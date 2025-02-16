@@ -135,7 +135,48 @@ serve(async (req) => {
       const messageText = update.message?.text;
       const chatId = update.message?.chat.id;
 
-      if (messageText && chatId) {
+      // בדיקה אם ההודעה מגיעה מהstart parameter
+      if (messageText && chatId && messageText.startsWith('/start')) {
+        const startParams = messageText.split(' ')[1]; // מקבל את הפרמטרים אחרי ה-/start
+        if (startParams) {
+          const communityId = startParams;
+          
+          // חיפוש הקהילה לפי ה-ID
+          const { data: community, error: communityError } = await supabase
+            .from('communities')
+            .select('id, name')
+            .eq('id', communityId)
+            .single();
+
+          if (communityError || !community) {
+            await sendTelegramMessage(BOT_TOKEN, chatId, "הקהילה לא נמצאה. אנא בדקו את הלינק ונסו שוב.");
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+
+          // יצירת לינק למיני אפליקציה
+          const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+          
+          // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
+          const message = `
+ברוכים הבאים לקהילת ${community.name}! 
+לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
+          `;
+
+          const replyMarkup = {
+            inline_keyboard: [[
+              {
+                text: "הצטרפו לקהילה 🚀",
+                web_app: { url: miniAppUrl }
+              }
+            ]]
+          };
+
+          await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
+        }
+      } else if (messageText && chatId && messageText.startsWith('COM_')) {
         // בדיקה אם ההודעה היא קוד קהילה (למשל, מתחיל ב-COM_)
         if (messageText.startsWith('COM_')) {
           // חיפוש הקהילה לפי הקוד
@@ -309,7 +350,7 @@ serve(async (req) => {
   }
 })
 
-// Helper function to send Telegram messages
+// Helper functions stay the same
 async function sendTelegramMessage(token: string, chatId: number, text: string) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`
   const response = await fetch(url, {
@@ -326,7 +367,6 @@ async function sendTelegramMessage(token: string, chatId: number, text: string) 
   return response.json()
 }
 
-// Helper function to send Telegram messages with markup
 async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`
   const response = await fetch(url, {
@@ -345,7 +385,6 @@ async function sendTelegramMessageWithMarkup(token: string, chatId: number, text
   return response.json()
 }
 
-// Helper function to delete Telegram messages
 async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
   const url = `https://api.telegram.org/bot${token}/deleteMessage`
   const response = await fetch(url, {

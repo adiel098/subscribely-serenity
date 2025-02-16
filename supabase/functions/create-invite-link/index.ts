@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -51,7 +52,7 @@ serve(async (req) => {
       throw new Error('Bot token not found')
     }
 
-    // Create invite link - remove member_limit and keep only creates_join_request
+    // Create invite link with member limit of 1 and no join request approval needed
     const response = await fetch(
       `https://api.telegram.org/bot${settings.bot_token}/createChatInviteLink`,
       {
@@ -61,7 +62,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           chat_id: community.telegram_chat_id,
-          creates_join_request: true
+          member_limit: 1
         })
       }
     )

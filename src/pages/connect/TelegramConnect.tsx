@@ -34,7 +34,7 @@ const TelegramConnect = () => {
     if (showSuccessDialog) {
       redirectTimeout = setTimeout(async () => {
         await refetch();
-        navigate('/dashboard');
+        navigate('/dashboard', { state: { from: '/connect/telegram' } });
       }, 5000);
     }
     return () => {

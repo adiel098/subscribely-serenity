@@ -49,6 +49,17 @@ async function setupWebhook(botToken: string) {
     const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
     console.log('Using webhook URL:', webhookUrl);
     
+    // נגדיר את ה-webhook עם כל ההרשאות הנדרשות
+    const allowedUpdates = [
+      "message",
+      "edited_message",
+      "channel_post",
+      "edited_channel_post",
+      "my_chat_member",
+      "chat_member",
+      "chat_join_request"
+    ];
+    
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/setWebhook`,
       { 
@@ -56,7 +67,10 @@ async function setupWebhook(botToken: string) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: webhookUrl })
+        body: JSON.stringify({ 
+          url: webhookUrl,
+          allowed_updates: allowedUpdates
+        })
       }
     );
     const result = await response.json();
@@ -228,6 +242,11 @@ serve(async (req) => {
 
         if (update.my_chat_member) {
           await handleMyChatMember(supabase, update);
+        }
+
+        if (update.chat_member) {
+          console.log('👥 Received chat_member update:', JSON.stringify(update.chat_member, null, 2));
+          await logTelegramEvent(supabase, 'chat_member', update);
         }
 
         if (update.chat_join_request) {

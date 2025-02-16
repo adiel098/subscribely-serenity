@@ -16,10 +16,6 @@ interface PaymentMethodsProps {
   onCompletePurchase: () => void;
   communityInviteLink?: string | null;
   showSuccess: boolean;
-  telegramUser?: {
-    id: number;
-    username?: string;
-  } | null;
 }
 
 export const PaymentMethods = ({
@@ -28,8 +24,7 @@ export const PaymentMethods = ({
   onPaymentMethodSelect,
   onCompletePurchase,
   communityInviteLink,
-  showSuccess,
-  telegramUser
+  showSuccess
 }: PaymentMethodsProps) => {
   const { toast } = useToast();
 
@@ -49,8 +44,7 @@ export const PaymentMethods = ({
         community_id: selectedPlan.community_id,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
-        status: 'completed',
-        telegram_user_id: telegramUser?.id?.toString()
+        status: 'completed'
       });
 
       const { data: payment, error } = await supabase
@@ -61,8 +55,7 @@ export const PaymentMethods = ({
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: communityInviteLink || null,
-          telegram_user_id: telegramUser?.id?.toString()
+          invite_link: communityInviteLink || null
         }])
         .select()
         .maybeSingle();

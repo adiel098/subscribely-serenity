@@ -13,6 +13,11 @@ export interface Community {
   platform_id: string;
   member_count: number;
   subscription_count: number;
+  subscription_revenue: number;
+  description: string | null;
+  platform: 'telegram' | 'discord';
+  telegram_chat_id: string | null;
+  telegram_invite_link: string | null;
 }
 
 export const useCommunities = () => {

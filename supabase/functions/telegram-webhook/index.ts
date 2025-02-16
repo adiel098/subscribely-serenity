@@ -179,7 +179,7 @@ serve(async (req) => {
             inline_keyboard: [[
               {
                 text: "הצטרפו לקהילה 🚀",
-                url: miniAppUrl
+                web_app: { url: `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}` }
               }
             ]]
           };
@@ -225,7 +225,7 @@ serve(async (req) => {
           inline_keyboard: [[
             {
               text: "הצטרפו לקהילה 🚀",
-              url: miniAppUrl
+              web_app: { url: `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}` }
             }
           ]]
         };

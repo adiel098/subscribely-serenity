@@ -1,8 +1,29 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkle, CreditCard, Check, Star } from "lucide-react";
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        ready: () => void;
+        expand: () => void;
+        close: () => void;
+        initDataUnsafe?: {
+          user?: {
+            id: number;
+            first_name: string;
+            last_name?: string;
+            username?: string;
+          };
+        };
+      };
+    };
+  }
+}
 
 interface TelegramUser {
   id: number;
@@ -32,10 +53,25 @@ const TelegramMiniApp = () => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [user, setUser] = useState<TelegramUser | null>(null);
 
   useEffect(() => {
+    // Initialize Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      // Notify WebApp is ready
+      window.Telegram.WebApp.ready();
+      // Expand to full screen
+      window.Telegram.WebApp.expand();
+      
+      // Get user data from Telegram
+      const webAppUser = window.Telegram.WebApp.initDataUnsafe?.user;
+      if (webAppUser) {
+        setUser(webAppUser);
+      }
+    }
+
     const initData = searchParams.get("initData");
-    const startParam = searchParams.get("start");
+    const startParam = searchParams.get("startapp"); // Changed from 'start' to 'startapp'
 
     const fetchCommunityData = async () => {
       try {
@@ -58,6 +94,24 @@ const TelegramMiniApp = () => {
     }
   }, [searchParams]);
 
+  const handleSubscribe = async (plan: Plan) => {
+    setSelectedPlan(plan);
+    
+    // אם המשתמש בחר תוכנית, נסגור את המיני אפליקציה
+    if (window.Telegram?.WebApp) {
+      // שליחת המידע לבוט
+      const data = {
+        action: 'subscribe',
+        planId: plan.id,
+        userId: user?.id,
+        communityId: community?.id
+      };
+      
+      // סגירת המיני אפליקציה
+      window.Telegram.WebApp.close();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -76,11 +130,6 @@ const TelegramMiniApp = () => {
       </div>
     );
   }
-
-  const handleSubscribe = (plan: Plan) => {
-    setSelectedPlan(plan);
-    // טיפול בתשלום יתווסף בשלב הבא
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">

@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
@@ -9,25 +10,29 @@ import { findCommunityByTelegramId, findCommunityById } from './communityHandler
 
 async function getBotChatMember(botToken: string, chatId: string | number, userId: string | number) {
   try {
+    // First, try to send a status message to the user privately
     const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/getChatMember`,
+      `https://api.telegram.org/bot${botToken}/sendChatAction`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chat_id: chatId,
-          user_id: userId,
+          chat_id: userId,
+          action: 'typing'
         }),
       }
     );
 
     const data = await response.json();
-    return data.ok ? data.result : null;
+    console.log('Chat action response:', data);
+    
+    // If we can send them a chat action, it means they have an active interaction with the bot
+    return data.ok;
   } catch (error) {
-    console.error('Error getting chat member:', error);
-    return null;
+    console.error('Error checking member activity:', error);
+    return false;
   }
 }
 
@@ -68,16 +73,11 @@ export async function updateMemberActivity(supabase: ReturnType<typeof createCli
 
     // Check each member's status
     for (const member of members) {
-      const chatMember = await getBotChatMember(
+      const canReceiveMessages = await getBotChatMember(
         settings.bot_token,
         community.telegram_chat_id,
         member.telegram_user_id
       );
-
-      // Update member status based on API response
-      const canReceiveMessages = chatMember && 
-        ['member', 'administrator', 'creator'].includes(chatMember.status) &&
-        !chatMember.user?.is_bot;
 
       await supabase
         .from('telegram_chat_members')

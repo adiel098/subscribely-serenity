@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,8 +40,7 @@ const TelegramMiniApp = () => {
     const fetchCommunityData = async () => {
       try {
         const response = await supabase.functions.invoke("telegram-mini-app", {
-          body: JSON.stringify({}),
-          query: { start: startParam, initData }
+          body: { start: startParam, initData }
         });
 
         if (response.data?.community) {
@@ -90,9 +88,9 @@ const TelegramMiniApp = () => {
       <div className="bg-gradient-to-b from-primary/10 to-background pt-8 pb-6 px-4 text-center space-y-3">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
           <Sparkle className="h-6 w-6 text-primary" />
-          {community.name}
+          {community?.name}
         </h1>
-        {community.description && (
+        {community?.description && (
           <p className="text-gray-600 max-w-lg mx-auto text-sm">
             {community.description}
           </p>
@@ -101,7 +99,7 @@ const TelegramMiniApp = () => {
 
       {/* רשימת התוכניות */}
       <div className="px-4 mt-6 space-y-4 max-w-md mx-auto">
-        {community.subscription_plans.map((plan) => (
+        {community?.subscription_plans.map((plan) => (
           <div
             key={plan.id}
             className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 transition-all hover:border-primary/50 hover:shadow-sm"

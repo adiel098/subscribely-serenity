@@ -1,11 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('🤖 Telegram bot webhook is running...');
+console.log('�� Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -158,7 +157,7 @@ serve(async (req) => {
 
           if (communityError || !community) {
             console.error('Community not found:', communityError);
-            await sendTelegramMessage(BOT_TOKEN, chatId, "הקהילה לא נמצאה. אנא בדקו את הלינק ונסו שוב.");
+            await sendTelegramMessage(BOT_TOKEN, chatId, "הקהילה לא נמצאה. אנא בדקו את הלינ�� ונסו שוב.");
             return new Response(JSON.stringify({ success: true }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 200,
@@ -167,8 +166,7 @@ serve(async (req) => {
 
           console.log('Found community:', community);
 
-          // יצירת לינק למיני אפליקציה
-          const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+          const miniAppUrl = `https://membify-dev.vercel.app`;
           
           // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
           const message = `
@@ -177,15 +175,18 @@ serve(async (req) => {
           `;
 
           const replyMarkup = {
-            inline_keyboard: [[
-              {
-                text: "הצטרפו לקהילה 🚀",
-                web_app: { url: miniAppUrl }
-              }
-            ]]
+            keyboard: [
+              [
+                {
+                  text: "הצטרפו לקהילה 🚀",
+                  web_app: { url: miniAppUrl }
+                }
+              ]
+            ],
+            resize_keyboard: true
           };
 
-          console.log('Sending welcome message with mini app button');
+          console.log('Sending welcome message with mini app button. URL:', miniAppUrl);
           const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
           console.log('Message sent result:', result);
         }
@@ -213,8 +214,7 @@ serve(async (req) => {
 
         console.log('Found community by code:', community);
 
-        // יצירת לינק למיני אפליקציה
-        const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+        const miniAppUrl = `https://membify-dev.vercel.app`;
         
         // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
         const message = `
@@ -223,12 +223,15 @@ serve(async (req) => {
         `;
 
         const replyMarkup = {
-          inline_keyboard: [[
-            {
-              text: "הצטרפו לקהילה 🚀",
-              web_app: { url: miniAppUrl }
-            }
-          ]]
+          keyboard: [
+            [
+              {
+                text: "הצטרפו לקהילה 🚀",
+                web_app: { url: miniAppUrl }
+              }
+            ]
+          ],
+          resize_keyboard: true
         };
 
         console.log('Sending welcome message with mini app button');

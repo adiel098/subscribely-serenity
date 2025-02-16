@@ -43,10 +43,19 @@ interface TelegramUpdate {
 
 async function setupWebhook(botToken: string) {
   console.log('Setting up webhook...'); // Added log
-  const webhookUrl = 'https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook';
+  const webhookUrl = `https://${SUPABASE_URL}/functions/v1/telegram-webhook`;
+  console.log('Using webhook URL:', webhookUrl); // Added for debugging
+  console.log('Using bot token:', `${botToken.slice(0, 5)}...${botToken.slice(-5)}`); // Log partial token for security
+  
   const response = await fetch(
-    `https://api.telegram.org/bot${botToken}/setWebhook?url=${webhookUrl}`,
-    { method: 'POST' }
+    `https://api.telegram.org/bot${botToken}/setWebhook`,
+    { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: webhookUrl })
+    }
   );
   const result = await response.json();
   console.log('Webhook setup result:', result); // Added log
@@ -57,7 +66,7 @@ async function getWebhookInfo(botToken: string) {
   console.log('Getting webhook info...'); // Added log
   const response = await fetch(
     `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
-    { method: 'POST' }
+    { method: 'GET' }
   );
   const result = await response.json();
   console.log('Webhook info result:', result); // Added log
@@ -85,9 +94,9 @@ serve(async (req) => {
       .select('bot_token')
       .single();
 
-    if (settingsError || !settings) {
+    if (settingsError || !settings?.bot_token) {
       console.error('Failed to get bot settings:', settingsError);
-      throw new Error('Failed to get bot settings');
+      throw new Error('Failed to get bot settings or bot token is missing');
     }
 
     const BOT_TOKEN = settings.bot_token;

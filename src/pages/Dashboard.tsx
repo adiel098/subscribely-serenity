@@ -1,6 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, MessagesSquare, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
+import { Users, CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,8 +48,9 @@ const Dashboard = () => {
     return null;
   }
 
-  // Calculate active subscribers
+  // Calculate subscribers stats
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
+  const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   const totalRevenue = activeSubscribers.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
 
   // Prepare data for charts
@@ -95,6 +96,18 @@ const Dashboard = () => {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Inactive Subscribers</h3>
+            <CreditCard className="h-5 w-5 text-red-500" />
+          </div>
+          <p className="text-3xl font-bold">{inactiveSubscribers.length}</p>
+          <div className="mt-2 flex items-center text-sm text-red-600">
+            <ArrowUpRight className="h-4 w-4 mr-1" />
+            <span>Expired subscriptions</span>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
           </div>
@@ -102,18 +115,6 @@ const Dashboard = () => {
           <div className="mt-2 flex items-center text-sm text-green-600">
             <ArrowUpRight className="h-4 w-4 mr-1" />
             <span>${(totalRevenue / (activeSubscribers.length || 1)).toFixed(2)} per subscriber</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
-            <MessagesSquare className="h-5 w-5 text-blue-500" />
-          </div>
-          <p className="text-3xl font-bold">{subscribers?.reduce((sum, sub) => sum + (sub.total_messages || 0), 0)}</p>
-          <div className="mt-2 flex items-center text-sm text-green-600">
-            <ArrowUpRight className="h-4 w-4 mr-1" />
-            <span>Across all members</span>
           </div>
         </Card>
       </div>

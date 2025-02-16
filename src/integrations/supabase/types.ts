@@ -345,6 +345,10 @@ export type Database = {
           is_active: boolean | null
           joined_at: string
           last_active: string | null
+          subscription_end_date: string | null
+          subscription_plan_id: string | null
+          subscription_start_date: string | null
+          subscription_status: boolean | null
           telegram_user_id: string
           telegram_username: string | null
           total_messages: number | null
@@ -355,6 +359,10 @@ export type Database = {
           is_active?: boolean | null
           joined_at?: string
           last_active?: string | null
+          subscription_end_date?: string | null
+          subscription_plan_id?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: boolean | null
           telegram_user_id: string
           telegram_username?: string | null
           total_messages?: number | null
@@ -365,6 +373,10 @@ export type Database = {
           is_active?: boolean | null
           joined_at?: string
           last_active?: string | null
+          subscription_end_date?: string | null
+          subscription_plan_id?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: boolean | null
           telegram_user_id?: string
           telegram_username?: string | null
           total_messages?: number | null
@@ -375,6 +387,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_chat_members_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]

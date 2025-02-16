@@ -71,7 +71,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow">
-        <div className="max-w-[95%] mx-auto px-4 py-4">
+        <div className="px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4 flex-1">
               <Select
@@ -118,7 +118,7 @@ const Dashboard = () => {
       </div>
 
       {/* Community Dashboard */}
-      <div className="max-w-[95%] mx-auto px-4 py-8">
+      <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">

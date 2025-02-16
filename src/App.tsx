@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -12,12 +13,11 @@ import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCommunities } from "@/hooks/useCommunities";
 import Navbar from "./components/Navbar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 const queryClient = new QueryClient();
 
-// Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
@@ -34,8 +34,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="pt-16">
-        {children}
+      <div className="flex w-full pt-16">
+        <AppSidebar />
+        <main className="flex-1">
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -48,37 +51,39 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route 
-                path="/platform-select" 
-                element={
-                  <ProtectedRoute>
-                    <PlatformSelect />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/connect/telegram" 
-                element={
-                  <ProtectedRoute>
-                    <TelegramConnect />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <SidebarProvider>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route 
+                  path="/platform-select" 
+                  element={
+                    <ProtectedRoute>
+                      <PlatformSelect />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/connect/telegram" 
+                  element={
+                    <ProtectedRoute>
+                      <TelegramConnect />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

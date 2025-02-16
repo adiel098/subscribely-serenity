@@ -14,10 +14,13 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          member_count: number | null
           name: string
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_id: string | null
+          subscription_count: number | null
+          subscription_revenue: number | null
           telegram_chat_id: string | null
           telegram_invite_link: string | null
           updated_at: string
@@ -26,10 +29,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          member_count?: number | null
           name: string
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_id?: string | null
+          subscription_count?: number | null
+          subscription_revenue?: number | null
           telegram_chat_id?: string | null
           telegram_invite_link?: string | null
           updated_at?: string
@@ -38,10 +44,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          member_count?: number | null
           name?: string
           owner_id?: string
           platform?: Database["public"]["Enums"]["platform_type"]
           platform_id?: string | null
+          subscription_count?: number | null
+          subscription_revenue?: number | null
           telegram_chat_id?: string | null
           telegram_invite_link?: string | null
           updated_at?: string
@@ -184,24 +193,30 @@ export type Database = {
           id: string
           is_active: boolean | null
           joined_at: string
+          last_active: string | null
           telegram_user_id: string
           telegram_username: string | null
+          total_messages: number | null
         }
         Insert: {
           community_id: string
           id?: string
           is_active?: boolean | null
           joined_at?: string
+          last_active?: string | null
           telegram_user_id: string
           telegram_username?: string | null
+          total_messages?: number | null
         }
         Update: {
           community_id?: string
           id?: string
           is_active?: boolean | null
           joined_at?: string
+          last_active?: string | null
           telegram_user_id?: string
           telegram_username?: string | null
+          total_messages?: number | null
         }
         Relationships: [
           {

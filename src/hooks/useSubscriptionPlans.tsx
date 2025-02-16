@@ -26,12 +26,19 @@ interface CreateSubscriptionPlanData {
 }
 
 export const useSubscriptionPlans = (communityId: string) => {
+  console.log('useSubscriptionPlans hook initialized with communityId:', communityId);
+  
   const queryClient = useQueryClient();
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['subscription-plans', communityId],
     queryFn: async () => {
-      if (!communityId) return [];
+      console.log('Fetching plans for community:', communityId);
+      
+      if (!communityId) {
+        console.log('No communityId provided, returning empty array');
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('subscription_plans')
@@ -41,8 +48,15 @@ export const useSubscriptionPlans = (communityId: string) => {
 
       if (error) {
         console.error('Error fetching plans:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         return [];
       }
+      
+      console.log('Successfully fetched plans:', data);
       return data as SubscriptionPlan[];
     },
     enabled: Boolean(communityId),
@@ -50,7 +64,22 @@ export const useSubscriptionPlans = (communityId: string) => {
 
   const createPlan = useMutation({
     mutationFn: async (newPlan: CreateSubscriptionPlanData) => {
-      console.log('Creating new plan:', newPlan); // Debug log
+      console.log('Attempting to create new plan with data:', newPlan);
+      console.log('Current auth session:', await supabase.auth.getSession());
+      
+      // Check if community exists first
+      const { data: communityCheck, error: communityError } = await supabase
+        .from('communities')
+        .select('id, owner_id')
+        .eq('id', newPlan.community_id)
+        .single();
+        
+      if (communityError) {
+        console.error('Error checking community:', communityError);
+        throw new Error('Failed to verify community access');
+      }
+      
+      console.log('Community check result:', communityCheck);
       
       const { data, error } = await supabase
         .from('subscription_plans')
@@ -67,23 +96,35 @@ export const useSubscriptionPlans = (communityId: string) => {
         .single();
 
       if (error) {
-        console.error('Supabase error:', error); // Debug log
+        console.error('Error creating plan:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
+      
+      console.log('Successfully created plan:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation succeeded, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
       toast.success('תוכנית המנוי נוצרה בהצלחה ✨');
     },
     onError: (error: any) => {
-      console.error('Error creating subscription plan:', error);
-      toast.error('שגיאה ביצירת תוכנית המנוי');
+      console.error('Mutation error:', error);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      toast.error(`שגיאה ביצירת תוכנית המנוי: ${error.message}`);
     }
   });
 
   const updatePlan = useMutation({
     mutationFn: async ({ id, ...updateData }: Partial<SubscriptionPlan> & { id: string }) => {
+      console.log('Attempting to update plan:', id, 'with data:', updateData);
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .update(updateData)
@@ -91,7 +132,12 @@ export const useSubscriptionPlans = (communityId: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating plan:', error);
+        throw error;
+      }
+      
+      console.log('Successfully updated plan:', data);
       return data;
     },
     onSuccess: () => {
@@ -106,12 +152,19 @@ export const useSubscriptionPlans = (communityId: string) => {
 
   const deletePlan = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Attempting to delete plan:', id);
+      
       const { error } = await supabase
         .from('subscription_plans')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting plan:', error);
+        throw error;
+      }
+      
+      console.log('Successfully deleted plan:', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });

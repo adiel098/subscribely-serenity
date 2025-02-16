@@ -198,9 +198,115 @@ async function handleChatMemberUpdate(supabase: any, update: any) {
     console.log('👥 Processing chat_member update:', JSON.stringify(update.chat_member, null, 2));
     
     const chatMember = update.chat_member;
-    if (chatMember.new_chat_member?.status === 'left' && 
-        chatMember.old_chat_member?.status === 'member') {
-      console.log('👋 Member left channel:', chatMember.from.username);
+    const { chat, from: member, new_chat_member, old_chat_member, invite_link } = chatMember;
+    
+    if (new_chat_member?.status === 'member' && old_chat_member?.status === 'left') {
+      console.log('🎉 Member joined channel:', member.username);
+      
+      // First, let's find the community by chat_id
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chat.id.toString())
+        .single();
+        
+      if (communityError) {
+        console.error('Error finding community:', communityError);
+        throw communityError;
+      }
+      
+      if (!community) {
+        console.error('Community not found for chat_id:', chat.id);
+        throw new Error(`Community not found for chat_id: ${chat.id}`);
+      }
+      
+      console.log('Found community:', community);
+      
+      // Check if member already exists
+      const { data: existingMember, error: memberCheckError } = await supabase
+        .from('telegram_chat_members')
+        .select('id')
+        .eq('community_id', community.id)
+        .eq('telegram_user_id', member.id.toString())
+        .maybeSingle();
+        
+      if (memberCheckError) {
+        console.error('Error checking existing member:', memberCheckError);
+        throw memberCheckError;
+      }
+      
+      if (existingMember) {
+        console.log('Member already exists, updating...');
+        const { error: updateError } = await supabase
+          .from('telegram_chat_members')
+          .update({
+            telegram_username: member.username,
+            is_active: true,
+            last_active: new Date().toISOString()
+          })
+          .eq('id', existingMember.id);
+          
+        if (updateError) {
+          console.error('Error updating member:', updateError);
+          throw updateError;
+        }
+      } else {
+        console.log('Creating new member...');
+        const { error: insertError } = await supabase
+          .from('telegram_chat_members')
+          .insert([{
+            community_id: community.id,
+            telegram_user_id: member.id.toString(),
+            telegram_username: member.username,
+            is_active: true,
+            joined_at: new Date().toISOString(),
+            last_active: new Date().toISOString()
+          }]);
+          
+        if (insertError) {
+          console.error('Error inserting member:', insertError);
+          throw insertError;
+        }
+      }
+      
+      console.log('✅ Successfully processed new member');
+    } else if (new_chat_member?.status === 'left' && old_chat_member?.status === 'member') {
+      console.log('👋 Member left channel:', member.username);
+      
+      // Find the community
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chat.id.toString())
+        .single();
+        
+      if (communityError) {
+        console.error('Error finding community:', communityError);
+        throw communityError;
+      }
+      
+      if (!community) {
+        console.error('Community not found for chat_id:', chat.id);
+        throw new Error(`Community not found for chat_id: ${chat.id}`);
+      }
+      
+      // Update member status
+      const { error: updateError } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: false,
+          subscription_status: false,
+          subscription_end_date: new Date().toISOString()
+        })
+        .eq('community_id', community.id)
+        .eq('telegram_user_id', member.id.toString());
+        
+      if (updateError) {
+        console.error('Error updating member status:', updateError);
+        throw updateError;
+      }
+      
+      console.log('✅ Successfully processed member departure');
     }
     
     await logTelegramEvent(supabase, 'chat_member', update);

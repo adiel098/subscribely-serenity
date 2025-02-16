@@ -35,6 +35,15 @@ const Subscriptions = () => {
   const { data: communities } = useCommunities();
   const { selectedCommunityId } = useCommunityContext();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  const [editPlanData, setEditPlanData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    interval: "monthly" as IntervalType,
+    features: [] as string[]
+  });
   const [newPlan, setNewPlan] = useState({
     name: "",
     description: "",
@@ -42,10 +51,63 @@ const Subscriptions = () => {
     interval: "monthly" as IntervalType,
     features: [] as string[]
   });
-  const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+  const [newFeature, setNewFeature] = useState("");
+  const [editFeature, setEditFeature] = useState("");
+
   const { plans, isLoading, createPlan, updatePlan, deletePlan } = useSubscriptionPlans(selectedCommunityId ?? "");
+
+  const handleEditClick = (plan: any) => {
+    setEditingPlan(plan.id);
+    setEditPlanData({
+      name: plan.name,
+      description: plan.description || "",
+      price: plan.price.toString(),
+      interval: plan.interval,
+      features: plan.features || []
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdatePlan = async () => {
+    if (!editingPlan || !selectedCommunityId) return;
+
+    try {
+      await updatePlan.mutateAsync({
+        id: editingPlan,
+        name: editPlanData.name,
+        description: editPlanData.description,
+        price: parseFloat(editPlanData.price),
+        interval: editPlanData.interval,
+        features: editPlanData.features
+      });
+
+      setIsEditDialogOpen(false);
+      setEditingPlan(null);
+      toast.success("Plan updated successfully! ✨");
+    } catch (error) {
+      console.error("Error updating plan:", error);
+      toast.error("Failed to update plan");
+    }
+  };
+
+  const handleAddEditFeature = () => {
+    if (editFeature.trim()) {
+      setEditPlanData(prev => ({
+        ...prev,
+        features: [...prev.features, editFeature.trim()]
+      }));
+      setEditFeature("");
+    }
+  };
+
+  const handleRemoveEditFeature = (index: number) => {
+    setEditPlanData(prev => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index)
+    }));
+  };
 
   const handleCreatePlan = async () => {
     if (!selectedCommunityId) {
@@ -107,7 +169,6 @@ const Subscriptions = () => {
     }
   };
 
-  const [newFeature, setNewFeature] = useState("");
   const handleAddFeature = () => {
     if (newFeature.trim()) {
       setNewPlan(prev => ({
@@ -181,7 +242,7 @@ const Subscriptions = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50/80" onClick={() => setEditingPlan(plan.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50/80" onClick={() => handleEditClick(plan)}>
                     <EditIcon className="h-4 w-4" />
                   </Button>
                   <AlertDialog open={isDeleteDialogOpen && planToDelete === plan.id}>
@@ -364,6 +425,126 @@ const Subscriptions = () => {
               <Button onClick={handleCreatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
                 <SparklesIcon className="h-4 w-4" />
                 Create Plan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
+            <DialogHeader className="space-y-3 pb-6">
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <EditIcon className="h-6 w-6 text-primary animate-pulse" />
+                Edit Subscription Plan
+              </DialogTitle>
+              <DialogDescription>
+                Modify the subscription plan details and features.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-6 relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name" className="text-base">Plan Name</Label>
+                <Input 
+                  id="edit-name" 
+                  value={editPlanData.name}
+                  onChange={e => setEditPlanData(prev => ({
+                    ...prev,
+                    name: e.target.value
+                  }))}
+                  className="text-lg"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description" className="text-base">Description</Label>
+                <Textarea 
+                  id="edit-description" 
+                  value={editPlanData.description}
+                  onChange={e => setEditPlanData(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))}
+                  className="min-h-[100px] text-base"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-price" className="text-base">Price</Label>
+                  <Input 
+                    id="edit-price" 
+                    type="number" 
+                    value={editPlanData.price}
+                    onChange={e => setEditPlanData(prev => ({
+                      ...prev,
+                      price: e.target.value
+                    }))}
+                    className="text-lg"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-interval" className="text-base">Billing Interval</Label>
+                  <Select 
+                    value={editPlanData.interval}
+                    onValueChange={(value: IntervalType) => setEditPlanData(prev => ({
+                      ...prev,
+                      interval: value
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="one-time">One-Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-4">
+                <Label className="text-base">Features</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a feature..."
+                    value={editFeature}
+                    onChange={e => setEditFeature(e.target.value)}
+                    onKeyPress={e => e.key === "Enter" && handleAddEditFeature()}
+                  />
+                  <Button onClick={handleAddEditFeature}>Add</Button>
+                </div>
+                <ul className="space-y-2">
+                  {editPlanData.features.map((feature, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CheckIcon className="h-5 w-5 text-green-500" />
+                        <span className="text-gray-700">{feature}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveEditFeature(index)}
+                        className="hover:bg-red-50 hover:text-red-500"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <DialogFooter className="gap-3 pt-6">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
+                <SparklesIcon className="h-4 w-4" />
+                Update Plan
               </Button>
             </DialogFooter>
           </DialogContent>

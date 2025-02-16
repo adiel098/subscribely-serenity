@@ -14,18 +14,20 @@ const corsHeaders = {
 
 async function logTelegramEvent(supabase: any, eventType: string, data: any, error?: string) {
   try {
-    console.log(`Logging ${eventType} event:`, data);
+    console.log(`Logging ${eventType} event:`, JSON.stringify(data, null, 2));
     
     const eventData = {
       event_type: eventType,
-      chat_id: data.message?.chat?.id || data.chat?.id || data.chat_join_request?.chat?.id,
-      user_id: data.message?.from?.id || data.from?.id || data.chat_join_request?.from?.id,
-      username: data.message?.from?.username || data.from?.username || data.chat_join_request?.from?.username,
+      chat_id: data.message?.chat?.id || data.chat?.id || data.chat_join_request?.chat?.id || data.my_chat_member?.chat?.id,
+      user_id: data.message?.from?.id || data.from?.id || data.chat_join_request?.from?.id || data.my_chat_member?.from?.id,
+      username: data.message?.from?.username || data.from?.username || data.chat_join_request?.from?.username || data.my_chat_member?.from?.username,
       message_id: data.message?.message_id,
       message_text: data.message?.text,
       raw_data: data,
       error: error
     };
+
+    console.log('Prepared event data:', JSON.stringify(eventData, null, 2));
 
     const { error: insertError } = await supabase
       .from('telegram_events')
@@ -83,33 +85,38 @@ async function getWebhookInfo(botToken: string) {
 }
 
 async function handleNewMessage(supabase: any, update: any) {
-  console.log('🗨️ Processing new message:', update.message);
+  console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
   await logTelegramEvent(supabase, 'new_message', update);
 }
 
 async function handleChatJoinRequest(supabase: any, update: any) {
-  console.log('👤 Processing chat join request:', update.chat_join_request);
+  console.log('👤 Processing chat join request:', JSON.stringify(update.chat_join_request, null, 2));
   await logTelegramEvent(supabase, 'chat_join_request', update);
 }
 
 async function handleChannelPost(supabase: any, update: any) {
-  console.log('📢 Processing channel post:', update.channel_post);
+  console.log('📢 Processing channel post:', JSON.stringify(update.channel_post, null, 2));
   await logTelegramEvent(supabase, 'channel_post', update);
 }
 
 async function handleEditedMessage(supabase: any, update: any) {
-  console.log('✏️ Processing edited message:', update.edited_message);
+  console.log('✏️ Processing edited message:', JSON.stringify(update.edited_message, null, 2));
   await logTelegramEvent(supabase, 'edited_message', update);
 }
 
 async function handleLeftChatMember(supabase: any, update: any) {
-  console.log('👋 Processing left chat member:', update.message?.left_chat_member);
+  console.log('👋 Processing left chat member:', JSON.stringify(update.message?.left_chat_member, null, 2));
   await logTelegramEvent(supabase, 'left_chat_member', update);
 }
 
 async function handleNewChatMember(supabase: any, update: any) {
-  console.log('🎉 Processing new chat member:', update.message?.new_chat_member);
+  console.log('🎉 Processing new chat member:', JSON.stringify(update.message?.new_chat_member || update.new_chat_member, null, 2));
   await logTelegramEvent(supabase, 'new_chat_member', update);
+}
+
+async function handleMyChatMember(supabase: any, update: any) {
+  console.log('👥 Processing my_chat_member update:', JSON.stringify(update.my_chat_member, null, 2));
+  await logTelegramEvent(supabase, 'my_chat_member', update);
 }
 
 serve(async (req) => {
@@ -190,13 +197,17 @@ serve(async (req) => {
 
         // Handle different types of updates
         if (update.message) {
-          if (update.message.new_chat_member) {
+          if (update.message.new_chat_member || update.message.new_chat_members) {
             await handleNewChatMember(supabase, update);
           } else if (update.message.left_chat_member) {
             await handleLeftChatMember(supabase, update);
           } else {
             await handleNewMessage(supabase, update);
           }
+        }
+
+        if (update.my_chat_member) {
+          await handleMyChatMember(supabase, update);
         }
 
         if (update.chat_join_request) {

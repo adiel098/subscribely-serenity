@@ -1,9 +1,9 @@
 
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Save } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,13 +17,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BotSettings } from "@/hooks/useBotSettings";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;
-  updateSettings: any; // Using any here as the mutation type is complex
+  updateSettings: any;
 }
 
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
+  const [draftMessage, setDraftMessage] = useState(settings.welcome_message);
+
+  const handleSave = () => {
+    updateSettings.mutate({ welcome_message: draftMessage });
+    toast.success("Welcome message saved successfully");
+  };
+
   return (
     <AccordionItem value="welcome" className="border rounded-lg">
       <AccordionTrigger className="px-4">
@@ -51,21 +60,18 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
               <Label>Send automatic welcome message</Label>
             </div>
             <Textarea
-              value={settings.welcome_message}
-              onChange={(e) =>
-                updateSettings.mutate({ welcome_message: e.target.value })
-              }
+              value={draftMessage}
+              onChange={(e) => setDraftMessage(e.target.value)}
               placeholder="Enter your welcome message..."
               className="min-h-[100px]"
             />
-            <Input
-              value={settings.bot_signature}
-              onChange={(e) =>
-                updateSettings.mutate({ bot_signature: e.target.value })
-              }
-              placeholder="Bot signature (e.g. 🤖)"
-              className="max-w-[200px]"
-            />
+            <Button 
+              onClick={handleSave}
+              className="bg-green-500 hover:bg-green-600"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Message
+            </Button>
           </CardContent>
         </Card>
       </AccordionContent>

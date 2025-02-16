@@ -23,7 +23,8 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
         console.log('Found community:', community);
         const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
 
-        const welcomeMessage = `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:\n\n${botSettings.bot_signature || ''}`;
+        // שימוש בהודעת הברוכים הבאים המותאמת אישית
+        const welcomeMessage = botSettings.welcome_message || `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
         
         const response = await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {
           method: 'POST',

@@ -42,7 +42,6 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
             <TableHead className="font-medium">Telegram ID</TableHead>
             <TableHead className="font-medium">Subscription Plan</TableHead>
             <TableHead className="font-medium">Status</TableHead>
-            <TableHead className="font-medium">Last Active</TableHead>
             <TableHead className="font-medium">Subscription Period</TableHead>
             <TableHead className="font-medium">Activity</TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -100,21 +99,6 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={subscriber.last_active ? "success" : "destructive"}>
-                    {subscriber.last_active ? (
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {format(new Date(subscriber.last_active), "PPp")}
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <XCircle className="h-3 w-3" />
-                        Never Active
-                      </span>
-                    )}
-                  </Badge>
-                </TableCell>
-                <TableCell>
                   <div className="space-y-1">
                     <div className="flex items-center text-sm">
                       Start: {subscriber.subscription_start_date
@@ -129,15 +113,8 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    <div className="text-sm">
-                      Joined: {format(new Date(subscriber.joined_at), "PPp")}
-                    </div>
-                    {subscriber.last_active && (
-                      <div className="text-sm text-muted-foreground">
-                        Last active: {format(new Date(subscriber.last_active), "PPp")}
-                      </div>
-                    )}
+                  <div className="text-sm">
+                    Joined: {format(new Date(subscriber.joined_at), "PPp")}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -167,7 +144,7 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="h-32 text-center">
+              <TableCell colSpan={7} className="h-32 text-center">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
                   <Users className="h-10 w-10 mb-2 opacity-50" />
                   <p className="text-sm">No subscribers found</p>

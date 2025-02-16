@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useSubscribers } from "@/hooks/useSubscribers";
 import { format } from "date-fns";
@@ -56,8 +55,16 @@ const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess }: Edi
   const { toast } = useToast();
   const [username, setUsername] = useState(subscriber.telegram_username || "");
   const [subscriptionStatus, setSubscriptionStatus] = useState(subscriber.subscription_status);
-  const [startDate, setStartDate] = useState(subscriber.subscription_start_date || "");
-  const [endDate, setEndDate] = useState(subscriber.subscription_end_date || "");
+  const [startDate, setStartDate] = useState(
+    subscriber.subscription_start_date ? 
+    new Date(subscriber.subscription_start_date).toISOString().slice(0, 16) : 
+    ""
+  );
+  const [endDate, setEndDate] = useState(
+    subscriber.subscription_end_date ? 
+    new Date(subscriber.subscription_end_date).toISOString().slice(0, 16) : 
+    ""
+  );
 
   const handleSave = async () => {
     try {
@@ -164,9 +171,39 @@ const Subscribers = () => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleEditSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+  };
+
+  const handleRemoveSubscriber = async (subscriber: any) => {
+    try {
+      const { error } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: false,
+          subscription_status: false,
+          subscription_end_date: new Date().toISOString(),
+        })
+        .eq('id', subscriber.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Subscriber removed successfully",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+    } catch (error) {
+      console.error('Error removing subscriber:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove subscriber",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -299,6 +336,13 @@ const Subscribers = () => {
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => handleRemoveSubscriber(subscriber)}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Remove Subscriber
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -51,10 +51,10 @@ interface TelegramUpdate {
 }
 
 async function setupWebhook(botToken: string) {
-  console.log('Setting up webhook...'); // Added log
+  console.log('Setting up webhook...'); 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
-  console.log('Using webhook URL:', webhookUrl); // Added for debugging
-  console.log('Using bot token:', `${botToken.slice(0, 5)}...${botToken.slice(-5)}`); // Log partial token for security
+  console.log('Using webhook URL:', webhookUrl);
+  console.log('Using bot token:', `${botToken.slice(0, 5)}...${botToken.slice(-5)}`);
   
   const response = await fetch(
     `https://api.telegram.org/bot${botToken}/setWebhook`,
@@ -67,18 +67,18 @@ async function setupWebhook(botToken: string) {
     }
   );
   const result = await response.json();
-  console.log('Webhook setup result:', result); // Added log
+  console.log('Webhook setup result:', result);
   return result;
 }
 
 async function getWebhookInfo(botToken: string) {
-  console.log('Getting webhook info...'); // Added log
+  console.log('Getting webhook info...'); 
   const response = await fetch(
     `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
     { method: 'GET' }
   );
   const result = await response.json();
-  console.log('Webhook info result:', result); // Added log
+  console.log('Webhook info result:', result);
   return result;
 }
 
@@ -143,25 +143,47 @@ serve(async (req) => {
         // Find the bot settings with this verification code
         const { data: botSettings, error: botError } = await supabase
           .from('telegram_bot_settings')
-          .update({ 
-            chat_id: chatId.toString(),
-            verified_at: new Date().toISOString(),
-            is_admin: true
-          })
+          .select('*')
           .eq('verification_code', verificationCode)
-          .is('verified_at', null)
-          .select()
-          .single();
+          .is('verified_at', null);
 
         if (botError) {
-          console.error('❌ Error updating bot settings:', botError);
+          console.error('❌ Error finding bot settings:', botError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to find bot settings' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            }
+          );
+        }
+
+        // If we found settings to update
+        if (botSettings && botSettings.length > 0) {
+          const { error: updateError } = await supabase
+            .from('telegram_bot_settings')
+            .update({ 
+              chat_id: chatId.toString(),
+              verified_at: new Date().toISOString(),
+              is_admin: true
+            })
+            .eq('verification_code', verificationCode)
+            .is('verified_at', null);
+
+          if (updateError) {
+            console.error('❌ Error updating bot settings:', updateError);
+          } else {
+            console.log('✅ Successfully updated bot settings');
+          }
+        } else {
+          console.log('⚠️ No unverified bot settings found for code:', verificationCode);
         }
 
         // Delete the verification message
         const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, messageId);
         console.log('🗑️ Delete message result:', deleteResult);
 
-        if (!botError && botSettings) {
+        if (botSettings && botSettings.length > 0) {
           // Send success message
           const messageResult = await sendTelegramMessage(
             BOT_TOKEN, 

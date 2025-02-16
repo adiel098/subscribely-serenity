@@ -76,6 +76,11 @@ const TelegramMiniApp = () => {
     }
   }, [searchParams]);
 
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method);
+    console.log(`Selected payment method: ${method}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
@@ -107,7 +112,6 @@ const TelegramMiniApp = () => {
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
         <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-12">
-          {/* Header Section */}
           <div className="text-center space-y-6 animate-fade-in">
             <div className="inline-block p-2 bg-primary/10 rounded-full mb-4">
               <Crown className="h-8 w-8 text-primary" />
@@ -122,7 +126,6 @@ const TelegramMiniApp = () => {
             )}
           </div>
 
-          {/* Plans Section */}
           <div className="space-y-8">
             <div className="text-center space-y-2">
               <Badge variant="secondary" className="px-4 py-1.5">
@@ -180,7 +183,6 @@ const TelegramMiniApp = () => {
             </div>
           </div>
 
-          {/* Payment Methods Section */}
           {selectedPlan && (
             <div 
               id="payment-methods" 

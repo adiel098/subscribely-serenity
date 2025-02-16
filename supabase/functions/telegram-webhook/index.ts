@@ -14,19 +14,15 @@ import {
 import { sendBroadcastMessage } from './broadcastHandler.ts';
 
 serve(async (req) => {
-  // Always handle CORS first
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Max-Age': '86400',
-      }
+    return new Response('ok', { 
+      headers: corsHeaders,
+      status: 200
     });
   }
 
   try {
-    // Parse request body
     const body = await req.json();
     const { path, communityId } = body;
     console.log('Received request:', { path, communityId });

@@ -18,7 +18,6 @@ export interface Community {
   platform: 'telegram' | 'discord';
   telegram_chat_id: string | null;
   telegram_invite_link: string | null;
-  telegram_photo_url: string | null;
 }
 
 export const useCommunities = () => {

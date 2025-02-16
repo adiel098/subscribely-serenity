@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPla
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
 import { Loader2, Plus, Copy } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
@@ -88,21 +86,13 @@ const Subscriptions = () => {
   return (
     <div className="container max-w-6xl py-6 space-y-8">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-primary/10">
-            <AvatarImage src={community?.telegram_photo_url} alt={community?.name} />
-            <AvatarFallback className="bg-primary/5 text-primary/70">
-              {community?.name?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {community?.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your community subscription plans
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Subscription Plans
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your community subscription plans
+          </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={copyMiniAppLink} variant="outline" className="gap-2">

@@ -24,7 +24,6 @@ export type Database = {
           subscription_revenue: number | null
           telegram_chat_id: string | null
           telegram_invite_link: string | null
-          telegram_photo_url: string | null
           updated_at: string
         }
         Insert: {
@@ -41,7 +40,6 @@ export type Database = {
           subscription_revenue?: number | null
           telegram_chat_id?: string | null
           telegram_invite_link?: string | null
-          telegram_photo_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -58,7 +56,6 @@ export type Database = {
           subscription_revenue?: number | null
           telegram_chat_id?: string | null
           telegram_invite_link?: string | null
-          telegram_photo_url?: string | null
           updated_at?: string
         }
         Relationships: [

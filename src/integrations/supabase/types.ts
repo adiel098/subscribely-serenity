@@ -136,6 +136,8 @@ export type Database = {
           id: string
           is_admin: boolean | null
           updated_at: string
+          verification_code: string | null
+          verified_at: string | null
           welcome_message: string | null
         }
         Insert: {
@@ -145,6 +147,8 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           updated_at?: string
+          verification_code?: string | null
+          verified_at?: string | null
           welcome_message?: string | null
         }
         Update: {
@@ -154,6 +158,8 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           updated_at?: string
+          verification_code?: string | null
+          verified_at?: string | null
           welcome_message?: string | null
         }
         Relationships: [

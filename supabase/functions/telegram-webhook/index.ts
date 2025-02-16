@@ -68,36 +68,53 @@ serve(async (req) => {
       const update: TelegramUpdate = await req.json()
       console.log('Received Telegram update:', update)
 
-      // Handle bot being added to a group
-      if (update.my_chat_member) {
-        const { chat, new_chat_member } = update.my_chat_member
+      // Handle verification messages
+      if (update.message?.text && update.message.text.startsWith('MBF_')) {
+        const verificationCode = update.message.text.trim();
+        const chatId = update.message.chat.id;
         
-        if (new_chat_member.status === 'administrator') {
-          // Find any community settings waiting for this chat
-          const { data: botSettings, error: botError } = await supabase
-            .from('telegram_bot_settings')
-            .update({ 
-              is_admin: true,
-              chat_id: chat.id.toString()
-            })
-            .eq('chat_id', chat.id.toString())
-            .select()
-            .single();
+        // Find the bot settings with this verification code
+        const { data: botSettings, error: botError } = await supabase
+          .from('telegram_bot_settings')
+          .update({ 
+            chat_id: chatId.toString(),
+            verified_at: new Date().toISOString(),
+            is_admin: true
+          })
+          .eq('verification_code', verificationCode)
+          .is('verified_at', null)
+          .select()
+          .single();
 
-          if (!botError && botSettings) {
-            console.log(`Bot added as admin to chat ${chat.id}`);
-            
-            // Send a welcome message
-            const welcomeMsg = "Thank you for adding me as an admin! I'm now ready to manage your community."
-            await sendTelegramMessage(BOT_TOKEN, chat.id, welcomeMsg);
-          }
+        // Delete the verification message
+        await deleteTelegramMessage(BOT_TOKEN, chatId, update.message.message_id);
+
+        if (!botError && botSettings) {
+          // Send success message
+          await sendTelegramMessage(
+            BOT_TOKEN, 
+            chatId, 
+            "✅ Verification successful! Your Telegram group is now connected to Membify."
+          );
+          console.log(`Group ${chatId} verified with code ${verificationCode}`);
         }
+        
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
       }
 
-      // Handle new messages
-      if (update.message) {
-        const { chat, from, text } = update.message
-        console.log(`Received message from ${from.username || from.id}: ${text}`);
+      // Handle bot being added to a group
+      if (update.my_chat_member?.new_chat_member.status === 'administrator') {
+        const chatId = update.my_chat_member.chat.id;
+        console.log(`Bot added as admin to chat ${chatId}`);
+        
+        await sendTelegramMessage(
+          BOT_TOKEN,
+          chatId,
+          "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account."
+        );
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -137,6 +154,23 @@ async function sendTelegramMessage(token: string, chatId: number, text: string) 
     body: JSON.stringify({
       chat_id: chatId,
       text: text,
+    }),
+  })
+  
+  return response.json()
+}
+
+// Helper function to delete Telegram messages
+async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
+  const url = `https://api.telegram.org/bot${token}/deleteMessage`
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
     }),
   })
   

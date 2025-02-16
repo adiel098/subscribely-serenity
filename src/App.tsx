@@ -21,6 +21,11 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const { data: communities, isLoading: isLoadingCommunities } = useCommunities();
+
+  const hasVerifiedCommunity = communities?.some(community => 
+    community.telegram_chat_id || // if telegram chat id exists, it means the community is verified
+    (community.platform !== 'telegram') // or if it's not a telegram community
+  );
   
   if (loading || isLoadingCommunities) return null;
   
@@ -35,8 +40,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/platform-select" />;
   }
 
-  // If user has communities and is on platform-select, redirect to dashboard
-  if (communities?.length > 0 && window.location.pathname === "/platform-select") {
+  // If user has communities but none are verified, and they're not on the connect page, redirect to connect
+  if (communities?.length > 0 && 
+      !hasVerifiedCommunity && 
+      !window.location.pathname.includes('/connect')) {
+    return <Navigate to="/connect/telegram" />;
+  }
+
+  // If user has verified communities and is on platform-select or connect pages, redirect to dashboard
+  if (hasVerifiedCommunity && 
+      (window.location.pathname === "/platform-select" || window.location.pathname.includes('/connect'))) {
     return <Navigate to="/dashboard" />;
   }
 

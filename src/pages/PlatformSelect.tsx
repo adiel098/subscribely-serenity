@@ -21,7 +21,7 @@ const PlatformSelect = () => {
     {
       name: "Slack",
       icon: "/lovable-uploads/214f6259-adad-480f-81ba-77390e675f8b.png",
-      color: "border-[#36C5F0] text-[#36C5F0] hover:bg-green-50",
+      color: "border-[#36BF7B] text-[#36BF7B] hover:bg-green-50",
       route: "/connect/slack"
     }
   ];

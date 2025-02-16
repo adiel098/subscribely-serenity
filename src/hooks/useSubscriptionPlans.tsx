@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +39,12 @@ export const useSubscriptionPlans = (communityId: string) => {
         console.log('No communityId provided, returning empty array');
         return [];
       }
+
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        console.error('No access token found');
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('subscription_plans')
@@ -64,7 +71,11 @@ export const useSubscriptionPlans = (communityId: string) => {
   const createPlan = useMutation({
     mutationFn: async (newPlan: CreateSubscriptionPlanData) => {
       console.log('Attempting to create new plan with data:', newPlan);
-      console.log('Current auth session:', await supabase.auth.getSession());
+      
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('No access token found');
+      }
       
       // Check if community exists first
       const { data: communityCheck, error: communityError } = await supabase

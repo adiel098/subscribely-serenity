@@ -18,6 +18,8 @@ export type Database = {
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_id: string | null
+          telegram_chat_id: string | null
+          telegram_invite_link: string | null
           updated_at: string
         }
         Insert: {
@@ -28,6 +30,8 @@ export type Database = {
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
           platform_id?: string | null
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
           updated_at?: string
         }
         Update: {
@@ -38,6 +42,8 @@ export type Database = {
           owner_id?: string
           platform?: Database["public"]["Enums"]["platform_type"]
           platform_id?: string | null
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -121,6 +127,82 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      telegram_bot_settings: {
+        Row: {
+          bot_token: string
+          chat_id: string | null
+          community_id: string
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          bot_token: string
+          chat_id?: string | null
+          community_id: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          bot_token?: string
+          chat_id?: string | null
+          community_id?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bot_settings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: true
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_chat_members: {
+        Row: {
+          community_id: string
+          id: string
+          is_active: boolean | null
+          joined_at: string
+          telegram_user_id: string
+          telegram_username: string | null
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          telegram_user_id: string
+          telegram_username?: string | null
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          telegram_user_id?: string
+          telegram_username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_chat_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

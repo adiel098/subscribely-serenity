@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { setupWebhook, getWebhookInfo } from './webhookManager.ts'
@@ -112,9 +113,8 @@ serve(async (req) => {
     const BOT_TOKEN = settings.bot_token;
     console.log('✅ Successfully retrieved bot token');
 
-    // Add bot token to env for message handler
-    process.env = process.env || {};
-    process.env.TELEGRAM_BOT_TOKEN = BOT_TOKEN;
+    // העברת ה-bot token להמשך הטיפול
+    const context = { BOT_TOKEN };
 
     const url = new URL(req.url);
     if (url.pathname.endsWith('/check')) {
@@ -158,7 +158,7 @@ serve(async (req) => {
 
         // Handle different types of updates
         if (update.message) {
-          await handleNewMessage(supabase, update);
+          await handleNewMessage(supabase, update, context);
         }
 
         if (update.my_chat_member) {

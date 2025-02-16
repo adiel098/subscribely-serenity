@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
@@ -189,7 +188,7 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
   }
 }
 
-export async function handleNewMessage(supabase: ReturnType<typeof createClient>, update: any) {
+export async function handleNewMessage(supabase: ReturnType<typeof createClient>, update: any, context: { BOT_TOKEN: string }) {
   try {
     console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
     
@@ -215,8 +214,7 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
         const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app`;
 
         // שליחת הודעה עם כפתור למיני אפ
-        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const response = await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

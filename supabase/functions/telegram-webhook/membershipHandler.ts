@@ -1,7 +1,6 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { ChatMemberUpdate } from './types';
-import { logTelegramEvent } from './eventLogger';
+import { ChatMemberUpdate } from './types.ts';
+import { logTelegramEvent } from './eventLogger.ts';
 
 export async function handleChatMemberUpdate(supabase: ReturnType<typeof createClient>, update: { chat_member: ChatMemberUpdate }) {
   try {

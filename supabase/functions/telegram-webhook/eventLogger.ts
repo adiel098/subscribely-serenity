@@ -1,6 +1,5 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { TelegramEvent } from './types';
+import { TelegramEvent } from './types.ts';
 
 export async function logTelegramEvent(supabase: ReturnType<typeof createClient>, eventType: string, data: any, error?: string) {
   try {

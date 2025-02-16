@@ -43,11 +43,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="flex min-h-[calc(100vh-4rem)] mt-16">
+      <div className="flex">
         <AppSidebar />
-        <main className="flex-1 pl-[280px]">
-          <div className="h-full min-h-full bg-gray-50 p-8">
-            {children}
+        <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16 pl-[280px]">
+          <div className="h-full w-full bg-gray-50">
+            <div className="p-8">
+              {children}
+            </div>
           </div>
         </main>
       </div>

@@ -13,6 +13,7 @@ import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCommunities } from "@/hooks/useCommunities";
+import Navbar from "./components/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="min-h-screen">
+      <Navbar />
+      <div className="pt-16">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -49,35 +61,37 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route 
-              path="/platform-select" 
-              element={
-                <ProtectedRoute>
-                  <PlatformSelect />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/connect/telegram" 
-              element={
-                <ProtectedRoute>
-                  <TelegramConnect />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route 
+                path="/platform-select" 
+                element={
+                  <ProtectedRoute>
+                    <PlatformSelect />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/connect/telegram" 
+                element={
+                  <ProtectedRoute>
+                    <TelegramConnect />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

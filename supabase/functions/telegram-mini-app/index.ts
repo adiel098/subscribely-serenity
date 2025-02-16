@@ -1,38 +1,32 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    // Get request body
     const { start, initData } = await req.json();
-    console.log('Received parameters:', { start, initData });
+    console.log('Received request with params:', { start, initData });
 
     if (!start) {
-      return new Response(
-        JSON.stringify({ error: 'Missing start parameter' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      throw new Error('Missing start parameter');
     }
 
-    console.log('Fetching community with ID:', start);
-    
-    // Get community details based on the start parameter
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get community data
     const { data: community, error: communityError } = await supabase
       .from('communities')
       .select(`
@@ -54,55 +48,30 @@ serve(async (req) => {
       .eq('id', start)
       .single();
 
-    console.log('Query result:', { community, error: communityError });
-
-    if (communityError || !community) {
+    if (communityError) {
       console.error('Error fetching community:', communityError);
-      return new Response(
-        JSON.stringify({ error: 'Community not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      throw communityError;
     }
 
-    // עדכון תוכניות המנוי עם ה-community_id
-    const plansWithCommunityId = community.subscription_plans.map(plan => ({
-      ...plan,
-      community_id: community.id
-    }));
+    console.log('Found community:', community);
 
-    const communityWithUpdatedPlans = {
-      ...community,
-      subscription_plans: plansWithCommunityId
-    };
-
-    // Parse Telegram init data if available
-    let telegramUser = null;
-    if (initData) {
-      try {
-        const decodedData = new URLSearchParams(initData);
-        const userStr = decodedData.get('user');
-        if (userStr) {
-          telegramUser = JSON.parse(userStr);
-        }
-      } catch (error) {
-        console.error('Error parsing Telegram init data:', error);
-      }
-    }
-
-    // Return community and subscription plan details
     return new Response(
       JSON.stringify({
-        community: communityWithUpdatedPlans,
-        telegramUser,
+        community
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
     );
-
   } catch (error) {
     console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
     );
   }
 });

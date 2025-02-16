@@ -8,7 +8,7 @@ import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
 import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPlanCard";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { Loader2, Plus, Copy } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
@@ -53,17 +53,6 @@ const Subscriptions = () => {
     setDeleteDialogOpen(true);
   };
 
-  const copyMiniAppLink = () => {
-    if (selectedCommunityId) {
-      const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
-      navigator.clipboard.writeText(miniAppUrl);
-      toast({
-        title: "Link Copied!",
-        description: "The mini app link has been copied to your clipboard.",
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -93,11 +82,7 @@ const Subscriptions = () => {
             Manage your community subscription plans
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={copyMiniAppLink} variant="outline" className="gap-2">
-            <Copy className="h-4 w-4" />
-            Copy Mini App Link
-          </Button>
+        <div>
           <Button onClick={handleCreatePlan}>
             <Plus className="h-4 w-4 mr-2" />
             Create Plan

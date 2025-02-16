@@ -33,19 +33,19 @@ export const CommunitySelector = () => {
 
   const copyMiniAppLink = () => {
     if (!selectedCommunityId) {
-      setAlertMessage("בחר קודם קהילה כדי להעתיק את הקישור 🎯");
+      setAlertMessage("Please select a community first to copy the link 🎯");
       setShowAlert(true);
       return;
     }
 
     if (!plans?.length) {
-      setAlertMessage("עדיין לא הגדרת חבילות מנוי לקהילה שלך. הוסף לפחות חבילה אחת כדי שתוכל לשתף את הלינק! 📦");
+      setAlertMessage("You haven't set up any subscription plans yet. Add at least one plan to share the link! 📦");
       setShowAlert(true);
       return;
     }
 
     if (!paymentMethods?.some(pm => pm.is_active)) {
-      setAlertMessage("טרם הגדרת אמצעי תשלום פעיל. הפעל לפחות אמצעי תשלום אחד כדי שתוכל לשתף את הלינק! 💳");
+      setAlertMessage("You haven't set up any active payment methods. Enable at least one payment method to share the link! 💳");
       setShowAlert(true);
       return;
     }
@@ -53,8 +53,8 @@ export const CommunitySelector = () => {
     const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
     navigator.clipboard.writeText(miniAppUrl);
     toast({
-      title: "הקישור הועתק! 🎉",
-      description: "הקישור למיני-אפ הועתק ללוח",
+      title: "Link Copied! 🎉",
+      description: "The Mini App link has been copied to your clipboard",
     });
   };
 
@@ -109,14 +109,14 @@ export const CommunitySelector = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-orange-500" />
-              <span>שימו לב</span>
+              <span>Attention</span>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-lg">
               {alertMessage}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>הבנתי</AlertDialogCancel>
+            <AlertDialogCancel>Got it</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

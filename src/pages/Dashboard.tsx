@@ -39,7 +39,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
@@ -47,7 +47,7 @@ const Dashboard = () => {
 
   if (!communities || communities.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Communities Yet</h2>
           <p className="text-gray-600 mb-6">Get started by connecting your first community</p>
@@ -68,10 +68,10 @@ const Dashboard = () => {
   const currentCommunity = communities.find(c => c.id === selectedCommunity) || communities[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-full">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-[95%] mx-auto px-4 py-4">
+      <div className="bg-white shadow rounded-lg mb-6">
+        <div className="px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4 flex-1">
               <Select
@@ -117,8 +117,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Community Dashboard */}
-      <div className="max-w-[95%] mx-auto px-4 py-8">
+      {/* Dashboard Content */}
+      <div className="space-y-6">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -169,7 +170,8 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
             <div className="h-[300px] w-full">

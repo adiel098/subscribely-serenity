@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -60,7 +59,6 @@ const Dashboard = () => {
     );
   }
 
-  // Set default selected community if none selected
   if (!selectedCommunity && communities.length > 0) {
     setSelectedCommunity(communities[0].id);
   }
@@ -68,10 +66,9 @@ const Dashboard = () => {
   const currentCommunity = communities.find(c => c.id === selectedCommunity) || communities[0];
 
   return (
-    <div className="h-full">
-      {/* Header */}
-      <div className="bg-white shadow rounded-lg mb-6">
-        <div className="px-4 py-4">
+    <div className="h-full space-y-6">
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4 flex-1">
               <Select
@@ -117,107 +114,102 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Dashboard Content */}
-      <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Members</h3>
-              <Users className="h-5 w-5 text-blue-500" />
-            </div>
-            <p className="text-3xl font-bold">{currentCommunity.member_count || 0}</p>
-            <div className="mt-2 flex items-center text-sm text-green-600">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span>+12% from last month</span>
-            </div>
-          </Card>
+      <div className="grid grid-cols-4 gap-6">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Members</h3>
+            <Users className="h-5 w-5 text-blue-500" />
+          </div>
+          <p className="text-3xl font-bold">{currentCommunity.member_count || 0}</p>
+          <div className="mt-2 flex items-center text-sm text-green-600">
+            <ArrowUpRight className="h-4 w-4 mr-1" />
+            <span>+12% from last month</span>
+          </div>
+        </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Subscribers</h3>
-              <CreditCard className="h-5 w-5 text-green-500" />
-            </div>
-            <p className="text-3xl font-bold">{currentCommunity.subscription_count || 0}</p>
-            <div className="mt-2 flex items-center text-sm text-green-600">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span>+5% from last month</span>
-            </div>
-          </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Subscribers</h3>
+            <CreditCard className="h-5 w-5 text-green-500" />
+          </div>
+          <p className="text-3xl font-bold">{currentCommunity.subscription_count || 0}</p>
+          <div className="mt-2 flex items-center text-sm text-green-600">
+            <ArrowUpRight className="h-4 w-4 mr-1" />
+            <span>+5% from last month</span>
+          </div>
+        </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
-              <TrendingUp className="h-5 w-5 text-green-500" />
-            </div>
-            <p className="text-3xl font-bold">${currentCommunity.subscription_revenue || '0.00'}</p>
-            <div className="mt-2 flex items-center text-sm text-green-600">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span>+8% from last month</span>
-            </div>
-          </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
+            <TrendingUp className="h-5 w-5 text-green-500" />
+          </div>
+          <p className="text-3xl font-bold">${currentCommunity.subscription_revenue || '0.00'}</p>
+          <div className="mt-2 flex items-center text-sm text-green-600">
+            <ArrowUpRight className="h-4 w-4 mr-1" />
+            <span>+8% from last month</span>
+          </div>
+        </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
-              <MessagesSquare className="h-5 w-5 text-blue-500" />
-            </div>
-            <p className="text-3xl font-bold">2,431</p>
-            <div className="mt-2 flex items-center text-sm text-green-600">
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-              <span>+15% from last month</span>
-            </div>
-          </Card>
-        </div>
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
+            <MessagesSquare className="h-5 w-5 text-blue-500" />
+          </div>
+          <p className="text-3xl font-bold">2,431</p>
+          <div className="mt-2 flex items-center text-sm text-green-600">
+            <ArrowUpRight className="h-4 w-4 mr-1" />
+            <span>+15% from last month</span>
+          </div>
+        </Card>
+      </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={[
-                    { name: 'Jan', value: 20 },
-                    { name: 'Feb', value: 35 },
-                    { name: 'Mar', value: 28 },
-                    { name: 'Apr', value: 45 },
-                  ]}
-                  margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#93c5fd" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+      <div className="grid grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={[
+                  { name: 'Jan', value: 20 },
+                  { name: 'Feb', value: 35 },
+                  { name: 'Mar', value: 28 },
+                  { name: 'Apr', value: 45 },
+                ]}
+                margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#93c5fd" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription Revenue</h3>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={[
-                    { name: 'Jan', value: 100 },
-                    { name: 'Feb', value: 200 },
-                    { name: 'Mar', value: 150 },
-                    { name: 'Apr', value: 300 },
-                  ]}
-                  margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="value" stroke="#10b981" fill="#6ee7b7" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </div>
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription Revenue</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={[
+                  { name: 'Jan', value: 100 },
+                  { name: 'Feb', value: 200 },
+                  { name: 'Mar', value: 150 },
+                  { name: 'Apr', value: 300 },
+                ]}
+                margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="value" stroke="#10b981" fill="#6ee7b7" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
     </div>
   );

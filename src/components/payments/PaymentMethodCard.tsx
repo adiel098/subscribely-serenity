@@ -3,7 +3,14 @@ import React from "react";
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Settings2 } from "lucide-react";
 
 interface PaymentMethodCardProps {
   icon: React.ElementType;
@@ -18,18 +25,44 @@ interface PaymentMethodCardProps {
 export const PaymentMethodCard = ({ 
   icon: Icon, 
   title, 
+  description,
   isActive,
-  onToggle
+  onToggle,
+  isConfigured,
+  onConfigure
 }: PaymentMethodCardProps) => (
-  <Card 
-    className={`cursor-pointer transition-all duration-300 ${isActive ? 'border-primary shadow-lg' : 'hover:border-primary/50 hover:shadow-md'}`}
-    onClick={() => onToggle(true)}
-  >
-    <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
-      <div className={`p-3 rounded-lg ${isActive ? 'bg-primary/20' : 'bg-primary/10'} transition-colors`}>
-        <Icon className="h-6 w-6 text-primary" />
+  <Card className="relative">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <Icon className="h-5 w-5 text-muted-foreground" />
+        <span>{title}</span>
+      </CardTitle>
+      {description && <CardDescription>{description}</CardDescription>}
+    </CardHeader>
+    <CardContent>
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">
+          {isActive ? 'Enabled' : 'Disabled'}
+        </span>
+        <Switch
+          checked={isActive}
+          onCheckedChange={onToggle}
+          disabled={!isConfigured}
+        />
       </div>
-      <h3 className="font-medium text-gray-900">{title}</h3>
     </CardContent>
+    {!isConfigured && (
+      <CardFooter>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={onConfigure}
+        >
+          <Settings2 className="mr-2 h-4 w-4" />
+          Configure
+        </Button>
+      </CardFooter>
+    )}
   </Card>
 );

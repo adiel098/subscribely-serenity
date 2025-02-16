@@ -51,11 +51,12 @@ const Dashboard = () => {
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   
-  // Calculate total revenue from all subscribers (both active and inactive)
+  // Calculate total revenue from all payments ever made (including expired subscriptions)
   const totalRevenue = (subscribers || []).reduce((sum, sub) => {
-    // Only count subscribers who had a plan (whether active or not)
+    // Sum all plan prices regardless of subscription status
     if (sub.plan) {
-      return sum + (sub.plan.price || 0);
+      const subscriptionAmount = sub.plan.price || 0;
+      return sum + subscriptionAmount;
     }
     return sum;
   }, 0);

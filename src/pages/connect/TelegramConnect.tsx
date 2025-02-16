@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,7 +42,6 @@ const TelegramConnect = () => {
       setIsCreating(true);
       const code = generateVerificationCode();
 
-      // Create a new community
       const { data: community, error: communityError } = await supabase
         .from('communities')
         .insert({
@@ -56,7 +54,6 @@ const TelegramConnect = () => {
 
       if (communityError) throw communityError;
 
-      // Set up the bot settings with verification code
       const { error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .insert({
@@ -119,15 +116,6 @@ const TelegramConnect = () => {
                   <li>Ban users</li>
                   <li>Add new admins</li>
                 </ul>
-                <a 
-                  href="https://t.me/membifybot" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-800"
-                >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Open Bot
-                </a>
               </div>
             </div>
 

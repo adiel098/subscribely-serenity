@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon, StarIcon, ZapIcon, Sparkles } from "lucide-react";
+import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon, StarIcon, ZapIcon, Sparkles, Copy, Share, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCommunityContext } from "@/App";
 
@@ -186,6 +186,19 @@ const Subscriptions = () => {
     }));
   };
 
+  const copyMiniAppLink = async () => {
+    if (!selectedCommunityId) return;
+    
+    const miniAppUrl = `https://t.me/Membify?start=${selectedCommunityId}`;
+    try {
+      await navigator.clipboard.writeText(miniAppUrl);
+      toast.success("Mini App link copied to clipboard! 🔗");
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast.error("Failed to copy link");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -217,98 +230,25 @@ const Subscriptions = () => {
             Create and manage subscription plans for your community members ✨
           </p>
         </div>
-      </div>
-
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-        {plans?.map((plan, index) => (
-          <Card key={plan.id} className={`group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in bg-gradient-to-br h-full flex flex-col ${intervalColors[plan.interval as IntervalType]}`} style={{
-            animationDelay: `${index * 100}ms`
-          }}>
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/50 to-primary"></div>
-            <div className="p-8 flex flex-col flex-grow">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    {plan.name}
-                    <StarIcon className="h-5 w-5 text-yellow-500" />
-                  </h3>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                      ${plan.price}
-                    </span>
-                    <span className="text-gray-600 text-lg">
-                      {plan.interval === "one-time" ? "" : `/ ${intervalLabels[plan.interval as IntervalType]}`}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50/80" onClick={() => handleEditClick(plan)}>
-                    <EditIcon className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog open={isDeleteDialogOpen && planToDelete === plan.id}>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(plan.id)} className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50/80">
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Subscription Plan</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this subscription plan? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-500 hover:bg-red-600">
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-              
-              {plan.description && <p className="text-gray-600 leading-relaxed mt-4">{plan.description}</p>}
-              
-              {plan.features && plan.features.length > 0 && <ul className="space-y-4 mt-6 flex-grow">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3 animate-fade-in" style={{
-                      animationDelay: `${index * 100}ms`
-                    }}>
-                      <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <CheckIcon className="h-3.5 w-3.5 text-green-600" />
-                      </div>
-                      <span className="text-gray-700 leading-tight">{feature}</span>
-                    </li>
-                  ))}
-                </ul>}
-
-              <div className="mt-6">
-                <Button className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" size="lg">
-                  <ZapIcon className="h-5 w-5" />
-                  Choose Plan
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Card className="h-full group cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary/50 transition-all duration-300 flex items-center justify-center bg-white/50 hover:bg-primary/5">
-              <div className="text-center space-y-4 p-8">
-                <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
-                  <PlusIcon className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium text-gray-900">Add New Plan</p>
-                  <p className="text-sm text-gray-500 mt-1">Click to create a subscription plan</p>
-                </div>
-              </div>
-            </Card>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
+        
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            className="gap-2" 
+            onClick={copyMiniAppLink}
+          >
+            <Link2 className="h-4 w-4" />
+            Copy Mini App Link
+          </Button>
+          
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <PlusIcon className="h-4 w-4" />
+                Add Plan
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
             <DialogHeader className="space-y-3 pb-6">
               <DialogTitle className="text-2xl flex items-center gap-2">
                 <Sparkles className="h-6 w-6 text-primary animate-pulse" />
@@ -428,7 +368,86 @@ const Subscriptions = () => {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+        {plans?.map((plan, index) => (
+          <Card key={plan.id} className={`group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in bg-gradient-to-br h-full flex flex-col ${intervalColors[plan.interval as IntervalType]}`} style={{
+            animationDelay: `${index * 100}ms`
+          }}>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/50 to-primary"></div>
+            <div className="p-8 flex flex-col flex-grow">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    {plan.name}
+                    <StarIcon className="h-5 w-5 text-yellow-500" />
+                  </h3>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                      ${plan.price}
+                    </span>
+                    <span className="text-gray-600 text-lg">
+                      {plan.interval === "one-time" ? "" : `/ ${intervalLabels[plan.interval as IntervalType]}`}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50/80" onClick={() => handleEditClick(plan)}>
+                    <EditIcon className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog open={isDeleteDialogOpen && planToDelete === plan.id}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(plan.id)} className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50/80">
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Subscription Plan</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this subscription plan? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-500 hover:bg-red-600">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+              
+              {plan.description && <p className="text-gray-600 leading-relaxed mt-4">{plan.description}</p>}
+              
+              {plan.features && plan.features.length > 0 && <ul className="space-y-4 mt-6 flex-grow">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 animate-fade-in" style={{
+                      animationDelay: `${index * 100}ms`
+                    }}>
+                      <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckIcon className="h-3.5 w-3.5 text-green-600" />
+                      </div>
+                      <span className="text-gray-700 leading-tight">{feature}</span>
+                    </li>
+                  ))}
+                </ul>}
+
+              <div className="mt-6">
+                <Button className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" size="lg">
+                  <ZapIcon className="h-5 w-5" />
+                  Choose Plan
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -129,7 +130,12 @@ const TelegramConnect = () => {
         .select()
         .single();
 
-      if (communityError) throw communityError;
+      if (communityError) {
+        console.error('Community creation error:', communityError);
+        throw communityError;
+      }
+
+      console.log('Community created/retrieved:', community);
 
       // Set up bot settings
       const { data: botSettings, error: settingsError } = await supabase
@@ -141,22 +147,49 @@ const TelegramConnect = () => {
         .select()
         .single();
 
-      if (settingsError) throw settingsError;
+      if (settingsError) {
+        console.error('Bot settings error:', settingsError);
+        throw settingsError;
+      }
 
-      // Check if the group has been verified
-      const { data: verifiedSettings, error: verificationError } = await supabase
-        .from('telegram_bot_settings')
-        .select('verified_at, chat_id')
-        .eq('community_id', community.id)
-        .single();
+      console.log('Bot settings created:', botSettings);
 
-      if (verificationError) throw verificationError;
+      // Check if the group has been verified - retry a few times with delay
+      let verifiedSettings = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        const { data: settings, error: verificationError } = await supabase
+          .from('telegram_bot_settings')
+          .select('verified_at, chat_id')
+          .eq('community_id', community.id)
+          .single();
 
-      if (verifiedSettings.verified_at && verifiedSettings.chat_id) {
+        if (verificationError) {
+          console.error('Verification check error:', verificationError);
+          throw verificationError;
+        }
+
+        console.log('Verification check attempt', attempts + 1, ':', settings);
+
+        if (settings.verified_at && settings.chat_id) {
+          verifiedSettings = settings;
+          break;
+        }
+
+        attempts++;
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between attempts
+        }
+      }
+
+      if (verifiedSettings) {
         toast({
           title: "Success!",
           description: "Your Telegram group has been successfully connected!",
         });
+        navigate('/dashboard');
       } else {
         toast({
           title: "Not Verified",

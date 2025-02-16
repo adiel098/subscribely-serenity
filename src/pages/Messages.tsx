@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, PaypalIcon, Bitcoin, AlertCircle, ChevronRight, Check } from "lucide-react";
+import { CreditCard, Wallet, Bitcoin, AlertCircle, ChevronRight, Check } from "lucide-react";
 import { useCommunityContext } from "@/App";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -162,7 +161,7 @@ const Messages = () => {
         <PaymentMethodCard
           title="PayPal"
           description="Accept PayPal payments"
-          icon={PaypalIcon}
+          icon={Wallet}
           isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
           onToggle={(active) => handleMethodToggle('paypal', active)}
           isConfigured={isMethodConfigured('paypal')}

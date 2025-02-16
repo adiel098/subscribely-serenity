@@ -3,10 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { 
-  CreditCard, 
   Star, 
-  Wallet, 
-  Bitcoin, 
   Sparkles, 
   CheckCircle2, 
   ChevronDown,
@@ -17,6 +14,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TelegramUser {
   id: number;
@@ -47,6 +45,8 @@ const TelegramMiniApp = () => {
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const initData = searchParams.get("initData");
@@ -80,6 +80,42 @@ const TelegramMiniApp = () => {
     setSelectedPaymentMethod(method);
     console.log(`Selected payment method: ${method}`);
   };
+
+  const handleCompletePurchase = () => {
+    setShowSuccess(true);
+    toast({
+      title: "Payment Successful! 🎉",
+      description: "You can now access the community.",
+      duration: 5000,
+    });
+  };
+
+  if (showSuccess) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
+        <div className="text-center space-y-6 p-8 max-w-md">
+          <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
+            <CheckCircle2 className="h-12 w-12 text-green-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Payment Successful!</h2>
+          <p className="text-gray-600">
+            You can now join the community and access all premium features.
+          </p>
+          <a 
+            href="https://t.me/+1234567890"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block w-full"
+          >
+            <Button className="w-full py-6 text-lg font-semibold" size="lg">
+              Join Community
+              <Crown className="ml-2 h-5 w-5" />
+            </Button>
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -199,33 +235,40 @@ const TelegramMiniApp = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-6">
                 <TelegramPaymentOption
-                  icon={CreditCard}
-                  title="Credit Card"
-                  isSelected={selectedPaymentMethod === 'stripe'}
-                  onSelect={() => handlePaymentMethodSelect('stripe')}
+                  icon="/lovable-uploads/5a20d054-33f7-43c0-8b20-079ddd9a5dd3.png"
+                  title="Bitcoin"
+                  isSelected={selectedPaymentMethod === 'crypto'}
+                  onSelect={() => handlePaymentMethodSelect('crypto')}
                 />
                 <TelegramPaymentOption
-                  icon={Wallet}
+                  icon="/lovable-uploads/5bcfd1e4-b3f3-47a5-a50c-bf9e2b7f73a0.png"
+                  title="Discord Pay"
+                  isSelected={selectedPaymentMethod === 'discord'}
+                  onSelect={() => handlePaymentMethodSelect('discord')}
+                />
+                <TelegramPaymentOption
+                  icon="/lovable-uploads/5763dacb-9a17-4a52-8be0-a56b994b6c44.png"
                   title="PayPal"
                   isSelected={selectedPaymentMethod === 'paypal'}
                   onSelect={() => handlePaymentMethodSelect('paypal')}
                 />
-                <TelegramPaymentOption
-                  icon={Bitcoin}
-                  title="Crypto"
-                  isSelected={selectedPaymentMethod === 'crypto'}
-                  onSelect={() => handlePaymentMethodSelect('crypto')}
-                />
               </div>
 
               {selectedPaymentMethod && (
-                <div className="flex justify-center animate-fade-in">
-                  <Button size="lg" className="px-8 py-6 text-lg font-semibold gap-2">
+                <div className="flex flex-col items-center space-y-4 animate-fade-in">
+                  <Button 
+                    size="lg" 
+                    className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm"
+                    onClick={handleCompletePurchase}
+                  >
                     <Heart className="h-5 w-5" />
-                    Complete Purchase
+                    I Paid ${selectedPlan.price}
                   </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Click the button above after completing your payment
+                  </p>
                 </div>
               )}
             </div>

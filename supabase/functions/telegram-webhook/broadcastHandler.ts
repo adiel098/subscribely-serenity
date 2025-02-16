@@ -80,6 +80,27 @@ export async function sendBroadcastMessage(
     let successCount = 0;
     let failureCount = 0;
 
+    // Create initial broadcast record
+    const { data: broadcastRecord, error: createError } = await supabase
+      .from('broadcast_messages')
+      .insert({
+        community_id: communityId,
+        message: message,
+        filter_type: filterType,
+        subscription_plan_id: subscriptionPlanId,
+        status: 'pending',
+        total_recipients: members.length,
+        sent_success: 0,
+        sent_failed: 0
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating broadcast record:', createError);
+      throw createError;
+    }
+
     // Send message to each member
     for (const member of members) {
       try {
@@ -95,6 +116,14 @@ export async function sendBroadcastMessage(
         if (!canReceiveMessages) {
           console.log(`User ${member.telegram_user_id} cannot receive messages - skipping`);
           failureCount++;
+          // Update stats after each failure
+          await supabase
+            .from('broadcast_messages')
+            .update({
+              sent_failed: failureCount,
+              sent_success: successCount
+            })
+            .eq('id', broadcastRecord.id);
           continue;
         }
 
@@ -108,9 +137,25 @@ export async function sendBroadcastMessage(
         if (result.ok) {
           successCount++;
           console.log(`✅ Message sent successfully to user ${member.telegram_user_id}`);
+          // Update stats after each success
+          await supabase
+            .from('broadcast_messages')
+            .update({
+              sent_success: successCount,
+              sent_failed: failureCount
+            })
+            .eq('id', broadcastRecord.id);
         } else {
           failureCount++;
           console.log(`❌ Failed to send message to user ${member.telegram_user_id}:`, result.description);
+          // Update stats after each failure
+          await supabase
+            .from('broadcast_messages')
+            .update({
+              sent_failed: failureCount,
+              sent_success: successCount
+            })
+            .eq('id', broadcastRecord.id);
         }
 
         // Add small delay to avoid hitting rate limits
@@ -118,21 +163,27 @@ export async function sendBroadcastMessage(
       } catch (error) {
         console.error(`Error sending message to user ${member.telegram_user_id}:`, error);
         failureCount++;
+        // Update stats after each error
+        await supabase
+          .from('broadcast_messages')
+          .update({
+            sent_failed: failureCount,
+            sent_success: successCount
+          })
+          .eq('id', broadcastRecord.id);
       }
     }
 
-    // Update broadcast message status
+    // Update final broadcast message status
     const { error: updateError } = await supabase
       .from('broadcast_messages')
       .update({
         status: 'completed',
-        total_recipients: members.length,
         sent_success: successCount,
         sent_failed: failureCount,
         completed_at: new Date().toISOString()
       })
-      .eq('community_id', communityId)
-      .eq('status', 'pending');
+      .eq('id', broadcastRecord.id);
 
     if (updateError) {
       console.error('Error updating broadcast status:', updateError);
@@ -151,3 +202,4 @@ export async function sendBroadcastMessage(
     throw error;
   }
 }
+

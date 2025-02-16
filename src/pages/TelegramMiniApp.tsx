@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Star, Wallet, Bitcoin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
+import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
 
 interface TelegramUser {
   id: number;
@@ -86,7 +85,6 @@ const TelegramMiniApp = () => {
 
   const handlePlanSelect = (plan: Plan) => {
     setSelectedPlan(plan);
-    // Scroll to payment methods section
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -98,7 +96,6 @@ const TelegramMiniApp = () => {
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-8">
-        {/* Community Info Section */}
         <div className="container max-w-2xl mx-auto pt-8 px-4">
           <div className="text-center space-y-4 mb-8">
             <h1 className="text-3xl font-bold text-gray-900">{community.name}</h1>
@@ -107,7 +104,6 @@ const TelegramMiniApp = () => {
             )}
           </div>
 
-          {/* Subscription Plans Section */}
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-center">Subscription Plans</h2>
             <div className="grid gap-4">
@@ -146,7 +142,6 @@ const TelegramMiniApp = () => {
             </div>
           </div>
 
-          {/* Payment Methods Section */}
           {selectedPlan && (
             <div id="payment-methods" className="mt-12">
               <div className="space-y-6">
@@ -155,32 +150,23 @@ const TelegramMiniApp = () => {
                   Choose how you'd like to pay for the {selectedPlan.name} plan
                 </p>
                 <div className="grid grid-cols-3 gap-4">
-                  <PaymentMethodCard
+                  <TelegramPaymentOption
                     icon={CreditCard}
                     title="Credit Card"
-                    description=""
-                    isActive={selectedPaymentMethod === 'stripe'}
-                    onToggle={() => handlePaymentMethodSelect('stripe')}
-                    isConfigured={true}
-                    onConfigure={() => {}}
+                    isSelected={selectedPaymentMethod === 'stripe'}
+                    onSelect={() => handlePaymentMethodSelect('stripe')}
                   />
-                  <PaymentMethodCard
+                  <TelegramPaymentOption
                     icon={Wallet}
                     title="PayPal"
-                    description=""
-                    isActive={selectedPaymentMethod === 'paypal'}
-                    onToggle={() => handlePaymentMethodSelect('paypal')}
-                    isConfigured={true}
-                    onConfigure={() => {}}
+                    isSelected={selectedPaymentMethod === 'paypal'}
+                    onSelect={() => handlePaymentMethodSelect('paypal')}
                   />
-                  <PaymentMethodCard
+                  <TelegramPaymentOption
                     icon={Bitcoin}
                     title="Crypto"
-                    description=""
-                    isActive={selectedPaymentMethod === 'crypto'}
-                    onToggle={() => handlePaymentMethodSelect('crypto')}
-                    isConfigured={true}
-                    onConfigure={() => {}}
+                    isSelected={selectedPaymentMethod === 'crypto'}
+                    onSelect={() => handlePaymentMethodSelect('crypto')}
                   />
                 </div>
               </div>

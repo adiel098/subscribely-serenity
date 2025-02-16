@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -60,7 +59,6 @@ const Dashboard = () => {
     );
   }
 
-  // Set default selected community if none selected
   if (!selectedCommunity && communities.length > 0) {
     setSelectedCommunity(communities[0].id);
   }
@@ -68,10 +66,10 @@ const Dashboard = () => {
   const currentCommunity = communities.find(c => c.id === selectedCommunity) || communities[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="px-4 py-4">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm mb-6">
+        <div className="px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4 flex-1">
               <Select
@@ -118,7 +116,7 @@ const Dashboard = () => {
       </div>
 
       {/* Community Dashboard */}
-      <div className="p-6">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -169,7 +167,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
             <div className="h-[300px] w-full">

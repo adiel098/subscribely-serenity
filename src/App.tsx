@@ -32,11 +32,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex w-full pt-16">
+      <div className="pt-16">
         <AppSidebar />
-        <main className="flex-1">
+        <main className="pl-72 pr-4 w-full">
           {children}
         </main>
       </div>

@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
+import TelegramConnect from "./pages/connect/TelegramConnect";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCommunities } from "@/hooks/useCommunities";
 
@@ -26,8 +27,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
-  // If user has no communities and isn't already on platform-select, redirect there
-  if (communities?.length === 0 && window.location.pathname !== "/platform-select") {
+  // If user has no communities and isn't already on platform-select or connect pages, redirect there
+  if (communities?.length === 0 && 
+      !window.location.pathname.includes('/connect') && 
+      window.location.pathname !== "/platform-select") {
     return <Navigate to="/platform-select" />;
   }
 
@@ -54,6 +57,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PlatformSelect />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/connect/telegram" 
+              element={
+                <ProtectedRoute>
+                  <TelegramConnect />
                 </ProtectedRoute>
               } 
             />

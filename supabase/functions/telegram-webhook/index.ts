@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -156,7 +155,6 @@ serve(async (req) => {
 
         if (profileError || !profiles?.length) {
           console.error('❌ Error finding profile:', profileError);
-          await sendTelegramMessage(BOT_TOKEN, chatId, "קוד האימות לא נמצא או שכבר נעשה בו שימוש. אנא בדקו את הקוד ונסו שוב.");
           return new Response(
             JSON.stringify({ error: 'Failed to find profile' }),
             {
@@ -219,10 +217,7 @@ serve(async (req) => {
         console.log('🗑️ Delete message result:', deleteResult);
 
         // Send success message
-        const successMessage = chatType === 'channel' 
-          ? "✅ Verification successful! Your Telegram channel is now connected to Membify."
-          : "✅ Verification successful! Your Telegram group is now connected to Membify.";
-        
+        const successMessage = "✅ Successfully connected to Membify!";
         const messageResult = await sendTelegramMessage(BOT_TOKEN, chatId, successMessage);
         console.log('✉️ Success message result:', messageResult);
         
@@ -237,13 +232,6 @@ serve(async (req) => {
         const chatId = update.my_chat_member.chat.id;
         const chatType = update.my_chat_member.chat.type;
         console.log(`👋 Bot added as admin to ${chatType} ${chatId}`);
-        
-        const welcomeMessage = chatType === 'channel'
-          ? "Thank you for adding me as an admin! Please paste the verification code to connect this channel to your Membify account."
-          : "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account.";
-        
-        const messageResult = await sendTelegramMessage(BOT_TOKEN, chatId, welcomeMessage);
-        console.log('✉️ Welcome message result:', messageResult);
       }
 
       return new Response(JSON.stringify({ success: true }), {

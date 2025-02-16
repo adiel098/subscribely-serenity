@@ -169,7 +169,8 @@ const Subscriptions = () => {
   const copyMiniAppLink = async () => {
     if (!selectedCommunityId) return;
     
-    const miniAppUrl = `https://t.me/Membify?start=${selectedCommunityId}`;
+    // עדכון ללינק הישיר של המיני אפליקציה במקום לשלוח קוד
+    const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${selectedCommunityId}`;
     try {
       await navigator.clipboard.writeText(miniAppUrl);
       toast.success("Mini App link copied to clipboard! 🔗");

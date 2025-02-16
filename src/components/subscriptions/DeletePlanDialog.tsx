@@ -2,6 +2,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangleIcon } from "lucide-react";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useCommunities } from "@/hooks/useCommunities";
 
 interface Props {
   isOpen: boolean;
@@ -10,6 +12,20 @@ interface Props {
 }
 
 export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
+  const { data: communities } = useCommunities();
+  const community = communities?.[0];
+  
+  const { deletePlan } = useSubscriptionPlans(community?.id || "");
+
+  const handleDelete = async () => {
+    try {
+      await deletePlan.mutateAsync(planId);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -26,8 +42,12 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="destructive">
-            Delete Plan
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete}
+            disabled={deletePlan.isPending}
+          >
+            {deletePlan.isPending ? 'Deleting...' : 'Delete Plan'}
           </Button>
         </DialogFooter>
       </DialogContent>

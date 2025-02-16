@@ -24,6 +24,12 @@ import TelegramConnect from "./pages/connect/TelegramConnect";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useCommunities } from "@/hooks/useCommunities";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +45,35 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
+const CommunitySelector = () => {
+  const { data: communities } = useCommunities();
+  const navigate = useNavigate();
+  
+  return (
+    <div className="flex items-center gap-4 px-8 py-4 bg-white border-b">
+      <Select>
+        <SelectTrigger className="w-[250px]">
+          <SelectValue placeholder="Select community" />
+        </SelectTrigger>
+        <SelectContent>
+          {communities?.map((community) => (
+            <SelectItem key={community.id} value={community.id}>
+              {community.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <div className="flex-1" />
+      <Button variant="ghost" size="icon">
+        <Bell className="h-5 w-5" />
+      </Button>
+      <Button variant="default" onClick={() => navigate("/platform-select")}>
+        New Community
+      </Button>
+    </div>
+  );
+};
+
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen">
@@ -46,6 +81,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex">
         <AppSidebar />
         <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16 pl-[280px]">
+          <CommunitySelector />
           <div className="h-full w-full bg-gray-50 p-8">
             {children}
           </div>

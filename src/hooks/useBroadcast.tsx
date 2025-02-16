@@ -35,12 +35,12 @@ export const useBroadcast = (communityId: string) => {
     },
     onSuccess: (data) => {
       toast.success(
-        `הודעה נשלחה בהצלחה ל-${data.successCount} מתוך ${data.totalRecipients} משתמשים`
+        `Successfully sent messages to ${data.successCount} out of ${data.totalRecipients} users`
       );
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);
-      toast.error('שגיאה בשליחת ההודעה');
+      toast.error('Error sending broadcast messages');
     }
   });
 };

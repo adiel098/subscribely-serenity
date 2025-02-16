@@ -25,7 +25,6 @@ import {
 import { useBroadcast } from "@/hooks/useBroadcast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BroadcastStats } from "./BroadcastStats";
 import { toast } from "sonner";
 
 interface BroadcastSectionProps {
@@ -37,7 +36,6 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [filterType, setFilterType] = useState("all");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isSending, setIsSending] = useState(false);
-  const [currentBroadcastId, setCurrentBroadcastId] = useState<string>("");
   const { mutateAsync: sendBroadcast } = useBroadcast(communityId);
 
   const { data: plans } = useQuery({
@@ -56,29 +54,17 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
 
   const handleSendBroadcast = async () => {
     if (!message.trim()) {
-      toast.error("אנא הכנס הודעה");
+      toast.error("Please enter a message");
       return;
     }
 
     if (filterType === 'plan' && !selectedPlanId) {
-      toast.error("אנא בחר תוכנית מנוי");
+      toast.error("Please select a subscription plan");
       return;
     }
 
     setIsSending(true);
     try {
-      const { data, error } = await supabase.from('broadcast_messages').insert({
-        community_id: communityId,
-        message: message.trim(),
-        filter_type: filterType,
-        subscription_plan_id: filterType === 'plan' ? selectedPlanId : null,
-        status: 'pending'
-      }).select().single();
-
-      if (error) throw error;
-
-      setCurrentBroadcastId(data.id);
-      
       await sendBroadcast({
         message: message.trim(),
         filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
@@ -86,10 +72,10 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       });
 
       setMessage("");
-      toast.success("ההודעה נשלחה בהצלחה!");
+      toast.success("Broadcast completed successfully!");
     } catch (error) {
       console.error('Error sending broadcast:', error);
-      toast.error("שגיאה בשליחת ההודעה");
+      toast.error("Error sending broadcast messages");
     } finally {
       setIsSending(false);
     }
@@ -164,10 +150,6 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
             >
               {isSending ? "Sending..." : "Send Broadcast"}
             </Button>
-
-            {currentBroadcastId && (
-              <BroadcastStats broadcastId={currentBroadcastId} />
-            )}
           </CardContent>
         </Card>
       </AccordionContent>

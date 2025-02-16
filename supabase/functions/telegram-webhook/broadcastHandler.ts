@@ -79,9 +79,11 @@ export async function sendBroadcastMessage(
 
     let successCount = 0;
     let failureCount = 0;
+    const BATCH_SIZE = 20; // Update progress every 20 messages
 
     // Send message to each member
-    for (const member of members) {
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
       try {
         console.log(`Attempting to send message to user ${member.telegram_user_id}`);
         
@@ -119,23 +121,6 @@ export async function sendBroadcastMessage(
         console.error(`Error sending message to user ${member.telegram_user_id}:`, error);
         failureCount++;
       }
-    }
-
-    // Update broadcast message status
-    const { error: updateError } = await supabase
-      .from('broadcast_messages')
-      .update({
-        status: 'completed',
-        total_recipients: members.length,
-        sent_success: successCount,
-        sent_failed: failureCount,
-        completed_at: new Date().toISOString()
-      })
-      .eq('community_id', communityId)
-      .eq('status', 'pending');
-
-    if (updateError) {
-      console.error('Error updating broadcast status:', updateError);
     }
 
     const status: BroadcastStatus = {

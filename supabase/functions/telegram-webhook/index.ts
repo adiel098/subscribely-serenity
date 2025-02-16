@@ -24,10 +24,43 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { path, communityId } = body;
-    console.log('Received request:', { path, communityId });
+    
+    // Check if this is a direct webhook update from Telegram
+    if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
+      console.log('Received direct Telegram webhook update:', body);
+      
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
 
-    // Create Supabase client
+      if (body.message) {
+        await handleNewMessage(supabase, body, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
+      } else if (body.edited_message) {
+        await handleEditedMessage(supabase, body);
+      } else if (body.channel_post) {
+        await handleChannelPost(supabase, body);
+      } else if (body.chat_member) {
+        await handleChatMemberUpdate(supabase, body);
+      } else if (body.my_chat_member) {
+        await handleMyChatMember(supabase, body);
+      } else if (body.chat_join_request) {
+        await handleChatJoinRequest(supabase, body);
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
+      });
+    }
+
+    // Handle other API endpoints
+    const { path, communityId } = body;
+    console.log('Received API request:', { path, communityId });
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -36,27 +69,6 @@ serve(async (req) => {
     let response;
 
     switch (path) {
-      case '/webhook':
-        const update = body;
-        console.log('Received webhook update:', update);
-
-        if (update.chat_member) {
-          await handleChatMemberUpdate(supabase, update);
-        } else if (update.chat_join_request) {
-          await handleChatJoinRequest(supabase, update);
-        } else if (update.message) {
-          await handleNewMessage(supabase, update, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
-        } else if (update.edited_message) {
-          await handleEditedMessage(supabase, update);
-        } else if (update.channel_post) {
-          await handleChannelPost(supabase, update);
-        } else if (update.my_chat_member) {
-          await handleMyChatMember(supabase, update);
-        }
-
-        response = { ok: true };
-        break;
-
       case '/update-activity':
         await updateMemberActivity(supabase, communityId);
         response = { ok: true };

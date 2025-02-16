@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('������ Telegram bot webhook is running...');
+console.log('������� Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,6 +149,42 @@ async function findCommunityAndPaymentByTelegramChatId(supabase: any, chatId: st
   return { community, payment };
 }
 
+async function findCommunityAndPaymentByInviteLink(supabase: any, chatId: string, inviteLink: string) {
+  console.log('Finding community and payment for chat ID:', chatId, 'and invite link:', inviteLink);
+  
+  // Get the community first
+  const { data: community, error: communityError } = await supabase
+    .from('communities')
+    .select('*')
+    .eq('telegram_chat_id', chatId)
+    .single();
+
+  if (communityError || !community) {
+    console.error('Error finding community:', communityError);
+    return null;
+  }
+
+  // Get the payment associated with this specific invite link
+  const { data: payment, error: paymentError } = await supabase
+    .from('subscription_payments')
+    .select(`
+      *,
+      plan:subscription_plans(*)
+    `)
+    .eq('community_id', community.id)
+    .eq('status', 'completed')
+    .eq('invite_link', inviteLink)
+    .is('telegram_user_id', null)  // Only if not already assigned
+    .single();
+
+  if (paymentError) {
+    console.error('Error finding payment:', paymentError);
+    return null;
+  }
+
+  return { community, payment };
+}
+
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`);
 
@@ -204,50 +240,76 @@ serve(async (req) => {
         const newMember = update.message.new_chat_member;
         console.log('New member joined:', newMember);
 
-        // Find the community and the latest unused payment
-        const result = await findCommunityAndPaymentByTelegramChatId(supabase, chatId);
+        // Get the most recent message that added this user to get the invite link used
+        const response = await fetch(
+          `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: chatId,
+              user_id: newMember.id
+            })
+          }
+        );
         
-        if (result) {
-          const { community, payment } = result;
+        const chatMemberInfo = await response.json();
+        console.log('Chat member info:', chatMemberInfo);
+        
+        if (chatMemberInfo.ok && chatMemberInfo.result.invite_link) {
+          const inviteLink = chatMemberInfo.result.invite_link;
+          
+          // Find the community and payment using the specific invite link
+          const result = await findCommunityAndPaymentByInviteLink(supabase, chatId, inviteLink);
+          
+          if (result) {
+            const { community, payment } = result;
 
-          // Create telegram_chat_members record
-          const { error: memberError } = await supabase
-            .from('telegram_chat_members')
-            .insert({
-              community_id: community.id,
-              telegram_user_id: newMember.id.toString(),
-              telegram_username: newMember.username || null,
-              subscription_status: true,
-              subscription_start_date: new Date().toISOString(),
-              subscription_end_date: payment?.plan?.interval === 'monthly' 
-                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
-                : payment?.plan?.interval === 'yearly'
-                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                : null,
-              subscription_plan_id: payment?.plan?.id || null
-            });
+            // Create telegram_chat_members record
+            const { error: memberError } = await supabase
+              .from('telegram_chat_members')
+              .insert({
+                community_id: community.id,
+                telegram_user_id: newMember.id.toString(),
+                telegram_username: newMember.username || null,
+                subscription_status: true,
+                subscription_start_date: new Date().toISOString(),
+                subscription_end_date: payment?.plan?.interval === 'monthly' 
+                  ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
+                  : payment?.plan?.interval === 'yearly'
+                  ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                  : null,
+                subscription_plan_id: payment?.plan?.id || null
+              });
 
-          if (memberError) {
-            console.error('Error creating member record:', memberError);
-          } else {
-            console.log('Successfully created member record');
+            if (memberError) {
+              console.error('Error creating member record:', memberError);
+            } else {
+              console.log('Successfully created member record');
 
-            // Update the payment record with the telegram user ID
-            if (payment) {
-              const { error: updateError } = await supabase
-                .from('subscription_payments')
-                .update({ 
-                  telegram_user_id: newMember.id.toString()
-                })
-                .eq('id', payment.id);
+              // Update the payment record with the telegram user ID
+              if (payment) {
+                const { error: updateError } = await supabase
+                  .from('subscription_payments')
+                  .update({ 
+                    telegram_user_id: newMember.id.toString()
+                  })
+                  .eq('id', payment.id);
 
-              if (updateError) {
-                console.error('Error updating payment record:', updateError);
-              } else {
-                console.log('Successfully updated payment record');
+                if (updateError) {
+                  console.error('Error updating payment record:', updateError);
+                } else {
+                  console.log('Successfully updated payment record');
+                }
               }
             }
+          } else {
+            console.log('No matching payment found for invite link:', inviteLink);
           }
+        } else {
+          console.log('Could not retrieve invite link information');
         }
       }
 

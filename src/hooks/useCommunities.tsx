@@ -8,7 +8,8 @@ export const useCommunities = () => {
     queryFn: async () => {
       const { data: communities, error } = await supabase
         .from("communities")
-        .select("*");
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return communities;

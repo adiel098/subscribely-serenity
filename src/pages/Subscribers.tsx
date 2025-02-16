@@ -22,37 +22,61 @@ const Subscribers = () => {
   };
 
   const handleRemoveSubscriber = async (subscriber: any) => {
+    console.log('Starting subscription removal process for subscriber:', subscriber);
+    
     try {
+      console.log('Attempting to update subscription status and end date...');
+      
       // First, update subscription_status and end_date
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
           subscription_status: false,
           subscription_end_date: new Date().toISOString(),
           is_active: false
         })
-        .eq('id', subscriber.id);
+        .eq('id', subscriber.id)
+        .select();
 
-      if (updateError) throw updateError;
+      console.log('Update response:', { data: updateData, error: updateError });
+
+      if (updateError) {
+        console.error('Error in first update:', updateError);
+        throw updateError;
+      }
+
+      console.log('Successfully updated subscription status');
+      console.log('Attempting to remove subscription plan reference...');
 
       // Then, remove the subscription plan reference
-      const { error: planError } = await supabase
+      const { data: planData, error: planError } = await supabase
         .from('telegram_chat_members')
         .update({
           subscription_plan_id: null
         })
-        .eq('id', subscriber.id);
+        .eq('id', subscriber.id)
+        .select();
 
-      if (planError) throw planError;
+      console.log('Plan removal response:', { data: planData, error: planError });
+
+      if (planError) {
+        console.error('Error in plan removal:', planError);
+        throw planError;
+      }
+
+      console.log('Successfully removed subscription plan reference');
 
       toast({
         title: "Success",
         description: "Subscription cancelled successfully",
       });
       
+      console.log('Invalidating queries to refresh data...');
       queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+      console.log('Data refresh completed');
     } catch (error) {
-      console.error('Error removing subscriber:', error);
+      console.error('Detailed error in subscription removal:', error);
+      console.error('Error stack:', (error as Error).stack);
       toast({
         title: "Error",
         description: "Failed to cancel subscription",

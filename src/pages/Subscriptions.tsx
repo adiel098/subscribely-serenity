@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { EditPlanDialog } from "@/components/subscriptions/EditPlanDialog";
 import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
 import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPlanCard";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { useCommunities } from "@/hooks/useCommunities";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 import { Loader2, Plus, Copy } from "lucide-react";
 
 const intervalColors = {
@@ -31,14 +32,12 @@ const Subscriptions = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const { data: communities } = useCommunities();
-  const community = communities?.[0];
+  const { selectedCommunityId } = useCommunityContext();
 
   const {
     plans,
     isLoading,
-  } = useSubscriptionPlans(community?.id || "");
+  } = useSubscriptionPlans(selectedCommunityId || "");
 
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -55,8 +54,8 @@ const Subscriptions = () => {
   };
 
   const copyMiniAppLink = () => {
-    if (community) {
-      const miniAppUrl = `https://t.me/membifybot?start=${community.id}`;
+    if (selectedCommunityId) {
+      const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
       navigator.clipboard.writeText(miniAppUrl);
       toast({
         title: "Link Copied!",

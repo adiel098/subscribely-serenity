@@ -13,17 +13,20 @@ export const useBroadcast = (communityId: string) => {
   return useMutation({
     mutationFn: async ({ 
       message, 
-      filterType 
+      filterType,
+      subscriptionPlanId 
     }: { 
       message: string; 
-      filterType?: 'all' | 'subscribed' 
+      filterType: 'all' | 'active' | 'expired' | 'plan';
+      subscriptionPlanId?: string;
     }): Promise<BroadcastStatus> => {
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
           communityId,
           path: '/broadcast',
           message,
-          filterType
+          filterType,
+          subscriptionPlanId
         }
       });
 

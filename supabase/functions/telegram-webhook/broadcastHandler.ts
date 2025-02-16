@@ -12,7 +12,8 @@ export async function sendBroadcastMessage(
   supabase: ReturnType<typeof createClient>, 
   communityId: string,
   message: string,
-  filterType: 'all' | 'subscribed' = 'all'
+  filterType: 'all' | 'active' | 'expired' | 'plan' = 'all',
+  subscriptionPlanId?: string
 ): Promise<BroadcastStatus> {
   try {
     console.log('Starting broadcast for community:', communityId);
@@ -28,14 +29,25 @@ export async function sendBroadcastMessage(
       throw new Error('Bot token not found');
     }
 
-    // Get all members
+    // Get all members based on filter
     let query = supabase
       .from('telegram_chat_members')
       .select('telegram_user_id, subscription_status')
       .eq('community_id', communityId);
 
-    if (filterType === 'subscribed') {
-      query = query.eq('subscription_status', true);
+    switch (filterType) {
+      case 'active':
+        query = query.eq('subscription_status', true);
+        break;
+      case 'expired':
+        query = query.eq('subscription_status', false);
+        break;
+      case 'plan':
+        if (!subscriptionPlanId) {
+          throw new Error('Subscription plan ID is required for plan filter type');
+        }
+        query = query.eq('subscription_plan_id', subscriptionPlanId);
+        break;
     }
 
     const { data: members, error: membersError } = await query;
@@ -96,6 +108,19 @@ export async function sendBroadcastMessage(
         failureCount++;
       }
     }
+
+    // Update broadcast message status
+    await supabase
+      .from('broadcast_messages')
+      .update({
+        status: 'completed',
+        total_recipients: members.length,
+        sent_success: successCount,
+        sent_failed: failureCount,
+        completed_at: new Date().toISOString()
+      })
+      .eq('community_id', communityId)
+      .eq('status', 'pending');
 
     const status: BroadcastStatus = {
       successCount,

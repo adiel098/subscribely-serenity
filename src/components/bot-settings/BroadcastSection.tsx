@@ -56,7 +56,12 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
 
   const handleSendBroadcast = async () => {
     if (!message.trim()) {
-      toast.error("Please enter a message");
+      toast.error("אנא הכנס הודעה");
+      return;
+    }
+
+    if (filterType === 'plan' && !selectedPlanId) {
+      toast.error("אנא בחר תוכנית מנוי");
       return;
     }
 
@@ -76,13 +81,15 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       
       await sendBroadcast({
         message: message.trim(),
-        filterType: filterType as 'all' | 'subscribed'
+        filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
+        subscriptionPlanId: selectedPlanId
       });
 
       setMessage("");
+      toast.success("ההודעה נשלחה בהצלחה!");
     } catch (error) {
       console.error('Error sending broadcast:', error);
-      toast.error("Failed to send broadcast message");
+      toast.error("שגיאה בשליחת ההודעה");
     } finally {
       setIsSending(false);
     }

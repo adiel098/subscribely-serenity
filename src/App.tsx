@@ -104,13 +104,13 @@ const CommunitySelector = () => {
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       <Navbar />
-      <div className="flex">
+      <div className="flex w-full">
         <AppSidebar />
         <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16 pl-[280px]">
           <CommunitySelector />
-          <div className="h-full w-full bg-gray-50 p-8 mt-[4.5rem]">
+          <div className="min-h-full w-full bg-gray-50 p-8 mt-[4.5rem]">
             {children}
           </div>
         </main>

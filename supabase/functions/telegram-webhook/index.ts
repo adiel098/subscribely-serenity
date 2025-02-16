@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { setupWebhook, getWebhookInfo } from './webhookManager.ts'
@@ -8,7 +7,8 @@ import {
   handleNewMessage,
   handleEditedMessage,
   handleChannelPost,
-  handleMyChatMember
+  handleMyChatMember,
+  updateMemberActivity
 } from './membershipHandler.ts'
 import { logTelegramEvent } from './eventLogger.ts'
 
@@ -20,7 +20,7 @@ console.log('🤖 Starting Telegram bot webhook...');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${req.url}`);
@@ -40,39 +40,43 @@ serve(async (req) => {
       SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    try {
-      const { error: connectionError } = await supabase
-        .from('telegram_events')
-        .select('id')
-        .limit(1);
-
-      if (connectionError) {
-        console.error('Error connecting to Supabase:', connectionError);
+    // Parse URL and handle activity update endpoint
+    const url = new URL(req.url);
+    if (url.pathname.endsWith('/update-activity')) {
+      const { communityId } = await req.json();
+      
+      if (!communityId) {
         return new Response(
-          JSON.stringify({ 
-            ok: true,
-            error: 'Database connection error',
-            details: connectionError.message 
-          }),
+          JSON.stringify({ error: 'Community ID is required' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          }
+        );
+      }
+
+      try {
+        await updateMemberActivity(supabase, communityId);
+        return new Response(
+          JSON.stringify({ success: true }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
           }
         );
+      } catch (error) {
+        console.error('Error updating member activity:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to update member activity',
+            details: error.message 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          }
+        );
       }
-    } catch (error) {
-      console.error('Error testing database connection:', error);
-      return new Response(
-        JSON.stringify({ 
-          ok: true,
-          error: 'Database connection test failed',
-          details: error.message 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
     }
 
     console.log('Fetching bot token from settings...');
@@ -115,37 +119,6 @@ serve(async (req) => {
 
     // העברת ה-bot token להמשך הטיפול
     const context = { BOT_TOKEN };
-
-    const url = new URL(req.url);
-    if (url.pathname.endsWith('/check')) {
-      console.log('Running webhook check...');
-      try {
-        const webhookInfo = await getWebhookInfo(BOT_TOKEN);
-        const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
-        const setupResult = await setupWebhook(BOT_TOKEN, webhookUrl);
-        
-        return new Response(
-          JSON.stringify({ webhookInfo, setupResult }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        );
-      } catch (error) {
-        console.error('Error during webhook check:', error);
-        return new Response(
-          JSON.stringify({ 
-            ok: true,
-            error: 'Error checking webhook status',
-            details: error.message 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          }
-        );
-      }
-    }
 
     if (req.method === 'POST') {
       console.log('Handling webhook update...');

@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
@@ -7,6 +6,98 @@ import { handleSubscription } from './subscriptionHandler.ts';
 import { findOrCreateMember, deactivateMember } from './memberHandler.ts';
 import { getBotSettings, getGlobalSettings } from './botSettingsHandler.ts';
 import { findCommunityByTelegramId, findCommunityById } from './communityHandler.ts';
+
+async function getBotChatMember(botToken: string, chatId: string | number, userId: string | number) {
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/getChatMember`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    return data.ok ? data.result : null;
+  } catch (error) {
+    console.error('Error getting chat member:', error);
+    return null;
+  }
+}
+
+export async function updateMemberActivity(supabase: ReturnType<typeof createClient>, communityId: string) {
+  try {
+    console.log('Updating member activity for community:', communityId);
+
+    // Get bot token
+    const { data: settings } = await supabase
+      .from('telegram_global_settings')
+      .select('bot_token')
+      .single();
+
+    if (!settings?.bot_token) {
+      throw new Error('Bot token not found');
+    }
+
+    // Get community telegram chat id
+    const { data: community } = await supabase
+      .from('communities')
+      .select('telegram_chat_id')
+      .eq('id', communityId)
+      .single();
+
+    if (!community?.telegram_chat_id) {
+      throw new Error('Community telegram chat id not found');
+    }
+
+    // Get all members
+    const { data: members, error: membersError } = await supabase
+      .from('telegram_chat_members')
+      .select('telegram_user_id')
+      .eq('community_id', communityId);
+
+    if (membersError) throw membersError;
+
+    console.log(`Found ${members.length} members to check`);
+
+    // Check each member's status
+    for (const member of members) {
+      const chatMember = await getBotChatMember(
+        settings.bot_token,
+        community.telegram_chat_id,
+        member.telegram_user_id
+      );
+
+      // Update member status based on API response
+      const canReceiveMessages = chatMember && 
+        ['member', 'administrator', 'creator'].includes(chatMember.status) &&
+        !chatMember.user?.is_bot;
+
+      await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: canReceiveMessages,
+          last_checked: new Date().toISOString()
+        })
+        .eq('telegram_user_id', member.telegram_user_id)
+        .eq('community_id', communityId);
+
+      // Add small delay to avoid hitting rate limits
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    console.log('✅ Successfully updated member activity');
+  } catch (error) {
+    console.error('Error updating member activity:', error);
+    throw error;
+  }
+}
 
 export async function handleChatMemberUpdate(supabase: ReturnType<typeof createClient>, update: { chat_member: ChatMemberUpdate }) {
   try {

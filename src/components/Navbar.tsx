@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -41,11 +41,7 @@ const Navbar = () => {
             <a href="#contact" className="text-gray-700 hover:text-gray-900 transition-colors">
               Contact
             </a>
-            {user ? (
-              <Button onClick={() => signOut()} variant="outline">
-                Sign Out
-              </Button>
-            ) : (
+            {!user && (
               <>
                 <Button variant="outline" onClick={() => navigate('/auth')}>
                   Sign In
@@ -102,11 +98,7 @@ const Navbar = () => {
               Contact
             </a>
             <div className="pt-4 pb-3 border-t border-gray-200">
-              {user ? (
-                <Button onClick={() => signOut()} variant="outline" className="w-full">
-                  Sign Out
-                </Button>
-              ) : (
+              {!user && (
                 <>
                   <Button variant="outline" onClick={() => navigate('/auth')} className="w-full mb-2">
                     Sign In

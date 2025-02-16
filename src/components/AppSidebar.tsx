@@ -1,4 +1,3 @@
-
 import {
   Users,
   CreditCard,
@@ -11,7 +10,9 @@ import {
   BadgeDollarSign,
   Wallet
 } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Button } from './ui/button';
 
 const menuItems = [
   {
@@ -76,6 +78,8 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  const { signOut } = useAuth();
+
   return (
     <Sidebar className="fixed left-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border-none shadow-lg bg-white/80 backdrop-blur-md">
       <SidebarContent>
@@ -98,6 +102,18 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Sign Out Button */}
+        <div className="absolute bottom-4 left-0 right-0 px-4">
+          <Button 
+            variant="destructive" 
+            className="w-full bg-red-500 hover:bg-red-600 text-white gap-2 transition-colors duration-200"
+            onClick={signOut}
+          >
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </Button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

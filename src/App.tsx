@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
+import TelegramMiniApp from "./pages/TelegramMiniApp";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -29,12 +30,16 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createContext, useContext, useState, useEffect } from "react";
+
 const queryClient = new QueryClient();
+
 type CommunityContextType = {
   selectedCommunityId: string | null;
   setSelectedCommunityId: (id: string | null) => void;
 };
+
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
+
 export const useCommunityContext = () => {
   const context = useContext(CommunityContext);
   if (!context) {
@@ -42,6 +47,7 @@ export const useCommunityContext = () => {
   }
   return context;
 };
+
 const CommunityProvider = ({
   children
 }: {
@@ -63,6 +69,7 @@ const CommunityProvider = ({
       {children}
     </CommunityContext.Provider>;
 };
+
 const ProtectedRoute = ({
   children
 }: {
@@ -78,6 +85,7 @@ const ProtectedRoute = ({
   }
   return children;
 };
+
 const CommunitySelector = () => {
   const {
     data: communities
@@ -109,6 +117,7 @@ const CommunitySelector = () => {
       </div>
     </div>;
 };
+
 const DashboardLayout = ({
   children
 }: {
@@ -127,7 +136,9 @@ const DashboardLayout = ({
       </div>
     </div>;
 };
-const App = () => <QueryClientProvider client={queryClient}>
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -137,6 +148,7 @@ const App = () => <QueryClientProvider client={queryClient}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
               <Route path="/dashboard" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
@@ -227,5 +239,7 @@ const App = () => <QueryClientProvider client={queryClient}>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>;
+  </QueryClientProvider>
+);
+
 export default App;

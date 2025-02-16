@@ -60,7 +60,9 @@ const TelegramConnect = () => {
         const { data: webhookData, error: webhookError } = await supabase.functions
           .invoke('telegram-webhook', {
             method: 'GET',
-            query: { action: 'check' }
+            headers: {
+              'Content-Type': 'application/json'
+            }
           });
 
         if (webhookError) {

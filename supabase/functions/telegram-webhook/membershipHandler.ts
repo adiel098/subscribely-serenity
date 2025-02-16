@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
@@ -191,6 +192,56 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
 export async function handleNewMessage(supabase: ReturnType<typeof createClient>, update: any) {
   try {
     console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
+    
+    const message = update.message;
+    if (message?.text?.startsWith('/start')) {
+      console.log('Processing /start command');
+      const communityId = message.text.split(' ')[1];
+      
+      if (communityId) {
+        console.log(`Looking up community with ID: ${communityId}`);
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', communityId)
+          .single();
+
+        if (communityError || !community) {
+          console.error('Error finding community:', communityError);
+          return;
+        }
+
+        console.log('Found community:', community);
+        const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app`;
+
+        // שליחת הודעה עם כפתור למיני אפ
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: message.chat.id,
+            text: `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`,
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: "הצטרפות לקהילה 🚀",
+                  web_app: {
+                    url: `${miniAppUrl}?start=${communityId}`
+                  }
+                }
+              ]]
+            }
+          })
+        });
+
+        const result = await response.json();
+        console.log('Telegram API response:', result);
+      }
+    }
+    
     await logTelegramEvent(supabase, 'new_message', update);
   } catch (error) {
     console.error('Error in handleNewMessage:', error);

@@ -47,6 +47,17 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
 
       if (error) throw error;
 
+      // If subscription is deactivated, kick the member
+      if (!subscriptionStatus && subscriber.subscription_status) {
+        const response = await supabase.functions.invoke('kick-member', {
+          body: { memberId: subscriber.id },
+        });
+
+        if (response.error) {
+          throw new Error('Failed to remove member from channel');
+        }
+      }
+
       toast({
         title: "Success",
         description: "Subscriber updated successfully",

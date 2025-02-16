@@ -424,10 +424,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      handle_telegram_webhook: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       community_role: "owner" | "admin" | "member"

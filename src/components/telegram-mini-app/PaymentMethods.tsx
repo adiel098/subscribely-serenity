@@ -51,7 +51,6 @@ export const PaymentMethods = ({
 
       if (inviteLinkError) {
         console.error('Error creating invite link:', inviteLinkError);
-        console.error('Error details:', JSON.stringify(inviteLinkError, null, 2));
         toast({
           variant: "destructive",
           title: "Error creating invite link",
@@ -61,7 +60,6 @@ export const PaymentMethods = ({
       }
 
       const newInviteLink = inviteLinkData?.inviteLink;
-      console.log('Successfully created new invite link:', newInviteLink);
 
       console.log('Creating payment with:', {
         plan_id: selectedPlan.id,
@@ -88,7 +86,6 @@ export const PaymentMethods = ({
 
       if (error) {
         console.error('Payment error:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
         toast({
           variant: "destructive",
           title: "Error processing payment",
@@ -97,10 +94,7 @@ export const PaymentMethods = ({
         return;
       }
 
-      console.log('Payment successful:', payment);
-
       if (payment?.invite_link) {
-        console.log('Setting payment invite link:', payment.invite_link);
         setPaymentInviteLink(payment.invite_link);
       }
 
@@ -113,7 +107,6 @@ export const PaymentMethods = ({
       
     } catch (error) {
       console.error('Unexpected error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         variant: "destructive",
         title: "Error processing payment",

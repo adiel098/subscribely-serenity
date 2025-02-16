@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,12 +37,18 @@ const TelegramMiniApp = () => {
   useEffect(() => {
     const initData = searchParams.get("initData");
     const startParam = searchParams.get("start");
+    console.log("Start parameter from URL:", startParam); // הוספת לוג לבדיקת הפרמטר
 
     const fetchCommunityData = async () => {
       try {
+        console.log("Fetching community data with start param:", startParam); // הוספת לוג לפני הקריאה
         const response = await supabase.functions.invoke("telegram-mini-app", {
-          body: { start: startParam, initData }
+          body: { 
+            start: startParam,
+            initData 
+          }
         });
+        console.log("Response from telegram-mini-app function:", response); // הוספת לוג של התשובה
 
         if (response.data?.community) {
           setCommunity(response.data.community);

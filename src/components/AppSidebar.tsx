@@ -82,7 +82,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   return (
-    <Sidebar className="glass-card fixed left-4 top-20 h-[calc(100vh-6rem)] rounded-xl w-[250px] border-none shadow-lg bg-white/80 backdrop-blur-md">
+    <Sidebar className="glass-card fixed left-4 top-4 bottom-4 h-[calc(100vh-2rem)] rounded-xl w-[250px] border-none shadow-lg bg-white/80 backdrop-blur-md">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent className="px-2 py-2">

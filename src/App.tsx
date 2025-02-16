@@ -34,9 +34,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <Navbar />
-      <div className="pt-16">
+      <div className="fixed inset-0 pt-16 overflow-hidden">
         <AppSidebar />
-        <main className="pl-[280px] pr-4 pt-4">
+        <main className="ml-[280px] p-4 h-full overflow-auto">
           {children}
         </main>
       </div>

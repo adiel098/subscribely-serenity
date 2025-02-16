@@ -14,14 +14,21 @@ import {
 import { sendBroadcastMessage } from './broadcastHandler.ts';
 
 serve(async (req) => {
-  try {
-    // Handle CORS preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders });
-    }
+  // Always handle CORS first
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', {
+      headers: {
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+      }
+    });
+  }
 
-    // Get request data
-    const { path, communityId } = await req.json();
+  try {
+    // Parse request body
+    const body = await req.json();
+    const { path, communityId } = body;
     console.log('Received request:', { path, communityId });
 
     // Create Supabase client
@@ -30,9 +37,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    let response;
+
     switch (path) {
       case '/webhook':
-        const update = await req.json();
+        const update = body;
         console.log('Received webhook update:', update);
 
         if (update.chat_member) {
@@ -49,46 +58,50 @@ serve(async (req) => {
           await handleMyChatMember(supabase, update);
         }
 
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        });
+        response = { ok: true };
+        break;
 
       case '/update-activity':
         await updateMemberActivity(supabase, communityId);
+        response = { ok: true };
         break;
 
       case '/broadcast':
-        if (!communityId || !req.body?.message) {
+        if (!communityId || !body.message) {
           throw new Error('Missing required parameters');
         }
 
         const status = await sendBroadcastMessage(
           supabase,
           communityId,
-          req.body.message,
-          req.body.filterType || 'all'
+          body.message,
+          body.filterType || 'all',
+          body.subscriptionPlanId
         );
 
-        return new Response(JSON.stringify(status), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        });
+        response = status;
+        break;
 
       default:
         throw new Error(`Unknown path: ${path}`);
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
+    return new Response(JSON.stringify(response), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      status: 200,
     });
 
   } catch (error) {
     console.error('Error processing request:', error);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      status: 500,
     });
   }
 });

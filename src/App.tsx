@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -135,97 +136,120 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SidebarProvider>
-            <CommunityProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
+            {/* Move CommunityProvider inside DashboardLayout routes */}
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Dashboard />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/members" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/members" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Members />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/subscribers" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscribers" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Subscribers />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/subscriptions" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscriptions" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Subscriptions />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/messages" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/messages" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Messages />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/analytics" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Analytics />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/bot-settings" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/bot-settings" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <BotSettings />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/events" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/events" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Events />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/rewards" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/rewards" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Rewards />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <Settings />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/platform-select" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/platform-select" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <PlatformSelect />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/connect/telegram" element={
-                  <ProtectedRoute>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/connect/telegram" element={
+                <ProtectedRoute>
+                  <CommunityProvider>
                     <DashboardLayout>
                       <TelegramConnect />
                     </DashboardLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </CommunityProvider>
+                  </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>

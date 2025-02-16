@@ -75,29 +75,6 @@ const TelegramConnect = () => {
     }
   };
 
-  const generateNewVerificationCode = async () => {
-    if (!user) return;
-
-    const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ current_telegram_code: newCode })
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating verification code:', updateError);
-      toast({
-        title: "Error",
-        description: "Failed to generate new verification code",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setVerificationCode(newCode);
-  };
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -120,128 +97,43 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
-      // First check if there's an existing verified bot settings with this code
-      const { data: existingSettings, error: existingError } = await supabase
+      // Check if the verification code has been used by checking bot settings
+      const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
-        .select('verified_at, chat_id, community_id')
+        .select(`
+          verified_at,
+          chat_id,
+          community_id,
+          communities:communities (
+            name,
+            telegram_chat_id,
+            owner_id
+          )
+        `)
         .eq('verification_code', verificationCode)
         .not('verified_at', 'is', null)
-        .single();
+        .maybeSingle();
 
-      console.log('Checking existing verified settings:', existingSettings);
-
-      if (existingError) {
-        console.log('No existing verified settings found, creating new...');
-        
-        // Create community if it doesn't exist
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .insert({
-            owner_id: user.id,
-            platform: 'telegram',
-            name: 'My Telegram Community',
-          })
-          .select()
-          .single();
-
-        if (communityError) {
-          console.error('Community creation error:', communityError);
-          throw communityError;
-        }
-
-        console.log('Community created:', community);
-
-        // Set up bot settings
-        const { data: botSettings, error: settingsError } = await supabase
-          .from('telegram_bot_settings')
-          .insert({
-            community_id: community.id,
-            verification_code: verificationCode,
-          })
-          .select()
-          .single();
-
-        if (settingsError) {
-          console.error('Bot settings error:', settingsError);
-          throw settingsError;
-        }
-
-        console.log('Bot settings created:', botSettings);
-
-        // Check if the group has been verified - retry a few times with delay
-        let verifiedSettings = null;
-        let attempts = 0;
-        const maxAttempts = 3;
-        
-        while (attempts < maxAttempts) {
-          const { data: settings, error: verificationError } = await supabase
-            .from('telegram_bot_settings')
-            .select('verified_at, chat_id')
-            .eq('community_id', community.id)
-            .single();
-
-          if (verificationError) {
-            console.error('Verification check error:', verificationError);
-            throw verificationError;
-          }
-
-          console.log('Verification check attempt', attempts + 1, ':', settings);
-
-          if (settings.verified_at && settings.chat_id) {
-            verifiedSettings = settings;
-            break;
-          }
-
-          attempts++;
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second between attempts
-          }
-        }
-
-        if (verifiedSettings) {
-          // Generate new verification code for future use
-          await generateNewVerificationCode();
-          
-          toast({
-            title: "Success!",
-            description: "Your Telegram group has been successfully connected!",
-          });
-          navigate('/dashboard');
-        } else {
-          toast({
-            title: "Not Verified",
-            description: "Please make sure you've added the bot and sent the verification code in your group.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        console.log('Found existing verified settings:', existingSettings);
-
-        // Update community ownership
-        const { data: communityUpdate, error: updateError } = await supabase
-          .from('communities')
-          .update({ owner_id: user.id })
-          .eq('id', existingSettings.community_id)
-          .select()
-          .single();
-
-        if (updateError) {
-          console.error('Community update error:', updateError);
-          throw updateError;
-        }
-
-        console.log('Community ownership updated:', communityUpdate);
-
-        // Generate new verification code for future use
-        await generateNewVerificationCode();
-
-        toast({
-          title: "Success!",
-          description: "Your Telegram group has been successfully connected!",
-        });
-        navigate('/dashboard');
+      if (settingsError) {
+        console.error('Error checking bot settings:', settingsError);
+        throw settingsError;
       }
 
+      if (botSettings) {
+        // If settings exist and chat is verified, connection is successful
+        toast({
+          title: "Success!",
+          description: "Your Telegram community has been successfully connected!",
+        });
+        navigate('/dashboard');
+      } else {
+        // If not verified yet, prompt user to send the code
+        toast({
+          title: "Not Verified",
+          description: "Please make sure you've added the bot as an admin and sent the verification code in your group.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Verification error:', error);
       toast({
@@ -282,7 +174,7 @@ const TelegramConnect = () => {
                     className="text-blue-600 hover:text-blue-800"
                   >
                     @MembifyBot
-                  </a> to your Telegram group and make it an administrator with these permissions:
+                  </a> to your Telegram group or channel and make it an administrator with these permissions:
                 </p>
                 <ul className="mt-2 text-sm text-gray-600 list-disc list-inside">
                   <li>Delete messages</li>
@@ -301,7 +193,7 @@ const TelegramConnect = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-900">Copy Verification Code</h3>
                 <p className="mt-1 text-gray-500">
-                  Copy this verification code and paste it in your Telegram group
+                  Copy this verification code and paste it in your Telegram group or channel
                 </p>
                 <div className="mt-4 flex items-center space-x-2">
                   <code className="px-4 py-2 bg-gray-100 rounded text-lg font-mono">
@@ -350,4 +242,3 @@ const TelegramConnect = () => {
 };
 
 export default TelegramConnect;
-

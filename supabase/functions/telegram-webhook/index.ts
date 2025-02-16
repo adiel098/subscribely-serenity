@@ -18,11 +18,19 @@ interface TelegramUpdate {
     from: {
       id: number;
       username?: string;
+      first_name?: string;
+      last_name?: string;
     };
     chat: {
       id: number;
       type: string;
       title?: string;
+    };
+    new_chat_member?: {
+      id: number;
+      username?: string;
+      first_name?: string;
+      last_name?: string;
     };
     text?: string;
   };
@@ -104,6 +112,43 @@ async function createInviteLink(botToken: string, chatId: number) {
   return result;
 }
 
+async function findCommunityAndPaymentByTelegramChatId(supabase: any, chatId: string) {
+  console.log('Finding community and latest payment for chat ID:', chatId);
+  
+  // Get the community first
+  const { data: community, error: communityError } = await supabase
+    .from('communities')
+    .select('*')
+    .eq('telegram_chat_id', chatId)
+    .single();
+
+  if (communityError || !community) {
+    console.error('Error finding community:', communityError);
+    return null;
+  }
+
+  // Get the latest payment for this community that hasn't been used yet
+  const { data: payment, error: paymentError } = await supabase
+    .from('subscription_payments')
+    .select(`
+      *,
+      plan:subscription_plans(*)
+    `)
+    .eq('community_id', community.id)
+    .eq('status', 'completed')
+    .is('telegram_user_id', null)  // Only get payments that haven't been assigned to a user yet
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (paymentError) {
+    console.error('Error finding payment:', paymentError);
+    return null;
+  }
+
+  return { community, payment };
+}
+
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`);
 
@@ -152,6 +197,59 @@ serve(async (req) => {
     if (req.method === 'POST') {
       const update: TelegramUpdate = await req.json()
       console.log('📥 Received Telegram update:', JSON.stringify(update, null, 2))
+
+      // Handle new member joining
+      if (update.message?.new_chat_member) {
+        const chatId = update.message.chat.id.toString();
+        const newMember = update.message.new_chat_member;
+        console.log('New member joined:', newMember);
+
+        // Find the community and the latest unused payment
+        const result = await findCommunityAndPaymentByTelegramChatId(supabase, chatId);
+        
+        if (result) {
+          const { community, payment } = result;
+
+          // Create telegram_chat_members record
+          const { error: memberError } = await supabase
+            .from('telegram_chat_members')
+            .insert({
+              community_id: community.id,
+              telegram_user_id: newMember.id.toString(),
+              telegram_username: newMember.username || null,
+              subscription_status: true,
+              subscription_start_date: new Date().toISOString(),
+              subscription_end_date: payment?.plan?.interval === 'monthly' 
+                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
+                : payment?.plan?.interval === 'yearly'
+                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                : null,
+              subscription_plan_id: payment?.plan?.id || null
+            });
+
+          if (memberError) {
+            console.error('Error creating member record:', memberError);
+          } else {
+            console.log('Successfully created member record');
+
+            // Update the payment record with the telegram user ID
+            if (payment) {
+              const { error: updateError } = await supabase
+                .from('subscription_payments')
+                .update({ 
+                  telegram_user_id: newMember.id.toString()
+                })
+                .eq('id', payment.id);
+
+              if (updateError) {
+                console.error('Error updating payment record:', updateError);
+              } else {
+                console.log('Successfully updated payment record');
+              }
+            }
+          }
+        }
+      }
 
       const messageText = update.message?.text || update.channel_post?.text;
       const chatId = update.message?.chat.id || update.channel_post?.chat.id;

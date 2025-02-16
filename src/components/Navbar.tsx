@@ -7,28 +7,28 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 direction-rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex-shrink-0 flex items-center">
-            <span className="text-xl font-semibold">Subscribely</span>
+            <span className="text-xl font-semibold">סבסקרייבלי</span>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors">
-              Features
+              תכונות
             </a>
             <a href="#pricing" className="text-gray-700 hover:text-gray-900 transition-colors">
-              Pricing
+              תמחור
             </a>
             <a href="#contact" className="text-gray-700 hover:text-gray-900 transition-colors">
-              Contact
+              צור קשר
             </a>
-            <Button variant="outline" className="ml-4">
-              Sign In
+            <Button variant="outline" className="mr-4">
+              התחברות
             </Button>
-            <Button>Get Started</Button>
+            <Button>התחל עכשיו</Button>
           </div>
 
           {/* Mobile menu button */}
@@ -51,25 +51,25 @@ const Navbar = () => {
               href="#features"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              Features
+              תכונות
             </a>
             <a
               href="#pricing"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              Pricing
+              תמחור
             </a>
             <a
               href="#contact"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              Contact
+              צור קשר
             </a>
             <div className="pt-4 pb-3 border-t border-gray-200">
               <Button variant="outline" className="w-full mb-2">
-                Sign In
+                התחברות
               </Button>
-              <Button className="w-full">Get Started</Button>
+              <Button className="w-full">התחל עכשיו</Button>
             </div>
           </div>
         </div>

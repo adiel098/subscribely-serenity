@@ -29,16 +29,12 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createContext, useContext, useState, useEffect } from "react";
-
 const queryClient = new QueryClient();
-
 type CommunityContextType = {
   selectedCommunityId: string | null;
   setSelectedCommunityId: (id: string | null) => void;
 };
-
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
-
 export const useCommunityContext = () => {
   const context = useContext(CommunityContext);
   if (!context) {
@@ -46,56 +42,60 @@ export const useCommunityContext = () => {
   }
   return context;
 };
-
-const CommunityProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: communities } = useCommunities();
+const CommunityProvider = ({
+  children
+}: {
+  children: React.ReactNode;
+}) => {
+  const {
+    data: communities
+  } = useCommunities();
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
-  
   useEffect(() => {
     if (communities?.length && !selectedCommunityId) {
       setSelectedCommunityId(communities[0].id);
     }
   }, [communities, selectedCommunityId]);
-  
-  return (
-    <CommunityContext.Provider value={{ selectedCommunityId, setSelectedCommunityId }}>
+  return <CommunityContext.Provider value={{
+    selectedCommunityId,
+    setSelectedCommunityId
+  }}>
       {children}
-    </CommunityContext.Provider>
-  );
+    </CommunityContext.Provider>;
 };
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
+const ProtectedRoute = ({
+  children
+}: {
+  children: React.ReactNode;
+}) => {
+  const {
+    user,
+    loading
+  } = useAuth();
   if (loading) return null;
-  
   if (!user) {
     return <Navigate to="/auth" />;
   }
-
   return children;
 };
-
 const CommunitySelector = () => {
-  const { data: communities } = useCommunities();
+  const {
+    data: communities
+  } = useCommunities();
   const navigate = useNavigate();
-  const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
-  
-  return (
-    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center justify-between gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
-      <Select 
-        value={selectedCommunityId || undefined}
-        onValueChange={setSelectedCommunityId}
-      >
+  const {
+    selectedCommunityId,
+    setSelectedCommunityId
+  } = useCommunityContext();
+  return <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center justify-between gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
+      <Select value={selectedCommunityId || undefined} onValueChange={setSelectedCommunityId}>
         <SelectTrigger className="w-[250px]">
           <SelectValue placeholder="Select community" />
         </SelectTrigger>
         <SelectContent>
-          {communities?.map((community) => (
-            <SelectItem key={community.id} value={community.id}>
+          {communities?.map(community => <SelectItem key={community.id} value={community.id}>
               {community.name}
-            </SelectItem>
-          ))}
+            </SelectItem>)}
         </SelectContent>
       </Select>
 
@@ -107,29 +107,27 @@ const CommunitySelector = () => {
           New Community
         </Button>
       </div>
-    </div>
-  );
+    </div>;
 };
-
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="min-h-screen w-full">
+const DashboardLayout = ({
+  children
+}: {
+  children: React.ReactNode;
+}) => {
+  return <div className="min-h-screen w-full">
       <Navbar />
       <div className="flex w-full">
         <AppSidebar />
         <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16">
           <CommunitySelector />
-          <div className="min-h-full w-full bg-gray-50 p-8 mt-[4.5rem] pl-[280px]">
+          <div className="min-h-full w-full bg-gray-50 p-8 mt-[4.5rem] pl-[280px] my-[22px] py-0 px-[4px]">
             {children}
           </div>
         </main>
       </div>
-    </div>
-  );
+    </div>;
 };
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -139,121 +137,95 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
+              <Route path="/dashboard" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Dashboard />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/members" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/members" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Members />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscribers" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/subscribers" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Subscribers />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscriptions" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/subscriptions" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Subscriptions />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/messages" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Messages />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Analytics />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/bot-settings" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/bot-settings" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <BotSettings />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/events" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/events" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Events />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/rewards" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/rewards" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Rewards />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <Settings />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/platform-select" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/platform-select" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <PlatformSelect />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/connect/telegram" element={
-                <ProtectedRoute>
+                </ProtectedRoute>} />
+              <Route path="/connect/telegram" element={<ProtectedRoute>
                   <CommunityProvider>
                     <DashboardLayout>
                       <TelegramConnect />
                     </DashboardLayout>
                   </CommunityProvider>
-                </ProtectedRoute>
-              } />
+                </ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
-);
-
+  </QueryClientProvider>;
 export default App;

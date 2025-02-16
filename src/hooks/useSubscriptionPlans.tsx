@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,7 +8,7 @@ interface SubscriptionPlan {
   name: string;
   description: string | null;
   price: number;
-  interval: 'monthly' | 'yearly';
+  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
   is_active: boolean;
   features: string[];
   created_at: string;
@@ -21,7 +20,7 @@ interface CreateSubscriptionPlanData {
   name: string;
   description?: string;
   price: number;
-  interval: 'monthly' | 'yearly';
+  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
   features?: string[];
 }
 

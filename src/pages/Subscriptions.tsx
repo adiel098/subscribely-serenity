@@ -1,15 +1,15 @@
-
 import { useState } from "react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon, StarIcon, ZapIcon } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon, StarIcon, ZapIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCommunityContext } from "@/App";
 
@@ -42,6 +42,9 @@ const Subscriptions = () => {
     interval: "monthly" as IntervalType,
     features: [] as string[]
   });
+  const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
   const {
     plans,
@@ -77,6 +80,25 @@ const Subscriptions = () => {
     } catch (error) {
       console.error("Error creating plan:", error);
       toast.error("Failed to create plan");
+    }
+  };
+
+  const handleDeleteClick = (planId: string) => {
+    setPlanToDelete(planId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (planToDelete) {
+      try {
+        await deletePlan.mutateAsync(planToDelete);
+        setIsDeleteDialogOpen(false);
+        setPlanToDelete(null);
+        toast.success("Plan deleted successfully! 🗑️");
+      } catch (error) {
+        console.error("Error deleting plan:", error);
+        toast.error("Failed to delete plan");
+      }
     }
   };
 
@@ -172,17 +194,39 @@ const Subscriptions = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50/80"
+                    onClick={() => setEditingPlan(plan.id)}
                   >
                     <EditIcon className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePlan(plan.id)}
-                    className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50/80"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog open={isDeleteDialogOpen && planToDelete === plan.id}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteClick(plan.id)}
+                        className="h-8 w-8 text-red-400 hover:text-red-500 hover:bg-red-50/80"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Subscription Plan</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this subscription plan? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleConfirmDelete}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
               
@@ -213,7 +257,7 @@ const Subscriptions = () => {
                   size="lg"
                 >
                   <ZapIcon className="h-5 w-5" />
-                  בחר תוכנית
+                  Choose Plan
                 </Button>
               </div>
             </div>
@@ -228,28 +272,29 @@ const Subscriptions = () => {
                   <PlusIcon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-lg font-medium text-gray-900">הוסף תוכנית חדשה</p>
-                  <p className="text-sm text-gray-500 mt-1">לחץ להוספת תוכנית מנוי</p>
+                  <p className="text-lg font-medium text-gray-900">Add New Plan</p>
+                  <p className="text-sm text-gray-500 mt-1">Click to create a subscription plan</p>
                 </div>
               </div>
             </Card>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[525px] p-6">
+          <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
             <DialogHeader className="space-y-3 pb-6">
               <DialogTitle className="text-2xl flex items-center gap-2">
-                <SparklesIcon className="h-6 w-6 text-primary" />
-                יצירת תוכנית מנוי חדשה
+                <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+                Create New Subscription Plan
               </DialogTitle>
-              <p className="text-gray-600">
-                עצב תוכנית מנוי חדשה להציע לחברי הקהילה שלך הטבות בלעדיות
-              </p>
+              <DialogDescription>
+                Design a new subscription plan to offer exclusive benefits to your community members.
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6">
+            <div className="grid gap-6 relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
               <div className="grid gap-2">
-                <Label htmlFor="name" className="text-base">שם התוכנית</Label>
+                <Label htmlFor="name" className="text-base">Plan Name</Label>
                 <Input 
                   id="name" 
-                  placeholder='לדוגמא: "תוכנית פרימיום"' 
+                  placeholder='e.g. "Premium Plan"' 
                   value={newPlan.name}
                   onChange={e => setNewPlan(prev => ({
                     ...prev,
@@ -259,10 +304,10 @@ const Subscriptions = () => {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="description" className="text-base">תיאור</Label>
+                <Label htmlFor="description" className="text-base">Description</Label>
                 <Textarea 
                   id="description" 
-                  placeholder="תאר את ההטבות הבלעדיות של התוכנית..." 
+                  placeholder="Describe the exclusive benefits of this plan..." 
                   value={newPlan.description}
                   onChange={e => setNewPlan(prev => ({
                     ...prev,
@@ -273,7 +318,7 @@ const Subscriptions = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="price" className="text-base">מחיר</Label>
+                  <Label htmlFor="price" className="text-base">Price</Label>
                   <Input 
                     id="price" 
                     type="number" 
@@ -287,7 +332,7 @@ const Subscriptions = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="interval" className="text-base">תקופת חיוב</Label>
+                  <Label htmlFor="interval" className="text-base">Billing Interval</Label>
                   <Select 
                     value={newPlan.interval}
                     onValueChange={(value: IntervalType) => setNewPlan(prev => ({
@@ -299,25 +344,25 @@ const Subscriptions = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="monthly">חודשי</SelectItem>
-                      <SelectItem value="quarterly">רבעוני</SelectItem>
-                      <SelectItem value="half-yearly">חצי שנתי</SelectItem>
-                      <SelectItem value="yearly">שנתי</SelectItem>
-                      <SelectItem value="one-time">חד פעמי</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="one-time">One-Time</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid gap-4">
-                <Label className="text-base">יתרונות</Label>
+                <Label className="text-base">Features</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="הוסף יתרון..."
+                    placeholder="Add a feature..."
                     value={newFeature}
                     onChange={e => setNewFeature(e.target.value)}
                     onKeyPress={e => e.key === "Enter" && handleAddFeature()}
                   />
-                  <Button onClick={handleAddFeature}>הוסף</Button>
+                  <Button onClick={handleAddFeature}>Add</Button>
                 </div>
                 <ul className="space-y-2">
                   {newPlan.features.map((feature, index) => (
@@ -343,15 +388,15 @@ const Subscriptions = () => {
                 </ul>
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-6">
+            <DialogFooter className="gap-3 pt-6">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                ביטול
+                Cancel
               </Button>
-              <Button onClick={handleCreatePlan} className="gap-2">
+              <Button onClick={handleCreatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
                 <SparklesIcon className="h-4 w-4" />
-                צור תוכנית
+                Create Plan
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

@@ -3,6 +3,7 @@ import { Send } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,7 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [filterType, setFilterType] = useState("all");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isSending, setIsSending] = useState(false);
+  const [includeButton, setIncludeButton] = useState(false);
   const { mutateAsync: sendBroadcast } = useBroadcast(communityId);
 
   const { data: plans } = useQuery({
@@ -68,7 +70,8 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       await sendBroadcast({
         message: message.trim(),
         filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
-        subscriptionPlanId: selectedPlanId
+        subscriptionPlanId: selectedPlanId,
+        includeButton
       });
 
       setMessage("");
@@ -142,6 +145,19 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
               placeholder="Type your broadcast message..."
               className="min-h-[150px]"
             />
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="include-button"
+                checked={includeButton}
+                onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
+              />
+              <label
+                htmlFor="include-button"
+                className="text-sm text-muted-foreground"
+              >
+                Include join button with message
+              </label>
+            </div>
             <Button 
               onClick={handleSendBroadcast} 
               disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId)}

@@ -14,29 +14,35 @@ export async function sendBroadcastMessage(
   communityId: string,
   message: string,
   filterType: 'all' | 'active' | 'expired' | 'plan' = 'all',
-  subscriptionPlanId?: string
+  subscriptionPlanId?: string,
+  includeButton?: boolean
 ): Promise<BroadcastStatus> {
   try {
     console.log('Starting broadcast for community:', communityId);
     console.log('Filter type:', filterType);
 
-    // Get bot token
-    const { data: settings, error: settingsError } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single();
+    // Get bot token and community details
+    const [settingsResult, communityResult] = await Promise.all([
+      supabase.from('telegram_global_settings').select('bot_token').single(),
+      supabase.from('communities').select('miniapp_url').eq('id', communityId).single()
+    ]);
 
-    if (settingsError) {
-      console.error('Error fetching bot token:', settingsError);
-      throw settingsError;
+    if (settingsResult.error) {
+      console.error('Error fetching bot token:', settingsResult.error);
+      throw settingsResult.error;
     }
 
-    if (!settings?.bot_token) {
+    if (communityResult.error) {
+      console.error('Error fetching community:', communityResult.error);
+      throw communityResult.error;
+    }
+
+    if (!settingsResult.data?.bot_token) {
       console.error('Bot token not found in settings');
       throw new Error('Bot token not found');
     }
 
-    console.log('Successfully retrieved bot token');
+    console.log('Successfully retrieved bot token and community details');
 
     // Get all members based on filter
     let query = supabase
@@ -79,7 +85,19 @@ export async function sendBroadcastMessage(
 
     let successCount = 0;
     let failureCount = 0;
-    const BATCH_SIZE = 20; // Update progress every 20 messages
+    const BATCH_SIZE = 20;
+
+    // Prepare inline keyboard if button is requested
+    const inlineKeyboard = includeButton && communityResult.data.miniapp_url ? {
+      inline_keyboard: [[
+        {
+          text: "הצטרפות לקהילה 🚀",
+          web_app: {
+            url: `${communityResult.data.miniapp_url}?start=${communityId}`
+          }
+        }
+      ]]
+    } : undefined;
 
     // Send message to each member
     for (let i = 0; i < members.length; i++) {
@@ -89,7 +107,7 @@ export async function sendBroadcastMessage(
         
         // Check if user can receive messages
         const canReceiveMessages = await getBotChatMember(
-          settings.bot_token,
+          settingsResult.data.bot_token,
           member.telegram_user_id,
           member.telegram_user_id
         );
@@ -102,9 +120,10 @@ export async function sendBroadcastMessage(
 
         // Send the message using our telegram client
         const result = await sendTelegramMessage(
-          settings.bot_token,
+          settingsResult.data.bot_token,
           member.telegram_user_id,
-          message
+          message,
+          inlineKeyboard
         );
         
         if (result.ok) {

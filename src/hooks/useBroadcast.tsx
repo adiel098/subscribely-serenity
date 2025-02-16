@@ -14,11 +14,13 @@ export const useBroadcast = (communityId: string) => {
     mutationFn: async ({ 
       message, 
       filterType,
-      subscriptionPlanId 
+      subscriptionPlanId,
+      includeButton
     }: { 
       message: string; 
       filterType: 'all' | 'active' | 'expired' | 'plan';
       subscriptionPlanId?: string;
+      includeButton?: boolean;
     }): Promise<BroadcastStatus> => {
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
@@ -26,7 +28,8 @@ export const useBroadcast = (communityId: string) => {
           path: '/broadcast',
           message,
           filterType,
-          subscriptionPlanId
+          subscriptionPlanId,
+          includeButton
         }
       });
 

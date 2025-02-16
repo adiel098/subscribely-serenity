@@ -64,6 +64,9 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Members</p>
                 <p className="text-2xl font-bold">{stats.totalMembers}</p>
+                <p className="text-sm text-muted-foreground">
+                  {stats.activeMembers} Active with Bot
+                </p>
               </div>
             </div>
           </CardContent>

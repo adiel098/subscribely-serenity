@@ -19,7 +19,7 @@ export const useBotStats = (communityId: string) => {
 
       const { data: members, error } = await supabase
         .from('telegram_chat_members')
-        .select('subscription_status, last_active')
+        .select('subscription_status, last_active, is_active')
         .eq('community_id', communityId);
 
       if (error) {
@@ -32,9 +32,7 @@ export const useBotStats = (communityId: string) => {
       
       return {
         totalMembers: members.length,
-        activeMembers: members.filter(member => 
-          member.last_active && new Date(member.last_active) > thirtyDaysAgo
-        ).length,
+        activeMembers: members.filter(member => member.is_active).length,
         subscribedMembers: members.filter(m => m.subscription_status).length,
         expiredMembers: members.filter(m => !m.subscription_status).length
       };

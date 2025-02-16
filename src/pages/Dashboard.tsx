@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, Settings, MessagesSquare, CreditCard, 
   Bot, Layout, PlusCircle, Bell, TrendingUp,
-  ArrowUpRight, Calendar
+  ArrowUpRight, Calendar, ChevronDown
 } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,19 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: communities, isLoading } = useCommunities();
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
 
   const addNewCommunity = () => {
     navigate('/platform-select');
@@ -52,15 +60,49 @@ const Dashboard = () => {
     );
   }
 
+  // Set default selected community if none selected
+  if (!selectedCommunity && communities.length > 0) {
+    setSelectedCommunity(communities[0].id);
+  }
+
+  const currentCommunity = communities.find(c => c.id === selectedCommunity) || communities[0];
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-[95%] mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back{user?.email ? `, ${user.email}` : ''}</h1>
-              <p className="mt-1 text-sm text-gray-600">Manage your communities and settings</p>
+            <div className="flex items-center space-x-4 flex-1">
+              <Select
+                value={selectedCommunity || ''}
+                onValueChange={(value) => setSelectedCommunity(value)}
+              >
+                <SelectTrigger className="w-[300px]">
+                  <SelectValue>
+                    <div className="flex items-center space-x-2">
+                      {currentCommunity.platform === 'telegram' ? 
+                        <Bot className="h-4 w-4" /> : 
+                        <Layout className="h-4 w-4" />
+                      }
+                      <span>{currentCommunity.name}</span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {communities.map((community) => (
+                    <SelectItem key={community.id} value={community.id}>
+                      <div className="flex items-center space-x-2">
+                        {community.platform === 'telegram' ? 
+                          <Bot className="h-4 w-4" /> : 
+                          <Layout className="h-4 w-4" />
+                        }
+                        <span>{community.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex space-x-4">
               <Button variant="outline" size="icon">
@@ -75,77 +117,104 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Communities Overview */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {communities.map((community) => (
-            <Card 
-              key={community.id}
-              className="p-6 hover:shadow-lg transition-all duration-300"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{community.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {community.platform === 'telegram' ? 'Telegram' : 'Discord'} Community
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => {}}>
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
+      {/* Community Dashboard */}
+      <div className="max-w-[95%] mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Members</h3>
+              <Users className="h-5 w-5 text-blue-500" />
+            </div>
+            <p className="text-3xl font-bold">{currentCommunity.member_count || 0}</p>
+            <div className="mt-2 flex items-center text-sm text-green-600">
+              <ArrowUpRight className="h-4 w-4 mr-1" />
+              <span>+12% from last month</span>
+            </div>
+          </Card>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <Users className="h-5 w-5 text-blue-500" />
-                    <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  </div>
-                  <p className="mt-2 text-2xl font-semibold">{community.member_count || 0}</p>
-                  <p className="text-sm text-gray-500">Total Members</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <CreditCard className="h-5 w-5 text-green-500" />
-                    <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  </div>
-                  <p className="mt-2 text-2xl font-semibold">{community.subscription_count || 0}</p>
-                  <p className="text-sm text-gray-500">Subscribers</p>
-                </div>
-              </div>
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Subscribers</h3>
+              <CreditCard className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-3xl font-bold">{currentCommunity.subscription_count || 0}</p>
+            <div className="mt-2 flex items-center text-sm text-green-600">
+              <ArrowUpRight className="h-4 w-4 mr-1" />
+              <span>+5% from last month</span>
+            </div>
+          </Card>
 
-              <div className="h-32 w-full mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={[
-                      { name: 'Jan', value: 20 },
-                      { name: 'Feb', value: 35 },
-                      { name: 'Mar', value: 28 },
-                      { name: 'Apr', value: 45 },
-                    ]}
-                    margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#93c5fd" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
+              <TrendingUp className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="text-3xl font-bold">${currentCommunity.subscription_revenue || '0.00'}</p>
+            <div className="mt-2 flex items-center text-sm text-green-600">
+              <ArrowUpRight className="h-4 w-4 mr-1" />
+              <span>+8% from last month</span>
+            </div>
+          </Card>
 
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center text-gray-500">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  <span>Created {new Date(community.created_at).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center text-green-600">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  <span>${community.subscription_revenue || '0.00'} Revenue</span>
-                </div>
-              </div>
-            </Card>
-          ))}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Messages</h3>
+              <MessagesSquare className="h-5 w-5 text-blue-500" />
+            </div>
+            <p className="text-3xl font-bold">2,431</p>
+            <div className="mt-2 flex items-center text-sm text-green-600">
+              <ArrowUpRight className="h-4 w-4 mr-1" />
+              <span>+15% from last month</span>
+            </div>
+          </Card>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={[
+                    { name: 'Jan', value: 20 },
+                    { name: 'Feb', value: 35 },
+                    { name: 'Mar', value: 28 },
+                    { name: 'Apr', value: 45 },
+                  ]}
+                  margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="value" stroke="#3b82f6" fill="#93c5fd" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription Revenue</h3>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={[
+                    { name: 'Jan', value: 100 },
+                    { name: 'Feb', value: 200 },
+                    { name: 'Mar', value: 150 },
+                    { name: 'Apr', value: 300 },
+                  ]}
+                  margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="value" stroke="#10b981" fill="#6ee7b7" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

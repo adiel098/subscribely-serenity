@@ -5,7 +5,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('🤖 Telegram bot webhook is running...'); // Added initial log
+console.log('🤖 Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +23,15 @@ interface TelegramUpdate {
     chat: {
       id: number;
       type: string;
+    };
+    text?: string;
+  };
+  channel_post?: {
+    message_id: number;
+    chat: {
+      id: number;
+      type: string;
+      title?: string;
     };
     text?: string;
   };
@@ -74,7 +83,7 @@ async function getWebhookInfo(botToken: string) {
 }
 
 serve(async (req) => {
-  console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`); // Added request log
+  console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -88,7 +97,7 @@ serve(async (req) => {
     )
 
     // Get the global bot token
-    console.log('Fetching bot token from settings...'); // Added log
+    console.log('Fetching bot token from settings...');
     const { data: settings, error: settingsError } = await supabase
       .from('telegram_global_settings')
       .select('bot_token')
@@ -100,12 +109,12 @@ serve(async (req) => {
     }
 
     const BOT_TOKEN = settings.bot_token;
-    console.log('✅ Successfully retrieved bot token'); // Added log
+    console.log('✅ Successfully retrieved bot token');
     
     // Special endpoint to check webhook status
     const url = new URL(req.url);
     if (url.pathname.endsWith('/check')) {
-      console.log('Running webhook check...'); // Added log
+      console.log('Running webhook check...');
       const webhookInfo = await getWebhookInfo(BOT_TOKEN);
       const setupResult = await setupWebhook(BOT_TOKEN);
       return new Response(
@@ -122,10 +131,13 @@ serve(async (req) => {
       const update: TelegramUpdate = await req.json()
       console.log('📥 Received Telegram update:', JSON.stringify(update, null, 2))
 
-      // Handle verification messages
-      if (update.message?.text && update.message.text.startsWith('MBF_')) {
-        const verificationCode = update.message.text.trim();
-        const chatId = update.message.chat.id;
+      // Handle verification messages (either from regular message or channel post)
+      const verificationMessage = update.message?.text || update.channel_post?.text;
+      const chatId = update.message?.chat.id || update.channel_post?.chat.id;
+      const messageId = update.message?.message_id || update.channel_post?.message_id;
+
+      if (verificationMessage?.startsWith('MBF_') && chatId && messageId) {
+        const verificationCode = verificationMessage.trim();
         console.log(`🔑 Processing verification code ${verificationCode} for chat ${chatId}`);
         
         // Find the bot settings with this verification code
@@ -146,7 +158,7 @@ serve(async (req) => {
         }
 
         // Delete the verification message
-        const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, update.message.message_id);
+        const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, messageId);
         console.log('🗑️ Delete message result:', deleteResult);
 
         if (!botError && botSettings) {

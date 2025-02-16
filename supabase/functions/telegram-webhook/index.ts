@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -167,8 +166,8 @@ serve(async (req) => {
 
           console.log('Found community:', community);
 
-          // יצירת לינק למיני אפליקציה
-          const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+          // יצירת לינק למיני אפליקציה - שימו לב לפורמט החדש
+          const miniAppUrl = `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}`;
           
           // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
           const message = `
@@ -180,12 +179,12 @@ serve(async (req) => {
             inline_keyboard: [[
               {
                 text: "הצטרפו לקהילה 🚀",
-                web_app: { url: miniAppUrl }
+                url: miniAppUrl
               }
             ]]
           };
 
-          console.log('Sending welcome message with mini app button');
+          console.log('Sending welcome message with mini app button, URL:', miniAppUrl);
           const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
           console.log('Message sent result:', result);
         }
@@ -213,8 +212,8 @@ serve(async (req) => {
 
         console.log('Found community by code:', community);
 
-        // יצירת לינק למיני אפליקציה
-        const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+        // יצירת לינק למיני אפליקציה - שימו לב לפורמט החדש
+        const miniAppUrl = `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}`;
         
         // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
         const message = `
@@ -226,12 +225,12 @@ serve(async (req) => {
           inline_keyboard: [[
             {
               text: "הצטרפו לקהילה 🚀",
-              web_app: { url: miniAppUrl }
+              url: miniAppUrl
             }
           ]]
         };
 
-        console.log('Sending welcome message with mini app button');
+        console.log('Sending welcome message with mini app button, URL:', miniAppUrl);
         const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
         console.log('Message sent result:', result);
       }

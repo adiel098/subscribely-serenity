@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { PlusIcon, TrashIcon, PencilIcon } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
+
+type IntervalType = "monthly" | "yearly";
 
 const Subscriptions = () => {
   const { data: communities } = useCommunities();
@@ -39,13 +40,13 @@ const Subscriptions = () => {
     name: "",
     description: "",
     price: "",
-    interval: "monthly" as const,
+    interval: "monthly" as IntervalType,
     features: [] as string[],
   });
 
   const handleCreatePlan = async () => {
     if (!selectedCommunity) {
-      toast.error("נא לבחור קהילה");
+      toast.error("Please select a community");
       return;
     }
 
@@ -72,7 +73,7 @@ const Subscriptions = () => {
   };
 
   const handleDeletePlan = async (planId: string) => {
-    if (confirm("האם אתה בטוח שברצונך למחוק את תוכנית המנוי הזו?")) {
+    if (confirm("Are you sure you want to delete this subscription plan?")) {
       await deletePlan.mutateAsync(planId);
     }
   };
@@ -80,8 +81,8 @@ const Subscriptions = () => {
   if (!communities?.length) {
     return (
       <div className="text-center py-8">
-        <h2 className="text-xl font-semibold mb-2">אין קהילות</h2>
-        <p className="text-gray-600">נא ליצור קהילה חדשה כדי להגדיר תוכניות מנוי</p>
+        <h2 className="text-xl font-semibold mb-2">No Communities</h2>
+        <p className="text-gray-600">Create a community to set up subscription plans</p>
       </div>
     );
   }
@@ -89,14 +90,14 @@ const Subscriptions = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">ניהול מנויים</h1>
+        <h1 className="text-2xl font-bold">Subscription Plans</h1>
         <div className="flex gap-4">
           <Select
             value={selectedCommunity ?? ""}
             onValueChange={(value) => setSelectedCommunity(value)}
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="בחר קהילה" />
+              <SelectValue placeholder="Select Community" />
             </SelectTrigger>
             <SelectContent>
               {communities?.map((community) => (
@@ -109,17 +110,17 @@ const Subscriptions = () => {
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <PlusIcon className="h-4 w-4 ml-2" />
-                תוכנית מנוי חדשה
+                <PlusIcon className="h-4 w-4 mr-2" />
+                New Plan
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>יצירת תוכנית מנוי חדשה</DialogTitle>
+                <DialogTitle>Create New Subscription Plan</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="name">שם התוכנית</Label>
+                  <Label htmlFor="name">Plan Name</Label>
                   <Input
                     id="name"
                     value={newPlan.name}
@@ -129,7 +130,7 @@ const Subscriptions = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="description">תיאור</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     value={newPlan.description}
@@ -142,7 +143,7 @@ const Subscriptions = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="price">מחיר</Label>
+                  <Label htmlFor="price">Price</Label>
                   <Input
                     id="price"
                     type="number"
@@ -153,10 +154,10 @@ const Subscriptions = () => {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="interval">תדירות החיוב</Label>
+                  <Label htmlFor="interval">Billing Interval</Label>
                   <Select
                     value={newPlan.interval}
-                    onValueChange={(value: "monthly" | "yearly") =>
+                    onValueChange={(value: IntervalType) =>
                       setNewPlan((prev) => ({ ...prev, interval: value }))
                     }
                   >
@@ -164,14 +165,14 @@ const Subscriptions = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="monthly">חודשי</SelectItem>
-                      <SelectItem value="yearly">שנתי</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button onClick={handleCreatePlan}>יצירת תוכנית</Button>
+                <Button onClick={handleCreatePlan}>Create Plan</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -179,10 +180,10 @@ const Subscriptions = () => {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">טוען...</div>
+        <div className="text-center py-8">Loading...</div>
       ) : !selectedCommunity ? (
         <div className="text-center py-8">
-          <p className="text-gray-600">נא לבחור קהילה כדי לראות את תוכניות המנוי</p>
+          <p className="text-gray-600">Select a community to view subscription plans</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -192,7 +193,7 @@ const Subscriptions = () => {
                 <div>
                   <h3 className="text-xl font-semibold">{plan.name}</h3>
                   <p className="text-gray-600">
-                    ₪{plan.price} / {plan.interval === "monthly" ? "לחודש" : "לשנה"}
+                    ${plan.price} / {plan.interval === "monthly" ? "month" : "year"}
                   </p>
                 </div>
                 <div className="flex gap-2">

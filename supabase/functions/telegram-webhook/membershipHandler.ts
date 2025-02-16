@@ -8,7 +8,7 @@ import { findOrCreateMember, deactivateMember } from './memberHandler.ts';
 import { getBotSettings, getGlobalSettings } from './botSettingsHandler.ts';
 import { findCommunityByTelegramId, findCommunityById } from './communityHandler.ts';
 
-async function getBotChatMember(botToken: string, chatId: string | number, userId: string | number) {
+export async function getBotChatMember(botToken: string, chatId: string | number, userId: string | number) {
   try {
     // Try to send a typing action to the user privately
     // This will fail if the user has blocked the bot or deleted the chat

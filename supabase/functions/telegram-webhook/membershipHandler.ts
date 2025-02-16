@@ -3,6 +3,31 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
 
+async function sendTelegramMessage(botToken: string, chatId: string | number, message: string) {
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'HTML'
+        }),
+      }
+    );
+    const result = await response.json();
+    console.log('Message sent:', result);
+    return result;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+}
+
 export async function handleChatMemberUpdate(supabase: ReturnType<typeof createClient>, update: { chat_member: ChatMemberUpdate }) {
   try {
     console.log('👥 Processing chat_member update:', JSON.stringify(update.chat_member, null, 2));
@@ -30,6 +55,28 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
       }
       
       console.log('Found community:', community);
+
+      // Get bot settings for the community
+      const { data: botSettings, error: botSettingsError } = await supabase
+        .from('telegram_bot_settings')
+        .select('*')
+        .eq('community_id', community.id)
+        .single();
+
+      if (botSettingsError) {
+        console.error('Error fetching bot settings:', botSettingsError);
+        throw botSettingsError;
+      }
+
+      const { data: globalSettings, error: globalSettingsError } = await supabase
+        .from('telegram_global_settings')
+        .select('bot_token')
+        .single();
+
+      if (globalSettingsError || !globalSettings?.bot_token) {
+        console.error('Error fetching bot token:', globalSettingsError);
+        throw globalSettingsError;
+      }
       
       const { data: payment, error: paymentError } = await supabase
         .from('subscription_payments')
@@ -133,6 +180,12 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
           throw insertError;
         }
       }
+
+      // Send welcome message if enabled
+      if (botSettings.auto_welcome_message && botSettings.welcome_message) {
+        const welcomeMessage = `${botSettings.welcome_message}\n\n${botSettings.bot_signature || ''}`;
+        await sendTelegramMessage(globalSettings.bot_token, chat.id, welcomeMessage);
+      }
       
       console.log('✅ Successfully processed new member');
     } else if (new_chat_member?.status === 'left' && old_chat_member?.status === 'member') {
@@ -211,10 +264,24 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
           return;
         }
 
+        // Get bot settings for the community
+        const { data: botSettings, error: botSettingsError } = await supabase
+          .from('telegram_bot_settings')
+          .select('*')
+          .eq('community_id', communityId)
+          .single();
+
+        if (botSettingsError) {
+          console.error('Error fetching bot settings:', botSettingsError);
+          return;
+        }
+
         console.log('Found community:', community);
         const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
 
-        // שליחת הודעה עם כפתור למיני אפ
+        // Send welcome message with bot signature
+        const welcomeMessage = `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:\n\n${botSettings.bot_signature || ''}`;
+        
         const response = await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: {
@@ -222,7 +289,7 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
           },
           body: JSON.stringify({
             chat_id: message.chat.id,
-            text: `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`,
+            text: welcomeMessage,
             reply_markup: {
               inline_keyboard: [[
                 {
@@ -284,3 +351,4 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
     throw error;
   }
 }
+

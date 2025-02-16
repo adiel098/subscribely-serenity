@@ -36,6 +36,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
+  return children;
+};
+
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="fixed top-0 left-0 right-0 z-50">
@@ -64,102 +68,90 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route 
-                path="/platform-select" 
-                element={
-                  <ProtectedRoute>
-                    <PlatformSelect />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/connect/telegram" 
-                element={
-                  <ProtectedRoute>
-                    <TelegramConnect />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/members" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/members" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Members />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/subscribers" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscribers" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Subscribers />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/subscriptions" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscriptions" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Subscriptions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/messages" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/messages" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Messages />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/analytics" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Analytics />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/bot-settings" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/bot-settings" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <BotSettings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/events" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/events" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Events />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/rewards" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/rewards" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Rewards />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
                     <Settings />
-                  </ProtectedRoute>
-                } 
-              />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/platform-select" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PlatformSelect />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/connect/telegram" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <TelegramConnect />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SidebarProvider>

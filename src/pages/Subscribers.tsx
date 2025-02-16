@@ -9,7 +9,9 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import {
   Table,
@@ -20,10 +22,152 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+
+interface EditSubscriberDialogProps {
+  subscriber: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess }: EditSubscriberDialogProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const [username, setUsername] = useState(subscriber.telegram_username || "");
+  const [subscriptionStatus, setSubscriptionStatus] = useState(subscriber.subscription_status);
+  const [startDate, setStartDate] = useState(subscriber.subscription_start_date || "");
+  const [endDate, setEndDate] = useState(subscriber.subscription_end_date || "");
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          telegram_username: username,
+          subscription_status: subscriptionStatus,
+          subscription_start_date: startDate || null,
+          subscription_end_date: endDate || null,
+        })
+        .eq('id', subscriber.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Subscriber updated successfully",
+      });
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating subscriber:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscriber",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Subscriber</DialogTitle>
+          <DialogDescription>
+            Update subscriber details and subscription status
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Telegram username"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="subscription-status">Subscription Status</Label>
+            <Switch
+              id="subscription-status"
+              checked={subscriptionStatus}
+              onCheckedChange={setSubscriptionStatus}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="start-date">Start Date</Label>
+            <Input
+              id="start-date"
+              type="datetime-local"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="end-date">End Date</Label>
+            <Input
+              id="end-date"
+              type="datetime-local"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const Subscribers = () => {
   const { selectedCommunityId } = useCommunityContext();
   const { data: subscribers, isLoading } = useSubscribers(selectedCommunityId || "");
+  const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+  };
 
   if (isLoading) {
     return (
@@ -56,6 +200,7 @@ const Subscribers = () => {
               <TableHead className="font-medium">Status</TableHead>
               <TableHead className="font-medium">Subscription Period</TableHead>
               <TableHead className="font-medium">Activity</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,11 +282,32 @@ const Subscribers = () => {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedSubscriber(subscriber);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={7} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <Users className="h-10 w-10 mb-2 opacity-50" />
                     <p className="text-sm">No subscribers found</p>
@@ -152,6 +318,15 @@ const Subscribers = () => {
           </TableBody>
         </Table>
       </div>
+
+      {selectedSubscriber && (
+        <EditSubscriberDialog
+          subscriber={selectedSubscriber}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 };

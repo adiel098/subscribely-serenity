@@ -11,6 +11,7 @@ export interface Subscriber {
   subscription_start_date: string | null;
   subscription_end_date: string | null;
   subscription_status: boolean;
+  total_messages: number | null;
   plan: {
     id: string;
     name: string;

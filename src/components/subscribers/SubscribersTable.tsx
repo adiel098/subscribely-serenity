@@ -42,6 +42,7 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
             <TableHead className="font-medium">Telegram ID</TableHead>
             <TableHead className="font-medium">Subscription Plan</TableHead>
             <TableHead className="font-medium">Status</TableHead>
+            <TableHead className="font-medium">Channel Status</TableHead>
             <TableHead className="font-medium">Subscription Period</TableHead>
             <TableHead className="font-medium">Activity</TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -94,6 +95,21 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                       <span className="flex items-center gap-1">
                         <XCircle className="h-3 w-3" />
                         Inactive
+                      </span>
+                    )}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={subscriber.is_active ? "success" : "destructive"}>
+                    {subscriber.is_active ? (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        In Channel
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <XCircle className="h-3 w-3" />
+                        Left Channel
                       </span>
                     )}
                   </Badge>

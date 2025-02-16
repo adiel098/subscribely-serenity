@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('🤖 Telegram bot webhook is running...');
+console.log('��� Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -176,12 +176,13 @@ serve(async (req) => {
           `;
 
           const replyMarkup = {
-            inline_keyboard: [[
+            keyboard: [[
               {
                 text: "הצטרפו לקהילה 🚀",
-                web_app: { url: `https://t.me/membifybot?start=${encodeURIComponent(community.id)}` }
+                web_app: { url: "https://t.me/membifybot/app" }
               }
-            ]]
+            ]],
+            resize_keyboard: true
           };
 
           console.log('Sending welcome message with mini app button, URL:', miniAppUrl);
@@ -222,12 +223,13 @@ serve(async (req) => {
         `;
 
         const replyMarkup = {
-          inline_keyboard: [[
+          keyboard: [[
             {
               text: "הצטרפו לקהילה 🚀",
-              web_app: { url: `https://t.me/membifybot?start=${encodeURIComponent(community.id)}` }
+              web_app: { url: "https://t.me/membifybot/app" }
             }
-          ]]
+          ]],
+          resize_keyboard: true
         };
 
         console.log('Sending welcome message with mini app button, URL:', miniAppUrl);

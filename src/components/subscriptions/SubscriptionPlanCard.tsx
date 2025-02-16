@@ -86,7 +86,7 @@ export const SubscriptionPlanCard = ({
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    variant="destructive"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() => onDelete(plan.id)}
                   >
                     Delete

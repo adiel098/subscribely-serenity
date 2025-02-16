@@ -82,8 +82,8 @@ const CommunitySelector = () => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
-    <div className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
-      <div className="pl-[280px] w-full flex items-center gap-4">
+    <div className="fixed top-16 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
+      <div className="flex items-center gap-4">
         <Select 
           value={selectedCommunityId || undefined}
           onValueChange={setSelectedCommunityId}
@@ -99,7 +99,6 @@ const CommunitySelector = () => {
             ))}
           </SelectContent>
         </Select>
-        <div className="flex-1" />
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

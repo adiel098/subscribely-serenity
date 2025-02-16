@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon, TrashIcon, CheckIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useCommunityContext } from "@/App";
 
@@ -94,116 +94,129 @@ const Subscriptions = () => {
   }
 
   return (
-    <div className="w-full space-y-6">
-      <div className="bg-white shadow rounded-lg w-full">
-        <div className="px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Subscription Plans</h1>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  New Plan
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Create New Subscription Plan</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Plan Name</Label>
-                    <Input
-                      id="name"
-                      value={newPlan.name}
-                      onChange={(e) =>
-                        setNewPlan((prev) => ({ ...prev, name: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newPlan.description}
-                      onChange={(e) =>
-                        setNewPlan((prev) => ({
-                          ...prev,
-                          description: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={newPlan.price}
-                      onChange={(e) =>
-                        setNewPlan((prev) => ({ ...prev, price: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="interval">Billing Interval</Label>
-                    <Select
-                      value={newPlan.interval}
-                      onValueChange={(value: IntervalType) =>
-                        setNewPlan((prev) => ({ ...prev, interval: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={handleCreatePlan}>Create Plan</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Subscription Plans</h1>
+          <p className="mt-2 text-gray-600">Manage your community's subscription plans</p>
         </div>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="gap-2">
+              <PlusIcon className="h-5 w-5" />
+              New Plan
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Subscription Plan</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Plan Name</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g. Basic Plan"
+                  value={newPlan.name}
+                  onChange={(e) =>
+                    setNewPlan((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the benefits of this plan..."
+                  value={newPlan.description}
+                  onChange={(e) =>
+                    setNewPlan((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="0.00"
+                  value={newPlan.price}
+                  onChange={(e) =>
+                    setNewPlan((prev) => ({ ...prev, price: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="interval">Billing Interval</Label>
+                <Select
+                  value={newPlan.interval}
+                  onValueChange={(value: IntervalType) =>
+                    setNewPlan((prev) => ({ ...prev, interval: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreatePlan}>Create Plan</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {plans?.map((plan) => (
-          <Card key={plan.id} className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                <p className="text-gray-600">
-                  ${plan.price} / {plan.interval === "monthly" ? "month" : "year"}
-                </p>
-              </div>
-              <div className="flex gap-2">
+          <Card key={plan.id} className="relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-200">
+            {/* Popular badge would go here */}
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-gray-600">
+                      / {plan.interval === "monthly" ? "month" : "year"}
+                    </span>
+                  </div>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDeletePlan(plan.id)}
+                  className="text-gray-400 hover:text-red-500"
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <TrashIcon className="h-5 w-5" />
                 </Button>
               </div>
+              
+              {plan.description && (
+                <p className="mt-4 text-gray-600">{plan.description}</p>
+              )}
+              
+              {plan.features && plan.features.length > 0 && (
+                <ul className="mt-6 space-y-3">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-600">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            {plan.description && (
-              <p className="text-gray-600 mb-4">{plan.description}</p>
-            )}
-            {plan.features && plan.features.length > 0 && (
-              <ul className="list-disc list-inside space-y-2">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="text-gray-600">
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            )}
           </Card>
         ))}
       </div>

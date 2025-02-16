@@ -167,7 +167,7 @@ serve(async (req) => {
           console.log('Found community:', community);
 
           // יצירת לינק למיני אפליקציה - שימו לב לפורמט החדש
-          const miniAppUrl = `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}`;
+          const miniAppUrl = `https://t.me/membifybot?start=${encodeURIComponent(community.id)}`;
           
           // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
           const message = `
@@ -179,7 +179,7 @@ serve(async (req) => {
             inline_keyboard: [[
               {
                 text: "הצטרפו לקהילה 🚀",
-                web_app: { url: `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}` }
+                web_app: { url: `https://t.me/membifybot?start=${encodeURIComponent(community.id)}` }
               }
             ]]
           };
@@ -213,7 +213,7 @@ serve(async (req) => {
         console.log('Found community by code:', community);
 
         // יצירת לינק למיני אפליקציה - שימו לב לפורמט החדש
-        const miniAppUrl = `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}`;
+        const miniAppUrl = `https://t.me/membifybot?start=${encodeURIComponent(community.id)}`;
         
         // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
         const message = `
@@ -225,7 +225,7 @@ serve(async (req) => {
           inline_keyboard: [[
             {
               text: "הצטרפו לקהילה 🚀",
-              web_app: { url: `https://t.me/membifybot/app?startapp=${encodeURIComponent(community.id)}` }
+              web_app: { url: `https://t.me/membifybot?start=${encodeURIComponent(community.id)}` }
             }
           ]]
         };

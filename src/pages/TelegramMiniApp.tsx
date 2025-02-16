@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,7 +70,7 @@ const TelegramMiniApp = () => {
     }
 
     const initData = searchParams.get("initData");
-    const startParam = searchParams.get("startapp"); // Changed from 'start' to 'startapp'
+    const startParam = searchParams.get("start"); // Changed from 'startapp' back to 'start'
 
     const fetchCommunityData = async () => {
       try {

@@ -10,7 +10,8 @@ import { findCommunityByTelegramId, findCommunityById } from './communityHandler
 
 async function getBotChatMember(botToken: string, chatId: string | number, userId: string | number) {
   try {
-    // First, try to send a status message to the user privately
+    // Try to send a typing action to the user privately
+    // This will fail if the user has blocked the bot or deleted the chat
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendChatAction`,
       {
@@ -26,12 +27,15 @@ async function getBotChatMember(botToken: string, chatId: string | number, userI
     );
 
     const data = await response.json();
-    console.log('Chat action response:', data);
+    console.log('Chat action response for user', userId, ':', data);
     
-    // If we can send them a chat action, it means they have an active interaction with the bot
+    if (!data.ok) {
+      console.log('User', userId, 'cannot receive messages. Error:', data.description);
+    }
+    
     return data.ok;
   } catch (error) {
-    console.error('Error checking member activity:', error);
+    console.error('Error checking member activity for user', userId, ':', error);
     return false;
   }
 }
@@ -71,6 +75,10 @@ export async function updateMemberActivity(supabase: ReturnType<typeof createCli
 
     console.log(`Found ${members.length} members to check`);
 
+    // Track statistics
+    let activeCount = 0;
+    let inactiveCount = 0;
+
     // Check each member's status
     for (const member of members) {
       const canReceiveMessages = await getBotChatMember(
@@ -78,6 +86,12 @@ export async function updateMemberActivity(supabase: ReturnType<typeof createCli
         community.telegram_chat_id,
         member.telegram_user_id
       );
+
+      if (canReceiveMessages) {
+        activeCount++;
+      } else {
+        inactiveCount++;
+      }
 
       await supabase
         .from('telegram_chat_members')
@@ -92,7 +106,11 @@ export async function updateMemberActivity(supabase: ReturnType<typeof createCli
       await new Promise(resolve => setTimeout(resolve, 50));
     }
 
-    console.log('✅ Successfully updated member activity');
+    console.log('✅ Activity check completed:', {
+      totalMembers: members.length,
+      activeMembers: activeCount,
+      inactiveMembers: inactiveCount
+    });
   } catch (error) {
     console.error('Error updating member activity:', error);
     throw error;

@@ -1,5 +1,5 @@
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 
 const Hero = () => {
@@ -11,22 +11,22 @@ const Hero = () => {
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
-          ניהול קהילות <br className="hidden sm:inline" />
-          <span className="text-blue-600">בקלות</span>
+          Community Management <br className="hidden sm:inline" />
+          <span className="text-blue-600">Made Simple</span>
         </h1>
         
         <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          נהלו את קהילות הטלגרם והדיסקורד שלכם בקלות. פשטו את המנויים, 
-          אוטומציה של גישת חברים, והתמקדו במה שחשוב באמת - הקהילה שלכם.
+          Manage your Telegram and Discord communities with ease. Streamline subscriptions, 
+          automate member access, and focus on what matters most - your community.
         </p>
         
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <Button size="lg" className="group">
-            התחל עכשיו
-            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Get Started
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
           <Button size="lg" variant="outline">
-            צפה בהדגמה
+            Watch Demo
           </Button>
         </div>
       </div>

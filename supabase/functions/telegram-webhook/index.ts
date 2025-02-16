@@ -222,6 +222,63 @@ async function handleChatMemberUpdate(supabase: any, update: any) {
       
       console.log('Found community:', community);
       
+      // Check if there's an active payment with this invite link
+      console.log('Checking for payment with invite link:', invite_link?.invite_link);
+      const { data: payment, error: paymentError } = await supabase
+        .from('subscription_payments')
+        .select(`
+          id,
+          plan_id,
+          subscription_plans:plan_id (
+            interval
+          )
+        `)
+        .eq('invite_link', invite_link?.invite_link)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .maybeSingle();
+
+      if (paymentError) {
+        console.error('Error checking payment:', paymentError);
+        throw paymentError;
+      }
+
+      let subscriptionStartDate = new Date();
+      let subscriptionEndDate = null;
+      let subscriptionPlanId = null;
+
+      if (payment) {
+        console.log('Found payment:', payment);
+        subscriptionPlanId = payment.plan_id;
+        
+        // Calculate subscription end date based on plan interval
+        if (payment.subscription_plans?.interval) {
+          switch (payment.subscription_plans.interval) {
+            case 'monthly':
+              subscriptionEndDate = new Date(subscriptionStartDate);
+              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+              break;
+            case 'quarterly':
+              subscriptionEndDate = new Date(subscriptionStartDate);
+              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+              break;
+            case 'half-yearly':
+              subscriptionEndDate = new Date(subscriptionStartDate);
+              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
+              break;
+            case 'yearly':
+              subscriptionEndDate = new Date(subscriptionStartDate);
+              subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+              break;
+            case 'one-time':
+              // For one-time payments, set end date to 100 years from now (effectively unlimited)
+              subscriptionEndDate = new Date(subscriptionStartDate);
+              subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
+              break;
+          }
+        }
+      }
+      
       // Check if member already exists
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('telegram_chat_members')
@@ -235,15 +292,21 @@ async function handleChatMemberUpdate(supabase: any, update: any) {
         throw memberCheckError;
       }
       
+      const memberData = {
+        telegram_username: member.username,
+        is_active: true,
+        last_active: new Date().toISOString(),
+        subscription_status: Boolean(payment),
+        subscription_plan_id: subscriptionPlanId,
+        subscription_start_date: subscriptionStartDate.toISOString(),
+        subscription_end_date: subscriptionEndDate?.toISOString() || null
+      };
+      
       if (existingMember) {
-        console.log('Member already exists, updating...');
+        console.log('Member already exists, updating with:', memberData);
         const { error: updateError } = await supabase
           .from('telegram_chat_members')
-          .update({
-            telegram_username: member.username,
-            is_active: true,
-            last_active: new Date().toISOString()
-          })
+          .update(memberData)
           .eq('id', existingMember.id);
           
         if (updateError) {
@@ -251,16 +314,14 @@ async function handleChatMemberUpdate(supabase: any, update: any) {
           throw updateError;
         }
       } else {
-        console.log('Creating new member...');
+        console.log('Creating new member with:', memberData);
         const { error: insertError } = await supabase
           .from('telegram_chat_members')
           .insert([{
             community_id: community.id,
             telegram_user_id: member.id.toString(),
-            telegram_username: member.username,
-            is_active: true,
             joined_at: new Date().toISOString(),
-            last_active: new Date().toISOString()
+            ...memberData
           }]);
           
         if (insertError) {

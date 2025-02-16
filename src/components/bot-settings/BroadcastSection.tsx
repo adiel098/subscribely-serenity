@@ -22,9 +22,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useBroadcast } from "@/hooks/useBroadcast";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { BroadcastStats } from "./BroadcastStats";
 
 interface BroadcastSectionProps {
@@ -37,6 +37,7 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isSending, setIsSending] = useState(false);
   const [currentBroadcastId, setCurrentBroadcastId] = useState<string>("");
+  const { mutateAsync: sendBroadcast } = useBroadcast(communityId);
 
   const { data: plans } = useQuery({
     queryKey: ['subscription-plans', communityId],
@@ -71,7 +72,12 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       if (error) throw error;
 
       setCurrentBroadcastId(data.id);
-      toast.success("Broadcast message queued successfully");
+      
+      await sendBroadcast({
+        message: message.trim(),
+        filterType: filterType as 'all' | 'subscribed'
+      });
+
       setMessage("");
     } catch (error) {
       console.error('Error sending broadcast:', error);

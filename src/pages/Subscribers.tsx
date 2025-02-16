@@ -23,20 +23,31 @@ const Subscribers = () => {
 
   const handleRemoveSubscriber = async (subscriber: any) => {
     try {
-      const { error } = await supabase
+      // First, update subscription_status and end_date
+      const { error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
-          is_active: false,
           subscription_status: false,
           subscription_end_date: new Date().toISOString(),
+          is_active: false
         })
         .eq('id', subscriber.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Then, remove the subscription plan reference
+      const { error: planError } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          subscription_plan_id: null
+        })
+        .eq('id', subscriber.id);
+
+      if (planError) throw planError;
 
       toast({
         title: "Success",
-        description: "Subscriber removed successfully",
+        description: "Subscription cancelled successfully",
       });
       
       queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
@@ -44,7 +55,7 @@ const Subscribers = () => {
       console.error('Error removing subscriber:', error);
       toast({
         title: "Error",
-        description: "Failed to remove subscriber",
+        description: "Failed to cancel subscription",
         variant: "destructive",
       });
     }

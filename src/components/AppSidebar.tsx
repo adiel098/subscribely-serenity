@@ -5,8 +5,6 @@ import {
   TrendingUp,
   Bot,
   BarChart,
-  Calendar,
-  Gift,
   BadgeDollarSign,
   Wallet
 } from 'lucide-react';
@@ -56,17 +54,7 @@ const menuItems = [
     path: "/bot-settings"
   },
   {
-    title: "Events",
-    icon: Calendar,
-    path: "/events"
-  },
-  {
-    title: "Rewards",
-    icon: Gift,
-    path: "/rewards"
-  },
-  {
-    title: "Settings",
+    title: "Membify Settings",
     icon: Settings,
     path: "/settings"
   }

@@ -43,7 +43,7 @@ interface TelegramUpdate {
 
 async function setupWebhook(botToken: string) {
   console.log('Setting up webhook...'); // Added log
-  const webhookUrl = `https://${SUPABASE_URL}/functions/v1/telegram-webhook`;
+  const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
   console.log('Using webhook URL:', webhookUrl); // Added for debugging
   console.log('Using bot token:', `${botToken.slice(0, 5)}...${botToken.slice(-5)}`); // Log partial token for security
   
@@ -103,20 +103,18 @@ serve(async (req) => {
     console.log('✅ Successfully retrieved bot token'); // Added log
     
     // Special endpoint to check webhook status
-    if (req.method === 'GET') {
-      const url = new URL(req.url);
-      if (url.pathname.endsWith('/check')) {
-        console.log('Running webhook check...'); // Added log
-        const webhookInfo = await getWebhookInfo(BOT_TOKEN);
-        const setupResult = await setupWebhook(BOT_TOKEN);
-        return new Response(
-          JSON.stringify({ webhookInfo, setupResult }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        );
-      }
+    const url = new URL(req.url);
+    if (url.pathname.endsWith('/check')) {
+      console.log('Running webhook check...'); // Added log
+      const webhookInfo = await getWebhookInfo(BOT_TOKEN);
+      const setupResult = await setupWebhook(BOT_TOKEN);
+      return new Response(
+        JSON.stringify({ webhookInfo, setupResult }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      );
     }
 
     // For direct Telegram webhook updates

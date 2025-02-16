@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -130,18 +129,13 @@ const Subscriptions = () => {
           isOpen={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           editPlanData={{
+            id: selectedPlan.id,
             name: selectedPlan.name,
             description: selectedPlan.description || "",
             price: selectedPlan.price.toString(),
             interval: selectedPlan.interval,
             features: selectedPlan.features
           }}
-          setEditPlanData={() => {}}
-          editFeature=""
-          setEditFeature={() => {}}
-          handleAddEditFeature={() => {}}
-          handleRemoveEditFeature={() => {}}
-          handleUpdatePlan={() => {}}
         />
       )}
       

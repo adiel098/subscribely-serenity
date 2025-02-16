@@ -2,31 +2,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
-
-async function sendTelegramMessage(botToken: string, chatId: string | number, message: string) {
-  try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'HTML'
-        }),
-      }
-    );
-    const result = await response.json();
-    console.log('Message sent:', result);
-    return result;
-  } catch (error) {
-    console.error('Error sending message:', error);
-    throw error;
-  }
-}
+import { sendTelegramMessage } from './telegramClient.ts';
+import { handleSubscription } from './subscriptionHandler.ts';
+import { findOrCreateMember, deactivateMember } from './memberHandler.ts';
+import { getBotSettings, getGlobalSettings } from './botSettingsHandler.ts';
+import { findCommunityByTelegramId, findCommunityById } from './communityHandler.ts';
 
 export async function handleChatMemberUpdate(supabase: ReturnType<typeof createClient>, update: { chat_member: ChatMemberUpdate }) {
   try {
@@ -38,150 +18,17 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
     if (new_chat_member?.status === 'member' && old_chat_member?.status === 'left') {
       console.log('🎉 Member joined channel:', member.username);
       
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('id')
-        .eq('telegram_chat_id', chat.id.toString())
-        .single();
-        
-      if (communityError) {
-        console.error('Error finding community:', communityError);
-        throw communityError;
-      }
-      
-      if (!community) {
-        console.error('Community not found for chat_id:', chat.id);
-        throw new Error(`Community not found for chat_id: ${chat.id}`);
-      }
-      
+      const community = await findCommunityByTelegramId(supabase, chat.id);
       console.log('Found community:', community);
 
-      // Get bot settings for the community
-      const { data: botSettings, error: botSettingsError } = await supabase
-        .from('telegram_bot_settings')
-        .select('*')
-        .eq('community_id', community.id)
-        .single();
+      const [botSettings, globalSettings] = await Promise.all([
+        getBotSettings(supabase, community.id),
+        getGlobalSettings(supabase)
+      ]);
 
-      if (botSettingsError) {
-        console.error('Error fetching bot settings:', botSettingsError);
-        throw botSettingsError;
-      }
+      const subscription = await handleSubscription(supabase, invite_link?.invite_link);
+      await findOrCreateMember(supabase, community.id, member.id.toString(), member.username || '', subscription);
 
-      const { data: globalSettings, error: globalSettingsError } = await supabase
-        .from('telegram_global_settings')
-        .select('bot_token')
-        .single();
-
-      if (globalSettingsError || !globalSettings?.bot_token) {
-        console.error('Error fetching bot token:', globalSettingsError);
-        throw globalSettingsError;
-      }
-      
-      const { data: payment, error: paymentError } = await supabase
-        .from('subscription_payments')
-        .select(`
-          id,
-          plan_id,
-          subscription_plans:plan_id (
-            interval
-          )
-        `)
-        .eq('invite_link', invite_link?.invite_link)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .maybeSingle();
-
-      if (paymentError) {
-        console.error('Error checking payment:', paymentError);
-        throw paymentError;
-      }
-
-      let subscriptionStartDate = new Date();
-      let subscriptionEndDate = null;
-      let subscriptionPlanId = null;
-
-      if (payment) {
-        console.log('Found payment:', payment);
-        subscriptionPlanId = payment.plan_id;
-        
-        if (payment.subscription_plans?.interval) {
-          switch (payment.subscription_plans.interval) {
-            case 'monthly':
-              subscriptionEndDate = new Date(subscriptionStartDate);
-              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-              break;
-            case 'quarterly':
-              subscriptionEndDate = new Date(subscriptionStartDate);
-              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
-              break;
-            case 'half-yearly':
-              subscriptionEndDate = new Date(subscriptionStartDate);
-              subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
-              break;
-            case 'yearly':
-              subscriptionEndDate = new Date(subscriptionStartDate);
-              subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
-              break;
-            case 'one-time':
-              subscriptionEndDate = new Date(subscriptionStartDate);
-              subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
-              break;
-          }
-        }
-      }
-      
-      const { data: existingMember, error: memberCheckError } = await supabase
-        .from('telegram_chat_members')
-        .select('id')
-        .eq('community_id', community.id)
-        .eq('telegram_user_id', member.id.toString())
-        .maybeSingle();
-        
-      if (memberCheckError) {
-        console.error('Error checking existing member:', memberCheckError);
-        throw memberCheckError;
-      }
-      
-      const memberData = {
-        telegram_username: member.username,
-        is_active: true,
-        last_active: new Date().toISOString(),
-        subscription_status: Boolean(payment),
-        subscription_plan_id: subscriptionPlanId,
-        subscription_start_date: subscriptionStartDate.toISOString(),
-        subscription_end_date: subscriptionEndDate?.toISOString() || null
-      };
-      
-      if (existingMember) {
-        console.log('Member already exists, updating with:', memberData);
-        const { error: updateError } = await supabase
-          .from('telegram_chat_members')
-          .update(memberData)
-          .eq('id', existingMember.id);
-          
-        if (updateError) {
-          console.error('Error updating member:', updateError);
-          throw updateError;
-        }
-      } else {
-        console.log('Creating new member with:', memberData);
-        const { error: insertError } = await supabase
-          .from('telegram_chat_members')
-          .insert([{
-            community_id: community.id,
-            telegram_user_id: member.id.toString(),
-            joined_at: new Date().toISOString(),
-            ...memberData
-          }]);
-          
-        if (insertError) {
-          console.error('Error inserting member:', insertError);
-          throw insertError;
-        }
-      }
-
-      // Send welcome message if enabled
       if (botSettings.auto_welcome_message && botSettings.welcome_message) {
         const welcomeMessage = `${botSettings.welcome_message}\n\n${botSettings.bot_signature || ''}`;
         await sendTelegramMessage(globalSettings.bot_token, chat.id, welcomeMessage);
@@ -191,36 +38,8 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
     } else if (new_chat_member?.status === 'left' && old_chat_member?.status === 'member') {
       console.log('👋 Member left channel:', member.username);
       
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('id')
-        .eq('telegram_chat_id', chat.id.toString())
-        .single();
-        
-      if (communityError) {
-        console.error('Error finding community:', communityError);
-        throw communityError;
-      }
-      
-      if (!community) {
-        console.error('Community not found for chat_id:', chat.id);
-        throw new Error(`Community not found for chat_id: ${chat.id}`);
-      }
-      
-      const { error: updateError } = await supabase
-        .from('telegram_chat_members')
-        .update({
-          is_active: false,
-          subscription_status: false,
-          subscription_end_date: new Date().toISOString()
-        })
-        .eq('community_id', community.id)
-        .eq('telegram_user_id', member.id.toString());
-        
-      if (updateError) {
-        console.error('Error updating member status:', updateError);
-        throw updateError;
-      }
+      const community = await findCommunityByTelegramId(supabase, chat.id);
+      await deactivateMember(supabase, community.id, member.id.toString());
       
       console.log('✅ Successfully processed member departure');
     }
@@ -252,29 +71,10 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
       const communityId = message.text.split(' ')[1];
       
       if (communityId) {
-        console.log(`Looking up community with ID: ${communityId}`);
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .select('*')
-          .eq('id', communityId)
-          .single();
-
-        if (communityError || !community) {
-          console.error('Error finding community:', communityError);
-          return;
-        }
-
-        // Get bot settings for the community
-        const { data: botSettings, error: botSettingsError } = await supabase
-          .from('telegram_bot_settings')
-          .select('*')
-          .eq('community_id', communityId)
-          .single();
-
-        if (botSettingsError) {
-          console.error('Error fetching bot settings:', botSettingsError);
-          return;
-        }
+        const [community, botSettings] = await Promise.all([
+          findCommunityById(supabase, communityId),
+          getBotSettings(supabase, communityId)
+        ]);
 
         console.log('Found community:', community);
         const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
@@ -351,4 +151,3 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
     throw error;
   }
 }
-

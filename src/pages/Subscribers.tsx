@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useSubscribers } from "@/hooks/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
@@ -18,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// טיפוס עבור navigator עם msSaveBlob
 interface MSNavigator extends Navigator {
   msSaveBlob?: (blob: Blob, defaultName: string) => boolean;
 }
@@ -205,9 +203,10 @@ const Subscribers = () => {
               Update Member Status
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={handleExport}
+              className="bg-green-100 hover:bg-green-200 text-green-700 border-green-200"
             >
               <FileSpreadsheet className="h-4 w-4 mr-2" />
               Export

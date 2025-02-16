@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -52,12 +51,35 @@ const TelegramConnect = () => {
             description: "Failed to update bot token",
             variant: "destructive",
           });
-        } else {
-          console.log('Bot token updated successfully');
-          // Now check the webhook
-          const response = await fetch('https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook/check');
-          const result = await response.json();
-          console.log('Webhook check result:', result);
+          return;
+        }
+
+        console.log('Bot token updated successfully');
+        
+        // Now check the webhook using Supabase Functions
+        const { data: webhookData, error: webhookError } = await supabase.functions
+          .invoke('telegram-webhook', {
+            method: 'GET',
+            query: { action: 'check' }
+          });
+
+        if (webhookError) {
+          console.error('Error checking webhook:', webhookError);
+          toast({
+            title: "Error",
+            description: "Failed to check webhook status",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('Webhook check result:', webhookData);
+        
+        if (webhookData?.webhookInfo?.ok) {
+          toast({
+            title: "Success",
+            description: "Telegram bot configuration updated successfully",
+          });
         }
       } catch (error) {
         console.error('Error:', error);
@@ -133,8 +155,6 @@ const TelegramConnect = () => {
           title: "Success!",
           description: "Your Telegram group has been successfully connected!",
         });
-        // You can navigate to a success page or dashboard here
-        // navigate('/dashboard');
       } else {
         toast({
           title: "Not Verified",

@@ -110,12 +110,32 @@ async function handleLeftChatMember(supabase: any, update: any) {
 }
 
 async function handleNewChatMember(supabase: any, update: any) {
-  console.log('🎉 Processing new chat member:', JSON.stringify(update.message?.new_chat_member || update.new_chat_member, null, 2));
-  await logTelegramEvent(supabase, 'new_chat_member', update);
+  console.log('🎉 Processing new chat members:', JSON.stringify(update.message?.new_chat_members || [update.message?.new_chat_member], null, 2));
+  
+  // נטפל בכל החברים החדשים (יכול להיות אחד או יותר)
+  const newMembers = update.message?.new_chat_members || [update.message?.new_chat_member].filter(Boolean);
+  
+  for (const member of newMembers) {
+    // נרשום לוג נפרד לכל חבר חדש
+    await logTelegramEvent(supabase, 'new_chat_member', {
+      ...update,
+      new_chat_member: member
+    });
+    
+    console.log(`✨ New member joined: ${member.first_name} ${member.last_name || ''} (@${member.username || 'no username'})`);
+  }
 }
 
 async function handleMyChatMember(supabase: any, update: any) {
   console.log('👥 Processing my_chat_member update:', JSON.stringify(update.my_chat_member, null, 2));
+  
+  const chatMember = update.my_chat_member;
+  // נבדוק אם זה אירוע של הצטרפות לערוץ
+  if (chatMember.new_chat_member?.status === 'member' || 
+      chatMember.new_chat_member?.status === 'administrator') {
+    console.log('🎉 New channel membership detected!');
+  }
+  
   await logTelegramEvent(supabase, 'my_chat_member', update);
 }
 
@@ -197,7 +217,7 @@ serve(async (req) => {
 
         // Handle different types of updates
         if (update.message) {
-          if (update.message.new_chat_member || update.message.new_chat_members) {
+          if (update.message.new_chat_members || update.message.new_chat_member) {
             await handleNewChatMember(supabase, update);
           } else if (update.message.left_chat_member) {
             await handleLeftChatMember(supabase, update);

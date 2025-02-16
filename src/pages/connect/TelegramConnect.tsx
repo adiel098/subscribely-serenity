@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,92 +9,93 @@ import { supabase } from "@/integrations/supabase/client";
 
 const TelegramConnect = () => {
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationCode] = useState<string>('MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase());
+  const [verificationCode, setVerificationCode] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
-    // Update the bot token when component mounts
-    const updateBotToken = async () => {
-      try {
-        // First, get the existing settings record
-        const { data: settings, error: fetchError } = await supabase
-          .from('telegram_global_settings')
-          .select('id')
-          .limit(1)
-          .single();
+    if (user) {
+      initializeVerificationCode();
+    }
+  }, [user]);
 
-        if (fetchError) {
-          console.error('Error fetching settings:', fetchError);
-          toast({
-            title: "Error",
-            description: "Failed to fetch bot settings",
-            variant: "destructive",
-          });
-          return;
-        }
+  const initializeVerificationCode = async () => {
+    try {
+      // First, check if user already has a verification code
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('initial_telegram_code, current_telegram_code')
+        .eq('id', user?.id)
+        .single();
 
-        // Now update using the correct UUID
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
+
+      if (profile.current_telegram_code) {
+        // User already has a current code, use it
+        setVerificationCode(profile.current_telegram_code);
+      } else if (profile.initial_telegram_code) {
+        // User has an initial code but no current code, set initial as current
         const { error: updateError } = await supabase
-          .from('telegram_global_settings')
-          .update({ 
-            bot_token: '7925621863:AAGIRzj6xbM9CJERSld5xhF-maIO1JTA_LQ',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', settings.id);
+          .from('profiles')
+          .update({ current_telegram_code: profile.initial_telegram_code })
+          .eq('id', user?.id);
 
         if (updateError) {
-          console.error('Error updating bot token:', updateError);
-          toast({
-            title: "Error",
-            description: "Failed to update bot token",
-            variant: "destructive",
-          });
+          console.error('Error updating current code:', updateError);
           return;
         }
 
-        console.log('Bot token updated successfully');
+        setVerificationCode(profile.initial_telegram_code);
+      } else {
+        // User has no codes, generate initial code
+        const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
         
-        // Now check the webhook using Supabase Functions with the /check path
-        const { data: webhookData, error: webhookError } = await supabase.functions
-          .invoke('telegram-webhook/check', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            initial_telegram_code: newCode,
+            current_telegram_code: newCode
+          })
+          .eq('id', user?.id);
 
-        if (webhookError) {
-          console.error('Error checking webhook:', webhookError);
-          toast({
-            title: "Error",
-            description: "Failed to check webhook status",
-            variant: "destructive",
-          });
+        if (updateError) {
+          console.error('Error setting initial code:', updateError);
           return;
         }
 
-        console.log('Webhook check result:', webhookData);
-        
-        if (webhookData?.webhookInfo?.ok) {
-          toast({
-            title: "Success",
-            description: "Telegram bot configuration updated successfully",
-          });
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
+        setVerificationCode(newCode);
       }
-    };
+    } catch (error) {
+      console.error('Error in initializeVerificationCode:', error);
+    }
+  };
 
-    updateBotToken();
-  }, [toast]);
+  const generateNewVerificationCode = async () => {
+    if (!user) return;
+
+    const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ current_telegram_code: newCode })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Error updating verification code:', updateError);
+      toast({
+        title: "Error",
+        description: "Failed to generate new verification code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVerificationCode(newCode);
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -115,7 +115,7 @@ const TelegramConnect = () => {
 
   const verifyConnection = async () => {
     try {
-      if (!user) return;
+      if (!user || !verificationCode) return;
       
       setIsVerifying(true);
 
@@ -151,6 +151,9 @@ const TelegramConnect = () => {
         }
 
         console.log('Community updated:', community);
+
+        // Generate new verification code for future use
+        await generateNewVerificationCode();
 
         toast({
           title: "Success!",
@@ -229,6 +232,9 @@ const TelegramConnect = () => {
       }
 
       if (verifiedSettings) {
+        // Generate new verification code for future use
+        await generateNewVerificationCode();
+        
         toast({
           title: "Success!",
           description: "Your Telegram group has been successfully connected!",

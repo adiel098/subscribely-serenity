@@ -1,6 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getBotChatMember } from './membershipHandler.ts';
+import { sendTelegramMessage } from './telegramClient.ts';
 
 interface BroadcastStatus {
   successCount: number;
@@ -20,14 +21,22 @@ export async function sendBroadcastMessage(
     console.log('Filter type:', filterType);
 
     // Get bot token
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from('telegram_global_settings')
       .select('bot_token')
       .single();
 
+    if (settingsError) {
+      console.error('Error fetching bot token:', settingsError);
+      throw settingsError;
+    }
+
     if (!settings?.bot_token) {
+      console.error('Bot token not found in settings');
       throw new Error('Bot token not found');
     }
+
+    console.log('Successfully retrieved bot token');
 
     // Get all members based on filter
     let query = supabase
@@ -52,9 +61,21 @@ export async function sendBroadcastMessage(
 
     const { data: members, error: membersError } = await query;
 
-    if (membersError) throw membersError;
+    if (membersError) {
+      console.error('Error fetching members:', membersError);
+      throw membersError;
+    }
 
-    console.log(`Found ${members.length} potential recipients`);
+    console.log(`Found ${members?.length || 0} potential recipients`);
+
+    if (!members || members.length === 0) {
+      console.log('No members found matching the criteria');
+      return {
+        successCount: 0,
+        failureCount: 0,
+        totalRecipients: 0
+      };
+    }
 
     let successCount = 0;
     let failureCount = 0;
@@ -62,6 +83,8 @@ export async function sendBroadcastMessage(
     // Send message to each member
     for (const member of members) {
       try {
+        console.log(`Attempting to send message to user ${member.telegram_user_id}`);
+        
         // Check if user can receive messages
         const canReceiveMessages = await getBotChatMember(
           settings.bot_token,
@@ -70,28 +93,17 @@ export async function sendBroadcastMessage(
         );
 
         if (!canReceiveMessages) {
-          console.log(`Skipping user ${member.telegram_user_id} - cannot receive messages`);
+          console.log(`User ${member.telegram_user_id} cannot receive messages - skipping`);
           failureCount++;
           continue;
         }
 
-        // Send the message
-        const response = await fetch(
-          `https://api.telegram.org/bot${settings.bot_token}/sendMessage`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              chat_id: member.telegram_user_id,
-              text: message,
-              parse_mode: 'HTML'
-            }),
-          }
+        // Send the message using our telegram client
+        const result = await sendTelegramMessage(
+          settings.bot_token,
+          member.telegram_user_id,
+          message
         );
-
-        const result = await response.json();
         
         if (result.ok) {
           successCount++;
@@ -110,7 +122,7 @@ export async function sendBroadcastMessage(
     }
 
     // Update broadcast message status
-    await supabase
+    const { error: updateError } = await supabase
       .from('broadcast_messages')
       .update({
         status: 'completed',
@@ -121,6 +133,10 @@ export async function sendBroadcastMessage(
       })
       .eq('community_id', communityId)
       .eq('status', 'pending');
+
+    if (updateError) {
+      console.error('Error updating broadcast status:', updateError);
+    }
 
     const status: BroadcastStatus = {
       successCount,

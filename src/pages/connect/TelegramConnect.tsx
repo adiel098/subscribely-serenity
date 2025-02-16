@@ -119,6 +119,50 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
+      // First check if there's an existing verified bot settings with this code
+      const { data: existingSettings, error: existingError } = await supabase
+        .from('telegram_bot_settings')
+        .select('verified_at, chat_id, community_id')
+        .eq('verification_code', verificationCode)
+        .not('verified_at', 'is', null)
+        .single();
+
+      console.log('Checking existing verified settings:', existingSettings);
+
+      if (existingSettings) {
+        // We found an existing verified connection, let's use that
+        console.log('Found existing verified settings:', existingSettings);
+
+        // Create or update community for this user
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .upsert({
+            id: existingSettings.community_id,
+            owner_id: user.id,
+            platform: 'telegram',
+            name: 'My Telegram Community',
+          })
+          .select()
+          .single();
+
+        if (communityError) {
+          console.error('Community update error:', communityError);
+          throw communityError;
+        }
+
+        console.log('Community updated:', community);
+
+        toast({
+          title: "Success!",
+          description: "Your Telegram group has been successfully connected!",
+        });
+        navigate('/dashboard');
+        return;
+      }
+
+      // If no existing verified settings found, continue with the original flow
+      console.log('No existing verified settings found, creating new...');
+
       // Create community if it doesn't exist
       const { data: community, error: communityError } = await supabase
         .from('communities')
@@ -135,7 +179,7 @@ const TelegramConnect = () => {
         throw communityError;
       }
 
-      console.log('Community created/retrieved:', community);
+      console.log('Community created:', community);
 
       // Set up bot settings
       const { data: botSettings, error: settingsError } = await supabase

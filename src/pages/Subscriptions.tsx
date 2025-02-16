@@ -61,7 +61,7 @@ const Subscriptions = () => {
 
   const copyMiniAppLink = () => {
     if (community) {
-      const miniAppUrl = `https://t.me/membifybot?start=${community.id}`;
+      const miniAppUrl = `https://t.me/membifybot/app?startapp=${community.id}`;
       navigator.clipboard.writeText(miniAppUrl);
       toast({
         title: "Link Copied!",

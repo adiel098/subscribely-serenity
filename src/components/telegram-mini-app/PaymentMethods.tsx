@@ -40,14 +40,37 @@ export const PaymentMethods = ({
     }
 
     try {
+      // Create a new invite link
+      console.log('Creating new invite link for community:', selectedPlan.community_id);
+      const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
+        'create-invite-link',
+        {
+          body: { communityId: selectedPlan.community_id }
+        }
+      );
+
+      if (inviteLinkError) {
+        console.error('Error creating invite link:', inviteLinkError);
+        toast({
+          variant: "destructive",
+          title: "Error creating invite link",
+          description: "Please try again or contact support."
+        });
+        return;
+      }
+
+      const newInviteLink = inviteLinkData?.inviteLink;
+
       console.log('Creating payment with:', {
         plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
-        status: 'completed'
+        status: 'completed',
+        invite_link: newInviteLink
       });
 
+      // Create the payment record with the new invite link
       const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
@@ -56,7 +79,7 @@ export const PaymentMethods = ({
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: communityInviteLink || null
+          invite_link: newInviteLink || null
         }])
         .select()
         .maybeSingle();

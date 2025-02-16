@@ -188,16 +188,15 @@ serve(async (req) => {
             });
           }
 
-          // Create mini app URL with the correct path and start parameter
-          const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`;
-          
-          // Create welcome message with button
+          // Create welcome message with Mini App button
           const welcomeMessage = `👋 Welcome! You're about to join *${community.name}*`;
           const replyMarkup = {
             inline_keyboard: [[
               {
                 text: "🚀 Open Mini App",
-                url: miniAppUrl
+                web_app: {
+                  url: `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`
+                }
               }
             ]]
           };

@@ -45,24 +45,31 @@ export const useSubscriptionPlans = (communityId: string) => {
       }
       return data as SubscriptionPlan[];
     },
-    enabled: Boolean(communityId), // רק אם יש community_id התשאול יתבצע
+    enabled: Boolean(communityId),
   });
 
   const createPlan = useMutation({
     mutationFn: async (newPlan: CreateSubscriptionPlanData) => {
+      console.log('Creating new plan:', newPlan); // Debug log
+      
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert([
-          {
-            ...newPlan,
-            features: newPlan.features || [],
-            is_active: true
-          }
-        ])
+        .insert({
+          community_id: newPlan.community_id,
+          name: newPlan.name,
+          description: newPlan.description || null,
+          price: newPlan.price,
+          interval: newPlan.interval,
+          features: newPlan.features || [],
+          is_active: true
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error); // Debug log
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

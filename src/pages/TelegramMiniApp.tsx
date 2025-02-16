@@ -1,10 +1,13 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkle, CreditCard, Check, Star } from "lucide-react";
+import { Sparkle, CreditCard, Check, Star, Wallet, Bitcoin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 
 interface TelegramUser {
   id: number;
@@ -28,6 +31,28 @@ interface Community {
   description: string | null;
   subscription_plans: Plan[];
 }
+
+const PaymentMethodCard = ({ icon: Icon, title, description, onClick }: { 
+  icon: React.ElementType; 
+  title: string; 
+  description: string;
+  onClick: () => void;
+}) => (
+  <Card 
+    className="group cursor-pointer hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
+    onClick={onClick}
+  >
+    <CardContent className="p-6 flex items-center gap-4">
+      <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+        <Icon className="h-6 w-6 text-primary" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-500">{description}</p>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -89,6 +114,11 @@ const TelegramMiniApp = () => {
     if (paymentSection) {
       paymentSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    // Here you would implement the actual payment processing
+    console.log(`Selected payment method: ${method}`);
   };
 
   const getPlanGridCols = (plansCount: number) => {
@@ -189,10 +219,29 @@ const TelegramMiniApp = () => {
           {selectedPlan && (
             <div className="space-y-6 animate-fade-in">
               <h2 className="text-2xl font-semibold text-center">Payment Method</h2>
-              <p className="text-gray-600 text-center">
+              <p className="text-gray-600 text-center mb-8">
                 Choose how you'd like to pay for the {selectedPlan.name} plan
               </p>
-              {/* Payment methods will be added here */}
+              <div className="grid gap-4">
+                <PaymentMethodCard
+                  icon={CreditCard}
+                  title="Credit Card"
+                  description="Pay securely with your credit card via Stripe"
+                  onClick={() => handlePaymentMethodSelect('stripe')}
+                />
+                <PaymentMethodCard
+                  icon={Wallet}
+                  title="PayPal"
+                  description="Fast and secure payment with PayPal"
+                  onClick={() => handlePaymentMethodSelect('paypal')}
+                />
+                <PaymentMethodCard
+                  icon={Bitcoin}
+                  title="Cryptocurrency"
+                  description="Pay with Bitcoin or other cryptocurrencies"
+                  onClick={() => handlePaymentMethodSelect('crypto')}
+                />
+              </div>
             </div>
           )}
         </div>

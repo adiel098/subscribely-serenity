@@ -72,7 +72,6 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       });
 
       setMessage("");
-      toast.success("Broadcast completed successfully!");
     } catch (error) {
       console.error('Error sending broadcast:', error);
       toast.error("Error sending broadcast messages");

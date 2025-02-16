@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, MessagesSquare, Discord, Slack } from "lucide-react";
 
 const PlatformSelect = () => {
   const navigate = useNavigate();
@@ -9,20 +8,20 @@ const PlatformSelect = () => {
   const platforms = [
     {
       name: "Telegram",
-      icon: MessageCircle,
-      color: "border-blue-500 text-blue-500 hover:bg-blue-50",
+      icon: "/lovable-uploads/0f9dcb59-a015-47ed-91ed-0f57d6e2c751.png",
+      color: "border-[#229ED9] text-[#229ED9] hover:bg-blue-50",
       route: "/connect/telegram"
     },
     {
       name: "Discord",
-      icon: Discord,
-      color: "border-indigo-500 text-indigo-500 hover:bg-indigo-50",
+      icon: "/lovable-uploads/c00577e9-67bf-4dcb-b6c9-c821640fcea2.png",
+      color: "border-[#5865F2] text-[#5865F2] hover:bg-indigo-50",
       route: "/connect/discord"
     },
     {
       name: "Slack",
-      icon: Slack,
-      color: "border-green-500 text-green-500 hover:bg-green-50",
+      icon: "/lovable-uploads/214f6259-adad-480f-81ba-77390e675f8b.png",
+      color: "border-[#36C5F0] text-[#36C5F0] hover:bg-green-50",
       route: "/connect/slack"
     }
   ];
@@ -47,7 +46,11 @@ const PlatformSelect = () => {
               variant="outline"
               className={`w-full h-20 border-2 bg-transparent ${platform.color} flex items-center justify-center space-x-3 text-lg transition-all duration-200`}
             >
-              <platform.icon className="w-8 h-8" />
+              <img 
+                src={platform.icon} 
+                alt={`${platform.name} icon`}
+                className="w-8 h-8 object-contain"
+              />
               <span>Connect with {platform.name}</span>
             </Button>
           ))}

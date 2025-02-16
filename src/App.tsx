@@ -36,10 +36,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" />;
   }
 
-  return <>{children}</>;
-};
-
-const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="fixed top-0 left-0 right-0 z-50">
@@ -65,109 +61,107 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SidebarProvider>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route 
-                  path="/platform-select" 
-                  element={
-                    <ProtectedRoute>
-                      <PlatformSelect />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/connect/telegram" 
-                  element={
-                    <ProtectedRoute>
-                      <TelegramConnect />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/members" 
-                  element={
-                    <ProtectedRoute>
-                      <Members />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/subscribers" 
-                  element={
-                    <ProtectedRoute>
-                      <Subscribers />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/subscriptions" 
-                  element={
-                    <ProtectedRoute>
-                      <Subscriptions />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/messages" 
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/analytics" 
-                  element={
-                    <ProtectedRoute>
-                      <Analytics />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/bot-settings" 
-                  element={
-                    <ProtectedRoute>
-                      <BotSettings />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/events" 
-                  element={
-                    <ProtectedRoute>
-                      <Events />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/rewards" 
-                  element={
-                    <ProtectedRoute>
-                      <Rewards />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/settings" 
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route 
+                path="/platform-select" 
+                element={
+                  <ProtectedRoute>
+                    <PlatformSelect />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/connect/telegram" 
+                element={
+                  <ProtectedRoute>
+                    <TelegramConnect />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/members" 
+                element={
+                  <ProtectedRoute>
+                    <Members />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/subscribers" 
+                element={
+                  <ProtectedRoute>
+                    <Subscribers />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/subscriptions" 
+                element={
+                  <ProtectedRoute>
+                    <Subscriptions />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/messages" 
+                element={
+                  <ProtectedRoute>
+                    <Messages />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/analytics" 
+                element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/bot-settings" 
+                element={
+                  <ProtectedRoute>
+                    <BotSettings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/events" 
+                element={
+                  <ProtectedRoute>
+                    <Events />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/rewards" 
+                element={
+                  <ProtectedRoute>
+                    <Rewards />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>

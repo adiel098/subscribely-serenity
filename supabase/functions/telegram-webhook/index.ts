@@ -146,6 +146,43 @@ serve(async (req) => {
       if (messageText?.startsWith('MBF_') && chatId && messageId) {
         console.log(`🔑 Processing verification code ${messageText} for chat ${chatId}`);
         
+        // Get chat info from Telegram to fetch the photo
+        const chatInfoResponse = await fetch(
+          `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ chat_id: chatId })
+          }
+        );
+        
+        const chatInfo = await chatInfoResponse.json();
+        console.log('Chat info:', chatInfo);
+        
+        let photoUrl = null;
+        if (chatInfo.ok && chatInfo.result.photo) {
+          // Get the file path
+          const fileResponse = await fetch(
+            `https://api.telegram.org/bot${BOT_TOKEN}/getFile`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ file_id: chatInfo.result.photo.big_file_id })
+            }
+          );
+          
+          const fileInfo = await fileResponse.json();
+          console.log('File info:', fileInfo);
+          
+          if (fileInfo.ok) {
+            photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.result.file_path}`;
+          }
+        }
+
         // Find profile with this verification code
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
@@ -166,7 +203,7 @@ serve(async (req) => {
 
         const userId = profiles[0].id;
 
-        // Create community
+        // Create community with photo URL
         const { data: community, error: communityError } = await supabase
           .from('communities')
           .insert({
@@ -174,7 +211,8 @@ serve(async (req) => {
             platform: 'telegram',
             name: chatTitle || 'My Telegram Community',
             platform_id: chatId.toString(),
-            telegram_chat_id: chatId.toString()
+            telegram_chat_id: chatId.toString(),
+            telegram_photo_url: photoUrl // Add the photo URL
           })
           .select()
           .single();

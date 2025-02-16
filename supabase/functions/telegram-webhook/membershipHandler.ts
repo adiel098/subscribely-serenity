@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { ChatMemberUpdate } from './types.ts';
 import { logTelegramEvent } from './eventLogger.ts';
@@ -211,7 +212,7 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
         }
 
         console.log('Found community:', community);
-        const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app`;
+        const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
 
         // שליחת הודעה עם כפתור למיני אפ
         const response = await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {

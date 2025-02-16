@@ -73,9 +73,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
             <div className="flex items-center space-x-2">
               <UserCheck className="h-5 w-5 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Can Receive Messages</p>
-                <p className="text-xs text-muted-foreground">Active bot interaction</p>
-                <p className="text-2xl font-bold">{stats.activeMembers}</p>
+                <p className="text-sm text-muted-foreground">Subscribed Members</p>
+                <p className="text-2xl font-bold">{stats.subscribedMembers}</p>
               </div>
             </div>
           </CardContent>
@@ -85,9 +84,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
             <div className="flex items-center space-x-2">
               <UserX className="h-5 w-5 text-red-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Cannot Receive Messages</p>
-                <p className="text-xs text-muted-foreground">Need to start bot</p>
-                <p className="text-2xl font-bold">{stats.inactiveMembers}</p>
+                <p className="text-sm text-muted-foreground">Expired Members</p>
+                <p className="text-2xl font-bold">{stats.expiredMembers}</p>
               </div>
             </div>
           </CardContent>

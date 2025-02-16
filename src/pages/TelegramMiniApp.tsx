@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,6 @@ import { SubscriptionPlans } from "@/components/telegram-mini-app/SubscriptionPl
 import { PaymentMethods } from "@/components/telegram-mini-app/PaymentMethods";
 import { LoadingScreen } from "@/components/telegram-mini-app/LoadingScreen";
 import { CommunityNotFound } from "@/components/telegram-mini-app/CommunityNotFound";
-import { SuccessScreen } from "@/components/telegram-mini-app/SuccessScreen";
 
 export interface Plan {
   id: string;
@@ -25,6 +25,7 @@ export interface Community {
   name: string;
   description: string | null;
   telegram_photo_url: string | null;
+  telegram_invite_link: string | null;
   subscription_plans: Plan[];
 }
 
@@ -84,10 +85,6 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (showSuccess) {
-    return <SuccessScreen />;
-  }
-
   if (loading) {
     return <LoadingScreen />;
   }
@@ -114,6 +111,8 @@ const TelegramMiniApp = () => {
               selectedPaymentMethod={selectedPaymentMethod}
               onPaymentMethodSelect={handlePaymentMethodSelect}
               onCompletePurchase={handleCompletePurchase}
+              communityInviteLink={community.telegram_invite_link}
+              showSuccess={showSuccess}
             />
           )}
 

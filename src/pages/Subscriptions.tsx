@@ -2,14 +2,6 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { CreatePlanDialog } from "@/components/subscriptions/CreatePlanDialog";
 import { EditPlanDialog } from "@/components/subscriptions/EditPlanDialog";
 import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
@@ -94,6 +86,8 @@ const Subscriptions = () => {
     );
   }
 
+  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
+
   return (
     <div className="container max-w-6xl py-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -150,18 +144,35 @@ const Subscriptions = () => {
         handleCreatePlan={() => {}}
       />
 
-      <EditPlanDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-      />
+      {selectedPlan && (
+        <EditPlanDialog
+          isOpen={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          editPlanData={{
+            name: selectedPlan.name,
+            description: selectedPlan.description || "",
+            price: selectedPlan.price.toString(),
+            interval: selectedPlan.interval,
+            features: selectedPlan.features
+          }}
+          setEditPlanData={() => {}}
+          editFeature=""
+          setEditFeature={() => {}}
+          handleAddEditFeature={() => {}}
+          handleRemoveEditFeature={() => {}}
+          handleUpdatePlan={() => {}}
+        />
+      )}
       
-      <DeletePlanDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      />
+      {selectedPlanId && (
+        <DeletePlanDialog
+          isOpen={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          planId={selectedPlanId}
+        />
+      )}
     </div>
   );
 };
 
 export default Subscriptions;
-

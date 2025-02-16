@@ -1,27 +1,36 @@
 
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangleIcon } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  planId: string;
 }
 
-export const DeletePlanDialog = ({ isOpen, onOpenChange, onConfirm }: Props) => {
+export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
   return (
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Delete Subscription Plan</AlertDialogTitle>
-        <AlertDialogDescription>
-          Are you sure you want to delete this subscription plan? This action cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel onClick={() => onOpenChange(false)}>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={onConfirm} className="bg-red-500 hover:bg-red-600">
-          Delete
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangleIcon className="h-5 w-5 text-red-500" />
+            Delete Subscription Plan
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this subscription plan? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive">
+            Delete Plan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

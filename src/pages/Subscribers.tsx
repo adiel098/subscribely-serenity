@@ -18,6 +18,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+// טיפוס עבור navigator עם msSaveBlob
+interface MSNavigator extends Navigator {
+  msSaveBlob?: (blob: Blob, defaultName: string) => boolean;
+}
+
 const Subscribers = () => {
   const { selectedCommunityId } = useCommunityContext();
   const { data: subscribers, isLoading, refetch } = useSubscribers(selectedCommunityId || "");
@@ -64,7 +69,6 @@ const Subscribers = () => {
   };
 
   const handleExport = () => {
-    // הכנת הנתונים לייצוא
     const exportData = filteredSubscribers.map(sub => ({
       Username: sub.telegram_username || 'No username',
       'Telegram ID': sub.telegram_user_id,
@@ -77,7 +81,6 @@ const Subscribers = () => {
       'Joined At': new Date(sub.joined_at).toLocaleDateString(),
     }));
 
-    // המרה ל-CSV
     const headers = Object.keys(exportData[0]);
     const csvRows = [
       headers.join(','),
@@ -88,12 +91,13 @@ const Subscribers = () => {
     ];
     const csvString = csvRows.join('\n');
 
-    // יצירת קובץ והורדה
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, 'subscribers.csv');
+    const msNavigator = navigator as MSNavigator;
+    
+    if (msNavigator.msSaveBlob) {
+      msNavigator.msSaveBlob(blob, 'subscribers.csv');
     } else {
+      const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.setAttribute('download', 'subscribers.csv');
       document.body.appendChild(link);
@@ -169,7 +173,6 @@ const Subscribers = () => {
     return matchesSearch && matchesStatus && matchesPlan;
   });
 
-  // Get unique plans for filter
   const uniquePlans = Array.from(
     new Set((subscribers || []).map((s) => s.plan).filter(Boolean))
   );
@@ -307,4 +310,4 @@ const Subscribers = () => {
   );
 };
 
-export default Dashboard;
+export default Subscribers;

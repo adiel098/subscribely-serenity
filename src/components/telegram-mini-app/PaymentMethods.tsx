@@ -39,7 +39,14 @@ export const PaymentMethods = ({
     }
 
     try {
-      // יצירת רשומת תשלום בדמו
+      console.log('Creating payment with:', {
+        plan_id: selectedPlan.id,
+        community_id: selectedPlan.community_id,
+        amount: selectedPlan.price,
+        payment_method: selectedPaymentMethod,
+        status: 'completed'
+      });
+
       const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
@@ -54,6 +61,7 @@ export const PaymentMethods = ({
         .maybeSingle();
 
       if (error) {
+        console.error('Payment error:', error);
         toast({
           variant: "destructive",
           title: "Error processing payment",
@@ -62,7 +70,6 @@ export const PaymentMethods = ({
         return;
       }
 
-      // אם הכל בסדר, נעבור למסך הבא
       toast({
         title: "Payment Successful! 🎉",
         description: "You can now join the community.",
@@ -71,6 +78,7 @@ export const PaymentMethods = ({
       onCompletePurchase();
       
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         variant: "destructive",
         title: "Error processing payment",

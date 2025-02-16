@@ -39,13 +39,16 @@ serve(async (req) => {
         id,
         name,
         description,
+        telegram_photo_url,
+        telegram_invite_link,
         subscription_plans (
           id,
           name,
           description,
           price,
           interval,
-          features
+          features,
+          community_id
         )
       `)
       .eq('id', start)
@@ -60,6 +63,17 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
+
+    // עדכון תוכניות המנוי עם ה-community_id
+    const plansWithCommunityId = community.subscription_plans.map(plan => ({
+      ...plan,
+      community_id: community.id
+    }));
+
+    const communityWithUpdatedPlans = {
+      ...community,
+      subscription_plans: plansWithCommunityId
+    };
 
     // Parse Telegram init data if available
     let telegramUser = null;
@@ -78,7 +92,7 @@ serve(async (req) => {
     // Return community and subscription plan details
     return new Response(
       JSON.stringify({
-        community,
+        community: communityWithUpdatedPlans,
         telegramUser,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

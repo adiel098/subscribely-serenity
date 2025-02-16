@@ -1,16 +1,9 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, ChevronRight, Check } from "lucide-react";
 
 interface PaymentMethodCardProps {
   icon: React.ElementType;
@@ -25,51 +18,18 @@ interface PaymentMethodCardProps {
 export const PaymentMethodCard = ({ 
   icon: Icon, 
   title, 
-  description, 
   isActive,
-  onToggle,
-  isConfigured,
-  onConfigure
+  onToggle
 }: PaymentMethodCardProps) => (
-  <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-    <CardHeader>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-xl">{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-        </div>
-        <Switch checked={isActive} onCheckedChange={onToggle} disabled={!isConfigured} />
+  <Card 
+    className={`cursor-pointer transition-all duration-300 ${isActive ? 'border-primary shadow-lg' : 'hover:border-primary/50 hover:shadow-md'}`}
+    onClick={() => onToggle(true)}
+  >
+    <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+      <div className={`p-3 rounded-lg ${isActive ? 'bg-primary/20' : 'bg-primary/10'} transition-colors`}>
+        <Icon className="h-6 w-6 text-primary" />
       </div>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center space-x-2">
-        {isConfigured ? (
-          <div className="flex items-center text-sm text-green-600">
-            <Check className="h-4 w-4 mr-1" />
-            Configured
-          </div>
-        ) : (
-          <div className="flex items-center text-sm text-amber-600">
-            <AlertCircle className="h-4 w-4 mr-1" />
-            Configuration required
-          </div>
-        )}
-      </div>
+      <h3 className="font-medium text-gray-900">{title}</h3>
     </CardContent>
-    <CardFooter>
-      <Button
-        variant="ghost"
-        className="w-full justify-between group-hover:bg-primary/5 transition-colors"
-        onClick={onConfigure}
-      >
-        Configure settings
-        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-      </Button>
-    </CardFooter>
   </Card>
 );

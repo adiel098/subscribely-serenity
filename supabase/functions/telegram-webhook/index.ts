@@ -1,11 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('🔄 🔄 🔄 Telegram bot webhook is running...');
+console.log('���� 🔄 🔄 Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -430,16 +429,23 @@ serve(async (req) => {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ file_id: chatInfo.result.photo.big_file_id })
+              body: JSON.stringify({ 
+                file_id: chatInfo.result.photo?.big_file_id || chatInfo.result.photo?.small_file_id 
+              })
             }
           );
           
           const fileInfo = await fileResponse.json();
           console.log('File info:', fileInfo);
           
-          if (fileInfo.ok) {
+          if (fileInfo.ok && fileInfo.result?.file_path) {
             photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.result.file_path}`;
+            console.log('Photo URL set to:', photoUrl);
+          } else {
+            console.log('Could not get file path from Telegram:', fileInfo);
           }
+        } else {
+          console.log('Chat has no photo or chat info request failed:', chatInfo);
         }
 
         // Create invite link for the chat

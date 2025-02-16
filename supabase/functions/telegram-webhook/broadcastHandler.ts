@@ -20,7 +20,6 @@ export async function sendBroadcastMessage(
   try {
     console.log('Starting broadcast for community:', communityId);
     console.log('Filter type:', filterType);
-    console.log('Include button:', includeButton);
 
     // Get bot token and community details
     const [settingsResult, communityResult] = await Promise.all([
@@ -43,7 +42,6 @@ export async function sendBroadcastMessage(
       throw new Error('Bot token not found');
     }
 
-    console.log('Community miniapp URL:', communityResult.data.miniapp_url);
     console.log('Successfully retrieved bot token and community details');
 
     // Get all members based on filter
@@ -90,28 +88,22 @@ export async function sendBroadcastMessage(
     const BATCH_SIZE = 20;
 
     // Prepare inline keyboard if button is requested
-    let inlineKeyboard;
-    if (includeButton && communityResult.data.miniapp_url) {
-      console.log('Creating inline keyboard with join button');
-      inlineKeyboard = {
-        inline_keyboard: [[
-          {
-            text: "הצטרפות לקהילה 🚀",
-            web_app: {
-              url: `${communityResult.data.miniapp_url}?start=${communityId}`
-            }
+    const inlineKeyboard = includeButton && communityResult.data.miniapp_url ? {
+      inline_keyboard: [[
+        {
+          text: "הצטרפות לקהילה 🚀",
+          web_app: {
+            url: `${communityResult.data.miniapp_url}?start=${communityId}`
           }
-        ]]
-      };
-      console.log('Inline keyboard:', JSON.stringify(inlineKeyboard));
-    }
+        }
+      ]]
+    } : undefined;
 
     // Send message to each member
     for (let i = 0; i < members.length; i++) {
       const member = members[i];
       try {
         console.log(`Attempting to send message to user ${member.telegram_user_id}`);
-        console.log('With inline keyboard:', inlineKeyboard ? 'yes' : 'no');
         
         // Check if user can receive messages
         const canReceiveMessages = await getBotChatMember(

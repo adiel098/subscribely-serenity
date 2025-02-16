@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,12 +41,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <Navbar />
-      </div>
-      <div className="fixed inset-0 top-16">
+      <Navbar />
+      <div className="flex h-[calc(100vh-4rem)] pt-16">
         <AppSidebar />
-        <main className="pl-[280px] pr-4 pt-4 h-full overflow-auto">
+        <main className="flex-1 overflow-auto pl-[280px] pr-4 pt-4">
           <div className="container mx-auto max-w-7xl">
             {children}
           </div>

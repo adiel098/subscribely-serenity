@@ -105,7 +105,14 @@ const TelegramConnect = () => {
               <div className="flex-1">
                 <h3 className="text-lg font-medium text-gray-900">Add our bot to your group</h3>
                 <p className="mt-1 text-gray-500">
-                  Add @YourGlobalBotName to your Telegram group and make it an administrator with these permissions:
+                  Add <a 
+                    href="https://t.me/membifybot" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    @MembifyBot
+                  </a> to your Telegram group and make it an administrator with these permissions:
                 </p>
                 <ul className="mt-2 text-sm text-gray-600 list-disc list-inside">
                   <li>Delete messages</li>
@@ -113,11 +120,12 @@ const TelegramConnect = () => {
                   <li>Add new admins</li>
                 </ul>
                 <a 
-                  href="https://t.me/YourGlobalBotName" 
+                  href="https://t.me/membifybot" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-block mt-2 text-blue-600 hover:text-blue-800"
+                  className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-800"
                 >
+                  <MessageCircle className="mr-2 h-4 w-4" />
                   Open Bot
                 </a>
               </div>

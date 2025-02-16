@@ -1,13 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sparkle, CreditCard, Check, Star, Wallet, Bitcoin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
 
 interface TelegramUser {
   id: number;
@@ -31,28 +29,6 @@ interface Community {
   description: string | null;
   subscription_plans: Plan[];
 }
-
-const PaymentMethodCard = ({ icon: Icon, title, description, onClick }: { 
-  icon: React.ElementType; 
-  title: string; 
-  description: string;
-  onClick: () => void;
-}) => (
-  <Card 
-    className="group cursor-pointer hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
-    onClick={onClick}
-  >
-    <CardContent className="p-6 flex items-center gap-4">
-      <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-        <Icon className="h-6 w-6 text-primary" />
-      </div>
-      <div>
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-500">{description}</p>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();

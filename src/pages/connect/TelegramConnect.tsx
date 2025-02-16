@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { MessageCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -10,63 +9,55 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const TelegramConnect = () => {
-  const [botToken, setBotToken] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleBotSetup = async () => {
+  const handleCommunitySetup = async () => {
     try {
-      if (!botToken || !user) return;
+      if (!user) return;
       
-      setIsVerifying(true);
+      setIsCreating(true);
 
-      // First create a new community
+      // Create a new community
       const { data: community, error: communityError } = await supabase
         .from('communities')
         .insert({
           owner_id: user.id,
           platform: 'telegram',
-          name: 'My Telegram Community', // You might want to make this configurable
+          name: 'My Telegram Community',
         })
         .select()
         .single();
 
       if (communityError) throw communityError;
 
-      // Then set up the bot settings
-      const response = await fetch('/api/telegram-webhook/setup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          communityId: community.id,
-          token: botToken,
-        }),
-      });
+      // Set up the bot settings for this community (without bot token)
+      const { error: settingsError } = await supabase
+        .from('telegram_bot_settings')
+        .insert({
+          community_id: community.id,
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to set up bot');
-      }
+      if (settingsError) throw settingsError;
 
       toast({
         title: "Success!",
-        description: "Your Telegram bot has been successfully set up. Now add it to your group as an admin.",
+        description: "Your community has been created. Now add our bot to your Telegram group as an admin.",
       });
 
-      // Navigate to the dashboard or next setup step
+      // Navigate to the dashboard
       navigate('/dashboard');
     } catch (error) {
       console.error('Setup error:', error);
       toast({
         title: "Error",
-        description: "Failed to set up the Telegram bot. Please try again.",
+        description: "Failed to set up the community. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsVerifying(false);
+      setIsCreating(false);
     }
   };
 
@@ -89,17 +80,17 @@ const TelegramConnect = () => {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">Create your Telegram bot</h3>
+                <h3 className="text-lg font-medium text-gray-900">Add our bot to your group</h3>
                 <p className="mt-1 text-gray-500">
-                  First, create a new bot with @BotFather on Telegram and get your bot token
+                  Add @YourGlobalBotName to your Telegram group and make it an administrator
                 </p>
                 <a 
-                  href="https://t.me/botfather" 
+                  href="https://t.me/YourGlobalBotName" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-block mt-2 text-blue-600 hover:text-blue-800"
                 >
-                  Open @BotFather
+                  Open Bot
                 </a>
               </div>
             </div>
@@ -110,47 +101,18 @@ const TelegramConnect = () => {
                   <span className="text-blue-600 font-semibold">2</span>
                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">Enter your bot token</h3>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Create your community</h3>
                 <p className="mt-1 text-gray-500">
-                  Enter the token you received from @BotFather
+                  Click below to create your community and link it to your Telegram group
                 </p>
-                <div className="mt-4">
-                  <Input
-                    type="text"
-                    placeholder="Enter your bot token"
-                    value={botToken}
-                    onChange={(e) => setBotToken(e.target.value)}
-                  />
-                </div>
                 <Button 
                   className="mt-4"
-                  onClick={handleBotSetup}
-                  disabled={!botToken || isVerifying}
+                  onClick={handleCommunitySetup}
+                  disabled={isCreating}
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  {isVerifying ? "Verifying..." : "Verify Bot Token"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold">3</span>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Add bot to your group</h3>
-                <p className="mt-1 text-gray-500">
-                  Add your bot to your Telegram group as an administrator
-                </p>
-                <Button 
-                  className="mt-4" 
-                  variant="outline" 
-                  disabled={!botToken}
-                >
-                  Add Bot to Group
+                  {isCreating ? "Creating..." : "Create Community"}
                 </Button>
               </div>
             </div>

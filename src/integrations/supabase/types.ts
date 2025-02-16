@@ -130,7 +130,6 @@ export type Database = {
       }
       telegram_bot_settings: {
         Row: {
-          bot_token: string
           chat_id: string | null
           community_id: string
           created_at: string
@@ -140,7 +139,6 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
-          bot_token: string
           chat_id?: string | null
           community_id: string
           created_at?: string
@@ -150,7 +148,6 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
-          bot_token?: string
           chat_id?: string | null
           community_id?: string
           created_at?: string
@@ -203,6 +200,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      telegram_global_settings: {
+        Row: {
+          bot_token: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bot_token: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_token?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

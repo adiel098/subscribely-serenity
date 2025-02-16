@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
@@ -131,6 +130,9 @@ const Subscriptions = () => {
                 <SparklesIcon className="h-5 w-5 text-primary" />
                 Create New Subscription Plan
               </DialogTitle>
+              <p className="text-sm text-gray-500">
+                Fill in the details below to create a new subscription plan for your community.
+              </p>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">

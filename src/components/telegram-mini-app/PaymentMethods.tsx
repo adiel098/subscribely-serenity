@@ -39,11 +39,12 @@ export const PaymentMethods = ({
     }
 
     try {
-      // בדמו - יצירת רשומת תשלום מוצלחת
+      // יצירת רשומת תשלום בדמו
       const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
+          community_id: selectedPlan.community_id, // הוספנו את ה-community_id
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',

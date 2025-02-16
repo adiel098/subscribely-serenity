@@ -441,8 +441,10 @@ export type Database = {
         Row: {
           community_id: string
           id: string
+          is_active: boolean | null
           joined_at: string
           last_active: string | null
+          last_checked: string | null
           subscription_end_date: string | null
           subscription_plan_id: string | null
           subscription_start_date: string | null
@@ -454,8 +456,10 @@ export type Database = {
         Insert: {
           community_id: string
           id?: string
+          is_active?: boolean | null
           joined_at?: string
           last_active?: string | null
+          last_checked?: string | null
           subscription_end_date?: string | null
           subscription_plan_id?: string | null
           subscription_start_date?: string | null
@@ -467,8 +471,10 @@ export type Database = {
         Update: {
           community_id?: string
           id?: string
+          is_active?: boolean | null
           joined_at?: string
           last_active?: string | null
+          last_checked?: string | null
           subscription_end_date?: string | null
           subscription_plan_id?: string | null
           subscription_start_date?: string | null

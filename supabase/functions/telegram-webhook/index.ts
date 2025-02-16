@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -135,11 +136,18 @@ serve(async (req) => {
       const messageText = update.message?.text;
       const chatId = update.message?.chat.id;
 
+      console.log('Message text:', messageText);
+      console.log('Chat ID:', chatId);
+
       // בדיקה אם ההודעה מגיעה מהstart parameter
       if (messageText && chatId && messageText.startsWith('/start')) {
+        console.log('Detected /start command');
         const startParams = messageText.split(' ')[1]; // מקבל את הפרמטרים אחרי ה-/start
+        console.log('Start parameters:', startParams);
+        
         if (startParams) {
           const communityId = startParams;
+          console.log('Looking for community with ID:', communityId);
           
           // חיפוש הקהילה לפי ה-ID
           const { data: community, error: communityError } = await supabase
@@ -149,6 +157,7 @@ serve(async (req) => {
             .single();
 
           if (communityError || !community) {
+            console.error('Community not found:', communityError);
             await sendTelegramMessage(BOT_TOKEN, chatId, "הקהילה לא נמצאה. אנא בדקו את הלינק ונסו שוב.");
             return new Response(JSON.stringify({ success: true }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,43 +165,7 @@ serve(async (req) => {
             });
           }
 
-          // יצירת לינק למיני אפליקציה
-          const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
-          
-          // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
-          const message = `
-ברוכים הבאים לקהילת ${community.name}! 
-לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
-          `;
-
-          const replyMarkup = {
-            inline_keyboard: [[
-              {
-                text: "הצטרפו לקהילה 🚀",
-                web_app: { url: miniAppUrl }
-              }
-            ]]
-          };
-
-          await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
-        }
-      } else if (messageText && chatId && messageText.startsWith('COM_')) {
-        // בדיקה אם ההודעה היא קוד קהילה (למשל, מתחיל ב-COM_)
-        if (messageText.startsWith('COM_')) {
-          // חיפוש הקהילה לפי הקוד
-          const { data: community, error: communityError } = await supabase
-            .from('communities')
-            .select('id, name')
-            .eq('platform_id', messageText)
-            .single();
-
-          if (communityError || !community) {
-            await sendTelegramMessage(BOT_TOKEN, chatId, "קוד הקהילה לא נמצא. אנא בדקו את הקוד ונסו שוב.");
-            return new Response(JSON.stringify({ success: true }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            });
-          }
+          console.log('Found community:', community);
 
           // יצירת לינק למיני אפליקציה
           const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
@@ -212,8 +185,55 @@ serve(async (req) => {
             ]]
           };
 
-          await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
+          console.log('Sending welcome message with mini app button');
+          const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
+          console.log('Message sent result:', result);
         }
+      }
+      
+      // בדיקה אם ההודעה היא קוד קהילה
+      else if (messageText && chatId && messageText.startsWith('COM_')) {
+        console.log('Detected community code:', messageText);
+        
+        // חיפוש הקהילה לפי הקוד
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('id, name')
+          .eq('platform_id', messageText)
+          .single();
+
+        if (communityError || !community) {
+          console.error('Community not found by code:', communityError);
+          await sendTelegramMessage(BOT_TOKEN, chatId, "קוד הקהילה לא נמצא. אנא בדקו את הקוד ונסו שוב.");
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+
+        console.log('Found community by code:', community);
+
+        // יצירת לינק למיני אפליקציה
+        const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+        
+        // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
+        const message = `
+ברוכים הבאים לקהילת ${community.name}! 
+לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
+        `;
+
+        const replyMarkup = {
+          inline_keyboard: [[
+            {
+              text: "הצטרפו לקהילה 🚀",
+              web_app: { url: miniAppUrl }
+            }
+          ]]
+        };
+
+        console.log('Sending welcome message with mini app button');
+        const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
+        console.log('Message sent result:', result);
       }
 
       // Handle verification messages (either from regular message or channel post)
@@ -350,9 +370,10 @@ serve(async (req) => {
   }
 })
 
-// Helper functions stay the same
+// Helper functions
 async function sendTelegramMessage(token: string, chatId: number, text: string) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`
+  console.log('Sending telegram message:', { chatId, text });
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -364,11 +385,14 @@ async function sendTelegramMessage(token: string, chatId: number, text: string) 
     }),
   })
   
-  return response.json()
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
 }
 
 async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
   const url = `https://api.telegram.org/bot${token}/sendMessage`
+  console.log('Sending telegram message with markup:', { chatId, text, reply_markup });
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -382,11 +406,14 @@ async function sendTelegramMessageWithMarkup(token: string, chatId: number, text
     }),
   })
   
-  return response.json()
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
 }
 
 async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
   const url = `https://api.telegram.org/bot${token}/deleteMessage`
+  console.log('Deleting telegram message:', { chatId, messageId });
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -398,5 +425,7 @@ async function deleteTelegramMessage(token: string, chatId: number, messageId: n
     }),
   })
   
-  return response.json()
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
 }

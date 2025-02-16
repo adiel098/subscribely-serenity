@@ -11,14 +11,13 @@ import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
 
 const Subscribers = () => {
   const { selectedCommunityId } = useCommunityContext();
-  const { data: subscribers, isLoading } = useSubscribers(selectedCommunityId || "");
+  const { data: subscribers, isLoading, refetch } = useSubscribers(selectedCommunityId || "");
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleEditSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+    refetch();
   };
 
   const handleRemoveSubscriber = async (subscriber: any) => {
@@ -33,7 +32,8 @@ const Subscribers = () => {
         .update({
           subscription_status: false,
           subscription_end_date: new Date().toISOString(),
-          is_active: false
+          is_active: false,
+          subscription_plan_id: null  // Update all fields in one operation
         })
         .eq('id', subscriber.id)
         .select();
@@ -41,38 +41,19 @@ const Subscribers = () => {
       console.log('Update response:', { data: updateData, error: updateError });
 
       if (updateError) {
-        console.error('Error in first update:', updateError);
+        console.error('Error in update:', updateError);
         throw updateError;
       }
 
-      console.log('Successfully updated subscription status');
-      console.log('Attempting to remove subscription plan reference...');
-
-      // Then, remove the subscription plan reference
-      const { data: planData, error: planError } = await supabase
-        .from('telegram_chat_members')
-        .update({
-          subscription_plan_id: null
-        })
-        .eq('id', subscriber.id)
-        .select();
-
-      console.log('Plan removal response:', { data: planData, error: planError });
-
-      if (planError) {
-        console.error('Error in plan removal:', planError);
-        throw planError;
-      }
-
-      console.log('Successfully removed subscription plan reference');
+      console.log('Successfully updated subscriber status');
 
       toast({
         title: "Success",
         description: "Subscription cancelled successfully",
       });
       
-      console.log('Invalidating queries to refresh data...');
-      queryClient.invalidateQueries({ queryKey: ['subscribers', selectedCommunityId] });
+      console.log('Refreshing data...');
+      await refetch();
       console.log('Data refresh completed');
     } catch (error) {
       console.error('Detailed error in subscription removal:', error);

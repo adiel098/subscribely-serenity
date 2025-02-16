@@ -45,6 +45,7 @@ export const useSubscribers = (communityId: string) => {
         throw error;
       }
 
+      console.log('Fetched subscribers:', data);
       return data as Subscriber[];
     },
     enabled: Boolean(communityId),

@@ -18,7 +18,7 @@ export interface Plan {
   price: number;
   interval: string;
   features: string[];
-  community_id: string; // הוספנו את שדה ה-community_id
+  community_id: string;
 }
 
 export interface Community {
@@ -45,6 +45,7 @@ const TelegramMiniApp = () => {
 
     const fetchCommunityData = async () => {
       try {
+        console.log('Fetching community data with params:', { startParam, initData });
         const response = await supabase.functions.invoke("telegram-mini-app", {
           body: { 
             start: startParam,
@@ -52,11 +53,18 @@ const TelegramMiniApp = () => {
           }
         });
 
+        console.log('Response from telegram-mini-app:', response);
+
         if (response.data?.community) {
           setCommunity(response.data.community);
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load community data. Please try again."
+        });
       } finally {
         setLoading(false);
       }
@@ -64,8 +72,11 @@ const TelegramMiniApp = () => {
 
     if (startParam) {
       fetchCommunityData();
+    } else {
+      console.error("No start parameter provided");
+      setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);

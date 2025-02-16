@@ -2,7 +2,17 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, EditIcon, TrashIcon, StarIcon } from "lucide-react";
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { 
+  AlertDialog, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger,
+  AlertDialogCancel,
+  AlertDialogAction
+} from "@/components/ui/alert-dialog";
 
 interface SubscriptionPlan {
   id: string;
@@ -74,13 +84,13 @@ export const SubscriptionPlanCard = ({
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <Button variant="outline">Cancel</Button>
-                  <Button 
-                    variant="destructive" 
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
                     onClick={() => onDelete(plan.id)}
                   >
                     Delete
-                  </Button>
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -103,12 +113,6 @@ export const SubscriptionPlanCard = ({
             ))}
           </ul>
         )}
-
-        <div className="mt-6">
-          <Button className="w-full gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" size="lg">
-            Choose Plan
-          </Button>
-        </div>
       </div>
     </Card>
   );

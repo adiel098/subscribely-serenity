@@ -26,6 +26,5 @@ enabled = true
 [realtime]
 enabled = true
 
-[[functions]]
-name = "telegram-webhook"
+[functions.telegram-webhook]
 verify_jwt = false

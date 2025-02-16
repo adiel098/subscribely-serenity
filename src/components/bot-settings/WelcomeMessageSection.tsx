@@ -1,7 +1,5 @@
 
 import { MessageSquare, Save } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,15 +48,6 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={settings.auto_welcome_message}
-                onCheckedChange={(checked) =>
-                  updateSettings.mutate({ auto_welcome_message: checked })
-                }
-              />
-              <Label>Send automatic welcome message</Label>
-            </div>
             <Textarea
               value={draftMessage}
               onChange={(e) => setDraftMessage(e.target.value)}

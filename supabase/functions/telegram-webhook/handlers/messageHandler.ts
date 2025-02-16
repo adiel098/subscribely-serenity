@@ -48,7 +48,7 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
             reply_markup: {
               inline_keyboard: [[
                 {
-                  text: "הצטרפות לקהילה 🚀",
+                  text: "Join Community 🚀",
                   web_app: {
                     url: `${miniAppUrl}?start=${communityId}`
                   }

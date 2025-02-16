@@ -12,7 +12,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon, StarIcon, ZapIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useCommunityContext } from "@/App";
+
 type IntervalType = "monthly" | "quarterly" | "half-yearly" | "yearly" | "one-time";
+
 const intervalColors = {
   monthly: "from-blue-50 to-blue-100 border-blue-200",
   quarterly: "from-green-50 to-green-100 border-green-200",
@@ -20,20 +22,18 @@ const intervalColors = {
   yearly: "from-orange-50 to-orange-100 border-orange-200",
   "one-time": "from-pink-50 to-pink-100 border-pink-200"
 };
+
 const intervalLabels = {
-  monthly: "חודשי",
-  quarterly: "רבעוני",
-  "half-yearly": "חצי שנתי",
-  yearly: "שנתי",
-  "one-time": "חד פעמי"
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  "half-yearly": "Half-Yearly",
+  yearly: "Yearly",
+  "one-time": "One-Time"
 };
+
 const Subscriptions = () => {
-  const {
-    data: communities
-  } = useCommunities();
-  const {
-    selectedCommunityId
-  } = useCommunityContext();
+  const { data: communities } = useCommunities();
+  const { selectedCommunityId } = useCommunityContext();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -45,13 +45,8 @@ const Subscriptions = () => {
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
-  const {
-    plans,
-    isLoading,
-    createPlan,
-    updatePlan,
-    deletePlan
-  } = useSubscriptionPlans(selectedCommunityId ?? "");
+  const { plans, isLoading, createPlan, updatePlan, deletePlan } = useSubscriptionPlans(selectedCommunityId ?? "");
+
   const handleCreatePlan = async () => {
     if (!selectedCommunityId) {
       toast.error("Please select a community");
@@ -80,10 +75,12 @@ const Subscriptions = () => {
       toast.error("Failed to create plan");
     }
   };
+
   const handleDeleteClick = (planId: string) => {
     setPlanToDelete(planId);
     setIsDeleteDialogOpen(true);
   };
+
   const handleConfirmDelete = async () => {
     if (planToDelete) {
       try {
@@ -97,6 +94,7 @@ const Subscriptions = () => {
       }
     }
   };
+
   const handleDeletePlan = async (planId: string) => {
     if (confirm("Are you sure you want to delete this subscription plan?")) {
       try {
@@ -108,6 +106,7 @@ const Subscriptions = () => {
       }
     }
   };
+
   const [newFeature, setNewFeature] = useState("");
   const handleAddFeature = () => {
     if (newFeature.trim()) {
@@ -118,42 +117,52 @@ const Subscriptions = () => {
       setNewFeature("");
     }
   };
+
   const handleRemoveFeature = (index: number) => {
     setNewPlan(prev => ({
       ...prev,
       features: prev.features.filter((_, i) => i !== index)
     }));
   };
+
   if (isLoading) {
-    return <div className="w-full h-full flex items-center justify-center">
+    return (
+      <div className="w-full h-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>;
+      </div>
+    );
   }
+
   if (!selectedCommunityId) {
-    return <div className="w-full h-full flex items-center justify-center">
+    return (
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center space-y-4">
           <CrownIcon className="h-12 w-12 text-gray-400 mx-auto" />
           <p className="text-gray-600">Select a community to view subscription plans</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="w-full max-w-7xl p-8 space-y-12 bg-white min-h-screen mx-0 px-[15px]">
+
+  return (
+    <div className="w-full max-w-7xl p-8 space-y-12 bg-white min-h-screen mx-0 px-[15px]">
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
             <CrownIcon className="h-10 w-10 text-yellow-500" />
-            תוכניות מנוי
+            Subscription Plans
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl">
-            צור ונהל תוכניות מנוי עבור חברי הקהילה שלך ✨
+            Create and manage subscription plans for your community members ✨
           </p>
         </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
-        {plans?.map((plan, index) => <Card key={plan.id} className={`group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in bg-gradient-to-br h-full flex flex-col ${intervalColors[plan.interval as IntervalType]}`} style={{
-        animationDelay: `${index * 100}ms`
-      }}>
+        {plans?.map((plan, index) => (
+          <Card key={plan.id} className={`group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in bg-gradient-to-br h-full flex flex-col ${intervalColors[plan.interval as IntervalType]}`} style={{
+            animationDelay: `${index * 100}ms`
+          }}>
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/50 to-primary"></div>
             <div className="p-8 flex flex-col flex-grow">
               <div className="flex justify-between items-start">
@@ -202,14 +211,16 @@ const Subscriptions = () => {
               {plan.description && <p className="text-gray-600 leading-relaxed mt-4">{plan.description}</p>}
               
               {plan.features && plan.features.length > 0 && <ul className="space-y-4 mt-6 flex-grow">
-                  {plan.features.map((feature, index) => <li key={index} className="flex items-start gap-3 animate-fade-in" style={{
-              animationDelay: `${index * 100}ms`
-            }}>
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 animate-fade-in" style={{
+                      animationDelay: `${index * 100}ms`
+                    }}>
                       <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <CheckIcon className="h-3.5 w-3.5 text-green-600" />
                       </div>
                       <span className="text-gray-700 leading-tight">{feature}</span>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>}
 
               <div className="mt-6">
@@ -219,7 +230,8 @@ const Subscriptions = () => {
                 </Button>
               </div>
             </div>
-          </Card>)}
+          </Card>
+        ))}
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -249,32 +261,54 @@ const Subscriptions = () => {
               <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
               <div className="grid gap-2">
                 <Label htmlFor="name" className="text-base">Plan Name</Label>
-                <Input id="name" placeholder='e.g. "Premium Plan"' value={newPlan.name} onChange={e => setNewPlan(prev => ({
-                ...prev,
-                name: e.target.value
-              }))} className="text-lg" />
+                <Input 
+                  id="name" 
+                  placeholder='e.g. "Premium Plan"' 
+                  value={newPlan.name}
+                  onChange={e => setNewPlan(prev => ({
+                    ...prev,
+                    name: e.target.value
+                  }))}
+                  className="text-lg"
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="description" className="text-base">Description</Label>
-                <Textarea id="description" placeholder="Describe the exclusive benefits of this plan..." value={newPlan.description} onChange={e => setNewPlan(prev => ({
-                ...prev,
-                description: e.target.value
-              }))} className="min-h-[100px] text-base" />
+                <Textarea 
+                  id="description" 
+                  placeholder="Describe the exclusive benefits of this plan..." 
+                  value={newPlan.description}
+                  onChange={e => setNewPlan(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))}
+                  className="min-h-[100px] text-base"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="price" className="text-base">Price</Label>
-                  <Input id="price" type="number" placeholder="0.00" value={newPlan.price} onChange={e => setNewPlan(prev => ({
-                  ...prev,
-                  price: e.target.value
-                }))} className="text-lg" />
+                  <Input 
+                    id="price" 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={newPlan.price}
+                    onChange={e => setNewPlan(prev => ({
+                      ...prev,
+                      price: e.target.value
+                    }))}
+                    className="text-lg"
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="interval" className="text-base">Billing Interval</Label>
-                  <Select value={newPlan.interval} onValueChange={(value: IntervalType) => setNewPlan(prev => ({
-                  ...prev,
-                  interval: value
-                }))}>
+                  <Select 
+                    value={newPlan.interval}
+                    onValueChange={(value: IntervalType) => setNewPlan(prev => ({
+                      ...prev,
+                      interval: value
+                    }))}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -291,21 +325,35 @@ const Subscriptions = () => {
               <div className="grid gap-4">
                 <Label className="text-base">Features</Label>
                 <div className="flex gap-2">
-                  <Input placeholder="Add a feature..." value={newFeature} onChange={e => setNewFeature(e.target.value)} onKeyPress={e => e.key === "Enter" && handleAddFeature()} />
+                  <Input
+                    placeholder="Add a feature..."
+                    value={newFeature}
+                    onChange={e => setNewFeature(e.target.value)}
+                    onKeyPress={e => e.key === "Enter" && handleAddFeature()}
+                  />
                   <Button onClick={handleAddFeature}>Add</Button>
                 </div>
                 <ul className="space-y-2">
-                  {newPlan.features.map((feature, index) => <li key={index} className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in" style={{
-                  animationDelay: `${index * 50}ms`
-                }}>
+                  {newPlan.features.map((feature, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                       <div className="flex items-center gap-2">
                         <CheckIcon className="h-5 w-5 text-green-500" />
                         <span className="text-gray-700">{feature}</span>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveFeature(index)} className="hover:bg-red-50 hover:text-red-500">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveFeature(index)}
+                        className="hover:bg-red-50 hover:text-red-500"
+                      >
                         <TrashIcon className="h-4 w-4" />
                       </Button>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -321,6 +369,8 @@ const Subscriptions = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Subscriptions;

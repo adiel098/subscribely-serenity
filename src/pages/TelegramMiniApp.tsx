@@ -18,7 +18,7 @@ export interface Plan {
   price: number;
   interval: string;
   features: string[];
-  community_id: string; // הוספנו את שדה ה-community_id
+  community_id: string;
 }
 
 export interface Community {
@@ -30,6 +30,11 @@ export interface Community {
   subscription_plans: Plan[];
 }
 
+export interface TelegramUser {
+  id: number;
+  username?: string;
+}
+
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -37,6 +42,7 @@ const TelegramMiniApp = () => {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,6 +60,9 @@ const TelegramMiniApp = () => {
 
         if (response.data?.community) {
           setCommunity(response.data.community);
+        }
+        if (response.data?.telegramUser) {
+          setTelegramUser(response.data.telegramUser);
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
@@ -114,6 +123,7 @@ const TelegramMiniApp = () => {
               onCompletePurchase={handleCompletePurchase}
               communityInviteLink={community.telegram_invite_link}
               showSuccess={showSuccess}
+              telegramUser={telegramUser}
             />
           )}
 

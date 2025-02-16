@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
+import { useCommunityContext } from '@/App';
 import {
   AreaChart,
   Area,
@@ -18,19 +19,12 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: communities, isLoading } = useCommunities();
-  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
+  const { selectedCommunityId } = useCommunityContext();
 
   const addNewCommunity = () => {
     navigate('/platform-select');
@@ -59,61 +53,14 @@ const Dashboard = () => {
     );
   }
 
-  if (!selectedCommunity && communities.length > 0) {
-    setSelectedCommunity(communities[0].id);
-  }
+  const currentCommunity = communities.find(c => c.id === selectedCommunityId) || communities[0];
 
-  const currentCommunity = communities.find(c => c.id === selectedCommunity) || communities[0];
+  if (!currentCommunity) {
+    return null;
+  }
 
   return (
     <div className="h-full space-y-6">
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4 flex-1">
-              <Select
-                value={selectedCommunity || ''}
-                onValueChange={(value) => setSelectedCommunity(value)}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue>
-                    <div className="flex items-center space-x-2">
-                      {currentCommunity.platform === 'telegram' ? 
-                        <Bot className="h-4 w-4" /> : 
-                        <Layout className="h-4 w-4" />
-                      }
-                      <span>{currentCommunity.name}</span>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {communities.map((community) => (
-                    <SelectItem key={community.id} value={community.id}>
-                      <div className="flex items-center space-x-2">
-                        {community.platform === 'telegram' ? 
-                          <Bot className="h-4 w-4" /> : 
-                          <Layout className="h-4 w-4" />
-                        }
-                        <span>{community.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex space-x-4">
-              <Button variant="outline" size="icon">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <Button onClick={addNewCommunity}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                New Community
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-4 gap-6">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">

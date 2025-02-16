@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,9 +28,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 const queryClient = new QueryClient();
+
+type CommunityContextType = {
+  selectedCommunityId: string | null;
+  setSelectedCommunityId: (id: string | null) => void;
+};
+
+const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
+
+export const useCommunityContext = () => {
+  const context = useContext(CommunityContext);
+  if (!context) {
+    throw new Error('useCommunityContext must be used within a CommunityProvider');
+  }
+  return context;
+};
+
+const CommunityProvider = ({ children }: { children: React.ReactNode }) => {
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  
+  return (
+    <CommunityContext.Provider value={{ selectedCommunityId, setSelectedCommunityId }}>
+      {children}
+    </CommunityContext.Provider>
+  );
+};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -48,10 +72,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const CommunitySelector = () => {
   const { data: communities } = useCommunities();
   const navigate = useNavigate();
+  const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
-    <div className="flex items-center gap-4 px-8 py-4 bg-white border-b">
-      <Select>
+    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
+      <Select 
+        value={selectedCommunityId || undefined}
+        onValueChange={setSelectedCommunityId}
+      >
         <SelectTrigger className="w-[250px]">
           <SelectValue placeholder="Select community" />
         </SelectTrigger>
@@ -82,7 +110,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <AppSidebar />
         <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16 pl-[280px]">
           <CommunitySelector />
-          <div className="h-full w-full bg-gray-50 p-8">
+          <div className="h-full w-full bg-gray-50 p-8 mt-[4.5rem]">
             {children}
           </div>
         </main>
@@ -99,95 +127,97 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SidebarProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/members" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Members />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscribers" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Subscribers />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscriptions" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Subscriptions />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/messages" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Messages />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Analytics />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bot-settings" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <BotSettings />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/events" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Events />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/rewards" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Rewards />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Settings />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/platform-select" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <PlatformSelect />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/connect/telegram" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <TelegramConnect />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <CommunityProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Dashboard />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/members" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Members />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/subscribers" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Subscribers />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/subscriptions" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Subscriptions />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/messages" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Messages />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Analytics />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bot-settings" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <BotSettings />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/events" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Events />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/rewards" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Rewards />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Settings />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/platform-select" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <PlatformSelect />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/connect/telegram" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <TelegramConnect />
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CommunityProvider>
           </SidebarProvider>
         </AuthProvider>
       </BrowserRouter>

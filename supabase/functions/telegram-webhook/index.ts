@@ -64,22 +64,48 @@ serve(async (req) => {
 
       case '/broadcast':
         if (!communityId || !body.message) {
-          throw new Error('Missing required parameters');
+          return new Response(
+            JSON.stringify({ error: 'Missing required parameters' }), 
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400 
+            }
+          );
         }
 
-        const status = await sendBroadcastMessage(
-          supabase,
-          communityId,
-          body.message,
-          body.filterType || 'all',
-          body.subscriptionPlanId
-        );
-
-        response = status;
+        try {
+          const status = await sendBroadcastMessage(
+            supabase,
+            communityId,
+            body.message,
+            body.filterType || 'all',
+            body.subscriptionPlanId
+          );
+          
+          response = status;
+        } catch (error) {
+          console.error('Error in broadcast:', error);
+          return new Response(
+            JSON.stringify({ 
+              error: error instanceof Error ? error.message : 'Unknown error in broadcast',
+              details: error 
+            }), 
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500 
+            }
+          );
+        }
         break;
 
       default:
-        throw new Error(`Unknown path: ${path}`);
+        return new Response(
+          JSON.stringify({ error: `Unknown path: ${path}` }), 
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400 
+          }
+        );
     }
 
     return new Response(JSON.stringify(response), {
@@ -92,12 +118,18 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing request:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error processing request',
+        details: error 
+      }), 
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 500,
+      }
+    );
   }
 });

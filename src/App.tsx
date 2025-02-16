@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createContext, useContext, useState, useEffect } from "react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const queryClient = new QueryClient();
 
@@ -95,15 +97,38 @@ const CommunitySelector = () => {
     selectedCommunityId,
     setSelectedCommunityId
   } = useCommunityContext();
+
+  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
+
   return <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center justify-between gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
       <Select value={selectedCommunityId || undefined} onValueChange={setSelectedCommunityId}>
         <SelectTrigger className="w-[250px]">
-          <SelectValue placeholder="Select community" />
+          <div className="flex items-center gap-2">
+            {selectedCommunity && (
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={selectedCommunity.telegram_photo_url || undefined} />
+                <AvatarFallback className="bg-primary/5 text-primary/70">
+                  {selectedCommunity.name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <SelectValue placeholder="Select community" />
+          </div>
         </SelectTrigger>
         <SelectContent>
-          {communities?.map(community => <SelectItem key={community.id} value={community.id}>
-              {community.name}
-            </SelectItem>)}
+          {communities?.map(community => (
+            <SelectItem key={community.id} value={community.id}>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={community.telegram_photo_url || undefined} />
+                  <AvatarFallback className="bg-primary/5 text-primary/70">
+                    {community.name?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                {community.name}
+              </div>
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 

@@ -62,8 +62,7 @@ const TelegramConnect = () => {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json'
-            },
-            responseType: 'json'
+            }
           });
 
         if (webhookError) {

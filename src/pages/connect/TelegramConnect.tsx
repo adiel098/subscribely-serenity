@@ -1,23 +1,19 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, Copy } from "lucide-react";
+import { MessageCircle, Copy, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const TelegramConnect = () => {
-  const [isCreating, setIsCreating] = useState(false);
-  const [verificationCode, setVerificationCode] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationCode] = useState<string>('MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase());
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const generateVerificationCode = () => {
-    const code = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    return code;
-  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -35,13 +31,13 @@ const TelegramConnect = () => {
     }
   };
 
-  const handleCommunitySetup = async () => {
+  const verifyConnection = async () => {
     try {
       if (!user) return;
       
-      setIsCreating(true);
-      const code = generateVerificationCode();
+      setIsVerifying(true);
 
+      // Create community if it doesn't exist
       const { data: community, error: communityError } = await supabase
         .from('communities')
         .insert({
@@ -54,30 +50,51 @@ const TelegramConnect = () => {
 
       if (communityError) throw communityError;
 
-      const { error: settingsError } = await supabase
+      // Set up bot settings
+      const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .insert({
           community_id: community.id,
-          verification_code: code,
-        });
+          verification_code: verificationCode,
+        })
+        .select()
+        .single();
 
       if (settingsError) throw settingsError;
 
-      setVerificationCode(code);
-      toast({
-        title: "Success!",
-        description: "Your community has been created. Please follow the verification steps.",
-      });
+      // Check if the group has been verified
+      const { data: verifiedSettings, error: verificationError } = await supabase
+        .from('telegram_bot_settings')
+        .select('verified_at, chat_id')
+        .eq('community_id', community.id)
+        .single();
+
+      if (verificationError) throw verificationError;
+
+      if (verifiedSettings.verified_at && verifiedSettings.chat_id) {
+        toast({
+          title: "Success!",
+          description: "Your Telegram group has been successfully connected!",
+        });
+        // You can navigate to a success page or dashboard here
+        // navigate('/dashboard');
+      } else {
+        toast({
+          title: "Not Verified",
+          description: "Please make sure you've added the bot and sent the verification code in your group.",
+          variant: "destructive",
+        });
+      }
 
     } catch (error) {
-      console.error('Setup error:', error);
+      console.error('Verification error:', error);
       toast({
         title: "Error",
-        description: "Failed to set up the community. Please try again.",
+        description: "Failed to verify the connection. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsCreating(false);
+      setIsVerifying(false);
     }
   };
 
@@ -92,7 +109,7 @@ const TelegramConnect = () => {
         </div>
 
         <Card className="p-6 bg-white shadow-sm">
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -126,53 +143,49 @@ const TelegramConnect = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900">Get Verification Code</h3>
+                <h3 className="text-lg font-medium text-gray-900">Copy Verification Code</h3>
                 <p className="mt-1 text-gray-500">
-                  Click below to create your community and get a verification code
+                  Copy this verification code and paste it in your Telegram group
                 </p>
-                <Button 
-                  className="mt-4"
-                  onClick={handleCommunitySetup}
-                  disabled={isCreating || !!verificationCode}
-                >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  {isCreating ? "Creating..." : "Create Community"}
-                </Button>
+                <div className="mt-4 flex items-center space-x-2">
+                  <code className="px-4 py-2 bg-gray-100 rounded text-lg font-mono">
+                    {verificationCode}
+                  </code>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => copyToClipboard(verificationCode)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  The message will be automatically deleted once verified
+                </p>
               </div>
             </div>
 
-            {verificationCode && (
-              <>
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">3</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">Verify Your Group</h3>
-                    <p className="mt-1 text-gray-500">
-                      Copy and paste this verification code in your Telegram group. Our bot will verify it automatically.
-                    </p>
-                    <div className="mt-4 flex items-center space-x-2">
-                      <code className="px-4 py-2 bg-gray-100 rounded text-lg font-mono">
-                        {verificationCode}
-                      </code>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => copyToClipboard(verificationCode)}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500">
-                      The message will be automatically deleted once verified
-                    </p>
-                  </div>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold">3</span>
                 </div>
-              </>
-            )}
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Verify Connection</h3>
+                <p className="mt-1 text-gray-500">
+                  After adding the bot and sending the verification code, click below to verify the connection
+                </p>
+                <Button 
+                  className="mt-4"
+                  onClick={verifyConnection}
+                  disabled={isVerifying}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {isVerifying ? "Verifying..." : "Verify Connection"}
+                </Button>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

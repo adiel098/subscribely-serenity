@@ -1,10 +1,11 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('�� Telegram bot webhook is running...');
+console.log('🤖 Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -132,139 +133,35 @@ serve(async (req) => {
       const update: TelegramUpdate = await req.json()
       console.log('📥 Received Telegram update:', JSON.stringify(update, null, 2))
 
-      const messageText = update.message?.text;
-      const chatId = update.message?.chat.id;
-
-      console.log('Message text:', messageText);
-      console.log('Chat ID:', chatId);
-
-      // בדיקה אם ההודעה מגיעה מהstart parameter
-      if (messageText && chatId && messageText.startsWith('/start')) {
-        console.log('Detected /start command');
-        const startParams = messageText.split(' ')[1]; // מקבל את הפרמטרים אחרי ה-/start
-        console.log('Start parameters:', startParams);
-        
-        if (startParams) {
-          const communityId = startParams;
-          console.log('Looking for community with ID:', communityId);
-          
-          // חיפוש הקהילה לפי ה-ID
-          const { data: community, error: communityError } = await supabase
-            .from('communities')
-            .select('id, name')
-            .eq('id', communityId)
-            .single();
-
-          if (communityError || !community) {
-            console.error('Community not found:', communityError);
-            await sendTelegramMessage(BOT_TOKEN, chatId, "הקהילה לא נמצאה. אנא בדקו את הלינ�� ונסו שוב.");
-            return new Response(JSON.stringify({ success: true }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            });
-          }
-
-          console.log('Found community:', community);
-
-          const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`;
-          console.log('Generated mini app URL:', miniAppUrl);
-          
-          // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
-          const message = `
-ברוכים הבאים לקהילת ${community.name}! 
-לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
-          `;
-
-          const replyMarkup = {
-            keyboard: [
-              [
-                {
-                  text: "הצטרפו לקהילה 🚀",
-                  web_app: { url: miniAppUrl }
-                }
-              ]
-            ],
-            resize_keyboard: true
-          };
-
-          console.log('Sending welcome message with mini app button. URL:', miniAppUrl);
-          const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
-          console.log('Message sent result:', result);
-        }
-      }
-      
-      // בדיקה אם ההודעה היא קוד קהילה
-      else if (messageText && chatId && messageText.startsWith('COM_')) {
-        console.log('Detected community code:', messageText);
-        
-        // חיפוש הקהילה לפי הקוד
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .select('id, name')
-          .eq('platform_id', messageText)
-          .single();
-
-        if (communityError || !community) {
-          console.error('Community not found by code:', communityError);
-          await sendTelegramMessage(BOT_TOKEN, chatId, "קוד הקהילה לא נמצא. אנא בדקו את הקוד ונסו שוב.");
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          });
-        }
-
-        console.log('Found community by code:', community);
-
-        const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`;
-        console.log('Generated mini app URL:', miniAppUrl);
-        
-        // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
-        const message = `
-ברוכים הבאים לקהילת ${community.name}! 
-לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
-        `;
-
-        const replyMarkup = {
-          keyboard: [
-            [
-              {
-                text: "הצטרפו לקהילה 🚀",
-                web_app: { url: miniAppUrl }
-              }
-            ]
-          ],
-          resize_keyboard: true
-        };
-
-        console.log('Sending welcome message with mini app button');
-        const result = await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
-        console.log('Message sent result:', result);
-      }
-
-      // Handle verification messages (either from regular message or channel post)
-      const verificationMessage = update.message?.text || update.channel_post?.text;
-      const verificationChatId = update.message?.chat.id || update.channel_post?.chat.id;
+      const messageText = update.message?.text || update.channel_post?.text;
+      const chatId = update.message?.chat.id || update.channel_post?.chat.id;
       const messageId = update.message?.message_id || update.channel_post?.message_id;
       const chatType = update.message?.chat.type || update.channel_post?.chat.type;
       const chatTitle = update.message?.chat.title || update.channel_post?.chat.title;
 
-      if (verificationMessage?.startsWith('MBF_') && verificationChatId && messageId) {
-        console.log(`🔑 Processing verification code ${verificationMessage} for chat ${verificationChatId}`);
+      console.log('Message text:', messageText);
+      console.log('Chat ID:', chatId);
+      console.log('Chat type:', chatType);
+
+      // Handle verification messages
+      if (messageText?.startsWith('MBF_') && chatId && messageId) {
+        console.log(`🔑 Processing verification code ${messageText} for chat ${chatId}`);
         
         // Find profile with this verification code
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('current_telegram_code', verificationMessage.trim())
+          .eq('current_telegram_code', messageText.trim())
           .limit(1);
 
         if (profileError || !profiles?.length) {
           console.error('❌ Error finding profile:', profileError);
+          await sendTelegramMessage(BOT_TOKEN, chatId, "קוד האימות לא נמצא או שכבר נעשה בו שימוש. אנא בדקו את הקוד ונסו שוב.");
           return new Response(
             JSON.stringify({ error: 'Failed to find profile' }),
             {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500,
+              status: 200,
             }
           );
         }
@@ -301,7 +198,7 @@ serve(async (req) => {
           .insert({
             community_id: community.id,
             chat_id: chatId.toString(),
-            verification_code: verificationMessage.trim(),
+            verification_code: messageText.trim(),
             verified_at: new Date().toISOString(),
             is_admin: true
           });

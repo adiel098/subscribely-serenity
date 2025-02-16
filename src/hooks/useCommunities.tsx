@@ -24,7 +24,7 @@ export interface Community {
 export const useCommunities = () => {
   const { user } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["communities", user?.id],
     queryFn: async () => {
       if (!user) {
@@ -57,7 +57,9 @@ export const useCommunities = () => {
     },
     enabled: !!user,
     retry: 2,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    refetchOnWindowFocus: false
+    staleTime: 0, // Changed from 5 minutes to 0 to always fetch fresh data
+    refetchOnWindowFocus: true // Changed to true to refresh when window gets focus
   });
+
+  return query;
 };

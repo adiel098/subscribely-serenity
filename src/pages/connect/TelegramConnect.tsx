@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCommunities } from "@/contexts/CommunitiesContext";
 
 const TelegramConnect = () => {
   const [isVerifying, setIsVerifying] = useState(false);
@@ -20,6 +21,7 @@ const TelegramConnect = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refetch } = useCommunities();
 
   useEffect(() => {
     if (user) {
@@ -30,7 +32,8 @@ const TelegramConnect = () => {
   useEffect(() => {
     let redirectTimeout: NodeJS.Timeout;
     if (showSuccessDialog) {
-      redirectTimeout = setTimeout(() => {
+      redirectTimeout = setTimeout(async () => {
+        await refetch();
         navigate('/dashboard');
       }, 5000);
     }
@@ -39,7 +42,7 @@ const TelegramConnect = () => {
         clearTimeout(redirectTimeout);
       }
     };
-  }, [showSuccessDialog, navigate]);
+  }, [showSuccessDialog, navigate, refetch]);
 
   const generateNewCode = () => {
     return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -47,7 +50,6 @@ const TelegramConnect = () => {
 
   const initializeVerificationCode = async () => {
     try {
-      // First, check if user already has a verification code
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('initial_telegram_code, current_telegram_code')
@@ -60,10 +62,8 @@ const TelegramConnect = () => {
       }
 
       if (profile.current_telegram_code) {
-        // אם יש כבר קוד, נשתמש בו
         setVerificationCode(profile.current_telegram_code);
       } else {
-        // רק אם אין קוד, ניצור קוד חדש
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')
@@ -107,7 +107,6 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
-      // Check if the verification code has been used by checking bot settings
       const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .select(`
@@ -130,7 +129,6 @@ const TelegramConnect = () => {
       }
 
       if (botSettings) {
-        // אם הקוד אומת בהצלחה, רק אז ניצור קוד חדש
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')
@@ -145,7 +143,6 @@ const TelegramConnect = () => {
 
         setShowSuccessDialog(true);
       } else {
-        // If not verified yet, prompt user to send the code
         toast({
           title: "Not Verified",
           description: "Please make sure you've added the bot as an admin and sent the verification code in your group.",

@@ -114,13 +114,13 @@ const Subscribers = () => {
                       <div className="flex items-center text-sm">
                         <Calendar className="h-4 w-4 mr-1" />
                         {subscriber.subscription_start_date
-                          ? format(new Date(subscriber.subscription_start_date), "PP")
+                          ? format(new Date(subscriber.subscription_start_date), "PPp")
                           : "-"}
                       </div>
                       <div className="flex items-center text-sm">
                         <Clock className="h-4 w-4 mr-1" />
                         {subscriber.subscription_end_date
-                          ? format(new Date(subscriber.subscription_end_date), "PP")
+                          ? format(new Date(subscriber.subscription_end_date), "PPp")
                           : "-"}
                       </div>
                     </div>
@@ -128,11 +128,11 @@ const Subscribers = () => {
                   <TableCell>
                     <div className="space-y-1">
                       <div className="text-sm">
-                        Joined: {format(new Date(subscriber.joined_at), "PP")}
+                        Joined: {format(new Date(subscriber.joined_at), "PPp")}
                       </div>
                       {subscriber.last_active && (
                         <div className="text-sm text-muted-foreground">
-                          Last active: {format(new Date(subscriber.last_active), "PP")}
+                          Last active: {format(new Date(subscriber.last_active), "PPp")}
                         </div>
                       )}
                     </div>

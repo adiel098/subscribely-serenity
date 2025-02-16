@@ -18,6 +18,22 @@ import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
 import { Loader2, Plus, Copy } from "lucide-react";
 
+const intervalColors = {
+  monthly: "bg-blue-100 text-blue-700",
+  quarterly: "bg-green-100 text-green-700",
+  "half-yearly": "bg-purple-100 text-purple-700",
+  yearly: "bg-orange-100 text-orange-700",
+  "one-time": "bg-gray-100 text-gray-700",
+};
+
+const intervalLabels = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  "half-yearly": "Half Yearly",
+  yearly: "Yearly",
+  "one-time": "One Time",
+};
+
 const Subscriptions = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -26,18 +42,17 @@ const Subscriptions = () => {
   const { toast } = useToast();
 
   const {
-    subscriptionPlans,
-    isLoading: isLoadingPlans,
-    error: plansError,
-  } = useSubscriptionPlans();
-
-  const {
-    communities,
-    isLoading: isLoadingCommunities,
-    error: communitiesError,
+    data: communities
   } = useCommunities();
 
   const community = communities?.[0];
+
+  const {
+    plans,
+    isLoading,
+    error,
+    createPlan
+  } = useSubscriptionPlans(community?.id || "");
 
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -55,7 +70,6 @@ const Subscriptions = () => {
 
   const copyMiniAppLink = () => {
     if (community) {
-      // שימוש ב-start במקום startapp כדי שהבוט יקבל את ההודעה
       const miniAppUrl = `https://t.me/membifybot?start=${community.id}`;
       navigator.clipboard.writeText(miniAppUrl);
       toast({
@@ -65,7 +79,7 @@ const Subscriptions = () => {
     }
   };
 
-  if (isLoadingPlans || isLoadingCommunities) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
@@ -73,7 +87,7 @@ const Subscriptions = () => {
     );
   }
 
-  if (plansError || communitiesError) {
+  if (error) {
     return (
       <div className="text-center py-8">
         <p className="text-red-500">Error loading data</p>
@@ -106,30 +120,45 @@ const Subscriptions = () => {
 
       {/* Display subscription plans */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {subscriptionPlans?.map((plan) => (
+        {plans?.map((plan) => (
           <SubscriptionPlanCard
             key={plan.id}
             plan={plan}
             onEdit={() => handleEditPlan(plan.id)}
             onDelete={() => handleDeletePlan(plan.id)}
+            intervalColors={intervalColors}
+            intervalLabels={intervalLabels}
           />
         ))}
       </div>
 
       {/* Dialogs */}
       <CreatePlanDialog
-        open={createDialogOpen}
+        isOpen={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+        newPlan={{
+          name: "",
+          description: "",
+          price: "",
+          interval: "monthly",
+          features: []
+        }}
+        setNewPlan={() => {}}
+        newFeature=""
+        setNewFeature={() => {}}
+        handleAddFeature={() => {}}
+        handleRemoveFeature={() => {}}
+        handleCreatePlan={() => {}}
       />
       {selectedPlanId && (
         <>
           <EditPlanDialog
-            open={editDialogOpen}
+            isOpen={editDialogOpen}
             onOpenChange={setEditDialogOpen}
             planId={selectedPlanId}
           />
           <DeletePlanDialog
-            open={deleteDialogOpen}
+            isOpen={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
             planId={selectedPlanId}
           />
@@ -140,4 +169,3 @@ const Subscriptions = () => {
 };
 
 export default Subscriptions;
-

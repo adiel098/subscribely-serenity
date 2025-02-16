@@ -37,113 +37,115 @@ export const CreatePlanDialog = ({
   handleCreatePlan
 }: Props) => {
   return (
-    <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
-      <DialogHeader className="space-y-3 pb-6">
-        <DialogTitle className="text-2xl flex items-center gap-2">
-          <SparklesIcon className="h-6 w-6 text-primary animate-pulse" />
-          Create New Subscription Plan
-        </DialogTitle>
-        <DialogDescription>
-          Design a new subscription plan to offer exclusive benefits to your community members.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="grid gap-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
-        <div className="grid gap-2">
-          <Label htmlFor="name" className="text-base">Plan Name</Label>
-          <Input 
-            id="name" 
-            placeholder='e.g. "Premium Plan"' 
-            value={newPlan.name}
-            onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-            className="text-lg"
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="description" className="text-base">Description</Label>
-          <Textarea 
-            id="description" 
-            placeholder="Describe the exclusive benefits of this plan..." 
-            value={newPlan.description}
-            onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-            className="min-h-[100px] text-base"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
+        <DialogHeader className="space-y-3 pb-6">
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            <SparklesIcon className="h-6 w-6 text-primary animate-pulse" />
+            Create New Subscription Plan
+          </DialogTitle>
+          <DialogDescription>
+            Design a new subscription plan to offer exclusive benefits to your community members.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
           <div className="grid gap-2">
-            <Label htmlFor="price" className="text-base">Price</Label>
+            <Label htmlFor="name" className="text-base">Plan Name</Label>
             <Input 
-              id="price" 
-              type="number" 
-              placeholder="0.00" 
-              value={newPlan.price}
-              onChange={e => setNewPlan({ ...newPlan, price: e.target.value })}
+              id="name" 
+              placeholder='e.g. "Premium Plan"' 
+              value={newPlan.name}
+              onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
               className="text-lg"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="interval" className="text-base">Billing Interval</Label>
-            <Select 
-              value={newPlan.interval}
-              onValueChange={(value: any) => setNewPlan({ ...newPlan, interval: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="half-yearly">Half-Yearly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-                <SelectItem value="one-time">One-Time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="grid gap-4">
-          <Label className="text-base">Features</Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add a feature..."
-              value={newFeature}
-              onChange={e => setNewFeature(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && handleAddFeature()}
+            <Label htmlFor="description" className="text-base">Description</Label>
+            <Textarea 
+              id="description" 
+              placeholder="Describe the exclusive benefits of this plan..." 
+              value={newPlan.description}
+              onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
+              className="min-h-[100px] text-base"
             />
-            <Button onClick={handleAddFeature}>Add</Button>
           </div>
-          <ul className="space-y-2">
-            {newPlan.features.map((feature, index) => (
-              <li 
-                key={index} 
-                className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="price" className="text-base">Price</Label>
+              <Input 
+                id="price" 
+                type="number" 
+                placeholder="0.00" 
+                value={newPlan.price}
+                onChange={e => setNewPlan({ ...newPlan, price: e.target.value })}
+                className="text-lg"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="interval" className="text-base">Billing Interval</Label>
+              <Select 
+                value={newPlan.interval}
+                onValueChange={(value: any) => setNewPlan({ ...newPlan, interval: value })}
               >
-                <div className="flex items-center gap-2">
-                  <CheckIcon className="h-5 w-5 text-green-500" />
-                  <span className="text-gray-700">{feature}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveFeature(index)}
-                  className="hover:bg-red-50 hover:text-red-500"
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="one-time">One-Time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <Label className="text-base">Features</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a feature..."
+                value={newFeature}
+                onChange={e => setNewFeature(e.target.value)}
+                onKeyPress={e => e.key === "Enter" && handleAddFeature()}
+              />
+              <Button onClick={handleAddFeature}>Add</Button>
+            </div>
+            <ul className="space-y-2">
+              {newPlan.features.map((feature, index) => (
+                <li 
+                  key={index} 
+                  className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <PlusIcon className="h-4 w-4 rotate-45" />
-                </Button>
-              </li>
-            ))}
-          </ul>
+                  <div className="flex items-center gap-2">
+                    <CheckIcon className="h-5 w-5 text-green-500" />
+                    <span className="text-gray-700">{feature}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveFeature(index)}
+                    className="hover:bg-red-50 hover:text-red-500"
+                  >
+                    <PlusIcon className="h-4 w-4 rotate-45" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
-      <DialogFooter className="gap-3 pt-6">
-        <Button variant="outline" onClick={() => onOpenChange(false)}>
-          Cancel
-        </Button>
-        <Button onClick={handleCreatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
-          <SparklesIcon className="h-4 w-4" />
-          Create Plan
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        <DialogFooter className="gap-3 pt-6">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
+            <SparklesIcon className="h-4 w-4" />
+            Create Plan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

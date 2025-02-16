@@ -7,7 +7,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangleIcon } from "lucide-react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
@@ -49,11 +49,10 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             onClick={handleDelete}
-            disabled={deletePlan.isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {deletePlan.isPending ? 'Deleting...' : 'Delete Plan'}
+            Delete Plan
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

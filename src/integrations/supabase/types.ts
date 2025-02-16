@@ -398,6 +398,45 @@ export type Database = {
           },
         ]
       }
+      telegram_events: {
+        Row: {
+          chat_id: string | null
+          created_at: string
+          error: string | null
+          event_type: string
+          id: number
+          message_id: string | null
+          message_text: string | null
+          raw_data: Json | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          chat_id?: string | null
+          created_at?: string
+          error?: string | null
+          event_type: string
+          id?: number
+          message_id?: string | null
+          message_text?: string | null
+          raw_data?: Json | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          chat_id?: string | null
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          id?: number
+          message_id?: string | null
+          message_text?: string | null
+          raw_data?: Json | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       telegram_global_settings: {
         Row: {
           bot_token: string

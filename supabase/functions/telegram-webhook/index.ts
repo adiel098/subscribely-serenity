@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -9,6 +10,35 @@ console.log('🤖 Starting Telegram bot webhook...');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+async function logTelegramEvent(supabase: any, eventType: string, data: any, error?: string) {
+  try {
+    console.log(`Logging ${eventType} event:`, data);
+    
+    const eventData = {
+      event_type: eventType,
+      chat_id: data.message?.chat?.id || data.chat?.id || data.chat_join_request?.chat?.id,
+      user_id: data.message?.from?.id || data.from?.id || data.chat_join_request?.from?.id,
+      username: data.message?.from?.username || data.from?.username || data.chat_join_request?.from?.username,
+      message_id: data.message?.message_id,
+      message_text: data.message?.text,
+      raw_data: data,
+      error: error
+    };
+
+    const { error: insertError } = await supabase
+      .from('telegram_events')
+      .insert([eventData]);
+
+    if (insertError) {
+      console.error('Error logging event:', insertError);
+    } else {
+      console.log('✅ Event logged successfully');
+    }
+  } catch (err) {
+    console.error('Error in logTelegramEvent:', err);
+  }
 }
 
 async function setupWebhook(botToken: string) {
@@ -52,10 +82,39 @@ async function getWebhookInfo(botToken: string) {
   }
 }
 
+async function handleNewMessage(supabase: any, update: any) {
+  console.log('🗨️ Processing new message:', update.message);
+  await logTelegramEvent(supabase, 'new_message', update);
+}
+
+async function handleChatJoinRequest(supabase: any, update: any) {
+  console.log('👤 Processing chat join request:', update.chat_join_request);
+  await logTelegramEvent(supabase, 'chat_join_request', update);
+}
+
+async function handleChannelPost(supabase: any, update: any) {
+  console.log('📢 Processing channel post:', update.channel_post);
+  await logTelegramEvent(supabase, 'channel_post', update);
+}
+
+async function handleEditedMessage(supabase: any, update: any) {
+  console.log('✏️ Processing edited message:', update.edited_message);
+  await logTelegramEvent(supabase, 'edited_message', update);
+}
+
+async function handleLeftChatMember(supabase: any, update: any) {
+  console.log('👋 Processing left chat member:', update.message?.left_chat_member);
+  await logTelegramEvent(supabase, 'left_chat_member', update);
+}
+
+async function handleNewChatMember(supabase: any, update: any) {
+  console.log('🎉 Processing new chat member:', update.message?.new_chat_member);
+  await logTelegramEvent(supabase, 'new_chat_member', update);
+}
+
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${req.url}`);
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request');
     return new Response(null, { 
@@ -71,7 +130,6 @@ serve(async (req) => {
       SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get the global bot token
     console.log('Fetching bot token from settings...');
     const { data: settings, error: settingsError } = await supabase
       .from('telegram_global_settings')
@@ -91,7 +149,6 @@ serve(async (req) => {
     const BOT_TOKEN = settings.bot_token;
     console.log('✅ Successfully retrieved bot token');
 
-    // Special endpoint to check webhook status
     const url = new URL(req.url);
     if (url.pathname.endsWith('/check')) {
       console.log('Running webhook check...');
@@ -99,20 +156,10 @@ serve(async (req) => {
         const webhookInfo = await getWebhookInfo(BOT_TOKEN);
         const setupResult = await setupWebhook(BOT_TOKEN);
         
-        const response = {
-          webhookInfo,
-          setupResult
-        };
-        
-        console.log('Webhook check response:', response);
-        
         return new Response(
-          JSON.stringify(response),
+          JSON.stringify({ webhookInfo, setupResult }),
           { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200 
           }
         );
@@ -120,356 +167,75 @@ serve(async (req) => {
         console.error('Error during webhook check:', error);
         return new Response(
           JSON.stringify({ 
+            ok: true,
             error: 'Error checking webhook status',
             details: error.message 
           }),
           { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            },
-            status: 200  // Return 200 even for errors to avoid Telegram retries
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
           }
         );
       }
     }
 
-    // For webhook updates
     if (req.method === 'POST') {
       console.log('Handling webhook update...');
       try {
         const update = await req.json();
-        console.log('Received update:', JSON.stringify(update, null, 2));
-        
-        // Handle new member joining
-        if (update.message?.new_chat_member) {
-          const chatId = update.message.chat.id.toString();
-          const newMember = update.message.new_chat_member;
-          console.log('👤 New member joined - Details:', {
-            chatId,
-            memberId: newMember.id,
-            username: newMember.username,
-            firstName: newMember.first_name,
-            lastName: newMember.last_name
-          });
+        console.log('📥 Received update:', JSON.stringify(update, null, 2));
 
-          // Get the most recent message that added this user to get the invite link used
-          const response = await fetch(
-            `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                chat_id: chatId,
-                user_id: newMember.id
-              })
-            }
-          );
-          
-          const chatMemberInfo = await response.json();
-          console.log('📝 Chat member info from Telegram:', JSON.stringify(chatMemberInfo, null, 2));
-          
-          if (chatMemberInfo.ok && chatMemberInfo.result.invite_link) {
-            const inviteLink = chatMemberInfo.result.invite_link;
-            console.log('🔗 Found invite link:', inviteLink);
-            
-            // Find the community and payment using the specific invite link
-            const result = await findCommunityAndPaymentByInviteLink(supabase, chatId, inviteLink);
-            
-            if (result) {
-              const { community, payment } = result;
-              console.log('✅ Found matching community and payment:', {
-                communityId: community.id,
-                communityName: community.name,
-                paymentId: payment?.id,
-                planId: payment?.plan?.id,
-                planInterval: payment?.plan?.interval
-              });
+        // Log raw update for debugging
+        await logTelegramEvent(supabase, 'raw_update', update);
 
-              const memberData = {
-                community_id: community.id,
-                telegram_user_id: newMember.id.toString(),
-                telegram_username: newMember.username || null,
-                subscription_status: true,
-                subscription_start_date: new Date().toISOString(),
-                subscription_end_date: payment?.plan?.interval === 'monthly' 
-                  ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
-                  : payment?.plan?.interval === 'yearly'
-                  ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                  : null,
-                subscription_plan_id: payment?.plan?.id || null,
-                is_active: true,
-                joined_at: new Date().toISOString(),
-                last_active: new Date().toISOString(),
-                total_messages: 0
-              };
-
-              console.log('📝 Attempting to create member record with data:', JSON.stringify(memberData, null, 2));
-
-              // Create telegram_chat_members record with exact table structure
-              const { data: memberData2, error: memberError } = await supabase
-                .from('telegram_chat_members')
-                .insert(memberData)
-                .select();
-
-              if (memberError) {
-                console.error('❌ Error creating member record:', memberError);
-                console.error('Error details:', JSON.stringify(memberError, null, 2));
-              } else {
-                console.log('✅ Successfully created member record:', JSON.stringify(memberData2, null, 2));
-
-                // Update the payment record with the telegram user ID
-                if (payment) {
-                  console.log('📝 Updating payment record for user:', newMember.id.toString());
-                  const { error: updateError } = await supabase
-                    .from('subscription_payments')
-                    .update({ 
-                      telegram_user_id: newMember.id.toString()
-                    })
-                    .eq('id', payment.id);
-
-                  if (updateError) {
-                    console.error('❌ Error updating payment record:', updateError);
-                    console.error('Error details:', JSON.stringify(updateError, null, 2));
-                  } else {
-                    console.log('✅ Successfully updated payment record');
-                  }
-                }
-              }
-            } else {
-              console.log('❌ No matching payment found for invite link:', inviteLink);
-            }
+        // Handle different types of updates
+        if (update.message) {
+          if (update.message.new_chat_member) {
+            await handleNewChatMember(supabase, update);
+          } else if (update.message.left_chat_member) {
+            await handleLeftChatMember(supabase, update);
           } else {
-            console.log('❌ Could not retrieve invite link information from chat member info');
-            console.log('Chat member info response:', JSON.stringify(chatMemberInfo, null, 2));
+            await handleNewMessage(supabase, update);
           }
         }
 
-        const messageText = update.message?.text || update.channel_post?.text;
-        const chatId = update.message?.chat.id || update.channel_post?.chat.id;
-        const messageId = update.message?.message_id || update.channel_post?.message_id;
-        const chatType = update.message?.chat.type || update.channel_post?.chat.type;
-        const chatTitle = update.message?.chat.title || update.channel_post?.chat.title;
-        const userId = update.message?.from?.id;
-
-        console.log('Message text:', messageText);
-        console.log('Chat ID:', chatId);
-        console.log('Chat type:', chatType);
-        console.log('User ID:', userId);
-
-        // Handle /start command with community ID
-        if (messageText?.startsWith('/start') && userId) {
-          const communityId = messageText.split(' ')[1]; // Get the community ID after /start
-          console.log('Start command received with community ID:', communityId);
-
-          if (communityId) {
-            // Get community details
-            const { data: community, error: communityError } = await supabase
-              .from('communities')
-              .select('*')
-              .eq('id', communityId)
-              .single();
-
-            if (communityError || !community) {
-              console.error('Error finding community:', communityError);
-              const errorMessage = "Sorry, I couldn't find this community.";
-              await sendTelegramMessage(BOT_TOKEN, userId, errorMessage);
-              return new Response(JSON.stringify({ success: true }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
-              });
-            }
-
-            // Create welcome message with Mini App button
-            const welcomeMessage = `👋 Welcome! You're about to join *${community.name}*`;
-            const replyMarkup = {
-              inline_keyboard: [[
-                {
-                  text: "🚀 Open Mini App",
-                  web_app: {
-                    url: `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`
-                  }
-                }
-              ]]
-            };
-
-            // Send message with button
-            await sendTelegramMessageWithMarkup(BOT_TOKEN, userId, welcomeMessage, replyMarkup);
-            
-            return new Response(JSON.stringify({ success: true }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            });
-          }
+        if (update.chat_join_request) {
+          await handleChatJoinRequest(supabase, update);
         }
 
-        // Handle verification messages
-        if (messageText?.startsWith('MBF_') && chatId && messageId) {
-          console.log(`🔑 Processing verification code ${messageText} for chat ${chatId}`);
-          
-          // Get chat info from Telegram to fetch the photo
-          const chatInfoResponse = await fetch(
-            `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ chat_id: chatId })
-            }
-          );
-          
-          const chatInfo = await chatInfoResponse.json();
-          console.log('Chat info:', chatInfo);
-          
-          let photoUrl = null;
-          if (chatInfo.ok && chatInfo.result.photo) {
-            // Get the file path
-            const fileResponse = await fetch(
-              `https://api.telegram.org/bot${BOT_TOKEN}/getFile`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ file_id: chatInfo.result.photo.big_file_id })
-              }
-            );
-            
-            const fileInfo = await fileResponse.json();
-            console.log('File info:', fileInfo);
-            
-            if (fileInfo.ok) {
-              photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileInfo.result.file_path}`;
-            }
-          }
-
-          // Create invite link for the chat
-          const inviteLinkResult = await createInviteLink(BOT_TOKEN, chatId);
-          const inviteLink = inviteLinkResult.ok ? inviteLinkResult.result.invite_link : null;
-
-          // Find profile with this verification code
-          const { data: profiles, error: profileError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('current_telegram_code', messageText.trim())
-            .limit(1);
-
-          if (profileError || !profiles?.length) {
-            console.error('❌ Error finding profile:', profileError);
-            return new Response(
-              JSON.stringify({ error: 'Failed to find profile' }),
-              {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
-              }
-            );
-          }
-
-          const ownerId = profiles[0].id;
-
-          // Create community with photo URL and invite link
-          const { data: community, error: communityError } = await supabase
-            .from('communities')
-            .insert({
-              owner_id: ownerId,
-              platform: 'telegram',
-              name: chatTitle || 'My Telegram Community',
-              platform_id: chatId.toString(),
-              telegram_chat_id: chatId.toString(),
-              telegram_photo_url: photoUrl,
-              telegram_invite_link: inviteLink
-            })
-            .select()
-            .single();
-
-          if (communityError) {
-            console.error('❌ Error creating community:', communityError);
-            return new Response(
-              JSON.stringify({ error: 'Failed to create community' }),
-              {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 500,
-              }
-            );
-          }
-
-          // Set up and verify bot settings
-          const { error: botSettingsError } = await supabase
-            .from('telegram_bot_settings')
-            .insert({
-              community_id: community.id,
-              chat_id: chatId.toString(),
-              verification_code: messageText.trim(),
-              verified_at: new Date().toISOString(),
-              is_admin: true
-            });
-
-          if (botSettingsError) {
-            console.error('❌ Error creating bot settings:', botSettingsError);
-            return new Response(
-              JSON.stringify({ error: 'Failed to create bot settings' }),
-              {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 500,
-              }
-            );
-          }
-
-          // Delete the verification message
-          const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, messageId);
-          console.log('🗑️ Delete message result:', deleteResult);
-
-          // Send success message
-          const successMessage = "✅ Successfully connected to Membify!";
-          const messageResult = await sendTelegramMessage(BOT_TOKEN, chatId, successMessage);
-          console.log('✉️ Success message result:', messageResult);
-          
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          });
+        if (update.channel_post) {
+          await handleChannelPost(supabase, update);
         }
 
-        // Handle bot being added to a group
-        if (update.my_chat_member?.new_chat_member.status === 'administrator') {
-          const chatId = update.my_chat_member.chat.id;
-          const chatType = update.my_chat_member.chat.type;
-          console.log(`👋 Bot added as admin to ${chatType} ${chatId}`);
+        if (update.edited_message) {
+          await handleEditedMessage(supabase, update);
         }
-        
+
+        console.log('✅ Successfully processed update');
         return new Response(
           JSON.stringify({ ok: true }),
           { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200 
           }
         );
       } catch (error) {
         console.error('Error processing webhook update:', error);
+        await logTelegramEvent(supabase, 'error', {}, error.message);
         return new Response(
           JSON.stringify({ 
-            ok: true,  // Tell Telegram everything is fine
+            ok: true,
             error: 'Error processing update',
             details: error.message 
           }),
           { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            },
-            status: 200  // Return 200 even for errors
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
           }
         );
       }
     }
 
-    // Invalid request method
     console.log('Invalid request method:', req.method);
     return new Response(
       JSON.stringify({ 
@@ -477,231 +243,23 @@ serve(async (req) => {
         error: 'Invalid request method' 
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     );
 
   } catch (error) {
     console.error('Unhandled error:', error);
-    // Always return 200 to Telegram
     return new Response(
       JSON.stringify({ 
-        ok: true,  // Tell Telegram everything is fine
+        ok: true,
         error: 'Internal server error',
         details: error.message 
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
-        status: 200  // Return 200 even for errors
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
   }
 });
-
-interface TelegramUpdate {
-  update_id: number;
-  message?: {
-    message_id: number;
-    from: {
-      id: number;
-      username?: string;
-      first_name?: string;
-      last_name?: string;
-    };
-    chat: {
-      id: number;
-      type: string;
-      title?: string;
-    };
-    new_chat_member?: {
-      id: number;
-      username?: string;
-      first_name?: string;
-      last_name?: string;
-    };
-    text?: string;
-  };
-  channel_post?: {
-    message_id: number;
-    chat: {
-      id: number;
-      type: string;
-      title?: string;
-    };
-    text?: string;
-  };
-  my_chat_member?: {
-    chat: {
-      id: number;
-      type: string;
-      title?: string;
-    };
-    from: {
-      id: number;
-      username?: string;
-    };
-    new_chat_member: {
-      status: string;
-    };
-  };
-}
-
-async function createInviteLink(botToken: string, chatId: number) {
-  console.log('Creating invite link for chat:', chatId);
-  const response = await fetch(
-    `https://api.telegram.org/bot${botToken}/createChatInviteLink`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        member_limit: 1,
-        creates_join_request: true
-      })
-    }
-  );
-  const result = await response.json();
-  console.log('Invite link creation result:', result);
-  return result;
-}
-
-async function findCommunityAndPaymentByTelegramChatId(supabase: any, chatId: string) {
-  console.log('Finding community and latest payment for chat ID:', chatId);
-  
-  // Get the community first
-  const { data: community, error: communityError } = await supabase
-    .from('communities')
-    .select('*')
-    .eq('telegram_chat_id', chatId)
-    .single();
-
-  if (communityError || !community) {
-    console.error('Error finding community:', communityError);
-    return null;
-  }
-
-  // Get the latest payment for this community that hasn't been used yet
-  const { data: payment, error: paymentError } = await supabase
-    .from('subscription_payments')
-    .select(`
-      *,
-      plan:subscription_plans(*)
-    `)
-    .eq('community_id', community.id)
-    .eq('status', 'completed')
-    .is('telegram_user_id', null)  // Only get payments that haven't been assigned to a user yet
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (paymentError) {
-    console.error('Error finding payment:', paymentError);
-    return null;
-  }
-
-  return { community, payment };
-}
-
-async function findCommunityAndPaymentByInviteLink(supabase: any, chatId: string, inviteLink: string) {
-  console.log('Finding community and payment for chat ID:', chatId, 'and invite link:', inviteLink);
-  
-  // Get the community first
-  const { data: community, error: communityError } = await supabase
-    .from('communities')
-    .select('*')
-    .eq('telegram_chat_id', chatId)
-    .single();
-
-  if (communityError || !community) {
-    console.error('Error finding community:', communityError);
-    return null;
-  }
-
-  // Get the payment associated with this specific invite link
-  const { data: payment, error: paymentError } = await supabase
-    .from('subscription_payments')
-    .select(`
-      *,
-      plan:subscription_plans(*)
-    `)
-    .eq('community_id', community.id)
-    .eq('status', 'completed')
-    .eq('invite_link', inviteLink)
-    .is('telegram_user_id', null)  // Only if not already assigned
-    .single();
-
-  if (paymentError) {
-    console.error('Error finding payment:', paymentError);
-    return null;
-  }
-
-  return { community, payment };
-}
-
-async function sendTelegramMessage(token: string, chatId: number, text: string) {
-  const url = `https://api.telegram.org/bot${token}/sendMessage`
-  console.log('Sending telegram message:', { chatId, text });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}
-
-async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
-  const url = `https://api.telegram.org/bot${token}/sendMessage`
-  console.log('Sending telegram message with markup:', { chatId, text, reply_markup });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-      reply_markup: reply_markup,
-      parse_mode: 'Markdown'
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}
-
-async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
-  const url = `https://api.telegram.org/bot${token}/deleteMessage`
-  console.log('Deleting telegram message:', { chatId, messageId });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      message_id: messageId,
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}

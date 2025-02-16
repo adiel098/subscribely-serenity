@@ -44,7 +44,7 @@ export const PaymentMethods = ({
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
-          community_id: selectedPlan.community_id, // הוספנו את ה-community_id
+          community_id: selectedPlan.community_id,
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',

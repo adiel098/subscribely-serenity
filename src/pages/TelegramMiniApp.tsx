@@ -18,6 +18,7 @@ export interface Plan {
   price: number;
   interval: string;
   features: string[];
+  community_id: string; // הוספנו את שדה ה-community_id
 }
 
 export interface Community {

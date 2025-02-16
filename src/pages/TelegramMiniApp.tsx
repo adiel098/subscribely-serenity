@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +34,7 @@ const TelegramMiniApp = () => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
 
   useEffect(() => {
     const initData = searchParams.get("initData");
@@ -85,7 +85,6 @@ const TelegramMiniApp = () => {
 
   const handleSubscribe = (plan: Plan) => {
     setSelectedPlan(plan);
-    // Scroll to payment methods
     const paymentSection = document.getElementById('payment-methods');
     if (paymentSection) {
       paymentSection.scrollIntoView({ behavior: 'smooth' });
@@ -93,7 +92,7 @@ const TelegramMiniApp = () => {
   };
 
   const handlePaymentMethodSelect = (method: string) => {
-    // Here you would implement the actual payment processing
+    setSelectedPaymentMethod(method);
     console.log(`Selected payment method: ${method}`);
   };
 
@@ -123,7 +122,6 @@ const TelegramMiniApp = () => {
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-8">
-        {/* Hero Section */}
         <div className="bg-gradient-to-b from-primary/10 to-background pt-8 pb-12 px-4 text-center space-y-4">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 animate-fade-in">
             <Sparkle className="h-8 w-8 text-primary" />
@@ -140,7 +138,6 @@ const TelegramMiniApp = () => {
           </div>
         </div>
 
-        {/* Plans Grid */}
         <div className={`px-4 mt-8 grid gap-6 max-w-7xl mx-auto ${getPlanGridCols(community.subscription_plans.length)}`}>
           {community.subscription_plans.map((plan, index) => (
             <div
@@ -190,7 +187,6 @@ const TelegramMiniApp = () => {
           ))}
         </div>
 
-        {/* Payment Methods Section */}
         <div id="payment-methods" className="mt-12 px-4 max-w-2xl mx-auto">
           {selectedPlan && (
             <div className="space-y-6 animate-fade-in">
@@ -203,19 +199,28 @@ const TelegramMiniApp = () => {
                   icon={CreditCard}
                   title="Credit Card"
                   description="Pay securely with your credit card via Stripe"
-                  onClick={() => handlePaymentMethodSelect('stripe')}
+                  isActive={selectedPaymentMethod === 'stripe'}
+                  onToggle={() => handlePaymentMethodSelect('stripe')}
+                  isConfigured={true}
+                  onConfigure={() => handlePaymentMethodSelect('stripe')}
                 />
                 <PaymentMethodCard
                   icon={Wallet}
                   title="PayPal"
                   description="Fast and secure payment with PayPal"
-                  onClick={() => handlePaymentMethodSelect('paypal')}
+                  isActive={selectedPaymentMethod === 'paypal'}
+                  onToggle={() => handlePaymentMethodSelect('paypal')}
+                  isConfigured={true}
+                  onConfigure={() => handlePaymentMethodSelect('paypal')}
                 />
                 <PaymentMethodCard
                   icon={Bitcoin}
                   title="Cryptocurrency"
                   description="Pay with Bitcoin or other cryptocurrencies"
-                  onClick={() => handlePaymentMethodSelect('crypto')}
+                  isActive={selectedPaymentMethod === 'crypto'}
+                  onToggle={() => handlePaymentMethodSelect('crypto')}
+                  isConfigured={true}
+                  onConfigure={() => handlePaymentMethodSelect('crypto')}
                 />
               </div>
             </div>

@@ -83,7 +83,7 @@ const CommunitySelector = () => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
-    <div className="fixed top-16 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
+    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
       <div className="flex items-center gap-4">
         <Select 
           value={selectedCommunityId || undefined}
@@ -100,12 +100,15 @@ const CommunitySelector = () => {
             ))}
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-        </Button>
-        <Button variant="default" onClick={() => navigate("/platform-select")}>
-          New Community
-        </Button>
+        <div className="flex-1" /> {/* Spacer */}
+        <div className="ml-auto flex items-center gap-4">
+          <Button variant="ghost" size="icon">
+            <Bell className="h-5 w-5" />
+          </Button>
+          <Button variant="default" onClick={() => navigate("/platform-select")}>
+            New Community
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
-import { useCommunityContext } from '@/App';
+import { useCommunityContext } from '@/contexts/CommunityContext';
 import {
   AreaChart,
   Area,

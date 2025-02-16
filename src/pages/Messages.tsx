@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CreditCard, Wallet, Bitcoin } from "lucide-react";
-import { useCommunityContext } from "@/App";
+import { useCommunityContext } from '@/contexts/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
 import { PaymentMethodTabs } from "@/components/payments/PaymentMethodTabs";

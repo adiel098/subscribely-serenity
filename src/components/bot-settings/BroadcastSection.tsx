@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { BroadcastStats } from "./BroadcastStats";
 
 interface BroadcastSectionProps {
   communityId: string;
@@ -32,7 +34,23 @@ interface BroadcastSectionProps {
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isSending, setIsSending] = useState(false);
+  const [currentBroadcastId, setCurrentBroadcastId] = useState<string>("");
+
+  const { data: plans } = useQuery({
+    queryKey: ['subscription-plans', communityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('community_id', communityId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleSendBroadcast = async () => {
     if (!message.trim()) {
@@ -42,15 +60,17 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
 
     setIsSending(true);
     try {
-      const { error } = await supabase.from('broadcast_messages').insert({
+      const { data, error } = await supabase.from('broadcast_messages').insert({
         community_id: communityId,
         message: message.trim(),
         filter_type: filterType,
+        subscription_plan_id: filterType === 'plan' ? selectedPlanId : null,
         status: 'pending'
-      });
+      }).select().single();
 
       if (error) throw error;
 
+      setCurrentBroadcastId(data.id);
       toast.success("Broadcast message queued successfully");
       setMessage("");
     } catch (error) {
@@ -81,7 +101,12 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
             <div className="space-y-2">
               <Select
                 value={filterType}
-                onValueChange={setFilterType}
+                onValueChange={(value) => {
+                  setFilterType(value);
+                  if (value !== 'plan') {
+                    setSelectedPlanId("");
+                  }
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select recipients" />
@@ -90,8 +115,27 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
                   <SelectItem value="all">All Members</SelectItem>
                   <SelectItem value="active">Active Subscribers</SelectItem>
                   <SelectItem value="expired">Expired Subscribers</SelectItem>
+                  <SelectItem value="plan">Specific Plan</SelectItem>
                 </SelectContent>
               </Select>
+
+              {filterType === 'plan' && plans && (
+                <Select
+                  value={selectedPlanId}
+                  onValueChange={setSelectedPlanId}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select subscription plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <Textarea
               value={message}
@@ -101,11 +145,15 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
             />
             <Button 
               onClick={handleSendBroadcast} 
-              disabled={isSending || !message.trim()}
+              disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId)}
               className="w-full"
             >
               {isSending ? "Sending..." : "Send Broadcast"}
             </Button>
+
+            {currentBroadcastId && (
+              <BroadcastStats broadcastId={currentBroadcastId} />
+            )}
           </CardContent>
         </Card>
       </AccordionContent>

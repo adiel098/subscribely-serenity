@@ -18,7 +18,11 @@ export type Database = {
           id: string
           message: string
           sent_at: string | null
+          sent_failed: number | null
+          sent_success: number | null
           status: string | null
+          subscription_plan_id: string | null
+          total_recipients: number | null
           updated_at: string | null
         }
         Insert: {
@@ -29,7 +33,11 @@ export type Database = {
           id?: string
           message: string
           sent_at?: string | null
+          sent_failed?: number | null
+          sent_success?: number | null
           status?: string | null
+          subscription_plan_id?: string | null
+          total_recipients?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -40,7 +48,11 @@ export type Database = {
           id?: string
           message?: string
           sent_at?: string | null
+          sent_failed?: number | null
+          sent_success?: number | null
           status?: string | null
+          subscription_plan_id?: string | null
+          total_recipients?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -49,6 +61,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_messages_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]

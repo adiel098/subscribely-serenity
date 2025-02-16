@@ -188,8 +188,8 @@ serve(async (req) => {
             });
           }
 
-          // Create mini app URL
-          const miniAppUrl = `https://t.me/membifybot/app?startapp=${communityId}`;
+          // Create mini app URL with the correct path and start parameter
+          const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`;
           
           // Create welcome message with button
           const welcomeMessage = `👋 Welcome! You're about to join *${community.name}*`;

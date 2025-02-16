@@ -5,6 +5,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+console.log('🤖 Telegram bot webhook is running...'); // Added initial log
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -40,23 +42,31 @@ interface TelegramUpdate {
 }
 
 async function setupWebhook(botToken: string) {
+  console.log('Setting up webhook...'); // Added log
   const webhookUrl = 'https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook';
   const response = await fetch(
     `https://api.telegram.org/bot${botToken}/setWebhook?url=${webhookUrl}`,
     { method: 'POST' }
   );
-  return response.json();
+  const result = await response.json();
+  console.log('Webhook setup result:', result); // Added log
+  return result;
 }
 
 async function getWebhookInfo(botToken: string) {
+  console.log('Getting webhook info...'); // Added log
   const response = await fetch(
     `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
     { method: 'POST' }
   );
-  return response.json();
+  const result = await response.json();
+  console.log('Webhook info result:', result); // Added log
+  return result;
 }
 
 serve(async (req) => {
+  console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`); // Added request log
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -69,6 +79,7 @@ serve(async (req) => {
     )
 
     // Get the global bot token
+    console.log('Fetching bot token from settings...'); // Added log
     const { data: settings, error: settingsError } = await supabase
       .from('telegram_global_settings')
       .select('bot_token')
@@ -80,11 +91,13 @@ serve(async (req) => {
     }
 
     const BOT_TOKEN = settings.bot_token;
+    console.log('✅ Successfully retrieved bot token'); // Added log
     
     // Special endpoint to check webhook status
     if (req.method === 'GET') {
       const url = new URL(req.url);
       if (url.pathname.endsWith('/check')) {
+        console.log('Running webhook check...'); // Added log
         const webhookInfo = await getWebhookInfo(BOT_TOKEN);
         const setupResult = await setupWebhook(BOT_TOKEN);
         return new Response(
@@ -100,13 +113,13 @@ serve(async (req) => {
     // For direct Telegram webhook updates
     if (req.method === 'POST') {
       const update: TelegramUpdate = await req.json()
-      console.log('Received Telegram update:', JSON.stringify(update, null, 2))
+      console.log('📥 Received Telegram update:', JSON.stringify(update, null, 2))
 
       // Handle verification messages
       if (update.message?.text && update.message.text.startsWith('MBF_')) {
         const verificationCode = update.message.text.trim();
         const chatId = update.message.chat.id;
-        console.log(`Processing verification code ${verificationCode} for chat ${chatId}`);
+        console.log(`🔑 Processing verification code ${verificationCode} for chat ${chatId}`);
         
         // Find the bot settings with this verification code
         const { data: botSettings, error: botError } = await supabase
@@ -122,12 +135,12 @@ serve(async (req) => {
           .single();
 
         if (botError) {
-          console.error('Error updating bot settings:', botError);
+          console.error('❌ Error updating bot settings:', botError);
         }
 
         // Delete the verification message
         const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, update.message.message_id);
-        console.log('Delete message result:', deleteResult);
+        console.log('🗑️ Delete message result:', deleteResult);
 
         if (!botError && botSettings) {
           // Send success message
@@ -136,8 +149,8 @@ serve(async (req) => {
             chatId, 
             "✅ Verification successful! Your Telegram group is now connected to Membify."
           );
-          console.log('Success message result:', messageResult);
-          console.log(`Group ${chatId} verified with code ${verificationCode}`);
+          console.log('✉️ Success message result:', messageResult);
+          console.log(`✅ Group ${chatId} verified with code ${verificationCode}`);
         }
         
         return new Response(JSON.stringify({ success: true }), {
@@ -149,14 +162,14 @@ serve(async (req) => {
       // Handle bot being added to a group
       if (update.my_chat_member?.new_chat_member.status === 'administrator') {
         const chatId = update.my_chat_member.chat.id;
-        console.log(`Bot added as admin to chat ${chatId}`);
+        console.log(`👋 Bot added as admin to chat ${chatId}`);
         
         const messageResult = await sendTelegramMessage(
           BOT_TOKEN,
           chatId,
           "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account."
         );
-        console.log('Welcome message result:', messageResult);
+        console.log('✉️ Welcome message result:', messageResult);
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -174,7 +187,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('❌ Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

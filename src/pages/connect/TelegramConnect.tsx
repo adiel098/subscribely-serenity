@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,23 +60,27 @@ const TelegramConnect = () => {
         return;
       }
 
-      // Always generate a new code for current use
-      const newCode = generateNewCode();
-      
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          initial_telegram_code: profile.initial_telegram_code || newCode,
-          current_telegram_code: newCode
-        })
-        .eq('id', user?.id);
+      if (profile.current_telegram_code) {
+        // אם יש כבר קוד, נשתמש בו
+        setVerificationCode(profile.current_telegram_code);
+      } else {
+        // רק אם אין קוד, ניצור קוד חדש
+        const newCode = generateNewCode();
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            initial_telegram_code: profile.initial_telegram_code || newCode,
+            current_telegram_code: newCode
+          })
+          .eq('id', user?.id);
 
-      if (updateError) {
-        console.error('Error updating codes:', updateError);
-        return;
+        if (updateError) {
+          console.error('Error updating codes:', updateError);
+          return;
+        }
+
+        setVerificationCode(newCode);
       }
-
-      setVerificationCode(newCode);
     } catch (error) {
       console.error('Error in initializeVerificationCode:', error);
     }
@@ -126,8 +131,7 @@ const TelegramConnect = () => {
       }
 
       if (botSettings) {
-        // If settings exist and chat is verified, connection is successful
-        // Generate a new verification code for future use
+        // אם הקוד אומת בהצלחה, רק אז ניצור קוד חדש
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')

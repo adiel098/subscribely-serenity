@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +24,7 @@ export interface Community {
   id: string;
   name: string;
   description: string | null;
+  telegram_photo_url: string | null;
   subscription_plans: Plan[];
 }
 

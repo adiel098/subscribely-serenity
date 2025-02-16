@@ -20,7 +20,7 @@ export const PaymentMethods = ({
   onCompletePurchase
 }: PaymentMethodsProps) => {
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div id="payment-methods" className="space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
         <Badge variant="secondary" className="px-4 py-1.5">
           <Gift className="h-4 w-4 mr-2" />
@@ -34,22 +34,22 @@ export const PaymentMethods = ({
 
       <div className="grid grid-cols-3 gap-6">
         <TelegramPaymentOption
-          icon="/lovable-uploads/5a20d054-33f7-43c0-8b20-079ddd9a5dd3.png"
-          title="Bitcoin"
-          isSelected={selectedPaymentMethod === 'crypto'}
-          onSelect={() => onPaymentMethodSelect('crypto')}
-        />
-        <TelegramPaymentOption
-          icon="/lovable-uploads/5bcfd1e4-b3f3-47a5-a50c-bf9e2b7f73a0.png"
-          title="Discord Pay"
-          isSelected={selectedPaymentMethod === 'discord'}
-          onSelect={() => onPaymentMethodSelect('discord')}
-        />
-        <TelegramPaymentOption
-          icon="/lovable-uploads/5763dacb-9a17-4a52-8be0-a56b994b6c44.png"
+          icon="/lovable-uploads/214f6259-adad-480f-81ba-77390e675f8b.png"
           title="PayPal"
           isSelected={selectedPaymentMethod === 'paypal'}
           onSelect={() => onPaymentMethodSelect('paypal')}
+        />
+        <TelegramPaymentOption
+          icon="/lovable-uploads/0f9dcb59-a015-47ed-91ed-0f57d6e2c751.png"
+          title="Card"
+          isSelected={selectedPaymentMethod === 'card'}
+          onSelect={() => onPaymentMethodSelect('card')}
+        />
+        <TelegramPaymentOption
+          icon="/lovable-uploads/c00577e9-67bf-4dcb-b6c9-c821640fcea2.png"
+          title="Bank Transfer"
+          isSelected={selectedPaymentMethod === 'bank'}
+          onSelect={() => onPaymentMethodSelect('bank')}
         />
       </div>
 

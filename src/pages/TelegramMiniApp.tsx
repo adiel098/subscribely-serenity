@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkle, CreditCard, Check, Star, Wallet, Bitcoin } from "lucide-react";
+import { CreditCard, Star, Wallet, Bitcoin } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
 
@@ -83,6 +84,12 @@ const TelegramMiniApp = () => {
     );
   }
 
+  const handlePlanSelect = (plan: Plan) => {
+    setSelectedPlan(plan);
+    // Scroll to payment methods section
+    document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
     console.log(`Selected payment method: ${method}`);
@@ -91,39 +98,94 @@ const TelegramMiniApp = () => {
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-8">
-        <div id="payment-methods" className="container max-w-2xl mx-auto pt-8">
+        {/* Community Info Section */}
+        <div className="container max-w-2xl mx-auto pt-8 px-4">
+          <div className="text-center space-y-4 mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">{community.name}</h1>
+            {community.description && (
+              <p className="text-gray-600">{community.description}</p>
+            )}
+          </div>
+
+          {/* Subscription Plans Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-center">בחר אמצעי תשלום</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <PaymentMethodCard
-                icon={CreditCard}
-                title="כרטיס אשראי"
-                description=""
-                isActive={selectedPaymentMethod === 'stripe'}
-                onToggle={() => handlePaymentMethodSelect('stripe')}
-                isConfigured={true}
-                onConfigure={() => {}}
-              />
-              <PaymentMethodCard
-                icon={Wallet}
-                title="PayPal"
-                description=""
-                isActive={selectedPaymentMethod === 'paypal'}
-                onToggle={() => handlePaymentMethodSelect('paypal')}
-                isConfigured={true}
-                onConfigure={() => {}}
-              />
-              <PaymentMethodCard
-                icon={Bitcoin}
-                title="קריפטו"
-                description=""
-                isActive={selectedPaymentMethod === 'crypto'}
-                onToggle={() => handlePaymentMethodSelect('crypto')}
-                isConfigured={true}
-                onConfigure={() => {}}
-              />
+            <h2 className="text-2xl font-semibold text-center">Subscription Plans</h2>
+            <div className="grid gap-4">
+              {community.subscription_plans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className={`p-6 rounded-lg border-2 transition-all duration-300 cursor-pointer ${
+                    selectedPlan?.id === plan.id
+                      ? 'border-primary shadow-lg bg-primary/5'
+                      : 'border-gray-200 hover:border-primary/50 hover:shadow-md'
+                  }`}
+                  onClick={() => handlePlanSelect(plan)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-semibold">{plan.name}</h3>
+                      <p className="text-gray-600">{plan.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">${plan.price}</p>
+                      <p className="text-sm text-gray-500">{plan.interval}</p>
+                    </div>
+                  </div>
+                  {plan.features && plan.features.length > 0 && (
+                    <ul className="mt-4 space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-center text-gray-600">
+                          <Star className="h-4 w-4 text-primary mr-2" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Payment Methods Section */}
+          {selectedPlan && (
+            <div id="payment-methods" className="mt-12">
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold text-center">Select Payment Method</h2>
+                <p className="text-center text-gray-600">
+                  Choose how you'd like to pay for the {selectedPlan.name} plan
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  <PaymentMethodCard
+                    icon={CreditCard}
+                    title="Credit Card"
+                    description=""
+                    isActive={selectedPaymentMethod === 'stripe'}
+                    onToggle={() => handlePaymentMethodSelect('stripe')}
+                    isConfigured={true}
+                    onConfigure={() => {}}
+                  />
+                  <PaymentMethodCard
+                    icon={Wallet}
+                    title="PayPal"
+                    description=""
+                    isActive={selectedPaymentMethod === 'paypal'}
+                    onToggle={() => handlePaymentMethodSelect('paypal')}
+                    isConfigured={true}
+                    onConfigure={() => {}}
+                  />
+                  <PaymentMethodCard
+                    icon={Bitcoin}
+                    title="Crypto"
+                    description=""
+                    isActive={selectedPaymentMethod === 'crypto'}
+                    onToggle={() => handlePaymentMethodSelect('crypto')}
+                    isConfigured={true}
+                    onConfigure={() => {}}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ScrollArea>

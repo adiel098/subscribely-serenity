@@ -1,0 +1,6 @@
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.telegram-mini-app]
+verify_jwt = false

@@ -15,6 +15,7 @@ export type Database = {
           description: string | null
           id: string
           member_count: number | null
+          miniapp_url: string | null
           name: string
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
@@ -30,6 +31,7 @@ export type Database = {
           description?: string | null
           id?: string
           member_count?: number | null
+          miniapp_url?: string | null
           name: string
           owner_id: string
           platform: Database["public"]["Enums"]["platform_type"]
@@ -45,6 +47,7 @@ export type Database = {
           description?: string | null
           id?: string
           member_count?: number | null
+          miniapp_url?: string | null
           name?: string
           owner_id?: string
           platform?: Database["public"]["Enums"]["platform_type"]
@@ -142,6 +145,66 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscription_payments: {
+        Row: {
+          amount: number
+          community_id: string | null
+          created_at: string
+          id: string
+          invite_link: string | null
+          payment_method: string | null
+          plan_id: string | null
+          status: string
+          telegram_payment_id: string | null
+          telegram_user_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          invite_link?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          status: string
+          telegram_payment_id?: string | null
+          telegram_user_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          community_id?: string | null
+          created_at?: string
+          id?: string
+          invite_link?: string | null
+          payment_method?: string | null
+          plan_id?: string | null
+          status?: string
+          telegram_payment_id?: string | null
+          telegram_user_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {

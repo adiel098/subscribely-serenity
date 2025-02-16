@@ -1,10 +1,11 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('�������� Telegram bot webhook is running...');
+console.log('🤖 Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -183,6 +184,65 @@ async function findCommunityAndPaymentByInviteLink(supabase: any, chatId: string
   }
 
   return { community, payment };
+}
+
+async function sendTelegramMessage(token: string, chatId: number, text: string) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`
+  console.log('Sending telegram message:', { chatId, text });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+    }),
+  })
+  
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
+}
+
+async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`
+  console.log('Sending telegram message with markup:', { chatId, text, reply_markup });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+      reply_markup: reply_markup,
+      parse_mode: 'Markdown'
+    }),
+  })
+  
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
+}
+
+async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
+  const url = `https://api.telegram.org/bot${token}/deleteMessage`
+  console.log('Deleting telegram message:', { chatId, messageId });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+    }),
+  })
+  
+  const result = await response.json();
+  console.log('Telegram API response:', result);
+  return result;
 }
 
 serve(async (req) => {
@@ -461,13 +521,13 @@ serve(async (req) => {
           );
         }
 
-        const userId = profiles[0].id;
+        const ownerId = profiles[0].id;
 
         // Create community with photo URL and invite link
         const { data: community, error: communityError } = await supabase
           .from('communities')
           .insert({
-            owner_id: userId,
+            owner_id: ownerId,
             platform: 'telegram',
             name: chatTitle || 'My Telegram Community',
             platform_id: chatId.toString(),
@@ -536,7 +596,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      })
+      });
     }
 
     return new Response(
@@ -545,76 +605,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       }
-    )
+    );
 
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('❌ Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    )
+    );
   }
-})
-
-// Helper functions
-async function sendTelegramMessage(token: string, chatId: number, text: string) {
-  const url = `https://api.telegram.org/bot${token}/sendMessage`
-  console.log('Sending telegram message:', { chatId, text });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}
-
-async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
-  const url = `https://api.telegram.org/bot${token}/sendMessage`
-  console.log('Sending telegram message with markup:', { chatId, text, reply_markup });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-      reply_markup: reply_markup,
-      parse_mode: 'HTML'
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}
-
-async function deleteTelegramMessage(token: string, chatId: number, messageId: number) {
-  const url = `https://api.telegram.org/bot${token}/deleteMessage`
-  console.log('Deleting telegram message:', { chatId, messageId });
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      message_id: messageId,
-    }),
-  })
-  
-  const result = await response.json();
-  console.log('Telegram API response:', result);
-  return result;
-}
+});

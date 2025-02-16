@@ -31,22 +31,34 @@ export const useSubscriptionPlans = (communityId: string) => {
   const { data: plans, isLoading } = useQuery({
     queryKey: ['subscription-plans', communityId],
     queryFn: async () => {
+      if (!communityId) return [];
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('community_id', communityId)
         .order('price', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching plans:', error);
+        return [];
+      }
       return data as SubscriptionPlan[];
-    }
+    },
+    enabled: Boolean(communityId), // רק אם יש community_id התשאול יתבצע
   });
 
   const createPlan = useMutation({
     mutationFn: async (newPlan: CreateSubscriptionPlanData) => {
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert(newPlan)
+        .insert([
+          {
+            ...newPlan,
+            features: newPlan.features || [],
+            is_active: true
+          }
+        ])
         .select()
         .single();
 
@@ -55,9 +67,9 @@ export const useSubscriptionPlans = (communityId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי נוצרה בהצלחה');
+      toast.success('תוכנית המנוי נוצרה בהצלחה ✨');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating subscription plan:', error);
       toast.error('שגיאה ביצירת תוכנית המנוי');
     }
@@ -77,9 +89,9 @@ export const useSubscriptionPlans = (communityId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי עודכנה בהצלחה');
+      toast.success('תוכנית המנוי עודכנה בהצלחה ✨');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating subscription plan:', error);
       toast.error('שגיאה בעדכון תוכנית המנוי');
     }
@@ -96,9 +108,9 @@ export const useSubscriptionPlans = (communityId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי נמחקה בהצלחה');
+      toast.success('תוכנית המנוי נמחקה בהצלחה 🗑️');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting subscription plan:', error);
       toast.error('שגיאה במחיקת תוכנית המנוי');
     }

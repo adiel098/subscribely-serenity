@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, MessagesSquare, MessageSquare } from "lucide-react";
+import { MessageCircle, MessagesSquare, Discord, Slack } from "lucide-react";
 
 const PlatformSelect = () => {
   const navigate = useNavigate();
@@ -10,19 +10,19 @@ const PlatformSelect = () => {
     {
       name: "Telegram",
       icon: MessageCircle,
-      color: "bg-blue-500 hover:bg-blue-600",
+      color: "border-blue-500 text-blue-500 hover:bg-blue-50",
       route: "/connect/telegram"
     },
     {
       name: "Discord",
-      icon: MessagesSquare,
-      color: "bg-indigo-500 hover:bg-indigo-600",
+      icon: Discord,
+      color: "border-indigo-500 text-indigo-500 hover:bg-indigo-50",
       route: "/connect/discord"
     },
     {
       name: "Slack",
-      icon: MessageSquare,
-      color: "bg-green-500 hover:bg-green-600",
+      icon: Slack,
+      color: "border-green-500 text-green-500 hover:bg-green-50",
       route: "/connect/slack"
     }
   ];
@@ -44,9 +44,10 @@ const PlatformSelect = () => {
             <Button
               key={platform.name}
               onClick={() => navigate(platform.route)}
-              className={`w-full h-16 ${platform.color} text-white flex items-center justify-center space-x-3 text-lg`}
+              variant="outline"
+              className={`w-full h-20 border-2 bg-transparent ${platform.color} flex items-center justify-center space-x-3 text-lg transition-all duration-200`}
             >
-              <platform.icon className="w-6 h-6" />
+              <platform.icon className="w-8 h-8" />
               <span>Connect with {platform.name}</span>
             </Button>
           ))}

@@ -7,7 +7,7 @@ import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOpti
 import { Plan } from "@/pages/TelegramMiniApp";
 import { SuccessScreen } from "./SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
@@ -30,24 +30,24 @@ export const PaymentMethods = ({
 
   const handlePaymentComplete = async () => {
     try {
-      console.log('Starting payment completion...', {
+      console.log('Starting demo payment completion...', {
         plan: selectedPlan,
         method: selectedPaymentMethod,
         inviteLink: communityInviteLink
       });
 
-      // Create payment record
+      // בדמו - יצירת רשומת תשלום מוצלחת
       const { data: payment, error } = await supabase
         .from('subscription_payments')
-        .insert({
+        .insert([{
           plan_id: selectedPlan.id,
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: communityInviteLink
-        })
+          invite_link: communityInviteLink || null
+        }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error creating payment record:', error);
@@ -59,15 +59,18 @@ export const PaymentMethods = ({
         return;
       }
 
-      console.log('Payment record created:', payment);
+      console.log('Demo payment record created:', payment);
+      
+      // מעבר למסך הצלחה
       toast({
         title: "Payment Successful! 🎉",
         description: "You can now join the community.",
       });
+      
       onCompletePurchase();
       
     } catch (error) {
-      console.error('Error handling payment:', error);
+      console.error('Error in demo payment:', error);
       toast({
         variant: "destructive",
         title: "Error processing payment",

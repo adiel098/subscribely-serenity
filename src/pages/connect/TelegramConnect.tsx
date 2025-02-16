@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, Copy, CheckCircle } from "lucide-react";
+import { MessageCircle, Copy, CheckCircle, PartyPopper } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const TelegramConnect = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState<string>('');
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -19,6 +26,20 @@ const TelegramConnect = () => {
       initializeVerificationCode();
     }
   }, [user]);
+
+  useEffect(() => {
+    let redirectTimeout: NodeJS.Timeout;
+    if (showSuccessDialog) {
+      redirectTimeout = setTimeout(() => {
+        navigate('/dashboard');
+      }, 5000);
+    }
+    return () => {
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+      }
+    };
+  }, [showSuccessDialog, navigate]);
 
   const generateNewCode = () => {
     return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -119,11 +140,7 @@ const TelegramConnect = () => {
           setVerificationCode(newCode);
         }
 
-        toast({
-          title: "Success!",
-          description: "Your Telegram community has been successfully connected!",
-        });
-        navigate('/dashboard');
+        setShowSuccessDialog(true);
       } else {
         // If not verified yet, prompt user to send the code
         toast({
@@ -235,6 +252,27 @@ const TelegramConnect = () => {
           </div>
         </Card>
       </div>
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center flex flex-col items-center gap-4">
+              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  התחברת בהצלחה! 🎉
+                </h3>
+                <p className="text-sm text-gray-500">
+                  הבוט חובר בהצלחה לקהילת הטלגרם שלך 🤖 <br />
+                  מעביר אותך לדשבורד תוך 5 שניות... ⏱️
+                </p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

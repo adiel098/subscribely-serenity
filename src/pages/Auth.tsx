@@ -37,8 +37,8 @@ const Auth = () => {
         });
         if (error) throw error;
         toast({
-          title: "רישום בוצע בהצלחה",
-          description: "נשלח אליך מייל אימות. אנא בדוק את תיבת הדואר שלך.",
+          title: "Registration Successful",
+          description: "Please check your email for verification.",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -51,7 +51,7 @@ const Auth = () => {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "שגיאה",
+        title: "Error",
         description: error.message,
       });
     } finally {
@@ -64,13 +64,13 @@ const Auth = () => {
       <Card className="w-full max-w-md space-y-8 p-8">
         <div>
           <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
-            {isSignUp ? "הרשמה למערכת" : "כניסה למערכת"}
+            {isSignUp ? "Sign Up" : "Sign In"}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -80,11 +80,10 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
-                dir="ltr"
               />
             </div>
             <div>
-              <Label htmlFor="password">סיסמה</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -94,7 +93,6 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1"
-                dir="ltr"
               />
             </div>
           </div>
@@ -102,10 +100,10 @@ const Auth = () => {
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
-                ? "מעבד..."
+                ? "Processing..."
                 : isSignUp
-                ? "הרשמה"
-                : "כניסה"}
+                ? "Sign Up"
+                : "Sign In"}
             </Button>
           </div>
         </form>
@@ -117,8 +115,8 @@ const Auth = () => {
             className="mt-2"
           >
             {isSignUp
-              ? "כבר יש לך חשבון? היכנס"
-              : "אין לך חשבון? הירשם"}
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
           </Button>
         </div>
       </Card>

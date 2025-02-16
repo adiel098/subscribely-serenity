@@ -21,25 +21,25 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors">
-              תכונות
+              Features
             </a>
             <a href="#pricing" className="text-gray-700 hover:text-gray-900 transition-colors">
-              מחירים
+              Pricing
             </a>
             <a href="#contact" className="text-gray-700 hover:text-gray-900 transition-colors">
-              צור קשר
+              Contact
             </a>
             {user ? (
               <Button onClick={() => signOut()} variant="outline">
-                התנתק
+                Sign Out
               </Button>
             ) : (
               <>
                 <Button variant="outline" onClick={() => navigate('/auth')}>
-                  כניסה
+                  Sign In
                 </Button>
                 <Button onClick={() => navigate('/auth')}>
-                  הרשמה
+                  Sign Up
                 </Button>
               </>
             )}
@@ -65,32 +65,32 @@ const Navbar = () => {
               href="#features"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              תכונות
+              Features
             </a>
             <a
               href="#pricing"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              מחירים
+              Pricing
             </a>
             <a
               href="#contact"
               className="block px-3 py-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
-              צור קשר
+              Contact
             </a>
             <div className="pt-4 pb-3 border-t border-gray-200">
               {user ? (
                 <Button onClick={() => signOut()} variant="outline" className="w-full">
-                  התנתק
+                  Sign Out
                 </Button>
               ) : (
                 <>
                   <Button variant="outline" onClick={() => navigate('/auth')} className="w-full mb-2">
-                    כניסה
+                    Sign In
                   </Button>
                   <Button onClick={() => navigate('/auth')} className="w-full">
-                    הרשמה
+                    Sign Up
                   </Button>
                 </>
               )}

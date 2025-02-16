@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('������� Telegram bot webhook is running...');
+console.log('�������� Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -238,7 +238,13 @@ serve(async (req) => {
       if (update.message?.new_chat_member) {
         const chatId = update.message.chat.id.toString();
         const newMember = update.message.new_chat_member;
-        console.log('New member joined:', newMember);
+        console.log('👤 New member joined - Details:', {
+          chatId,
+          memberId: newMember.id,
+          username: newMember.username,
+          firstName: newMember.first_name,
+          lastName: newMember.last_name
+        });
 
         // Get the most recent message that added this user to get the invite link used
         const response = await fetch(
@@ -256,21 +262,29 @@ serve(async (req) => {
         );
         
         const chatMemberInfo = await response.json();
-        console.log('Chat member info:', chatMemberInfo);
+        console.log('📝 Chat member info from Telegram:', JSON.stringify(chatMemberInfo, null, 2));
         
         if (chatMemberInfo.ok && chatMemberInfo.result.invite_link) {
           const inviteLink = chatMemberInfo.result.invite_link;
+          console.log('🔗 Found invite link:', inviteLink);
           
           // Find the community and payment using the specific invite link
           const result = await findCommunityAndPaymentByInviteLink(supabase, chatId, inviteLink);
           
           if (result) {
             const { community, payment } = result;
+            console.log('✅ Found matching community and payment:', {
+              communityId: community.id,
+              communityName: community.name,
+              paymentId: payment?.id,
+              planId: payment?.plan?.id,
+              planInterval: payment?.plan?.interval
+            });
 
-            console.log('Creating telegram_chat_members record with:', {
+            const memberData = {
               community_id: community.id,
               telegram_user_id: newMember.id.toString(),
-              telegram_username: newMember.username,
+              telegram_username: newMember.username || null,
               subscription_status: true,
               subscription_start_date: new Date().toISOString(),
               subscription_end_date: payment?.plan?.interval === 'monthly' 
@@ -283,37 +297,25 @@ serve(async (req) => {
               joined_at: new Date().toISOString(),
               last_active: new Date().toISOString(),
               total_messages: 0
-            });
+            };
+
+            console.log('📝 Attempting to create member record with data:', JSON.stringify(memberData, null, 2));
 
             // Create telegram_chat_members record with exact table structure
-            const { error: memberError } = await supabase
+            const { data: memberData2, error: memberError } = await supabase
               .from('telegram_chat_members')
-              .insert({
-                community_id: community.id,
-                telegram_user_id: newMember.id.toString(),
-                telegram_username: newMember.username || null,
-                subscription_status: true,
-                subscription_start_date: new Date().toISOString(),
-                subscription_end_date: payment?.plan?.interval === 'monthly' 
-                  ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
-                  : payment?.plan?.interval === 'yearly'
-                  ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-                  : null,
-                subscription_plan_id: payment?.plan?.id || null,
-                is_active: true,
-                joined_at: new Date().toISOString(),
-                last_active: new Date().toISOString(),
-                total_messages: 0
-              });
+              .insert(memberData)
+              .select();
 
             if (memberError) {
-              console.error('Error creating member record:', memberError);
+              console.error('❌ Error creating member record:', memberError);
               console.error('Error details:', JSON.stringify(memberError, null, 2));
             } else {
-              console.log('Successfully created member record');
+              console.log('✅ Successfully created member record:', JSON.stringify(memberData2, null, 2));
 
               // Update the payment record with the telegram user ID
               if (payment) {
+                console.log('📝 Updating payment record for user:', newMember.id.toString());
                 const { error: updateError } = await supabase
                   .from('subscription_payments')
                   .update({ 
@@ -322,17 +324,19 @@ serve(async (req) => {
                   .eq('id', payment.id);
 
                 if (updateError) {
-                  console.error('Error updating payment record:', updateError);
+                  console.error('❌ Error updating payment record:', updateError);
+                  console.error('Error details:', JSON.stringify(updateError, null, 2));
                 } else {
-                  console.log('Successfully updated payment record');
+                  console.log('✅ Successfully updated payment record');
                 }
               }
             }
           } else {
-            console.log('No matching payment found for invite link:', inviteLink);
+            console.log('❌ No matching payment found for invite link:', inviteLink);
           }
         } else {
-          console.log('Could not retrieve invite link information');
+          console.log('❌ Could not retrieve invite link information from chat member info');
+          console.log('Chat member info response:', JSON.stringify(chatMemberInfo, null, 2));
         }
       }
 

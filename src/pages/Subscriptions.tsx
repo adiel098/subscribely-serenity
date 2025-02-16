@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusIcon, TrashIcon, CheckIcon } from "lucide-react";
+import { PlusIcon, TrashIcon, CheckIcon, EditIcon, SparklesIcon, CrownIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useCommunityContext } from "@/App";
 
@@ -66,14 +66,22 @@ const Subscriptions = () => {
         interval: "monthly",
         features: [],
       });
+      toast.success("Plan created successfully! ✨");
     } catch (error) {
       console.error("Error creating plan:", error);
+      toast.error("Failed to create plan");
     }
   };
 
   const handleDeletePlan = async (planId: string) => {
     if (confirm("Are you sure you want to delete this subscription plan?")) {
-      await deletePlan.mutateAsync(planId);
+      try {
+        await deletePlan.mutateAsync(planId);
+        toast.success("Plan deleted successfully! 🗑️");
+      } catch (error) {
+        console.error("Error deleting plan:", error);
+        toast.error("Failed to delete plan");
+      }
     }
   };
 
@@ -97,19 +105,32 @@ const Subscriptions = () => {
     <div className="w-full max-w-7xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Subscription Plans</h1>
-          <p className="mt-2 text-gray-600">Manage your community's subscription plans</p>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <CrownIcon className="h-8 w-8 text-yellow-500" />
+            Subscription Plans
+          </h1>
+          <p className="mt-2 text-gray-600">Manage your community's subscription plans ✨</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="gap-2">
-              <PlusIcon className="h-5 w-5" />
-              New Plan
-            </Button>
+            <div className="group cursor-pointer">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center gap-4 transition-all duration-300 hover:border-primary hover:bg-primary/5">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300">
+                  <PlusIcon className="h-6 w-6 text-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-gray-900">Create New Plan</p>
+                  <p className="text-sm text-gray-500">Click to add a subscription plan</p>
+                </div>
+              </div>
+            </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Create New Subscription Plan</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-primary" />
+                Create New Subscription Plan
+              </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -179,12 +200,25 @@ const Subscriptions = () => {
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {plans?.map((plan) => (
-          <Card key={plan.id} className="relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-200">
-            {/* Popular badge would go here */}
+          <Card 
+            key={plan.id} 
+            className="relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 animate-fade-in group"
+            style={{
+              background: `linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)`,
+            }}
+          >
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 to-primary"></div>
             <div className="p-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    {plan.name}
+                    {plan.interval === "yearly" && (
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                        Yearly
+                      </span>
+                    )}
+                  </h3>
                   <div className="mt-2 flex items-baseline gap-1">
                     <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
                     <span className="text-gray-600">
@@ -192,14 +226,23 @@ const Subscriptions = () => {
                     </span>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeletePlan(plan.id)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </Button>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-primary"
+                  >
+                    <EditIcon className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeletePlan(plan.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               
               {plan.description && (
@@ -209,7 +252,7 @@ const Subscriptions = () => {
               {plan.features && plan.features.length > 0 && (
                 <ul className="mt-6 space-y-3">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
+                    <li key={index} className="flex items-start gap-3 animate-fade-in" style={{animationDelay: `${index * 100}ms`}}>
                       <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-600">{feature}</span>
                     </li>

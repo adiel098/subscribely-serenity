@@ -39,6 +39,23 @@ interface TelegramUpdate {
   };
 }
 
+async function setupWebhook(botToken: string) {
+  const webhookUrl = 'https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook';
+  const response = await fetch(
+    `https://api.telegram.org/bot${botToken}/setWebhook?url=${webhookUrl}`,
+    { method: 'POST' }
+  );
+  return response.json();
+}
+
+async function getWebhookInfo(botToken: string) {
+  const response = await fetch(
+    `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
+    { method: 'POST' }
+  );
+  return response.json();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -58,20 +75,38 @@ serve(async (req) => {
       .single();
 
     if (settingsError || !settings) {
+      console.error('Failed to get bot settings:', settingsError);
       throw new Error('Failed to get bot settings');
     }
 
     const BOT_TOKEN = settings.bot_token;
+    
+    // Special endpoint to check webhook status
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      if (url.pathname.endsWith('/check')) {
+        const webhookInfo = await getWebhookInfo(BOT_TOKEN);
+        const setupResult = await setupWebhook(BOT_TOKEN);
+        return new Response(
+          JSON.stringify({ webhookInfo, setupResult }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+      }
+    }
 
     // For direct Telegram webhook updates
     if (req.method === 'POST') {
       const update: TelegramUpdate = await req.json()
-      console.log('Received Telegram update:', update)
+      console.log('Received Telegram update:', JSON.stringify(update, null, 2))
 
       // Handle verification messages
       if (update.message?.text && update.message.text.startsWith('MBF_')) {
         const verificationCode = update.message.text.trim();
         const chatId = update.message.chat.id;
+        console.log(`Processing verification code ${verificationCode} for chat ${chatId}`);
         
         // Find the bot settings with this verification code
         const { data: botSettings, error: botError } = await supabase
@@ -86,16 +121,22 @@ serve(async (req) => {
           .select()
           .single();
 
+        if (botError) {
+          console.error('Error updating bot settings:', botError);
+        }
+
         // Delete the verification message
-        await deleteTelegramMessage(BOT_TOKEN, chatId, update.message.message_id);
+        const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, update.message.message_id);
+        console.log('Delete message result:', deleteResult);
 
         if (!botError && botSettings) {
           // Send success message
-          await sendTelegramMessage(
+          const messageResult = await sendTelegramMessage(
             BOT_TOKEN, 
             chatId, 
             "✅ Verification successful! Your Telegram group is now connected to Membify."
           );
+          console.log('Success message result:', messageResult);
           console.log(`Group ${chatId} verified with code ${verificationCode}`);
         }
         
@@ -110,11 +151,12 @@ serve(async (req) => {
         const chatId = update.my_chat_member.chat.id;
         console.log(`Bot added as admin to chat ${chatId}`);
         
-        await sendTelegramMessage(
+        const messageResult = await sendTelegramMessage(
           BOT_TOKEN,
           chatId,
           "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account."
         );
+        console.log('Welcome message result:', messageResult);
       }
 
       return new Response(JSON.stringify({ success: true }), {

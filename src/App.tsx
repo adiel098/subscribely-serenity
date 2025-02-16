@@ -9,6 +9,15 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Members from "./pages/Members";
+import Subscribers from "./pages/Subscribers";
+import Subscriptions from "./pages/Subscriptions";
+import Messages from "./pages/Messages";
+import Analytics from "./pages/Analytics";
+import BotSettings from "./pages/BotSettings";
+import Events from "./pages/Events";
+import Rewards from "./pages/Rewards";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
@@ -81,6 +90,78 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/members" 
+                  element={
+                    <ProtectedRoute>
+                      <Members />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/subscribers" 
+                  element={
+                    <ProtectedRoute>
+                      <Subscribers />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/subscriptions" 
+                  element={
+                    <ProtectedRoute>
+                      <Subscriptions />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/messages" 
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/analytics" 
+                  element={
+                    <ProtectedRoute>
+                      <Analytics />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/bot-settings" 
+                  element={
+                    <ProtectedRoute>
+                      <BotSettings />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/events" 
+                  element={
+                    <ProtectedRoute>
+                      <Events />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/rewards" 
+                  element={
+                    <ProtectedRoute>
+                      <Rewards />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
                     </ProtectedRoute>
                   } 
                 />

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MessageCircle, Copy, CheckCircle } from "lucide-react";
@@ -14,6 +13,39 @@ const TelegramConnect = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    // Update the bot token when component mounts
+    const updateBotToken = async () => {
+      try {
+        const { error } = await supabase
+          .from('telegram_global_settings')
+          .update({ 
+            bot_token: '7925621863:AAGIRzj6xbM9CJERSld5xhF-maIO1JTA_LQ',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', 1); // Assuming there's only one global settings row
+
+        if (error) {
+          console.error('Error updating bot token:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update bot token",
+            variant: "destructive",
+          });
+        } else {
+          // Now check the webhook
+          const response = await fetch('https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook/check');
+          const result = await response.json();
+          console.log('Webhook check result:', result);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    updateBotToken();
+  }, [toast]);
 
   const copyToClipboard = async (text: string) => {
     try {

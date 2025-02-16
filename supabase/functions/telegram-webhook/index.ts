@@ -49,7 +49,6 @@ async function setupWebhook(botToken: string) {
     const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
     console.log('Using webhook URL:', webhookUrl);
     
-    // נגדיר את ה-webhook עם כל ההרשאות הנדרשות
     const allowedUpdates = [
       "message",
       "edited_message",
@@ -99,58 +98,90 @@ async function getWebhookInfo(botToken: string) {
 }
 
 async function handleNewMessage(supabase: any, update: any) {
-  console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
-  await logTelegramEvent(supabase, 'new_message', update);
+  try {
+    console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
+    await logTelegramEvent(supabase, 'new_message', update);
+  } catch (error) {
+    console.error('Error in handleNewMessage:', error);
+    throw error;
+  }
 }
 
 async function handleChatJoinRequest(supabase: any, update: any) {
-  console.log('👤 Processing chat join request:', JSON.stringify(update.chat_join_request, null, 2));
-  await logTelegramEvent(supabase, 'chat_join_request', update);
+  try {
+    console.log('👤 Processing chat join request:', JSON.stringify(update.chat_join_request, null, 2));
+    await logTelegramEvent(supabase, 'chat_join_request', update);
+  } catch (error) {
+    console.error('Error in handleChatJoinRequest:', error);
+    throw error;
+  }
 }
 
 async function handleChannelPost(supabase: any, update: any) {
-  console.log('📢 Processing channel post:', JSON.stringify(update.channel_post, null, 2));
-  await logTelegramEvent(supabase, 'channel_post', update);
+  try {
+    console.log('📢 Processing channel post:', JSON.stringify(update.channel_post, null, 2));
+    await logTelegramEvent(supabase, 'channel_post', update);
+  } catch (error) {
+    console.error('Error in handleChannelPost:', error);
+    throw error;
+  }
 }
 
 async function handleEditedMessage(supabase: any, update: any) {
-  console.log('✏️ Processing edited message:', JSON.stringify(update.edited_message, null, 2));
-  await logTelegramEvent(supabase, 'edited_message', update);
+  try {
+    console.log('✏️ Processing edited message:', JSON.stringify(update.edited_message, null, 2));
+    await logTelegramEvent(supabase, 'edited_message', update);
+  } catch (error) {
+    console.error('Error in handleEditedMessage:', error);
+    throw error;
+  }
 }
 
 async function handleLeftChatMember(supabase: any, update: any) {
-  console.log('👋 Processing left chat member:', JSON.stringify(update.message?.left_chat_member, null, 2));
-  await logTelegramEvent(supabase, 'left_chat_member', update);
+  try {
+    console.log('👋 Processing left chat member:', JSON.stringify(update.message?.left_chat_member, null, 2));
+    await logTelegramEvent(supabase, 'left_chat_member', update);
+  } catch (error) {
+    console.error('Error in handleLeftChatMember:', error);
+    throw error;
+  }
 }
 
 async function handleNewChatMember(supabase: any, update: any) {
-  console.log('🎉 Processing new chat members:', JSON.stringify(update.message?.new_chat_members || [update.message?.new_chat_member], null, 2));
-  
-  // נטפל בכל החברים החדשים (יכול להיות אחד או יותר)
-  const newMembers = update.message?.new_chat_members || [update.message?.new_chat_member].filter(Boolean);
-  
-  for (const member of newMembers) {
-    // נרשום לוג נפרד לכל חבר חדש
-    await logTelegramEvent(supabase, 'new_chat_member', {
-      ...update,
-      new_chat_member: member
-    });
+  try {
+    console.log('🎉 Processing new chat members:', JSON.stringify(update.message?.new_chat_members || [update.message?.new_chat_member], null, 2));
     
-    console.log(`✨ New member joined: ${member.first_name} ${member.last_name || ''} (@${member.username || 'no username'})`);
+    const newMembers = update.message?.new_chat_members || [update.message?.new_chat_member].filter(Boolean);
+    
+    for (const member of newMembers) {
+      await logTelegramEvent(supabase, 'new_chat_member', {
+        ...update,
+        new_chat_member: member
+      });
+      
+      console.log(`✨ New member joined: ${member.first_name} ${member.last_name || ''} (@${member.username || 'no username'})`);
+    }
+  } catch (error) {
+    console.error('Error in handleNewChatMember:', error);
+    throw error;
   }
 }
 
 async function handleMyChatMember(supabase: any, update: any) {
-  console.log('👥 Processing my_chat_member update:', JSON.stringify(update.my_chat_member, null, 2));
-  
-  const chatMember = update.my_chat_member;
-  // נבדוק אם זה אירוע של הצטרפות לערוץ
-  if (chatMember.new_chat_member?.status === 'member' || 
-      chatMember.new_chat_member?.status === 'administrator') {
-    console.log('🎉 New channel membership detected!');
+  try {
+    console.log('👥 Processing my_chat_member update:', JSON.stringify(update.my_chat_member, null, 2));
+    
+    const chatMember = update.my_chat_member;
+    if (chatMember.new_chat_member?.status === 'member' || 
+        chatMember.new_chat_member?.status === 'administrator') {
+      console.log('🎉 New channel membership detected!');
+    }
+    
+    await logTelegramEvent(supabase, 'my_chat_member', update);
+  } catch (error) {
+    console.error('Error in handleMyChatMember:', error);
+    throw error;
   }
-  
-  await logTelegramEvent(supabase, 'my_chat_member', update);
 }
 
 serve(async (req) => {
@@ -179,12 +210,31 @@ serve(async (req) => {
 
     if (settingsError) {
       console.error('Error fetching bot token:', settingsError);
-      throw new Error('Failed to fetch bot token');
+      return new Response(
+        JSON.stringify({ 
+          ok: true,
+          error: 'Failed to fetch bot token',
+          details: settingsError.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
     if (!settings?.bot_token) {
       console.error('Bot token is missing from settings');
-      throw new Error('Bot token is missing');
+      return new Response(
+        JSON.stringify({ 
+          ok: true,
+          error: 'Bot token is missing'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
     const BOT_TOKEN = settings.bot_token;
@@ -271,13 +321,10 @@ serve(async (req) => {
         );
       } catch (error) {
         console.error('Error processing webhook update:', error);
+        // נרשום את השגיאה ב-DB ונחזיר תשובה תקינה לטלגרם
         await logTelegramEvent(supabase, 'error', {}, error.message);
         return new Response(
-          JSON.stringify({ 
-            ok: true,
-            error: 'Error processing update',
-            details: error.message 
-          }),
+          JSON.stringify({ ok: true }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
@@ -286,7 +333,6 @@ serve(async (req) => {
       }
     }
 
-    console.log('Invalid request method:', req.method);
     return new Response(
       JSON.stringify({ 
         ok: true,
@@ -301,11 +347,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unhandled error:', error);
     return new Response(
-      JSON.stringify({ 
-        ok: true,
-        error: 'Internal server error',
-        details: error.message 
-      }),
+      JSON.stringify({ ok: true }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200

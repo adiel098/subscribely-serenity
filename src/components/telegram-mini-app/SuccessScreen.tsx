@@ -3,7 +3,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Crown } from "lucide-react";
 
-export const SuccessScreen = () => {
+interface SuccessScreenProps {
+  communityInviteLink?: string | null;
+}
+
+export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
       <div className="text-center space-y-6 p-8 max-w-md">
@@ -15,7 +19,7 @@ export const SuccessScreen = () => {
           You can now join the community and access all premium features.
         </p>
         <a 
-          href="https://t.me/+1234567890"
+          href={communityInviteLink || "#"}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block w-full"

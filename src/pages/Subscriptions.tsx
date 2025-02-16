@@ -33,16 +33,12 @@ const Subscriptions = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const {
-    data: communities
-  } = useCommunities();
-
+  const { data: communities } = useCommunities();
   const community = communities?.[0];
 
   const {
     plans,
     isLoading,
-    createPlan
   } = useSubscriptionPlans(community?.id || "");
 
   const handleCreatePlan = () => {
@@ -111,21 +107,19 @@ const Subscriptions = () => {
         </div>
       </div>
 
-      {/* Display subscription plans */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {plans?.map((plan) => (
           <SubscriptionPlanCard
             key={plan.id}
             plan={plan}
             onEdit={() => handleEditPlan(plan.id)}
-            onDelete={() => handleDeletePlan(plan.id)}
+            onDelete={handleDeletePlan}
             intervalColors={intervalColors}
             intervalLabels={intervalLabels}
           />
         ))}
       </div>
 
-      {/* Dialogs */}
       <CreatePlanDialog
         isOpen={createDialogOpen}
         onOpenChange={setCreateDialogOpen}

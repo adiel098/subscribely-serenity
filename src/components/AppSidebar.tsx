@@ -1,5 +1,5 @@
+
 import {
-  Users,
   CreditCard,
   Settings,
   TrendingUp,
@@ -29,11 +29,6 @@ const menuItems = [
     title: "Dashboard",
     icon: BarChart,
     path: "/dashboard"
-  },
-  {
-    title: "Members",
-    icon: Users,
-    path: "/members"
   },
   {
     title: "Subscribers",

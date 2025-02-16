@@ -1,6 +1,5 @@
-
 import { useNavigate } from 'react-router-dom';
-import { Users, CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
+import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,12 +47,10 @@ const Dashboard = () => {
     return null;
   }
 
-  // Calculate subscribers stats
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   const totalRevenue = activeSubscribers.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
 
-  // Prepare data for charts
   const memberGrowthData = subscribers?.map(sub => ({
     date: new Date(sub.joined_at).toLocaleDateString(),
     members: 1
@@ -69,19 +66,7 @@ const Dashboard = () => {
 
   return (
     <div className="h-full space-y-6 py-[5px] px-[14px]">
-      <div className="grid grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Members</h3>
-            <Users className="h-5 w-5 text-blue-500" />
-          </div>
-          <p className="text-3xl font-bold">{subscribers?.length || 0}</p>
-          <div className="mt-2 flex items-center text-sm text-green-600">
-            <ArrowUpRight className="h-4 w-4 mr-1" />
-            <span>Latest: {subscribers?.[0]?.joined_at ? new Date(subscribers[0].joined_at).toLocaleDateString() : 'No members'}</span>
-          </div>
-        </Card>
-
+      <div className="grid grid-cols-3 gap-6">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Active Subscribers</h3>

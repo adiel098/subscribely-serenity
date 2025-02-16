@@ -29,13 +29,16 @@ export const PaymentMethods = ({
   const { toast } = useToast();
 
   const handlePaymentComplete = async () => {
-    try {
-      console.log('Starting demo payment completion...', {
-        plan: selectedPlan,
-        method: selectedPaymentMethod,
-        inviteLink: communityInviteLink
+    if (!selectedPlan || !selectedPaymentMethod) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a payment method"
       });
+      return;
+    }
 
+    try {
       // בדמו - יצירת רשומת תשלום מוצלחת
       const { data: payment, error } = await supabase
         .from('subscription_payments')
@@ -50,7 +53,6 @@ export const PaymentMethods = ({
         .maybeSingle();
 
       if (error) {
-        console.error('Error creating payment record:', error);
         toast({
           variant: "destructive",
           title: "Error processing payment",
@@ -59,9 +61,7 @@ export const PaymentMethods = ({
         return;
       }
 
-      console.log('Demo payment record created:', payment);
-      
-      // מעבר למסך הצלחה
+      // אם הכל בסדר, נעבור למסך הבא
       toast({
         title: "Payment Successful! 🎉",
         description: "You can now join the community.",
@@ -70,7 +70,6 @@ export const PaymentMethods = ({
       onCompletePurchase();
       
     } catch (error) {
-      console.error('Error in demo payment:', error);
       toast({
         variant: "destructive",
         title: "Error processing payment",

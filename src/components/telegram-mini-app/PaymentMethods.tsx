@@ -27,6 +27,7 @@ export const PaymentMethods = ({
   showSuccess
 }: PaymentMethodsProps) => {
   const { toast } = useToast();
+  const [paymentInviteLink, setPaymentInviteLink] = useState<string | null>(null);
 
   const handlePaymentComplete = async () => {
     if (!selectedPlan || !selectedPaymentMethod) {
@@ -70,6 +71,10 @@ export const PaymentMethods = ({
         return;
       }
 
+      if (payment?.invite_link) {
+        setPaymentInviteLink(payment.invite_link);
+      }
+
       toast({
         title: "Payment Successful! 🎉",
         description: "You can now join the community.",
@@ -88,7 +93,7 @@ export const PaymentMethods = ({
   };
 
   if (showSuccess) {
-    return <SuccessScreen communityInviteLink={communityInviteLink} />;
+    return <SuccessScreen communityInviteLink={paymentInviteLink || communityInviteLink} />;
   }
 
   return (

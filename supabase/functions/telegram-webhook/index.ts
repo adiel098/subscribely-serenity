@@ -23,6 +23,7 @@ interface TelegramUpdate {
     chat: {
       id: number;
       type: string;
+      title?: string;
     };
     text?: string;
   };
@@ -39,6 +40,7 @@ interface TelegramUpdate {
     chat: {
       id: number;
       type: string;
+      title?: string;
     };
     from: {
       id: number;
@@ -135,22 +137,24 @@ serve(async (req) => {
       const verificationMessage = update.message?.text || update.channel_post?.text;
       const chatId = update.message?.chat.id || update.channel_post?.chat.id;
       const messageId = update.message?.message_id || update.channel_post?.message_id;
+      const chatType = update.message?.chat.type || update.channel_post?.chat.type;
+      const chatTitle = update.message?.chat.title || update.channel_post?.chat.title;
 
       if (verificationMessage?.startsWith('MBF_') && chatId && messageId) {
         const verificationCode = verificationMessage.trim();
         console.log(`🔑 Processing verification code ${verificationCode} for chat ${chatId}`);
         
-        // Find the bot settings with this verification code
-        const { data: botSettings, error: botError } = await supabase
-          .from('telegram_bot_settings')
-          .select('*')
-          .eq('verification_code', verificationCode)
-          .is('verified_at', null);
+        // Find profile with this verification code
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('current_telegram_code', verificationCode)
+          .limit(1);
 
-        if (botError) {
-          console.error('❌ Error finding bot settings:', botError);
+        if (profileError || !profiles?.length) {
+          console.error('❌ Error finding profile:', profileError);
           return new Response(
-            JSON.stringify({ error: 'Failed to find bot settings' }),
+            JSON.stringify({ error: 'Failed to find profile' }),
             {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 500,
@@ -158,41 +162,65 @@ serve(async (req) => {
           );
         }
 
-        // If we found settings to update
-        if (botSettings && botSettings.length > 0) {
-          const { error: updateError } = await supabase
-            .from('telegram_bot_settings')
-            .update({ 
-              chat_id: chatId.toString(),
-              verified_at: new Date().toISOString(),
-              is_admin: true
-            })
-            .eq('verification_code', verificationCode)
-            .is('verified_at', null);
+        const userId = profiles[0].id;
 
-          if (updateError) {
-            console.error('❌ Error updating bot settings:', updateError);
-          } else {
-            console.log('✅ Successfully updated bot settings');
-          }
-        } else {
-          console.log('⚠️ No unverified bot settings found for code:', verificationCode);
+        // Create community
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .insert({
+            owner_id: userId,
+            platform: 'telegram',
+            name: chatTitle || 'My Telegram Community',
+            platform_id: chatId.toString(),
+            telegram_chat_id: chatId.toString()
+          })
+          .select()
+          .single();
+
+        if (communityError) {
+          console.error('❌ Error creating community:', communityError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create community' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            }
+          );
+        }
+
+        // Set up and verify bot settings
+        const { error: botSettingsError } = await supabase
+          .from('telegram_bot_settings')
+          .insert({
+            community_id: community.id,
+            chat_id: chatId.toString(),
+            verification_code: verificationCode,
+            verified_at: new Date().toISOString(),
+            is_admin: true
+          });
+
+        if (botSettingsError) {
+          console.error('❌ Error creating bot settings:', botSettingsError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create bot settings' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            }
+          );
         }
 
         // Delete the verification message
         const deleteResult = await deleteTelegramMessage(BOT_TOKEN, chatId, messageId);
         console.log('🗑️ Delete message result:', deleteResult);
 
-        if (botSettings && botSettings.length > 0) {
-          // Send success message
-          const messageResult = await sendTelegramMessage(
-            BOT_TOKEN, 
-            chatId, 
-            "✅ Verification successful! Your Telegram group is now connected to Membify."
-          );
-          console.log('✉️ Success message result:', messageResult);
-          console.log(`✅ Group ${chatId} verified with code ${verificationCode}`);
-        }
+        // Send success message
+        const successMessage = chatType === 'channel' 
+          ? "✅ Verification successful! Your Telegram channel is now connected to Membify."
+          : "✅ Verification successful! Your Telegram group is now connected to Membify.";
+        
+        const messageResult = await sendTelegramMessage(BOT_TOKEN, chatId, successMessage);
+        console.log('✉️ Success message result:', messageResult);
         
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -203,13 +231,14 @@ serve(async (req) => {
       // Handle bot being added to a group
       if (update.my_chat_member?.new_chat_member.status === 'administrator') {
         const chatId = update.my_chat_member.chat.id;
-        console.log(`👋 Bot added as admin to chat ${chatId}`);
+        const chatType = update.my_chat_member.chat.type;
+        console.log(`👋 Bot added as admin to ${chatType} ${chatId}`);
         
-        const messageResult = await sendTelegramMessage(
-          BOT_TOKEN,
-          chatId,
-          "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account."
-        );
+        const welcomeMessage = chatType === 'channel'
+          ? "Thank you for adding me as an admin! Please paste the verification code to connect this channel to your Membify account."
+          : "Thank you for adding me as an admin! Please paste the verification code to connect this group to your Membify account.";
+        
+        const messageResult = await sendTelegramMessage(BOT_TOKEN, chatId, welcomeMessage);
         console.log('✉️ Welcome message result:', messageResult);
       }
 

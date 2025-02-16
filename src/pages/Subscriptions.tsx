@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
-import { useCommunityContext } from "@/hooks/useCommunityContext";
+import { useCommunityContext } from "@/App";
 
 type IntervalType = "monthly" | "yearly";
 

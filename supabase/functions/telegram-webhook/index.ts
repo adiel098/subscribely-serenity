@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { setupWebhook, getWebhookInfo } from './webhookManager.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from './cors.ts';
 import { 
   handleChatMemberUpdate,
   handleChatJoinRequest,
@@ -9,191 +9,85 @@ import {
   handleChannelPost,
   handleMyChatMember,
   updateMemberActivity
-} from './membershipHandler.ts'
-import { logTelegramEvent } from './eventLogger.ts'
-
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-console.log('🤖 Starting Telegram bot webhook...');
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+} from './membershipHandler.ts';
+import { sendBroadcastMessage } from './broadcastHandler.ts';
 
 serve(async (req) => {
-  console.log(`🔄 Received ${req.method} request to ${req.url}`);
-
-  if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
-    return new Response(null, { 
-      headers: corsHeaders,
-      status: 200
-    });
-  }
-
   try {
-    console.log('Creating Supabase client...');
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders });
+    }
+
+    // Get request data
+    const { path, communityId } = await req.json();
+    console.log('Received request:', { path, communityId });
+
+    // Create Supabase client
     const supabase = createClient(
-      SUPABASE_URL!,
-      SUPABASE_SERVICE_ROLE_KEY!
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Parse URL and handle activity update endpoint
-    const url = new URL(req.url);
-    if (url.pathname.endsWith('/update-activity')) {
-      const { communityId } = await req.json();
-      
-      if (!communityId) {
-        return new Response(
-          JSON.stringify({ error: 'Community ID is required' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400
-          }
-        );
-      }
-
-      try {
-        await updateMemberActivity(supabase, communityId);
-        return new Response(
-          JSON.stringify({ success: true }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          }
-        );
-      } catch (error) {
-        console.error('Error updating member activity:', error);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to update member activity',
-            details: error.message 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500
-          }
-        );
-      }
-    }
-
-    console.log('Fetching bot token from settings...');
-    const { data: settings, error: settingsError } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single();
-
-    if (settingsError) {
-      console.error('Error fetching bot token:', settingsError);
-      return new Response(
-        JSON.stringify({ 
-          ok: true,
-          error: 'Failed to fetch bot token',
-          details: settingsError.message 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
-    if (!settings?.bot_token) {
-      console.error('Bot token is missing from settings');
-      return new Response(
-        JSON.stringify({ 
-          ok: true,
-          error: 'Bot token is missing'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
-    const BOT_TOKEN = settings.bot_token;
-    console.log('✅ Successfully retrieved bot token');
-
-    // העברת ה-bot token להמשך הטיפול
-    const context = { BOT_TOKEN };
-
-    if (req.method === 'POST') {
-      console.log('Handling webhook update...');
-      try {
+    switch (path) {
+      case '/webhook':
         const update = await req.json();
-        console.log('📥 Received update:', JSON.stringify(update, null, 2));
-
-        // Log raw update for debugging
-        await logTelegramEvent(supabase, 'raw_update', update);
-
-        // Handle different types of updates
-        if (update.message) {
-          await handleNewMessage(supabase, update, context);
-        }
-
-        if (update.my_chat_member) {
-          await handleMyChatMember(supabase, update);
-        }
+        console.log('Received webhook update:', update);
 
         if (update.chat_member) {
           await handleChatMemberUpdate(supabase, update);
-        }
-
-        if (update.chat_join_request) {
+        } else if (update.chat_join_request) {
           await handleChatJoinRequest(supabase, update);
-        }
-
-        if (update.channel_post) {
-          await handleChannelPost(supabase, update);
-        }
-
-        if (update.edited_message) {
+        } else if (update.message) {
+          await handleNewMessage(supabase, update, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
+        } else if (update.edited_message) {
           await handleEditedMessage(supabase, update);
+        } else if (update.channel_post) {
+          await handleChannelPost(supabase, update);
+        } else if (update.my_chat_member) {
+          await handleMyChatMember(supabase, update);
         }
 
-        console.log('✅ Successfully processed update');
-        return new Response(
-          JSON.stringify({ ok: true }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        });
+
+      case '/update-activity':
+        await updateMemberActivity(supabase, communityId);
+        break;
+
+      case '/broadcast':
+        if (!communityId || !req.body?.message) {
+          throw new Error('Missing required parameters');
+        }
+
+        const status = await sendBroadcastMessage(
+          supabase,
+          communityId,
+          req.body.message,
+          req.body.filterType || 'all'
         );
-      } catch (error) {
-        console.error('Error processing webhook update:', error);
-        await logTelegramEvent(supabase, 'error', {}, error.message);
-        return new Response(
-          JSON.stringify({ ok: true }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          }
-        );
-      }
+
+        return new Response(JSON.stringify(status), {
+          headers: { 'Content-Type': 'application/json' },
+          status: 200
+        });
+
+      default:
+        throw new Error(`Unknown path: ${path}`);
     }
 
-    return new Response(
-      JSON.stringify({ 
-        ok: true,
-        error: 'Invalid request method' 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
+    });
 
   } catch (error) {
-    console.error('Unhandled error:', error);
-    return new Response(
-      JSON.stringify({ ok: true }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
-    );
+    console.error('Error processing request:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500
+    });
   }
 });

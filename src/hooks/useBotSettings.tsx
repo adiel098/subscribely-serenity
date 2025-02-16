@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCallback, useRef } from "react";
 
 export interface BotSettings {
   id: string;
@@ -23,6 +24,7 @@ export interface BotSettings {
 
 export const useBotSettings = (communityId: string) => {
   const queryClient = useQueryClient();
+  const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['bot-settings', communityId],
@@ -45,7 +47,7 @@ export const useBotSettings = (communityId: string) => {
     enabled: Boolean(communityId),
   });
 
-  const updateSettings = useMutation({
+  const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<BotSettings>) => {
       if (!communityId) throw new Error('No community selected');
 
@@ -73,9 +75,31 @@ export const useBotSettings = (communityId: string) => {
     },
   });
 
+  const debouncedUpdateSettings = useCallback((newSettings: Partial<BotSettings>) => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // For non-text fields (switches, numbers), update immediately
+    if (!Object.keys(newSettings).some(key => 
+      typeof newSettings[key as keyof BotSettings] === 'string' && 
+      key !== 'language'
+    )) {
+      updateSettingsMutation.mutate(newSettings);
+      return;
+    }
+
+    // For text fields, debounce the update
+    updateTimeoutRef.current = setTimeout(() => {
+      updateSettingsMutation.mutate(newSettings);
+    }, 1000); // Wait 1 second after last change before saving
+  }, [updateSettingsMutation]);
+
   return {
     settings,
     isLoading,
-    updateSettings,
+    updateSettings: {
+      mutate: debouncedUpdateSettings
+    },
   };
 };

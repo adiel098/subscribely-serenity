@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      broadcast_messages: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          filter_data: Json | null
+          filter_type: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          filter_data?: Json | null
+          filter_type?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          filter_data?: Json | null
+          filter_type?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communities: {
         Row: {
           created_at: string

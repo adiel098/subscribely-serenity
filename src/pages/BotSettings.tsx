@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessagePreview } from "@/components/bot-settings/MessagePreview";
 import { WelcomeMessageSection } from "@/components/bot-settings/WelcomeMessageSection";
 import { SubscriptionSection } from "@/components/bot-settings/SubscriptionSection";
+import { BroadcastSection } from "@/components/bot-settings/BroadcastSection";
 
 const BotSettings = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -58,6 +59,7 @@ const BotSettings = () => {
       >
         <WelcomeMessageSection settings={settings} updateSettings={updateSettings} />
         <SubscriptionSection settings={settings} updateSettings={updateSettings} />
+        <BroadcastSection communityId={selectedCommunityId || ""} />
       </Accordion>
     </div>
   );

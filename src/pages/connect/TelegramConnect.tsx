@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,22 +19,41 @@ const TelegramConnect = () => {
     // Update the bot token when component mounts
     const updateBotToken = async () => {
       try {
-        const { error } = await supabase
+        // First, get the existing settings record
+        const { data: settings, error: fetchError } = await supabase
+          .from('telegram_global_settings')
+          .select('id')
+          .limit(1)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching settings:', fetchError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch bot settings",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Now update using the correct UUID
+        const { error: updateError } = await supabase
           .from('telegram_global_settings')
           .update({ 
             bot_token: '7925621863:AAGIRzj6xbM9CJERSld5xhF-maIO1JTA_LQ',
             updated_at: new Date().toISOString()
           })
-          .eq('id', 1); // Assuming there's only one global settings row
+          .eq('id', settings.id);
 
-        if (error) {
-          console.error('Error updating bot token:', error);
+        if (updateError) {
+          console.error('Error updating bot token:', updateError);
           toast({
             title: "Error",
             description: "Failed to update bot token",
             variant: "destructive",
           });
         } else {
+          console.log('Bot token updated successfully');
           // Now check the webhook
           const response = await fetch('https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-webhook/check');
           const result = await response.json();
@@ -41,6 +61,11 @@ const TelegramConnect = () => {
         }
       } catch (error) {
         console.error('Error:', error);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
       }
     };
 

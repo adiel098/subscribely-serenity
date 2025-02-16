@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 interface BotStats {
   totalMembers: number;
   activeMembers: number;
-  inactiveMembers: number;
+  subscribedMembers: number;
+  expiredMembers: number;
 }
 
 export const useBotStats = (communityId: string) => {
@@ -16,9 +17,9 @@ export const useBotStats = (communityId: string) => {
         throw new Error('Community ID is required');
       }
 
-      const { data, error } = await supabase
+      const { data: members, error } = await supabase
         .from('telegram_chat_members')
-        .select('is_active, last_active')
+        .select('subscription_status, last_active')
         .eq('community_id', communityId);
 
       if (error) {
@@ -26,16 +27,16 @@ export const useBotStats = (communityId: string) => {
         throw error;
       }
 
-      const totalMembers = data.length;
-      const activeMembers = data.filter(member => 
-        member.is_active && member.last_active && 
-        new Date(member.last_active) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      ).length;
-
+      // Consider a member active if they've been active in the last 30 days
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      
       return {
-        totalMembers,
-        activeMembers,
-        inactiveMembers: totalMembers - activeMembers
+        totalMembers: members.length,
+        activeMembers: members.filter(member => 
+          member.last_active && new Date(member.last_active) > thirtyDaysAgo
+        ).length,
+        subscribedMembers: members.filter(m => m.subscription_status).length,
+        expiredMembers: members.filter(m => !m.subscription_status).length
       };
     },
     enabled: Boolean(communityId),

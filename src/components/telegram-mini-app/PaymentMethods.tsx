@@ -2,11 +2,12 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Gift, Heart, ArrowRight } from "lucide-react";
+import { Gift, Heart } from "lucide-react";
 import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
 import { Plan } from "@/pages/TelegramMiniApp";
 import { SuccessScreen } from "./SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
@@ -25,8 +26,16 @@ export const PaymentMethods = ({
   communityInviteLink,
   showSuccess
 }: PaymentMethodsProps) => {
+  const { toast } = useToast();
+
   const handlePaymentComplete = async () => {
     try {
+      console.log('Starting payment completion...', {
+        plan: selectedPlan,
+        method: selectedPaymentMethod,
+        inviteLink: communityInviteLink
+      });
+
       // Create payment record
       const { data: payment, error } = await supabase
         .from('subscription_payments')
@@ -42,13 +51,28 @@ export const PaymentMethods = ({
 
       if (error) {
         console.error('Error creating payment record:', error);
+        toast({
+          variant: "destructive",
+          title: "Error processing payment",
+          description: "Please try again or contact support."
+        });
         return;
       }
 
       console.log('Payment record created:', payment);
+      toast({
+        title: "Payment Successful! 🎉",
+        description: "You can now join the community.",
+      });
       onCompletePurchase();
+      
     } catch (error) {
       console.error('Error handling payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Error processing payment",
+        description: "Please try again or contact support."
+      });
     }
   };
 

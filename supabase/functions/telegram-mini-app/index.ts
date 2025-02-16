@@ -19,17 +19,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { searchParams } = new URL(req.url);
-    const startParam = searchParams.get('start');
-    const telegramInitData = searchParams.get('initData');
+    // Get request body
+    const { start, initData } = await req.json();
+    console.log('Received parameters:', { start, initData });
 
-    if (!startParam) {
+    if (!start) {
       return new Response(
         JSON.stringify({ error: 'Missing start parameter' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
+    console.log('Fetching community with ID:', start);
+    
     // Get community details based on the start parameter
     const { data: community, error: communityError } = await supabase
       .from('communities')
@@ -46,8 +48,10 @@ serve(async (req) => {
           features
         )
       `)
-      .eq('id', startParam)
+      .eq('id', start)
       .single();
+
+    console.log('Query result:', { community, error: communityError });
 
     if (communityError || !community) {
       console.error('Error fetching community:', communityError);
@@ -59,9 +63,9 @@ serve(async (req) => {
 
     // Parse Telegram init data if available
     let telegramUser = null;
-    if (telegramInitData) {
+    if (initData) {
       try {
-        const decodedData = new URLSearchParams(telegramInitData);
+        const decodedData = new URLSearchParams(initData);
         const userStr = decodedData.get('user');
         if (userStr) {
           telegramUser = JSON.parse(userStr);

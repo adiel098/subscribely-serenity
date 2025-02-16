@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from "./cors.ts";
 import { handleMessage } from "./handlers/messageHandler.ts";
-import { handleChatMember } from "./handlers/chatMemberHandler.ts";
+import { handleChatMemberUpdate } from "./handlers/chatMemberHandler.ts";
 import { handleJoinRequest } from "./handlers/joinRequestHandler.ts";
 import { handleWebhookUpdate } from "./webhookManager.ts";
 import { sendBroadcastMessage } from "./broadcastHandler.ts";
@@ -29,7 +29,7 @@ serve(async (req) => {
       case '/message':
         return await handleMessage(supabase, update);
       case '/chat-member':
-        return await handleChatMember(supabase, update);
+        return await handleChatMemberUpdate(supabase, update);
       case '/join-request':
         return await handleJoinRequest(supabase, update);
       case '/broadcast':

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -83,32 +82,30 @@ const CommunitySelector = () => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
-    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
+    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center justify-between gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
+      <Select 
+        value={selectedCommunityId || undefined}
+        onValueChange={setSelectedCommunityId}
+      >
+        <SelectTrigger className="w-[250px]">
+          <SelectValue placeholder="Select community" />
+        </SelectTrigger>
+        <SelectContent>
+          {communities?.map((community) => (
+            <SelectItem key={community.id} value={community.id}>
+              {community.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       <div className="flex items-center gap-4">
-        <Select 
-          value={selectedCommunityId || undefined}
-          onValueChange={setSelectedCommunityId}
-        >
-          <SelectTrigger className="w-[250px]">
-            <SelectValue placeholder="Select community" />
-          </SelectTrigger>
-          <SelectContent>
-            {communities?.map((community) => (
-              <SelectItem key={community.id} value={community.id}>
-                {community.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex-1" /> {/* Spacer */}
-        <div className="ml-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
-          <Button variant="default" onClick={() => navigate("/platform-select")}>
-            New Community
-          </Button>
-        </div>
+        <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
+        </Button>
+        <Button variant="default" onClick={() => navigate("/platform-select")}>
+          New Community
+        </Button>
       </div>
     </div>
   );
@@ -139,7 +136,6 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <SidebarProvider>
-            {/* Move CommunityProvider inside DashboardLayout routes */}
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />

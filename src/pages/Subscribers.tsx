@@ -1,7 +1,7 @@
 
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useSubscribers } from "@/hooks/useSubscribers";
-import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw } from "lucide-react";
+import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -61,6 +61,50 @@ const Subscribers = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleExport = () => {
+    // הכנת הנתונים לייצוא
+    const exportData = filteredSubscribers.map(sub => ({
+      Username: sub.telegram_username || 'No username',
+      'Telegram ID': sub.telegram_user_id,
+      'Plan Name': sub.plan?.name || 'No plan',
+      'Plan Price': sub.plan ? `$${sub.plan.price}` : '-',
+      'Plan Interval': sub.plan?.interval || '-',
+      Status: sub.subscription_status ? 'Active' : 'Inactive',
+      'Start Date': sub.subscription_start_date ? new Date(sub.subscription_start_date).toLocaleDateString() : '-',
+      'End Date': sub.subscription_end_date ? new Date(sub.subscription_end_date).toLocaleDateString() : '-',
+      'Joined At': new Date(sub.joined_at).toLocaleDateString(),
+    }));
+
+    // המרה ל-CSV
+    const headers = Object.keys(exportData[0]);
+    const csvRows = [
+      headers.join(','),
+      ...exportData.map(row => 
+        headers.map(header => 
+          JSON.stringify(row[header as keyof typeof row])).join(',')
+      )
+    ];
+    const csvString = csvRows.join('\n');
+
+    // יצירת קובץ והורדה
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (navigator.msSaveBlob) {
+      navigator.msSaveBlob(blob, 'subscribers.csv');
+    } else {
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'subscribers.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    toast({
+      title: "Success",
+      description: "Subscribers data exported successfully",
+    });
   };
 
   const handleRemoveSubscriber = async (subscriber: any) => {
@@ -147,15 +191,25 @@ const Subscribers = () => {
             <Users className="h-6 w-6" />
             <h1 className="text-2xl font-semibold">Subscribers</h1>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleUpdateStatus}
-            disabled={isUpdating}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-            Update Member Status
-          </Button>
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUpdateStatus}
+              disabled={isUpdating}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
+              Update Member Status
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Manage your community subscribers and monitor their subscription status
@@ -253,4 +307,4 @@ const Subscribers = () => {
   );
 };
 
-export default Subscribers;
+export default Dashboard;

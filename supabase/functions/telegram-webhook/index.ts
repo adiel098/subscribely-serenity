@@ -1,10 +1,11 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('�������� Telegram bot webhook is running...');
+console.log('🔄 🔄 🔄 Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -187,9 +188,11 @@ async function findCommunityAndPaymentByInviteLink(supabase: any, chatId: string
 
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${new URL(req.url).pathname}`);
+  console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('📝 Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders })
   }
 
@@ -211,8 +214,8 @@ serve(async (req) => {
       throw new Error('Failed to get bot settings or bot token is missing');
     }
 
-    const BOT_TOKEN = settings.bot_token;
     console.log('✅ Successfully retrieved bot token');
+    const BOT_TOKEN = settings.bot_token;
     
     // Special endpoint to check webhook status
     const url = new URL(req.url);
@@ -549,6 +552,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error:', error)
+    console.error('Error stack:', error.stack)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

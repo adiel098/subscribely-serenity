@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useBotSettings } from "@/hooks/useBotSettings";
 import { 
@@ -29,11 +28,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 const MessagePreview = ({ message, signature }: { message: string; signature: string }) => {
   return (
     <div className="fixed right-4 top-24 w-80">
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card text-card-foreground">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <Eye className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">תצוגה מקדימה</h3>
+            <h3 className="font-semibold">Message Preview</h3>
           </div>
         </div>
         <div className="p-4">
@@ -44,7 +43,7 @@ const MessagePreview = ({ message, signature }: { message: string; signature: st
               </div>
               <div className="flex-1 space-y-1">
                 <div className="font-medium text-sm text-primary">Bot</div>
-                <div className="text-sm whitespace-pre-wrap" dir="auto">
+                <div className="text-sm whitespace-pre-wrap">
                   {message}
                   {signature && (
                     <>

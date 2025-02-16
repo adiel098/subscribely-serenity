@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -133,22 +132,64 @@ serve(async (req) => {
       const update: TelegramUpdate = await req.json()
       console.log('📥 Received Telegram update:', JSON.stringify(update, null, 2))
 
+      const messageText = update.message?.text;
+      const chatId = update.message?.chat.id;
+
+      if (messageText && chatId) {
+        // בדיקה אם ההודעה היא קוד קהילה (למשל, מתחיל ב-COM_)
+        if (messageText.startsWith('COM_')) {
+          // חיפוש הקהילה לפי הקוד
+          const { data: community, error: communityError } = await supabase
+            .from('communities')
+            .select('id, name')
+            .eq('platform_id', messageText)
+            .single();
+
+          if (communityError || !community) {
+            await sendTelegramMessage(BOT_TOKEN, chatId, "קוד הקהילה לא נמצא. אנא בדקו את הקוד ונסו שוב.");
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+
+          // יצירת לינק למיני אפליקציה
+          const miniAppUrl = `https://t.me/MembifyBot/app?startapp=${community.id}`;
+          
+          // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
+          const message = `
+ברוכים הבאים לקהילת ${community.name}! 
+לחצו על הכפתור למטה כדי להצטרף לקהילה 👇
+          `;
+
+          const replyMarkup = {
+            inline_keyboard: [[
+              {
+                text: "הצטרפו לקהילה 🚀",
+                web_app: { url: miniAppUrl }
+              }
+            ]]
+          };
+
+          await sendTelegramMessageWithMarkup(BOT_TOKEN, chatId, message, replyMarkup);
+        }
+      }
+
       // Handle verification messages (either from regular message or channel post)
       const verificationMessage = update.message?.text || update.channel_post?.text;
-      const chatId = update.message?.chat.id || update.channel_post?.chat.id;
+      const verificationChatId = update.message?.chat.id || update.channel_post?.chat.id;
       const messageId = update.message?.message_id || update.channel_post?.message_id;
       const chatType = update.message?.chat.type || update.channel_post?.chat.type;
       const chatTitle = update.message?.chat.title || update.channel_post?.chat.title;
 
-      if (verificationMessage?.startsWith('MBF_') && chatId && messageId) {
-        const verificationCode = verificationMessage.trim();
-        console.log(`🔑 Processing verification code ${verificationCode} for chat ${chatId}`);
+      if (verificationMessage?.startsWith('MBF_') && verificationChatId && messageId) {
+        console.log(`🔑 Processing verification code ${verificationMessage} for chat ${verificationChatId}`);
         
         // Find profile with this verification code
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('current_telegram_code', verificationCode)
+          .eq('current_telegram_code', verificationMessage.trim())
           .limit(1);
 
         if (profileError || !profiles?.length) {
@@ -194,7 +235,7 @@ serve(async (req) => {
           .insert({
             community_id: community.id,
             chat_id: chatId.toString(),
-            verification_code: verificationCode,
+            verification_code: verificationMessage.trim(),
             verified_at: new Date().toISOString(),
             is_admin: true
           });
@@ -279,6 +320,25 @@ async function sendTelegramMessage(token: string, chatId: number, text: string) 
     body: JSON.stringify({
       chat_id: chatId,
       text: text,
+    }),
+  })
+  
+  return response.json()
+}
+
+// Helper function to send Telegram messages with markup
+async function sendTelegramMessageWithMarkup(token: string, chatId: number, text: string, reply_markup: any) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+      reply_markup: reply_markup,
+      parse_mode: 'HTML'
     }),
   })
   

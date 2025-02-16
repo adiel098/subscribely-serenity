@@ -1,7 +1,7 @@
 
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useSubscribers } from "@/hooks/useSubscribers";
-import { Loader2, Users, Search, Filter, CheckSquare, XSquare } from "lucide-react";
+import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -26,10 +26,41 @@ const Subscribers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [planFilter, setPlanFilter] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
   const handleEditSuccess = () => {
     refetch();
+  };
+
+  const handleUpdateStatus = async () => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase.functions.invoke('telegram-webhook', {
+        body: { 
+          communityId: selectedCommunityId,
+          path: '/update-activity'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Member status updated successfully",
+      });
+      
+      await refetch();
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update member status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleRemoveSubscriber = async (subscriber: any) => {
@@ -43,7 +74,6 @@ const Subscribers = () => {
         .update({
           subscription_status: false,
           subscription_end_date: new Date().toISOString(),
-          is_active: false,
           subscription_plan_id: null
         })
         .eq('id', subscriber.id)
@@ -112,9 +142,20 @@ const Subscribers = () => {
   return (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <div className="flex items-center space-x-2">
-          <Users className="h-6 w-6" />
-          <h1 className="text-2xl font-semibold">Subscribers</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Users className="h-6 w-6" />
+            <h1 className="text-2xl font-semibold">Subscribers</h1>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUpdateStatus}
+            disabled={isUpdating}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
+            Update Member Status
+          </Button>
         </div>
         <p className="text-sm text-muted-foreground">
           Manage your community subscribers and monitor their subscription status

@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export interface Subscriber {
   id: string;
@@ -21,7 +22,7 @@ export interface Subscriber {
 }
 
 export const useSubscribers = (communityId: string) => {
-  return useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['subscribers', communityId],
     queryFn: async () => {
       if (!communityId) return [];
@@ -50,4 +51,31 @@ export const useSubscribers = (communityId: string) => {
     },
     enabled: Boolean(communityId),
   });
+
+  useEffect(() => {
+    if (communityId) {
+      // בדיקת סטטוס המשתמשים בעת טעינת הדף
+      const checkStatus = async () => {
+        try {
+          const { error } = await supabase.functions.invoke('telegram-webhook', {
+            body: { 
+              communityId,
+              path: '/update-activity'
+            }
+          });
+
+          if (error) throw error;
+          
+          // רענון הנתונים לאחר העדכון
+          refetch();
+        } catch (error) {
+          console.error('Error checking member status:', error);
+        }
+      };
+
+      checkStatus();
+    }
+  }, [communityId]);
+
+  return { data, isLoading, error, refetch };
 };

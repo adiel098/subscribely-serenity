@@ -29,6 +29,17 @@ async function logTelegramEvent(supabase: any, eventType: string, data: any, err
 
     console.log('Prepared event data:', JSON.stringify(eventData, null, 2));
 
+    // בדיקה האם הטבלה קיימת
+    const { error: checkError } = await supabase
+      .from('telegram_events')
+      .select('id')
+      .limit(1);
+
+    if (checkError) {
+      console.error('Error checking telegram_events table:', checkError);
+      return;
+    }
+
     const { error: insertError } = await supabase
       .from('telegram_events')
       .insert([eventData]);
@@ -201,6 +212,42 @@ serve(async (req) => {
       SUPABASE_URL!,
       SUPABASE_SERVICE_ROLE_KEY!
     );
+
+    // בדיקת חיבור ל-Supabase
+    try {
+      const { error: connectionError } = await supabase
+        .from('telegram_events')
+        .select('id')
+        .limit(1);
+
+      if (connectionError) {
+        console.error('Error connecting to Supabase:', connectionError);
+        return new Response(
+          JSON.stringify({ 
+            ok: true,
+            error: 'Database connection error',
+            details: connectionError.message 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error testing database connection:', error);
+      return new Response(
+        JSON.stringify({ 
+          ok: true,
+          error: 'Database connection test failed',
+          details: error.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
 
     console.log('Fetching bot token from settings...');
     const { data: settings, error: settingsError } = await supabase

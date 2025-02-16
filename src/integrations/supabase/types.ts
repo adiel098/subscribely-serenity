@@ -296,33 +296,69 @@ export type Database = {
       }
       telegram_bot_settings: {
         Row: {
+          auto_remove_expired: boolean | null
+          auto_welcome_message: boolean | null
+          bot_signature: string | null
           chat_id: string | null
           community_id: string
           created_at: string
+          expired_subscription_message: string | null
           id: string
           is_admin: boolean | null
+          language: string | null
+          max_messages_per_day: number | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          renewal_discount_enabled: boolean | null
+          renewal_discount_percentage: number | null
+          subscription_reminder_days: number | null
+          subscription_reminder_message: string | null
           updated_at: string
           verification_code: string | null
           verified_at: string | null
           welcome_message: string | null
         }
         Insert: {
+          auto_remove_expired?: boolean | null
+          auto_welcome_message?: boolean | null
+          bot_signature?: string | null
           chat_id?: string | null
           community_id: string
           created_at?: string
+          expired_subscription_message?: string | null
           id?: string
           is_admin?: boolean | null
+          language?: string | null
+          max_messages_per_day?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          renewal_discount_enabled?: boolean | null
+          renewal_discount_percentage?: number | null
+          subscription_reminder_days?: number | null
+          subscription_reminder_message?: string | null
           updated_at?: string
           verification_code?: string | null
           verified_at?: string | null
           welcome_message?: string | null
         }
         Update: {
+          auto_remove_expired?: boolean | null
+          auto_welcome_message?: boolean | null
+          bot_signature?: string | null
           chat_id?: string | null
           community_id?: string
           created_at?: string
+          expired_subscription_message?: string | null
           id?: string
           is_admin?: boolean | null
+          language?: string | null
+          max_messages_per_day?: number | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          renewal_discount_enabled?: boolean | null
+          renewal_discount_percentage?: number | null
+          subscription_reminder_days?: number | null
+          subscription_reminder_message?: string | null
           updated_at?: string
           verification_code?: string | null
           verified_at?: string | null

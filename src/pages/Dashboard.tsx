@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
@@ -49,7 +50,15 @@ const Dashboard = () => {
 
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
-  const totalRevenue = activeSubscribers.reduce((sum, sub) => sum + (sub.plan?.price || 0), 0);
+  
+  // Calculate total revenue from all subscribers (both active and inactive)
+  const totalRevenue = (subscribers || []).reduce((sum, sub) => {
+    // Only count subscribers who had a plan (whether active or not)
+    if (sub.plan) {
+      return sum + (sub.plan.price || 0);
+    }
+    return sum;
+  }, 0);
 
   const memberGrowthData = subscribers?.map(sub => ({
     date: new Date(sub.joined_at).toLocaleDateString(),
@@ -93,13 +102,13 @@ const Dashboard = () => {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Total Revenue</h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
           </div>
           <p className="text-3xl font-bold">${totalRevenue.toFixed(2)}</p>
           <div className="mt-2 flex items-center text-sm text-green-600">
             <ArrowUpRight className="h-4 w-4 mr-1" />
-            <span>${(totalRevenue / (activeSubscribers.length || 1)).toFixed(2)} per subscriber</span>
+            <span>${(totalRevenue / (subscribers?.length || 1)).toFixed(2)} per subscriber</span>
           </div>
         </Card>
       </div>
@@ -125,7 +134,7 @@ const Dashboard = () => {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart 
-                data={activeSubscribers.map(sub => ({
+                data={subscribers?.filter(sub => sub.plan).map(sub => ({
                   date: new Date(sub.subscription_start_date || '').toLocaleDateString(),
                   revenue: sub.plan?.price || 0
                 }))} 

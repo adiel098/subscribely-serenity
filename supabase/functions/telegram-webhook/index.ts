@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -267,6 +268,20 @@ serve(async (req) => {
           if (result) {
             const { community, payment } = result;
 
+            console.log('Creating telegram_chat_members record with:', {
+              community_id: community.id,
+              telegram_user_id: newMember.id.toString(),
+              telegram_username: newMember.username,
+              subscription_status: true,
+              subscription_start_date: new Date().toISOString(),
+              subscription_end_date: payment?.plan?.interval === 'monthly' 
+                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() 
+                : payment?.plan?.interval === 'yearly'
+                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                : null,
+              subscription_plan_id: payment?.plan?.id
+            });
+
             // Create telegram_chat_members record
             const { error: memberError } = await supabase
               .from('telegram_chat_members')
@@ -281,7 +296,7 @@ serve(async (req) => {
                   : payment?.plan?.interval === 'yearly'
                   ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
                   : null,
-                subscription_plan_id: payment?.plan?.id || null
+                subscription_plan_id: payment?.plan?.id
               });
 
             if (memberError) {

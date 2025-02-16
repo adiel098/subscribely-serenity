@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -29,7 +28,6 @@ async function logTelegramEvent(supabase: any, eventType: string, data: any, err
 
     console.log('Prepared event data:', JSON.stringify(eventData, null, 2));
 
-    // בדיקה האם הטבלה קיימת
     const { error: checkError } = await supabase
       .from('telegram_events')
       .select('id')
@@ -195,6 +193,23 @@ async function handleMyChatMember(supabase: any, update: any) {
   }
 }
 
+async function handleChatMemberUpdate(supabase: any, update: any) {
+  try {
+    console.log('👥 Processing chat_member update:', JSON.stringify(update.chat_member, null, 2));
+    
+    const chatMember = update.chat_member;
+    if (chatMember.new_chat_member?.status === 'left' && 
+        chatMember.old_chat_member?.status === 'member') {
+      console.log('👋 Member left channel:', chatMember.from.username);
+    }
+    
+    await logTelegramEvent(supabase, 'chat_member', update);
+  } catch (error) {
+    console.error('Error in handleChatMemberUpdate:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   console.log(`🔄 Received ${req.method} request to ${req.url}`);
 
@@ -342,8 +357,7 @@ serve(async (req) => {
         }
 
         if (update.chat_member) {
-          console.log('👥 Received chat_member update:', JSON.stringify(update.chat_member, null, 2));
-          await logTelegramEvent(supabase, 'chat_member', update);
+          await handleChatMemberUpdate(supabase, update);
         }
 
         if (update.chat_join_request) {

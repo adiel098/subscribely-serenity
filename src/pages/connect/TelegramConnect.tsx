@@ -56,9 +56,9 @@ const TelegramConnect = () => {
 
         console.log('Bot token updated successfully');
         
-        // Now check the webhook using Supabase Functions
+        // Now check the webhook using Supabase Functions with the /check path
         const { data: webhookData, error: webhookError } = await supabase.functions
-          .invoke('telegram-webhook', {
+          .invoke('telegram-webhook/check', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json'

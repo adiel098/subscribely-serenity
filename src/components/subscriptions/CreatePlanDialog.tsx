@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -6,36 +7,72 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusIcon, SparklesIcon, CheckIcon } from "lucide-react";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useCommunities } from "@/hooks/useCommunities";
 
 interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  newPlan: {
-    name: string;
-    description: string;
-    price: string;
-    interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
-    features: string[];
-  };
-  setNewPlan: (plan: any) => void;
-  newFeature: string;
-  setNewFeature: (feature: string) => void;
-  handleAddFeature: () => void;
-  handleRemoveFeature: (index: number) => void;
-  handleCreatePlan: () => void;
 }
 
-export const CreatePlanDialog = ({
-  isOpen,
-  onOpenChange,
-  newPlan,
-  setNewPlan,
-  newFeature,
-  setNewFeature,
-  handleAddFeature,
-  handleRemoveFeature,
-  handleCreatePlan
-}: Props) => {
+export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
+  const { data: communities } = useCommunities();
+  const community = communities?.[0];
+  const { createPlan } = useSubscriptionPlans(community?.id || "");
+
+  const [newPlan, setNewPlan] = useState({
+    name: "",
+    description: "",
+    price: "",
+    interval: "monthly" as const,
+    features: [] as string[]
+  });
+  
+  const [newFeature, setNewFeature] = useState("");
+
+  const handleAddFeature = () => {
+    if (newFeature.trim()) {
+      setNewPlan({
+        ...newPlan,
+        features: [...newPlan.features, newFeature.trim()]
+      });
+      setNewFeature("");
+    }
+  };
+
+  const handleRemoveFeature = (index: number) => {
+    setNewPlan({
+      ...newPlan,
+      features: newPlan.features.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleCreatePlan = async () => {
+    if (!community?.id) return;
+    
+    try {
+      await createPlan.mutateAsync({
+        community_id: community.id,
+        name: newPlan.name,
+        description: newPlan.description,
+        price: Number(newPlan.price),
+        interval: newPlan.interval,
+        features: newPlan.features
+      });
+      
+      onOpenChange(false);
+      setNewPlan({
+        name: "",
+        description: "",
+        price: "",
+        interval: "monthly",
+        features: []
+      });
+    } catch (error) {
+      console.error('Error creating plan:', error);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
@@ -88,8 +125,8 @@ export const CreatePlanDialog = ({
                 value={newPlan.interval}
                 onValueChange={(value: any) => setNewPlan({ ...newPlan, interval: value })}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger id="interval">
+                  <SelectValue placeholder="Select interval" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="monthly">Monthly</SelectItem>
@@ -140,9 +177,13 @@ export const CreatePlanDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleCreatePlan} className="gap-2 bg-gradient-to-r from-primary to-primary/90">
+          <Button 
+            onClick={handleCreatePlan} 
+            className="gap-2 bg-gradient-to-r from-primary to-primary/90"
+            disabled={!newPlan.name || !newPlan.price || createPlan.isPending}
+          >
             <SparklesIcon className="h-4 w-4" />
-            Create Plan
+            {createPlan.isPending ? "Creating..." : "Create Plan"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -123,19 +123,6 @@ const Subscriptions = () => {
       <CreatePlanDialog
         isOpen={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        newPlan={{
-          name: "",
-          description: "",
-          price: "",
-          interval: "monthly",
-          features: []
-        }}
-        setNewPlan={() => {}}
-        newFeature=""
-        setNewFeature={() => {}}
-        handleAddFeature={() => {}}
-        handleRemoveFeature={() => {}}
-        handleCreatePlan={() => {}}
       />
 
       {selectedPlan && (

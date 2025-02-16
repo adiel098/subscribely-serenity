@@ -3,7 +3,7 @@ import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useBotSettings } from "@/hooks/useBotSettings";
 import { 
   Bot, Settings, MessageSquare, Clock, Bell, 
-  Ban, Percent, Languages, Volume2, Moon 
+  Ban, Percent, Languages, Volume2, Moon, Eye 
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,42 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const MessagePreview = ({ message, signature }: { message: string; signature: string }) => {
+  return (
+    <div className="fixed right-4 top-24 w-80">
+      <div className="rounded-lg border bg-card">
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Eye className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">תצוגה מקדימה</h3>
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="rounded-lg bg-white/10 backdrop-blur-lg border p-4 space-y-2 font-[system-ui]">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="font-medium text-sm text-primary">Bot</div>
+                <div className="text-sm whitespace-pre-wrap" dir="auto">
+                  {message}
+                  {signature && (
+                    <>
+                      {"\n\n"}
+                      <span className="text-muted-foreground">{signature}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const BotSettings = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -50,7 +86,7 @@ const BotSettings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center space-x-2">
         <Bot className="h-8 w-8 text-primary" />
         <div>
@@ -60,6 +96,11 @@ const BotSettings = () => {
           </p>
         </div>
       </div>
+
+      <MessagePreview 
+        message={expandedSection === "welcome" ? settings.welcome_message : settings.subscription_reminder_message}
+        signature={settings.bot_signature}
+      />
 
       <Accordion
         type="single"

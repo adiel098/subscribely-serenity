@@ -50,7 +50,6 @@ const Subscriptions = () => {
   const {
     plans,
     isLoading,
-    error,
     createPlan
   } = useSubscriptionPlans(community?.id || "");
 
@@ -87,10 +86,10 @@ const Subscriptions = () => {
     );
   }
 
-  if (error) {
+  if (!plans) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-500">Error loading data</p>
+        <p className="text-red-500">No plans found</p>
       </div>
     );
   }
@@ -150,22 +149,19 @@ const Subscriptions = () => {
         handleRemoveFeature={() => {}}
         handleCreatePlan={() => {}}
       />
-      {selectedPlanId && (
-        <>
-          <EditPlanDialog
-            isOpen={editDialogOpen}
-            onOpenChange={setEditDialogOpen}
-            planId={selectedPlanId}
-          />
-          <DeletePlanDialog
-            isOpen={deleteDialogOpen}
-            onOpenChange={setDeleteDialogOpen}
-            planId={selectedPlanId}
-          />
-        </>
-      )}
+
+      <EditPlanDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      
+      <DeletePlanDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      />
     </div>
   );
 };
 
 export default Subscriptions;
+

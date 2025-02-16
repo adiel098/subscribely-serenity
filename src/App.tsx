@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
@@ -48,7 +48,14 @@ export const useCommunityContext = () => {
 };
 
 const CommunityProvider = ({ children }: { children: React.ReactNode }) => {
+  const { data: communities } = useCommunities();
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (communities?.length && !selectedCommunityId) {
+      setSelectedCommunityId(communities[0].id);
+    }
+  }, [communities, selectedCommunityId]);
   
   return (
     <CommunityContext.Provider value={{ selectedCommunityId, setSelectedCommunityId }}>
@@ -75,29 +82,31 @@ const CommunitySelector = () => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
-    <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
-      <Select 
-        value={selectedCommunityId || undefined}
-        onValueChange={setSelectedCommunityId}
-      >
-        <SelectTrigger className="w-[250px]">
-          <SelectValue placeholder="Select community" />
-        </SelectTrigger>
-        <SelectContent>
-          {communities?.map((community) => (
-            <SelectItem key={community.id} value={community.id}>
-              {community.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="flex-1" />
-      <Button variant="ghost" size="icon">
-        <Bell className="h-5 w-5" />
-      </Button>
-      <Button variant="default" onClick={() => navigate("/platform-select")}>
-        New Community
-      </Button>
+    <div className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white border-b backdrop-blur-sm bg-opacity-90">
+      <div className="pl-[280px] w-full flex items-center gap-4">
+        <Select 
+          value={selectedCommunityId || undefined}
+          onValueChange={setSelectedCommunityId}
+        >
+          <SelectTrigger className="w-[250px]">
+            <SelectValue placeholder="Select community" />
+          </SelectTrigger>
+          <SelectContent>
+            {communities?.map((community) => (
+              <SelectItem key={community.id} value={community.id}>
+                {community.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex-1" />
+        <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
+        </Button>
+        <Button variant="default" onClick={() => navigate("/platform-select")}>
+          New Community
+        </Button>
+      </div>
     </div>
   );
 };
@@ -108,9 +117,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <Navbar />
       <div className="flex w-full">
         <AppSidebar />
-        <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16 pl-[280px]">
+        <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16">
           <CommunitySelector />
-          <div className="min-h-full w-full bg-gray-50 p-8 mt-[4.5rem]">
+          <div className="min-h-full w-full bg-gray-50 p-8 mt-[4.5rem] pl-[280px]">
             {children}
           </div>
         </main>

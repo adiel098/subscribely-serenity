@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/useCommunities";
@@ -23,18 +22,13 @@ import {
 } from "@/components/ui/select";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useCommunityContext } from "@/hooks/useCommunityContext";
 
 type IntervalType = "monthly" | "yearly";
 
 const Subscriptions = () => {
   const { data: communities } = useCommunities();
-  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(
-    communities?.[0]?.id ?? null
-  );
-  const { plans, isLoading, createPlan, updatePlan, deletePlan } = useSubscriptionPlans(
-    selectedCommunity ?? ""
-  );
-
+  const { selectedCommunityId } = useCommunityContext();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -44,15 +38,19 @@ const Subscriptions = () => {
     features: [] as string[],
   });
 
+  const { plans, isLoading, createPlan, updatePlan, deletePlan } = useSubscriptionPlans(
+    selectedCommunityId ?? ""
+  );
+
   const handleCreatePlan = async () => {
-    if (!selectedCommunity) {
+    if (!selectedCommunityId) {
       toast.error("Please select a community");
       return;
     }
 
     try {
       await createPlan.mutateAsync({
-        community_id: selectedCommunity,
+        community_id: selectedCommunityId,
         name: newPlan.name,
         description: newPlan.description,
         price: parseFloat(newPlan.price),
@@ -78,38 +76,28 @@ const Subscriptions = () => {
     }
   };
 
-  if (!communities?.length) {
+  if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <h2 className="text-xl font-semibold mb-2">No Communities</h2>
-        <p className="text-gray-600">Create a community to set up subscription plans</p>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!selectedCommunityId) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <p className="text-gray-600">Select a community to view subscription plans</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full space-y-6">
-      <div className="bg-white shadow rounded-lg">
+    <div className="w-full space-y-6">
+      <div className="bg-white shadow rounded-lg w-full">
         <div className="px-6 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Subscription Plans</h1>
-              <Select
-                value={selectedCommunity ?? ""}
-                onValueChange={(value) => setSelectedCommunity(value)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Community" />
-                </SelectTrigger>
-                <SelectContent>
-                  {communities?.map((community) => (
-                    <SelectItem key={community.id} value={community.id}>
-                      {community.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <h1 className="text-2xl font-bold">Subscription Plans</h1>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -183,49 +171,41 @@ const Subscriptions = () => {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-8">Loading...</div>
-      ) : !selectedCommunity ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">Select a community to view subscription plans</p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {plans?.map((plan) => (
-            <Card key={plan.id} className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold">{plan.name}</h3>
-                  <p className="text-gray-600">
-                    ${plan.price} / {plan.interval === "monthly" ? "month" : "year"}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePlan(plan.id)}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
+        {plans?.map((plan) => (
+          <Card key={plan.id} className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                <p className="text-gray-600">
+                  ${plan.price} / {plan.interval === "monthly" ? "month" : "year"}
+                </p>
               </div>
-              {plan.description && (
-                <p className="text-gray-600 mb-4">{plan.description}</p>
-              )}
-              {plan.features && plan.features.length > 0 && (
-                <ul className="list-disc list-inside space-y-2">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="text-gray-600">
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeletePlan(plan.id)}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            {plan.description && (
+              <p className="text-gray-600 mb-4">{plan.description}</p>
+            )}
+            {plan.features && plan.features.length > 0 && (
+              <ul className="list-disc list-inside space-y-2">
+                {plan.features.map((feature, index) => (
+                  <li key={index} className="text-gray-600">
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

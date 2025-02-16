@@ -1,11 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-console.log('🤖 Telegram bot webhook is running...');
+console.log('��� Telegram bot webhook is running...');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -159,10 +158,59 @@ serve(async (req) => {
       const messageId = update.message?.message_id || update.channel_post?.message_id;
       const chatType = update.message?.chat.type || update.channel_post?.chat.type;
       const chatTitle = update.message?.chat.title || update.channel_post?.chat.title;
+      const userId = update.message?.from?.id;
 
       console.log('Message text:', messageText);
       console.log('Chat ID:', chatId);
       console.log('Chat type:', chatType);
+      console.log('User ID:', userId);
+
+      // Handle /start command with community ID
+      if (messageText?.startsWith('/start') && userId) {
+        const communityId = messageText.split(' ')[1]; // Get the community ID after /start
+        console.log('Start command received with community ID:', communityId);
+
+        if (communityId) {
+          // Get community details
+          const { data: community, error: communityError } = await supabase
+            .from('communities')
+            .select('*')
+            .eq('id', communityId)
+            .single();
+
+          if (communityError || !community) {
+            console.error('Error finding community:', communityError);
+            const errorMessage = "Sorry, I couldn't find this community.";
+            await sendTelegramMessage(BOT_TOKEN, userId, errorMessage);
+            return new Response(JSON.stringify({ success: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+
+          // Create mini app URL
+          const miniAppUrl = `https://t.me/membifybot/app?startapp=${communityId}`;
+          
+          // Create welcome message with button
+          const welcomeMessage = `👋 Welcome! You're about to join *${community.name}*`;
+          const replyMarkup = {
+            inline_keyboard: [[
+              {
+                text: "🚀 Open Mini App",
+                url: miniAppUrl
+              }
+            ]]
+          };
+
+          // Send message with button
+          await sendTelegramMessageWithMarkup(BOT_TOKEN, userId, welcomeMessage, replyMarkup);
+          
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        }
+      }
 
       // Handle verification messages
       if (messageText?.startsWith('MBF_') && chatId && messageId) {

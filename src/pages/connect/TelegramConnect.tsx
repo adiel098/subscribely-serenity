@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCommunities } from "@/contexts/CommunitiesContext";
+import { useCommunities } from "@/hooks/useCommunities";
 
 const TelegramConnect = () => {
   const [isVerifying, setIsVerifying] = useState(false);

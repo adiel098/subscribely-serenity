@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +20,10 @@ const TelegramConnect = () => {
     }
   }, [user]);
 
+  const generateNewCode = () => {
+    return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  };
+
   const initializeVerificationCode = async () => {
     try {
       // First, check if user already has a verification code
@@ -35,41 +38,23 @@ const TelegramConnect = () => {
         return;
       }
 
-      if (profile.current_telegram_code) {
-        // User already has a current code, use it
-        setVerificationCode(profile.current_telegram_code);
-      } else if (profile.initial_telegram_code) {
-        // User has an initial code but no current code, set initial as current
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ current_telegram_code: profile.initial_telegram_code })
-          .eq('id', user?.id);
+      // Always generate a new code for current use
+      const newCode = generateNewCode();
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          initial_telegram_code: profile.initial_telegram_code || newCode,
+          current_telegram_code: newCode
+        })
+        .eq('id', user?.id);
 
-        if (updateError) {
-          console.error('Error updating current code:', updateError);
-          return;
-        }
-
-        setVerificationCode(profile.initial_telegram_code);
-      } else {
-        // User has no codes, generate initial code
-        const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-        
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            initial_telegram_code: newCode,
-            current_telegram_code: newCode
-          })
-          .eq('id', user?.id);
-
-        if (updateError) {
-          console.error('Error setting initial code:', updateError);
-          return;
-        }
-
-        setVerificationCode(newCode);
+      if (updateError) {
+        console.error('Error updating codes:', updateError);
+        return;
       }
+
+      setVerificationCode(newCode);
     } catch (error) {
       console.error('Error in initializeVerificationCode:', error);
     }
@@ -121,6 +106,19 @@ const TelegramConnect = () => {
 
       if (botSettings) {
         // If settings exist and chat is verified, connection is successful
+        // Generate a new verification code for future use
+        const newCode = generateNewCode();
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ current_telegram_code: newCode })
+          .eq('id', user?.id);
+
+        if (updateError) {
+          console.error('Error updating verification code:', updateError);
+        } else {
+          setVerificationCode(newCode);
+        }
+
         toast({
           title: "Success!",
           description: "Your Telegram community has been successfully connected!",

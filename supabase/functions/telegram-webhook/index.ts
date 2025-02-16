@@ -166,7 +166,7 @@ serve(async (req) => {
 
           console.log('Found community:', community);
 
-          const miniAppUrl = `https://membify-dev.vercel.app/telegram-mini-app?start=${community.id}`;
+          const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`;
           console.log('Generated mini app URL:', miniAppUrl);
           
           // שליחת הודעה עם כפתור שמוביל למיני אפליקציה
@@ -215,7 +215,7 @@ serve(async (req) => {
 
         console.log('Found community by code:', community);
 
-        const miniAppUrl = `https://membify-dev.vercel.app/telegram-mini-app?start=${community.id}`;
+        const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`;
         console.log('Generated mini app URL:', miniAppUrl);
         
         // שליחת הודעה עם כפתור שמוביל למיני אפליקציה

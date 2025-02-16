@@ -2,14 +2,14 @@
 import {
   Users,
   CreditCard,
-  MessagesSquare,
   Settings,
   TrendingUp,
   Bot,
   BarChart,
   Calendar,
   Gift,
-  BadgeDollarSign
+  BadgeDollarSign,
+  Wallet
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -44,8 +44,8 @@ const menuItems = [
     path: "/subscriptions"
   },
   {
-    title: "Messages",
-    icon: MessagesSquare,
+    title: "Payment Methods",
+    icon: Wallet,
     path: "/messages"
   },
   {

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -80,6 +81,27 @@ async function getWebhookInfo(botToken: string) {
   );
   const result = await response.json();
   console.log('Webhook info result:', result);
+  return result;
+}
+
+async function createInviteLink(botToken: string, chatId: number) {
+  console.log('Creating invite link for chat:', chatId);
+  const response = await fetch(
+    `https://api.telegram.org/bot${botToken}/createChatInviteLink`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        member_limit: 1,
+        creates_join_request: true
+      })
+    }
+  );
+  const result = await response.json();
+  console.log('Invite link creation result:', result);
   return result;
 }
 
@@ -183,6 +205,10 @@ serve(async (req) => {
           }
         }
 
+        // Create invite link for the chat
+        const inviteLinkResult = await createInviteLink(BOT_TOKEN, chatId);
+        const inviteLink = inviteLinkResult.ok ? inviteLinkResult.result.invite_link : null;
+
         // Find profile with this verification code
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
@@ -203,7 +229,7 @@ serve(async (req) => {
 
         const userId = profiles[0].id;
 
-        // Create community with photo URL
+        // Create community with photo URL and invite link
         const { data: community, error: communityError } = await supabase
           .from('communities')
           .insert({
@@ -212,7 +238,8 @@ serve(async (req) => {
             name: chatTitle || 'My Telegram Community',
             platform_id: chatId.toString(),
             telegram_chat_id: chatId.toString(),
-            telegram_photo_url: photoUrl // Add the photo URL
+            telegram_photo_url: photoUrl,
+            telegram_invite_link: inviteLink
           })
           .select()
           .single();

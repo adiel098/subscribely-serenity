@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { BrandTelegram, BrandDiscord, BrandSlack } from "lucide-react";
+import { Telegram, Discord, Slack } from "lucide-react";
 
 const PlatformSelect = () => {
   const navigate = useNavigate();
@@ -9,19 +9,19 @@ const PlatformSelect = () => {
   const platforms = [
     {
       name: "Telegram",
-      icon: BrandTelegram,
+      icon: Telegram,
       color: "bg-blue-500 hover:bg-blue-600",
       route: "/connect/telegram"
     },
     {
       name: "Discord",
-      icon: BrandDiscord,
+      icon: Discord,
       color: "bg-indigo-500 hover:bg-indigo-600",
       route: "/connect/discord"
     },
     {
       name: "Slack",
-      icon: BrandSlack,
+      icon: Slack,
       color: "bg-green-500 hover:bg-green-600",
       route: "/connect/slack"
     }

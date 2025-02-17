@@ -61,13 +61,19 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
+      // ממירים את מזהה הקהילה למחרוזת חיובית אם הוא שלילי
+      const communityId = selectedPlan.community_id.startsWith('-') ? 
+        selectedPlan.community_id.substring(1) : 
+        selectedPlan.community_id;
+
       console.log('Creating payment with:', {
         plan_id: selectedPlan.id,
-        community_id: selectedPlan.community_id,
+        community_id: communityId,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
         status: 'completed',
-        invite_link: newInviteLink
+        invite_link: newInviteLink,
+        telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
       });
 
       // Create the payment record with the new invite link
@@ -75,11 +81,12 @@ export const PaymentMethods = ({
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
-          community_id: selectedPlan.community_id,
+          community_id: communityId,
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: newInviteLink || null
+          invite_link: newInviteLink || null,
+          telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
         }])
         .select()
         .maybeSingle();

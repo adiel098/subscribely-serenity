@@ -5,7 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/features/community/c
 import { Badge } from "@/features/community/components/ui/badge";
 import { ScrollArea } from "@/features/community/components/ui/scroll-area";
 
-export interface CustomerSubscriptionsProps {
+interface Subscription {
+  id: string;
+  status: string;
+  created_at: string;
+  plan: {
+    name: string;
+    price: number;
+    interval: string;
+  };
+}
+
+interface CustomerSubscriptionsProps {
   customerId: string;
 }
 
@@ -14,7 +25,7 @@ export const CustomerSubscriptions = ({ customerId }: CustomerSubscriptionsProps
     queryKey: ['customerSubscriptions', customerId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('subscriptions')
+        .from('subscription_payments')
         .select(`
           id,
           status,
@@ -28,7 +39,7 @@ export const CustomerSubscriptions = ({ customerId }: CustomerSubscriptionsProps
         .eq('user_id', customerId);
 
       if (error) throw error;
-      return data || [];
+      return data as Subscription[];
     }
   });
 

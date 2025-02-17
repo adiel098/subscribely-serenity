@@ -1,88 +1,76 @@
 
-import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/features/community/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/features/community/components/ui/card";
 import { Badge } from "@/features/community/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { ScrollArea } from "@/features/community/components/ui/scroll-area";
 
-interface CustomerSubscriptionsProps {
-  data: {
-    subscriptions: Array<{
-      id: string;
-      plan_name: string;
-      status: "active" | "expired" | "cancelled";
-      start_date: string;
-      end_date: string | null;
-      price: number;
-      community_name: string;
-    }>;
-  };
+export interface CustomerSubscriptionsProps {
+  customerId: string;
 }
 
-export const CustomerSubscriptions = ({ data }: CustomerSubscriptionsProps) => {
-  if (!data.subscriptions?.length) {
+export const CustomerSubscriptions = ({ customerId }: CustomerSubscriptionsProps) => {
+  const { data: subscriptions } = useQuery({
+    queryKey: ['customerSubscriptions', customerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select(`
+          id,
+          status,
+          created_at,
+          plan:subscription_plans (
+            name,
+            price,
+            interval
+          )
+        `)
+        .eq('user_id', customerId);
+
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  if (!subscriptions?.length) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No subscriptions found</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscriptions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No active subscriptions</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {data.subscriptions.map((subscription) => (
-        <Card key={subscription.id}>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>{subscription.plan_name}</CardTitle>
-                <CardDescription>{subscription.community_name}</CardDescription>
-              </div>
-              <Badge
-                variant={
-                  subscription.status === "active"
-                    ? "success"
-                    : subscription.status === "expired"
-                    ? "destructive"
-                    : "secondary"
-                }
-              >
-                {subscription.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Start Date
-                </p>
-                <p className="text-sm">
-                  {formatDistanceToNow(new Date(subscription.start_date), {
-                    addSuffix: true,
-                  })}
-                </p>
-              </div>
-              {subscription.end_date && (
+    <Card>
+      <CardHeader>
+        <CardTitle>Subscriptions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[200px]">
+          <div className="space-y-4">
+            {subscriptions.map((subscription) => (
+              <div key={subscription.id} className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    End Date
-                  </p>
-                  <p className="text-sm">
-                    {formatDistanceToNow(new Date(subscription.end_date), {
-                      addSuffix: true,
-                    })}
+                  <p className="font-medium">{subscription.plan.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    ${subscription.plan.price}/{subscription.plan.interval}
                   </p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                <Badge 
+                  variant={subscription.status === 'active' ? "success" : "destructive"}
+                >
+                  {subscription.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };

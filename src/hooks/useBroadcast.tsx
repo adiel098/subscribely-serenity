@@ -23,7 +23,8 @@ export const useBroadcast = (communityId: string) => {
       subscriptionPlanId?: string;
       includeButton?: boolean;
     }): Promise<BroadcastStatus> => {
-      console.log('Starting broadcast with params:', {
+      console.log('=== Starting broadcast ===');
+      console.log('Broadcast parameters:', {
         communityId,
         message,
         filterType,
@@ -72,25 +73,40 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('Invalid response format from server');
       }
 
+      console.log('Broadcast status:', status);
+
       // רישום האירוע באנליטיקס
       try {
-        await logAnalyticsEvent(
+        console.log('Attempting to log analytics event...');
+        const analyticsData = {
+          message,
+          filter_type: filterType,
+          success_count: status.successCount,
+          failure_count: status.failureCount,
+          total_recipients: status.totalRecipients
+        };
+        console.log('Analytics metadata:', analyticsData);
+
+        const logResult = await logAnalyticsEvent(
           communityId,
           'notification_sent',
           null,
-          {
-            message,
-            filter_type: filterType,
-            success_count: status.successCount,
-            failure_count: status.failureCount,
-            total_recipients: status.totalRecipients
-          },
+          analyticsData,
           status.successCount
         );
+        console.log('Analytics log result:', logResult);
       } catch (error) {
-        console.error('Failed to log analytics event:', error);
+        console.error('Failed to log analytics event. Full error:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          });
+        }
       }
 
+      console.log('=== Finished broadcast ===');
       return status;
     },
     onSuccess: (data) => {

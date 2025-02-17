@@ -22,6 +22,15 @@ export const logAnalyticsEvent = async (
   metadata: Record<string, any> = {},
   amount: number | null = null
 ) => {
+  console.log('=== Starting logAnalyticsEvent ===');
+  console.log('Input parameters:', {
+    communityId,
+    eventType,
+    userId,
+    metadata,
+    amount
+  });
+
   if (!communityId) {
     console.error('Cannot log analytics event: Missing community ID');
     return;
@@ -29,30 +38,48 @@ export const logAnalyticsEvent = async (
 
   // וידוא שה-metadata הוא אובייקט תקין
   const validMetadata = typeof metadata === 'object' ? metadata : {};
+  console.log('Validated metadata:', validMetadata);
+
+  const eventData = {
+    community_id: communityId,
+    event_type: eventType,
+    user_id: userId,
+    metadata: validMetadata,
+    amount: amount
+  };
+
+  console.log('Prepared event data for insert:', eventData);
 
   try {
+    console.log('Attempting to insert into community_logs...');
     const { data, error } = await supabase
       .from('community_logs')
-      .insert({
-        community_id: communityId,
-        event_type: eventType,
-        user_id: userId,
-        metadata: validMetadata,
-        amount: amount
-      })
+      .insert(eventData)
       .select()
       .single();
 
     if (error) {
-      console.error('Error logging analytics event:', error);
+      console.error('Supabase error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
-    console.log('Successfully logged analytics event:', data);
+    console.log('Successfully inserted event, returned data:', data);
     return data as AnalyticsEvent;
   } catch (error) {
-    console.error('Failed to log analytics event:', error);
+    console.error('Full error object:', error);
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     throw error;
+  } finally {
+    console.log('=== Finished logAnalyticsEvent ===');
   }
 };
 
@@ -60,6 +87,7 @@ export const useAnalytics = (communityId: string) => {
   return useQuery({
     queryKey: ['analytics', communityId],
     queryFn: async () => {
+      console.log('=== Starting analytics query ===');
       if (!communityId) {
         console.log('No community ID provided for analytics');
         return null;
@@ -74,11 +102,18 @@ export const useAnalytics = (communityId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching analytics:', error.message);
+        console.error('Error fetching analytics:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
 
-      console.log('Fetched analytics events:', events);
+      console.log('Successfully fetched analytics events:', events);
+      console.log('=== Finished analytics query ===');
       return events as AnalyticsEvent[];
     },
     enabled: Boolean(communityId),

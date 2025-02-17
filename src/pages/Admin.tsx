@@ -57,11 +57,10 @@ const Admin = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Side Navigation */}
           <div className="md:col-span-3">
             <Card className="bg-[#221F26] border-none">
               <CardContent className="p-4">
-                <nav className="space-y-2">
+                <Tabs defaultValue="dashboard" orientation="vertical" className="h-full">
                   <TabsList className="flex flex-col w-full bg-transparent space-y-1">
                     <TabsTrigger
                       value="dashboard"
@@ -94,12 +93,11 @@ const Admin = () => {
                       Settings
                     </TabsTrigger>
                   </TabsList>
-                </nav>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
 
-          {/* Main Content */}
           <div className="md:col-span-9">
             <Tabs defaultValue="dashboard" className="space-y-6">
               <TabsContent value="dashboard" className="space-y-6 mt-0">

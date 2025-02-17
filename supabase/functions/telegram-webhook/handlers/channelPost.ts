@@ -27,7 +27,7 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
         .from('telegram_bot_settings')
         .select('*')
         .eq('verification_code', verificationCode)
-        .single();
+        .maybeSingle();
 
       if (findError) {
         console.error('[CHANNEL] Error finding verification code:', findError);
@@ -49,8 +49,7 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
           chat_id: chatId,
           verified_at: new Date().toISOString()
         })
-        .eq('id', botSettings.id)
-        .select();
+        .eq('id', botSettings.id);
 
       if (updateError) {
         console.error('[CHANNEL] Error updating bot settings:', updateError);

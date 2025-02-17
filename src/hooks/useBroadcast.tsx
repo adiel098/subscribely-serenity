@@ -2,6 +2,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logAnalyticsEvent } from "./useAnalytics";
 
 interface BroadcastStatus {
   successCount: number;
@@ -52,25 +53,47 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('No response from server');
       }
 
+      let status: BroadcastStatus;
+
       // אם התגובה היא { ok: true } זה אומר שההודעה נשלחה בהצלחה
       if (data.ok === true) {
-        return {
+        status = {
           successCount: 1,
           failureCount: 0,
           totalRecipients: 1
         };
       }
-
       // אם יש לנו את הפורמט המורחב עם המונים
-      if (typeof data.successCount === 'number' && typeof data.totalRecipients === 'number') {
-        return {
+      else if (typeof data.successCount === 'number' && typeof data.totalRecipients === 'number') {
+        status = {
           successCount: data.successCount,
           failureCount: data.failureCount || 0,
           totalRecipients: data.totalRecipients
         };
+      } else {
+        throw new Error('Invalid response format from server');
       }
 
-      throw new Error('Invalid response format from server');
+      // רישום האירוע באנליטיקס
+      try {
+        await logAnalyticsEvent(
+          communityId,
+          'notification_sent',
+          null,
+          {
+            message,
+            filter_type: filterType,
+            success_count: status.successCount,
+            failure_count: status.failureCount,
+            total_recipients: status.totalRecipients
+          }
+        );
+      } catch (error) {
+        console.error('Failed to log analytics event:', error);
+        // לא נזרוק שגיאה כאן כי זה לא קריטי
+      }
+
+      return status;
     },
     onSuccess: (data) => {
       if (!data.totalRecipients) {

@@ -4,17 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/features/community/components/ui/card";
 import { Users, DollarSign, Bell, TrendingUp } from "lucide-react";
 
+interface AdminStats {
+  total_users: number;
+  total_revenue: number;
+  active_communities: number;
+  monthly_growth: number;
+}
+
 export const AdminStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('admin_stats')
-        .select('*')
-        .single();
+      const { data, error } = await supabase.rpc('get_admin_stats');
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching admin stats:', error);
+        throw error;
+      }
+      return data as AdminStats;
     },
   });
 

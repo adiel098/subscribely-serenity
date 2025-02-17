@@ -17,6 +17,17 @@ import { Button } from "@/features/community/components/ui/button";
 import { Badge } from "@/features/community/components/ui/badge";
 import { Input } from "@/features/community/components/ui/input";
 
+interface AdminUser {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  profile?: {
+    full_name: string | null;
+    email: string | null;
+  };
+}
+
 export const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -28,20 +39,23 @@ export const AdminUsers = () => {
         .from('admin_users')
         .select(`
           *,
-          profiles:profiles!admin_users_user_id_fkey (
+          profile:profiles (
             full_name,
             email
           )
         `);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching admin users:', error);
+        throw error;
+      }
+      return data as AdminUser[];
     },
   });
 
   const filteredUsers = adminUsers?.filter(user => 
-    user.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    user.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isLoading) {
@@ -90,8 +104,8 @@ export const AdminUsers = () => {
             ) : (
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.profiles?.full_name}</TableCell>
-                  <TableCell>{user.profiles?.email}</TableCell>
+                  <TableCell>{user.profile?.full_name}</TableCell>
+                  <TableCell>{user.profile?.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                       {user.role}

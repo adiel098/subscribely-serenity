@@ -1,100 +1,93 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { TelegramClient } from "../_utils/telegramClient.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface KickMemberRequest {
+  memberId: string;
+  telegram_user_id: string;
+  community_id: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { memberId } = await req.json();
+    const telegramClient = new TelegramClient(Deno.env.get('TELEGRAM_BOT_TOKEN') || '');
+    const { memberId, telegram_user_id, community_id } = await req.json() as KickMemberRequest;
 
-    if (!memberId) {
-      throw new Error('Member ID is required');
-    }
+    console.log('Received request to kick member:', { memberId, telegram_user_id, community_id });
 
-    // Get member and community info
-    const { data: member, error: memberError } = await supabase
-      .from('telegram_chat_members')
-      .select(`
-        *,
-        community:communities(
-          telegram_chat_id
-        )
-      `)
-      .eq('id', memberId)
+    // Get the community's chat ID
+    const { data: community, error: communityError } = await supabaseClient
+      .from('communities')
+      .select('telegram_chat_id')
+      .eq('id', community_id)
       .single();
 
-    if (memberError || !member) {
-      throw new Error('Member not found');
+    if (communityError || !community) {
+      console.error('Error fetching community:', communityError);
+      throw new Error('Community not found');
     }
 
-    // Get bot token
-    const { data: settings, error: settingsError } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single();
+    console.log('Found community:', community);
 
-    if (settingsError || !settings?.bot_token) {
-      throw new Error('Bot settings not found');
-    }
+    // Kick member from the chat
+    try {
+      await telegramClient.banChatMember(community.telegram_chat_id, telegram_user_id);
+      console.log('Successfully kicked member from chat');
 
-    // Kick member from channel
-    const kickResponse = await fetch(
-      `https://api.telegram.org/bot${settings.bot_token}/banChatMember`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: member.community.telegram_chat_id,
-          user_id: member.telegram_user_id,
-          until_date: Math.floor(Date.now() / 1000) + 32, // Minimal ban time (32 seconds)
-        }),
+      // Update member status in database
+      const { error: updateError } = await supabaseClient
+        .from('telegram_chat_members')
+        .update({ 
+          is_active: false,
+          subscription_status: false,
+          subscription_end_date: new Date().toISOString()
+        })
+        .eq('id', memberId);
+
+      if (updateError) {
+        console.error('Error updating member status:', updateError);
+        throw updateError;
       }
-    );
 
-    const kickResult = await kickResponse.json();
-    console.log('Kick response:', kickResult);
+      // Log the event
+      await supabaseClient
+        .from('community_logs')
+        .insert({
+          community_id: community_id,
+          event_type: 'member_left',
+          user_id: telegram_user_id,
+          metadata: {
+            reason: 'subscription_cancelled',
+            member_id: memberId
+          }
+        });
 
-    if (!kickResult.ok) {
-      throw new Error(`Failed to kick member: ${kickResult.description}`);
+      return new Response(
+        JSON.stringify({ success: true }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    } catch (error) {
+      console.error('Error in kicking member:', error);
+      throw error;
     }
-
-    // Update member status in database
-    const { error: updateError } = await supabase
-      .from('telegram_chat_members')
-      .update({
-        is_active: false,
-        subscription_status: false,
-        subscription_end_date: new Date().toISOString(),
-        subscription_plan_id: null,
-      })
-      .eq('id', memberId);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return new Response(
-      JSON.stringify({ success: true }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
   } catch (error) {
     console.error('Error:', error);
     return new Response(

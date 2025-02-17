@@ -34,7 +34,7 @@ interface BroadcastSectionProps {
 
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
-  const [targetAudience, setTargetAudience] = useState<string>("all");
+  const [targetAudience, setTargetAudience] = useState<"all" | "active" | "expired">("all");
   const [silent, setSilent] = useState(false);
   const { toast } = useToast();
   const { broadcast, isLoading } = useBroadcast();
@@ -79,7 +79,7 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
       <AccordionTrigger>Broadcast Message</AccordionTrigger>
       <AccordionContent>
         <div className="space-y-4 pt-4">
-          <BroadcastStats communityId={communityId} />
+          <BroadcastStats broadcastId={communityId} />
 
           <Card>
             <CardHeader>

@@ -1,12 +1,16 @@
+
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Loader2, Send } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
-import { useBroadcast } from "@/hooks/community/useBroadcast";
+import { toast } from "sonner";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
+import { BroadcastStatus } from "@/types";
 
 interface BroadcastSectionProps {
   communityId: string;
@@ -14,72 +18,53 @@ interface BroadcastSectionProps {
 
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
-  const { toast } = useToast();
-  const { broadcast, isLoading, error, reset } = useBroadcast(communityId);
 
-  const handleBroadcast = async () => {
-    if (!message.trim()) {
-      toast({
-        title: "Error",
-        description: "Message cannot be empty.",
-        variant: "destructive",
+  const broadcastMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const { data, error } = await supabase.functions.invoke<BroadcastStatus>("telegram-webhook", {
+        body: {
+          message,
+          communityId,
+          path: "/broadcast"
+        }
       });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Message sent successfully");
+      setMessage("");
+    },
+    onError: (error) => {
+      toast.error(`Failed to send message: ${error.message}`);
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) {
+      toast.error("Please enter a message");
       return;
     }
-
-    try {
-      await broadcast(message);
-      toast({
-        title: "Success",
-        description: "Broadcast message sent!",
-      });
-      setMessage("");
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to send broadcast message.",
-        variant: "destructive",
-      });
-    }
+    broadcastMutation.mutate(message);
   };
 
   return (
     <AccordionItem value="broadcast">
       <AccordionTrigger>Broadcast Message</AccordionTrigger>
-      <AccordionContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Send a message to all subscribers of this community.
-        </p>
-        <div className="grid gap-2">
-          <Label htmlFor="broadcast-message">Message</Label>
+      <AccordionContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            id="broadcast-message"
-            placeholder="Enter your message here..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="resize-none"
+            placeholder="Enter your broadcast message"
+            rows={4}
           />
-        </div>
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              {error.message || "Failed to send broadcast message."}
-            </AlertDescription>
-          </Alert>
-        )}
-        <Button onClick={handleBroadcast} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
-            </>
-          ) : (
-            <>
-              Send Broadcast
-              <Send className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
+          <Button type="submit" disabled={broadcastMutation.isPending}>
+            {broadcastMutation.isPending ? "Sending..." : "Send Broadcast"}
+          </Button>
+        </form>
       </AccordionContent>
     </AccordionItem>
   );

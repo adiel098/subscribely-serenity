@@ -52,7 +52,7 @@ export const handleMessage = async (
               {
                 text: "View Subscription Plans",
                 web_app: {
-                  url: `https://membify-telegram.vercel.app/?community=${communityId}`
+                  url: `https://membify-telegram.vercel.app?start=${communityId}`
                 }
               }
             ]]
@@ -109,7 +109,7 @@ export const handleMessage = async (
                   {
                     text: "View Subscription Plans",
                     web_app: {
-                      url: `https://membify-telegram.vercel.app/?community=${community.id}`
+                      url: `https://membify-telegram.vercel.app?start=${community.id}`
                     }
                   }
                 ]]

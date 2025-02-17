@@ -14,6 +14,8 @@ export type Customer = {
   subscription_status: boolean;
   total_spent: number;
   join_date: string;
+  avatar_url: string | null;
+  telegram_username: string | null;
 };
 
 const Customers = () => {

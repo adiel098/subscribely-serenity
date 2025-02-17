@@ -1,312 +1,231 @@
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useSubscribers } from "@/hooks/community/useSubscribers";
-import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/features/community/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { EditSubscriberDialog } from "@/features/community/components/subscribers/EditSubscriberDialog";
-import { SubscribersTable } from "@/features/community/components/subscribers/SubscribersTable";
-import { Input } from "@/features/community/components/ui/input";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/features/community/components/ui/dropdown-menu";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/features/community/components/ui/card";
+import { Input } from "@/features/community/components/ui/input";
+import { Label } from "@/features/community/components/ui/label";
 import { Button } from "@/features/community/components/ui/button";
-import { Badge } from "@/features/community/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/features/community/components/ui/table"
+import { useCommunityContext } from '@/features/community/providers/CommunityContext';
+import { useSubscribers, Subscriber } from "@/hooks/community/useSubscribers";
+import { Calendar } from "@/features/community/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/features/community/components/ui/popover"
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon, ArrowDownToLine } from "lucide-react";
+import { DateRange } from "react-day-picker";
 
-interface Plan {
-  id: string;
-  name: string;
-  interval: string;
-  price: number;
-}
+const generateCSV = (data: Subscriber[]) => {
+  const header = Object.keys(data[0] || {}).join(',');
+  const rows = data.map(item => Object.values(item).map(value => {
+    if (typeof value === 'string') {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  }).join(','));
+  return `${header}\n${rows.join('\n')}`;
+};
 
 const Subscribers = () => {
-  const { selectedCommunityId } = useCommunityContext();
-  const { data: subscribers, isLoading, refetch } = useSubscribers(selectedCommunityId || "");
-  const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
-  const [planFilter, setPlanFilter] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const { selectedCommunityId } = useCommunityContext();
+  const { data: subscribers, isLoading, error, refetch } = useSubscribers(selectedCommunityId || '');
 
-  const handleEditSuccess = () => {
-    refetch();
-  };
-
-  const handleUpdateStatus = async () => {
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase.functions.invoke('telegram-webhook', {
-        body: { 
-          communityId: selectedCommunityId,
-          path: '/update-activity'
-        }
-      });
-
-      if (error) throw error;
-
+  useEffect(() => {
+    if (error) {
       toast({
-        title: "Success",
-        description: "Member status updated successfully",
-      });
-      
-      await refetch();
-    } catch (error) {
-      console.error('Error updating member status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update member status",
         variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch subscribers"
       });
-    } finally {
-      setIsUpdating(false);
     }
-  };
+  }, [error, toast]);
+
+  const filteredSubscribers = useCallback(() => {
+    if (!subscribers) return [];
+
+    let filtered = [...subscribers];
+
+    if (searchQuery) {
+      filtered = filtered.filter(subscriber =>
+        subscriber.telegram_username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        subscriber.telegram_user_id?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (dateRange?.from && dateRange?.to) {
+      filtered = filtered.filter(subscriber => {
+        const joinedAt = new Date(subscriber.joined_at);
+        return joinedAt >= dateRange.from! && joinedAt <= dateRange.to!;
+      });
+    }
+
+    return filtered;
+  }, [subscribers, searchQuery, dateRange]);
 
   const handleExport = () => {
-    const exportData = filteredSubscribers.map(sub => ({
-      Username: sub.telegram_username || 'No username',
-      'Telegram ID': sub.telegram_user_id,
-      'Plan Name': sub.plan?.name || 'No plan',
-      'Plan Price': sub.plan ? `$${sub.plan.price}` : '-',
-      'Plan Interval': sub.plan?.interval || '-',
-      Status: sub.subscription_status ? 'Active' : 'Inactive',
-      'Start Date': sub.subscription_start_date ? new Date(sub.subscription_start_date).toLocaleDateString() : '-',
-      'End Date': sub.subscription_end_date ? new Date(sub.subscription_end_date).toLocaleDateString() : '-',
-      'Joined At': new Date(sub.joined_at).toLocaleDateString(),
-    }));
-
-    const headers = Object.keys(exportData[0]);
-    const csvRows = [
-      headers.join(','),
-      ...exportData.map(row => 
-        headers.map(header => 
-          JSON.stringify(row[header as keyof typeof row])).join(',')
-      )
-    ];
-    const csvString = csvRows.join('\n');
-
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = generateCSV(subscribers || []);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(blob, 'subscribers.csv');
+    if (window.navigator && ('msSaveBlob' in window.navigator)) {
+      // עבור דפדפני IE
+      (window.navigator as any).msSaveBlob(blob, 'subscribers.csv');
     } else {
       const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', 'subscribers.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    toast({
-      title: "Success",
-      description: "Subscribers data exported successfully",
-    });
-  };
-
-  const handleRemoveSubscriber = async (subscriber: any) => {
-    console.log('Starting subscription removal process for subscriber:', subscriber);
-    
-    try {
-      console.log('Attempting to update subscription status and end date...');
-      
-      const { data: updateData, error: updateError } = await supabase
-        .from('telegram_chat_members')
-        .update({
-          subscription_status: false,
-          subscription_end_date: new Date().toISOString(),
-          subscription_plan_id: null
-        })
-        .eq('id', subscriber.id)
-        .select();
-
-      console.log('Update response:', { data: updateData, error: updateError });
-
-      if (updateError) {
-        console.error('Error in update:', updateError);
-        throw updateError;
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'subscribers.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
-
-      console.log('Successfully updated subscriber status');
-
-      toast({
-        title: "Success",
-        description: "Subscription cancelled successfully",
-      });
-      
-      console.log('Refreshing data...');
-      await refetch();
-      console.log('Data refresh completed');
-    } catch (error) {
-      console.error('Detailed error in subscription removal:', error);
-      console.error('Error stack:', (error as Error).stack);
-      toast({
-        title: "Error",
-        description: "Failed to cancel subscription",
-        variant: "destructive",
-      });
     }
   };
-
-  const filteredSubscribers = (subscribers || []).filter((subscriber) => {
-    const matchesSearch = (subscriber.telegram_username || "")
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase()) ||
-      subscriber.telegram_user_id.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && subscriber.subscription_status) ||
-      (statusFilter === "inactive" && !subscriber.subscription_status);
-
-    const matchesPlan =
-      !planFilter ||
-      subscriber.plan?.id === planFilter;
-
-    return matchesSearch && matchesStatus && matchesPlan;
-  });
-
-  const uniquePlans = Array.from(
-    new Set((subscribers || []).map((s) => s.plan).filter(Boolean))
-  );
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Loading subscribers...</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Users className="h-6 w-6" />
-            <h1 className="text-2xl font-semibold">Subscribers</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUpdateStatus}
-              disabled={isUpdating}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-              Update Member Status
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExport}
-              className="bg-green-100 hover:bg-green-200 text-green-700 border-green-200"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
+    <div className="container max-w-7xl py-6 space-y-8 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Subscribers</h1>
         <p className="text-sm text-muted-foreground">
-          Manage your community subscribers and monitor their subscription status
+          Manage your community subscribers
         </p>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by username or Telegram ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>Filter subscribers by username and date</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="search">Search</Label>
+              <Input
+                type="search"
+                id="search"
+                placeholder="Search by username or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Date Range</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange?.from && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        `${format(dateRange.from, "LLL dd, y")} - ${format(
+                          dateRange.to,
+                          "LLL dd, y"
+                        )}`
+                      ) : (
+                        format(dateRange.from, "LLL dd, y")
+                      )
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date('2023-01-01')
+                    }
+                    numberOfMonths={2}
+                    pagedNavigation
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Filter className="h-4 w-4" />
-              <span>Status</span>
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="ml-2">
-                  {statusFilter}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setStatusFilter("all")}>
-                <span className="mr-2">All</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("active")}>
-                <CheckSquare className="mr-2 h-4 w-4 text-green-500" />
-                <span>Active</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>
-                <XSquare className="mr-2 h-4 w-4 text-red-500" />
-                <span>Inactive</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscribers List</CardTitle>
+          <CardDescription>
+            All subscribers in your community
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div>Loading subscribers...</div>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableCaption>A list of your community subscribers.</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Joined Date</TableHead>
+                    <TableHead>Subscription Status</TableHead>
+                    <TableHead>Plan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSubscribers().map((subscriber) => (
+                    <TableRow key={subscriber.id}>
+                      <TableCell className="font-medium">{subscriber.telegram_user_id}</TableCell>
+                      <TableCell>{subscriber.telegram_username || 'N/A'}</TableCell>
+                      <TableCell>{new Date(subscriber.joined_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{subscriber.subscription_status ? 'Active' : 'Inactive'}</TableCell>
+                      <TableCell>{subscriber.plan?.name || 'N/A'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      {filteredSubscribers().length} Total subscribers
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Filter className="h-4 w-4" />
-              <span>Plan</span>
-              {planFilter && (
-                <Badge variant="secondary" className="ml-2">
-                  {uniquePlans.find((p) => p.id === planFilter)?.name}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setPlanFilter(null)}>
-                <span className="mr-2">All Plans</span>
-              </DropdownMenuItem>
-              {uniquePlans.map((plan) => (
-                <DropdownMenuItem
-                  key={plan.id}
-                  onClick={() => setPlanFilter(plan.id)}
-                >
-                  <span>{plan.name}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <SubscribersTable 
-        subscribers={filteredSubscribers}
-        onEdit={(subscriber) => {
-          setSelectedSubscriber(subscriber);
-          setEditDialogOpen(true);
-        }}
-        onRemove={handleRemoveSubscriber}
-      />
-
-      {selectedSubscriber && (
-        <EditSubscriberDialog
-          subscriber={selectedSubscriber}
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          onSuccess={handleEditSuccess}
-        />
-      )}
+      <Button onClick={handleExport} className="gap-2">
+        <ArrowDownToLine className="h-4 w-4" />
+        Export to CSV
+      </Button>
     </div>
   );
 };

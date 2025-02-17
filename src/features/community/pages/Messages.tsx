@@ -12,7 +12,7 @@ import { useCommunityContext } from '@/features/community/providers/CommunityCon
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/features/community/components/payments/PaymentMethodCard";
 import { PaymentMethodTabs } from "@/features/community/components/payments/PaymentMethodTabs";
-import { usePaymentMethods } from "@/hooks/community/usePaymentMethods";
+import { usePaymentMethods } from "@/features/community/hooks/usePaymentMethods";
 
 const Messages = () => {
   const { toast } = useToast();

@@ -1,13 +1,14 @@
 
 import { useToast } from "@/hooks/use-toast";
 import {
-  Toast,
-  ToastClose,
-  ToastDescription,
   ToastProvider,
-  ToastTitle,
   ToastViewport,
-} from "@/features/telegram mini app/components/ui/toast";
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+} from "@/features/community/components/ui/toast";
 
 export function Toaster() {
   const { toasts } = useToast();

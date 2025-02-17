@@ -1,6 +1,7 @@
+
 import Navbar from "@/components/Navbar";
-import { AppSidebar } from "@/features/community/components/AppSidebar";
-import { CommunitySelector } from "@/features/community/components/CommunitySelector";
+import { AppSidebar } from "@/components/AppSidebar";
+import { CommunitySelector } from "@/components/CommunitySelector";
 import { useLocation } from "react-router-dom";
 
 export const DashboardLayout = ({

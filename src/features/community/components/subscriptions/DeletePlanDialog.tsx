@@ -1,3 +1,4 @@
+
 import { 
   AlertDialog,
   AlertDialogContent,
@@ -58,4 +59,3 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
     </AlertDialog>
   );
 };
-

@@ -1,3 +1,4 @@
+
 import { Bot, Eye } from "lucide-react";
 
 interface MessagePreviewProps {
@@ -40,4 +41,3 @@ export const MessagePreview = ({ message, signature }: MessagePreviewProps) => {
     </div>
   );
 };
-

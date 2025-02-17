@@ -1,103 +1,65 @@
 
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useBotStats } from "@/hooks/useBotStats";
+import { useSubscribers } from "@/hooks/useSubscribers";
+import { format } from "date-fns";
+import { NextCheckTimer } from "@/components/analytics/NextCheckTimer";
+import { StatsGrid } from "@/components/analytics/StatsGrid";
 import { ActivityChart } from "@/components/analytics/ActivityChart";
 import { ActivityLog } from "@/components/analytics/ActivityLog";
-import { StatsGrid } from "@/components/analytics/StatsGrid";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 const Analytics = () => {
-  const { data: analyticsData, isLoading } = useQuery({
-    queryKey: ['admin-analytics'],
-    queryFn: async () => {
-      // Fetch analytics events
-      const { data: events, error: eventsError } = await supabase
-        .from('analytics_events')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+  const { selectedCommunityId } = useCommunityContext();
+  const { data: events } = useAnalytics(selectedCommunityId || "");
+  const { data: botStats } = useBotStats(selectedCommunityId || "");
+  const { data: subscribers } = useSubscribers(selectedCommunityId || "");
 
-      if (eventsError) throw eventsError;
+  // Calculate statistics
+  const stats = {
+    totalRevenue: events?.reduce((sum, event) => 
+      event.event_type === 'payment_received' ? (sum + (event.amount || 0)) : sum, 0
+    ) || 0,
+    activeSubscribers: subscribers?.filter(s => s.subscription_status).length || 0,
+    notifications: botStats?.messagesSent || 0,
+    totalMembers: botStats?.totalMembers || 0
+  };
 
-      // Fetch platform statistics
-      const { data: communities, error: communitiesError } = await supabase
-        .from('communities')
-        .select('member_count, subscription_count, subscription_revenue');
-
-      if (communitiesError) throw communitiesError;
-
-      // Calculate totals
-      const totalMembers = communities.reduce((sum, c) => sum + (c.member_count || 0), 0);
-      const totalSubscribers = communities.reduce((sum, c) => sum + (c.subscription_count || 0), 0);
-      const totalRevenue = communities.reduce((sum, c) => sum + (c.subscription_revenue || 0), 0);
-
-      // Prepare chart data
-      const chartData = events.reduce((acc: any[], event) => {
-        const date = new Date(event.created_at).toLocaleDateString();
-        const existingDate = acc.find(item => item.date === date);
-        
-        if (existingDate) {
-          existingDate.events += 1;
-          existingDate.revenue += event.amount || 0;
-        } else {
-          acc.push({
-            date,
-            events: 1,
-            revenue: event.amount || 0
-          });
-        }
-        
-        return acc;
-      }, []);
-
-      return {
-        events,
-        totalMembers,
-        totalSubscribers,
-        totalRevenue,
-        totalEvents: events.length,
-        chartData: chartData.slice(-30) // Last 30 days
-      };
+  // Chart data
+  const chartData = events?.reduce((acc: any[], event) => {
+    const date = format(new Date(event.created_at), 'MM/dd');
+    const existing = acc.find(item => item.date === date);
+    
+    if (existing) {
+      existing.events += 1;
+      if (event.event_type === 'payment_received') {
+        existing.revenue += event.amount || 0;
+      }
+    } else {
+      acc.push({
+        date,
+        events: 1,
+        revenue: event.event_type === 'payment_received' ? (event.amount || 0) : 0
+      });
     }
-  });
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!analyticsData) return null;
+    
+    return acc;
+  }, []) || [];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Platform Analytics</h1>
-          <p className="text-muted-foreground">
-            Overview of your platform's performance and activity
-          </p>
-        </div>
-
-        <StatsGrid
-          totalMembers={analyticsData.totalMembers}
-          activeSubscribers={analyticsData.totalSubscribers}
-          notifications={analyticsData.events.filter(e => e.event_type === 'notification_sent').length}
-          totalRevenue={analyticsData.totalRevenue}
-          totalEvents={analyticsData.totalEvents}
-        />
-
-        <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-          <ActivityChart data={analyticsData.chartData} />
-          <ActivityLog events={analyticsData.events} />
-        </div>
-      </div>
-    </DashboardLayout>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Analytics</h1>
+      <NextCheckTimer />
+      <StatsGrid 
+        totalRevenue={stats.totalRevenue}
+        activeSubscribers={stats.activeSubscribers}
+        notifications={stats.notifications}
+        totalMembers={stats.totalMembers}
+        totalEvents={events?.length || 0}
+      />
+      <ActivityChart data={chartData} />
+      <ActivityLog events={events || []} />
+    </div>
   );
 };
 

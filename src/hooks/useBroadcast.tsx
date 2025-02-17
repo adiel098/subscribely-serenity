@@ -22,6 +22,14 @@ export const useBroadcast = (communityId: string) => {
       subscriptionPlanId?: string;
       includeButton?: boolean;
     }): Promise<BroadcastStatus> => {
+      console.log('Sending broadcast with params:', {
+        communityId,
+        message,
+        filterType,
+        subscriptionPlanId,
+        includeButton
+      });
+
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
           communityId,
@@ -33,13 +41,28 @@ export const useBroadcast = (communityId: string) => {
         }
       });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Broadcast error:', error);
+        throw error;
+      }
+
+      // בדיקה שהתשובה תקינה ומכילה את כל השדות הנדרשים
+      if (!data || typeof data.successCount !== 'number' || typeof data.totalRecipients !== 'number') {
+        console.error('Invalid response from server:', data);
+        throw new Error('Invalid response from server');
+      }
+
+      console.log('Broadcast response:', data);
+      return data as BroadcastStatus;
     },
     onSuccess: (data) => {
-      toast.success(
-        `Successfully sent messages to ${data.successCount} out of ${data.totalRecipients} users`
-      );
+      if (data.totalRecipients === 0) {
+        toast.warning('No recipients found for this broadcast');
+      } else {
+        toast.success(
+          `Successfully sent messages to ${data.successCount} out of ${data.totalRecipients} users`
+        );
+      }
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);

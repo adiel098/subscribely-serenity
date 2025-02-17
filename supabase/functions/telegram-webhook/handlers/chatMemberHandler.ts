@@ -6,26 +6,56 @@ export async function handleChatMemberUpdate(
   chatMember: any
 ) {
   try {
-    const { chat, new_chat_member, invite_link } = chatMember;
+    const { chat, new_chat_member, old_chat_member } = chatMember;
     const userId = new_chat_member.user.id.toString();
     const chatId = chat.id.toString();
     const username = new_chat_member.user.username;
+    const status = new_chat_member.status;
+    const oldStatus = old_chat_member?.status;
 
     console.log('🔍 [ChatMember] Full update data:', JSON.stringify(chatMember, null, 2));
-    console.log('👤 [ChatMember] Processing member:', {
-      chatId,
+    console.log('👤 [ChatMember] Processing status change:', {
+      from: oldStatus,
+      to: status,
       userId,
-      username,
-      status: new_chat_member.status
+      chatId,
+      username
     });
 
-    if (new_chat_member.status === 'member') {
+    // כשמשתמש עוזב או מסולק
+    if (oldStatus === 'member' && status === 'left') {
+      console.log('👋 [ChatMember] Member leaving, updating subscription data');
+      const { error: updateError } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: false,
+          subscription_status: false,
+          subscription_start_date: null,
+          subscription_end_date: null,
+          subscription_plan_id: null
+        })
+        .eq('telegram_user_id', userId)
+        .eq('community_id', chatId);
+
+      if (updateError) {
+        console.error('❌ [ChatMember] Error updating left member:', updateError);
+      }
+      return true;
+    }
+
+    // כשמשתמש מצטרף
+    if (status === 'member') {
       // בדיקה אם יש תשלום פעיל עבור המשתמש
-      console.log('💳 [ChatMember] Checking for active payment...');
+      console.log('💳 [ChatMember] Checking for active payment...', {
+        userId,
+        chatId
+      });
+
       const { data: payments, error: paymentError } = await supabase
         .from('subscription_payments')
         .select('*')
         .eq('telegram_user_id', userId)
+        .eq('community_id', chatId) // מוודאים שזה תשלום לקהילה הספציפית
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(1);
@@ -61,7 +91,23 @@ export async function handleChatMemberUpdate(
 
       const now = new Date();
       const subscriptionEndDate = new Date();
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+      // מחשבים את תאריך סיום המנוי לפי סוג המנוי
+      switch(latestPayment.plan?.interval) {
+        case 'monthly':
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+          break;
+        case 'quarterly':
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+          break;
+        case 'half-yearly':
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
+          break;
+        case 'yearly':
+          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+          break;
+        default:
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // ברירת מחדל חודשי
+      }
 
       const existingMember = members && members.length > 0 ? members[0] : null;
 
@@ -125,7 +171,7 @@ export async function handleChatMemberUpdate(
       return true;
     }
 
-    console.log('ℹ️ [ChatMember] Member status is not "member":', new_chat_member.status);
+    console.log('ℹ️ [ChatMember] Member status is not "member":', status);
     return false;
   } catch (error) {
     console.error('💥 [ChatMember] Unexpected error:', error);

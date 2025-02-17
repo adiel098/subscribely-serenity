@@ -116,14 +116,40 @@ export const handleMessage = async (
               }
             });
 
-            // רישום האירוע
-            await logEvent(supabase, community.id, "member_joined", member.id.toString(), {
-              username: member.username,
-              first_name: member.first_name,
-              last_name: member.last_name
+            // רישום הצטרפות המשתמש בלוגים
+            console.log("Logging member join event for:", {
+              communityId: community.id,
+              userId: member.id.toString(),
+              username: member.username
             });
+
+            await supabase
+              .from("community_logs")
+              .insert({
+                community_id: community.id,
+                event_type: "member_joined",
+                user_id: member.id.toString(),
+                metadata: {
+                  username: member.username,
+                  first_name: member.first_name,
+                  last_name: member.last_name
+                }
+              });
+
+            // הוספת המשתמש לטבלת חברי הצ'אט
+            await supabase
+              .from("telegram_chat_members")
+              .insert({
+                community_id: community.id,
+                telegram_user_id: member.id.toString(),
+                telegram_username: member.username,
+                is_active: true
+              })
+              .select()
+              .single();
+
           } catch (error) {
-            console.error(`Error sending welcome message to user ${member.id}:`, error);
+            console.error(`Error handling new member ${member.id}:`, error);
           }
         }
       }
@@ -135,34 +161,45 @@ export const handleMessage = async (
 
   if (ctx.message?.left_chat_member) {
     console.log("Left chat member:", ctx.message.left_chat_member);
+    
+    const chatId = ctx.message.chat.id.toString();
+    const member = ctx.message.left_chat_member;
+
+    try {
+      // מציאת הקהילה
+      const { data: community } = await supabase
+        .from("communities")
+        .select("id")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (community) {
+        // רישום יציאת המשתמש בלוגים
+        await supabase
+          .from("community_logs")
+          .insert({
+            community_id: community.id,
+            event_type: "member_left",
+            user_id: member.id.toString(),
+            metadata: {
+              username: member.username,
+              first_name: member.first_name,
+              last_name: member.last_name
+            }
+          });
+
+        // עדכון סטטוס המשתמש בטבלת חברי הצ'אט
+        await supabase
+          .from("telegram_chat_members")
+          .update({ is_active: false })
+          .eq("community_id", community.id)
+          .eq("telegram_user_id", member.id.toString());
+      }
+    } catch (error) {
+      console.error("Error handling member left:", error);
+    }
     return;
   }
 
   console.log("Unhandled message:", ctx.message);
-};
-
-// Helper function to log events
-const logEvent = async (
-  supabase: SupabaseClient<Database>,
-  communityId: string,
-  eventType: "member_joined" | "member_left" | "notification_sent" | "payment_received",
-  userId: string | null,
-  metadata: Record<string, any> = {}
-) => {
-  try {
-    const { error } = await supabase
-      .from("community_logs")
-      .insert({
-        community_id: communityId,
-        event_type: eventType,
-        user_id: userId,
-        metadata
-      });
-
-    if (error) {
-      console.error("Error logging event:", error);
-    }
-  } catch (error) {
-    console.error("Error in logEvent:", error);
-  }
 };

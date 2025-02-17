@@ -8,6 +8,7 @@ import { Plan } from "@/pages/TelegramMiniApp";
 import { SuccessScreen } from "./SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logAnalyticsEvent } from "@/hooks/useAnalytics";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
@@ -98,6 +99,19 @@ export const PaymentMethods = ({
         setPaymentInviteLink(payment.invite_link);
       }
 
+      // Log the payment event
+      await logAnalyticsEvent(
+        selectedPlan.community_id,
+        'payment_received',
+        null,
+        {
+          plan_id: selectedPlan.id,
+          payment_method: selectedPaymentMethod,
+          invite_link: newInviteLink
+        },
+        selectedPlan.price
+      );
+
       toast({
         title: "Payment Successful! 🎉",
         description: "You can now join the community.",
@@ -173,3 +187,4 @@ export const PaymentMethods = ({
     </div>
   );
 };
+

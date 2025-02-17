@@ -1,11 +1,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type AnalyticsEventType = Database["public"]["Enums"]["analytics_event_type"];
 
 export interface AnalyticsEvent {
   id: string;
   community_id: string;
-  event_type: string;
+  event_type: AnalyticsEventType;
   user_id: string | null;
   metadata: Record<string, any>;
   amount: number | null;
@@ -14,7 +17,7 @@ export interface AnalyticsEvent {
 
 export const logAnalyticsEvent = async (
   communityId: string,
-  eventType: string,
+  eventType: AnalyticsEventType,
   userId?: string | null,
   metadata: Record<string, any> = {},
   amount?: number | null
@@ -30,15 +33,13 @@ export const logAnalyticsEvent = async (
   try {
     const { data, error } = await supabase
       .from('community_logs')
-      .insert([
-        {
-          community_id: communityId,
-          event_type: eventType,
-          user_id: userId,
-          metadata,
-          amount
-        }
-      ])
+      .insert({
+        community_id: communityId,
+        event_type: eventType,
+        user_id: userId,
+        metadata,
+        amount
+      })
       .select()
       .single();
 

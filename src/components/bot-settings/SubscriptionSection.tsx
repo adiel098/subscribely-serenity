@@ -20,17 +20,15 @@ import { BotSettings } from "@/hooks/useBotSettings";
 
 interface SubscriptionSectionProps {
   settings: BotSettings;
-  updateSettings: any; // Using any here as the mutation type is complex
+  updateSettings: any;
 }
 
 export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSectionProps) => {
   return (
     <AccordionItem value="subscription" className="border rounded-lg">
       <AccordionTrigger className="px-4">
-        <div className="flex items-center space-x-2">
-          <Bell className="h-5 w-5 text-primary" />
-          <span>Subscription Reminders</span>
-        </div>
+        <Bell className="h-5 w-5 text-primary" />
+        <span>Subscription Reminders</span>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4">
         <Card>
@@ -67,7 +65,7 @@ export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSe
               />
             </div>
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
+              <div>
                 <Switch
                   checked={settings.auto_remove_expired}
                   onCheckedChange={(checked) =>

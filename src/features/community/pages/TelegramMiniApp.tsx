@@ -1,4 +1,3 @@
-import { createContext } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,17 +10,7 @@ import { PaymentMethods } from "@/components/telegram-mini-app/PaymentMethods";
 import { LoadingScreen } from "@/components/telegram-mini-app/LoadingScreen";
 import { CommunityNotFound } from "@/components/telegram-mini-app/CommunityNotFound";
 
-interface TelegramWebApp {
-  BackButton: {
-    isVisible: boolean;
-    show: () => void;
-    hide: () => void;
-  };
-}
-
-export const TelegramWebAppContext = createContext<TelegramWebApp | null>(null);
-
-export interface SubscriptionPlan {
+export interface Plan {
   id: string;
   name: string;
   description: string | null;
@@ -37,23 +26,14 @@ export interface Community {
   description: string | null;
   telegram_photo_url: string | null;
   telegram_invite_link: string | null;
-  subscription_plans: SubscriptionPlan[];
-  owner_id: string;
-  platform: 'telegram' | 'discord';
-  platform_id: string;
-  member_count: number;
-  subscription_count: number;
-  subscription_revenue: number;
-  created_at: string;
-  updated_at: string;
-  telegram_chat_id: string | null;
+  subscription_plans: Plan[];
 }
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
@@ -111,7 +91,7 @@ const TelegramMiniApp = () => {
     });
   };
 
-  const handlePlanSelect = (plan: SubscriptionPlan) => {
+  const handlePlanSelect = (plan: Plan) => {
     setSelectedPlan(plan);
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };

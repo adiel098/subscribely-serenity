@@ -4,11 +4,11 @@ import { Bot } from "lucide-react";
 import { useState } from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessagePreview } from "@/features/community/components/bot-settings/MessagePreview";
-import { WelcomeMessageSection } from "@/features/community/components/bot-settings/WelcomeMessageSection";
-import { SubscriptionSection } from "@/features/community/components/bot-settings/SubscriptionSection";
-import { BroadcastSection } from "@/features/community/components/bot-settings/BroadcastSection";
-import { BotStatsHeader } from "@/features/community/components/bot-settings/BotStatsHeader";
+import { MessagePreview } from "@/components/bot-settings/MessagePreview";
+import { WelcomeMessageSection } from "@/components/bot-settings/WelcomeMessageSection";
+import { SubscriptionSection } from "@/components/bot-settings/SubscriptionSection";
+import { BroadcastSection } from "@/components/bot-settings/BroadcastSection";
+import { BotStatsHeader } from "@/components/bot-settings/BotStatsHeader";
 
 const BotSettings = () => {
   const { selectedCommunityId } = useCommunityContext();

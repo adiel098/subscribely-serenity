@@ -7,8 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CommunityProvider } from "@/features/community/providers/CommunityContext";
-import { ProtectedRoute } from "@/features/community/components/ProtectedRoute";
-import { DashboardLayout } from "@/features/community/components/DashboardLayout";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 import Index from "./features/community/pages/Index";
 import Auth from "./features/community/pages/Auth";

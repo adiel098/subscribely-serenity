@@ -3,7 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Community } from "@/features/community/pages/TelegramMiniApp";
+
+export interface Community {
+  id: string;
+  name: string;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+  platform_id: string;
+  member_count: number;
+  subscription_count: number;
+  subscription_revenue: number;
+  description: string | null;
+  platform: 'telegram' | 'discord';
+  telegram_chat_id: string | null;
+  telegram_invite_link: string | null;
+  telegram_photo_url: string | null;
+}
 
 export const useCommunities = () => {
   const { user } = useAuth();
@@ -21,18 +37,7 @@ export const useCommunities = () => {
       try {
         const { data: communities, error } = await supabase
           .from("communities")
-          .select(`
-            *,
-            subscription_plans (
-              id,
-              name,
-              description,
-              price,
-              interval,
-              features,
-              community_id
-            )
-          `)
+          .select("*")
           .eq("owner_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -43,7 +48,7 @@ export const useCommunities = () => {
         }
 
         console.log("Successfully fetched communities:", communities);
-        return communities as unknown as Community[];
+        return communities as Community[];
       } catch (error) {
         console.error("Error in communities query:", error);
         toast.error("An error occurred while fetching communities");
@@ -52,8 +57,8 @@ export const useCommunities = () => {
     },
     enabled: !!user,
     retry: 2,
-    staleTime: 0,
-    refetchOnWindowFocus: true
+    staleTime: 0, // Changed from 5 minutes to 0 to always fetch fresh data
+    refetchOnWindowFocus: true // Changed to true to refresh when window gets focus
   });
 
   return query;

@@ -2,15 +2,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './cors.ts';
-import { 
-  handleChatMemberUpdate,
-  handleChatJoinRequest,
-  handleNewMessage,
-  handleEditedMessage,
-  handleChannelPost,
-  handleMyChatMember,
-  updateMemberActivity
-} from './membershipHandler.ts';
 import { sendBroadcastMessage } from './broadcastHandler.ts';
 
 serve(async (req) => {
@@ -24,31 +15,26 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+    console.log('Received webhook request:', body);
     
-    // Check if this is a direct webhook update from Telegram
-    if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
-      console.log('Received direct Telegram webhook update:', body);
+    // בדיקה אם זו קריאת broadcast
+    if (body.type === 'broadcast') {
+      console.log('Processing broadcast request:', body);
       
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      const status = await sendBroadcastMessage(
+        createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        ),
+        body.communityId,
+        body.message,
+        body.filterType || 'all',
+        body.subscriptionPlanId,
+        body.includeButton,
+        body.recipients
       );
 
-      if (body.message) {
-        await handleNewMessage(supabase, body, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
-      } else if (body.edited_message) {
-        await handleEditedMessage(supabase, body);
-      } else if (body.channel_post) {
-        await handleChannelPost(supabase, body);
-      } else if (body.chat_member) {
-        await handleChatMemberUpdate(supabase, body);
-      } else if (body.my_chat_member) {
-        await handleMyChatMember(supabase, body);
-      } else if (body.chat_join_request) {
-        await handleChatJoinRequest(supabase, body);
-      }
-
-      return new Response(JSON.stringify({ ok: true }), {
+      return new Response(JSON.stringify(status), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
@@ -57,45 +43,8 @@ serve(async (req) => {
       });
     }
 
-    // Handle other API endpoints
-    const { path, communityId } = body;
-    console.log('Received API request:', { path, communityId });
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    let response;
-
-    switch (path) {
-      case '/update-activity':
-        await updateMemberActivity(supabase, communityId);
-        response = { ok: true };
-        break;
-
-      case '/broadcast':
-        if (!communityId || !body.message) {
-          throw new Error('Missing required parameters');
-        }
-
-        const status = await sendBroadcastMessage(
-          supabase,
-          communityId,
-          body.message,
-          body.filterType || 'all',
-          body.subscriptionPlanId,
-          body.includeButton
-        );
-
-        response = status;
-        break;
-
-      default:
-        throw new Error(`Unknown path: ${path}`);
-    }
-
-    return new Response(JSON.stringify(response), {
+    // Handle other types of requests
+    return new Response(JSON.stringify({ ok: true }), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json',

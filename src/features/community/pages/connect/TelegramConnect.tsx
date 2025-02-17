@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/features/community/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/features/community/components/ui/card";
@@ -34,7 +35,7 @@ const TelegramConnect = () => {
       try {
         const { data, error } = await supabase
           .from('communities')
-          .select('telegram_bot_name')
+          .select('platform_id')
           .eq('id', selectedCommunityId)
           .single();
 
@@ -43,8 +44,8 @@ const TelegramConnect = () => {
           return;
         }
 
-        if (data && data.telegram_bot_name) {
-          setBotUsername(data.telegram_bot_name);
+        if (data && data.platform_id) {
+          setBotUsername(data.platform_id);
         }
       } catch (error) {
         console.error("Unexpected error fetching bot username:", error);
@@ -68,7 +69,7 @@ const TelegramConnect = () => {
     try {
       const { error } = await supabase
         .from('communities')
-        .update({ telegram_bot_name: botUsername })
+        .update({ platform_id: botUsername })
         .eq('id', selectedCommunityId);
 
       if (error) {
@@ -110,12 +111,12 @@ const TelegramConnect = () => {
 
     setIsChecking(true);
     try {
-       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
+      const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: { 
           communityId: selectedCommunityId,
           path: '/check-bot'
         }
-      })
+      });
 
       if (error) {
         console.error("Error checking bot in group:", error);

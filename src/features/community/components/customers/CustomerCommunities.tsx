@@ -1,92 +1,82 @@
 
-import { Users, UserPlus, Settings } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/features/community/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/features/community/components/ui/card";
 import { Badge } from "@/features/community/components/ui/badge";
-import { Button } from "@/features/community/components/ui/button";
-import { Database } from "@/integrations/supabase/types";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/features/community/components/ui/tooltip";
+import { ScrollArea } from "@/features/community/components/ui/scroll-area";
 
-interface CustomerCommunitiesProps {
-  data?: Database["public"]["Tables"]["customers"]["Row"];
+interface Community {
+  id: string;
+  name: string;
+  created_at: string;
+  subscription_status: boolean;
 }
 
-export const CustomerCommunities = ({ data }: CustomerCommunitiesProps) => {
-  if (!data?.communities?.length) {
+interface CustomerCommunitiesProps {
+  customerId: string;
+}
+
+export const CustomerCommunities = ({ customerId }: CustomerCommunitiesProps) => {
+  const { data: communities } = useQuery({
+    queryKey: ['customerCommunities', customerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_members')
+        .select(`
+          community:communities (
+            id,
+            name,
+            created_at
+          ),
+          subscription_status
+        `)
+        .eq('user_id', customerId);
+
+      if (error) throw error;
+      return data?.map(item => ({
+        ...item.community,
+        subscription_status: item.subscription_status
+      })) || [];
+    }
+  });
+
+  if (!communities?.length) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No communities found</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Communities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No communities joined</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {data.communities.map((community: any) => (
-        <Card key={community.id}>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>{community.name}</CardTitle>
-                <CardDescription>{community.description}</CardDescription>
+    <Card>
+      <CardHeader>
+        <CardTitle>Communities</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[200px]">
+          <div className="space-y-4">
+            {communities.map((community) => (
+              <div key={community.id} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{community.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Joined {new Date(community.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Badge variant={community.subscription_status ? "success" : "destructive"}>
+                  {community.subscription_status ? "Active" : "Inactive"}
+                </Badge>
               </div>
-              <Badge>{community.role}</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex space-x-4">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Users className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>View Members</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Invite Members</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Community Settings</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };

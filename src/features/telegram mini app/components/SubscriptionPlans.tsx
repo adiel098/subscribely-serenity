@@ -1,7 +1,9 @@
-import React from "react";
-import { Badge } from "@/features/telegram-mini-app/components/ui/badge";
-import { CheckCircle2, Sparkles } from "lucide-react";
-import { Plan } from "@/features/telegram-mini-app/pages/TelegramMiniApp";
+
+import { useState } from "react";
+import { CheckCircle, CreditCard } from "lucide-react";
+import { Badge } from "@/features/telegram mini app/components/ui/badge";
+import { Card } from "@/features/telegram mini app/components/ui/card";
+import { Plan } from "../pages/TelegramMiniApp";
 
 interface SubscriptionPlansProps {
   plans: Plan[];
@@ -12,62 +14,72 @@ interface SubscriptionPlansProps {
 export const SubscriptionPlans = ({
   plans,
   selectedPlan,
-  onPlanSelect
+  onPlanSelect,
 }: SubscriptionPlansProps) => {
+  const [selectedInterval, setSelectedInterval] = useState<string>("monthly");
+
+  const filteredPlans = plans.filter(
+    (plan) => plan.interval === selectedInterval
+  );
+
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-2">
-        <Badge variant="secondary" className="px-4 py-1.5">
-          <Sparkles className="h-4 w-4 mr-2" />
-          Premium Features
-        </Badge>
-        <h2 className="text-3xl font-bold text-gray-900">Choose Your Plan</h2>
-        <p className="text-gray-600">Select the perfect plan for you</p>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold tracking-tight">
+          Choose Your Plan
+        </h2>
+        <p className="text-muted-foreground">
+          Select the subscription plan that best fits your needs
+        </p>
       </div>
 
-      <div className="grid gap-6">
-        {plans.map((plan) => (
-          <div
+      <div className="grid gap-4">
+        {filteredPlans.map((plan) => (
+          <Card
             key={plan.id}
-            className={`group p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer hover-scale ${
+            className={`p-6 cursor-pointer transition-all ${
               selectedPlan?.id === plan.id
-                ? 'border-primary shadow-xl bg-primary/5'
-                : 'border-gray-200 hover:border-primary/50 hover:shadow-lg'
+                ? "border-primary ring-2 ring-primary ring-offset-2"
+                : "hover:border-primary/50"
             }`}
             onClick={() => onPlanSelect(plan)}
           >
             <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <Badge variant="outline" className="mb-2">
-                  {plan.interval}
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="font-medium">{plan.name}</h3>
+                  <div className="text-3xl font-bold">
+                    ${plan.price}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /{plan.interval}
+                    </span>
+                  </div>
+                </div>
+
+                {plan.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {plan.description}
+                  </p>
+                )}
+
+                <div className="space-y-2">
+                  {plan.features.map((feature, index) => (
+                    <div key={index} className="flex items-center text-sm">
+                      <CheckCircle className="h-4 w-4 text-primary mr-2" />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedPlan?.id === plan.id && (
+                <Badge variant="secondary" className="shrink-0">
+                  <CreditCard className="h-3 w-3 mr-1" />
+                  Selected
                 </Badge>
-                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary transition-colors">
-                  {plan.name}
-                </h3>
-                <p className="text-gray-600">{plan.description}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
-                  ${plan.price}
-                </p>
-                <p className="text-sm text-gray-500">{plan.interval}</p>
-              </div>
+              )}
             </div>
-            {plan.features && plan.features.length > 0 && (
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li 
-                    key={index} 
-                    className="flex items-center text-gray-700 animate-fade-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          </Card>
         ))}
       </div>
     </div>

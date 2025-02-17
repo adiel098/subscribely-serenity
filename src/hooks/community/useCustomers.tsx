@@ -4,9 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Customer {
   id: string;
-  email: string;
-  created_at: string;
-  updated_at: string;
   full_name: string;
   avatar_url: string;
   subscription_status: boolean;
@@ -28,7 +25,13 @@ export const useCustomers = () => {
       const { data, error } = await supabase
         .from('telegram_chat_members')
         .select(`
-          *,
+          id,
+          full_name,
+          avatar_url,
+          subscription_status,
+          joined_at,
+          subscription_start_date,
+          subscription_end_date,
           plan:subscription_plans(
             id,
             name,

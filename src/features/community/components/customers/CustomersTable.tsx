@@ -17,11 +17,13 @@ import { format } from "date-fns";
 const CustomersTable = () => {
   const { data: customers, isLoading } = useCustomers();
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
+  const selectedCustomerData = customers?.find(c => c.id === selectedCustomer);
 
   return (
     <div>
@@ -53,7 +55,7 @@ const CustomersTable = () => {
                   variant="ghost"
                   onClick={() => {
                     setSelectedCustomer(customer.id);
-                    setIsDetailsOpen(true);
+                    setOpen(true);
                   }}
                 >
                   View Details
@@ -64,11 +66,11 @@ const CustomersTable = () => {
         </TableBody>
       </Table>
 
-      {selectedCustomer && (
+      {selectedCustomerData && (
         <CustomerDetailsSheet
-          customer={customers?.find((c) => c.id === selectedCustomer)}
-          open={isDetailsOpen}
-          onOpenChange={setIsDetailsOpen}
+          customer={selectedCustomerData}
+          open={open}
+          onOpenChange={setOpen}
         />
       )}
     </div>

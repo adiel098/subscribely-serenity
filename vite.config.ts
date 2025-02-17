@@ -18,6 +18,7 @@ export default defineConfig({
       "@/lib": path.resolve(__dirname, "./src/lib"),
       "@/types": path.resolve(__dirname, "./src/types"),
       "@/ui": path.resolve(__dirname, "./src/components/ui"),
+      "@/pages": path.resolve(__dirname, "./src/features/community/pages"),
     },
   },
 });

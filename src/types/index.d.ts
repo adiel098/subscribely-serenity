@@ -24,6 +24,12 @@ export interface Customer {
   email: string | null;
   created_at: string;
   subscription_status: boolean;
+  avatar_url?: string;
+  joined_at?: string;
+  plan?: {
+    name: string;
+    price: number;
+  };
 }
 
 export interface StatsGridProps {
@@ -61,6 +67,7 @@ export interface AnalyticsEvent {
   event_type: string;
   created_at: string;
   amount?: number;
+  community_id: string;
 }
 
 export interface SubscriberPlan {
@@ -70,4 +77,12 @@ export interface SubscriberPlan {
   price: number;
   features?: string[];
   description?: string | null;
+}
+
+export interface BroadcastOptions {
+  message: string;
+  filterType: 'all' | 'active' | 'expired';
+  includeButton?: boolean;
+  buttonText?: string;
+  buttonUrl?: string;
 }

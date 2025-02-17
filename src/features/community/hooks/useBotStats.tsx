@@ -21,29 +21,16 @@ export const useBotStats = (communityId: string) => {
         throw error;
       }
 
-      // Count messages sent from analytics_events
-      const { data: messages, error: messagesError } = await supabase
-        .from('analytics_events')
-        .select('*')
-        .eq('community_id', communityId)
-        .eq('event_type', 'notification_sent');
-
-      if (messagesError) {
-        console.error('Error fetching messages count:', messagesError);
-        throw messagesError;
-      }
-
       const activeMembers = members.filter(member => member.is_active).length;
-      const inactiveMembers = members.filter(member => !member.is_active).length;
       const activeSubscribers = members.filter(member => member.is_active).length;
       const expiredSubscriptions = members.filter(member => !member.is_active).length;
       
       return {
         totalMembers: members.length,
         activeMembers,
-        inactiveMembers,
-        totalRevenue: 0,
-        revenuePerSubscriber: 0,
+        inactiveMembers: members.length - activeMembers,
+        totalRevenue: 0, // This should be calculated from payments
+        revenuePerSubscriber: 0, // This should be calculated from payments
         activeSubscribers,
         expiredSubscriptions
       };

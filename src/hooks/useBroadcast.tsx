@@ -33,8 +33,8 @@ export const useBroadcast = (communityId: string) => {
 
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
+          path: '/broadcast', // וידאנו שזה נשלח כראוי
           communityId,
-          path: '/broadcast',
           message,
           filterType,
           subscriptionPlanId,

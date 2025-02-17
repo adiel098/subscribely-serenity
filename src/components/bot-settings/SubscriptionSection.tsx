@@ -1,6 +1,5 @@
 
 import { Bell } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ import { BotSettings } from "@/hooks/useBotSettings";
 
 interface SubscriptionSectionProps {
   settings: BotSettings;
-  updateSettings: any; // Using any here as the mutation type is complex
+  updateSettings: any;
 }
 
 export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSectionProps) => {
@@ -37,7 +36,7 @@ export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSe
           <CardHeader>
             <CardTitle>Subscription Management</CardTitle>
             <CardDescription>
-              Configure how the bot handles subscriptions and reminders
+              Configure how the bot handles subscription expiration reminders. Members will be automatically removed when their subscription expires.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -66,16 +65,8 @@ export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSe
                 placeholder="Enter subscription reminder message..."
               />
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={settings.auto_remove_expired}
-                  onCheckedChange={(checked) =>
-                    updateSettings.mutate({ auto_remove_expired: checked })
-                  }
-                />
-                <Label>Automatically remove expired members</Label>
-              </div>
+            <div className="space-y-2">
+              <Label>Expiration Message</Label>
               <Textarea
                 value={settings.expired_subscription_message}
                 onChange={(e) =>

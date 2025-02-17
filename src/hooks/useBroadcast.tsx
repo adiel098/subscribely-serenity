@@ -30,7 +30,7 @@ export const useBroadcast = (communityId: string) => {
         includeButton
       });
 
-      const { data, error } = await supabase.functions.invoke('telegram-webhook', {
+      const response = await supabase.functions.invoke('telegram-webhook', {
         body: {
           communityId,
           path: '/broadcast',
@@ -41,19 +41,35 @@ export const useBroadcast = (communityId: string) => {
         }
       });
 
-      if (error) {
-        console.error('Broadcast error:', error);
-        throw error;
+      if (response.error) {
+        console.error('Broadcast error:', response.error);
+        throw response.error;
       }
 
-      // בדיקה שהתשובה תקינה ומכילה את כל השדות הנדרשים
-      if (!data || typeof data.successCount !== 'number' || typeof data.totalRecipients !== 'number') {
-        console.error('Invalid response from server:', data);
-        throw new Error('Invalid response from server');
+      const responseData = response.data;
+      console.log('Raw broadcast response:', responseData);
+
+      // בדיקה מורחבת של התשובה
+      if (!responseData) {
+        console.error('No response data received');
+        throw new Error('No response data received');
       }
 
-      console.log('Broadcast response:', data);
-      return data as BroadcastStatus;
+      // נסה לחלץ את השדות הנדרשים מהתשובה
+      const status: BroadcastStatus = {
+        successCount: Number(responseData.successCount) || 0,
+        failureCount: Number(responseData.failureCount) || 0,
+        totalRecipients: Number(responseData.totalRecipients) || 0
+      };
+
+      // וודא שהערכים תקינים
+      if (isNaN(status.successCount) || isNaN(status.failureCount) || isNaN(status.totalRecipients)) {
+        console.error('Invalid response format:', responseData);
+        throw new Error('Invalid response format');
+      }
+
+      console.log('Processed broadcast response:', status);
+      return status;
     },
     onSuccess: (data) => {
       if (data.totalRecipients === 0) {

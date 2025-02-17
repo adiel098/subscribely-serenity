@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
@@ -94,10 +93,9 @@ const Subscribers = () => {
     const csvString = csvRows.join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const msNavigator = navigator as MSNavigator;
     
-    if (msNavigator.msSaveBlob) {
-      msNavigator.msSaveBlob(blob, 'subscribers.csv');
+    if (navigator.msSaveBlob) {
+      navigator.msSaveBlob(blob, 'subscribers.csv');
     } else {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);

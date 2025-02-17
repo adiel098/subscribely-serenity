@@ -1,6 +1,10 @@
-import { useState } from "react";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Loader2, Search, PlusCircle } from "lucide-react";
+import { format } from "date-fns";
+import { AddAdminDialog } from "./AddAdminDialog";
 import {
   Table,
   TableBody,
@@ -8,27 +12,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/features/admin/components/ui/table";
-import { Button } from "@/features/admin/components/ui/button";
-import { Badge } from "@/features/admin/components/ui/badge";
-import { Loader2, Plus } from "lucide-react";
-import { AddAdminDialog } from "./AddAdminDialog";
-import { format } from "date-fns";
-
-interface AdminUser {
-  id: string;
-  role: 'super_admin' | 'admin' | 'moderator';
-  created_at: string;
-  user_id: string;
-  user: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-  };
-}
+} from "@/features/community/components/ui/table";
+import { Button } from "@/features/community/components/ui/button";
+import { Badge } from "@/features/community/components/ui/badge";
+import { Input } from "@/features/community/components/ui/input";
 
 export const AdminUsers = () => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const { data: adminUsers, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -36,21 +27,22 @@ export const AdminUsers = () => {
       const { data, error } = await supabase
         .from('admin_users')
         .select(`
-          id,
-          role,
-          created_at,
-          user_id,
-          user:profiles!admin_users_user_id_fkey (
-            id,
+          *,
+          profiles:profiles!admin_users_user_id_fkey (
             full_name,
             email
           )
         `);
 
       if (error) throw error;
-      return data as unknown as AdminUser[];
+      return data;
     },
   });
+
+  const filteredUsers = adminUsers?.filter(user => 
+    user.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -62,9 +54,18 @@ export const AdminUsers = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search admins..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button onClick={() => setShowAddDialog(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
           Add Admin
         </Button>
       </div>
@@ -76,31 +77,28 @@ export const AdminUsers = () => {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Added On</TableHead>
+              <TableHead>Added</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!adminUsers?.length ? (
+            {!filteredUsers?.length ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   No admin users found
                 </TableCell>
               </TableRow>
             ) : (
-              adminUsers.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell>{admin.user?.full_name || 'N/A'}</TableCell>
-                  <TableCell>{admin.user?.email}</TableCell>
+              filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.profiles?.full_name}</TableCell>
+                  <TableCell>{user.profiles?.email}</TableCell>
                   <TableCell>
-                    <Badge variant={
-                      admin.role === 'super_admin' ? 'default' :
-                      admin.role === 'admin' ? 'secondary' : 'outline'
-                    }>
-                      {admin.role}
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                      {user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(admin.created_at), 'PP')}
+                    {format(new Date(user.created_at), 'PP')}
                   </TableCell>
                 </TableRow>
               ))
@@ -109,7 +107,10 @@ export const AdminUsers = () => {
         </Table>
       </div>
 
-      <AddAdminDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddAdminDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
     </div>
   );
 };

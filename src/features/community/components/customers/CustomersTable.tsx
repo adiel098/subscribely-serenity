@@ -21,15 +21,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/features/community/components/ui/dropdown-menu";
-import { useCustomers } from "@/hooks/community/useCustomers";
 
 interface Customer {
   id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
-  status: "active" | "inactive";
-  profile_image_url: string | null;
+  status: string;
   created_at: string;
+  avatar_url: string | null;
+  is_subscribed: boolean;
 }
 
 interface CustomersTableProps {
@@ -55,11 +55,11 @@ export const CustomersTable = ({ data, onViewDetails }: CustomersTableProps) => 
             <TableCell className="font-medium">
               <div className="flex items-center space-x-3">
                 <Avatar>
-                  {customer.profile_image_url ? (
-                    <AvatarImage src={customer.profile_image_url} />
+                  {customer.avatar_url ? (
+                    <AvatarImage src={customer.avatar_url} />
                   ) : (
                     <AvatarFallback>
-                      {customer.full_name.charAt(0)}
+                      {customer.full_name?.charAt(0) || '?'}
                     </AvatarFallback>
                   )}
                 </Avatar>

@@ -6,30 +6,15 @@ import { CustomerDetailsSheet } from "@/features/community/components/customers/
 import { CustomersTable } from "@/features/community/components/customers/CustomersTable";
 import { CustomerFilters } from "@/features/community/components/customers/CustomerFilters";
 
-export type Customer = {
-  id: string;
-  full_name: string | null;
-  email: string;
-  status: string;
-  subscription_status: boolean;
-  total_spent: number;
-  join_date: string;
-  avatar_url: string | null;
-  telegram_username: string | null;
-};
-
 const Customers = () => {
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [filters, setFilters] = useState({
-    status: "all",
-    subscription: "all",
-    search: "",
-  });
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: customers, isLoading } = useCustomers();
   const { toast } = useToast();
 
-  const handleCustomerSelect = (customer: Customer) => {
+  const handleCustomerSelect = (customer: any) => {
     setSelectedCustomer(customer);
   };
 
@@ -39,21 +24,14 @@ const Customers = () => {
 
   const filteredCustomers = customers?.filter((customer) => {
     if (
-      filters.search &&
-      !customer.full_name?.toLowerCase().includes(filters.search.toLowerCase()) &&
-      !customer.email.toLowerCase().includes(filters.search.toLowerCase())
+      searchQuery &&
+      !customer.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !customer.email.toLowerCase().includes(searchQuery.toLowerCase())
     ) {
       return false;
     }
 
-    if (filters.status !== "all" && customer.status !== filters.status) {
-      return false;
-    }
-
-    if (
-      filters.subscription !== "all" &&
-      String(customer.subscription_status) !== filters.subscription
-    ) {
+    if (statusFilter !== "all" && customer.status !== statusFilter) {
       return false;
     }
 
@@ -71,13 +49,17 @@ const Customers = () => {
         </div>
       </div>
 
-      <CustomerFilters filters={filters} onFiltersChange={setFilters} />
+      <CustomerFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+      />
 
       <div className="mt-6">
         <CustomersTable
-          customers={filteredCustomers || []}
-          isLoading={isLoading}
-          onCustomerSelect={handleCustomerSelect}
+          data={filteredCustomers || []}
+          onViewDetails={handleCustomerSelect}
         />
       </div>
 

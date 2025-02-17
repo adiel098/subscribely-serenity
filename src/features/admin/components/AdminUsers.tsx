@@ -22,10 +22,10 @@ interface AdminUser {
   user_id: string;
   role: string;
   created_at: string;
-  profile?: {
+  profile: {
     full_name: string | null;
     email: string | null;
-  };
+  } | null;
 }
 
 export const AdminUsers = () => {
@@ -39,10 +39,7 @@ export const AdminUsers = () => {
         .from('admin_users')
         .select(`
           *,
-          profile:profiles (
-            full_name,
-            email
-          )
+          profile:profiles(full_name, email)
         `);
 
       if (error) {
@@ -104,8 +101,8 @@ export const AdminUsers = () => {
             ) : (
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.profile?.full_name}</TableCell>
-                  <TableCell>{user.profile?.email}</TableCell>
+                  <TableCell>{user.profile?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{user.profile?.email || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                       {user.role}

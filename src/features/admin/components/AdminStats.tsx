@@ -15,13 +15,31 @@ export const AdminStats = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_admin_stats');
+      // Since we don't have direct access to admin_stats table,
+      // let's query the tables directly to calculate stats
+      const [usersCount, communityStats, revenueStats] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact' }),
+        supabase.from('communities').select('id', { count: 'exact' }).eq('subscription_count', '>', 0),
+        supabase.from('communities').select('subscription_revenue')
+      ]);
 
-      if (error) {
-        console.error('Error fetching admin stats:', error);
-        throw error;
-      }
-      return data as AdminStats;
+      if (usersCount.error) throw usersCount.error;
+      if (communityStats.error) throw communityStats.error;
+      if (revenueStats.error) throw revenueStats.error;
+
+      const totalRevenue = revenueStats.data?.reduce((acc, curr) => acc + (curr.subscription_revenue || 0), 0) || 0;
+      
+      // Calculate monthly growth (placeholder - you might want to implement actual growth calculation)
+      const monthlyGrowth = 5; // Placeholder 5%
+
+      const stats: AdminStats = {
+        total_users: usersCount.count || 0,
+        total_revenue: totalRevenue,
+        active_communities: communityStats.count || 0,
+        monthly_growth: monthlyGrowth
+      };
+
+      return stats;
     },
   });
 

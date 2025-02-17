@@ -46,17 +46,31 @@ export const useBroadcast = (communityId: string) => {
         throw error;
       }
 
-      if (!data || typeof data.successCount !== 'number' || typeof data.totalRecipients !== 'number') {
-        console.error('Invalid response format:', data);
-        throw new Error('Invalid response from server');
+      console.log('Broadcast response:', data);
+
+      if (!data) {
+        throw new Error('No response from server');
       }
 
-      console.log('Broadcast response:', data);
-      return {
-        successCount: data.successCount,
-        failureCount: data.failureCount || 0,
-        totalRecipients: data.totalRecipients
-      };
+      // אם התגובה היא { ok: true } זה אומר שההודעה נשלחה בהצלחה
+      if (data.ok === true) {
+        return {
+          successCount: 1,
+          failureCount: 0,
+          totalRecipients: 1
+        };
+      }
+
+      // אם יש לנו את הפורמט המורחב עם המונים
+      if (typeof data.successCount === 'number' && typeof data.totalRecipients === 'number') {
+        return {
+          successCount: data.successCount,
+          failureCount: data.failureCount || 0,
+          totalRecipients: data.totalRecipients
+        };
+      }
+
+      throw new Error('Invalid response format from server');
     },
     onSuccess: (data) => {
       if (!data.totalRecipients) {
@@ -65,7 +79,7 @@ export const useBroadcast = (communityId: string) => {
       }
       
       toast.success(
-        `Successfully sent messages to ${data.successCount || 0} out of ${data.totalRecipients} users`
+        `Successfully sent messages to ${data.successCount} out of ${data.totalRecipients} users`
       );
 
       if (data.failureCount > 0) {

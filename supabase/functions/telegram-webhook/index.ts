@@ -1,12 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from '@supabase/supabase-js'
-import { Bot, webhookCallback } from '../_utils/telegramClient.ts'
-import { corsHeaders } from './cors.ts'
-import { handleMessage } from './handlers/messageHandler.ts'
-import { handleChatMember } from './handlers/chatMemberHandler.ts'
-import { handleJoinRequest } from './handlers/joinRequestHandler.ts'
-import { updateMemberActivity } from './handlers/activityHandler.ts'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { Bot, webhookCallback } from "../_utils/telegramClient.ts"
+import { corsHeaders } from "./cors.ts"
+import { handleMessage } from "./handlers/messageHandler.ts"
+import { handleChatMember } from "./handlers/chatMemberHandler.ts"
+import { handleJoinRequest } from "./handlers/joinRequestHandler.ts"
+import { updateMemberActivity } from "./handlers/activityHandler.ts"
 
 serve(async (req) => {
   // Handle CORS

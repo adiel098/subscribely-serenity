@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -15,16 +14,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@/features/community/components/ui/table";
+import { Badge } from "@/features/community/components/ui/badge";
+import { Button } from "@/features/community/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Subscriber } from "@/hooks/useSubscribers";
+} from "@/features/community/components/ui/dropdown-menu";
+import { Subscriber } from "@/features/community/hooks/useSubscribers";
 
 interface SubscribersTableProps {
   subscribers: Subscriber[];
@@ -73,12 +72,12 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                 <TableCell className="font-mono">{subscriber.telegram_user_id}</TableCell>
                 <TableCell>
                   {subscriber.plan ? (
-                    <>
+                    <div>
                       <div className="font-medium">{subscriber.plan.name}</div>
                       <div className="text-sm text-muted-foreground">
                         {subscriber.plan.interval} - ${subscriber.plan.price}
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <span className="text-muted-foreground">No plan</span>
                   )}

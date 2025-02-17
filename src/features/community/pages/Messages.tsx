@@ -1,19 +1,18 @@
-
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/features/community/components/ui/use-toast";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/features/community/components/ui/card";
 import { CreditCard, Wallet, Bitcoin } from "lucide-react";
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
-import { PaymentMethodTabs } from "@/components/payments/PaymentMethodTabs";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { PaymentMethodCard } from "@/features/community/components/payments/PaymentMethodCard";
+import { PaymentMethodTabs } from "@/features/community/components/payments/PaymentMethodTabs";
+import { usePaymentMethods } from "@/hooks/community/usePaymentMethods";
 
 const Messages = () => {
   const { toast } = useToast();

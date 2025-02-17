@@ -1,21 +1,21 @@
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useSubscribers } from "@/hooks/useSubscribers";
+import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/features/community/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { EditSubscriberDialog } from "@/components/subscribers/EditSubscriberDialog";
-import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
-import { Input } from "@/components/ui/input";
+import { EditSubscriberDialog } from "@/features/community/components/subscribers/EditSubscriberDialog";
+import { SubscribersTable } from "@/features/community/components/subscribers/SubscribersTable";
+import { Input } from "@/features/community/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "@/features/community/components/ui/dropdown-menu";
+import { Button } from "@/features/community/components/ui/button";
+import { Badge } from "@/features/community/components/ui/badge";
 
 interface MSNavigator extends Navigator {
   msSaveBlob?: (blob: Blob, defaultName: string) => boolean;

@@ -1,22 +1,21 @@
-
 import { Bell, Save } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/features/community/components/ui/label";
+import { Textarea } from "@/features/community/components/ui/textarea";
+import { Input } from "@/features/community/components/ui/input";
+import { Button } from "@/features/community/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/features/community/components/ui/card";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { BotSettings } from "@/hooks/useBotSettings";
+} from "@/features/community/components/ui/accordion";
+import { BotSettings } from "@/hooks/community/useBotSettings";
 import { useState } from "react";
 import { toast } from "sonner";
 

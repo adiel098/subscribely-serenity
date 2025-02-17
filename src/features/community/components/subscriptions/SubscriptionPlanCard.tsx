@@ -1,6 +1,5 @@
-
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/features/community/components/ui/card";
+import { Button } from "@/features/community/components/ui/button";
 import { CheckIcon, EditIcon, TrashIcon, StarIcon } from "lucide-react";
 
 interface SubscriptionPlan {

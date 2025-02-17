@@ -1,8 +1,7 @@
-
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/features/telegram-mini-app/components/ui/badge";
 import { CheckCircle2, Sparkles } from "lucide-react";
-import { Plan } from "@/pages/TelegramMiniApp";
+import { Plan } from "@/features/telegram-mini-app/pages/TelegramMiniApp";
 
 interface SubscriptionPlansProps {
   plans: Plan[];

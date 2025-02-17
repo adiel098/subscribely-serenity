@@ -1,20 +1,19 @@
-
 import { MessageSquare, Save } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Textarea } from "@/features/community/components/ui/textarea";
+import { Button } from "@/features/community/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/features/community/components/ui/card";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { BotSettings } from "@/hooks/useBotSettings";
+} from "@/features/community/components/ui/accordion";
+import { BotSettings } from "@/hooks/community/useBotSettings";
 import { useState } from "react";
 import { toast } from "sonner";
 

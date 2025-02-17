@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +8,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "@/features/admin/components/ui/table";
+import { Button } from "@/features/admin/components/ui/button";
+import { Badge } from "@/features/admin/components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
 import { AddAdminDialog } from "./AddAdminDialog";
 import { format } from "date-fns";

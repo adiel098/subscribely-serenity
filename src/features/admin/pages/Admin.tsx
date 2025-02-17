@@ -1,11 +1,10 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/features/admin/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/features/admin/components/ui/card";
 import { AdminUsers } from "@/features/admin/components/AdminUsers";
 import { AdminStats } from "@/features/admin/components/AdminStats";
 import { AdminLogs } from "@/features/admin/components/AdminLogs";

@@ -1,10 +1,9 @@
-
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/features/community/components/ui/input";
+import { Label } from "@/features/community/components/ui/label";
+import { Alert, AlertDescription } from "@/features/community/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/features/community/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/features/community/components/ui/button";
 
 interface PaymentMethodTabsProps {
   activeTab: string;

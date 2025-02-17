@@ -1,4 +1,3 @@
-
 import { 
   AlertDialog,
   AlertDialogContent,
@@ -8,10 +7,10 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+} from "@/features/community/components/ui/alert-dialog";
 import { AlertTriangleIcon } from "lucide-react";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { useCommunities } from "@/hooks/useCommunities";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
+import { useCommunities } from "@/hooks/community/useCommunities";
 
 interface Props {
   isOpen: boolean;

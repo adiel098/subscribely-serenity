@@ -1,29 +1,28 @@
-
 import { Send } from "lucide-react";
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/features/community/components/ui/textarea";
+import { Button } from "@/features/community/components/ui/button";
+import { Checkbox } from "@/features/community/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/features/community/components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/features/community/components/ui/card";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { useBroadcast } from "@/hooks/useBroadcast";
+} from "@/features/community/components/ui/accordion";
+import { useBroadcast } from "@/features/community/hooks/useBroadcast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

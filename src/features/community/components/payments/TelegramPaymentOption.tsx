@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import {
   Card,
   CardContent,
-} from "@/components/ui/card";
+} from "@/features/community/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 

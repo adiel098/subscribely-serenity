@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/features/community/components/ui/card";
 import { Timer } from "lucide-react";
 import { format, addMinutes, differenceInSeconds } from "date-fns";
 

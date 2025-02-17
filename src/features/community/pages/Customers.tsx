@@ -1,9 +1,8 @@
-
 import { useState } from "react";
-import { useCustomers } from "@/hooks/useCustomers";
-import { CustomerDetailsSheet } from "@/components/customers/CustomerDetailsSheet";
-import { CustomersTable } from "@/components/customers/CustomersTable";
-import { CustomerFilters } from "@/components/customers/CustomerFilters";
+import { useCustomers } from "@/hooks/community/useCustomers";
+import { CustomerDetailsSheet } from "@/features/community/components/customers/CustomerDetailsSheet";
+import { CustomersTable } from "@/features/community/components/customers/CustomersTable";
+import { CustomerFilters } from "@/features/community/components/customers/CustomerFilters";
 import { Loader2 } from "lucide-react";
 
 const Customers = () => {

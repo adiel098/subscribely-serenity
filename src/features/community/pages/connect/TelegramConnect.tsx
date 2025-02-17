@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/features/community/components/ui/button";
+import { Card } from "@/features/community/components/ui/card";
 import { MessageCircle, Copy, CheckCircle, PartyPopper } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/features/community/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +11,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useCommunities } from "@/hooks/useCommunities";
+} from "@/features/community/components/ui/dialog";
+import { useCommunities } from "@/hooks/community/useCommunities";
 
 const TelegramConnect = () => {
   const [isVerifying, setIsVerifying] = useState(false);

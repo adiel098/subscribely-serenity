@@ -1,12 +1,11 @@
-
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/features/community/components/ui/dialog";
+import { Button } from "@/features/community/components/ui/button";
+import { Label } from "@/features/community/components/ui/label";
+import { Input } from "@/features/community/components/ui/input";
+import { Switch } from "@/features/community/components/ui/switch";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/features/community/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EditSubscriberDialogProps {

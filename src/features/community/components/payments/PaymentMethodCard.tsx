@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Card,
@@ -7,9 +6,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+} from "@/features/community/components/ui/card";
+import { Switch } from "@/features/community/components/ui/switch";
+import { Button } from "@/features/community/components/ui/button";
 import { Settings2 } from "lucide-react";
 
 interface PaymentMethodCardProps {

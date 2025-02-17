@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/features/community/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/features/community/components/ui/dialog";
+import { Input } from "@/features/community/components/ui/input";
+import { Label } from "@/features/community/components/ui/label";
+import { Textarea } from "@/features/community/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/features/community/components/ui/select";
 import { SparklesIcon, CheckIcon, PlusIcon } from "lucide-react";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { useCommunities } from "@/hooks/useCommunities";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
+import { useCommunities } from "@/hooks/community/useCommunities";
 
 interface Props {
   isOpen: boolean;

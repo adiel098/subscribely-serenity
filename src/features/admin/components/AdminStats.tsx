@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/features/admin/components/ui/card";
 import { Loader2, Users, CreditCard, Building2, Bell } from "lucide-react";
 
 export const AdminStats = () => {

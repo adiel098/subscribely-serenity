@@ -1,14 +1,13 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/features/community/components/ui/toaster";
+import { Toaster as Sonner } from "@/features/community/components/ui/sonner";
+import { TooltipProvider } from "@/features/community/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/features/community/components/ui/sidebar";
 import { CommunityProvider } from "@/features/community/providers/CommunityContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { ProtectedRoute } from "@/features/community/components/ProtectedRoute";
+import { DashboardLayout } from "@/features/community/components/DashboardLayout";
 
 import Index from "./features/community/pages/Index";
 import Auth from "./features/community/pages/Auth";

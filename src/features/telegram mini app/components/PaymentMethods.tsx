@@ -1,13 +1,12 @@
-
 import React, { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/features/telegram-mini-app/components/ui/badge";
+import { Button } from "@/features/telegram-mini-app/components/ui/button";
 import { Gift, Heart } from "lucide-react";
-import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
-import { Plan } from "@/pages/TelegramMiniApp";
+import { TelegramPaymentOption } from "@/features/telegram-mini-app/components/payments/TelegramPaymentOption";
+import { Plan } from "@/features/telegram-mini-app/pages/TelegramMiniApp";
 import { SuccessScreen } from "./SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/telegram-mini-app/hooks/use-toast";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
@@ -99,7 +98,7 @@ export const PaymentMethods = ({
       }
 
       toast({
-        title: "Payment Successful! 🎉",
+        title: "Payment Successful! ",
         description: "You can now join the community.",
       });
       

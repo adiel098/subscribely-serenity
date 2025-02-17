@@ -1,107 +1,117 @@
+
+"use client"
+
 import * as React from "react"
-import * as CarouselPrimitive from "@radix-ui/react-carousel"
-import {
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
-
+import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/features/community/components/ui/button"
+import { Button } from "@/features/community/components/ui/button"
 
-const Carousel = CarouselPrimitive.Root
+type CarouselApi = UseEmblaCarouselType[1]
+type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
+type CarouselOptions = UseCarouselParameters[0]
+type CarouselPlugin = UseCarouselParameters[1]
 
-const CarouselViewport = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive.Viewport>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive.Viewport>
->(({ className, ...props }, ref) => (
-  <CarouselPrimitive.Viewport
-    ref={ref}
-    className={cn("overflow-hidden w-full", className)}
-    {...props}
-  />
-))
-CarouselViewport.displayName = CarouselPrimitive.Viewport.displayName
+interface CarouselProps {
+  opts?: CarouselOptions
+  plugins?: CarouselPlugin
+  orientation?: "horizontal" | "vertical"
+  setApi?: (api: CarouselApi) => void
+}
 
-const CarouselContent = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <CarouselPrimitive.Content
-    ref={ref}
-    className={cn(
-      "flex gap-1 overflow-hidden",
-      className
-    )}
-    {...props}
-  />
-))
-CarouselContent.displayName = CarouselPrimitive.Content.displayName
+const Carousel = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & CarouselProps
+>(
+  (
+    {
+      orientation = "horizontal",
+      opts,
+      setApi,
+      plugins,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const [emblaRef, emblaApi] = useEmblaCarousel(
+      {
+        ...opts,
+        axis: orientation === "horizontal" ? "x" : "y",
+      },
+      plugins
+    )
 
-const CarouselItem = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive.Item>
->(({ className, ...props }, ref) => (
-  <CarouselPrimitive.Item
-    ref={ref}
-    className={cn("w-full flex-[0_0_auto]", className)}
-    {...props}
-  />
-))
-CarouselItem.displayName = CarouselPrimitive.Item.displayName
+    React.useEffect(() => {
+      if (emblaApi && setApi) {
+        setApi(emblaApi)
+      }
+    }, [emblaApi, setApi])
+
+    return (
+      <div
+        ref={ref}
+        className={cn("relative", className)}
+        {...props}
+      >
+        <div ref={emblaRef} className="overflow-hidden">
+          <div className="flex">
+            {React.Children.map(children, (child) => (
+              <div className="min-w-0 flex-[0_0_100%]">
+                {child}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+)
+Carousel.displayName = "Carousel"
 
 const CarouselPrevious = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive.Prev>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive.Prev>
->(({ className, ...props }, ref) => (
-  <div className="relative w-[40px] h-[40px]">
-  <CarouselPrimitive.Prev
-    ref={ref}
-    className={cn(
-      buttonVariants({
-        variant: "ghost",
-        size: "icon",
-      }),
-      "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
-      className
-    )}
-    {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-    <span className="sr-only">Previous slide</span>
-  </CarouselPrimitive.Prev>
-  </div>
-))
-CarouselPrevious.displayName = CarouselPrimitive.Prev.displayName
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button>
+>(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      variant={variant}
+      size={size}
+      className={cn(
+        "absolute left-4 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full",
+        className
+      )}
+      {...props}
+    >
+      <ArrowLeft className="h-4 w-4" />
+      <span className="sr-only">Previous slide</span>
+    </Button>
+  )
+})
+CarouselPrevious.displayName = "CarouselPrevious"
 
 const CarouselNext = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive.Next>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive.Next>
->(({ className, ...props }, ref) => (
-  <div className="relative w-[40px] h-[40px]">
-  <CarouselPrimitive.Next
-    ref={ref}
-    className={cn(
-      buttonVariants({
-        variant: "ghost",
-        size: "icon",
-      }),
-      "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full",
-      className
-    )}
-    {...props}
-  >
-    <ChevronRight className="h-4 w-4" />
-    <span className="sr-only">Next slide</span>
-  </CarouselPrimitive.Next>
-  </div>
-))
-CarouselNext.displayName = CarouselPrimitive.Next.displayName
+  HTMLButtonElement,
+  React.ComponentProps<typeof Button>
+>(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+  return (
+    <Button
+      ref={ref}
+      variant={variant}
+      size={size}
+      className={cn(
+        "absolute right-4 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full",
+        className
+      )}
+      {...props}
+    >
+      <ArrowRight className="h-4 w-4" />
+      <span className="sr-only">Next slide</span>
+    </Button>
+  )
+})
+CarouselNext.displayName = "CarouselNext"
 
-export {
-  Carousel,
-  CarouselViewport,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-}
+export { Carousel, CarouselNext, CarouselPrevious }

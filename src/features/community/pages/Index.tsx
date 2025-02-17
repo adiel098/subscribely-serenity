@@ -1,6 +1,6 @@
 
-import Hero from "@/components/Hero";
-import Footer from "@/components/Footer";
+import { Hero } from "@/features/community/components/Hero";
+import { Footer } from "@/features/community/components/Footer";
 
 const Index = () => {
   return (

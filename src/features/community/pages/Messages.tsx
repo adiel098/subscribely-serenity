@@ -11,8 +11,8 @@ import {
 import { CreditCard, Wallet, Bitcoin } from "lucide-react";
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
-import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
-import { PaymentMethodTabs } from "@/components/payments/PaymentMethodTabs";
+import { PaymentMethodCard } from "@/features/community/components/payments/PaymentMethodCard";
+import { PaymentMethodTabs } from "@/features/community/components/payments/PaymentMethodTabs";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 
 const Messages = () => {

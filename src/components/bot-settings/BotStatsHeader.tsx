@@ -28,7 +28,7 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
       if (error) throw error;
 
       toast.success("Successfully updated member activity status");
-      refetch(); // Refresh stats after update
+      refetch();
     } catch (error) {
       console.error('Error updating member activity:', error);
       toast.error("Failed to update member activity status");
@@ -64,9 +64,6 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Members</p>
                 <p className="text-2xl font-bold">{stats.totalMembers}</p>
-                <p className="text-sm text-muted-foreground">
-                  {stats.activeMembers} Active with Bot
-                </p>
               </div>
             </div>
           </CardContent>
@@ -76,8 +73,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
             <div className="flex items-center space-x-2">
               <UserCheck className="h-5 w-5 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Subscribed Members</p>
-                <p className="text-2xl font-bold">{stats.subscribedMembers}</p>
+                <p className="text-sm text-muted-foreground">Active with Bot</p>
+                <p className="text-2xl font-bold">{stats.activeMembers}</p>
               </div>
             </div>
           </CardContent>
@@ -87,8 +84,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
             <div className="flex items-center space-x-2">
               <UserX className="h-5 w-5 text-red-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Expired Members</p>
-                <p className="text-2xl font-bold">{stats.expiredMembers}</p>
+                <p className="text-sm text-muted-foreground">Blocked or Inactive</p>
+                <p className="text-2xl font-bold">{stats.inactiveMembers}</p>
               </div>
             </div>
           </CardContent>

@@ -64,7 +64,11 @@ export const useBroadcast = (communityId: string) => {
           message,
           filterType,
           subscriptionPlanId,
-          includeButton
+          includeButton,
+          recipients: activeMembers.map(member => ({
+            userId: member.telegram_user_id,
+            username: member.telegram_username
+          }))
         }
       });
 
@@ -80,29 +84,20 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('No response data received');
       }
 
-      // אם התשובה היא פשוט { ok: true }, נשתמש במספר המשתמשים הפעילים כברירת מחדל
-      if (typeof broadcastResult === 'object' && 'ok' in broadcastResult) {
-        return {
-          successCount: activeMembers.length,
-          failureCount: 0,
-          totalRecipients: activeMembers.length
-        };
+      if (!('successCount' in broadcastResult) || !('failureCount' in broadcastResult)) {
+        console.error('Invalid response format:', broadcastResult);
+        throw new Error('השליחה נכשלה - בעיה בתקשורת עם הבוט');
       }
 
       const status: BroadcastStatus = {
-        successCount: Number(broadcastResult.successCount) || activeMembers.length,
+        successCount: Number(broadcastResult.successCount) || 0,
         failureCount: Number(broadcastResult.failureCount) || 0,
-        totalRecipients: Number(broadcastResult.totalRecipients) || activeMembers.length
+        totalRecipients: activeMembers.length
       };
 
-      if (isNaN(status.successCount) || isNaN(status.failureCount) || isNaN(status.totalRecipients)) {
-        console.error('Invalid response format:', broadcastResult);
-        // במקרה של פורמט לא תקין, נשתמש במספר המשתמשים הפעילים
-        return {
-          successCount: activeMembers.length,
-          failureCount: 0,
-          totalRecipients: activeMembers.length
-        };
+      // בדיקה שבאמת היו הצלחות בשליחה
+      if (status.successCount === 0) {
+        throw new Error('לא הצלחנו לשלוח את ההודעה לאף משתמש');
       }
 
       console.log('Processed broadcast response:', status);
@@ -119,7 +114,7 @@ export const useBroadcast = (communityId: string) => {
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);
-      toast.error('שגיאה בשליחת ההודעות');
+      toast.error(error instanceof Error ? error.message : 'שגיאה בשליחת ההודעות');
     }
   });
 };

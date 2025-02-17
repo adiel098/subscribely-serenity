@@ -250,6 +250,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_notifications: {
+        Row: {
+          community_id: string | null
+          error: string | null
+          id: string
+          member_id: string | null
+          notification_type: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          community_id?: string | null
+          error?: string | null
+          id?: string
+          member_id?: string | null
+          notification_type: string
+          sent_at?: string | null
+          status: string
+        }
+        Update: {
+          community_id?: string | null
+          error?: string | null
+          id?: string
+          member_id?: string | null
+          notification_type?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_notifications_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_notifications_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_chat_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_payments: {
         Row: {
           amount: number

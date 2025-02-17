@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useLocation } from "react-router-dom";
+import { Community } from "@/features/community/pages/TelegramMiniApp";
 
 type CommunityContextType = {
   selectedCommunityId: string | null;
   setSelectedCommunityId: (id: string | null) => void;
+  selectedCommunity?: Community | null;
 };
 
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
@@ -62,7 +64,8 @@ export const CommunityProvider = ({
   return (
     <CommunityContext.Provider value={{
       selectedCommunityId,
-      setSelectedCommunityId
+      setSelectedCommunityId,
+      selectedCommunity: communities.find(c => c.id === selectedCommunityId)
     }}>
       {children}
     </CommunityContext.Provider>

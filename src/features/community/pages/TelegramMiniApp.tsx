@@ -1,3 +1,5 @@
+
+import { createContext } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +11,17 @@ import { SubscriptionPlans } from "@/components/telegram-mini-app/SubscriptionPl
 import { PaymentMethods } from "@/components/telegram-mini-app/PaymentMethods";
 import { LoadingScreen } from "@/components/telegram-mini-app/LoadingScreen";
 import { CommunityNotFound } from "@/components/telegram-mini-app/CommunityNotFound";
+
+interface TelegramWebApp {
+  BackButton: {
+    isVisible: boolean;
+    show: () => void;
+    hide: () => void;
+  };
+  // Add other Telegram Web App properties as needed
+}
+
+export const TelegramWebAppContext = createContext<TelegramWebApp | null>(null);
 
 export interface Plan {
   id: string;

@@ -1,4 +1,6 @@
 
+import { TelegramPaymentOption } from "@/features/community/components/payments/TelegramPaymentOption";
+
 interface PaymentMethodsProps {
   selectedPlan: any;
   selectedPaymentMethod: string | null;

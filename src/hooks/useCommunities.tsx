@@ -1,32 +1,9 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
-export interface Community {
-  id: string;
-  name: string;
-  owner_id: string;
-  created_at: string;
-  updated_at: string;
-  platform_id: string;
-  member_count: number;
-  subscription_count: number;
-  subscription_revenue: number;
-  description: string | null;
-  platform: 'telegram' | 'discord';
-  telegram_chat_id: string | null;
-  telegram_invite_link: string | null;
-  telegram_photo_url: string | null;
-  subscription_plans: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    interval: string;
-    features: string[];
-  }>;
-}
+import { Community } from "@/features/community/pages/TelegramMiniApp";
 
 export const useCommunities = () => {
   const { user } = useAuth();
@@ -44,7 +21,18 @@ export const useCommunities = () => {
       try {
         const { data: communities, error } = await supabase
           .from("communities")
-          .select("*")
+          .select(`
+            *,
+            subscription_plans (
+              id,
+              name,
+              description,
+              price,
+              interval,
+              features,
+              community_id
+            )
+          `)
           .eq("owner_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -55,7 +43,7 @@ export const useCommunities = () => {
         }
 
         console.log("Successfully fetched communities:", communities);
-        return communities as Community[];
+        return communities as unknown as Community[];
       } catch (error) {
         console.error("Error in communities query:", error);
         toast.error("An error occurred while fetching communities");

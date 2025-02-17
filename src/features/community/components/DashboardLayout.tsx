@@ -1,6 +1,6 @@
 
 import { useLocation } from "react-router-dom";
-import { Navbar } from "@/features/community/components/Navbar";
+import Navbar from "@/features/community/components/Navbar";
 import { AppSidebar } from "@/features/community/components/AppSidebar";
 import { CommunitySelector } from "@/features/community/components/CommunitySelector";
 

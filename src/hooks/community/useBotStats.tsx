@@ -2,11 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface BotStats {
+export interface BotStats {
   totalMembers: number;
   activeMembers: number;
   inactiveMembers: number;
   messagesSent: number;
+  total_messages: number;
+  active_users: number;
+  response_rate: number;
 }
 
 export const useBotStats = (communityId: string) => {
@@ -38,12 +41,18 @@ export const useBotStats = (communityId: string) => {
         console.error('Error fetching messages count:', messagesError);
         throw messagesError;
       }
+
+      const totalMembers = members.length;
+      const activeMembers = members.filter(member => member.is_active).length;
       
       return {
-        totalMembers: members.length,
-        activeMembers: members.filter(member => member.is_active).length,
-        inactiveMembers: members.filter(member => !member.is_active).length,
-        messagesSent: messages?.length || 0
+        totalMembers,
+        activeMembers,
+        inactiveMembers: totalMembers - activeMembers,
+        messagesSent: messages?.length || 0,
+        total_messages: messages?.length || 0,
+        active_users: activeMembers,
+        response_rate: activeMembers / (totalMembers || 1)
       };
     },
     enabled: Boolean(communityId),

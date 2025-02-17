@@ -9,27 +9,23 @@ interface BroadcastStatus {
   totalRecipients: number;
 }
 
-export const useBroadcast = (communityId: string) => {
-  return useMutation({
-    mutationFn: async ({ 
-      message, 
-      filterType,
-      subscriptionPlanId,
-      includeButton
-    }: { 
-      message: string; 
-      filterType: 'all' | 'active' | 'expired' | 'plan';
-      subscriptionPlanId?: string;
-      includeButton?: boolean;
-    }): Promise<BroadcastStatus> => {
+interface BroadcastParams {
+  communityId: string;
+  message: string;
+  targetAudience: 'all' | 'active' | 'expired';
+  silent: boolean;
+}
+
+export const useBroadcast = () => {
+  const mutation = useMutation({
+    mutationFn: async (params: BroadcastParams): Promise<BroadcastStatus> => {
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
-          communityId,
           path: '/broadcast',
-          message,
-          filterType,
-          subscriptionPlanId,
-          includeButton
+          message: params.message,
+          filterType: params.targetAudience,
+          communityId: params.communityId,
+          silent: params.silent
         }
       });
 
@@ -46,4 +42,9 @@ export const useBroadcast = (communityId: string) => {
       toast.error('Error sending broadcast messages');
     }
   });
+
+  return {
+    mutate: mutation.mutate,
+    isLoading: mutation.isPending
+  };
 };

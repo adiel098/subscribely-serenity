@@ -1,74 +1,39 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getBotChatMember } from './chatMemberHandler.ts';
 
-export async function updateMemberActivity(supabase: ReturnType<typeof createClient>, communityId: string) {
+export async function updateMemberActivity(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  communityId: string
+) {
   try {
-    console.log('Updating member activity for community:', communityId);
-
-    const { data: settings } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single();
-
-    if (!settings?.bot_token) {
-      throw new Error('Bot token not found');
-    }
-
-    const { data: community } = await supabase
-      .from('communities')
-      .select('telegram_chat_id')
-      .eq('id', communityId)
-      .single();
-
-    if (!community?.telegram_chat_id) {
-      throw new Error('Community telegram chat id not found');
-    }
-
-    const { data: members, error: membersError } = await supabase
+    await supabase
       .from('telegram_chat_members')
-      .select('telegram_user_id')
+      .update({
+        last_active: new Date().toISOString(),
+        total_messages: supabase.rpc('increment'),
+      })
+      .eq('telegram_user_id', userId)
       .eq('community_id', communityId);
 
-    if (membersError) throw membersError;
-
-    console.log(`Found ${members.length} members to check`);
-
-    let activeCount = 0;
-    let inactiveCount = 0;
-
-    for (const member of members) {
-      const canReceiveMessages = await getBotChatMember(
-        settings.bot_token,
-        community.telegram_chat_id,
-        member.telegram_user_id
-      );
-
-      if (canReceiveMessages) {
-        activeCount++;
-      } else {
-        inactiveCount++;
-      }
-
-      await supabase
-        .from('telegram_chat_members')
-        .update({
-          is_active: canReceiveMessages,
-          last_checked: new Date().toISOString()
-        })
-        .eq('telegram_user_id', member.telegram_user_id)
-        .eq('community_id', communityId);
-
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-
-    console.log('✅ Activity check completed:', {
-      totalMembers: members.length,
-      activeMembers: activeCount,
-      inactiveMembers: inactiveCount
-    });
+    return true;
   } catch (error) {
-    console.error('Error updating member activity:', error);
-    throw error;
+    console.error('[Activity] Error updating member activity:', error);
+    return false;
   }
+}
+
+export async function checkInactiveMembers(
+  supabase: ReturnType<typeof createClient>,
+  communityId: string,
+  daysThreshold: number = 30
+) {
+  const { data: inactiveMembers } = await supabase
+    .from('telegram_chat_members')
+    .select('*')
+    .eq('community_id', communityId)
+    .eq('is_active', true)
+    .lt('last_active', new Date(Date.now() - daysThreshold * 24 * 60 * 60 * 1000).toISOString());
+
+  return inactiveMembers || [];
 }

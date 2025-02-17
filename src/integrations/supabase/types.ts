@@ -9,29 +9,43 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_users: {
+      analytics_events: {
         Row: {
+          amount: number | null
+          community_id: string
           created_at: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
           id: string
-          role: Database["public"]["Enums"]["admin_role"]
-          updated_at: string
-          user_id: string
+          metadata: Json | null
+          user_id: string | null
         }
         Insert: {
+          amount?: number | null
+          community_id: string
           created_at?: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
           id?: string
-          role?: Database["public"]["Enums"]["admin_role"]
-          updated_at?: string
-          user_id: string
+          metadata?: Json | null
+          user_id?: string | null
         }
         Update: {
+          amount?: number | null
+          community_id?: string
           created_at?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
           id?: string
-          role?: Database["public"]["Enums"]["admin_role"]
-          updated_at?: string
-          user_id?: string
+          metadata?: Json | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       broadcast_messages: {
         Row: {
@@ -158,44 +172,6 @@ export type Database = {
           },
         ]
       }
-      community_logs: {
-        Row: {
-          amount: number | null
-          community_id: string
-          created_at: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id: string
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          community_id: string
-          created_at?: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          community_id?: string
-          created_at?: string
-          event_type?: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       community_members: {
         Row: {
           community_id: string
@@ -285,50 +261,29 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          company_name: string | null
           created_at: string
           current_telegram_code: string | null
-          email: string | null
           full_name: string | null
           id: string
           initial_telegram_code: string | null
-          last_login: string | null
-          notes: string | null
-          phone: string | null
-          registration_date: string | null
-          status: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
-          company_name?: string | null
           created_at?: string
           current_telegram_code?: string | null
-          email?: string | null
           full_name?: string | null
           id: string
           initial_telegram_code?: string | null
-          last_login?: string | null
-          notes?: string | null
-          phone?: string | null
-          registration_date?: string | null
-          status?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
-          company_name?: string | null
           created_at?: string
           current_telegram_code?: string | null
-          email?: string | null
           full_name?: string | null
           id?: string
           initial_telegram_code?: string | null
-          last_login?: string | null
-          notes?: string | null
-          phone?: string | null
-          registration_date?: string | null
-          status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -481,48 +436,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      system_logs: {
-        Row: {
-          created_at: string
-          details: string
-          event_type: string
-          id: number
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          details: string
-          event_type: string
-          id?: never
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string
-          event_type?: string
-          id?: never
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_system_logs_profiles"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -741,24 +654,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_modify_admin_users: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: boolean
-      }
-      can_view_admin_users: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: boolean
-      }
-      check_admin_role: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: Database["public"]["Enums"]["admin_role"]
-      }
       check_inactive_members: {
         Args: {
           community_id_param: string
@@ -775,21 +670,8 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      is_admin: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: boolean
-      }
     }
     Enums: {
-      admin_role: "super_admin" | "admin" | "moderator"
       analytics_event_type:
         | "subscription_created"
         | "subscription_expired"

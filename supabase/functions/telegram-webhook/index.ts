@@ -5,49 +5,28 @@ import { corsHeaders } from './cors.ts';
 import { 
   handleChatMemberUpdate,
   handleChatJoinRequest,
+  handleNewMessage,
+  handleEditedMessage,
+  handleChannelPost,
   handleMyChatMember,
-  updateMemberActivity,
-  getBotChatMember
+  updateMemberActivity
 } from './membershipHandler.ts';
 import { sendBroadcastMessage } from './broadcastHandler.ts';
-
-interface AnalyticsEvent {
-  event_type: 'member_joined' | 'member_left' | 'notification_sent' | 'subscription_expired' | 'subscription_renewed' | 'payment_received';
-  community_id: string;
-  user_id?: string | null;
-  metadata?: Record<string, any>;
-  amount?: number | null;
-}
-
-async function logAnalyticsEvent(supabase: any, event: AnalyticsEvent) {
-  try {
-    console.log('Logging analytics event:', event);
-    const { error } = await supabase
-      .from('analytics_events')
-      .insert([event]);
-
-    if (error) {
-      console.error('Error logging analytics event:', error);
-      throw error;
-    }
-
-    console.log('Successfully logged analytics event');
-  } catch (err) {
-    console.error('Failed to log analytics event:', err);
-  }
-}
 
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   try {
     const body = await req.json();
     
     // Check if this is a direct webhook update from Telegram
-    if (body.chat_member || body.my_chat_member || body.chat_join_request) {
+    if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
       console.log('Received direct Telegram webhook update:', body);
       
       const supabase = createClient(
@@ -55,21 +34,14 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      if (body.chat_member) {
-        const result = await handleChatMemberUpdate(supabase, body);
-        // Log member status changes
-        if (result?.event) {
-          await logAnalyticsEvent(supabase, {
-            event_type: result.event as any,
-            community_id: result.communityId,
-            user_id: result.userId,
-            metadata: {
-              telegram_user_id: body.chat_member.from.id,
-              username: body.chat_member.from.username,
-              status: body.chat_member.new_chat_member.status
-            }
-          });
-        }
+      if (body.message) {
+        await handleNewMessage(supabase, body, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
+      } else if (body.edited_message) {
+        await handleEditedMessage(supabase, body);
+      } else if (body.channel_post) {
+        await handleChannelPost(supabase, body);
+      } else if (body.chat_member) {
+        await handleChatMemberUpdate(supabase, body);
       } else if (body.my_chat_member) {
         await handleMyChatMember(supabase, body);
       } else if (body.chat_join_request) {
@@ -107,7 +79,7 @@ serve(async (req) => {
           throw new Error('Missing required parameters');
         }
 
-        response = await sendBroadcastMessage(
+        const status = await sendBroadcastMessage(
           supabase,
           communityId,
           body.message,
@@ -116,20 +88,7 @@ serve(async (req) => {
           body.includeButton
         );
 
-        // Log broadcast event
-        if (response?.successCount > 0) {
-          await logAnalyticsEvent(supabase, {
-            event_type: 'notification_sent',
-            community_id: communityId,
-            metadata: {
-              message: body.message,
-              filter_type: body.filterType,
-              success_count: response.successCount,
-              failure_count: response.failureCount,
-              total_recipients: response.totalRecipients
-            }
-          });
-        }
+        response = status;
         break;
 
       default:

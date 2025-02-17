@@ -5,7 +5,6 @@ import { corsHeaders } from './cors.ts';
 import { 
   handleChatMemberUpdate,
   handleChatJoinRequest,
-  handleNewMessage,
   handleMyChatMember,
   updateMemberActivity,
   getBotChatMember
@@ -22,7 +21,7 @@ serve(async (req) => {
     const body = await req.json();
     
     // Check if this is a direct webhook update from Telegram
-    if (body.message || body.chat_member || body.my_chat_member || body.chat_join_request) {
+    if (body.chat_member || body.my_chat_member || body.chat_join_request) {
       console.log('Received direct Telegram webhook update:', body);
       
       const supabase = createClient(
@@ -30,9 +29,7 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      if (body.message) {
-        await handleNewMessage(supabase, body);
-      } else if (body.chat_member) {
+      if (body.chat_member) {
         await handleChatMemberUpdate(supabase, body);
       } else if (body.my_chat_member) {
         await handleMyChatMember(supabase, body);

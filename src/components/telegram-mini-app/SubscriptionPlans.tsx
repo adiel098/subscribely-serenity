@@ -5,19 +5,33 @@ import { useCommunityContext } from "@/features/community/providers/CommunityCon
 import { TelegramWebAppContext } from "@/features/community/pages/TelegramMiniApp";
 import { useContext } from "react";
 
-export const SubscriptionPlans = () => {
-  const webApp = useContext(TelegramWebAppContext);
-  const { selectedCommunityId } = useCommunityContext();
-  const { data: plans, isLoading } = useSubscriptionPlans(selectedCommunityId || "");
+interface SubscriptionPlansProps {
+  plans: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    interval: string;
+  }>;
+  selectedPlan?: any;
+  onPlanSelect?: (plan: any) => void;
+}
 
-  if (isLoading) {
+export const SubscriptionPlans = ({ plans, selectedPlan, onPlanSelect }: SubscriptionPlansProps) => {
+  const webApp = useContext(TelegramWebAppContext);
+
+  if (!plans) {
     return <div>Loading plans...</div>;
   }
 
   return (
     <div className="grid gap-4">
-      {plans?.map((plan) => (
-        <Card key={plan.id} className="p-4">
+      {plans.map((plan) => (
+        <Card 
+          key={plan.id} 
+          className="p-4 cursor-pointer hover:border-primary/50 transition-all"
+          onClick={() => onPlanSelect?.(plan)}
+        >
           <h3 className="font-semibold">{plan.name}</h3>
           <p className="text-sm text-gray-600">{plan.description}</p>
           <p className="mt-2 font-bold">${plan.price}/month</p>

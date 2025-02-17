@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -17,7 +16,7 @@ import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 
 const Messages = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("stripe");
+  const [activeTab, setActiveTab] = useState("telegram");
   const { selectedCommunityId } = useCommunityContext();
   const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
 
@@ -96,10 +95,11 @@ const Messages = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodTabs 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-          />
+          <PaymentMethodTabs activeTab={activeTab} onTabChange={setActiveTab}>
+            <div className="mt-4 space-y-4">
+              {/* Add your payment method content here */}
+            </div>
+          </PaymentMethodTabs>
         </CardContent>
       </Card>
     </div>

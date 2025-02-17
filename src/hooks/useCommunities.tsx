@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +18,14 @@ export interface Community {
   telegram_chat_id: string | null;
   telegram_invite_link: string | null;
   telegram_photo_url: string | null;
+  subscription_plans: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    interval: string;
+    features: string[];
+  }>;
 }
 
 export const useCommunities = () => {
@@ -57,8 +64,8 @@ export const useCommunities = () => {
     },
     enabled: !!user,
     retry: 2,
-    staleTime: 0, // Changed from 5 minutes to 0 to always fetch fresh data
-    refetchOnWindowFocus: true // Changed to true to refresh when window gets focus
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   return query;

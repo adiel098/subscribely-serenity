@@ -1,25 +1,28 @@
 
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { PaymentMethodTabs } from "@/features/community/components/payments/PaymentMethodTabs";
-import { TelegramPaymentOption } from "@/features/community/components/payments/TelegramPaymentOption";
-import { TelegramWebAppContext } from "@/features/community/pages/TelegramMiniApp";
-import { useContext, useState } from "react";
+interface PaymentMethodsProps {
+  selectedPlan: any;
+  selectedPaymentMethod: string | null;
+  onPaymentMethodSelect: (method: string) => void;
+  onCompletePurchase: () => void;
+  communityInviteLink: string | null;
+  showSuccess: boolean;
+}
 
-export const PaymentMethods = () => {
-  const webApp = useContext(TelegramWebAppContext);
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-
+export const PaymentMethods = ({
+  selectedPlan,
+  selectedPaymentMethod,
+  onPaymentMethodSelect,
+  onCompletePurchase,
+  communityInviteLink,
+  showSuccess
+}: PaymentMethodsProps) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Payment Methods</CardTitle>
-      </CardHeader>
-      <PaymentMethodTabs activeTab="telegram">
-        <TelegramPaymentOption 
-          isSelected={selectedMethod === 'telegram'}
-          onSelect={() => setSelectedMethod('telegram')}
-        />
-      </PaymentMethodTabs>
-    </Card>
+    <div id="payment-methods" className="space-y-4">
+      <h2 className="text-xl font-semibold">Select Payment Method</h2>
+      <TelegramPaymentOption
+        isSelected={selectedPaymentMethod === 'telegram'}
+        onSelect={() => onPaymentMethodSelect('telegram')}
+      />
+    </div>
   );
 };

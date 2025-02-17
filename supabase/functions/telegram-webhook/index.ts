@@ -39,16 +39,19 @@ serve(async (req) => {
 
     // קבלת העדכון מטלגרם
     const update = await req.json();
-    const message = update.message;
+    console.log("[WEBHOOK] Received update:", JSON.stringify(update, null, 2));
+
+    // טיפול בהודעות - כולל channel_post
+    const message = update.message || update.channel_post;
     
     if (!message) {
-      console.log("[WEBHOOK] No message in update");
+      console.log("[WEBHOOK] No message or channel_post in update:", update);
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('🗨️ Processing new message:', JSON.stringify(message, null, 2));
+    console.log('🗨️ Processing message:', JSON.stringify(message, null, 2));
 
     // טיפול בהודעות שונות
     let handled = false;
@@ -76,9 +79,12 @@ serve(async (req) => {
     await supabaseClient
       .from('telegram_events')
       .insert({
-        event_type: 'webhook_update',
+        event_type: update.channel_post ? 'channel_post' : 'webhook_update',
         raw_data: update,
-        handled: handled
+        handled: handled,
+        chat_id: message.chat?.id?.toString(),
+        message_text: message.text,
+        username: message.from?.username
       });
 
     return new Response(JSON.stringify({ ok: true }), {

@@ -4,7 +4,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from './handlers/verificationHandler.ts';
 import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
-import { handleChatMemberUpdate } from './handlers/chatMemberHandler.ts';
 import { kickMember } from './handlers/kickMemberHandler.ts';
 import { corsHeaders } from './cors.ts';
 
@@ -59,15 +58,6 @@ serve(async (req) => {
         console.error('[WEBHOOK] Error removing member:', error);
         throw error;
       }
-    }
-
-    // טיפול באירוע chat_member (הצטרפות/עזיבה)
-    if (body.chat_member) {
-      console.log('[WEBHOOK] Handling chat member update:', body.chat_member);
-      const success = await handleChatMemberUpdate(supabaseClient, body.chat_member);
-      return new Response(JSON.stringify({ success }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     // טיפול בהודעות רגילות

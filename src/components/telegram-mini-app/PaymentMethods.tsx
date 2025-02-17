@@ -61,16 +61,25 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
+      console.log('Creating payment with:', {
+        plan_id: selectedPlan.id,
+        community_id: selectedPlan.community_id,
+        amount: selectedPlan.price,
+        payment_method: selectedPaymentMethod,
+        status: 'completed',
+        invite_link: newInviteLink
+      });
+
       // Create the payment record with the new invite link
       const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
+          community_id: selectedPlan.community_id,
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: newInviteLink || null,
-          telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+          invite_link: newInviteLink || null
         }])
         .select()
         .maybeSingle();

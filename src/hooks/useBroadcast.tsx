@@ -57,47 +57,39 @@ export const useBroadcast = (communityId: string) => {
         activeUsersCount: activeMembers.length
       });
 
-      const { data: broadcastResult, error } = await supabase.functions.invoke('telegram-webhook', {
+      const response = await supabase.functions.invoke('telegram-webhook', {
         body: {
-          type: 'broadcast',
+          type: 'broadcast',  // הוספת type במקום path
           communityId,
           message,
           filterType,
           subscriptionPlanId,
-          includeButton,
-          recipients: activeMembers.map(member => ({
-            userId: member.telegram_user_id,
-            username: member.telegram_username
-          }))
+          includeButton
         }
       });
 
-      console.log('Raw response from server:', broadcastResult);
-
-      if (error) {
-        console.error('Broadcast error:', error);
-        throw error;
+      if (response.error) {
+        console.error('Broadcast error:', response.error);
+        throw response.error;
       }
 
-      if (!broadcastResult) {
+      const responseData = response.data;
+      console.log('Raw broadcast response:', responseData);
+
+      if (!responseData) {
         console.error('No response data received');
         throw new Error('No response data received');
       }
 
-      if (!('successCount' in broadcastResult) || !('failureCount' in broadcastResult)) {
-        console.error('Invalid response format:', broadcastResult);
-        throw new Error('השליחה נכשלה - בעיה בתקשורת עם הבוט');
-      }
-
       const status: BroadcastStatus = {
-        successCount: Number(broadcastResult.successCount) || 0,
-        failureCount: Number(broadcastResult.failureCount) || 0,
-        totalRecipients: activeMembers.length
+        successCount: Number(responseData.successCount) || 0,
+        failureCount: Number(responseData.failureCount) || 0,
+        totalRecipients: Number(responseData.totalRecipients) || 0
       };
 
-      // בדיקה שבאמת היו הצלחות בשליחה
-      if (status.successCount === 0) {
-        throw new Error('לא הצלחנו לשלוח את ההודעה לאף משתמש');
+      if (isNaN(status.successCount) || isNaN(status.failureCount) || isNaN(status.totalRecipients)) {
+        console.error('Invalid response format:', responseData);
+        throw new Error('Invalid response format');
       }
 
       console.log('Processed broadcast response:', status);
@@ -114,7 +106,7 @@ export const useBroadcast = (communityId: string) => {
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);
-      toast.error(error instanceof Error ? error.message : 'שגיאה בשליחת ההודעות');
+      toast.error('שגיאה בשליחת ההודעות');
     }
   });
 };

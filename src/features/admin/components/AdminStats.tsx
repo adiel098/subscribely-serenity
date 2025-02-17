@@ -19,7 +19,7 @@ export const AdminStats = () => {
       // let's query the tables directly to calculate stats
       const [usersCount, communityStats, revenueStats] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('communities').select('id', { count: 'exact' }).where('subscription_count', '>', '0'),
+        supabase.from('communities').select('id', { count: 'exact' }).filter('subscription_count', 'gt', '0'),
         supabase.from('communities').select('subscription_revenue')
       ]);
 

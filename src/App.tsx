@@ -47,7 +47,6 @@ const App = () => (
                   <Admin />
                 </ProtectedRoute>
               } />
-              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <CommunityProvider>

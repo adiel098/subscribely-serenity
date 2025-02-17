@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AdminUsers } from "@/components/admin/AdminUsers";
-import { AdminStats } from "@/components/admin/AdminStats";
-import { AdminLogs } from "@/components/admin/AdminLogs";
+import { AdminUsers } from "@/features/admin/components/AdminUsers";
+import { AdminStats } from "@/features/admin/components/AdminStats";
+import { AdminLogs } from "@/features/admin/components/AdminLogs";
 import { ShieldAlert, Loader2, Users, BarChart3, ActivitySquare, Settings2 } from "lucide-react";
 
 const Admin = () => {

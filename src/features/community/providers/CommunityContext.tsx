@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useLocation } from "react-router-dom";

@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { CommunityProvider } from "@/contexts/CommunityContext";
+import { CommunityProvider } from "@/features/community/providers/CommunityContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 
@@ -26,7 +26,7 @@ import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
 import TelegramMiniApp from "./pages/TelegramMiniApp";
-import Admin from "./pages/Admin";
+import Admin from "./features/admin/pages/Admin";
 
 const queryClient = new QueryClient();
 

@@ -1,84 +1,107 @@
-
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
+import { Bell, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import type { BotSettings } from "@/features/community/hooks/useBotSettings";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { BotSettings } from "@/hooks/useBotSettings";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface SubscriptionSectionProps {
   settings: BotSettings;
-  updateSettings: {
-    mutate: (settings: Partial<BotSettings>) => void;
-  };
+  updateSettings: any;
 }
 
 export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSectionProps) => {
+  const [draftSettings, setDraftSettings] = useState({
+    subscription_reminder_days: settings.subscription_reminder_days,
+    subscription_reminder_message: settings.subscription_reminder_message,
+    expired_subscription_message: settings.expired_subscription_message,
+  });
+
+  const handleSave = () => {
+    updateSettings.mutate(draftSettings);
+    toast.success("Subscription settings saved successfully");
+  };
+
   return (
-    <AccordionItem value="subscription">
-      <AccordionTrigger>Subscription Settings</AccordionTrigger>
-      <AccordionContent className="space-y-4 pt-4">
-        <div className="space-y-2">
-          <Label htmlFor="subscription_reminder_days">Reminder Days Before Expiry</Label>
-          <Input
-            id="subscription_reminder_days"
-            type="number"
-            value={settings.subscription_reminder_days}
-            onChange={(e) => updateSettings.mutate({ subscription_reminder_days: parseInt(e.target.value) })}
-          />
+    <AccordionItem value="subscription" className="border rounded-lg">
+      <AccordionTrigger className="px-4">
+        <div className="flex items-center space-x-2">
+          <Bell className="h-5 w-5 text-primary" />
+          <span>Subscription Reminders</span>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="subscription_reminder_message">Subscription Reminder Message</Label>
-          <Textarea
-            id="subscription_reminder_message"
-            value={settings.subscription_reminder_message}
-            onChange={(e) => updateSettings.mutate({ subscription_reminder_message: e.target.value })}
-            className="min-h-[100px]"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="expired_subscription_message">Expired Subscription Message</Label>
-          <Textarea
-            id="expired_subscription_message"
-            value={settings.expired_subscription_message}
-            onChange={(e) => updateSettings.mutate({ expired_subscription_message: e.target.value })}
-            className="min-h-[100px]"
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="auto_remove_expired">Auto Remove Expired Members</Label>
-          <Switch
-            id="auto_remove_expired"
-            checked={settings.auto_remove_expired}
-            onCheckedChange={(checked) => updateSettings.mutate({ auto_remove_expired: checked })}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="renewal_discount_enabled">Enable Renewal Discount</Label>
-          <Switch
-            id="renewal_discount_enabled"
-            checked={settings.renewal_discount_enabled}
-            onCheckedChange={(checked) => updateSettings.mutate({ renewal_discount_enabled: checked })}
-          />
-        </div>
-
-        {settings.renewal_discount_enabled && (
-          <div className="space-y-2">
-            <Label htmlFor="renewal_discount_percentage">Renewal Discount Percentage</Label>
-            <Input
-              id="renewal_discount_percentage"
-              type="number"
-              min="0"
-              max="100"
-              value={settings.renewal_discount_percentage}
-              onChange={(e) => updateSettings.mutate({ renewal_discount_percentage: parseInt(e.target.value) })}
-            />
-          </div>
-        )}
+      </AccordionTrigger>
+      <AccordionContent className="px-4 pb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscription Management</CardTitle>
+            <CardDescription>
+              Configure how the bot handles subscription expiration reminders. Members will be automatically removed when their subscription expires.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <Label>Days before expiration to send reminder</Label>
+              <Input
+                type="number"
+                value={draftSettings.subscription_reminder_days}
+                onChange={(e) =>
+                  setDraftSettings(prev => ({
+                    ...prev,
+                    subscription_reminder_days: parseInt(e.target.value),
+                  }))
+                }
+                className="max-w-[100px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Reminder Message</Label>
+              <Textarea
+                value={draftSettings.subscription_reminder_message}
+                onChange={(e) =>
+                  setDraftSettings(prev => ({
+                    ...prev,
+                    subscription_reminder_message: e.target.value,
+                  }))
+                }
+                placeholder="Enter subscription reminder message..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Expiration Message</Label>
+              <Textarea
+                value={draftSettings.expired_subscription_message}
+                onChange={(e) =>
+                  setDraftSettings(prev => ({
+                    ...prev,
+                    expired_subscription_message: e.target.value,
+                  }))
+                }
+                placeholder="Message to send when subscription expires..."
+              />
+            </div>
+            <Button 
+              onClick={handleSave}
+              className="bg-green-500 hover:bg-green-600"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Settings
+            </Button>
+          </CardContent>
+        </Card>
       </AccordionContent>
     </AccordionItem>
   );

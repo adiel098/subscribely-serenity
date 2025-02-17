@@ -1,54 +1,61 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useSubscriptionPlans } from "@/features/community/hooks/useSubscriptionPlans";
+import { 
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangleIcon } from "lucide-react";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useCommunities } from "@/hooks/useCommunities";
 
-interface DeletePlanDialogProps {
+interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   planId: string;
 }
 
-export const DeletePlanDialog: React.FC<DeletePlanDialogProps> = ({ isOpen, onOpenChange, planId }) => {
-  const { deletePlan } = useSubscriptionPlans("");
-  const [isDeleting, setIsDeleting] = useState(false);
+export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
+  const { data: communities } = useCommunities();
+  const community = communities?.[0];
+  
+  const { deletePlan } = useSubscriptionPlans(community?.id || "");
 
   const handleDelete = async () => {
-    setIsDeleting(true);
     try {
       await deletePlan.mutateAsync(planId);
       onOpenChange(false);
     } catch (error) {
-      console.error("Error deleting plan:", error);
-    } finally {
-      setIsDeleting(false);
+      console.error('Error deleting plan:', error);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Delete Subscription Plan</DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangleIcon className="h-5 w-5 text-red-500" />
+            Delete Subscription Plan
+          </AlertDialogTitle>
+          <AlertDialogDescription>
             Are you sure you want to delete this subscription plan? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleDelete}
-            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            Delete Plan
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
+

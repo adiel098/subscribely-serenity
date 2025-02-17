@@ -1,109 +1,171 @@
-
+import { Send } from "lucide-react";
 import { useState } from "react";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useBroadcast } from "@/features/community/hooks/useBroadcast";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useBroadcast } from "@/hooks/useBroadcast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface BroadcastSectionProps {
   communityId: string;
 }
 
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
-  const broadcast = useBroadcast(communityId);
   const [message, setMessage] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "active" | "expired">("all");
+  const [filterType, setFilterType] = useState("all");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [isSending, setIsSending] = useState(false);
   const [includeButton, setIncludeButton] = useState(false);
-  const [buttonText, setButtonText] = useState("");
-  const [buttonUrl, setButtonUrl] = useState("");
+  const { mutateAsync: sendBroadcast } = useBroadcast(communityId);
 
-  const handleSend = () => {
-    broadcast.mutate({
-      message,
-      filterType,
-      includeButton,
-      buttonText,
-      buttonUrl,
-    });
+  const { data: plans } = useQuery({
+    queryKey: ['subscription-plans', communityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('community_id', communityId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleSendBroadcast = async () => {
+    if (!message.trim()) {
+      toast.error("Please enter a message");
+      return;
+    }
+
+    if (filterType === 'plan' && !selectedPlanId) {
+      toast.error("Please select a subscription plan");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await sendBroadcast({
+        message: message.trim(),
+        filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
+        subscriptionPlanId: selectedPlanId,
+        includeButton
+      });
+
+      setMessage("");
+    } catch (error) {
+      console.error('Error sending broadcast:', error);
+      toast.error("Error sending broadcast messages");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
-    <AccordionItem value="broadcast">
-      <AccordionTrigger>Broadcast Message</AccordionTrigger>
-      <AccordionContent className="space-y-4 pt-4">
-        <div className="space-y-2">
-          <Label>Message</Label>
-          <Textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Enter your broadcast message"
-            className="min-h-[100px]"
-          />
+    <AccordionItem value="broadcast" className="border rounded-lg">
+      <AccordionTrigger className="px-4">
+        <div className="flex items-center space-x-2">
+          <Send className="h-5 w-5 text-primary" />
+          <span>Broadcast Message</span>
         </div>
+      </AccordionTrigger>
+      <AccordionContent className="px-4 pb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Send Broadcast Message</CardTitle>
+            <CardDescription>
+              Send a message to your community members
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Select
+                value={filterType}
+                onValueChange={(value) => {
+                  setFilterType(value);
+                  if (value !== 'plan') {
+                    setSelectedPlanId("");
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select recipients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Members</SelectItem>
+                  <SelectItem value="active">Active Subscribers</SelectItem>
+                  <SelectItem value="expired">Expired Subscribers</SelectItem>
+                  <SelectItem value="plan">Specific Plan</SelectItem>
+                </SelectContent>
+              </Select>
 
-        <div className="space-y-2">
-          <Label>Send to</Label>
-          <RadioGroup value={filterType} onValueChange={(value: "all" | "active" | "expired") => setFilterType(value)}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="all" id="all" />
-              <Label htmlFor="all">All Members</Label>
+              {filterType === 'plan' && plans && (
+                <Select
+                  value={selectedPlanId}
+                  onValueChange={setSelectedPlanId}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select subscription plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="active" id="active" />
-              <Label htmlFor="active">Active Subscribers</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="expired" id="expired" />
-              <Label htmlFor="expired">Expired Subscribers</Label>
-            </div>
-          </RadioGroup>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="include-button"
-              checked={includeButton}
-              onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your broadcast message..."
+              className="min-h-[150px]"
             />
-            <Label htmlFor="include-button">Include Button</Label>
-          </div>
-
-          {includeButton && (
-            <div className="space-y-2 pl-6">
-              <div className="space-y-2">
-                <Label htmlFor="button-text">Button Text</Label>
-                <Input
-                  id="button-text"
-                  value={buttonText}
-                  onChange={(e) => setButtonText(e.target.value)}
-                  placeholder="Enter button text"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="button-url">Button URL</Label>
-                <Input
-                  id="button-url"
-                  value={buttonUrl}
-                  onChange={(e) => setButtonUrl(e.target.value)}
-                  placeholder="Enter button URL"
-                />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="include-button"
+                checked={includeButton}
+                onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
+              />
+              <label
+                htmlFor="include-button"
+                className="text-sm text-muted-foreground"
+              >
+                Include join button with message
+              </label>
             </div>
-          )}
-        </div>
-
-        <Button 
-          onClick={handleSend} 
-          className="w-full" 
-          disabled={!message || broadcast.isLoading}
-        >
-          {broadcast.isLoading ? "Sending..." : "Send Broadcast"}
-        </Button>
+            <Button 
+              onClick={handleSendBroadcast} 
+              disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId)}
+              className="w-full"
+            >
+              {isSending ? "Sending..." : "Send Broadcast"}
+            </Button>
+          </CardContent>
+        </Card>
       </AccordionContent>
     </AccordionItem>
   );

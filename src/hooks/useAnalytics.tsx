@@ -22,6 +22,11 @@ export const logAnalyticsEvent = async (
   metadata: Record<string, any> = {},
   amount?: number | null
 ) => {
+  if (!communityId) {
+    console.error('Cannot log analytics event: Missing community ID');
+    return;
+  }
+
   console.log('Logging analytics event:', {
     communityId,
     eventType,
@@ -41,17 +46,21 @@ export const logAnalyticsEvent = async (
         amount
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error('Error logging analytics event:', error);
+      console.error('Error logging analytics event:', error.message);
       throw error;
     }
 
     console.log('Successfully logged analytics event:', data);
     return data;
   } catch (error) {
-    console.error('Failed to log analytics event:', error);
+    if (error instanceof Error) {
+      console.error('Failed to log analytics event:', error.message);
+    } else {
+      console.error('Failed to log analytics event:', error);
+    }
     throw error;
   }
 };
@@ -60,7 +69,12 @@ export const useAnalytics = (communityId: string) => {
   return useQuery({
     queryKey: ['analytics', communityId],
     queryFn: async () => {
-      if (!communityId) return null;
+      if (!communityId) {
+        console.log('No community ID provided for analytics');
+        return null;
+      }
+
+      console.log('Fetching analytics for community:', communityId);
 
       const { data: events, error } = await supabase
         .from('community_logs')
@@ -69,7 +83,7 @@ export const useAnalytics = (communityId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching analytics:', error);
+        console.error('Error fetching analytics:', error.message);
         throw error;
       }
 

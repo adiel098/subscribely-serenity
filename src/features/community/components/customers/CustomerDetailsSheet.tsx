@@ -1,88 +1,112 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { UserCircle2, Users2, CreditCard } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/features/community/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/features/community/components/ui/tabs";
 import { CustomerProfile } from "./CustomerProfile";
 import { CustomerCommunities } from "./CustomerCommunities";
 import { CustomerSubscriptions } from "./CustomerSubscriptions";
-import { Loader2 } from "lucide-react";
+
+interface CustomerData {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  status: "active" | "inactive";
+  created_at: string;
+  profile_image_url: string | null;
+  communities: Array<{
+    id: string;
+    name: string;
+    platform: "telegram" | "discord";
+    member_count: number;
+    subscription_count: number;
+    subscription_revenue: number;
+    platform_id: string;
+    telegram_chat_id: string;
+    telegram_invite_link: string;
+  }>;
+  subscriptions: Array<{
+    id: string;
+    plan_name: string;
+    status: "active" | "expired" | "cancelled";
+    start_date: string;
+    end_date: string | null;
+    price: number;
+    community_name: string;
+  }>;
+}
 
 interface CustomerDetailsSheetProps {
-  customerId: string | null;
-  open: boolean;
+  customer: CustomerData | null;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export const CustomerDetailsSheet = ({
-  customerId,
-  open,
+  customer,
+  isOpen,
   onOpenChange,
 }: CustomerDetailsSheetProps) => {
-  const { data: customer, isLoading } = useQuery({
-    queryKey: ['customer', customerId],
-    queryFn: async () => {
-      if (!customerId) return null;
+  const [activeTab, setActiveTab] = useState("profile");
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          communities (
-            id,
-            name,
-            platform,
-            member_count,
-            subscription_count,
-            subscription_revenue,
-            platform_id,
-            telegram_chat_id,
-            telegram_invite_link
-          )
-        `)
-        .eq('id', customerId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: Boolean(customerId),
-  });
+  if (!customer) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>Customer Details</SheetTitle>
         </SheetHeader>
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
-          </div>
-        ) : customer ? (
-          <Tabs defaultValue="profile" className="mt-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="communities">Communities</TabsTrigger>
-              <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-            </TabsList>
+
+        <Tabs
+          defaultValue="profile"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-6"
+        >
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <UserCircle2 className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="communities" className="flex items-center gap-2">
+              <Users2 className="h-4 w-4" />
+              Communities
+            </TabsTrigger>
+            <TabsTrigger
+              value="subscriptions"
+              className="flex items-center gap-2"
+            >
+              <CreditCard className="h-4 w-4" />
+              Subscriptions
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="mt-6">
             <TabsContent value="profile">
-              <CustomerProfile customer={customer} />
+              <CustomerProfile data={customer} />
             </TabsContent>
             <TabsContent value="communities">
-              <CustomerCommunities communities={customer.communities || []} />
+              <CustomerCommunities data={customer} />
             </TabsContent>
             <TabsContent value="subscriptions">
-              <CustomerSubscriptions communities={customer.communities || []} />
+              <CustomerSubscriptions data={customer} />
             </TabsContent>
-          </Tabs>
-        ) : null}
+          </div>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );

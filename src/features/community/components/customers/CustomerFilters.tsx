@@ -1,26 +1,28 @@
 
-import { Input } from "@/components/ui/input";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
+import { Input } from "@/features/community/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/features/community/components/ui/select";
 
 interface CustomerFiltersProps {
-  searchTerm: string;
+  searchQuery: string;
   onSearchChange: (value: string) => void;
   statusFilter: string;
-  onStatusChange: (value: string) => void;
+  onStatusFilterChange: (value: string) => void;
 }
 
 export const CustomerFilters = ({
-  searchTerm,
+  searchQuery,
   onSearchChange,
   statusFilter,
-  onStatusChange,
+  onStatusFilterChange,
 }: CustomerFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -28,21 +30,22 @@ export const CustomerFilters = ({
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search customers..."
-          value={searchTerm}
+          value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9"
         />
       </div>
-      <Select value={statusFilter} onValueChange={onStatusChange}>
+      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
         <SelectTrigger className="w-full sm:w-[180px]">
-          <Filter className="mr-2 h-4 w-4" />
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="inactive">Inactive</SelectItem>
-          <SelectItem value="suspended">Suspended</SelectItem>
+          <SelectGroup>
+            <SelectLabel>Status</SelectLabel>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectGroup>
         </SelectContent>
       </Select>
     </div>

@@ -13,7 +13,8 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
       console.log('Processing /start command');
       const communityId = message.text.split(' ')[1];
       
-      if (communityId) {
+      // וודא שיש לנו את ה-chat_id של השולח
+      if (communityId && message.from) {
         // Get bot token from settings
         const { data: settings } = await supabase
           .from('telegram_global_settings')
@@ -37,13 +38,14 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
         // שימוש בהודעת הברוכים הבאים המותאמת אישית
         const welcomeMessage = botSettings.welcome_message || `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
         
+        // שלח את ההודעה ל-chat_id של המשתמש ששלח את הפקודה
         const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            chat_id: message.chat.id,
+            chat_id: message.from.id, // שימוש ב-ID של השולח במקום ה-chat_id של הקבוצה
             text: welcomeMessage,
             reply_markup: {
               inline_keyboard: [[

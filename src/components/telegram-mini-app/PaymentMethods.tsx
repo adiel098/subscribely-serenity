@@ -61,18 +61,21 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
+      // בדיקת הנתונים לפני השליחה לבסיס הנתונים
+      const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
+      console.log('Telegram User ID:', telegramUserId);
+      console.log('Selected Plan:', selectedPlan);
+
       // Create the payment record with the new invite link
       const paymentData = {
         plan_id: selectedPlan.id,
-        community_id: selectedPlan.community_id, // Adding community_id
+        community_id: selectedPlan.community_id,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
         status: 'completed',
         invite_link: newInviteLink || null,
-        telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+        telegram_user_id: telegramUserId
       };
-
-      console.log('Creating payment with data:', paymentData);
 
       const { data: payment, error } = await supabase
         .from('subscription_payments')

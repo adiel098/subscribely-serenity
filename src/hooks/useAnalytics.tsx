@@ -19,7 +19,7 @@ export const useAnalytics = (communityId: string) => {
       if (!communityId) return null;
 
       const { data: events, error } = await supabase
-        .from('analytics_events')
+        .from('community_logs')
         .select('*')
         .eq('community_id', communityId)
         .order('created_at', { ascending: false });

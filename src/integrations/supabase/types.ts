@@ -33,44 +33,6 @@ export type Database = {
         }
         Relationships: []
       }
-      analytics_events: {
-        Row: {
-          amount: number | null
-          community_id: string
-          created_at: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id: string
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          community_id: string
-          created_at?: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          community_id?: string
-          created_at?: string
-          event_type?: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       broadcast_messages: {
         Row: {
           community_id: string
@@ -192,6 +154,44 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_logs: {
+        Row: {
+          amount: number | null
+          community_id: string
+          created_at: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          community_id: string
+          created_at?: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          community_id?: string
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]

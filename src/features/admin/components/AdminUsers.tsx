@@ -16,13 +16,14 @@ import {
 import { Button } from "@/features/community/components/ui/button";
 import { Badge } from "@/features/community/components/ui/badge";
 import { Input } from "@/features/community/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminUser {
   id: string;
   user_id: string;
   role: string;
   created_at: string;
-  profile: {
+  profiles: {
     full_name: string | null;
     email: string | null;
   } | null;
@@ -31,6 +32,7 @@ interface AdminUser {
 export const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const { toast } = useToast();
 
   const { data: adminUsers, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -39,20 +41,30 @@ export const AdminUsers = () => {
         .from('admin_users')
         .select(`
           *,
-          profile:profiles(full_name, email)
-        `);
+          profiles (
+            full_name,
+            email
+          )
+        `)
+        .returns<AdminUser[]>();
 
       if (error) {
         console.error('Error fetching admin users:', error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching admin users",
+          description: error.message
+        });
         throw error;
       }
-      return data as AdminUser[];
+
+      return data;
     },
   });
 
   const filteredUsers = adminUsers?.filter(user => 
-    user.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.profile?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    user.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (isLoading) {
@@ -101,8 +113,8 @@ export const AdminUsers = () => {
             ) : (
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.profile?.full_name || 'N/A'}</TableCell>
-                  <TableCell>{user.profile?.email || 'N/A'}</TableCell>
+                  <TableCell>{user.profiles?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{user.profiles?.email || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                       {user.role}

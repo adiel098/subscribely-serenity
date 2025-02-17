@@ -19,7 +19,7 @@ export const AdminStats = () => {
       // let's query the tables directly to calculate stats
       const [usersCount, communityStats, revenueStats] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('communities').select('id', { count: 'exact' }).eq('subscription_count', '>', 0),
+        supabase.from('communities').select('id', { count: 'exact' }).where('subscription_count', '>', '0'),
         supabase.from('communities').select('subscription_revenue')
       ]);
 
@@ -29,7 +29,6 @@ export const AdminStats = () => {
 
       const totalRevenue = revenueStats.data?.reduce((acc, curr) => acc + (curr.subscription_revenue || 0), 0) || 0;
       
-      // Calculate monthly growth (placeholder - you might want to implement actual growth calculation)
       const monthlyGrowth = 5; // Placeholder 5%
 
       const stats: AdminStats = {

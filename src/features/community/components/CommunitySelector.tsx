@@ -1,13 +1,13 @@
 
 import { useNavigate } from "react-router-dom";
 import { Bell, Copy, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useCommunities } from "@/hooks/useCommunities";
+import { Button } from "@/features/community/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/features/community/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/features/community/components/ui/avatar";
+import { useCommunities } from "@/hooks/community/useCommunities";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { usePaymentMethods } from "@/hooks/community/usePaymentMethods";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/features/community/components/ui/alert-dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 

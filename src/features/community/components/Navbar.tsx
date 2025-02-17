@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Menu, X, LayoutDashboard } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '@/features/community/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 

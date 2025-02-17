@@ -76,7 +76,7 @@ export const useBroadcast = (communityId: string) => {
       try {
         await logAnalyticsEvent(
           communityId,
-          'message_sent',
+          'notification_sent',
           null,
           {
             message,

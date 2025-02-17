@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
       "@/components": path.resolve(__dirname, "./src/features/community/components"),
       "@/contexts": path.resolve(__dirname, "./src/contexts"),
       "@/features": path.resolve(__dirname, "./src/features"),
-      "@/hooks": path.resolve(__dirname, "./src/hooks/community"),
+      "@/hooks": path.resolve(__dirname, "./src/features/community/hooks"),
       "@/lib": path.resolve(__dirname, "./src/lib"),
       "@/types": path.resolve(__dirname, "./src/types"),
       "@/ui": path.resolve(__dirname, "./src/components/ui"),

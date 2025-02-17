@@ -1,7 +1,7 @@
-import { Bot, Context } from "../../../../_utils/telegramClient";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../../../../_utils/database.types";
-import { logEvent } from "../../../../_utils/eventLogger";
+
+import { Bot, Context } from "../../_utils/telegramClient.ts";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Database } from "../../_utils/database.types.ts";
 
 export const handleMessage = async (
   bot: Bot,
@@ -54,17 +54,11 @@ export const handleMessage = async (
         );
 
         // רישום האירוע
-        await logEvent(
-          supabase,
-          communityId,
-          "member_joined",
-          ctx.from?.id?.toString() || null,
-          {
-            username: ctx.from?.username,
-            first_name: ctx.from?.first_name,
-            last_name: ctx.from?.last_name
-          }
-        );
+        await logEvent(supabase, communityId, "member_joined", ctx.from?.id?.toString() || null, {
+          username: ctx.from?.username,
+          first_name: ctx.from?.first_name,
+          last_name: ctx.from?.last_name
+        });
 
       } catch (error) {
         console.error("Error processing start command:", error);
@@ -88,4 +82,30 @@ export const handleMessage = async (
   }
 
   console.log("Unhandled message:", ctx.message);
+};
+
+// Helper function to log events
+const logEvent = async (
+  supabase: SupabaseClient<Database>,
+  communityId: string,
+  eventType: "member_joined" | "member_left" | "notification_sent" | "payment_received",
+  userId: string | null,
+  metadata: Record<string, any> = {}
+) => {
+  try {
+    const { error } = await supabase
+      .from("community_logs")
+      .insert({
+        community_id: communityId,
+        event_type: eventType,
+        user_id: userId,
+        metadata
+      });
+
+    if (error) {
+      console.error("Error logging event:", error);
+    }
+  } catch (error) {
+    console.error("Error in logEvent:", error);
+  }
 };

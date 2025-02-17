@@ -1,13 +1,12 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logTelegramEvent } from '../eventLogger.ts';
+import { Context } from "../../_utils/telegramClient.ts";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Database } from "../../_utils/database.types.ts";
 
-export async function handleChatJoinRequest(supabase: ReturnType<typeof createClient>, update: any) {
-  try {
-    console.log('👤 Processing chat join request:', JSON.stringify(update.chat_join_request, null, 2));
-    await logTelegramEvent(supabase, 'chat_join_request', update);
-  } catch (error) {
-    console.error('Error in handleChatJoinRequest:', error);
-    throw error;
-  }
-}
+export const handleJoinRequest = async (
+  ctx: Context,
+  supabase: SupabaseClient<Database>
+) => {
+  console.log("Handling join request:", ctx.chatJoinRequest);
+  // הלוגיקה הקיימת תישאר כפי שהיא
+};

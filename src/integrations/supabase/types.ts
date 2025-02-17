@@ -781,12 +781,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_super_admin: {
-        Args: {
-          user_uuid: string
-        }
-        Returns: boolean
-      }
     }
     Enums: {
       admin_role: "super_admin" | "admin" | "moderator"

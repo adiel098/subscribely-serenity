@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,18 +6,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/features/community/components/ui/dialog";
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/features/community/components/ui/select";
-import { Button } from "@/features/community/components/ui/button";
-import { Input } from "@/features/community/components/ui/input";
-import { Label } from "@/features/community/components/ui/label";
-import { useToast } from "@/features/community/components/ui/use-toast";
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface AddAdminDialogProps {

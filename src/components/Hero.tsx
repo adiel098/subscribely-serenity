@@ -1,30 +1,33 @@
 
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/features/community/components/ui/button";
+import { ArrowRight } from 'lucide-react';
+import { Button } from './ui/button';
 
 const Hero = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="relative isolate px-6 pt-14 lg:px-8">
-      <div className="mx-auto max-w-3xl py-32 sm:py-48 lg:py-56">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-            Manage Your Community With Ease
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-grid-black/[0.02] bg-[size:20px_20px]" />
+      </div>
+      
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-32">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-gray-900 mb-8 animate-slide-up">
+            Community Management <br className="hidden sm:inline" />
+            <span className="text-blue-600">Made Simple</span>
           </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
-            Connect your social platform, manage subscriptions, and grow your community all in one place.
+          
+          <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            Manage your Telegram and Discord communities with ease. Streamline subscriptions, 
+            automate member access, and focus on what matters most - your community.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button onClick={() => navigate("/select-platform")} size="lg">
+          
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <Button size="lg" className="group">
               Get Started
+              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate("/about")}
-            >
-              Learn More
+            <Button size="lg" variant="outline">
+              Watch Demo
             </Button>
           </div>
         </div>

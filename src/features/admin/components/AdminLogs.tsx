@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -8,8 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/features/community/components/ui/table";
-import { Badge } from "@/features/community/components/ui/badge";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -42,10 +41,7 @@ export const AdminLogs = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) {
-        console.error('Error fetching system logs:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as SystemLog[];
     },
   });

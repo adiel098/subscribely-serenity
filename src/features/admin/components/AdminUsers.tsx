@@ -1,10 +1,6 @@
-
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { Loader2, Search, PlusCircle } from "lucide-react";
-import { format } from "date-fns";
-import { AddAdminDialog } from "./AddAdminDialog";
 import {
   Table,
   TableBody,
@@ -12,16 +8,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/features/community/components/ui/table";
-import { Button } from "@/features/community/components/ui/button";
-import { Badge } from "@/features/community/components/ui/badge";
-import { Input } from "@/features/community/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Plus } from "lucide-react";
+import { AddAdminDialog } from "./AddAdminDialog";
+import { format } from "date-fns";
 
 interface AdminUser {
   id: string;
-  user_id: string;
-  role: string;
+  role: 'super_admin' | 'admin' | 'moderator';
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -30,9 +26,7 @@ interface AdminUser {
 }
 
 export const AdminUsers = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const { toast } = useToast();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { data: adminUsers, isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -40,32 +34,19 @@ export const AdminUsers = () => {
       const { data, error } = await supabase
         .from('admin_users')
         .select(`
-          *,
+          id,
+          role,
+          created_at,
           profiles (
             full_name,
             email
           )
-        `)
-        .returns<AdminUser[]>();
+        `);
 
-      if (error) {
-        console.error('Error fetching admin users:', error);
-        toast({
-          variant: "destructive",
-          title: "Error fetching admin users",
-          description: error.message
-        });
-        throw error;
-      }
-
-      return data;
+      if (error) throw error;
+      return data as unknown as AdminUser[];
     },
   });
-
-  const filteredUsers = adminUsers?.filter(user => 
-    user.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (isLoading) {
     return (
@@ -77,18 +58,9 @@ export const AdminUsers = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search admins..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button onClick={() => setShowAddDialog(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+      <div className="flex justify-end">
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
           Add Admin
         </Button>
       </div>
@@ -100,28 +72,31 @@ export const AdminUsers = () => {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Added</TableHead>
+              <TableHead>Added On</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!filteredUsers?.length ? (
+            {!adminUsers?.length ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   No admin users found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.profiles?.full_name || 'N/A'}</TableCell>
-                  <TableCell>{user.profiles?.email || 'N/A'}</TableCell>
+              adminUsers.map((admin) => (
+                <TableRow key={admin.id}>
+                  <TableCell>{admin.profiles?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{admin.profiles?.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                      {user.role}
+                    <Badge variant={
+                      admin.role === 'super_admin' ? 'default' :
+                      admin.role === 'admin' ? 'secondary' : 'outline'
+                    }>
+                      {admin.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(user.created_at), 'PP')}
+                    {format(new Date(admin.created_at), 'PP')}
                   </TableCell>
                 </TableRow>
               ))
@@ -130,10 +105,7 @@ export const AdminUsers = () => {
         </Table>
       </div>
 
-      <AddAdminDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-      />
+      <AddAdminDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </div>
   );
 };

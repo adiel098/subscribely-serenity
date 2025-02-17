@@ -1,25 +1,31 @@
 
-import { Button } from "@/features/community/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
+import { LayoutDashboard } from "lucide-react";
 
 const Footer = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   return (
-    <footer className="bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
-        <div className="flex justify-center space-x-6 md:order-2">
-          <Button variant="ghost" size="sm">
-            About
-          </Button>
-          <Button variant="ghost" size="sm">
-            Blog
-          </Button>
-          <Button variant="ghost" size="sm">
-            Contact
-          </Button>
-        </div>
-        <div className="mt-8 md:order-1 md:mt-0">
-          <p className="text-center text-xs leading-5 text-gray-500">
-            &copy; 2024 Lovable, Inc. All rights reserved.
-          </p>
+    <footer className="bg-white border-t border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <div className="text-gray-600">
+            © 2024 Membify. All rights reserved.
+          </div>
+          
+          {user && (
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="outline"
+              className="group"
+            >
+              Go to Dashboard
+              <LayoutDashboard className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          )}
         </div>
       </div>
     </footer>

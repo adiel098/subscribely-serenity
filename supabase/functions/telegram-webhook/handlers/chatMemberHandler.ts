@@ -22,9 +22,9 @@ export async function handleChatMemberUpdate(
     if (new_chat_member.status === 'member') {
       // בדיקה אם יש תשלום פעיל עבור המשתמש
       console.log('💳 [ChatMember] Checking for active payment...');
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payments, error: paymentError } = await supabase
         .from('subscription_payments')
-        .select('*') // מחזיר את כל השדות לצורך דיבוג
+        .select('*')
         .eq('telegram_user_id', userId)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
@@ -35,18 +35,18 @@ export async function handleChatMemberUpdate(
         return false;
       }
 
-      console.log('💰 [ChatMember] Found payment:', JSON.stringify(payment, null, 2));
+      console.log('💰 [ChatMember] Found payments:', JSON.stringify(payments, null, 2));
 
-      if (!payment || payment.length === 0) {
+      if (!payments || payments.length === 0) {
         console.log('⚠️ [ChatMember] No active payment found for user:', userId);
         return false;
       }
 
-      const latestPayment = payment[0];
+      const latestPayment = payments[0];
       
       // בדיקה אם קיים כבר רשומה למשתמש
       console.log('🔍 [ChatMember] Checking for existing member...');
-      const { data: existingMember, error: memberError } = await supabase
+      const { data: members, error: memberError } = await supabase
         .from('telegram_chat_members')
         .select('*')
         .eq('telegram_user_id', userId)
@@ -57,15 +57,17 @@ export async function handleChatMemberUpdate(
         return false;
       }
 
-      console.log('📋 [ChatMember] Existing member data:', JSON.stringify(existingMember, null, 2));
+      console.log('📋 [ChatMember] Found members:', JSON.stringify(members, null, 2));
 
       const now = new Date();
       const subscriptionEndDate = new Date();
       subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
-      if (existingMember && existingMember.length > 0) {
+      const existingMember = members && members.length > 0 ? members[0] : null;
+
+      if (existingMember) {
         // עדכון חבר קיים
-        console.log('📝 [ChatMember] Updating existing member:', existingMember[0].id);
+        console.log('📝 [ChatMember] Updating existing member:', existingMember.id);
         const updateData = {
           is_active: true,
           subscription_status: true,
@@ -81,7 +83,7 @@ export async function handleChatMemberUpdate(
         const { data: updateResult, error: updateError } = await supabase
           .from('telegram_chat_members')
           .update(updateData)
-          .eq('id', existingMember[0].id)
+          .eq('id', existingMember.id)
           .select();
 
         if (updateError) {

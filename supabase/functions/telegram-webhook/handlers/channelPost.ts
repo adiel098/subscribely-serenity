@@ -6,7 +6,7 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
     const channelPost = update.channel_post;
     console.log('Processing channel post:', channelPost);
 
-    if (!channelPost.text) {
+    if (!channelPost?.text) {
       console.log('No text in channel post, ignoring');
       return;
     }
@@ -21,64 +21,84 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
         chatId: chatId
       });
 
-      // עדכון הגדרות הבוט עם קוד האימות
-      const { data: settings, error: updateError } = await supabase
+      // בדיקה האם קיים קוד אימות תקף
+      const { data: botSettings, error: findError } = await supabase
+        .from('telegram_bot_settings')
+        .select('*')
+        .eq('verification_code', verificationCode)
+        .single();
+
+      if (findError) {
+        console.error('Error finding verification code:', findError);
+        return;
+      }
+
+      if (!botSettings) {
+        console.log('No matching verification code found');
+        return;
+      }
+
+      console.log('Found bot settings:', botSettings);
+
+      // עדכון הגדרות הבוט עם מזהה הצ'אט
+      const { error: updateError } = await supabase
         .from('telegram_bot_settings')
         .update({
           chat_id: chatId,
           verified_at: new Date().toISOString()
         })
-        .eq('verification_code', verificationCode)
-        .select()
-        .single();
+        .eq('id', botSettings.id);
 
       if (updateError) {
         console.error('Error updating bot settings:', updateError);
         throw updateError;
       }
 
-      if (settings) {
-        console.log('Channel successfully verified:', settings);
-        
-        // עדכון ה-community עם מזהה הצ'אט
-        const { error: communityError } = await supabase
-          .from('communities')
-          .update({
-            telegram_chat_id: chatId
-          })
-          .eq('id', settings.community_id);
+      console.log('Updated bot settings with chat ID');
 
-        if (communityError) {
-          console.error('Error updating community:', communityError);
-          throw communityError;
-        }
+      // עדכון ה-community עם מזהה הצ'אט
+      const { error: communityError } = await supabase
+        .from('communities')
+        .update({
+          telegram_chat_id: chatId
+        })
+        .eq('id', botSettings.community_id);
 
-        // קבלת טוקן הבוט
-        const { data: globalSettings } = await supabase
-          .from('telegram_global_settings')
-          .select('bot_token')
-          .single();
-
-        if (globalSettings?.bot_token) {
-          // מחיקת הודעת האימות
-          try {
-            await fetch(`https://api.telegram.org/bot${globalSettings.bot_token}/deleteMessage`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                chat_id: chatId,
-                message_id: channelPost.message_id
-              }),
-            });
-          } catch (deleteError) {
-            console.error('Error deleting verification message:', deleteError);
-          }
-        }
-      } else {
-        console.log('No matching verification code found');
+      if (communityError) {
+        console.error('Error updating community:', communityError);
+        throw communityError;
       }
+
+      console.log('Updated community with chat ID');
+
+      // קבלת טוקן הבוט
+      const { data: globalSettings } = await supabase
+        .from('telegram_global_settings')
+        .select('bot_token')
+        .single();
+
+      if (globalSettings?.bot_token) {
+        // מחיקת הודעת האימות
+        try {
+          const deleteResponse = await fetch(`https://api.telegram.org/bot${globalSettings.bot_token}/deleteMessage`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: chatId,
+              message_id: channelPost.message_id
+            }),
+          });
+          
+          const deleteResult = await deleteResponse.json();
+          console.log('Delete message response:', deleteResult);
+        } catch (deleteError) {
+          console.error('Error deleting verification message:', deleteError);
+        }
+      }
+
+      console.log('Channel verification completed successfully');
     }
   } catch (error) {
     console.error('Error in handleChannelPost:', error);

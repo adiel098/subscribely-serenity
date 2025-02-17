@@ -1,20 +1,8 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { handleChannelPost } from './handlers/channelPost.ts';
 
-export { 
-  getBotChatMember,
-  handleChatMemberUpdate,
-  handleMyChatMember 
-} from './handlers/chatMemberHandler.ts';
-
-export { 
-  handleNewMessage,
-  handleEditedMessage,
-  handleChannelPost 
-} from './handlers/messageHandler.ts';
-
-export { 
-  handleChatJoinRequest 
-} from './handlers/joinRequestHandler.ts';
-
-export { 
-  updateMemberActivity 
-} from './handlers/activityHandler.ts';
+// ייצוא הפונקציה handleChannelPost
+export {
+  handleChannelPost,
+  // ייצוא פונקציות נוספות אם יש
+};

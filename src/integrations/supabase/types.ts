@@ -525,6 +525,7 @@ export type Database = {
           community_id: string
           id: string
           is_active: boolean | null
+          is_trial: boolean | null
           joined_at: string
           last_active: string | null
           last_checked: string | null
@@ -535,11 +536,13 @@ export type Database = {
           telegram_user_id: string
           telegram_username: string | null
           total_messages: number | null
+          trial_end_date: string | null
         }
         Insert: {
           community_id: string
           id?: string
           is_active?: boolean | null
+          is_trial?: boolean | null
           joined_at?: string
           last_active?: string | null
           last_checked?: string | null
@@ -550,11 +553,13 @@ export type Database = {
           telegram_user_id: string
           telegram_username?: string | null
           total_messages?: number | null
+          trial_end_date?: string | null
         }
         Update: {
           community_id?: string
           id?: string
           is_active?: boolean | null
+          is_trial?: boolean | null
           joined_at?: string
           last_active?: string | null
           last_checked?: string | null
@@ -565,6 +570,7 @@ export type Database = {
           telegram_user_id?: string
           telegram_username?: string | null
           total_messages?: number | null
+          trial_end_date?: string | null
         }
         Relationships: [
           {
@@ -648,6 +654,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_inactive_members: {
+        Args: {
+          community_id_param: string
+        }
+        Returns: {
+          telegram_user_id: string
+          is_active: boolean
+          subscription_status: boolean
+          is_trial: boolean
+          trial_end_date: string
+        }[]
+      }
       handle_telegram_webhook: {
         Args: Record<PropertyKey, never>
         Returns: undefined

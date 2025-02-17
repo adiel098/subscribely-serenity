@@ -28,57 +28,53 @@ Deno.serve(async (req) => {
       throw new Error('Bot token not found');
     }
 
-    // Get all active members with subscriptions
-    const { data: members, error: membersError } = await supabase
-      .from('telegram_chat_members')
+    // Get all communities with their bot settings
+    const { data: communities, error: communitiesError } = await supabase
+      .from('communities')
       .select(`
-        *,
-        community:communities(*),
-        bot_settings:telegram_bot_settings(*)
-      `)
-      .eq('is_active', true)
-      .not('subscription_end_date', 'is', null);
+        id,
+        telegram_chat_id,
+        telegram_bot_settings (
+          auto_remove_expired,
+          expired_subscription_message
+        )
+      `);
 
-    if (membersError) {
-      throw membersError;
+    if (communitiesError) {
+      throw communitiesError;
     }
 
-    const now = new Date();
     const processedMembers = [];
 
-    for (const member of members) {
-      try {
-        const subscriptionEndDate = new Date(member.subscription_end_date);
-        const reminderDays = member.bot_settings?.subscription_reminder_days || 3;
-        const msPerDay = 1000 * 60 * 60 * 24;
-        const daysUntilExpiration = Math.floor((subscriptionEndDate.getTime() - now.getTime()) / msPerDay);
+    for (const community of communities) {
+      if (!community.telegram_chat_id) continue;
 
-        // Check if subscription has expired
-        if (now > subscriptionEndDate) {
-          // Send expiration message
-          if (member.subscription_status) {
-            await sendTelegramMessage(
-              globalSettings.bot_token,
-              member.telegram_user_id,
-              member.bot_settings?.expired_subscription_message || 'Your subscription has expired.'
-            );
+      // בדיקת משתמשים לא פעילים באמצעות הפונקציה החדשה
+      const { data: inactiveMembers, error: membersError } = await supabase
+        .rpc('check_inactive_members', {
+          community_id_param: community.id
+        });
 
-            // Log notification
-            await supabase.from('subscription_notifications').insert({
-              member_id: member.id,
-              community_id: member.community_id,
-              notification_type: 'expiration',
-              status: 'success'
-            });
+      if (membersError) {
+        console.error('Error checking inactive members:', membersError);
+        continue;
+      }
 
-            // Update member status
-            await supabase
-              .from('telegram_chat_members')
-              .update({
-                is_active: false,
-                subscription_status: false
-              })
-              .eq('id', member.id);
+      for (const member of inactiveMembers) {
+        try {
+          // Get bot settings for this community
+          const botSettings = community.telegram_bot_settings?.[0];
+          
+          // Only proceed if auto_remove_expired is enabled
+          if (botSettings?.auto_remove_expired) {
+            // Send expiration message
+            if (botSettings.expired_subscription_message) {
+              await sendTelegramMessage(
+                globalSettings.bot_token,
+                member.telegram_user_id,
+                botSettings.expired_subscription_message
+              );
+            }
 
             // Kick member from channel
             try {
@@ -88,45 +84,56 @@ Deno.serve(async (req) => {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    chat_id: member.community.telegram_chat_id,
+                    chat_id: community.telegram_chat_id,
                     user_id: member.telegram_user_id,
                     until_date: Math.floor(Date.now() / 1000) + 32, // Minimal ban time
                   }),
                 }
               );
+
+              // Update member status
+              await supabase
+                .from('telegram_chat_members')
+                .update({
+                  is_active: false,
+                  subscription_status: false
+                })
+                .eq('telegram_user_id', member.telegram_user_id)
+                .eq('community_id', community.id);
+
+              // Log the event
+              await supabase.from('analytics_events').insert({
+                community_id: community.id,
+                event_type: 'member_kicked',
+                user_id: member.telegram_user_id,
+                metadata: {
+                  reason: 'subscription_expired',
+                  was_trial: member.is_trial
+                }
+              });
             } catch (error) {
               console.error('Error kicking member:', error);
+              processedMembers.push({
+                telegram_user_id: member.telegram_user_id,
+                status: 'error',
+                error: error.message
+              });
+              continue;
             }
           }
-        }
-        // Check if we need to send a reminder
-        else if (daysUntilExpiration === reminderDays && member.subscription_status) {
-          await sendTelegramMessage(
-            globalSettings.bot_token,
-            member.telegram_user_id,
-            member.bot_settings?.subscription_reminder_message || 'Your subscription will expire soon.'
-          );
 
-          // Log notification
-          await supabase.from('subscription_notifications').insert({
-            member_id: member.id,
-            community_id: member.community_id,
-            notification_type: 'reminder',
+          processedMembers.push({
+            telegram_user_id: member.telegram_user_id,
             status: 'success'
           });
+        } catch (error) {
+          console.error('Error processing member:', member.telegram_user_id, error);
+          processedMembers.push({
+            telegram_user_id: member.telegram_user_id,
+            status: 'error',
+            error: error.message
+          });
         }
-
-        processedMembers.push({
-          id: member.id,
-          status: 'success'
-        });
-      } catch (error) {
-        console.error('Error processing member:', member.id, error);
-        processedMembers.push({
-          id: member.id,
-          status: 'error',
-          error: error.message
-        });
       }
     }
 

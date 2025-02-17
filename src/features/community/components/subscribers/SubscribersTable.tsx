@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -23,7 +24,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/features/community/components/ui/dropdown-menu";
-import { Subscriber } from "@/features/community/hooks/useSubscribers";
+
+export interface Subscriber {
+  id: string;
+  telegram_user_id: string;
+  telegram_username: string | null;
+  subscription_status: boolean;
+  subscription_start_date: string | null;
+  subscription_end_date: string | null;
+  joined_at: string;
+  plan?: {
+    id: string;
+    name: string;
+    interval: string;
+    price: number;
+  };
+}
 
 interface SubscribersTableProps {
   subscribers: Subscriber[];

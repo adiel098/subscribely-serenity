@@ -21,31 +21,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const checkAdminAndRedirect = async (userId: string) => {
-    const { data: isAdmin } = await supabase.rpc('is_admin', { user_uuid: userId });
-    if (isAdmin) {
-      navigate('/admin');
-    } else {
-      navigate('/dashboard');
-    }
-  };
-
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminAndRedirect(session.user.id);
-      }
       setLoading(false);
     });
 
     // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       setUser(session?.user ?? null);
-      if (event === 'SIGNED_IN' && session?.user) {
-        checkAdminAndRedirect(session.user.id);
-      }
       setLoading(false);
     });
 

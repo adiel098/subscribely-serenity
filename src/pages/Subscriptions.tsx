@@ -7,7 +7,7 @@ import { EditPlanDialog } from "@/components/subscriptions/EditPlanDialog";
 import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
 import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPlanCard";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 import { Loader2, Plus } from "lucide-react";
 
 const intervalColors = {

@@ -1,5 +1,5 @@
 
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useBotSettings } from "@/hooks/useBotSettings";
 import { Bot } from "lucide-react";
 import { useState } from "react";

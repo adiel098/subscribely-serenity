@@ -1,58 +1,86 @@
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-} from "@/features/community/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Bot } from "lucide-react";
+import { Button } from "@/features/community/components/ui/button";
+import { Input } from "@/features/community/components/ui/input";
+import { Label } from "@/features/community/components/ui/label";
+import { Card, CardHeader, CardContent, CardDescription, CardTitle } from "@/features/community/components/ui/card";
+import { useToast } from "@/features/community/components/ui/use-toast";
 
 interface TelegramPaymentOptionProps {
-  icon: string;
-  title: string;
-  isSelected: boolean;
-  onSelect: () => void;
-  demoDelay?: number;
+  onSave: (config: { botToken: string; providerToken: string }) => Promise<void>;
+  initialConfig?: {
+    botToken: string;
+    providerToken: string;
+  };
 }
 
-export const TelegramPaymentOption = ({ 
-  icon, 
-  title,
-  isSelected,
-  onSelect,
-  demoDelay = 1500
+export const TelegramPaymentOption = ({
+  onSave,
+  initialConfig,
 }: TelegramPaymentOptionProps) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [botToken, setBotToken] = useState(initialConfig?.botToken || "");
+  const [providerToken, setProviderToken] = useState(
+    initialConfig?.providerToken || ""
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleClick = async () => {
-    setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, demoDelay));
-    setIsProcessing(false);
-    onSelect();
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      await onSave({ botToken, providerToken });
+      toast({
+        title: "Success",
+        description: "Telegram payment settings saved successfully.",
+      });
+    } catch (error: any) {
+      console.error("Error saving Telegram payment settings:", error);
+      toast({
+        title: "Error",
+        description:
+          error?.message || "Failed to save Telegram payment settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Card 
-      className={cn(
-        "cursor-pointer transition-all duration-300 hover:scale-105",
-        isSelected ? 'border-primary shadow-lg' : 'hover:border-primary/50 hover:shadow-md'
-      )}
-      onClick={handleClick}
-    >
-      <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
-        {isProcessing ? (
-          <div className="p-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className={cn(
-            "p-4 rounded-full transition-colors",
-            isSelected ? 'bg-primary/20' : 'bg-primary/10'
-          )}>
-            <img src={icon} alt={title} className="h-12 w-12" />
-          </div>
-        )}
-        <h3 className="font-medium text-gray-900 text-lg">{title}</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="h-5 w-5" />
+          Telegram Payments
+        </CardTitle>
+        <CardDescription>
+          Configure your Telegram bot for accepting payments.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="bot-token">Bot Token</Label>
+          <Input
+            id="bot-token"
+            placeholder="Enter your Telegram bot token"
+            type="password"
+            value={botToken}
+            onChange={(e) => setBotToken(e.target.value)}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="provider-token">Provider Token</Label>
+          <Input
+            id="provider-token"
+            placeholder="Enter your payment provider token"
+            type="password"
+            value={providerToken}
+            onChange={(e) => setProviderToken(e.target.value)}
+          />
+        </div>
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save Changes"}
+        </Button>
       </CardContent>
     </Card>
   );

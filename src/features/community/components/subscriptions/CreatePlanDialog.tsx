@@ -1,11 +1,12 @@
+
 import { useState } from "react";
+import { SparklesIcon, CheckIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/features/community/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/features/community/components/ui/dialog";
 import { Input } from "@/features/community/components/ui/input";
 import { Label } from "@/features/community/components/ui/label";
 import { Textarea } from "@/features/community/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/features/community/components/ui/select";
-import { PlusIcon, SparklesIcon, CheckIcon } from "lucide-react";
 import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
 import { useCommunities } from "@/hooks/community/useCommunities";
 

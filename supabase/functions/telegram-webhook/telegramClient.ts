@@ -82,3 +82,14 @@ export class TelegramClient {
     }
   }
 }
+
+// בשביל תאימות עם הקוד הקיים
+export const sendTelegramMessage = async (
+  botToken: string, 
+  chatId: string | number, 
+  message: string,
+  reply_markup?: any
+) => {
+  const client = new TelegramClient(botToken);
+  return client.sendMessage(chatId, message, reply_markup);
+};

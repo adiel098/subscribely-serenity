@@ -1,13 +1,14 @@
-import { Toaster } from "@/features/community/components/ui/toaster";
-import { Toaster as Sonner } from "@/features/community/components/ui/sonner";
-import { TooltipProvider } from "@/features/community/components/ui/tooltip";
+
+import { Toaster } from "./features/community/components/ui/toaster";
+import { Toaster as Sonner } from "./features/community/components/ui/sonner";
+import { TooltipProvider } from "./features/community/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SidebarProvider } from "@/features/community/components/ui/sidebar";
-import { CommunityProvider } from "@/features/community/providers/CommunityContext";
-import { ProtectedRoute } from "@/features/community/components/ProtectedRoute";
-import { DashboardLayout } from "@/features/community/components/DashboardLayout";
+import { AuthProvider } from "./contexts/AuthContext";
+import { SidebarProvider } from "./features/community/components/ui/sidebar";
+import { CommunityProvider } from "./features/community/providers/CommunityContext";
+import { ProtectedRoute } from "./features/community/components/ProtectedRoute";
+import { DashboardLayout } from "./features/community/components/DashboardLayout";
 
 import Index from "./features/community/pages/Index";
 import Auth from "./features/community/pages/Auth";
@@ -22,9 +23,9 @@ import Events from "./features/community/pages/Events";
 import Rewards from "./features/community/pages/Rewards";
 import Settings from "./features/community/pages/Settings";
 import NotFound from "./features/community/pages/NotFound";
-import PlatformSelect from "./features/community/pages/PlatformSelect";
+import PlatformSelect from "./features/telegram mini app/pages/PlatformSelect";
 import TelegramConnect from "./features/community/pages/connect/TelegramConnect";
-import TelegramMiniApp from "./features/community/pages/TelegramMiniApp";
+import TelegramMiniApp from "./features/telegram mini app/pages/TelegramMiniApp";
 import Admin from "./features/admin/pages/Admin";
 
 const queryClient = new QueryClient();

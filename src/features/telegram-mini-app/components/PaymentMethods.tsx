@@ -1,12 +1,11 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart } from "lucide-react";
 import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
 import { Plan } from "../types";
 import { SuccessScreen } from "./SuccessScreen";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface PaymentMethodsProps {
@@ -30,6 +29,8 @@ export const PaymentMethods = ({
     <div id="payment-methods" className="space-y-4">
       <h2 className="text-xl font-semibold">Select Payment Method</h2>
       <TelegramPaymentOption
+        icon="/telegram-icon.png"
+        title="Pay with Telegram"
         isSelected={selectedPaymentMethod === 'telegram'}
         onSelect={() => onPaymentMethodSelect('telegram')}
       />

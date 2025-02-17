@@ -55,7 +55,7 @@ export const PaymentMethods = ({
         throw new Error('Could not get Telegram user ID');
       }
 
-      console.log('Creating payment for user:', {
+      console.log('Processing payment for user:', {
         userId,
         planId: selectedPlan.id,
         communityId: selectedPlan.community_id
@@ -82,27 +82,33 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
-      // עדכון סטטוס המנוי של המשתמש
-      const { data: existingMember, error: memberError } = await supabase
+      // בדיקת חבר קיים והתאמת הסטטוס
+      const { data: members, error: memberError } = await supabase
         .from('telegram_chat_members')
-        .select('id')
+        .select('id, is_active, subscription_status')
         .eq('community_id', selectedPlan.community_id)
-        .eq('telegram_user_id', userId.toString())
-        .single();
+        .eq('telegram_user_id', userId.toString());
 
-      if (memberError && memberError.code !== 'PGRST116') { // PGRST116 means no rows found
+      if (memberError) {
         console.error('Error checking existing member:', memberError);
         throw memberError;
       }
 
+      const existingMember = members?.[0];
+      const now = new Date().toISOString();
+      const subscriptionEndDate = selectedPlan.interval === 'one-time' 
+        ? null 
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
       if (existingMember) {
+        console.log('Updating existing member:', existingMember);
         // עדכון חבר קיים
         const { error: updateError } = await supabase
           .from('telegram_chat_members')
           .update({
             subscription_status: true,
-            subscription_start_date: new Date().toISOString(),
-            subscription_end_date: selectedPlan.interval === 'one-time' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_start_date: now,
+            subscription_end_date: subscriptionEndDate,
             subscription_plan_id: selectedPlan.id,
             is_active: true
           })
@@ -112,7 +118,19 @@ export const PaymentMethods = ({
           console.error('Error updating member:', updateError);
           throw updateError;
         }
+
+        // רישום אירוע חידוש מנוי
+        await logAnalyticsEvent(
+          selectedPlan.community_id,
+          'subscription_renewed',
+          userId.toString(),
+          {
+            plan_id: selectedPlan.id,
+            previous_status: existingMember.subscription_status
+          }
+        );
       } else {
+        console.log('Creating new member');
         // יצירת חבר חדש
         const { error: insertError } = await supabase
           .from('telegram_chat_members')
@@ -121,8 +139,8 @@ export const PaymentMethods = ({
             telegram_user_id: userId.toString(),
             telegram_username: initDataUnsafe?.user?.username || null,
             subscription_status: true,
-            subscription_start_date: new Date().toISOString(),
-            subscription_end_date: selectedPlan.interval === 'one-time' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_start_date: now,
+            subscription_end_date: subscriptionEndDate,
             subscription_plan_id: selectedPlan.id,
             is_active: true
           });
@@ -131,10 +149,21 @@ export const PaymentMethods = ({
           console.error('Error creating new member:', insertError);
           throw insertError;
         }
+
+        // רישום אירוע הצטרפות חדשה
+        await logAnalyticsEvent(
+          selectedPlan.community_id,
+          'member_joined',
+          userId.toString(),
+          {
+            username: initDataUnsafe?.user?.username,
+            plan_id: selectedPlan.id
+          }
+        );
       }
 
-      // Create the payment record
-      const { data: payment, error } = await supabase
+      // יצירת רשומת תשלום
+      const { data: payment, error: paymentError } = await supabase
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
@@ -148,21 +177,16 @@ export const PaymentMethods = ({
         .select()
         .maybeSingle();
 
-      if (error) {
-        console.error('Payment error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error processing payment",
-          description: "Please try again or contact support."
-        });
-        return;
+      if (paymentError) {
+        console.error('Payment error:', paymentError);
+        throw paymentError;
       }
 
       if (payment?.invite_link) {
         setPaymentInviteLink(payment.invite_link);
       }
 
-      // Log the payment event
+      // רישום אירוע תשלום
       await logAnalyticsEvent(
         selectedPlan.community_id,
         'payment_received',
@@ -170,7 +194,8 @@ export const PaymentMethods = ({
         {
           plan_id: selectedPlan.id,
           payment_method: selectedPaymentMethod,
-          invite_link: newInviteLink
+          invite_link: newInviteLink,
+          amount: selectedPlan.price
         },
         selectedPlan.price
       );

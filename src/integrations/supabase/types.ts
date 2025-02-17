@@ -741,6 +741,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_modify_admin_users: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: boolean
+      }
+      can_view_admin_users: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: boolean
+      }
       check_admin_role: {
         Args: {
           user_uuid: string

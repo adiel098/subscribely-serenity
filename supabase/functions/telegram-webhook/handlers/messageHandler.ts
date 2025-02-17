@@ -51,7 +51,9 @@ export const handleMessage = async (
             inline_keyboard: [[
               {
                 text: "View Subscription Plans",
-                url: `https://t.me/membifybot/app?startapp=${communityId}`
+                web_app: {
+                  url: `https://membify-telegram.vercel.app/?community=${communityId}`
+                }
               }
             ]]
           }
@@ -106,7 +108,9 @@ export const handleMessage = async (
                 inline_keyboard: [[
                   {
                     text: "View Subscription Plans",
-                    url: `https://t.me/membifybot/app?startapp=${community.id}`
+                    web_app: {
+                      url: `https://membify-telegram.vercel.app/?community=${community.id}`
+                    }
                   }
                 ]]
               }

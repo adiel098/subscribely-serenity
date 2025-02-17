@@ -1,32 +1,31 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { CommunityProvider } from "@/features/community/providers/CommunityContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { AuthProvider } from "./contexts/AuthContext";
+import { SidebarProvider } from "./components/ui/sidebar";
+import { CommunityProvider } from "./features/community/providers/CommunityContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { DashboardLayout } from "./components/DashboardLayout";
 
-import Index from "@/features/community/pages/Index";
-import Auth from "@/features/community/pages/Auth";
-import Dashboard from "@/features/community/pages/Dashboard";
-import Members from "@/features/community/pages/Members";
-import Subscribers from "@/features/community/pages/Subscribers";
-import Subscriptions from "@/features/community/pages/Subscriptions";
-import Messages from "@/features/community/pages/Messages";
-import Analytics from "@/features/community/pages/Analytics";
-import BotSettings from "@/features/community/pages/BotSettings";
-import Events from "@/features/community/pages/Events";
-import Rewards from "@/features/community/pages/Rewards";
-import Settings from "@/features/community/pages/Settings";
-import NotFound from "@/features/community/pages/NotFound";
-import PlatformSelect from "@/features/community/pages/PlatformSelect";
-import TelegramConnect from "@/features/community/pages/connect/TelegramConnect";
-import TelegramMiniApp from "@/features/community/pages/TelegramMiniApp";
-import Admin from "@/features/admin/pages/Admin";
+import Index from "./features/community/pages/Index";
+import Auth from "./features/community/pages/Auth";
+import Dashboard from "./features/community/pages/Dashboard";
+import Members from "./features/community/pages/Members";
+import Subscribers from "./features/community/pages/Subscribers";
+import Subscriptions from "./features/community/pages/Subscriptions";
+import Messages from "./features/community/pages/Messages";
+import Analytics from "./features/community/pages/Analytics";
+import BotSettings from "./features/community/pages/BotSettings";
+import Events from "./features/community/pages/Events";
+import Rewards from "./features/community/pages/Rewards";
+import Settings from "./features/community/pages/Settings";
+import NotFound from "./features/community/pages/NotFound";
+import PlatformSelect from "./features/community/pages/PlatformSelect";
+import TelegramConnect from "./features/community/pages/connect/TelegramConnect";
+import TelegramMiniApp from "./features/community/pages/TelegramMiniApp";
+import Admin from "./features/admin/pages/Admin";
 
 const queryClient = new QueryClient();
 

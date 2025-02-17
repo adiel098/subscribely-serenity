@@ -1,26 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-export interface Customer {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-  company_name: string | null;
-  status: string;
-  registration_date: string;
-  last_login: string | null;
-  avatar_url: string | null;
-  notes: string | null;
-  communities: {
-    id: string;
-    name: string;
-    platform: string;
-    member_count: number;
-    subscription_count: number;
-  }[];
-}
+import { Customer } from "@/features/community/components/customers/CustomersTable";
 
 interface UseCustomersOptions {
   searchTerm?: string;
@@ -63,7 +44,10 @@ export const useCustomers = (options: UseCustomersOptions = {}) => {
         throw error;
       }
 
-      return data as Customer[];
+      return data.map((profile: any) => ({
+        ...profile,
+        is_subscribed: profile.status === 'active'
+      })) as Customer[];
     }
   });
 };

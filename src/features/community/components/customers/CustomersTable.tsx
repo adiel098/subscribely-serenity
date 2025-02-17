@@ -1,4 +1,3 @@
-
 import { Eye, MoreHorizontal } from "lucide-react";
 import {
   Table,
@@ -22,13 +21,13 @@ import {
   DropdownMenuTrigger,
 } from "@/features/community/components/ui/dropdown-menu";
 
-interface Customer {
+export interface Customer {
   id: string;
   full_name: string | null;
-  email: string;
+  email: string | null;
   status: string;
-  created_at: string;
   avatar_url: string | null;
+  created_at: string;
   is_subscribed: boolean;
 }
 

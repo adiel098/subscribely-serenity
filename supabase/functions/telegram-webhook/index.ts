@@ -43,7 +43,23 @@ serve(async (req) => {
     if (body.path === '/remove-member') {
       console.log('[WEBHOOK] Handling member removal:', body);
       try {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/banChatMember`, {
+        // קודם מסירים את המשתמש מהקבוצה
+        const kickResponse = await fetch(`https://api.telegram.org/bot${botToken}/kickChatMember`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: body.chat_id,
+            user_id: body.user_id
+          })
+        });
+
+        const kickResult = await kickResponse.json();
+        console.log('[WEBHOOK] Kick result:', kickResult);
+
+        // מיד אחרי זה מסירים את ה-ban כדי שהמשתמש יוכל להצטרף שוב בעתיד
+        const unbanResponse = await fetch(`https://api.telegram.org/bot${botToken}/unbanChatMember`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -51,18 +67,22 @@ serve(async (req) => {
           body: JSON.stringify({
             chat_id: body.chat_id,
             user_id: body.user_id,
-            revoke_messages: false
+            only_if_banned: true
           })
         });
 
-        const result = await response.json();
-        console.log('[WEBHOOK] Ban result:', result);
+        const unbanResult = await unbanResponse.json();
+        console.log('[WEBHOOK] Unban result:', unbanResult);
 
-        return new Response(JSON.stringify({ success: result.ok }), {
+        return new Response(JSON.stringify({ 
+          success: kickResult.ok && unbanResult.ok,
+          kickResult,
+          unbanResult
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('[WEBHOOK] Error banning member:', error);
+        console.error('[WEBHOOK] Error removing member:', error);
         throw error;
       }
     }

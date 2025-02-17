@@ -1,3 +1,4 @@
+
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
@@ -17,8 +18,11 @@ import {
 import { Button } from "@/features/community/components/ui/button";
 import { Badge } from "@/features/community/components/ui/badge";
 
-interface MSNavigator extends Navigator {
-  msSaveBlob?: (blob: Blob, defaultName: string) => boolean;
+interface Plan {
+  id: string;
+  name: string;
+  interval: string;
+  price: number;
 }
 
 const Subscribers = () => {

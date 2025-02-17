@@ -15,7 +15,6 @@ export interface Community {
   subscription_revenue: number;
   created_at: string;
   updated_at: string;
-  telegram_photo_url?: string;
 }
 
 export const useCommunities = () => {

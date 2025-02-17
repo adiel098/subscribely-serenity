@@ -1,6 +1,6 @@
+
 import { Card } from "@/components/ui/card";
 import { useBotStats } from "@/hooks/community/useBotStats";
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { CreditCard, Users, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -27,7 +27,7 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
           <div className="flex items-center space-x-4">
             <Users className="h-5 w-5 text-muted-foreground" />
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Active Subscribers</h3>
               <Skeleton className="h-4 w-24" />
             </div>
           </div>
@@ -36,7 +36,7 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
           <div className="flex items-center space-x-4">
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
               <Skeleton className="h-4 w-24" />
             </div>
           </div>
@@ -60,8 +60,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
         <div className="flex items-center space-x-4">
           <Users className="h-5 w-5 text-muted-foreground" />
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
-            <p className="text-lg font-semibold">{botStats?.totalMembers || 0}</p>
+            <h3 className="text-sm font-medium text-muted-foreground">Active Subscribers</h3>
+            <p className="text-lg font-semibold">{botStats?.activeSubscribers || 0}</p>
           </div>
         </div>
       </Card>
@@ -69,8 +69,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
         <div className="flex items-center space-x-4">
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
-            <p className="text-lg font-semibold">{botStats?.messagesSent || 0}</p>
+            <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
+            <p className="text-lg font-semibold">{botStats?.totalMembers || 0}</p>
           </div>
         </div>
       </Card>

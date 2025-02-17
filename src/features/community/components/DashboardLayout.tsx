@@ -1,7 +1,7 @@
 
 import { AppSidebar } from "./AppSidebar";
 import CommunitySelector from "./CommunitySelector";
-import { useCommunityContext } from '@/features/community/providers/CommunityContext';
+import { useCommunityContext } from "../providers/CommunityContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

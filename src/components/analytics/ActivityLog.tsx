@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreditCard, Clock, Bell, Users, TrendingUp, DoorClosed, LogIn } from "lucide-react";
 import { format } from "date-fns";
 
@@ -71,35 +72,64 @@ export const ActivityLog = ({ events }: ActivityLogProps) => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Activity Log</CardTitle>
+        <span className="text-sm text-muted-foreground">
+          {events.length} events total
+        </span>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {events?.slice(0, 10).map(event => (
-            <div key={event.id} className="flex items-center space-x-4">
-              <div className="p-2 rounded-full bg-gray-100">
-                {getEventIcon(event.event_type)}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">
-                  {getEventTitle(event.event_type)}
-                </p>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-xs text-gray-500">
-                    {format(new Date(event.created_at), 'dd/MM/yyyy HH:mm')}
-                  </p>
-                  {getEventDetails(event) && (
-                    <p className="text-xs text-gray-600">{getEventDetails(event)}</p>
-                  )}
-                </div>
-              </div>
-              {event.amount && (
-                <div className="text-green-500 font-medium">${event.amount}</div>
-              )}
-            </div>
-          ))}
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Event</TableHead>
+              <TableHead>Details</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {events.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  No activity found
+                </TableCell>
+              </TableRow>
+            ) : (
+              events.map(event => (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-full bg-gray-100">
+                        {getEventIcon(event.event_type)}
+                      </div>
+                      <span className="font-medium">
+                        {getEventTitle(event.event_type)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {getEventDetails(event)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(event.created_at), 'dd/MM/yyyy HH:mm')}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {event.amount && (
+                      <span className="text-green-600 font-medium">
+                        ${event.amount}
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

@@ -9,8 +9,17 @@ export async function handleStartCommand(
   botToken: string
 ): Promise<boolean> {
   try {
-    console.log('[Start] Processing start command:', { message });
+    console.log('[Start] Processing start command:', { 
+      message,
+      hasBotToken: !!botToken,
+      botTokenLength: botToken?.length
+    });
     
+    if (!botToken) {
+      console.error('[Start] Bot token is missing!');
+      return false;
+    }
+
     const communityId = message.text.split(' ')[1];
     if (!communityId || !message.from) {
       console.log('[Start] Missing required data:', { communityId, from: message.from });
@@ -38,17 +47,36 @@ export async function handleStartCommand(
       hasWelcomeMessage: !!botSettings.welcome_message 
     });
 
+    // נוודא שיש לנו טוקן תקין ע"י בדיקה מול טלגרם
+    console.log('[Start] Verifying bot token...');
+    try {
+      const verifyResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+      const verifyResult = await verifyResponse.json();
+      if (!verifyResult.ok) {
+        console.error('[Start] Invalid bot token:', verifyResult);
+        return false;
+      }
+      console.log('[Start] Bot token verified successfully:', verifyResult.result.username);
+    } catch (verifyError) {
+      console.error('[Start] Error verifying bot token:', verifyError);
+      return false;
+    }
+
     const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
     const welcomeMessage = botSettings.welcome_message || 
       `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
 
     console.log('[Start] Sending welcome message to:', message.from.id);
     console.log('[Start] Message content:', welcomeMessage);
+    console.log('[Start] Using bot API URL:', `https://api.telegram.org/bot${botToken.substring(0, 5)}...`);
 
     try {
       const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'Subscribely-Bot/1.0'
+        },
         body: JSON.stringify({
           chat_id: message.from.id,
           text: welcomeMessage,
@@ -64,7 +92,17 @@ export async function handleStartCommand(
         })
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+      console.log('[Start] Raw API response:', responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('[Start] Error parsing API response:', parseError);
+        return false;
+      }
+
       console.log('[Start] Telegram API response:', result);
 
       if (!result.ok) {

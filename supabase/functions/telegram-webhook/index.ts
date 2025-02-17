@@ -7,7 +7,6 @@ import {
   handleChatJoinRequest,
   handleNewMessage,
   handleEditedMessage,
-  handleChannelPost,
   handleMyChatMember,
   updateMemberActivity
 } from './membershipHandler.ts';
@@ -16,10 +15,7 @@ import { sendBroadcastMessage } from './broadcastHandler.ts';
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { 
-      headers: corsHeaders,
-      status: 200
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -35,11 +31,9 @@ serve(async (req) => {
       );
 
       if (body.message) {
-        await handleNewMessage(supabase, body, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
+        await handleNewMessage(supabase, body);
       } else if (body.edited_message) {
         await handleEditedMessage(supabase, body);
-      } else if (body.channel_post) {
-        await handleChannelPost(supabase, body);
       } else if (body.chat_member) {
         await handleChatMemberUpdate(supabase, body);
       } else if (body.my_chat_member) {
@@ -79,7 +73,7 @@ serve(async (req) => {
           throw new Error('Missing required parameters');
         }
 
-        const status = await sendBroadcastMessage(
+        response = await sendBroadcastMessage(
           supabase,
           communityId,
           body.message,
@@ -87,8 +81,6 @@ serve(async (req) => {
           body.subscriptionPlanId,
           body.includeButton
         );
-
-        response = status;
         break;
 
       default:

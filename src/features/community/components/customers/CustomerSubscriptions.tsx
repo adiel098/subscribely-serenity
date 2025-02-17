@@ -1,132 +1,88 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import {
+import { 
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, CreditCard } from "lucide-react";
-import { format } from "date-fns";
-
-interface Community {
-  id: string;
-  name: string;
-}
+} from "@/features/community/components/ui/card";
+import { Badge } from "@/features/community/components/ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
 interface CustomerSubscriptionsProps {
-  communities: Community[];
-}
-
-interface Subscription {
-  id: string;
-  status: string;
-  amount: number;
-  created_at: string;
-  payment_method: string;
-  community: {
-    name: string;
-  };
-  plan: {
-    name: string;
-    interval: string;
+  data: {
+    subscriptions: Array<{
+      id: string;
+      plan_name: string;
+      status: "active" | "expired" | "cancelled";
+      start_date: string;
+      end_date: string | null;
+      price: number;
+      community_name: string;
+    }>;
   };
 }
 
-export const CustomerSubscriptions = ({ communities }: CustomerSubscriptionsProps) => {
-  const { data: subscriptions, isLoading } = useQuery({
-    queryKey: ['customer-subscriptions', communities.map(c => c.id)],
-    queryFn: async () => {
-      if (communities.length === 0) return [];
-
-      const { data, error } = await supabase
-        .from('subscription_payments')
-        .select(`
-          *,
-          community:communities(name),
-          plan:subscription_plans(name, interval)
-        `)
-        .in('community_id', communities.map(c => c.id))
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Subscription[];
-    },
-    enabled: communities.length > 0,
-  });
-
-  if (isLoading) {
+export const CustomerSubscriptions = ({ data }: CustomerSubscriptionsProps) => {
+  if (!data.subscriptions?.length) {
     return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No subscriptions found</p>
       </div>
     );
   }
 
-  if (!subscriptions?.length) {
-    return (
-      <Card className="mt-6">
-        <CardContent className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground">
-          <CreditCard className="h-8 w-8 mb-4" />
-          <p>No subscription history found</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6 py-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription History</CardTitle>
-          <CardDescription>
-            View all subscription payments and their status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {subscriptions.map((subscription) => (
-              <div
-                key={subscription.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium">
-                      {subscription.community?.name}
-                    </span>
-                    <Badge variant="outline">
-                      {subscription.plan?.name} - {subscription.plan?.interval}
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(subscription.created_at), 'PPp')}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">${subscription.amount}</div>
-                  <div className="text-sm">
-                    <Badge
-                      variant={
-                        subscription.status === 'completed'
-                          ? 'default'
-                          : subscription.status === 'failed'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                    >
-                      {subscription.status}
-                    </Badge>
-                  </div>
-                </div>
+    <div className="space-y-4">
+      {data.subscriptions.map((subscription) => (
+        <Card key={subscription.id}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>{subscription.plan_name}</CardTitle>
+                <CardDescription>{subscription.community_name}</CardDescription>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <Badge
+                variant={
+                  subscription.status === "active"
+                    ? "success"
+                    : subscription.status === "expired"
+                    ? "destructive"
+                    : "secondary"
+                }
+              >
+                {subscription.status}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Start Date
+                </p>
+                <p className="text-sm">
+                  {formatDistanceToNow(new Date(subscription.start_date), {
+                    addSuffix: true,
+                  })}
+                </p>
+              </div>
+              {subscription.end_date && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    End Date
+                  </p>
+                  <p className="text-sm">
+                    {formatDistanceToNow(new Date(subscription.end_date), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

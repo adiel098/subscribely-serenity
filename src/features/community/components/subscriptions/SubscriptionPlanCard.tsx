@@ -1,3 +1,4 @@
+
 import { Card } from "@/features/community/components/ui/card";
 import { Button } from "@/features/community/components/ui/button";
 import { CheckIcon, EditIcon, TrashIcon, StarIcon } from "lucide-react";
@@ -65,7 +66,9 @@ export const SubscriptionPlanCard = ({
           </div>
         </div>
         
-        {plan.description && <p className="text-gray-600 leading-relaxed mt-4">{plan.description}</p>}
+        {plan.description && (
+          <p className="text-gray-600 leading-relaxed mt-4">{plan.description}</p>
+        )}
         
         {plan.features && plan.features.length > 0 && (
           <ul className="space-y-4 mt-6 flex-grow">

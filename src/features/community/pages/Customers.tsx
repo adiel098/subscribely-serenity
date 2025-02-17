@@ -1,13 +1,13 @@
 
 import { useCustomers } from "@/hooks/community/useCustomers";
-import { CustomersTable } from "@/features/community/components/customers/CustomersTable";
-import { CustomerDetailsSheet } from "@/features/community/components/customers/CustomerDetailsSheet";
+import { CustomersTable } from "../components/customers/CustomersTable";
+import { CustomerDetailsSheet } from "../components/customers/CustomerDetailsSheet";
 import { useState } from "react";
 
 const Customers = () => {
+  const { data: customers } = useCustomers();
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { data: customers } = useCustomers();
 
   const customer = customers?.find(c => c.id === selectedCustomer);
 

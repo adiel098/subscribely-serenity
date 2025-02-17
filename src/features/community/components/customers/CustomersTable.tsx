@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CustomerDetailsSheet } from "@/features/community/components/customers/CustomerDetailsSheet";
+import { CustomerDetailsSheet } from "./CustomerDetailsSheet";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -30,16 +30,17 @@ export const CustomersTable = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
+            <TableHead>Username</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Joined</TableHead>
+            <TableHead>Plan</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {customers?.map((customer) => (
             <TableRow key={customer.id}>
-              <TableCell>{customer.full_name}</TableCell>
+              <TableCell>{customer.telegram_username || 'No username'}</TableCell>
               <TableCell>
                 <Badge variant={customer.subscription_status ? "success" : "secondary"}>
                   {customer.subscription_status ? "Active" : "Inactive"}
@@ -48,6 +49,7 @@ export const CustomersTable = () => {
               <TableCell>
                 {format(new Date(customer.joined_at), "PPP")}
               </TableCell>
+              <TableCell>{customer.plan?.name || 'No plan'}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"

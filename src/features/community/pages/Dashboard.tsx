@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/features/community/components/ui/card";
@@ -50,9 +51,7 @@ const Dashboard = () => {
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   
-  // Calculate total revenue from all payments ever made (including expired subscriptions)
   const totalRevenue = (subscribers || []).reduce((sum, sub) => {
-    // Sum all plan prices regardless of subscription status
     if (sub.plan) {
       const subscriptionAmount = sub.plan.price || 0;
       return sum + subscriptionAmount;
@@ -74,9 +73,9 @@ const Dashboard = () => {
   }, []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) || [];
 
   return (
-    <div className="h-full space-y-6 py-[5px] px-[14px]">
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="p-6">
+    <div className="container mx-auto p-6 max-w-[1400px] space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Active Subscribers</h3>
             <CreditCard className="h-5 w-5 text-green-500" />
@@ -88,7 +87,7 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Inactive Subscribers</h3>
             <CreditCard className="h-5 w-5 text-red-500" />
@@ -100,7 +99,7 @@ const Dashboard = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Total Revenue</h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
@@ -113,23 +112,29 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Member Growth</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={memberGrowthData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+              <AreaChart data={memberGrowthData} margin={{ top: 10, right: 10, bottom: 20, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="members" stroke="#3b82f6" fill="#93c5fd" />
+                <Area 
+                  type="monotone" 
+                  dataKey="members" 
+                  stroke="#3b82f6" 
+                  fill="#93c5fd" 
+                  strokeWidth={2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Over Time</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -137,14 +142,20 @@ const Dashboard = () => {
                 data={subscribers?.filter(sub => sub.plan).map(sub => ({
                   date: new Date(sub.subscription_start_date || '').toLocaleDateString(),
                   revenue: sub.plan?.price || 0
-                }))} 
-                margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+                }))}
+                margin={{ top: 10, right: 10, bottom: 20, left: 10 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#6ee7b7" />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#10b981" 
+                  fill="#6ee7b7" 
+                  strokeWidth={2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>

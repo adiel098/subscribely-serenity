@@ -1,7 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { Bot, webhookCallback } from "../_utils/telegramClient.ts"
+import { Bot } from "https://deno.land/x/grammy@v1.21.1/mod.ts"
+import { webhookCallback } from "https://deno.land/x/grammy@v1.21.1/mod.ts"
 import { corsHeaders } from "./cors.ts"
 import { handleMessage } from "./handlers/messageHandler.ts"
 import { handleChatMember } from "./handlers/chatMemberHandler.ts"

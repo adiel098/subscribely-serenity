@@ -1,4 +1,5 @@
-import { Context } from "../../_utils/telegramClient.ts";
+
+import { Context } from "https://deno.land/x/grammy@v1.21.1/mod.ts";
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Database } from "../../_utils/database.types.ts";
 

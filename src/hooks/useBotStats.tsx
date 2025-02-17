@@ -6,7 +6,6 @@ interface BotStats {
   totalMembers: number;
   activeMembers: number;
   inactiveMembers: number;
-  messagesSent: number;
 }
 
 export const useBotStats = (communityId: string) => {
@@ -26,24 +25,11 @@ export const useBotStats = (communityId: string) => {
         console.error('Error fetching bot stats:', error);
         throw error;
       }
-
-      // Count messages sent from community_logs
-      const { data: messages, error: messagesError } = await supabase
-        .from('community_logs')
-        .select('*')
-        .eq('community_id', communityId)
-        .eq('event_type', 'notification_sent');
-
-      if (messagesError) {
-        console.error('Error fetching messages count:', messagesError);
-        throw messagesError;
-      }
       
       return {
         totalMembers: members.length,
         activeMembers: members.filter(member => member.is_active).length,
         inactiveMembers: members.filter(member => !member.is_active).length,
-        messagesSent: messages?.length || 0
       };
     },
     enabled: Boolean(communityId),

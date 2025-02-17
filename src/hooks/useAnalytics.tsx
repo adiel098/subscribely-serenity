@@ -30,21 +30,17 @@ export const logAnalyticsEvent = async (
   // וידוא שה-metadata הוא אובייקט תקין
   const validMetadata = typeof metadata === 'object' ? metadata : {};
 
-  const eventData = {
-    community_id: communityId,
-    event_type: eventType,
-    user_id: userId,
-    metadata: validMetadata,
-    amount: amount === undefined ? null : amount
-  };
-
-  console.log('Logging analytics event:', eventData);
-
   try {
     const { data, error } = await supabase
       .from('community_logs')
-      .insert([eventData]) // שימו לב שאנחנו שולחים מערך
-      .select('*')
+      .insert({
+        community_id: communityId,
+        event_type: eventType,
+        user_id: userId,
+        metadata: validMetadata,
+        amount: amount
+      })
+      .select()
       .single();
 
     if (error) {
@@ -53,7 +49,7 @@ export const logAnalyticsEvent = async (
     }
 
     console.log('Successfully logged analytics event:', data);
-    return data;
+    return data as AnalyticsEvent;
   } catch (error) {
     console.error('Failed to log analytics event:', error);
     throw error;

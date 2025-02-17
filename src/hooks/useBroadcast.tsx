@@ -33,7 +33,7 @@ export const useBroadcast = (communityId: string) => {
 
       const { data, error } = await supabase.functions.invoke('telegram-webhook', {
         body: {
-          path: '/broadcast', // וידאנו שזה נשלח כראוי
+          path: '/broadcast',
           communityId,
           message,
           filterType,
@@ -55,7 +55,6 @@ export const useBroadcast = (communityId: string) => {
 
       let status: BroadcastStatus;
 
-      // אם התגובה היא { ok: true } זה אומר שההודעה נשלחה בהצלחה
       if (data.ok === true) {
         status = {
           successCount: 1,
@@ -63,7 +62,6 @@ export const useBroadcast = (communityId: string) => {
           totalRecipients: 1
         };
       }
-      // אם יש לנו את הפורמט המורחב עם המונים
       else if (typeof data.successCount === 'number' && typeof data.totalRecipients === 'number') {
         status = {
           successCount: data.successCount,
@@ -78,7 +76,7 @@ export const useBroadcast = (communityId: string) => {
       try {
         await logAnalyticsEvent(
           communityId,
-          'notification_sent',
+          'message_sent',
           null,
           {
             message,
@@ -86,11 +84,11 @@ export const useBroadcast = (communityId: string) => {
             success_count: status.successCount,
             failure_count: status.failureCount,
             total_recipients: status.totalRecipients
-          }
+          },
+          status.successCount
         );
       } catch (error) {
         console.error('Failed to log analytics event:', error);
-        // לא נזרוק שגיאה כאן כי זה לא קריטי
       }
 
       return status;

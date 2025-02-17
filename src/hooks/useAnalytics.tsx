@@ -18,21 +18,24 @@ export interface AnalyticsEvent {
 export const logAnalyticsEvent = async (
   communityId: string,
   eventType: AnalyticsEventType,
-  userId?: string | null,
+  userId: string | null = null,
   metadata: Record<string, any> = {},
-  amount?: number | null
+  amount: number | null = null
 ) => {
   if (!communityId) {
     console.error('Cannot log analytics event: Missing community ID');
     return;
   }
 
+  // וידוא שה-metadata הוא אובייקט תקין
+  const validMetadata = typeof metadata === 'object' ? metadata : {};
+
   const eventData = {
     community_id: communityId,
     event_type: eventType,
-    user_id: userId || null,
-    metadata: metadata || {},
-    amount: amount || null
+    user_id: userId,
+    metadata: validMetadata,
+    amount: amount === undefined ? null : amount
   };
 
   console.log('Logging analytics event:', eventData);
@@ -40,23 +43,19 @@ export const logAnalyticsEvent = async (
   try {
     const { data, error } = await supabase
       .from('community_logs')
-      .insert(eventData)
-      .select()
-      .maybeSingle();
+      .insert([eventData]) // שימו לב שאנחנו שולחים מערך
+      .select('*')
+      .single();
 
     if (error) {
-      console.error('Error logging analytics event:', error.message);
+      console.error('Error logging analytics event:', error);
       throw error;
     }
 
     console.log('Successfully logged analytics event:', data);
     return data;
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Failed to log analytics event:', error.message);
-    } else {
-      console.error('Failed to log analytics event:', error);
-    }
+    console.error('Failed to log analytics event:', error);
     throw error;
   }
 };

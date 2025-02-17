@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { useBotSettings } from "@/hooks/useBotSettings";
 import { Bot } from "lucide-react";
@@ -60,8 +59,8 @@ const BotSettings = () => {
         onValueChange={(value) => setExpandedSection(value)}
         className="space-y-4"
       >
-        <WelcomeMessageSection settings={settings} updateSettings={updateSettings} />
-        <SubscriptionSection settings={settings} updateSettings={updateSettings} />
+        <WelcomeMessageSection settings={settings} updateSettings={updateSettings.mutate} />
+        <SubscriptionSection settings={settings} updateSettings={updateSettings.mutate} />
         <BroadcastSection communityId={selectedCommunityId || ""} />
       </Accordion>
     </div>

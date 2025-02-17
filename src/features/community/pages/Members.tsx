@@ -4,8 +4,8 @@ import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSp
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { EditSubscriberDialog } from "@/components/subscribers/EditSubscriberDialog";
-import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
+import { EditSubscriberDialog } from "@/features/community/components/subscribers/EditSubscriberDialog";
+import { SubscribersTable } from "@/features/community/components/subscribers/SubscribersTable";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,

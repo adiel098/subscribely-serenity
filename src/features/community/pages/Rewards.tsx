@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Gift, Gem, CheckCircle2 } from "lucide-react";
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
+import { Button } from "@/components/ui/button";
 
 const Rewards = () => {
   const { toast } = useToast();

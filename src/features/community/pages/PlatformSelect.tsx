@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, Telegram, Discord } from "lucide-react";
+import { Globe, MessageSquare } from "lucide-react";
 
 const PlatformSelect = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const PlatformSelect = () => {
         <Card className="bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Telegram className="h-5 w-5 text-blue-500" />
+              <MessageSquare className="h-5 w-5 text-blue-500" />
               <span>Telegram</span>
             </CardTitle>
             <CardDescription>Connect your Telegram community</CardDescription>
@@ -36,7 +36,7 @@ const PlatformSelect = () => {
         <Card className="bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Discord className="h-5 w-5 text-purple-500" />
+              <MessageSquare className="h-5 w-5 text-purple-500" />
               <span>Discord</span>
             </CardTitle>
             <CardDescription>Connect your Discord community</CardDescription>

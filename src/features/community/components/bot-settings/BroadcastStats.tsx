@@ -4,6 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDown, ArrowUp, Loader2, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+export interface BroadcastStats {
+  messagesSent?: number;
+  newSubscribers?: number;
+  unsubscribers?: number;
+}
+
 interface StatCardProps {
   title: string;
   value: number | undefined;

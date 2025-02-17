@@ -1,43 +1,42 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { TelegramEvent } from './types.ts';
 
-export async function logTelegramEvent(supabase: ReturnType<typeof createClient>, eventType: string, data: any, error?: string) {
-  try {
-    console.log(`Logging ${eventType} event:`, JSON.stringify(data, null, 2));
-    
-    const eventData: TelegramEvent = {
-      event_type: eventType,
-      chat_id: data.message?.chat?.id || data.chat?.id || data.chat_join_request?.chat?.id || data.my_chat_member?.chat?.id,
-      user_id: data.message?.from?.id || data.from?.id || data.chat_join_request?.from?.id || data.my_chat_member?.from?.id,
-      username: data.message?.from?.username || data.from?.username || data.chat_join_request?.from?.username || data.my_chat_member?.from?.username,
-      message_id: data.message?.message_id,
-      message_text: data.message?.text,
-      raw_data: data,
-      error: error
-    };
+import { SupabaseClient } from "@supabase/supabase-js";
 
-    console.log('Prepared event data:', JSON.stringify(eventData, null, 2));
-
-    const { error: checkError } = await supabase
-      .from('telegram_events')
-      .select('id')
-      .limit(1);
-
-    if (checkError) {
-      console.error('Error checking telegram_events table:', checkError);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from('telegram_events')
-      .insert([eventData]);
-
-    if (insertError) {
-      console.error('Error logging event:', insertError);
-    } else {
-      console.log('✅ Event logged successfully');
-    }
-  } catch (err) {
-    console.error('Error in logTelegramEvent:', err);
-  }
+interface EventLogParams {
+  communityId: string;
+  eventType: string;
+  userId?: string | null;
+  metadata?: Record<string, any>;
+  amount?: number | null;
 }
+
+export const logEvent = async (
+  supabaseClient: SupabaseClient,
+  { communityId, eventType, userId = null, metadata = {}, amount = null }: EventLogParams
+) => {
+  console.log('Logging event:', { communityId, eventType, userId, metadata, amount });
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('community_logs')
+      .insert({
+        community_id: communityId,
+        event_type: eventType,
+        user_id: userId,
+        metadata,
+        amount
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error logging event:', error);
+      throw error;
+    }
+
+    console.log('Successfully logged event:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to log event:', error);
+    throw error;
+  }
+};

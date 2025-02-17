@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,13 +40,11 @@ export const PaymentMethods = ({
     }
 
     try {
-      // קבלת נתוני המשתמש מ-Telegram WebApp
       const webApp = (window as any).Telegram?.WebApp;
       if (!webApp) {
         throw new Error('Telegram WebApp is not available');
       }
 
-      const initData = webApp.initData;
       const initDataUnsafe = webApp.initDataUnsafe;
       const userId = initDataUnsafe?.user?.id;
 
@@ -61,8 +58,7 @@ export const PaymentMethods = ({
         communityId: selectedPlan.community_id
       });
 
-      // Create a new invite link
-      console.log('Creating new invite link for community:', selectedPlan.community_id);
+      // יצירת לינק הצטרפות חדש
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
         'create-invite-link',
         {
@@ -72,94 +68,42 @@ export const PaymentMethods = ({
 
       if (inviteLinkError) {
         console.error('Error creating invite link:', inviteLinkError);
-        toast({
-          variant: "destructive",
-          title: "Error creating invite link",
-          description: "Please try again or contact support."
-        });
-        return;
+        throw inviteLinkError;
       }
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
-      // בדיקת חבר קיים והתאמת הסטטוס
-      const { data: members, error: memberError } = await supabase
-        .from('telegram_chat_members')
-        .select('id, is_active, subscription_status')
-        .eq('community_id', selectedPlan.community_id)
-        .eq('telegram_user_id', userId.toString());
-
-      if (memberError) {
-        console.error('Error checking existing member:', memberError);
-        throw memberError;
-      }
-
-      const existingMember = members?.[0];
+      // עדכון או יצירת חבר
       const now = new Date().toISOString();
       const subscriptionEndDate = selectedPlan.interval === 'one-time' 
         ? null 
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      if (existingMember) {
-        console.log('Updating existing member:', existingMember);
-        // עדכון חבר קיים
-        const { error: updateError } = await supabase
-          .from('telegram_chat_members')
-          .update({
-            subscription_status: true,
-            subscription_start_date: now,
-            subscription_end_date: subscriptionEndDate,
-            subscription_plan_id: selectedPlan.id,
-            is_active: true
-          })
-          .eq('id', existingMember.id);
+      const memberData = {
+        community_id: selectedPlan.community_id,
+        telegram_user_id: userId.toString(),
+        telegram_username: initDataUnsafe?.user?.username || null,
+        subscription_status: true,
+        subscription_start_date: now,
+        subscription_end_date: subscriptionEndDate,
+        subscription_plan_id: selectedPlan.id,
+        is_active: true
+      };
 
-        if (updateError) {
-          console.error('Error updating member:', updateError);
-          throw updateError;
-        }
-
-        // רישום אירוע חידוש מנוי
-        await logAnalyticsEvent(
-          selectedPlan.community_id,
-          'subscription_renewed',
-          userId.toString(),
-          {
-            plan_id: selectedPlan.id,
-            previous_status: existingMember.subscription_status
+      // נסיון עדכון אם קיים, אחרת יצירה
+      const { error: upsertError } = await supabase
+        .from('telegram_chat_members')
+        .upsert(
+          memberData,
+          { 
+            onConflict: 'community_id,telegram_user_id',
+            ignoreDuplicates: false
           }
         );
-      } else {
-        console.log('Creating new member');
-        // יצירת חבר חדש
-        const { error: insertError } = await supabase
-          .from('telegram_chat_members')
-          .insert({
-            community_id: selectedPlan.community_id,
-            telegram_user_id: userId.toString(),
-            telegram_username: initDataUnsafe?.user?.username || null,
-            subscription_status: true,
-            subscription_start_date: now,
-            subscription_end_date: subscriptionEndDate,
-            subscription_plan_id: selectedPlan.id,
-            is_active: true
-          });
 
-        if (insertError) {
-          console.error('Error creating new member:', insertError);
-          throw insertError;
-        }
-
-        // רישום אירוע הצטרפות חדשה
-        await logAnalyticsEvent(
-          selectedPlan.community_id,
-          'member_joined',
-          userId.toString(),
-          {
-            username: initDataUnsafe?.user?.username,
-            plan_id: selectedPlan.id
-          }
-        );
+      if (upsertError) {
+        console.error('Error upserting member:', upsertError);
+        throw upsertError;
       }
 
       // יצירת רשומת תשלום
@@ -186,19 +130,35 @@ export const PaymentMethods = ({
         setPaymentInviteLink(payment.invite_link);
       }
 
-      // רישום אירוע תשלום
-      await logAnalyticsEvent(
-        selectedPlan.community_id,
-        'payment_received',
-        userId.toString(),
-        {
-          plan_id: selectedPlan.id,
-          payment_method: selectedPaymentMethod,
-          invite_link: newInviteLink,
+      // רישום אירועים
+      await supabase.functions.invoke('telegram-webhook', {
+        body: {
+          path: 'log-event',
+          communityId: selectedPlan.community_id,
+          eventType: 'payment_received',
+          userId: userId.toString(),
+          metadata: {
+            plan_id: selectedPlan.id,
+            payment_method: selectedPaymentMethod,
+            invite_link: newInviteLink,
+            amount: selectedPlan.price
+          },
           amount: selectedPlan.price
-        },
-        selectedPlan.price
-      );
+        }
+      });
+
+      await supabase.functions.invoke('telegram-webhook', {
+        body: {
+          path: 'log-event',
+          communityId: selectedPlan.community_id,
+          eventType: 'subscription_started',
+          userId: userId.toString(),
+          metadata: {
+            plan_id: selectedPlan.id,
+            subscription_end_date: subscriptionEndDate
+          }
+        }
+      });
 
       toast({
         title: "Payment Successful! 🎉",

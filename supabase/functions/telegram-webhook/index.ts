@@ -1,114 +1,119 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { Bot } from "https://deno.land/x/grammy@v1.21.1/mod.ts"
-import { webhookCallback } from "https://deno.land/x/grammy@v1.21.1/mod.ts"
-import { corsHeaders } from "./cors.ts"
-import { handleMessage } from "./handlers/messageHandler.ts"
-import { handleChatMember } from "./handlers/chatMemberHandler.ts"
-import { handleJoinRequest } from "./handlers/joinRequestHandler.ts"
-import { updateMemberActivity } from "./handlers/activityHandler.ts"
-import { handleBroadcast } from "./broadcastHandler.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { TelegramClient } from "./telegramClient.ts";
+import { WebhookManager } from "./webhookManager.ts";
+import { corsHeaders } from "./cors.ts";
+import { handleChat } from "./communityHandler.ts";
+import { handleSubscription } from "./subscriptionHandler.ts";
+import { handleMember } from "./memberHandler.ts";
+import { handleMessage } from "./handlers/messageHandler.ts";
+import { handleChatMember } from "./handlers/chatMemberHandler.ts";
+import { handleJoinRequest } from "./handlers/joinRequestHandler.ts";
+import { handleActivityUpdate } from "./handlers/activityHandler.ts";
+import { logEvent } from "./eventLogger.ts";
 
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    console.log('Received request:', {
+      url: req.url,
+      pathname: new URL(req.url).pathname,
+      path: new URL(req.url).pathname.split('/').pop(),
+      method: req.method
+    });
+
+    // Parse request body
+    const body = await req.json();
+    console.log('Request body:', body);
+
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const url = new URL(req.url)
-    const pathParts = url.pathname.split('/').filter(Boolean)
-    const path = pathParts[pathParts.length - 1] // Get the last part of the path
+    // Initialize Telegram client
+    const telegramClient = new TelegramClient(
+      Deno.env.get('TELEGRAM_BOT_TOKEN') || ''
+    );
 
-    console.log('Received request:', {
-      url: req.url,
-      pathname: url.pathname,
-      path,
-      method: req.method
-    })
-
-    // אם אין נתיב, זה כנראה עדכון מטלגרם
-    if (!path || path === 'telegram-webhook') {
-      const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '')
+    // Get the path from the URL
+    const path = new URL(req.url).pathname.split('/').pop();
     
-      bot.on('message', async (ctx) => {
-        await handleMessage(bot, ctx, supabaseClient)
-      })
-
-      bot.on('chat_member', async (ctx) => {
-        await handleChatMember(ctx, supabaseClient)
-      })
-
-      bot.on('chat_join_request', async (ctx) => {
-        await handleJoinRequest(ctx, supabaseClient)
-      })
-
-      const handler = webhookCallback(bot, 'std/http')
-      const response = await handler(req)
+    // Route to appropriate handler based on path
+    switch (path) {
+      case 'update-activity':
+        return handleActivityUpdate(body, supabaseClient, corsHeaders);
       
-      // הוספת CORS headers לתשובה
-      Object.entries(corsHeaders).forEach(([key, value]) => {
-        response.headers.set(key, value)
-      })
-      
-      return response
+      case 'log-event':
+        // Handle event logging
+        const { communityId, eventType, userId, metadata, amount } = body;
+        try {
+          const result = await logEvent(supabaseClient, {
+            communityId,
+            eventType,
+            userId,
+            metadata,
+            amount
+          });
+          
+          return new Response(
+            JSON.stringify({ success: true, data: result }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          console.error('Error logging event:', error);
+          return new Response(
+            JSON.stringify({ error: error.message }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400
+            }
+          );
+        }
+
+      default:
+        // Handle Telegram webhook updates
+        if (!body.update_id) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid webhook data' }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400
+            }
+          );
+        }
+
+        const webhookManager = new WebhookManager(body, telegramClient, supabaseClient);
+        
+        // Route based on update type
+        if (body.message) {
+          await handleMessage(body.message, telegramClient, supabaseClient);
+        }
+        if (body.chat_member) {
+          await handleChatMember(body.chat_member, telegramClient, supabaseClient);
+        }
+        if (body.chat_join_request) {
+          await handleJoinRequest(body.chat_join_request, telegramClient, supabaseClient);
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
     }
-
-    // בדיקה אם זה עדכון פעילות
-    if (path === 'update-activity') {
-      const { communityId } = await req.json()
-      
-      if (!communityId) {
-        return new Response(
-          JSON.stringify({ error: 'Community ID is required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      const result = await updateMemberActivity(supabaseClient, communityId)
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // בדיקה אם זה ברודקאסט
-    if (path === 'broadcast') {
-      const { communityId, message, filterType, subscriptionPlanId, includeButton } = await req.json()
-      
-      if (!communityId || !message) {
-        return new Response(
-          JSON.stringify({ error: 'Community ID and message are required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '')
-      const result = await handleBroadcast(bot, supabaseClient, communityId, message, filterType, subscriptionPlanId, includeButton)
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // אם הגענו לכאן, הנתיב לא מוכר
-    return new Response(
-      JSON.stringify({ error: `Unknown path: ${path}` }),
-      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
   } catch (error) {
-    console.error('Error processing request:', error)
+    console.error('Error in webhook handler:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
-})
+});

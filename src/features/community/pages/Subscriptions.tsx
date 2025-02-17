@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/features/community/components/ui/use-toast";
 import { Button } from "@/features/community/components/ui/button";
@@ -54,8 +55,9 @@ const Subscriptions = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
+      <div className="flex items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Loading subscribers...</p>
       </div>
     );
   }

@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -29,7 +30,6 @@ export const BroadcastStats = ({ broadcastId }: BroadcastStatsProps) => {
   });
 
   useEffect(() => {
-    // Subscribe to changes in the broadcast_messages table
     const channel = supabase
       .channel('broadcast-updates')
       .on(

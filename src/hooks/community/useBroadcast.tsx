@@ -44,7 +44,7 @@ export const useBroadcast = () => {
   });
 
   return {
-    mutate: mutation.mutate,
+    broadcast: mutation.mutate,
     isLoading: mutation.isPending
   };
 };

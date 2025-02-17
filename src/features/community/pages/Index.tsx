@@ -1,15 +1,21 @@
 
-import Hero from "@/components/Hero";
-import Footer from "@/components/Footer";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen w-full">
-      <Hero />
-      <div className="flex-grow"></div>
-      <Footer />
-    </div>
-  );
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  return null;
 };
 
 export default Index;

@@ -2,9 +2,12 @@
 import { AppSidebar } from "./AppSidebar";
 import { CommunitySelector } from "./CommunitySelector";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import type { CommunitySelectorProps } from "@/types";
 
-export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
 
   return (
@@ -14,7 +17,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         <div className="p-4">
           <CommunitySelector
             selectedCommunityId={selectedCommunityId || ""}
-            onSelect={setSelectedCommunityId}
+            onSelect={(id) => setSelectedCommunityId(id)}
           />
           <main className="mt-4">{children}</main>
         </div>

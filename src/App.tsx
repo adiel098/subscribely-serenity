@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,12 +8,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CommunityProvider } from "@/features/community/providers/CommunityContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { DashboardLayout } from "@/features/community/components/DashboardLayout";
 
-// Import pages from their new locations
-import Index from "@/features/community/pages/Index";
-import Auth from "@/features/community/pages/Auth";
+// Import pages
 import Dashboard from "@/features/community/pages/Dashboard";
+import Auth from "@/features/community/pages/Auth";
+import Index from "@/features/community/pages/Index";
 import Members from "@/features/community/pages/Members";
 import Subscribers from "@/features/community/pages/Subscribers";
 import Subscriptions from "@/features/community/pages/Subscriptions";

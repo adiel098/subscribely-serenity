@@ -261,29 +261,50 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          company_name: string | null
           created_at: string
           current_telegram_code: string | null
+          email: string | null
           full_name: string | null
           id: string
           initial_telegram_code: string | null
+          last_login: string | null
+          notes: string | null
+          phone: string | null
+          registration_date: string | null
+          status: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          company_name?: string | null
           created_at?: string
           current_telegram_code?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
           initial_telegram_code?: string | null
+          last_login?: string | null
+          notes?: string | null
+          phone?: string | null
+          registration_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          company_name?: string | null
           created_at?: string
           current_telegram_code?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
           initial_telegram_code?: string | null
+          last_login?: string | null
+          notes?: string | null
+          phone?: string | null
+          registration_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: []

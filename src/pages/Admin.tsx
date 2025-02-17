@@ -56,91 +56,87 @@ const Admin = () => {
           <h1 className="text-3xl font-bold">Admin Panel</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <Tabs defaultValue="dashboard" className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="md:col-span-3">
             <Card className="bg-[#221F26] border-none">
               <CardContent className="p-4">
-                <Tabs defaultValue="dashboard" orientation="vertical" className="h-full">
-                  <TabsList className="flex flex-col w-full bg-transparent space-y-1">
+                <TabsList className="flex flex-col w-full bg-transparent space-y-1">
+                  <TabsTrigger
+                    value="dashboard"
+                    className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
+                  >
+                    <BarChart3 className="h-5 w-5 mr-2" />
+                    Dashboard
+                  </TabsTrigger>
+                  {adminRole === 'super_admin' && (
                     <TabsTrigger
-                      value="dashboard"
+                      value="admins"
                       className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
                     >
-                      <BarChart3 className="h-5 w-5 mr-2" />
-                      Dashboard
+                      <Users className="h-5 w-5 mr-2" />
+                      Manage Admins
                     </TabsTrigger>
-                    {adminRole === 'super_admin' && (
-                      <TabsTrigger
-                        value="admins"
-                        className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
-                      >
-                        <Users className="h-5 w-5 mr-2" />
-                        Manage Admins
-                      </TabsTrigger>
-                    )}
-                    <TabsTrigger
-                      value="logs"
-                      className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
-                    >
-                      <ActivitySquare className="h-5 w-5 mr-2" />
-                      System Logs
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="settings"
-                      className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
-                    >
-                      <Settings2 className="h-5 w-5 mr-2" />
-                      Settings
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                  )}
+                  <TabsTrigger
+                    value="logs"
+                    className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
+                  >
+                    <ActivitySquare className="h-5 w-5 mr-2" />
+                    System Logs
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="settings"
+                    className="w-full justify-start px-4 py-3 data-[state=active]:bg-[#1A1F2C] data-[state=active]:text-white"
+                  >
+                    <Settings2 className="h-5 w-5 mr-2" />
+                    Settings
+                  </TabsTrigger>
+                </TabsList>
               </CardContent>
             </Card>
           </div>
 
           <div className="md:col-span-9">
-            <Tabs defaultValue="dashboard" className="space-y-6">
-              <TabsContent value="dashboard" className="space-y-6 mt-0">
-                <AdminStats />
-              </TabsContent>
+            <TabsContent value="dashboard" className="space-y-6 mt-0">
+              <AdminStats />
+            </TabsContent>
 
-              {adminRole === 'super_admin' && (
-                <TabsContent value="admins" className="space-y-6 mt-0">
-                  <Card className="bg-[#221F26] border-none">
-                    <CardHeader>
-                      <CardTitle className="text-xl text-white">Admin Users Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <AdminUsers />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              )}
-
-              <TabsContent value="logs" className="space-y-6 mt-0">
+            {adminRole === 'super_admin' && (
+              <TabsContent value="admins" className="space-y-6 mt-0">
                 <Card className="bg-[#221F26] border-none">
                   <CardHeader>
-                    <CardTitle className="text-xl text-white">System Logs</CardTitle>
+                    <CardTitle className="text-xl text-white">Admin Users Management</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <AdminLogs />
+                    <AdminUsers />
                   </CardContent>
                 </Card>
               </TabsContent>
+            )}
 
-              <TabsContent value="settings" className="space-y-6 mt-0">
-                <Card className="bg-[#221F26] border-none">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-white">System Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-400">System settings coming soon...</p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <TabsContent value="logs" className="space-y-6 mt-0">
+              <Card className="bg-[#221F26] border-none">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">System Logs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AdminLogs />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-6 mt-0">
+              <Card className="bg-[#221F26] border-none">
+                <CardHeader>
+                  <CardTitle className="text-xl text-white">System Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-400">System settings coming soon...</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </div>
     </div>
   );

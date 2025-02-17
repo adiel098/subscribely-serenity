@@ -22,7 +22,42 @@ serve(async (req) => {
     )
 
     const url = new URL(req.url)
-    const path = url.pathname.split('/').pop()
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    const path = pathParts[pathParts.length - 1] // Get the last part of the path
+
+    console.log('Received request:', {
+      url: req.url,
+      pathname: url.pathname,
+      path,
+      method: req.method
+    })
+
+    // אם אין נתיב, זה כנראה עדכון מטלגרם
+    if (!path || path === 'telegram-webhook') {
+      const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '')
+    
+      bot.on('message', async (ctx) => {
+        await handleMessage(bot, ctx, supabaseClient)
+      })
+
+      bot.on('chat_member', async (ctx) => {
+        await handleChatMember(ctx, supabaseClient)
+      })
+
+      bot.on('chat_join_request', async (ctx) => {
+        await handleJoinRequest(ctx, supabaseClient)
+      })
+
+      const handler = webhookCallback(bot, 'std/http')
+      const response = await handler(req)
+      
+      // הוספת CORS headers לתשובה
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+      
+      return response
+    }
 
     // בדיקה אם זה עדכון פעילות
     if (path === 'update-activity') {
@@ -62,33 +97,14 @@ serve(async (req) => {
       )
     }
 
-    // טיפול בעדכונים מטלגרם
-    const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '')
-    
-    bot.on('message', async (ctx) => {
-      await handleMessage(bot, ctx, supabaseClient)
-    })
-
-    bot.on('chat_member', async (ctx) => {
-      await handleChatMember(ctx, supabaseClient)
-    })
-
-    bot.on('chat_join_request', async (ctx) => {
-      await handleJoinRequest(ctx, supabaseClient)
-    })
-
-    const handler = webhookCallback(bot, 'std/http')
-    const response = await handler(req)
-    
-    // הוספת CORS headers לתשובה
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      response.headers.set(key, value)
-    })
-    
-    return response
+    // אם הגענו לכאן, הנתיב לא מוכר
+    return new Response(
+      JSON.stringify({ error: `Unknown path: ${path}` }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
-    console.error('Error in webhook:', error)
+    console.error('Error processing request:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

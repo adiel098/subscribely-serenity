@@ -40,19 +40,6 @@ export const PaymentMethods = ({
     }
 
     try {
-      // מקבלים את מזהה המשתמש מטלגרם
-      const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id;
-      
-      if (!telegramUserId) {
-        console.error('No Telegram user ID found');
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not verify Telegram user. Please try again."
-        });
-        return;
-      }
-
       // Create a new invite link
       console.log('Creating new invite link for community:', selectedPlan.community_id);
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
@@ -79,22 +66,28 @@ export const PaymentMethods = ({
         selectedPlan.community_id.substring(1) : 
         selectedPlan.community_id;
 
-      const paymentData = {
+      console.log('Creating payment with:', {
         plan_id: selectedPlan.id,
         community_id: communityId,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
         status: 'completed',
-        invite_link: newInviteLink || null,
-        telegram_user_id: telegramUserId.toString()
-      };
-
-      console.log('Creating payment with:', paymentData);
+        invite_link: newInviteLink,
+        telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+      });
 
       // Create the payment record with the new invite link
       const { data: payment, error } = await supabase
         .from('subscription_payments')
-        .insert([paymentData])
+        .insert([{
+          plan_id: selectedPlan.id,
+          community_id: communityId,
+          amount: selectedPlan.price,
+          payment_method: selectedPaymentMethod,
+          status: 'completed',
+          invite_link: newInviteLink || null,
+          telegram_user_id: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+        }])
         .select()
         .maybeSingle();
 

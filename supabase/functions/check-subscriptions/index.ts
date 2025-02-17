@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      let kickedMembers = 0;
+      let errorCount = 0;
+
       for (const member of inactiveMembers) {
         try {
           // Get bot settings for this community
@@ -111,8 +114,11 @@ Deno.serve(async (req) => {
                   was_trial: member.is_trial
                 }
               });
+
+              kickedMembers++;
             } catch (error) {
               console.error('Error kicking member:', error);
+              errorCount++;
               processedMembers.push({
                 telegram_user_id: member.telegram_user_id,
                 status: 'error',
@@ -128,6 +134,7 @@ Deno.serve(async (req) => {
           });
         } catch (error) {
           console.error('Error processing member:', member.telegram_user_id, error);
+          errorCount++;
           processedMembers.push({
             telegram_user_id: member.telegram_user_id,
             status: 'error',
@@ -135,6 +142,17 @@ Deno.serve(async (req) => {
           });
         }
       }
+
+      // Add analytics event for the cron job execution
+      await supabase.from('analytics_events').insert({
+        community_id: community.id,
+        event_type: 'subscription_check',
+        metadata: {
+          checked_members: inactiveMembers.length,
+          kicked_members: kickedMembers,
+          errors: errorCount
+        }
+      });
     }
 
     return new Response(

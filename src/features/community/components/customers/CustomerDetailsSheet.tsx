@@ -3,13 +3,7 @@ import { format } from "date-fns";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Customer } from "@/hooks/community/useCustomers";
-
-interface CustomerDetailsSheetProps {
-  customer: Customer;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+import type { CustomerDetailsSheetProps } from "@/types";
 
 export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerDetailsSheetProps) => {
   if (!customer) return null;
@@ -39,20 +33,20 @@ export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerD
 
           <div className="flex justify-between">
             <span className="text-muted-foreground">Joined</span>
-            <span>{format(new Date(customer.joined_at), "PPP")}</span>
+            <span>{format(new Date(customer.created_at), "PPP")}</span>
           </div>
 
-          {customer.subscription_start_date && (
+          {customer.name && (
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subscription Start</span>
-              <span>{format(new Date(customer.subscription_start_date), "PPP")}</span>
+              <span className="text-muted-foreground">Name</span>
+              <span>{customer.name}</span>
             </div>
           )}
 
-          {customer.subscription_end_date && (
+          {customer.email && (
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subscription End</span>
-              <span>{format(new Date(customer.subscription_end_date), "PPP")}</span>
+              <span className="text-muted-foreground">Email</span>
+              <span>{customer.email}</span>
             </div>
           )}
         </div>

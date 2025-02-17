@@ -1,8 +1,8 @@
 
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useAnalytics } from "@/hooks/community/useAnalytics";
-import { useBotStats } from "@/hooks/community/useBotStats";
-import { useSubscribers } from "@/hooks/community/useSubscribers";
+import { useAnalytics } from "@/features/community/hooks/useAnalytics";
+import { useBotStats } from "@/features/community/hooks/useBotStats";
+import { useSubscribers } from "@/features/community/hooks/useSubscribers";
 import { NextCheckTimer } from "@/features/community/components/analytics/NextCheckTimer";
 import { StatsGrid } from "@/features/community/components/analytics/StatsGrid";
 import { ActivityChart } from "@/features/community/components/analytics/ActivityChart";

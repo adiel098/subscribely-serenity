@@ -4,9 +4,9 @@ import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { useCommunities } from '@/hooks/community/useCommunities';
+import { useCommunities } from '@/features/community/hooks/useCommunities';
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
-import { useSubscribers } from '@/hooks/community/useSubscribers';
+import { useSubscribers } from '@/features/community/hooks/useSubscribers';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {

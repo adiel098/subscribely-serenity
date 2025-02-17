@@ -12,13 +12,16 @@ export interface BotStats {
   inactiveMembers: number;
   totalRevenue: number;
   revenuePerSubscriber: number;
+  activeSubscribers: number;
+  expiredSubscriptions: number;
 }
 
 export interface Customer {
   id: string;
-  name: string;
-  email: string;
   telegram_user_id: string;
+  telegram_username: string | null;
+  name?: string;
+  email?: string;
   created_at: string;
   subscription_status: boolean;
 }
@@ -66,3 +69,4 @@ export interface SubscriberPlan {
   interval: "monthly" | "quarterly" | "half-yearly" | "yearly" | "one-time";
   price: number;
 }
+

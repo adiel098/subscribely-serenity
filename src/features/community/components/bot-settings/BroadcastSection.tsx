@@ -1,49 +1,40 @@
 import { useState } from "react";
-import { useBroadcast } from "@/hooks/community/useBroadcast";
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
+import { useBroadcast } from "@/features/community/hooks/useBroadcast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessagePreview } from "@/features/community/components/bot-settings/MessagePreview";
-import { toast } from "sonner";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { supabase } from "@/integrations/supabase/client";
-import { BroadcastStatus } from "@/types";
+import { useSubscriptionPlans } from "@/features/community/hooks/useSubscriptionPlans";
 
-interface BroadcastSectionProps {
-  communityId: string;
-}
-
-export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
+export const BroadcastSection = ({ communityId }: { communityId: string }) => {
   const [message, setMessage] = useState("");
+  const { mutate: broadcast } = useBroadcast(communityId);
+  const { plans } = useSubscriptionPlans(communityId);
 
-  const broadcastMutation = useBroadcast();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-    broadcastMutation.mutate(message);
+  const handleSend = () => {
+    broadcast({ 
+      message,
+      filterType: 'all',
+      includeButton: false
+    });
   };
 
   return (
     <AccordionItem value="broadcast">
       <AccordionTrigger>Broadcast Message</AccordionTrigger>
       <AccordionContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={() => handleSend()} className="space-y-4">
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter your broadcast message"
             rows={4}
           />
-          <Button type="submit" disabled={broadcastMutation.isPending}>
-            {broadcastMutation.isPending ? "Sending..." : "Send Broadcast"}
+          <Button type="submit" disabled={broadcast.isPending}>
+            {broadcast.isPending ? "Sending..." : "Send Broadcast"}
           </Button>
         </form>
       </AccordionContent>

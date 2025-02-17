@@ -1,23 +1,20 @@
 
 import { AppSidebar } from "./AppSidebar";
-import CommunitySelector from "./CommunitySelector";
-import { useCommunityContext } from "../providers/CommunityContext";
+import { CommunitySelector } from "./CommunitySelector";
+import { useCommunityContext } from "@/features/community/providers/CommunityContext";
+import type { CommunitySelectorProps } from "@/types";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
 
   return (
     <div className="flex h-screen">
       <AppSidebar />
       <div className="flex-1 overflow-auto">
-        <div className="container p-4">
+        <div className="p-4">
           <CommunitySelector
             selectedCommunityId={selectedCommunityId || ""}
-            onSelect={(id: string) => setSelectedCommunityId(id)}
+            onSelect={setSelectedCommunityId}
           />
           <main className="mt-4">{children}</main>
         </div>

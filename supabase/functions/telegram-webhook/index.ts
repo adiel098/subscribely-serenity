@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './cors.ts';
@@ -19,9 +20,11 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log('Received webhook request:', JSON.stringify(body, null, 2));
+    console.log('[WEBHOOK] Received webhook request:', JSON.stringify(body, null, 2));
     
     if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
+      console.log('[WEBHOOK] Creating Supabase client...');
+      
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -32,8 +35,9 @@ serve(async (req) => {
       } else if (body.edited_message) {
         await handleEditedMessage(supabase, body);
       } else if (body.channel_post) {
-        console.log('Processing channel post:', body.channel_post);
+        console.log('[WEBHOOK] Detected channel post, text:', body.channel_post.text);
         await handleChannelPost(supabase, body);
+        console.log('[WEBHOOK] Finished handling channel post');
       } else if (body.chat_member) {
         await handleChatMemberUpdate(supabase, body);
       } else if (body.my_chat_member) {
@@ -60,7 +64,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('[WEBHOOK] Error processing request:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

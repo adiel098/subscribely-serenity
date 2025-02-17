@@ -20,7 +20,7 @@ export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerD
         <SheetHeader>
           <div className="flex items-center gap-4">
             <Avatar>
-              <AvatarImage src={customer.avatar_url} alt={customer.full_name || ''} />
+              <AvatarImage src={customer.avatar_url || ''} alt={customer.full_name || ''} />
               <AvatarFallback>{customer.full_name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -31,7 +31,7 @@ export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerD
 
         <div className="mt-6 space-y-4">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Subscription Status</span>
+            <span className="text-muted-foreground">Status</span>
             <Badge variant={customer.subscription_status ? "success" : "secondary"}>
               {customer.subscription_status ? "Active" : "Inactive"}
             </Badge>
@@ -46,6 +46,13 @@ export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerD
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subscription Start</span>
               <span>{format(new Date(customer.subscription_start_date), "PPP")}</span>
+            </div>
+          )}
+
+          {customer.subscription_end_date && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subscription End</span>
+              <span>{format(new Date(customer.subscription_end_date), "PPP")}</span>
             </div>
           )}
 

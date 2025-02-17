@@ -1,12 +1,12 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BotStats {
   totalMembers: number;
-  activeMembers: number;
-  inactiveMembers: number;
-  messagesSent: number;
+  activeSubscribers: number;
+  expiredSubscriptions: number;
+  totalRevenue: number;
+  revenuePerSubscriber: number;
 }
 
 export const useBotStats = (communityId: string) => {
@@ -41,9 +41,10 @@ export const useBotStats = (communityId: string) => {
       
       return {
         totalMembers: members.length,
-        activeMembers: members.filter(member => member.is_active).length,
-        inactiveMembers: members.filter(member => !member.is_active).length,
-        messagesSent: messages?.length || 0
+        activeSubscribers: members.filter(member => member.is_active).length,
+        expiredSubscriptions: members.filter(member => !member.is_active).length,
+        totalRevenue: 0,
+        revenuePerSubscriber: 0
       };
     },
     enabled: Boolean(communityId),

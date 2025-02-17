@@ -1,52 +1,75 @@
 
+import { useState, useEffect } from 'react';
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useCommunities } from "@/hooks/community/useCommunities";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
-interface CommunitySelectorProps {
-  selectedCommunityId: string | null;
-  onSelect: (communityId: string) => void;
+export interface CommunitySelectorProps {
+  selectedCommunityId: string;
+  onSelect: (id: string) => void;
 }
 
 const CommunitySelector = ({ selectedCommunityId, onSelect }: CommunitySelectorProps) => {
+  const [open, setOpen] = useState(false);
   const { data: communities, isLoading } = useCommunities();
-  const [isOpen, setIsOpen] = useState(false);
+  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
 
   if (isLoading) {
-    return (
-      <Button variant="outline" className="w-[200px]">
-        <Loader2 className="h-4 w-4 animate-spin" />
-      </Button>
-    );
+    return <div>Loading...</div>;
   }
 
-  const selectedCommunity = communities?.find(
-    (community) => community.id === selectedCommunityId
-  );
-
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-[200px] justify-start">
-          {selectedCommunity?.name || "Select Community"}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between"
+        >
+          {selectedCommunity ? selectedCommunity.name : "Select community..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]">
-        {communities?.map((community) => (
-          <DropdownMenuItem
-            key={community.id}
-            onClick={() => {
-              onSelect(community.id);
-              setIsOpen(false);
-            }}
-          >
-            {community.name}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search community..." />
+          <CommandEmpty>No community found.</CommandEmpty>
+          <CommandGroup>
+            {communities?.map((community) => (
+              <CommandItem
+                key={community.id}
+                onSelect={() => {
+                  onSelect(community.id);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    selectedCommunityId === community.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                {community.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

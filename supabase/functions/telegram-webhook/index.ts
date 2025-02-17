@@ -39,6 +39,8 @@ serve(async (req) => {
       } else if (body.edited_message) {
         await handleEditedMessage(supabase, body);
       } else if (body.channel_post) {
+        // טיפול מיוחד בהודעות מערוץ
+        console.log('Processing channel post:', body.channel_post);
         await handleChannelPost(supabase, body);
       } else if (body.chat_member) {
         await handleChatMemberUpdate(supabase, body);

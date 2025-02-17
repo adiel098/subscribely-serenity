@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,6 +10,7 @@ import { PaymentMethods } from "@/features/telegram-mini-app/components/PaymentM
 import { LoadingScreen } from "@/features/telegram-mini-app/components/LoadingScreen";
 import { CommunityNotFound } from "@/features/telegram-mini-app/components/CommunityNotFound";
 import { Plan, Community } from "@/features/telegram-mini-app/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TelegramConnect = () => {
   const [searchParams] = useSearchParams();
@@ -19,14 +20,27 @@ const TelegramConnect = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
     const initData = searchParams.get("initData");
     const startParam = searchParams.get("start");
 
     const fetchCommunityData = async () => {
       try {
         console.log('Fetching community data with params:', { startParam, initData });
+        const { data: session } = await supabase.auth.getSession();
+        
+        if (!session?.session) {
+          throw new Error('No active session');
+        }
+
         const response = await supabase.functions.invoke("telegram-mini-app", {
           body: { 
             start: startParam,
@@ -41,11 +55,15 @@ const TelegramConnect = () => {
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load community data. Please try again."
-        });
+        if (error.message === 'No active session') {
+          navigate('/auth');
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load community data. Please try again."
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -57,7 +75,7 @@ const TelegramConnect = () => {
       console.error("No start parameter provided");
       setLoading(false);
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, navigate, user]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);

@@ -78,7 +78,13 @@ export const handleMessage = async (
       // Find the community by telegram_chat_id
       const { data: community, error: communityError } = await supabase
         .from("communities")
-        .select("id")
+        .select(`
+          id,
+          name,
+          telegram_bot_settings (
+            welcome_message
+          )
+        `)
         .eq("telegram_chat_id", chatId)
         .single();
 
@@ -87,14 +93,34 @@ export const handleMessage = async (
         return;
       }
 
-      // Log event for each new member
+      // שליחת הודעה פרטית לכל חבר חדש
       for (const member of ctx.message.new_chat_members) {
-        if (!member.is_bot) {  // Only log real users, not bots
-          await logEvent(supabase, community.id, "member_joined", member.id.toString(), {
-            username: member.username,
-            first_name: member.first_name,
-            last_name: member.last_name
-          });
+        if (!member.is_bot) {  // רק למשתמשים אמיתיים, לא לבוטים
+          try {
+            const welcomeMessage = community.telegram_bot_settings?.welcome_message || 
+              `Welcome to ${community.name}! 👋\n\nTo access all community features, please select a subscription plan:`;
+
+            // שליחת הודעה פרטית למשתמש
+            await bot.api.sendMessage(member.id, welcomeMessage, {
+              reply_markup: {
+                inline_keyboard: [[
+                  {
+                    text: "View Subscription Plans",
+                    url: `https://t.me/membifybot/app?startapp=${community.id}`
+                  }
+                ]]
+              }
+            });
+
+            // רישום האירוע
+            await logEvent(supabase, community.id, "member_joined", member.id.toString(), {
+              username: member.username,
+              first_name: member.first_name,
+              last_name: member.last_name
+            });
+          } catch (error) {
+            console.error(`Error sending welcome message to user ${member.id}:`, error);
+          }
         }
       }
     } catch (error) {

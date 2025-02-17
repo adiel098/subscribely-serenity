@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,11 +19,29 @@ const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const { data: isAdmin } = useQuery({
+    queryKey: ['is-admin', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      return !!data;
+    },
+    enabled: !!user?.id
+  });
+
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +64,6 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
-        navigate("/dashboard");
       }
     } catch (error: any) {
       toast({

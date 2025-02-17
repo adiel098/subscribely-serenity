@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          amount: number | null
+          community_id: string
+          created_at: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          community_id: string
+          created_at?: string
+          event_type: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          community_id?: string
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcast_messages: {
         Row: {
           community_id: string
@@ -616,6 +654,15 @@ export type Database = {
       }
     }
     Enums: {
+      analytics_event_type:
+        | "subscription_created"
+        | "subscription_expired"
+        | "subscription_renewed"
+        | "member_joined"
+        | "member_left"
+        | "member_kicked"
+        | "payment_received"
+        | "notification_sent"
       community_role: "owner" | "admin" | "member"
       platform_type: "telegram" | "discord"
     }

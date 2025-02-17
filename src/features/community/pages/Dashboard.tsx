@@ -1,9 +1,10 @@
+
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
-import { useCommunities } from '@/hooks/useCommunities';
+import { useCommunities } from '@/hooks/admin/useCommunities';
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
 import { useSubscribers } from '@/hooks/community/useSubscribers';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';

@@ -12,6 +12,49 @@ export interface AnalyticsEvent {
   created_at: string;
 }
 
+export const logAnalyticsEvent = async (
+  communityId: string,
+  eventType: string,
+  userId?: string | null,
+  metadata: Record<string, any> = {},
+  amount?: number | null
+) => {
+  console.log('Logging analytics event:', {
+    communityId,
+    eventType,
+    userId,
+    metadata,
+    amount
+  });
+
+  try {
+    const { data, error } = await supabase
+      .from('community_logs')
+      .insert([
+        {
+          community_id: communityId,
+          event_type: eventType,
+          user_id: userId,
+          metadata,
+          amount
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error logging analytics event:', error);
+      throw error;
+    }
+
+    console.log('Successfully logged analytics event:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to log analytics event:', error);
+    throw error;
+  }
+};
+
 export const useAnalytics = (communityId: string) => {
   return useQuery({
     queryKey: ['analytics', communityId],
@@ -24,8 +67,12 @@ export const useAnalytics = (communityId: string) => {
         .eq('community_id', communityId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching analytics:', error);
+        throw error;
+      }
 
+      console.log('Fetched analytics events:', events);
       return events as AnalyticsEvent[];
     },
     enabled: Boolean(communityId),

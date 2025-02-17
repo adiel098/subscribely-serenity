@@ -91,8 +91,7 @@ export const useBroadcast = (communityId: string) => {
           communityId,
           'notification_sent',
           null,
-          analyticsData,
-          status.successCount
+          analyticsData
         );
         console.log('Analytics log result:', logResult);
       } catch (error) {

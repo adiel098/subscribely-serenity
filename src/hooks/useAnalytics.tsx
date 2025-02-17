@@ -27,8 +27,7 @@ export const logAnalyticsEvent = async (
     communityId,
     eventType,
     userId,
-    metadata,
-    amount
+    metadata
   });
 
   if (!communityId) {
@@ -45,7 +44,8 @@ export const logAnalyticsEvent = async (
     event_type: eventType,
     user_id: userId,
     metadata: validMetadata,
-    amount: amount
+    // רק אם זה תשלום או שסופק amount ספציפית
+    amount: eventType === 'payment_received' ? amount : null
   };
 
   console.log('Prepared event data for insert:', eventData);

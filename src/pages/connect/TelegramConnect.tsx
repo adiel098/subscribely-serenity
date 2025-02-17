@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -107,6 +108,7 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
+      // בדיקת חיבור קיים
       const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .select(`
@@ -128,7 +130,21 @@ const TelegramConnect = () => {
         throw settingsError;
       }
 
-      if (botSettings) {
+      // בדיקת קהילה שנוצרה דרך הווובהוק
+      const { data: recentCommunity, error: communityError } = await supabase
+        .from('communities')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (communityError) {
+        console.error('Error checking recent community:', communityError);
+        throw communityError;
+      }
+
+      if (botSettings || (recentCommunity && recentCommunity.telegram_chat_id)) {
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')

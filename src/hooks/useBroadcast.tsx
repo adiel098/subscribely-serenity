@@ -57,42 +57,64 @@ export const useBroadcast = (communityId: string) => {
         activeUsersCount: activeMembers.length
       });
 
-      const response = await supabase.functions.invoke('telegram-webhook', {
-        body: {
-          type: 'broadcast',  // הוספת type במקום path
-          communityId,
-          message,
-          filterType,
-          subscriptionPlanId,
-          includeButton
-        }
-      });
+      const { data: settings, error: settingsError } = await supabase
+        .from('telegram_global_settings')
+        .select('bot_token')
+        .single();
 
-      if (response.error) {
-        console.error('Broadcast error:', response.error);
-        throw response.error;
+      if (settingsError || !settings?.bot_token) {
+        console.error('Error fetching bot token:', settingsError);
+        throw new Error('Bot token not found');
       }
 
-      const responseData = response.data;
-      console.log('Raw broadcast response:', responseData);
+      let successCount = 0;
+      let failureCount = 0;
 
-      if (!responseData) {
-        console.error('No response data received');
-        throw new Error('No response data received');
+      // שליחת הודעות בצורה סדרתית
+      for (const member of activeMembers) {
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: member.telegram_user_id,
+              text: message,
+              parse_mode: 'HTML'
+            }),
+          });
+
+          const result = await response.json();
+          console.log(`Message sent to ${member.telegram_username || member.telegram_user_id}:`, result);
+
+          if (result.ok) {
+            successCount++;
+          } else {
+            failureCount++;
+            console.error(`Failed to send message to ${member.telegram_username || member.telegram_user_id}:`, result);
+          }
+
+          // להוסיף השהייה קטנה בין הודעות כדי להימנע מחסימה
+          await new Promise(resolve => setTimeout(resolve, 35));
+        } catch (error) {
+          console.error(`Error sending message to ${member.telegram_username || member.telegram_user_id}:`, error);
+          failureCount++;
+        }
       }
 
       const status: BroadcastStatus = {
-        successCount: Number(responseData.successCount) || 0,
-        failureCount: Number(responseData.failureCount) || 0,
-        totalRecipients: Number(responseData.totalRecipients) || 0
+        successCount,
+        failureCount,
+        totalRecipients: activeMembers.length
       };
 
-      if (isNaN(status.successCount) || isNaN(status.failureCount) || isNaN(status.totalRecipients)) {
-        console.error('Invalid response format:', responseData);
-        throw new Error('Invalid response format');
+      // בדיקה שבאמת היו הצלחות בשליחה
+      if (status.successCount === 0 && status.totalRecipients > 0) {
+        throw new Error('לא הצלחנו לשלוח את ההודעה לאף משתמש');
       }
 
-      console.log('Processed broadcast response:', status);
+      console.log('Broadcast completed with status:', status);
       return status;
     },
     onSuccess: (data) => {
@@ -106,7 +128,7 @@ export const useBroadcast = (communityId: string) => {
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);
-      toast.error('שגיאה בשליחת ההודעות');
+      toast.error(error instanceof Error ? error.message : 'שגיאה בשליחת ההודעות');
     }
   });
 };

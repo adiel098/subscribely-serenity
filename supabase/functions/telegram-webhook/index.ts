@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from './handlers/verificationHandler.ts';
+import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
 import { corsHeaders } from './cors.ts';
 
 console.log("[WEBHOOK] Starting webhook service...");
@@ -52,8 +53,14 @@ serve(async (req) => {
     // טיפול בהודעות שונות
     let handled = false;
 
+    // בדיקה אם זו הודעה מערוץ/קבוצה עם קוד אימות
+    if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
+      console.log("[WEBHOOK] Handling channel verification...");
+      handled = await handleChannelVerification(supabaseClient, message, botToken);
+      console.log("[WEBHOOK] Channel verification handled:", handled);
+    }
     // בדיקה אם זו פקודת start
-    if (message.text?.startsWith('/start')) {
+    else if (message.text?.startsWith('/start')) {
       console.log("[WEBHOOK] Handling start command...");
       handled = await handleStartCommand(supabaseClient, message, botToken);
       console.log("[WEBHOOK] Start command handled:", handled);

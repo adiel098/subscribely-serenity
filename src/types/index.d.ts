@@ -20,8 +20,8 @@ export interface Customer {
   id: string;
   telegram_user_id: string;
   telegram_username: string | null;
-  name?: string;
-  email?: string;
+  name: string | null;
+  email: string | null;
   created_at: string;
   subscription_status: boolean;
 }
@@ -68,5 +68,6 @@ export interface SubscriberPlan {
   name: string;
   interval: "monthly" | "quarterly" | "half-yearly" | "yearly" | "one-time";
   price: number;
+  features?: string[];
+  description?: string | null;
 }
-

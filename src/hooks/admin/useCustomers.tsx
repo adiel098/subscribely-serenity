@@ -4,28 +4,48 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Customer {
   id: string;
-  email: string;
   created_at: string;
-  updated_at: string;
-  profile: {
-    full_name: string;
-    avatar_url: string;
-  } | null;
+  email: string;
+  full_name: string;
+  company_name: string;
+  initial_telegram_code: string;
+  current_telegram_code: string;
+  last_login: string;
+  status: string;
+  avatar_url: string;
+  communities: {
+    id: string;
+    name: string;
+    platform: string;
+    member_count: number;
+    subscription_count: number;
+    subscription_revenue: number;
+  }[];
 }
 
 export const useCustomers = () => {
   return useQuery({
-    queryKey: ['customers'],
+    queryKey: ["customers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .select(`
           *,
-          user:users(*)
+          communities:community_members(
+            id,
+            name,
+            platform,
+            member_count,
+            subscription_count,
+            subscription_revenue
+          )
         `);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+
       return data as Customer[];
-    }
+    },
   });
 };

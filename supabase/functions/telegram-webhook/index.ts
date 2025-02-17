@@ -6,9 +6,9 @@ import {
   handleChatMemberUpdate,
   handleChatJoinRequest,
   handleNewMessage,
-  handleEditedMessage,
   handleMyChatMember,
-  updateMemberActivity
+  updateMemberActivity,
+  getBotChatMember
 } from './membershipHandler.ts';
 import { sendBroadcastMessage } from './broadcastHandler.ts';
 
@@ -22,7 +22,7 @@ serve(async (req) => {
     const body = await req.json();
     
     // Check if this is a direct webhook update from Telegram
-    if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
+    if (body.message || body.chat_member || body.my_chat_member || body.chat_join_request) {
       console.log('Received direct Telegram webhook update:', body);
       
       const supabase = createClient(
@@ -32,8 +32,6 @@ serve(async (req) => {
 
       if (body.message) {
         await handleNewMessage(supabase, body);
-      } else if (body.edited_message) {
-        await handleEditedMessage(supabase, body);
       } else if (body.chat_member) {
         await handleChatMemberUpdate(supabase, body);
       } else if (body.my_chat_member) {

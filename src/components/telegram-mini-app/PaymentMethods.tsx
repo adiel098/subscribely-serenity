@@ -41,6 +41,26 @@ export const PaymentMethods = ({
     }
 
     try {
+      // קבלת נתוני המשתמש מ-Telegram WebApp
+      const webApp = (window as any).Telegram?.WebApp;
+      if (!webApp) {
+        throw new Error('Telegram WebApp is not available');
+      }
+
+      const initData = webApp.initData;
+      const initDataUnsafe = webApp.initDataUnsafe;
+      const userId = initDataUnsafe?.user?.id;
+
+      if (!userId) {
+        throw new Error('Could not get Telegram user ID');
+      }
+
+      console.log('Creating payment for user:', {
+        userId,
+        planId: selectedPlan.id,
+        communityId: selectedPlan.community_id
+      });
+
       // Create a new invite link
       console.log('Creating new invite link for community:', selectedPlan.community_id);
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
@@ -62,16 +82,58 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
-      console.log('Creating payment with:', {
-        plan_id: selectedPlan.id,
-        community_id: selectedPlan.community_id,
-        amount: selectedPlan.price,
-        payment_method: selectedPaymentMethod,
-        status: 'completed',
-        invite_link: newInviteLink
-      });
+      // עדכון סטטוס המנוי של המשתמש
+      const { data: existingMember, error: memberError } = await supabase
+        .from('telegram_chat_members')
+        .select('id')
+        .eq('community_id', selectedPlan.community_id)
+        .eq('telegram_user_id', userId.toString())
+        .single();
 
-      // Create the payment record with the new invite link
+      if (memberError && memberError.code !== 'PGRST116') { // PGRST116 means no rows found
+        console.error('Error checking existing member:', memberError);
+        throw memberError;
+      }
+
+      if (existingMember) {
+        // עדכון חבר קיים
+        const { error: updateError } = await supabase
+          .from('telegram_chat_members')
+          .update({
+            subscription_status: true,
+            subscription_start_date: new Date().toISOString(),
+            subscription_end_date: selectedPlan.interval === 'one-time' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_plan_id: selectedPlan.id,
+            is_active: true
+          })
+          .eq('id', existingMember.id);
+
+        if (updateError) {
+          console.error('Error updating member:', updateError);
+          throw updateError;
+        }
+      } else {
+        // יצירת חבר חדש
+        const { error: insertError } = await supabase
+          .from('telegram_chat_members')
+          .insert({
+            community_id: selectedPlan.community_id,
+            telegram_user_id: userId.toString(),
+            telegram_username: initDataUnsafe?.user?.username || null,
+            subscription_status: true,
+            subscription_start_date: new Date().toISOString(),
+            subscription_end_date: selectedPlan.interval === 'one-time' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_plan_id: selectedPlan.id,
+            is_active: true
+          });
+
+        if (insertError) {
+          console.error('Error creating new member:', insertError);
+          throw insertError;
+        }
+      }
+
+      // Create the payment record
       const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
@@ -80,7 +142,8 @@ export const PaymentMethods = ({
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: newInviteLink || null
+          invite_link: newInviteLink || null,
+          telegram_user_id: userId.toString()
         }])
         .select()
         .maybeSingle();
@@ -103,7 +166,7 @@ export const PaymentMethods = ({
       await logAnalyticsEvent(
         selectedPlan.community_id,
         'payment_received',
-        null,
+        userId.toString(),
         {
           plan_id: selectedPlan.id,
           payment_method: selectedPaymentMethod,
@@ -187,4 +250,3 @@ export const PaymentMethods = ({
     </div>
   );
 };
-

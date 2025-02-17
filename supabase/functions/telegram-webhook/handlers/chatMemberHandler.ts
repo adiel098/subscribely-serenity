@@ -8,7 +8,8 @@ export async function handleChatMemberUpdate(
   try {
     const { chat, new_chat_member, old_chat_member } = chatMember;
     const userId = new_chat_member.user.id.toString();
-    const chatId = chat.id.toString();
+    // נמיר את המזהה השלילי למחרוזת חיובית
+    const chatId = Math.abs(chat.id).toString();
     const username = new_chat_member.user.username;
     const status = new_chat_member.status;
     const oldStatus = old_chat_member?.status;
@@ -18,7 +19,8 @@ export async function handleChatMemberUpdate(
       from: oldStatus,
       to: status,
       userId,
-      chatId,
+      originalChatId: chat.id,
+      processedChatId: chatId,
       username
     });
 
@@ -53,9 +55,15 @@ export async function handleChatMemberUpdate(
 
       const { data: payments, error: paymentError } = await supabase
         .from('subscription_payments')
-        .select('*')
+        .select(`
+          *,
+          plan:subscription_plans(
+            id,
+            interval
+          )
+        `)
         .eq('telegram_user_id', userId)
-        .eq('community_id', chatId) // מוודאים שזה תשלום לקהילה הספציפית
+        .eq('community_id', chatId)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(1);

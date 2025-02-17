@@ -1,7 +1,7 @@
 
-import { useCustomers } from "@/hooks/useCustomers";
-import CustomersTable from "@/components/customers/CustomersTable";
-import { CustomerDetailsSheet } from "@/components/customers/CustomerDetailsSheet";
+import { useCustomers } from "@/hooks/community/useCustomers";
+import { CustomersTable } from "@/features/community/components/customers/CustomersTable";
+import { CustomerDetailsSheet } from "@/features/community/components/customers/CustomerDetailsSheet";
 import { useState } from "react";
 
 const Customers = () => {

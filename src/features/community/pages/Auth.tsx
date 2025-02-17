@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { Button } from "@/features/community/components/ui/button";
 import { Input } from "@/features/community/components/ui/input";
 import { Label } from "@/features/community/components/ui/label";
 import { Card } from "@/features/community/components/ui/card";
-import { useToast } from "@/features/community/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 

@@ -1,8 +1,8 @@
 
-import Navbar from "@/components/Navbar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { CommunitySelector } from "@/components/CommunitySelector";
 import { useLocation } from "react-router-dom";
+import { Navbar } from "@/features/community/components/Navbar";
+import { AppSidebar } from "@/features/community/components/AppSidebar";
+import { CommunitySelector } from "@/features/community/components/CommunitySelector";
 
 export const DashboardLayout = ({
   children
@@ -12,7 +12,8 @@ export const DashboardLayout = ({
   const location = useLocation();
   const isAdminPage = location.pathname === '/admin';
 
-  return <div className="min-h-screen w-full">
+  return (
+    <div className="min-h-screen w-full">
       <Navbar />
       <div className="flex w-full">
         <AppSidebar />
@@ -23,5 +24,6 @@ export const DashboardLayout = ({
           </div>
         </main>
       </div>
-    </div>;
+    </div>
+  );
 };

@@ -1,42 +1,37 @@
 
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+import { Button } from "@/features/telegram mini app/components/ui/button";
+import { Plan } from "../pages/TelegramMiniApp";
 
 interface SuccessScreenProps {
-  communityInviteLink: string | null;
+  plan: Plan;
+  inviteLink: string;
 }
 
-export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
-  const handleJoinClick = () => {
-    if (communityInviteLink) {
-      window.open(communityInviteLink, '_blank');
-    }
-  };
-
+export const SuccessScreen = ({ plan, inviteLink }: SuccessScreenProps) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-fade-up">
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-        <Check className="w-8 h-8 text-green-600" />
+    <div className="text-center space-y-6 py-8">
+      <div className="flex justify-center">
+        <div className="rounded-full bg-green-100 p-3">
+          <CheckCircle2 className="h-12 w-12 text-green-600" />
+        </div>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900">
-        Payment Successful!
-      </h2>
-      <p className="text-gray-600 max-w-sm">
-        Your payment has been processed. Click the button below to join the community.
-      </p>
-      {communityInviteLink ? (
-        <Button
-          size="lg"
-          onClick={handleJoinClick}
-          className="px-8 py-6 text-lg font-semibold"
-        >
-          Join Community
-        </Button>
-      ) : (
-        <p className="text-red-500">
-          Error: No invite link available. Please contact support.
+
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Payment Successful!</h2>
+        <p className="text-muted-foreground">
+          You now have access to {plan.name}
         </p>
-      )}
+      </div>
+
+      <Button
+        size="lg"
+        className="gap-2"
+        onClick={() => window.location.href = inviteLink}
+      >
+        Join Community
+        <ArrowRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

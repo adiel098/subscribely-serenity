@@ -1,13 +1,12 @@
-
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
-import { useCommunityContext } from '@/contexts/CommunityContext';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useCommunityContext } from '@/features/community/providers/CommunityContext';
 import { useSubscribers } from '@/hooks/useSubscribers';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {
   const { user } = useAuth();

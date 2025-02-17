@@ -10,6 +10,7 @@ import { CommunityProvider } from "@/features/community/providers/CommunityConte
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 
+// Import pages from their new locations
 import Index from "./features/community/pages/Index";
 import Auth from "./features/community/pages/Auth";
 import Dashboard from "./features/community/pages/Dashboard";

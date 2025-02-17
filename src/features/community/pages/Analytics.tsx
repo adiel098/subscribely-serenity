@@ -3,10 +3,10 @@ import { useCommunityContext } from "@/features/community/providers/CommunityCon
 import { useAnalytics } from "@/hooks/community/useAnalytics";
 import { useBotStats } from "@/hooks/community/useBotStats";
 import { useSubscribers } from "@/hooks/community/useSubscribers";
-import { NextCheckTimer } from "../components/analytics/NextCheckTimer";
-import { StatsGrid } from "../components/analytics/StatsGrid";
-import { ActivityChart } from "../components/analytics/ActivityChart";
-import { ActivityLog } from "../components/analytics/ActivityLog";
+import { NextCheckTimer } from "@/features/community/components/analytics/NextCheckTimer";
+import { StatsGrid } from "@/features/community/components/analytics/StatsGrid";
+import { ActivityChart } from "@/features/community/components/analytics/ActivityChart";
+import { ActivityLog } from "@/features/community/components/analytics/ActivityLog";
 import type { ChartData } from "@/types";
 
 const Analytics = () => {

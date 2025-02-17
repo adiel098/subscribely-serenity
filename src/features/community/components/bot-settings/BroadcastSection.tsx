@@ -1,8 +1,9 @@
-
-import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useBroadcast } from "@/hooks/community/useBroadcast";
+import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MessagePreview } from "@/features/community/components/bot-settings/MessagePreview";
 import { toast } from "sonner";
 import {
   AccordionContent,
@@ -19,27 +20,7 @@ interface BroadcastSectionProps {
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
 
-  const broadcastMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const { data, error } = await supabase.functions.invoke<BroadcastStatus>("telegram-webhook", {
-        body: {
-          message,
-          communityId,
-          path: "/broadcast"
-        }
-      });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Message sent successfully");
-      setMessage("");
-    },
-    onError: (error) => {
-      toast.error(`Failed to send message: ${error.message}`);
-    }
-  });
+  const broadcastMutation = useBroadcast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

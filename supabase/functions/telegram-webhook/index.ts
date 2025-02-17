@@ -11,6 +11,32 @@ import {
 } from './membershipHandler.ts';
 import { sendBroadcastMessage } from './broadcastHandler.ts';
 
+interface AnalyticsEvent {
+  event_type: 'member_joined' | 'member_left' | 'notification_sent' | 'subscription_expired' | 'subscription_renewed' | 'payment_received';
+  community_id: string;
+  user_id?: string | null;
+  metadata?: Record<string, any>;
+  amount?: number | null;
+}
+
+async function logAnalyticsEvent(supabase: any, event: AnalyticsEvent) {
+  try {
+    console.log('Logging analytics event:', event);
+    const { error } = await supabase
+      .from('analytics_events')
+      .insert([event]);
+
+    if (error) {
+      console.error('Error logging analytics event:', error);
+      throw error;
+    }
+
+    console.log('Successfully logged analytics event');
+  } catch (err) {
+    console.error('Failed to log analytics event:', err);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -30,7 +56,20 @@ serve(async (req) => {
       );
 
       if (body.chat_member) {
-        await handleChatMemberUpdate(supabase, body);
+        const result = await handleChatMemberUpdate(supabase, body);
+        // Log member status changes
+        if (result?.event) {
+          await logAnalyticsEvent(supabase, {
+            event_type: result.event as any,
+            community_id: result.communityId,
+            user_id: result.userId,
+            metadata: {
+              telegram_user_id: body.chat_member.from.id,
+              username: body.chat_member.from.username,
+              status: body.chat_member.new_chat_member.status
+            }
+          });
+        }
       } else if (body.my_chat_member) {
         await handleMyChatMember(supabase, body);
       } else if (body.chat_join_request) {
@@ -76,6 +115,21 @@ serve(async (req) => {
           body.subscriptionPlanId,
           body.includeButton
         );
+
+        // Log broadcast event
+        if (response?.successCount > 0) {
+          await logAnalyticsEvent(supabase, {
+            event_type: 'notification_sent',
+            community_id: communityId,
+            metadata: {
+              message: body.message,
+              filter_type: body.filterType,
+              success_count: response.successCount,
+              failure_count: response.failureCount,
+              total_recipients: response.totalRecipients
+            }
+          });
+        }
         break;
 
       default:

@@ -52,7 +52,7 @@ export const handleMessage = async (
               {
                 text: "View Subscription Plans",
                 web_app: {
-                  url: `https://preview--subscribely-serenity.lovable.app/?start=${communityId}`
+                  url: `https://subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`
                 }
               }
             ]]
@@ -109,7 +109,7 @@ export const handleMessage = async (
                   {
                     text: "View Subscription Plans",
                     web_app: {
-                      url: `https://preview--subscribely-serenity.lovable.app/?start=${community.id}`
+                      url: `https://subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`
                     }
                   }
                 ]]

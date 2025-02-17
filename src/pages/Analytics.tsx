@@ -26,7 +26,7 @@ const Analytics = () => {
   const [nextCronTime, setNextCronTime] = useState<Date | null>(null);
   const [timeUntilNextCron, setTimeUntilNextCron] = useState<string>("");
 
-  // חישוב הזמן עד הבדיקה הבאה (כל שעה)
+  // Calculate time until next check (hourly)
   useEffect(() => {
     const calculateNextCron = () => {
       const now = new Date();
@@ -41,7 +41,7 @@ const Analytics = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // עדכון הספירה לאחור
+  // Update countdown
   useEffect(() => {
     if (!nextCronTime) return;
 
@@ -49,7 +49,7 @@ const Analytics = () => {
       const now = new Date();
       const diff = differenceInMinutes(nextCronTime, now);
       const minutes = diff % 60;
-      setTimeUntilNextCron(`${minutes} דקות`);
+      setTimeUntilNextCron(`${minutes} minutes`);
     };
 
     updateCountdown();
@@ -57,7 +57,7 @@ const Analytics = () => {
     return () => clearInterval(interval);
   }, [nextCronTime]);
 
-  // חישוב נתונים סטטיסטיים
+  // Calculate statistics
   const stats = {
     totalRevenue: events?.reduce((sum, event) => 
       event.event_type === 'payment_received' ? (sum + (event.amount || 0)) : sum, 0
@@ -67,7 +67,7 @@ const Analytics = () => {
     totalMembers: botStats?.totalMembers || 0
   };
 
-  // נתונים לגרף
+  // Chart data
   const chartData = events?.reduce((acc: any[], event) => {
     const date = format(new Date(event.created_at), 'MM/dd');
     const existing = acc.find(item => item.date === date);
@@ -90,7 +90,7 @@ const Analytics = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">אנליטיקס</h1>
+      <h1 className="text-2xl font-bold">Analytics</h1>
 
       {/* Next Cron Timer */}
       <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-none">
@@ -98,14 +98,14 @@ const Analytics = () => {
           <div className="flex items-center space-x-4">
             <Timer className="h-8 w-8 text-purple-500" />
             <div>
-              <h3 className="text-lg font-semibold">בדיקת מנויים הבאה</h3>
+              <h3 className="text-lg font-semibold">Next Subscription Check</h3>
               <p className="text-sm text-gray-500">
                 {nextCronTime ? (
                   <>
-                    בעוד {timeUntilNextCron} ({format(nextCronTime, 'HH:mm')})
+                    in {timeUntilNextCron} ({format(nextCronTime, 'HH:mm')})
                   </>
                 ) : (
-                  'טוען...'
+                  'Loading...'
                 )}
               </p>
             </div>
@@ -117,47 +117,47 @@ const Analytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">סה"כ הכנסות</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <CreditCard className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalRevenue}</div>
-            <div className="text-xs text-gray-500">מכל הזמנים</div>
+            <div className="text-xs text-gray-500">All time</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">מנויים פעילים</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Subscribers</CardTitle>
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeSubscribers}</div>
             <div className="text-xs text-gray-500">
-              מתוך {stats.totalMembers} חברים
+              out of {stats.totalMembers} members
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">התראות שנשלחו</CardTitle>
+            <CardTitle className="text-sm font-medium">Notifications Sent</CardTitle>
             <Bell className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.notifications}</div>
-            <div className="text-xs text-gray-500">ב-30 הימים האחרונים</div>
+            <div className="text-xs text-gray-500">in the last 30 days</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">פעילות</CardTitle>
+            <CardTitle className="text-sm font-medium">Activity</CardTitle>
             <Activity className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{events?.length || 0}</div>
-            <div className="text-xs text-gray-500">אירועים נרשמו</div>
+            <div className="text-xs text-gray-500">events recorded</div>
           </CardContent>
         </Card>
       </div>
@@ -165,7 +165,7 @@ const Analytics = () => {
       {/* Activity Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>פעילות ורווחים</CardTitle>
+          <CardTitle>Activity and Revenue</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -175,8 +175,8 @@ const Analytics = () => {
                 <YAxis yAxisId="left" />
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip />
-                <Bar yAxisId="left" dataKey="events" fill="#4f46e5" name="פעולות" />
-                <Bar yAxisId="right" dataKey="revenue" fill="#22c55e" name="הכנסות" />
+                <Bar yAxisId="left" dataKey="events" fill="#4f46e5" name="Events" />
+                <Bar yAxisId="right" dataKey="revenue" fill="#22c55e" name="Revenue" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -186,7 +186,7 @@ const Analytics = () => {
       {/* Activity Log */}
       <Card>
         <CardHeader>
-          <CardTitle>יומן פעילות</CardTitle>
+          <CardTitle>Activity Log</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -201,11 +201,11 @@ const Analytics = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">
-                    {event.event_type === 'payment_received' && 'תשלום התקבל'}
-                    {event.event_type === 'subscription_expired' && 'מנוי הסתיים'}
-                    {event.event_type === 'notification_sent' && 'התראה נשלחה'}
-                    {event.event_type === 'member_joined' && 'חבר חדש הצטרף'}
-                    {event.event_type === 'subscription_renewed' && 'מנוי חודש'}
+                    {event.event_type === 'payment_received' && 'Payment Received'}
+                    {event.event_type === 'subscription_expired' && 'Subscription Expired'}
+                    {event.event_type === 'notification_sent' && 'Notification Sent'}
+                    {event.event_type === 'member_joined' && 'New Member Joined'}
+                    {event.event_type === 'subscription_renewed' && 'Subscription Renewed'}
                   </p>
                   <p className="text-xs text-gray-500">
                     {format(new Date(event.created_at), 'dd/MM/yyyy HH:mm')}

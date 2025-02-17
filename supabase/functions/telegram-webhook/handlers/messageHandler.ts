@@ -18,10 +18,15 @@ export const handleMessage = async (
       console.log(`Processing start command for community: ${communityId}`);
       
       try {
-        // מציאת הקהילה
-        const { data: community, error: communityError } = await supabase
+        // מציאת הקהילה והגדרות הבוט שלה
+        const { data: communityData, error: communityError } = await supabase
           .from("communities")
-          .select("*")
+          .select(`
+            *,
+            telegram_bot_settings (
+              welcome_message
+            )
+          `)
           .eq("id", communityId)
           .single();
 
@@ -31,33 +36,25 @@ export const handleMessage = async (
           return;
         }
 
-        if (!community) {
+        if (!communityData) {
           console.log("Community not found");
           await ctx.reply("Sorry, I couldn't find this community.");
           return;
         }
 
-        // שליחת הודעת ברוכים הבאים עם כפתור לקנייה
-        await ctx.reply(
-          `Welcome to ${community.name}! 👋\n\n` +
-          `To join this community, please select a subscription plan:`,
-          {
-            reply_markup: {
-              inline_keyboard: [[
-                {
-                  text: "View Subscription Plans",
-                  url: `https://t.me/membifybot/app?startapp=${communityId}`
-                }
-              ]]
-            }
-          }
-        );
+        const welcomeMessage = communityData.telegram_bot_settings?.welcome_message || 
+          `Welcome to ${communityData.name}! 👋\n\nTo join this community, please select a subscription plan:`;
 
-        // רישום האירוע
-        await logEvent(supabase, communityId, "member_joined", ctx.from?.id?.toString() || null, {
-          username: ctx.from?.username,
-          first_name: ctx.from?.first_name,
-          last_name: ctx.from?.last_name
+        // שליחת הודעת ברוכים הבאים עם כפתור לקנייה
+        await ctx.reply(welcomeMessage, {
+          reply_markup: {
+            inline_keyboard: [[
+              {
+                text: "View Subscription Plans",
+                url: `https://t.me/membifybot/app?startapp=${communityId}`
+              }
+            ]]
+          }
         });
 
       } catch (error) {
@@ -70,9 +67,39 @@ export const handleMessage = async (
     return;
   }
 
-  // Handle other message types
+  // Handle new members joining the channel/group
   if (ctx.message?.new_chat_members) {
     console.log("New chat members:", ctx.message.new_chat_members);
+    
+    // Get chat ID for the community
+    const chatId = ctx.message.chat.id.toString();
+    
+    try {
+      // Find the community by telegram_chat_id
+      const { data: community, error: communityError } = await supabase
+        .from("communities")
+        .select("id")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (communityError || !community) {
+        console.error("Error finding community:", communityError);
+        return;
+      }
+
+      // Log event for each new member
+      for (const member of ctx.message.new_chat_members) {
+        if (!member.is_bot) {  // Only log real users, not bots
+          await logEvent(supabase, community.id, "member_joined", member.id.toString(), {
+            username: member.username,
+            first_name: member.first_name,
+            last_name: member.last_name
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error handling new chat members:", error);
+    }
     return;
   }
 

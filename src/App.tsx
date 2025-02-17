@@ -42,6 +42,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              } />
               
               <Route path="/dashboard" element={
                 <ProtectedRoute>
@@ -151,15 +156,6 @@ const App = () => (
                   </CommunityProvider>
                 </ProtectedRoute>
               } />
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Admin />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SidebarProvider>
@@ -170,4 +166,3 @@ const App = () => (
 );
 
 export default App;
-

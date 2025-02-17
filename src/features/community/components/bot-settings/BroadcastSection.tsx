@@ -1,8 +1,18 @@
-import { Send } from "lucide-react";
+
 import { useState } from "react";
+import { Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/features/community/components/ui/textarea";
 import { Button } from "@/features/community/components/ui/button";
 import { Checkbox } from "@/features/community/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/features/community/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -11,21 +21,12 @@ import {
   SelectValue,
 } from "@/features/community/components/ui/select";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/features/community/components/ui/card";
-import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/features/community/components/ui/accordion";
-import { useBroadcast } from "@/features/community/hooks/useBroadcast";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useBroadcast } from "@/hooks/community/useBroadcast";
+import { BroadcastStats } from "./BroadcastStats";
 
 interface BroadcastSectionProps {
   communityId: string;
@@ -33,139 +34,117 @@ interface BroadcastSectionProps {
 
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
-  const [isSending, setIsSending] = useState(false);
-  const [includeButton, setIncludeButton] = useState(false);
-  const { mutateAsync: sendBroadcast } = useBroadcast(communityId);
+  const [targetAudience, setTargetAudience] = useState<string>("all");
+  const [silent, setSilent] = useState(false);
+  const { toast } = useToast();
+  const { broadcast, isLoading } = useBroadcast();
 
-  const { data: plans } = useQuery({
-    queryKey: ['subscription-plans', communityId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('community_id', communityId)
-        .eq('is_active', true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const handleSendBroadcast = async () => {
     if (!message.trim()) {
-      toast.error("Please enter a message");
+      toast({
+        title: "Error",
+        description: "Please enter a message",
+        variant: "destructive",
+      });
       return;
     }
 
-    if (filterType === 'plan' && !selectedPlanId) {
-      toast.error("Please select a subscription plan");
-      return;
-    }
-
-    setIsSending(true);
     try {
-      await sendBroadcast({
+      await broadcast({
+        communityId,
         message: message.trim(),
-        filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
-        subscriptionPlanId: selectedPlanId,
-        includeButton
+        targetAudience,
+        silent,
+      });
+
+      toast({
+        title: "Success",
+        description: "Message broadcast initiated",
       });
 
       setMessage("");
-    } catch (error) {
-      console.error('Error sending broadcast:', error);
-      toast.error("Error sending broadcast messages");
-    } finally {
-      setIsSending(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to broadcast message",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <AccordionItem value="broadcast" className="border rounded-lg">
-      <AccordionTrigger className="px-4">
-        <div className="flex items-center space-x-2">
-          <Send className="h-5 w-5 text-primary" />
-          <span>Broadcast Message</span>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent className="px-4 pb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Send Broadcast Message</CardTitle>
-            <CardDescription>
-              Send a message to your community members
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Select
-                value={filterType}
-                onValueChange={(value) => {
-                  setFilterType(value);
-                  if (value !== 'plan') {
-                    setSelectedPlanId("");
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select recipients" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Members</SelectItem>
-                  <SelectItem value="active">Active Subscribers</SelectItem>
-                  <SelectItem value="expired">Expired Subscribers</SelectItem>
-                  <SelectItem value="plan">Specific Plan</SelectItem>
-                </SelectContent>
-              </Select>
+    <AccordionItem value="broadcast">
+      <AccordionTrigger>Broadcast Message</AccordionTrigger>
+      <AccordionContent>
+        <div className="space-y-4 pt-4">
+          <BroadcastStats communityId={communityId} />
 
-              {filterType === 'plan' && plans && (
-                <Select
-                  value={selectedPlanId}
-                  onValueChange={setSelectedPlanId}
+          <Card>
+            <CardHeader>
+              <CardTitle>New Broadcast</CardTitle>
+              <CardDescription>
+                Send a message to all or selected members of your community
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Audience</label>
+                  <Select
+                    value={targetAudience}
+                    onValueChange={setTargetAudience}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select target audience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Members</SelectItem>
+                      <SelectItem value="active">Active Subscribers</SelectItem>
+                      <SelectItem value="expired">Expired Subscribers</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Message</label>
+                  <Textarea
+                    placeholder="Type your broadcast message here..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="silent"
+                    checked={silent}
+                    onCheckedChange={(checked) => setSilent(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="silent"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Silent notification (no sound)
+                  </label>
+                </div>
+              </CardContent>
+
+              <CardFooter>
+                <Button
+                  type="submit"
+                  disabled={isLoading || !message.trim()}
+                  className="w-full sm:w-auto"
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select subscription plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your broadcast message..."
-              className="min-h-[150px]"
-            />
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="include-button"
-                checked={includeButton}
-                onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
-              />
-              <label
-                htmlFor="include-button"
-                className="text-sm text-muted-foreground"
-              >
-                Include join button with message
-              </label>
-            </div>
-            <Button 
-              onClick={handleSendBroadcast} 
-              disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId)}
-              className="w-full"
-            >
-              {isSending ? "Sending..." : "Send Broadcast"}
-            </Button>
-          </CardContent>
-        </Card>
+                  <Send className="mr-2 h-4 w-4" />
+                  {isLoading ? "Sending..." : "Send Broadcast"}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
       </AccordionContent>
     </AccordionItem>
   );

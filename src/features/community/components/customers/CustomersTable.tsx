@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useCustomers } from "@/hooks/community/useCustomers";
+import { useCustomers, Customer } from "@/hooks/community/useCustomers";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -16,14 +16,12 @@ import { Badge } from "@/components/ui/badge";
 
 export const CustomersTable = () => {
   const { data: customers, isLoading } = useCustomers();
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [open, setOpen] = useState(false);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
-
-  const selectedCustomerData = customers?.find(c => c.id === selectedCustomer);
 
   return (
     <div>
@@ -54,7 +52,7 @@ export const CustomersTable = () => {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setSelectedCustomer(customer.id);
+                    setSelectedCustomer(customer);
                     setOpen(true);
                   }}
                 >
@@ -66,9 +64,9 @@ export const CustomersTable = () => {
         </TableBody>
       </Table>
 
-      {selectedCustomerData && (
+      {selectedCustomer && (
         <CustomerDetailsSheet
-          customer={selectedCustomerData}
+          customer={selectedCustomer}
           open={open}
           onOpenChange={setOpen}
         />

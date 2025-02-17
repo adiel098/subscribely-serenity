@@ -17,7 +17,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="container p-4">
           <CommunitySelector
             selectedCommunityId={selectedCommunityId || ""}
-            onSelect={setSelectedCommunityId}
+            onSelect={(id: string) => setSelectedCommunityId(id)}
           />
           <main className="mt-4">{children}</main>
         </div>

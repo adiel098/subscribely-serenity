@@ -69,8 +69,8 @@ export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
         <div className="flex items-center space-x-4">
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
-            <p className="text-lg font-semibold">{botStats?.totalMembers || 0}</p>
+            <h3 className="text-sm font-medium text-muted-foreground">Expired Subscriptions</h3>
+            <p className="text-lg font-semibold">{botStats?.expiredSubscriptions || 0}</p>
           </div>
         </div>
       </Card>

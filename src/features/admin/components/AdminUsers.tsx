@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,10 +20,12 @@ interface AdminUser {
   id: string;
   role: 'super_admin' | 'admin' | 'moderator';
   created_at: string;
-  profiles: {
+  user_id: string;
+  user: {
+    id: string;
     full_name: string | null;
     email: string | null;
-  } | null;
+  };
 }
 
 export const AdminUsers = () => {
@@ -37,7 +40,9 @@ export const AdminUsers = () => {
           id,
           role,
           created_at,
-          profiles (
+          user_id,
+          user:profiles!admin_users_user_id_fkey (
+            id,
             full_name,
             email
           )
@@ -85,8 +90,8 @@ export const AdminUsers = () => {
             ) : (
               adminUsers.map((admin) => (
                 <TableRow key={admin.id}>
-                  <TableCell>{admin.profiles?.full_name || 'N/A'}</TableCell>
-                  <TableCell>{admin.profiles?.email}</TableCell>
+                  <TableCell>{admin.user?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{admin.user?.email}</TableCell>
                   <TableCell>
                     <Badge variant={
                       admin.role === 'super_admin' ? 'default' :

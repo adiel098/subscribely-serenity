@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -7,8 +8,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/features/admin/components/ui/table";
-import { Badge } from "@/features/admin/components/ui/badge";
+} from "@/features/community/components/ui/table";
+import { Badge } from "@/features/community/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 

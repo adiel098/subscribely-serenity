@@ -46,17 +46,26 @@ export const useBroadcast = (communityId: string) => {
         throw error;
       }
 
+      if (!data || typeof data.successCount !== 'number' || typeof data.totalRecipients !== 'number') {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response from server');
+      }
+
       console.log('Broadcast response:', data);
-      return data;
+      return {
+        successCount: data.successCount,
+        failureCount: data.failureCount || 0,
+        totalRecipients: data.totalRecipients
+      };
     },
     onSuccess: (data) => {
-      if (data.totalRecipients === 0) {
+      if (!data.totalRecipients) {
         toast.warning('No recipients found matching the selected criteria');
         return;
       }
       
       toast.success(
-        `Successfully sent messages to ${data.successCount} out of ${data.totalRecipients} users`
+        `Successfully sent messages to ${data.successCount || 0} out of ${data.totalRecipients} users`
       );
 
       if (data.failureCount > 0) {

@@ -1,6 +1,6 @@
 
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useAnalytics } from "@/hooks/admin/useAnalytics";
+import { useAnalytics } from "@/hooks/community/useAnalytics";
 import { useBotStats } from "@/hooks/community/useBotStats";
 import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { format } from "date-fns";

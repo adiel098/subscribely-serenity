@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { useCommunities } from "@/hooks/admin/useCommunities";
+import { useCommunities } from "@/hooks/community/useCommunities";
 import { useLocation } from "react-router-dom";
 
 type CommunityContextType = {

@@ -1,124 +1,83 @@
+import { useMemo } from "react";
+import { Check, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Copy, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useCommunities } from "@/hooks/useCommunities";
+import { useCommunities } from "@/hooks/community/useCommunities";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { usePaymentMethods } from "@/hooks/telegram-mini-app/usePaymentMethods";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
 
-export const CommunitySelector = () => {
-  const { data: communities } = useCommunities();
+const CommunitySelector = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: communities, isLoading } = useCommunities();
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
-  const { toast } = useToast();
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
+  const { data: paymentMethods } = usePaymentMethods();
+  const { data: subscriptionPlans } = useSubscriptionPlans(selectedCommunityId || "");
 
-  const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
-  const { plans } = useSubscriptionPlans(selectedCommunityId || "");
-
-  const copyMiniAppLink = () => {
-    if (!selectedCommunityId) {
-      setAlertMessage("Please select a community first to copy the link 🎯");
-      setShowAlert(true);
-      return;
-    }
-
-    if (!plans?.length) {
-      setAlertMessage("You haven't set up any subscription plans yet. Add at least one plan to share the link! 📦");
-      setShowAlert(true);
-      return;
-    }
-
-    if (!paymentMethods?.some(pm => pm.is_active)) {
-      setAlertMessage("You haven't set up any active payment methods. Enable at least one payment method to share the link! 💳");
-      setShowAlert(true);
-      return;
-    }
-
-    const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
-    navigator.clipboard.writeText(miniAppUrl);
-    toast({
-      title: "Link Copied! 🎉",
-      description: "The Mini App link has been copied to your clipboard",
-    });
+  const addNewCommunity = () => {
+    navigate('/platform-select');
   };
 
+  const hasPaymentMethods = useMemo(() => {
+    return paymentMethods && paymentMethods.length > 0;
+  }, [paymentMethods]);
+
+  const hasSubscriptionPlans = useMemo(() => {
+    return subscriptionPlans && subscriptionPlans.length > 0;
+  }, [subscriptionPlans]);
+
   return (
-    <>
-      <div className="fixed top-16 left-[280px] right-0 z-10 flex items-center gap-4 px-8 py-4 bg-white/80 border-b backdrop-blur-lg transition-all duration-300 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Select value={selectedCommunityId || undefined} onValueChange={setSelectedCommunityId}>
-            <SelectTrigger className="w-[250px]">
-              <SelectValue placeholder="Select community" />
-            </SelectTrigger>
-            <SelectContent>
-              {communities?.map(community => (
-                <SelectItem key={community.id} value={community.id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={community.telegram_photo_url || undefined} />
-                      <AvatarFallback className="bg-primary/5 text-primary/70">
-                        {community.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {community.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button 
-            onClick={copyMiniAppLink} 
-            size="sm"
-            variant="ghost"
-            className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 gap-2"
-          >
-            <Copy className="h-4 w-4" />
-            Copy Mini App Link
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-4 ml-auto">
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
-          <Button variant="default" onClick={() => navigate("/platform-select")}>
-            New Community
-          </Button>
-        </div>
+    <div className="border rounded-md shadow-sm bg-white">
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-lg font-semibold">Select Community</h2>
+        <Button size="sm" onClick={addNewCommunity}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New
+        </Button>
       </div>
-
-      <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
-              <span>Attention</span>
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-lg">
-              {alertMessage}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Got it</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <div className="p-4">
+        {isLoading ? (
+          <p>Loading communities...</p>
+        ) : communities && communities.length > 0 ? (
+          <div className="space-y-2">
+            {communities.map((community) => (
+              <div
+                key={community.id}
+                className={`flex items-center justify-between p-3 rounded-md cursor-pointer hover:bg-gray-100 ${
+                  selectedCommunityId === community.id ? 'bg-gray-100' : ''
+                }`}
+                onClick={() => setSelectedCommunityId(community.id)}
+              >
+                <div className="flex items-center space-x-3">
+                  {community.telegram_photo_url ? (
+                    <img
+                      src={community.telegram_photo_url}
+                      alt={community.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                      {community.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span>{community.name}</span>
+                </div>
+                {selectedCommunityId === community.id && (
+                  <Check className="h-4 w-4 text-green-500" />
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-500">No communities found.</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
+
+export default CommunitySelector;

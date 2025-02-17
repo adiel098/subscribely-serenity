@@ -7,9 +7,17 @@ export interface Customer {
   email: string;
   created_at: string;
   updated_at: string;
-  profile: {
-    full_name: string;
-    avatar_url: string;
+  full_name: string;
+  avatar_url: string;
+  subscription_status: boolean;
+  joined_at: string;
+  subscription_start_date: string | null;
+  subscription_end_date: string | null;
+  plan: {
+    id: string;
+    name: string;
+    interval: string;
+    price: number;
   } | null;
 }
 
@@ -18,14 +26,19 @@ export const useCustomers = () => {
     queryKey: ['customers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('telegram_chat_members')
         .select(`
           *,
-          user:users(*)
+          plan:subscription_plans(
+            id,
+            name,
+            interval,
+            price
+          )
         `);
 
       if (error) throw error;
-      return data as Customer[];
+      return data as unknown as Customer[];
     }
   });
 };

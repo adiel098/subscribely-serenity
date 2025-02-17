@@ -1,78 +1,41 @@
 
+import { useBotStats } from "@/features/community/hooks/useBotStats";
 import { Card } from "@/components/ui/card";
-import { useBotStats } from "@/hooks/community/useBotStats";
-import { CreditCard, Users, MessageSquare } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MessageCircle, Users, Clock } from "lucide-react";
 
 interface BotStatsHeaderProps {
   communityId: string;
 }
 
 export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
-  const { data: botStats, isLoading } = useBotStats(communityId);
+  const { data: stats } = useBotStats(communityId);
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center space-x-4">
-            <CreditCard className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Total Revenue</h3>
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center space-x-4">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Active Subscribers</h3>
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center space-x-4">
-            <MessageSquare className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Total Members</h3>
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  if (!stats) return null;
 
   return (
     <div className="grid grid-cols-3 gap-4">
       <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <CreditCard className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Total Revenue</h3>
-            <p className="text-lg font-semibold">${botStats?.totalRevenue || 0}</p>
-          </div>
+        <div className="flex items-center space-x-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Total Members</h3>
         </div>
+        <p className="mt-2 text-2xl font-bold">{stats.totalMembers}</p>
       </Card>
+      
       <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Active Subscribers</h3>
-            <p className="text-lg font-semibold">{botStats?.activeSubscribers || 0}</p>
-          </div>
+        <div className="flex items-center space-x-2">
+          <MessageCircle className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Active Members</h3>
         </div>
+        <p className="mt-2 text-2xl font-bold">{stats.activeMembers}</p>
       </Card>
+      
       <Card className="p-4">
-        <div className="flex items-center space-x-4">
-          <MessageSquare className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Expired Subscriptions</h3>
-            <p className="text-lg font-semibold">{botStats?.expiredSubscriptions || 0}</p>
-          </div>
+        <div className="flex items-center space-x-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Expired Members</h3>
         </div>
+        <p className="mt-2 text-2xl font-bold">{stats.inactiveMembers}</p>
       </Card>
     </div>
   );

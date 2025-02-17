@@ -32,9 +32,11 @@ interface BroadcastSectionProps {
   communityId: string;
 }
 
+type TargetAudience = "all" | "active" | "expired";
+
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
-  const [targetAudience, setTargetAudience] = useState<"all" | "active" | "expired">("all");
+  const [targetAudience, setTargetAudience] = useState<TargetAudience>("all");
   const [silent, setSilent] = useState(false);
   const { toast } = useToast();
   const { broadcast, isLoading } = useBroadcast();
@@ -59,11 +61,6 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
         silent,
       });
 
-      toast({
-        title: "Success",
-        description: "Message broadcast initiated",
-      });
-
       setMessage("");
     } catch (error: any) {
       toast({
@@ -72,6 +69,10 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleTargetAudienceChange = (value: string) => {
+    setTargetAudience(value as TargetAudience);
   };
 
   return (
@@ -94,7 +95,7 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
                   <label className="text-sm font-medium">Target Audience</label>
                   <Select
                     value={targetAudience}
-                    onValueChange={setTargetAudience}
+                    onValueChange={handleTargetAudienceChange}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select target audience" />

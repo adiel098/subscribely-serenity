@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-import { format, addMinutes, differenceInMinutes } from "date-fns";
+import { format, addMinutes, differenceInSeconds } from "date-fns";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useBotStats } from "@/hooks/useBotStats";
@@ -47,13 +47,14 @@ const Analytics = () => {
 
     const updateCountdown = () => {
       const now = new Date();
-      const diff = differenceInMinutes(nextCronTime, now);
-      const minutes = diff % 60;
-      setTimeUntilNextCron(`${minutes} minutes`);
+      const diffInSeconds = differenceInSeconds(nextCronTime, now);
+      const minutes = Math.floor(diffInSeconds / 60);
+      const seconds = diffInSeconds % 60;
+      setTimeUntilNextCron(`${minutes} minutes ${seconds} seconds`);
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, 60000);
+    const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [nextCronTime]);
 
@@ -63,7 +64,7 @@ const Analytics = () => {
       event.event_type === 'payment_received' ? (sum + (event.amount || 0)) : sum, 0
     ) || 0,
     activeSubscribers: subscribers?.filter(s => s.subscription_status).length || 0,
-    notifications: botStats?.messagesSent || 0, // שימוש במספר ההודעות שנשלחו מהבוט
+    notifications: botStats?.messagesSent || 0,
     totalMembers: botStats?.totalMembers || 0
   };
 
@@ -102,7 +103,7 @@ const Analytics = () => {
               <p className="text-sm text-gray-500">
                 {nextCronTime ? (
                   <>
-                    in {timeUntilNextCron} ({format(nextCronTime, 'HH:mm')})
+                    in {timeUntilNextCron} ({format(nextCronTime, 'HH:mm:ss')})
                   </>
                 ) : (
                   'Loading...'

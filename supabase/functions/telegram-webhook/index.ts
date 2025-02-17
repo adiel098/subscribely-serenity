@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from './handlers/verificationHandler.ts';
 import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
+import { kickMember } from './handlers/kickMemberHandler.ts';
 import { corsHeaders } from './cors.ts';
 
 console.log("[WEBHOOK] Starting webhook service...");
@@ -43,42 +44,14 @@ serve(async (req) => {
     if (body.path === '/remove-member') {
       console.log('[WEBHOOK] Handling member removal:', body);
       try {
-        // קודם מסירים את המשתמש מהקבוצה
-        const kickResponse = await fetch(`https://api.telegram.org/bot${botToken}/kickChatMember`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: body.chat_id,
-            user_id: body.user_id
-          })
-        });
+        const success = await kickMember(
+          supabaseClient,
+          body.chat_id,
+          body.user_id,
+          botToken
+        );
 
-        const kickResult = await kickResponse.json();
-        console.log('[WEBHOOK] Kick result:', kickResult);
-
-        // מיד אחרי זה מסירים את ה-ban כדי שהמשתמש יוכל להצטרף שוב בעתיד
-        const unbanResponse = await fetch(`https://api.telegram.org/bot${botToken}/unbanChatMember`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: body.chat_id,
-            user_id: body.user_id,
-            only_if_banned: true
-          })
-        });
-
-        const unbanResult = await unbanResponse.json();
-        console.log('[WEBHOOK] Unban result:', unbanResult);
-
-        return new Response(JSON.stringify({ 
-          success: kickResult.ok && unbanResult.ok,
-          kickResult,
-          unbanResult
-        }), {
+        return new Response(JSON.stringify({ success }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {

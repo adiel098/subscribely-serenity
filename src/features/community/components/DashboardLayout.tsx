@@ -13,13 +13,13 @@ export const DashboardLayout = ({
   const isAdminPage = location.pathname === '/admin';
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex w-full">
+      <div className="flex h-[calc(100vh-4rem)]">
         <AppSidebar />
-        <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16">
+        <main className="flex-1 relative mt-16">
           {!isAdminPage && <CommunitySelector />}
-          <div className={`min-h-full w-full bg-gray-50 px-6 py-8 mt-${isAdminPage ? '16' : '[4.5rem]'} pl-[280px]`}>
+          <div className={`${!isAdminPage ? 'mt-[4.5rem]' : ''} h-[calc(100vh-8.5rem)] overflow-y-auto pl-[280px]`}>
             {children}
           </div>
         </main>

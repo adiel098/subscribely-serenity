@@ -21,13 +21,7 @@ const Analytics = () => {
       event.event_type === 'payment_received' ? (sum + (event.amount || 0)) : sum, 0
     ) || 0,
     activeSubscribers: subscribers?.filter(s => s.subscription_status).length || 0,
-    notifications: events?.reduce((sum, event) => {
-      if (event.event_type === 'notification_sent') {
-        // שימוש ב-metadata.success_count לקבלת מספר ההודעות שנשלחו בפועל
-        return sum + (event.metadata?.success_count || 0);
-      }
-      return sum;
-    }, 0) || 0,
+    notifications: botStats?.messagesSent || 0,
     totalMembers: botStats?.totalMembers || 0
   };
 

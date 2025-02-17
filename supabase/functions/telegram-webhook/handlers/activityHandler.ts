@@ -1,56 +1,74 @@
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../cors.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getBotChatMember } from './chatMemberHandler.ts';
 
-export const handleActivityUpdate = async (
-  body: any,
-  supabase: SupabaseClient,
-  corsHeaders: Record<string, string>
-) => {
+export async function updateMemberActivity(supabase: ReturnType<typeof createClient>, communityId: string) {
   try {
-    const { communityId } = body;
+    console.log('Updating member activity for community:', communityId);
 
-    if (!communityId) {
-      return new Response(
-        JSON.stringify({ error: 'Community ID is required' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
+    const { data: settings } = await supabase
+      .from('telegram_global_settings')
+      .select('bot_token')
+      .single();
+
+    if (!settings?.bot_token) {
+      throw new Error('Bot token not found');
     }
 
-    console.log("Updating member activity for community:", communityId);
-    
-    // עדכון הפעילות האחרונה של המשתמשים
-    const { error } = await supabase
-      .from("telegram_chat_members")
-      .update({ last_checked: new Date().toISOString() })
-      .eq("community_id", communityId);
+    const { data: community } = await supabase
+      .from('communities')
+      .select('telegram_chat_id')
+      .eq('id', communityId)
+      .single();
 
-    if (error) {
-      console.error("Error updating member activity:", error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
-        }
-      );
+    if (!community?.telegram_chat_id) {
+      throw new Error('Community telegram chat id not found');
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error("Error in handleActivityUpdate:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+    const { data: members, error: membersError } = await supabase
+      .from('telegram_chat_members')
+      .select('telegram_user_id')
+      .eq('community_id', communityId);
+
+    if (membersError) throw membersError;
+
+    console.log(`Found ${members.length} members to check`);
+
+    let activeCount = 0;
+    let inactiveCount = 0;
+
+    for (const member of members) {
+      const canReceiveMessages = await getBotChatMember(
+        settings.bot_token,
+        community.telegram_chat_id,
+        member.telegram_user_id
+      );
+
+      if (canReceiveMessages) {
+        activeCount++;
+      } else {
+        inactiveCount++;
       }
-    );
+
+      await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: canReceiveMessages,
+          last_checked: new Date().toISOString()
+        })
+        .eq('telegram_user_id', member.telegram_user_id)
+        .eq('community_id', communityId);
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    console.log('✅ Activity check completed:', {
+      totalMembers: members.length,
+      activeMembers: activeCount,
+      inactiveMembers: inactiveCount
+    });
+  } catch (error) {
+    console.error('Error updating member activity:', error);
+    throw error;
   }
-};
+}

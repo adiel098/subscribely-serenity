@@ -1,205 +1,91 @@
 
-import { Bot, Context } from "https://deno.land/x/grammy@v1.21.1/mod.ts";
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Database } from "../../_utils/database.types.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logTelegramEvent } from '../eventLogger.ts';
+import { getBotSettings } from '../botSettingsHandler.ts';
+import { findCommunityById } from '../communityHandler.ts';
 
-export const handleMessage = async (
-  bot: Bot,
-  ctx: Context,
-  supabase: SupabaseClient<Database>,
-) => {
-  console.log("Handling message event:", ctx.message);
-
-  // טיפול בפקודת start
-  if (ctx.message?.text?.startsWith("/start")) {
-    const communityId = ctx.message.text.split(" ")[1]; // מקבל את ה-ID אחרי הפקודה
+export async function handleNewMessage(supabase: ReturnType<typeof createClient>, update: any, context: { BOT_TOKEN: string }) {
+  try {
+    console.log('🗨️ Processing new message:', JSON.stringify(update.message, null, 2));
     
-    if (communityId) {
-      console.log(`Processing start command for community: ${communityId}`);
+    const message = update.message;
+    if (message?.text?.startsWith('/start')) {
+      console.log('Processing /start command');
+      const communityId = message.text.split(' ')[1];
       
-      try {
-        // מציאת הקהילה והגדרות הבוט שלה
-        const { data: communityData, error: communityError } = await supabase
-          .from("communities")
-          .select(`
-            *,
-            telegram_bot_settings (
-              welcome_message
-            )
-          `)
-          .eq("id", communityId)
+      if (communityId) {
+        // Get bot token from settings
+        const { data: settings } = await supabase
+          .from('telegram_global_settings')
+          .select('bot_token')
           .single();
 
-        if (communityError) {
-          console.error("Error fetching community:", communityError);
-          await ctx.reply("Sorry, I couldn't find this community. Please try again later.");
-          return;
+        if (!settings?.bot_token) {
+          throw new Error('Bot token not found in settings');
         }
 
-        if (!communityData) {
-          console.log("Community not found");
-          await ctx.reply("Sorry, I couldn't find this community.");
-          return;
-        }
+        const [community, botSettings] = await Promise.all([
+          findCommunityById(supabase, communityId),
+          getBotSettings(supabase, communityId)
+        ]);
 
-        const welcomeMessage = communityData.telegram_bot_settings?.welcome_message || 
-          `Welcome to ${communityData.name}! 👋\n\nTo join this community, please select a subscription plan:`;
+        console.log('Found community:', community);
+        console.log('Bot settings:', botSettings);
+        
+        const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
 
-        // שליחת הודעת ברוכים הבאים עם כפתור לקנייה
-        await ctx.reply(welcomeMessage, {
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: "View Subscription Plans",
-                web_app: {
-                  url: `https://subscribely-serenity.lovable.app/telegram-mini-app?start=${communityId}`
+        // שימוש בהודעת הברוכים הבאים המותאמת אישית
+        const welcomeMessage = botSettings.welcome_message || `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
+        
+        const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: message.chat.id,
+            text: welcomeMessage,
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: "Join Community 🚀",
+                  web_app: {
+                    url: `${miniAppUrl}?start=${communityId}`
+                  }
                 }
-              }
-            ]]
-          }
+              ]]
+            }
+          })
         });
 
-      } catch (error) {
-        console.error("Error processing start command:", error);
-        await ctx.reply("Sorry, something went wrong. Please try again later.");
+        const result = await response.json();
+        console.log('Telegram API response:', result);
       }
-    } else {
-      await ctx.reply("Welcome to Membify! Please use the complete invite link to join a community.");
     }
-    return;
-  }
-
-  // Handle new members joining the channel/group
-  if (ctx.message?.new_chat_members) {
-    console.log("New chat members:", ctx.message.new_chat_members);
     
-    // Get chat ID for the community
-    const chatId = ctx.message.chat.id.toString();
-    
-    try {
-      // Find the community by telegram_chat_id
-      const { data: community, error: communityError } = await supabase
-        .from("communities")
-        .select(`
-          id,
-          name,
-          telegram_bot_settings (
-            welcome_message
-          )
-        `)
-        .eq("telegram_chat_id", chatId)
-        .single();
-
-      if (communityError || !community) {
-        console.error("Error finding community:", communityError);
-        return;
-      }
-
-      // שליחת הודעה פרטית לכל חבר חדש
-      for (const member of ctx.message.new_chat_members) {
-        if (!member.is_bot) {  // רק למשתמשים אמיתיים, לא לבוטים
-          try {
-            const welcomeMessage = community.telegram_bot_settings?.welcome_message || 
-              `Welcome to ${community.name}! 👋\n\nTo access all community features, please select a subscription plan:`;
-
-            // שליחת הודעה פרטית למשתמש
-            await bot.api.sendMessage(member.id, welcomeMessage, {
-              reply_markup: {
-                inline_keyboard: [[
-                  {
-                    text: "View Subscription Plans",
-                    web_app: {
-                      url: `https://subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`
-                    }
-                  }
-                ]]
-              }
-            });
-
-            // רישום הצטרפות המשתמש בלוגים
-            console.log("Logging member join event for:", {
-              communityId: community.id,
-              userId: member.id.toString(),
-              username: member.username
-            });
-
-            await supabase
-              .from("community_logs")
-              .insert({
-                community_id: community.id,
-                event_type: "member_joined",
-                user_id: member.id.toString(),
-                metadata: {
-                  username: member.username,
-                  first_name: member.first_name,
-                  last_name: member.last_name
-                }
-              });
-
-            // הוספת המשתמש לטבלת חברי הצ'אט
-            await supabase
-              .from("telegram_chat_members")
-              .insert({
-                community_id: community.id,
-                telegram_user_id: member.id.toString(),
-                telegram_username: member.username,
-                is_active: true
-              })
-              .select()
-              .single();
-
-          } catch (error) {
-            console.error(`Error handling new member ${member.id}:`, error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error handling new chat members:", error);
-    }
-    return;
+    await logTelegramEvent(supabase, 'new_message', update);
+  } catch (error) {
+    console.error('Error in handleNewMessage:', error);
+    throw error;
   }
+}
 
-  if (ctx.message?.left_chat_member) {
-    console.log("Left chat member:", ctx.message.left_chat_member);
-    
-    const chatId = ctx.message.chat.id.toString();
-    const member = ctx.message.left_chat_member;
-
-    try {
-      // מציאת הקהילה
-      const { data: community } = await supabase
-        .from("communities")
-        .select("id")
-        .eq("telegram_chat_id", chatId)
-        .single();
-
-      if (community) {
-        // רישום יציאת המשתמש בלוגים
-        await supabase
-          .from("community_logs")
-          .insert({
-            community_id: community.id,
-            event_type: "member_left",
-            user_id: member.id.toString(),
-            metadata: {
-              username: member.username,
-              first_name: member.first_name,
-              last_name: member.last_name
-            }
-          });
-
-        // עדכון סטטוס המשתמש בטבלת חברי הצ'אט
-        await supabase
-          .from("telegram_chat_members")
-          .update({ is_active: false })
-          .eq("community_id", community.id)
-          .eq("telegram_user_id", member.id.toString());
-      }
-    } catch (error) {
-      console.error("Error handling member left:", error);
-    }
-    return;
+export async function handleEditedMessage(supabase: ReturnType<typeof createClient>, update: any) {
+  try {
+    console.log('✏️ Processing edited message:', JSON.stringify(update.edited_message, null, 2));
+    await logTelegramEvent(supabase, 'edited_message', update);
+  } catch (error) {
+    console.error('Error in handleEditedMessage:', error);
+    throw error;
   }
+}
 
-  console.log("Unhandled message:", ctx.message);
-};
+export async function handleChannelPost(supabase: ReturnType<typeof createClient>, update: any) {
+  try {
+    console.log('📢 Processing channel post:', JSON.stringify(update.channel_post, null, 2));
+    await logTelegramEvent(supabase, 'channel_post', update);
+  } catch (error) {
+    console.error('Error in handleChannelPost:', error);
+    throw error;
+  }
+}

@@ -1,73 +1,157 @@
 
-import { Bot } from "https://deno.land/x/grammy@v1.21.1/mod.ts";
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Database } from "../_utils/database.types.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getBotChatMember } from './membershipHandler.ts';
+import { sendTelegramMessage } from './telegramClient.ts';
 
-export const handleBroadcast = async (
-  bot: Bot,
-  supabase: SupabaseClient<Database>,
+interface BroadcastStatus {
+  successCount: number;
+  failureCount: number;
+  totalRecipients: number;
+}
+
+export async function sendBroadcastMessage(
+  supabase: ReturnType<typeof createClient>, 
   communityId: string,
   message: string,
-  filterType: 'all' | 'active' | 'expired' | 'plan',
+  filterType: 'all' | 'active' | 'expired' | 'plan' = 'all',
   subscriptionPlanId?: string,
   includeButton?: boolean
-) => {
-  console.log('Starting broadcast handler:', {
-    communityId,
-    filterType,
-    subscriptionPlanId,
-    includeButton
-  });
-
+): Promise<BroadcastStatus> {
   try {
-    // קבלת פרטי הקהילה
-    const { data: community, error: communityError } = await supabase
-      .from('communities')
-      .select('*')
-      .eq('id', communityId)
-      .single();
+    console.log('Starting broadcast for community:', communityId);
+    console.log('Filter type:', filterType);
 
-    if (communityError || !community) {
-      console.error('Error fetching community:', communityError);
-      throw new Error('Community not found');
+    // Get bot token and community details
+    const [settingsResult, communityResult] = await Promise.all([
+      supabase.from('telegram_global_settings').select('bot_token').single(),
+      supabase.from('communities').select('miniapp_url').eq('id', communityId).single()
+    ]);
+
+    if (settingsResult.error) {
+      console.error('Error fetching bot token:', settingsResult.error);
+      throw settingsResult.error;
     }
 
-    // שליחת ההודעה לכל המשתמשים הרלוונטיים
+    if (communityResult.error) {
+      console.error('Error fetching community:', communityResult.error);
+      throw communityResult.error;
+    }
+
+    if (!settingsResult.data?.bot_token) {
+      console.error('Bot token not found in settings');
+      throw new Error('Bot token not found');
+    }
+
+    console.log('Successfully retrieved bot token and community details');
+
+    // Get all members based on filter
+    let query = supabase
+      .from('telegram_chat_members')
+      .select('telegram_user_id, subscription_status')
+      .eq('community_id', communityId);
+
+    switch (filterType) {
+      case 'active':
+        query = query.eq('subscription_status', true);
+        break;
+      case 'expired':
+        query = query.eq('subscription_status', false);
+        break;
+      case 'plan':
+        if (!subscriptionPlanId) {
+          throw new Error('Subscription plan ID is required for plan filter type');
+        }
+        query = query.eq('subscription_plan_id', subscriptionPlanId);
+        break;
+    }
+
+    const { data: members, error: membersError } = await query;
+
+    if (membersError) {
+      console.error('Error fetching members:', membersError);
+      throw membersError;
+    }
+
+    console.log(`Found ${members?.length || 0} potential recipients`);
+
+    if (!members || members.length === 0) {
+      console.log('No members found matching the criteria');
+      return {
+        successCount: 0,
+        failureCount: 0,
+        totalRecipients: 0
+      };
+    }
+
     let successCount = 0;
     let failureCount = 0;
-    let totalRecipients = 0;
+    const BATCH_SIZE = 20;
 
-    // בשלב זה שולחים רק לצ'אט של הקהילה
-    if (community.chat_id) {
-      totalRecipients = 1;
+    // Prepare inline keyboard if button is requested
+    const inlineKeyboard = includeButton && communityResult.data.miniapp_url ? {
+      inline_keyboard: [[
+        {
+          text: "הצטרפות לקהילה 🚀",
+          web_app: {
+            url: `${communityResult.data.miniapp_url}?start=${communityId}`
+          }
+        }
+      ]]
+    } : undefined;
+
+    // Send message to each member
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
       try {
-        await bot.api.sendMessage(community.chat_id, message, {
-          parse_mode: 'HTML',
-          ...(includeButton && {
-            reply_markup: {
-              inline_keyboard: [[
-                {
-                  text: "View Plans",
-                  url: `https://t.me/membifybot/app?startapp=${communityId}`
-                }
-              ]]
-            }
-          })
-        });
-        successCount++;
+        console.log(`Attempting to send message to user ${member.telegram_user_id}`);
+        
+        // Check if user can receive messages
+        const canReceiveMessages = await getBotChatMember(
+          settingsResult.data.bot_token,
+          member.telegram_user_id,
+          member.telegram_user_id
+        );
+
+        if (!canReceiveMessages) {
+          console.log(`User ${member.telegram_user_id} cannot receive messages - skipping`);
+          failureCount++;
+          continue;
+        }
+
+        // Send the message using our telegram client
+        const result = await sendTelegramMessage(
+          settingsResult.data.bot_token,
+          member.telegram_user_id,
+          message,
+          inlineKeyboard
+        );
+        
+        if (result.ok) {
+          successCount++;
+          console.log(`✅ Message sent successfully to user ${member.telegram_user_id}`);
+        } else {
+          failureCount++;
+          console.log(`❌ Failed to send message to user ${member.telegram_user_id}:`, result.description);
+        }
+
+        // Add small delay to avoid hitting rate limits
+        await new Promise(resolve => setTimeout(resolve, 50));
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error(`Error sending message to user ${member.telegram_user_id}:`, error);
         failureCount++;
       }
     }
 
-    return {
+    const status: BroadcastStatus = {
       successCount,
       failureCount,
-      totalRecipients
+      totalRecipients: members.length
     };
+
+    console.log('Broadcast completed:', status);
+    return status;
   } catch (error) {
-    console.error('Error in broadcast handler:', error);
+    console.error('Error in broadcast:', error);
     throw error;
   }
-};
+}

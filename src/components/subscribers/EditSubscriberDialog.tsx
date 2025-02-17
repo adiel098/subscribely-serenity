@@ -49,24 +49,12 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
 
       // If subscription is deactivated, kick the member
       if (!subscriptionStatus && subscriber.subscription_status) {
-        console.log("Attempting to kick member:", {
-          memberId: subscriber.id,
-          telegram_user_id: subscriber.telegram_user_id,
-          community_id: subscriber.community_id
-        });
-
         const response = await supabase.functions.invoke('kick-member', {
-          body: { 
-            memberId: subscriber.id,
-            telegram_user_id: subscriber.telegram_user_id,
-            community_id: subscriber.community_id
-          },
+          body: { memberId: subscriber.id },
         });
-
-        console.log("Kick member response:", response);
 
         if (response.error) {
-          throw new Error('Failed to remove member from channel: ' + response.error.message);
+          throw new Error('Failed to remove member from channel');
         }
       }
 

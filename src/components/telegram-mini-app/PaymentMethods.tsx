@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import { Plan } from "@/pages/TelegramMiniApp";
 import { SuccessScreen } from "./SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { logAnalyticsEvent } from "@/hooks/useAnalytics";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
@@ -40,25 +40,8 @@ export const PaymentMethods = ({
     }
 
     try {
-      const webApp = (window as any).Telegram?.WebApp;
-      if (!webApp) {
-        throw new Error('Telegram WebApp is not available');
-      }
-
-      const initDataUnsafe = webApp.initDataUnsafe;
-      const userId = initDataUnsafe?.user?.id;
-
-      if (!userId) {
-        throw new Error('Could not get Telegram user ID');
-      }
-
-      console.log('Processing payment for user:', {
-        userId,
-        planId: selectedPlan.id,
-        communityId: selectedPlan.community_id
-      });
-
-      // יצירת לינק הצטרפות חדש
+      // Create a new invite link
+      console.log('Creating new invite link for community:', selectedPlan.community_id);
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
         'create-invite-link',
         {
@@ -68,46 +51,27 @@ export const PaymentMethods = ({
 
       if (inviteLinkError) {
         console.error('Error creating invite link:', inviteLinkError);
-        throw inviteLinkError;
+        toast({
+          variant: "destructive",
+          title: "Error creating invite link",
+          description: "Please try again or contact support."
+        });
+        return;
       }
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
-      // עדכון או יצירת חבר
-      const now = new Date().toISOString();
-      const subscriptionEndDate = selectedPlan.interval === 'one-time' 
-        ? null 
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const memberData = {
+      console.log('Creating payment with:', {
+        plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
-        telegram_user_id: userId.toString(),
-        telegram_username: initDataUnsafe?.user?.username || null,
-        subscription_status: true,
-        subscription_start_date: now,
-        subscription_end_date: subscriptionEndDate,
-        subscription_plan_id: selectedPlan.id,
-        is_active: true
-      };
+        amount: selectedPlan.price,
+        payment_method: selectedPaymentMethod,
+        status: 'completed',
+        invite_link: newInviteLink
+      });
 
-      // נסיון עדכון אם קיים, אחרת יצירה
-      const { error: upsertError } = await supabase
-        .from('telegram_chat_members')
-        .upsert(
-          memberData,
-          { 
-            onConflict: 'community_id,telegram_user_id',
-            ignoreDuplicates: false
-          }
-        );
-
-      if (upsertError) {
-        console.error('Error upserting member:', upsertError);
-        throw upsertError;
-      }
-
-      // יצירת רשומת תשלום
-      const { data: payment, error: paymentError } = await supabase
+      // Create the payment record with the new invite link
+      const { data: payment, error } = await supabase
         .from('subscription_payments')
         .insert([{
           plan_id: selectedPlan.id,
@@ -115,50 +79,24 @@ export const PaymentMethods = ({
           amount: selectedPlan.price,
           payment_method: selectedPaymentMethod,
           status: 'completed',
-          invite_link: newInviteLink || null,
-          telegram_user_id: userId.toString()
+          invite_link: newInviteLink || null
         }])
         .select()
         .maybeSingle();
 
-      if (paymentError) {
-        console.error('Payment error:', paymentError);
-        throw paymentError;
+      if (error) {
+        console.error('Payment error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error processing payment",
+          description: "Please try again or contact support."
+        });
+        return;
       }
 
       if (payment?.invite_link) {
         setPaymentInviteLink(payment.invite_link);
       }
-
-      // רישום אירועים
-      await supabase.functions.invoke('telegram-webhook', {
-        body: {
-          path: 'log-event',
-          communityId: selectedPlan.community_id,
-          eventType: 'payment_received',
-          userId: userId.toString(),
-          metadata: {
-            plan_id: selectedPlan.id,
-            payment_method: selectedPaymentMethod,
-            invite_link: newInviteLink,
-            amount: selectedPlan.price
-          },
-          amount: selectedPlan.price
-        }
-      });
-
-      await supabase.functions.invoke('telegram-webhook', {
-        body: {
-          path: 'log-event',
-          communityId: selectedPlan.community_id,
-          eventType: 'subscription_started',
-          userId: userId.toString(),
-          metadata: {
-            plan_id: selectedPlan.id,
-            subscription_end_date: subscriptionEndDate
-          }
-        }
-      });
 
       toast({
         title: "Payment Successful! 🎉",

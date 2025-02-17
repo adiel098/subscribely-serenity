@@ -27,9 +27,9 @@ export const useBotStats = (communityId: string) => {
         throw error;
       }
 
-      // Count messages sent from community_logs (changed from analytics_events)
+      // Count messages sent from analytics_events
       const { data: messages, error: messagesError } = await supabase
-        .from('community_logs')
+        .from('analytics_events')
         .select('*')
         .eq('community_id', communityId)
         .eq('event_type', 'notification_sent');

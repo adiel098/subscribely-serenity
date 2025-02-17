@@ -1,119 +1,116 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { TelegramClient } from "./telegramClient.ts";
-import { WebhookManager } from "./webhookManager.ts";
-import { corsHeaders } from "./cors.ts";
-import { handleChat } from "./communityHandler.ts";
-import { handleSubscription } from "./subscriptionHandler.ts";
-import { handleMember } from "./memberHandler.ts";
-import { handleMessage } from "./handlers/messageHandler.ts";
-import { handleChatMember } from "./handlers/chatMemberHandler.ts";
-import { handleJoinRequest } from "./handlers/joinRequestHandler.ts";
-import { handleActivityUpdate } from "./handlers/activityHandler.ts";
-import { logEvent } from "./eventLogger.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from './cors.ts';
+import { 
+  handleChatMemberUpdate,
+  handleChatJoinRequest,
+  handleNewMessage,
+  handleEditedMessage,
+  handleChannelPost,
+  handleMyChatMember,
+  updateMemberActivity
+} from './membershipHandler.ts';
+import { sendBroadcastMessage } from './broadcastHandler.ts';
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   try {
-    console.log('Received request:', {
-      url: req.url,
-      pathname: new URL(req.url).pathname,
-      path: new URL(req.url).pathname.split('/').pop(),
-      method: req.method
-    });
-
-    // Parse request body
     const body = await req.json();
-    console.log('Request body:', body);
+    
+    // Check if this is a direct webhook update from Telegram
+    if (body.message || body.edited_message || body.channel_post || body.chat_member || body.my_chat_member || body.chat_join_request) {
+      console.log('Received direct Telegram webhook update:', body);
+      
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
+      if (body.message) {
+        await handleNewMessage(supabase, body, { BOT_TOKEN: Deno.env.get('BOT_TOKEN') ?? '' });
+      } else if (body.edited_message) {
+        await handleEditedMessage(supabase, body);
+      } else if (body.channel_post) {
+        await handleChannelPost(supabase, body);
+      } else if (body.chat_member) {
+        await handleChatMemberUpdate(supabase, body);
+      } else if (body.my_chat_member) {
+        await handleMyChatMember(supabase, body);
+      } else if (body.chat_join_request) {
+        await handleChatJoinRequest(supabase, body);
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        status: 200,
+      });
+    }
+
+    // Handle other API endpoints
+    const { path, communityId } = body;
+    console.log('Received API request:', { path, communityId });
+
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Initialize Telegram client
-    const telegramClient = new TelegramClient(
-      Deno.env.get('TELEGRAM_BOT_TOKEN') || ''
-    );
+    let response;
 
-    // Get the path from the URL
-    const path = new URL(req.url).pathname.split('/').pop();
-    
-    // Route to appropriate handler based on path
     switch (path) {
-      case 'update-activity':
-        return handleActivityUpdate(body, supabaseClient, corsHeaders);
-      
-      case 'log-event':
-        // Handle event logging
-        const { communityId, eventType, userId, metadata, amount } = body;
-        try {
-          const result = await logEvent(supabaseClient, {
-            communityId,
-            eventType,
-            userId,
-            metadata,
-            amount
-          });
-          
-          return new Response(
-            JSON.stringify({ success: true, data: result }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        } catch (error) {
-          console.error('Error logging event:', error);
-          return new Response(
-            JSON.stringify({ error: error.message }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 400
-            }
-          );
+      case '/update-activity':
+        await updateMemberActivity(supabase, communityId);
+        response = { ok: true };
+        break;
+
+      case '/broadcast':
+        if (!communityId || !body.message) {
+          throw new Error('Missing required parameters');
         }
+
+        const status = await sendBroadcastMessage(
+          supabase,
+          communityId,
+          body.message,
+          body.filterType || 'all',
+          body.subscriptionPlanId,
+          body.includeButton
+        );
+
+        response = status;
+        break;
 
       default:
-        // Handle Telegram webhook updates
-        if (!body.update_id) {
-          return new Response(
-            JSON.stringify({ error: 'Invalid webhook data' }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 400
-            }
-          );
-        }
-
-        const webhookManager = new WebhookManager(body, telegramClient, supabaseClient);
-        
-        // Route based on update type
-        if (body.message) {
-          await handleMessage(body.message, telegramClient, supabaseClient);
-        }
-        if (body.chat_member) {
-          await handleChatMember(body.chat_member, telegramClient, supabaseClient);
-        }
-        if (body.chat_join_request) {
-          await handleJoinRequest(body.chat_join_request, telegramClient, supabaseClient);
-        }
-
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        throw new Error(`Unknown path: ${path}`);
     }
+
+    return new Response(JSON.stringify(response), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error('Error in webhook handler:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    );
+    console.error('Error processing request:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      status: 500,
+    });
   }
 });

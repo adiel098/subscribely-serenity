@@ -12,21 +12,23 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Members from "./pages/Members";
-import Subscribers from "./pages/Subscribers";
-import Subscriptions from "./pages/Subscriptions";
-import Messages from "./pages/Messages";
-import Analytics from "./pages/Analytics";
-import BotSettings from "./pages/BotSettings";
-import Events from "./pages/Events";
-import Rewards from "./pages/Rewards";
-import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import PlatformSelect from "./pages/PlatformSelect";
-import TelegramConnect from "./pages/connect/TelegramConnect";
-import TelegramMiniApp from "./pages/TelegramMiniApp";
 import Admin from "./features/admin/pages/Admin";
+
+// Community Feature Pages
+import Dashboard from "@/features/community/pages/Dashboard";
+import Members from "@/features/community/pages/Members";
+import Subscribers from "@/features/community/pages/Subscribers";
+import Subscriptions from "@/features/community/pages/Subscriptions";
+import Messages from "@/features/community/pages/Messages";
+import Analytics from "@/features/community/pages/Analytics";
+import BotSettings from "@/features/community/pages/BotSettings";
+import Events from "@/features/community/pages/Events";
+import Rewards from "@/features/community/pages/Rewards";
+import Settings from "@/features/community/pages/Settings";
+import PlatformSelect from "@/features/community/pages/PlatformSelect";
+import TelegramConnect from "@/features/community/pages/connect/TelegramConnect";
+import TelegramMiniApp from "@/features/community/pages/TelegramMiniApp";
 
 const queryClient = new QueryClient();
 

@@ -18,11 +18,12 @@ interface SystemLog {
   event_type: string;
   details: string;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
+  metadata: Record<string, any> | null;
   profiles?: {
     full_name: string | null;
     email: string | null;
-  };
+  } | null;
 }
 
 export const AdminLogs = () => {
@@ -33,7 +34,7 @@ export const AdminLogs = () => {
         .from('system_logs')
         .select(`
           *,
-          profiles:user_id (
+          profiles:profiles!system_logs_user_id_fkey (
             full_name,
             email
           )

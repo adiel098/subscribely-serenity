@@ -18,7 +18,7 @@ import { format } from "date-fns";
 
 interface AdminUser {
   id: string;
-  role: string;
+  role: 'super_admin' | 'admin' | 'moderator';
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -38,7 +38,7 @@ export const AdminUsers = () => {
           id,
           role,
           created_at,
-          profiles:user_id (
+          profiles:profiles!admin_users_user_id_fkey (
             full_name,
             email
           )

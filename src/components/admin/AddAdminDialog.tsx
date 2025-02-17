@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +27,7 @@ interface AddAdminDialogProps {
 
 export const AddAdminDialog = ({ open, onOpenChange }: AddAdminDialogProps) => {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [role, setRole] = useState<'admin' | 'moderator'>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -55,7 +54,10 @@ export const AddAdminDialog = ({ open, onOpenChange }: AddAdminDialogProps) => {
 
       const { error } = await supabase
         .from('admin_users')
-        .insert({ user_id: userInfo.id, role });
+        .insert([{ 
+          user_id: userInfo.id, 
+          role: role
+        }]);
 
       if (error) throw error;
     },
@@ -110,7 +112,7 @@ export const AddAdminDialog = ({ open, onOpenChange }: AddAdminDialogProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="role">Admin Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value: 'admin' | 'moderator') => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { CustomerDetailsSheet } from "@/features/community/components/customers/CustomerDetailsSheet";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 export const CustomersTable = () => {
   const { data: customers, isLoading } = useCustomers();
@@ -40,7 +41,9 @@ export const CustomersTable = () => {
             <TableRow key={customer.id}>
               <TableCell>{customer.full_name}</TableCell>
               <TableCell>
-                {customer.subscription_status ? "Active" : "Inactive"}
+                <Badge variant={customer.subscription_status ? "success" : "secondary"}>
+                  {customer.subscription_status ? "Active" : "Inactive"}
+                </Badge>
               </TableCell>
               <TableCell>
                 {format(new Date(customer.joined_at), "PPP")}

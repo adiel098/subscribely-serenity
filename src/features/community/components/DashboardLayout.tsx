@@ -1,7 +1,7 @@
 
 import { AppSidebar } from "./AppSidebar";
 import CommunitySelector from "./CommunitySelector";
-import { useCommunityContext } from "@/features/community/providers/CommunityContext";
+import { useCommunityContext } from '@/features/community/providers/CommunityContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       <div className="flex-1 overflow-auto">
         <div className="container p-4">
           <CommunitySelector
-            selectedCommunityId={selectedCommunityId}
+            selectedCommunityId={selectedCommunityId || ""}
             onSelect={setSelectedCommunityId}
           />
           <main className="mt-4">{children}</main>

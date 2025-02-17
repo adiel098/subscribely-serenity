@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Customer {
   id: string;
-  full_name: string;
-  avatar_url: string;
+  full_name: string | null;
+  avatar_url: string | null;
   subscription_status: boolean;
   joined_at: string;
   subscription_start_date: string | null;

@@ -1,9 +1,9 @@
 
 import { format } from "date-fns";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/ui/avatar";
-import { Badge } from "@/ui/badge";
-import { Customer } from "@/hooks/useCustomers";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Customer } from "@/hooks/community/useCustomers";
 
 interface CustomerDetailsSheetProps {
   customer: Customer;
@@ -20,7 +20,7 @@ export const CustomerDetailsSheet = ({ customer, open, onOpenChange }: CustomerD
         <SheetHeader>
           <div className="flex items-center gap-4">
             <Avatar>
-              <AvatarImage src={customer.avatar_url} alt={customer.full_name} />
+              <AvatarImage src={customer.avatar_url} alt={customer.full_name || ''} />
               <AvatarFallback>{customer.full_name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>

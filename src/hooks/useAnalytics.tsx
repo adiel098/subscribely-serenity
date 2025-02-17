@@ -27,24 +27,20 @@ export const logAnalyticsEvent = async (
     return;
   }
 
-  console.log('Logging analytics event:', {
-    communityId,
-    eventType,
-    userId,
-    metadata,
-    amount
-  });
+  const eventData = {
+    community_id: communityId,
+    event_type: eventType,
+    user_id: userId || null,
+    metadata: metadata || {},
+    amount: amount || null
+  };
+
+  console.log('Logging analytics event:', eventData);
 
   try {
     const { data, error } = await supabase
       .from('community_logs')
-      .insert({
-        community_id: communityId,
-        event_type: eventType,
-        user_id: userId,
-        metadata,
-        amount
-      })
+      .insert(eventData)
       .select()
       .maybeSingle();
 

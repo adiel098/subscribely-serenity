@@ -18,14 +18,16 @@ const Admin = () => {
   const { data: adminRole, isLoading } = useQuery({
     queryKey: ['admin-role', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', user?.id)
-        .single();
+      const { data: roleData, error } = await supabase.rpc('check_admin_role', {
+        user_uuid: user?.id
+      });
 
-      if (error) throw error;
-      return data?.role;
+      if (error) {
+        console.error('Error fetching admin role:', error);
+        return null;
+      }
+
+      return roleData;
     },
     enabled: !!user?.id,
   });

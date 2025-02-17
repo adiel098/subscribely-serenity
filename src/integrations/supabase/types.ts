@@ -741,6 +741,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_admin_role: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: Database["public"]["Enums"]["admin_role"]
+      }
       check_inactive_members: {
         Args: {
           community_id_param: string

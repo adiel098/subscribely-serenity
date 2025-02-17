@@ -6,7 +6,24 @@ declare module 'lovable-tagger' {
   };
 }
 
-interface StatsGridProps {
+export interface BotStats {
+  totalMembers: number;
+  activeMembers: number;
+  inactiveMembers: number;
+  totalRevenue: number;
+  revenuePerSubscriber: number;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  telegram_user_id: string;
+  created_at: string;
+  subscription_status: boolean;
+}
+
+export interface StatsGridProps {
   totalRevenue: number;
   activeSubscribers: number;
   totalMembers: number;
@@ -14,32 +31,38 @@ interface StatsGridProps {
   notifications: number;
 }
 
-interface ChartData {
+export interface ChartData {
   date: string;
   events: number;
   revenue: number;
 }
 
-interface CommunitySelectorProps {
+export interface CommunitySelectorProps {
   selectedCommunityId: string;
   onSelect: (id: string) => void;
 }
 
-interface BroadcastStatus {
+export interface CustomerDetailsSheetProps {
+  customer: Customer;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface BroadcastStatus {
   success: boolean;
   message: string;
 }
 
-interface AnalyticsEvent {
+export interface AnalyticsEvent {
   id: string;
   event_type: string;
   created_at: string;
   amount?: number;
 }
 
-interface SubscriberPlan {
+export interface SubscriberPlan {
   id: string;
   name: string;
-  interval: string;
+  interval: "monthly" | "quarterly" | "half-yearly" | "yearly" | "one-time";
   price: number;
 }

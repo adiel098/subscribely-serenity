@@ -1,14 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface BotStats {
-  totalMembers: number;
-  activeSubscribers: number;
-  expiredSubscriptions: number;
-  totalRevenue: number;
-  revenuePerSubscriber: number;
-}
+import type { BotStats } from "@/types";
 
 export const useBotStats = (communityId: string) => {
   return useQuery({
@@ -39,11 +32,14 @@ export const useBotStats = (communityId: string) => {
         console.error('Error fetching messages count:', messagesError);
         throw messagesError;
       }
+
+      const activeMembers = members.filter(member => member.is_active).length;
+      const inactiveMembers = members.filter(member => !member.is_active).length;
       
       return {
         totalMembers: members.length,
-        activeSubscribers: members.filter(member => member.is_active).length,
-        expiredSubscriptions: members.filter(member => !member.is_active).length,
+        activeMembers,
+        inactiveMembers,
         totalRevenue: 0,
         revenuePerSubscriber: 0
       };

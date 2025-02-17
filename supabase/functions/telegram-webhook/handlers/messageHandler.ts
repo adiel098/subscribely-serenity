@@ -52,7 +52,7 @@ export const handleMessage = async (
               {
                 text: "View Subscription Plans",
                 web_app: {
-                  url: `https://preview--subscribely-serenity.lovable.app/?start=${communityId}&initData={initData}`
+                  url: `https://preview--subscribely-serenity.lovable.app/?start=${communityId}`
                 }
               }
             ]]
@@ -109,7 +109,7 @@ export const handleMessage = async (
                   {
                     text: "View Subscription Plans",
                     web_app: {
-                      url: `https://preview--subscribely-serenity.lovable.app/?start=${community.id}&initData={initData}`
+                      url: `https://preview--subscribely-serenity.lovable.app/?start=${community.id}`
                     }
                   }
                 ]]

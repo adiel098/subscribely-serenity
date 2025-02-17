@@ -63,7 +63,7 @@ const Analytics = () => {
       event.event_type === 'payment_received' ? (sum + (event.amount || 0)) : sum, 0
     ) || 0,
     activeSubscribers: subscribers?.filter(s => s.subscription_status).length || 0,
-    notifications: events?.filter(e => e.event_type === 'notification_sent').length || 0,
+    notifications: botStats?.messagesSent || 0, // שימוש במספר ההודעות שנשלחו מהבוט
     totalMembers: botStats?.totalMembers || 0
   };
 
@@ -141,12 +141,12 @@ const Analytics = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notifications Sent</CardTitle>
+            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
             <Bell className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.notifications}</div>
-            <div className="text-xs text-gray-500">in the last 30 days</div>
+            <div className="text-xs text-gray-500">via bot</div>
           </CardContent>
         </Card>
 

@@ -6,7 +6,8 @@ import {
   Bot,
   BarChart,
   BadgeDollarSign,
-  Wallet
+  Wallet,
+  ShieldAlert
 } from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -21,6 +22,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from './ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const menuItems = [
   {
@@ -61,7 +64,21 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ['is-admin', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      return !!data;
+    },
+    enabled: !!user?.id
+  });
 
   return (
     <Sidebar className="fixed left-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border-none shadow-lg bg-white/80 backdrop-blur-md">
@@ -82,6 +99,20 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link 
+                      to="/admin"
+                      className="w-full flex items-center space-x-3 px-3 py-2 hover:bg-gray-100/50 transition-colors rounded-lg text-gray-700"
+                    >
+                      <ShieldAlert className="h-5 w-5" />
+                      <span className="font-medium">Admin Panel</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

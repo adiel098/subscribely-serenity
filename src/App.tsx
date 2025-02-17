@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
 import TelegramMiniApp from "./pages/TelegramMiniApp";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
+              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <CommunityProvider>
@@ -147,6 +148,13 @@ const App = () => (
                       <TelegramConnect />
                     </DashboardLayout>
                   </CommunityProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Admin />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />

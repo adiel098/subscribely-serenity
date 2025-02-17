@@ -35,37 +35,61 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
   const handleSave = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
+      console.log('Updating subscriber:', {
+        id: subscriber.id,
+        telegram_username: username,
+        subscription_status: subscriptionStatus,
+        subscription_start_date: startDate,
+        subscription_end_date: endDate
+      });
+
+      // עדכון פרטי המנוי במסד הנתונים
+      const { error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
           telegram_username: username,
           subscription_status: subscriptionStatus,
           subscription_start_date: startDate || null,
           subscription_end_date: endDate || null,
+          // אם המנוי מבוטל, מעדכנים גם את is_active לfalse
+          ...(subscriptionStatus === false && { is_active: false })
         })
         .eq('id', subscriber.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating subscriber:', updateError);
+        throw updateError;
+      }
 
-      // If subscription is deactivated, kick the member
+      // אם המנוי בוטל, מסירים את המשתמש מהערוץ
       if (!subscriptionStatus && subscriber.subscription_status) {
-        const response = await supabase.functions.invoke('kick-member', {
-          body: { memberId: subscriber.id },
+        console.log('Subscription cancelled, removing member from channel...');
+        
+        const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
+          body: { 
+            path: '/remove-member',
+            chat_id: subscriber.community_id,
+            user_id: subscriber.telegram_user_id 
+          }
         });
 
-        if (response.error) {
+        if (kickError) {
+          console.error('Error removing member from channel:', kickError);
           throw new Error('Failed to remove member from channel');
         }
       }
 
       toast({
         title: "Success",
-        description: "Subscriber updated successfully",
+        description: subscriptionStatus ? 
+          "Subscriber updated successfully" : 
+          "Subscription cancelled and member removed from channel",
       });
+      
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating subscriber:', error);
+      console.error('Error handling subscription update:', error);
       toast({
         title: "Error",
         description: "Failed to update subscriber",
@@ -126,14 +150,18 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          <Button 
+            onClick={handleSave} 
+            disabled={isLoading}
+            variant={!subscriptionStatus ? "destructive" : "default"}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {!subscriptionStatus ? "Cancelling..." : "Saving..."}
               </>
             ) : (
-              "Save Changes"
+              !subscriptionStatus ? "Cancel Subscription" : "Save Changes"
             )}
           </Button>
         </div>

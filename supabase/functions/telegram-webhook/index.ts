@@ -37,11 +37,38 @@ serve(async (req) => {
     const botToken = settings.bot_token;
     console.log("[WEBHOOK] Bot token retrieved successfully");
 
-    // קבלת העדכון מטלגרם
-    const update = await req.json();
-    console.log("[WEBHOOK] Received update:", JSON.stringify(update, null, 2));
+    const body = await req.json();
+    
+    // טיפול בבקשה להסרת חבר
+    if (body.path === '/remove-member') {
+      console.log('[WEBHOOK] Handling member removal:', body);
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/banChatMember`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: body.chat_id,
+            user_id: body.user_id,
+            revoke_messages: false
+          })
+        });
 
-    // טיפול בהודעות - כולל channel_post
+        const result = await response.json();
+        console.log('[WEBHOOK] Ban result:', result);
+
+        return new Response(JSON.stringify({ success: result.ok }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('[WEBHOOK] Error banning member:', error);
+        throw error;
+      }
+    }
+
+    // טיפול בהודעות רגילות
+    const update = body;
     const message = update.message || update.channel_post;
     
     if (!message) {
@@ -53,29 +80,24 @@ serve(async (req) => {
 
     console.log('🗨️ Processing message:', JSON.stringify(message, null, 2));
 
-    // טיפול בהודעות שונות
     let handled = false;
 
-    // בדיקה אם זו הודעה מערוץ/קבוצה עם קוד אימות
     if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
       console.log("[WEBHOOK] Handling channel verification...");
       handled = await handleChannelVerification(supabaseClient, message, botToken);
       console.log("[WEBHOOK] Channel verification handled:", handled);
     }
-    // בדיקה אם זו פקודת start
     else if (message.text?.startsWith('/start')) {
       console.log("[WEBHOOK] Handling start command...");
       handled = await handleStartCommand(supabaseClient, message, botToken);
       console.log("[WEBHOOK] Start command handled:", handled);
     }
-    // בדיקה אם זו הודעת אימות
     else if (message.text?.startsWith('MBF_')) {
       console.log("[WEBHOOK] Handling verification message...");
       handled = await handleVerificationMessage(supabaseClient, message);
       console.log("[WEBHOOK] Verification handled:", handled);
     }
 
-    // תיעוד האירוע
     await supabaseClient
       .from('telegram_events')
       .insert({

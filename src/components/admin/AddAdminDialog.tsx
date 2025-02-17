@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +28,7 @@ interface AddAdminDialogProps {
 
 export const AddAdminDialog = ({ open, onOpenChange }: AddAdminDialogProps) => {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<'admin' | 'moderator'>();
+  const [role, setRole] = useState<'admin' | 'moderator' | undefined>(undefined);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -66,7 +67,7 @@ export const AddAdminDialog = ({ open, onOpenChange }: AddAdminDialogProps) => {
       toast({ title: "Success", description: "Admin user added successfully" });
       onOpenChange(false);
       setEmail("");
-      setRole("");
+      setRole(undefined);
     },
     onError: (error: Error) => {
       toast({

@@ -23,7 +23,7 @@ interface AdminUser {
   profiles: {
     full_name: string | null;
     email: string | null;
-  };
+  } | null;
 }
 
 export const AdminUsers = () => {
@@ -38,14 +38,14 @@ export const AdminUsers = () => {
           id,
           role,
           created_at,
-          profiles:profiles!admin_users_user_id_fkey (
+          profiles (
             full_name,
             email
           )
         `);
 
       if (error) throw error;
-      return data as AdminUser[];
+      return data as unknown as AdminUser[];
     },
   });
 
@@ -86,8 +86,8 @@ export const AdminUsers = () => {
             ) : (
               adminUsers.map((admin) => (
                 <TableRow key={admin.id}>
-                  <TableCell>{admin.profiles.full_name || 'N/A'}</TableCell>
-                  <TableCell>{admin.profiles.email}</TableCell>
+                  <TableCell>{admin.profiles?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{admin.profiles?.email}</TableCell>
                   <TableCell>
                     <Badge variant={
                       admin.role === 'super_admin' ? 'default' :

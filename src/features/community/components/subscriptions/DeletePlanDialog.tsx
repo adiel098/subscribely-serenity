@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
-import { useCommunities } from "@/hooks/community/useCommunities";
+import { useSubscriptionPlans } from "@/features/community/hooks/useSubscriptionPlans";
 
 interface DeletePlanDialogProps {
   isOpen: boolean;

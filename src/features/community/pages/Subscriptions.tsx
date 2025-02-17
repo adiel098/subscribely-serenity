@@ -1,11 +1,12 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { CreatePlanDialog } from "@/features/community/components/subscriptions/CreatePlanDialog";
 import { EditPlanDialog } from "@/features/community/components/subscriptions/EditPlanDialog";
 import { DeletePlanDialog } from "@/features/community/components/subscriptions/DeletePlanDialog";
-import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPlanCard";
-import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
+import { SubscriptionPlanCard } from "@/features/community/components/subscriptions/SubscriptionPlanCard";
+import { useSubscriptionPlans } from "@/features/community/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { Loader2, Plus } from "lucide-react";
 

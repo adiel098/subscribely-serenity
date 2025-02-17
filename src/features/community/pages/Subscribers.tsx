@@ -1,11 +1,12 @@
+
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useSubscribers } from "@/hooks/community/useSubscribers";
+import { useSubscribers } from "@/features/community/hooks/useSubscribers";
 import { SubscribersTable } from "@/features/community/components/subscribers/SubscribersTable";
+import { EditSubscriberDialog } from "@/features/community/components/subscribers/EditSubscriberDialog";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { EditSubscriberDialog } from "@/components/subscribers/EditSubscriberDialog";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,

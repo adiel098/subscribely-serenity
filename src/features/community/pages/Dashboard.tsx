@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
 import { useCommunityContext } from '@/features/community/providers/CommunityContext';
-import { useSubscribers } from '@/hooks/useSubscribers';
+import { useSubscribers } from '@/hooks/community/useSubscribers';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {

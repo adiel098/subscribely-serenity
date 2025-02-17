@@ -1,6 +1,5 @@
-
 import { Card, CardContent } from "@/components/ui/card";
-import { useBotStats } from "@/hooks/useBotStats";
+import { useBotStats } from "@/hooks/community/useBotStats";
 import { Users, UserCheck, UserX, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";

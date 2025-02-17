@@ -1,5 +1,5 @@
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useSubscribers } from "@/hooks/useSubscribers";
+import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";

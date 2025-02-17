@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -13,7 +12,7 @@ import { useCommunityContext } from '@/features/community/providers/CommunityCon
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/components/payments/PaymentMethodCard";
 import { PaymentMethodTabs } from "@/components/payments/PaymentMethodTabs";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { usePaymentMethods } from "@/hooks/telegram-mini-app/usePaymentMethods";
 
 const Messages = () => {
   const { toast } = useToast();

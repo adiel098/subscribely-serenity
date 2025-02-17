@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Bell, Copy, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { usePaymentMethods } from "@/hooks/telegram-mini-app/usePaymentMethods";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
 import {
   AlertDialog,
   AlertDialogCancel,

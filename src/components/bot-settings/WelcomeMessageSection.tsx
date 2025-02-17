@@ -1,4 +1,3 @@
-
 import { MessageSquare, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BotSettings } from "@/hooks/useBotSettings";
+import { useBotSettings } from "@/hooks/community/useBotSettings";
 import { useState } from "react";
 import { toast } from "sonner";
 

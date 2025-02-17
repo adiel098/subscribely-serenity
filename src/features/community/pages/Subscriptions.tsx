@@ -5,7 +5,7 @@ import { CreatePlanDialog } from "@/components/subscriptions/CreatePlanDialog";
 import { EditPlanDialog } from "@/components/subscriptions/EditPlanDialog";
 import { DeletePlanDialog } from "@/components/subscriptions/DeletePlanDialog";
 import { SubscriptionPlanCard } from "@/components/subscriptions/SubscriptionPlanCard";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useSubscriptionPlans } from "@/hooks/community/useSubscriptionPlans";
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { Loader2, Plus } from "lucide-react";
 

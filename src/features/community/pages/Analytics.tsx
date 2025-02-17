@@ -1,7 +1,7 @@
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { useBotStats } from "@/hooks/useBotStats";
-import { useSubscribers } from "@/hooks/useSubscribers";
+import { useBotStats } from "@/hooks/community/useBotStats";
+import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { format } from "date-fns";
 import { NextCheckTimer } from "@/components/analytics/NextCheckTimer";
 import { StatsGrid } from "@/components/analytics/StatsGrid";

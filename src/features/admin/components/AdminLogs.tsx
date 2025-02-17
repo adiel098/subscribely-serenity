@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -41,7 +42,10 @@ export const AdminLogs = () => {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching system logs:', error);
+        throw error;
+      }
       return data as SystemLog[];
     },
   });

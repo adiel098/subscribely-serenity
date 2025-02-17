@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, ChevronRight, User } from "lucide-react";
 import { format } from "date-fns";
 import type { Customer } from "@/hooks/useCustomers";
+import { useCustomers } from "@/hooks/admin/useCustomers";
 
 interface CustomersTableProps {
   customers: Customer[];

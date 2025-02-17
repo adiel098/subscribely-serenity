@@ -16,6 +16,7 @@ import {
 import { useBotSettings } from "@/hooks/community/useBotSettings";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BotSettings } from "@/types/bot-settings";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;

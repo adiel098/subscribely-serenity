@@ -1,5 +1,5 @@
 import { useCommunityContext } from "@/features/community/providers/CommunityContext";
-import { useSubscribers } from "@/hooks/useSubscribers";
+import { useSubscribers } from "@/hooks/community/useSubscribers";
 import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+interface SubscriberPlan {
+  id: string;
+  name: string;
+}
 
 interface MSNavigator extends Navigator {
   msSaveBlob?: (blob: Blob, defaultName: string) => boolean;
@@ -172,7 +177,9 @@ const Subscribers = () => {
   });
 
   const uniquePlans = Array.from(
-    new Set((subscribers || []).map((s) => s.plan).filter(Boolean))
+    new Set((subscribers || [])
+      .map((s) => s.plan)
+      .filter((plan): plan is SubscriberPlan => Boolean(plan)))
   );
 
   if (isLoading) {

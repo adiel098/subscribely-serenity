@@ -7,6 +7,7 @@ import { handleMessage } from "./handlers/messageHandler.ts"
 import { handleChatMember } from "./handlers/chatMemberHandler.ts"
 import { handleJoinRequest } from "./handlers/joinRequestHandler.ts"
 import { updateMemberActivity } from "./handlers/activityHandler.ts"
+import { handleBroadcast } from "./broadcastHandler.ts"
 
 serve(async (req) => {
   // Handle CORS

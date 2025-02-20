@@ -18,6 +18,12 @@ interface StripeConfig {
   secret_key: string;
 }
 
+// Type guard to check if value is a StripeConfig
+const isStripeConfig = (value: Json): value is StripeConfig => {
+  if (typeof value !== 'object' || value === null) return false;
+  return 'public_key' in value && 'secret_key' in value;
+};
+
 export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -40,10 +46,9 @@ export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
           return;
         }
 
-        const config = data?.config as StripeConfig;
-        if (config) {
-          setStripePublicKey(config.public_key || '');
-          setStripeSecretKey(config.secret_key || '');
+        if (data?.config && isStripeConfig(data.config)) {
+          setStripePublicKey(data.config.public_key);
+          setStripeSecretKey(data.config.secret_key);
         }
       } catch (error) {
         console.error('Error:', error);

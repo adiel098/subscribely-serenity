@@ -7,9 +7,15 @@ import { Wallet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { type Json } from "@/integrations/supabase/types";
 
 interface PaymentMethodTabsProps {
   communityId: string;
+}
+
+interface StripeConfig {
+  public_key: string;
+  secret_key: string;
 }
 
 export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
@@ -34,9 +40,10 @@ export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
           return;
         }
 
-        if (data?.config) {
-          setStripePublicKey(data.config.public_key || '');
-          setStripeSecretKey(data.config.secret_key || '');
+        const config = data?.config as StripeConfig;
+        if (config) {
+          setStripePublicKey(config.public_key || '');
+          setStripeSecretKey(config.secret_key || '');
         }
       } catch (error) {
         console.error('Error:', error);

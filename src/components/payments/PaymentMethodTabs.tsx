@@ -1,10 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentMethodTabsProps {
@@ -16,6 +17,36 @@ export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [stripePublicKey, setStripePublicKey] = useState("");
   const [stripeSecretKey, setStripeSecretKey] = useState("");
+
+  // Fetch existing keys when component mounts
+  useEffect(() => {
+    const fetchStripeKeys = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .select('config')
+          .eq('community_id', communityId)
+          .eq('provider', 'stripe')
+          .single();
+
+        if (error) {
+          console.error('Error fetching Stripe config:', error);
+          return;
+        }
+
+        if (data?.config) {
+          setStripePublicKey(data.config.public_key || '');
+          setStripeSecretKey(data.config.secret_key || '');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    if (communityId) {
+      fetchStripeKeys();
+    }
+  }, [communityId]);
 
   const handleStripeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

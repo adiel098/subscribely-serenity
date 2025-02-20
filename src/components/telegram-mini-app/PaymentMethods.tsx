@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart } from "lucide-react";
@@ -28,6 +28,32 @@ export const PaymentMethods = ({
 }: PaymentMethodsProps) => {
   const { toast } = useToast();
   const [paymentInviteLink, setPaymentInviteLink] = useState<string | null>(null);
+  const [stripeConfig, setStripeConfig] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStripeConfig = async () => {
+      if (!selectedPlan?.community_id) return;
+      
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('config')
+        .eq('community_id', selectedPlan.community_id)
+        .eq('provider', 'stripe')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching Stripe config:', error);
+        return;
+      }
+
+      if (data?.config) {
+        setStripeConfig(data.config);
+      }
+    };
+
+    fetchStripeConfig();
+  }, [selectedPlan?.community_id]);
 
   const handlePaymentComplete = async () => {
     if (!selectedPlan || !selectedPaymentMethod) {
@@ -40,6 +66,39 @@ export const PaymentMethods = ({
     }
 
     try {
+      if (selectedPaymentMethod === 'card' && stripeConfig) {
+        // Load Stripe.js
+        const stripe = await loadStripe(stripeConfig.public_key);
+        
+        // Create payment session using Edge Function
+        const { data: session, error: sessionError } = await supabase.functions.invoke(
+          'create-stripe-session',
+          {
+            body: { 
+              planId: selectedPlan.id,
+              amount: selectedPlan.price,
+              communityId: selectedPlan.community_id,
+              telegramUserId: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+            }
+          }
+        );
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        // Redirect to Stripe Checkout
+        const result = await stripe.redirectToCheckout({
+          sessionId: session.id
+        });
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        return;
+      }
+      
       // Create a new invite link
       console.log('Creating new invite link for community:', selectedPlan.community_id);
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
@@ -61,12 +120,10 @@ export const PaymentMethods = ({
 
       const newInviteLink = inviteLinkData?.inviteLink;
 
-      // בדיקת הנתונים לפני השליחה לבסיס הנתונים
       const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
       console.log('Telegram User ID:', telegramUserId);
       console.log('Selected Plan:', selectedPlan);
 
-      // Create the payment record with the new invite link
       const paymentData = {
         plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
@@ -145,6 +202,7 @@ export const PaymentMethods = ({
           title="Card"
           isSelected={selectedPaymentMethod === 'card'}
           onSelect={() => onPaymentMethodSelect('card')}
+          disabled={!stripeConfig}
         />
         <TelegramPaymentOption
           icon="/lovable-uploads/c00577e9-67bf-4dcb-b6c9-c821640fcea2.png"

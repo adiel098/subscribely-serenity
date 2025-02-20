@@ -1,6 +1,4 @@
 
-[functions.telegram-webhook]
-verify_jwt = false
-
-[functions.telegram-mini-app]
+project_id = "trkiniaqliiwdkrvvuky"
+[functions.create-stripe-session]
 verify_jwt = false

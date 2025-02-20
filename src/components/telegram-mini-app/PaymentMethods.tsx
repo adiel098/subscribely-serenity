@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export const PaymentMethods = ({
   const { toast } = useToast();
   const [paymentInviteLink, setPaymentInviteLink] = useState<string | null>(null);
   const [stripeConfig, setStripeConfig] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchStripeConfig = async () => {
@@ -66,9 +68,13 @@ export const PaymentMethods = ({
     }
 
     try {
+      setIsProcessing(true);
+
       if (selectedPaymentMethod === 'card' && stripeConfig) {
-        // Load Stripe.js
         const stripe = await loadStripe(stripeConfig.public_key);
+        if (!stripe) {
+          throw new Error('Failed to load Stripe');
+        }
         
         // Create payment session using Edge Function
         const { data: session, error: sessionError } = await supabase.functions.invoke(
@@ -83,8 +89,8 @@ export const PaymentMethods = ({
           }
         );
 
-        if (sessionError) {
-          throw sessionError;
+        if (sessionError || !session?.id) {
+          throw sessionError || new Error('Failed to create payment session');
         }
 
         // Redirect to Stripe Checkout
@@ -99,38 +105,16 @@ export const PaymentMethods = ({
         return;
       }
       
-      // Create a new invite link
-      console.log('Creating new invite link for community:', selectedPlan.community_id);
-      const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
-        'create-invite-link',
-        {
-          body: { communityId: selectedPlan.community_id }
-        }
-      );
-
-      if (inviteLinkError) {
-        console.error('Error creating invite link:', inviteLinkError);
-        toast({
-          variant: "destructive",
-          title: "Error creating invite link",
-          description: "Please try again or contact support."
-        });
-        return;
-      }
-
-      const newInviteLink = inviteLinkData?.inviteLink;
-
+      // Handle other payment methods...
       const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
-      console.log('Telegram User ID:', telegramUserId);
-      console.log('Selected Plan:', selectedPlan);
-
+      
       const paymentData = {
         plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
         status: 'completed',
-        invite_link: newInviteLink || null,
+        invite_link: null,
         telegram_user_id: telegramUserId
       };
 
@@ -138,16 +122,10 @@ export const PaymentMethods = ({
         .from('subscription_payments')
         .insert([paymentData])
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) {
-        console.error('Payment error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error processing payment",
-          description: "Please try again or contact support."
-        });
-        return;
+        throw error;
       }
 
       if (payment?.invite_link) {
@@ -162,12 +140,14 @@ export const PaymentMethods = ({
       onCompletePurchase();
       
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Payment error:', error);
       toast({
         variant: "destructive",
         title: "Error processing payment",
-        description: "Please try again or contact support."
+        description: error.message || "Please try again or contact support."
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -218,12 +198,13 @@ export const PaymentMethods = ({
             size="lg" 
             className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm"
             onClick={handlePaymentComplete}
+            disabled={isProcessing}
           >
             <Heart className="h-5 w-5" />
-            I Paid ${selectedPlan.price}
+            {isProcessing ? 'Processing...' : `Pay $${selectedPlan.price}`}
           </Button>
           <p className="text-sm text-muted-foreground pb-8">
-            Click the button above after completing your payment
+            Click the button above to complete your payment
           </p>
         </div>
       )}

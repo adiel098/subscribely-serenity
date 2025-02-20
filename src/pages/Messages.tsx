@@ -19,7 +19,7 @@ const Messages = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("stripe");
   const { selectedCommunityId } = useCommunityContext();
-  const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
+  const { data: paymentMethods, refetch } = usePaymentMethods(selectedCommunityId);
 
   const handleMethodToggle = async (provider: string, active: boolean) => {
     if (!selectedCommunityId) return;
@@ -42,6 +42,7 @@ const Messages = () => {
         description: `${provider} payments ${active ? 'enabled' : 'disabled'}`
       });
     }
+    refetch();
   };
 
   const isMethodConfigured = (provider: string) => {

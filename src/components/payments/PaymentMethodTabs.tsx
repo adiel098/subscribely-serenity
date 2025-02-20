@@ -21,7 +21,8 @@ interface StripeConfig {
 // Type guard to check if value is a StripeConfig
 const isStripeConfig = (value: Json): value is StripeConfig => {
   if (typeof value !== 'object' || value === null) return false;
-  return 'public_key' in value && 'secret_key' in value;
+  const config = value as Record<string, unknown>;
+  return typeof config.public_key === 'string' && typeof config.secret_key === 'string';
 };
 
 export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {

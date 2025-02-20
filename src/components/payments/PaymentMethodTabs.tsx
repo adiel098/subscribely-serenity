@@ -1,75 +1,118 @@
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PayPalIcon, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentMethodTabsProps {
-  activeTab: string;
-  onTabChange: (value: string) => void;
+  communityId: string;
 }
 
-export const PaymentMethodTabs = ({ activeTab, onTabChange }: PaymentMethodTabsProps) => (
-  <Tabs value={activeTab} onValueChange={onTabChange}>
-    <TabsList className="grid w-full grid-cols-3">
-      <TabsTrigger value="stripe">Stripe</TabsTrigger>
-      <TabsTrigger value="paypal">PayPal</TabsTrigger>
-      <TabsTrigger value="crypto">Crypto</TabsTrigger>
-    </TabsList>
-    <TabsContent value="stripe" className="space-y-4">
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          You'll need your Stripe API keys to enable credit card payments.
-        </AlertDescription>
-      </Alert>
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="stripe-public">Stripe Public Key</Label>
-          <Input id="stripe-public" placeholder="pk_test_..." />
+export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [stripePublicKey, setStripePublicKey] = useState("");
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+
+  const handleStripeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripePublicKey || !stripeSecretKey) {
+      toast({
+        title: "Error",
+        description: "Please fill in both Stripe keys",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('payment_methods')
+        .upsert({
+          community_id: communityId,
+          provider: 'stripe',
+          is_active: true,
+          config: {
+            public_key: stripePublicKey,
+            secret_key: stripeSecretKey
+          }
+        }, {
+          onConflict: 'community_id,provider'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Stripe configuration has been saved",
+      });
+
+    } catch (error) {
+      console.error('Error saving Stripe config:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save Stripe configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Tabs defaultValue="stripe" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="stripe">Stripe</TabsTrigger>
+        <TabsTrigger value="paypal">
+          <PayPalIcon className="mr-2 h-4 w-4" />
+          PayPal
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="stripe" className="space-y-4">
+        <form onSubmit={handleStripeSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="stripe-public">Stripe Public Key</Label>
+            <Input 
+              id="stripe-public" 
+              placeholder="pk_test_..." 
+              value={stripePublicKey}
+              onChange={(e) => setStripePublicKey(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="stripe-secret">Stripe Secret Key</Label>
+            <Input 
+              id="stripe-secret" 
+              type="password" 
+              placeholder="sk_test_..." 
+              value={stripeSecretKey}
+              onChange={(e) => setStripeSecretKey(e.target.value)}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Stripe Configuration'
+            )}
+          </Button>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="paypal">
+        <div className="space-y-4">
+          {/* PayPal configuration content */}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="stripe-secret">Stripe Secret Key</Label>
-          <Input id="stripe-secret" type="password" placeholder="sk_test_..." />
-        </div>
-        <Button>Save Stripe Configuration</Button>
-      </div>
-    </TabsContent>
-    <TabsContent value="paypal" className="space-y-4">
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Connect your PayPal business account to accept PayPal payments.
-        </AlertDescription>
-      </Alert>
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="paypal-client">Client ID</Label>
-          <Input id="paypal-client" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="paypal-secret">Client Secret</Label>
-          <Input id="paypal-secret" type="password" />
-        </div>
-        <Button>Save PayPal Configuration</Button>
-      </div>
-    </TabsContent>
-    <TabsContent value="crypto" className="space-y-4">
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Set up cryptocurrency payment options for your community.
-        </AlertDescription>
-      </Alert>
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="wallet-address">Wallet Address</Label>
-          <Input id="wallet-address" placeholder="Your crypto wallet address" />
-        </div>
-        <Button>Save Crypto Configuration</Button>
-      </div>
-    </TabsContent>
-  </Tabs>
-);
+      </TabsContent>
+    </Tabs>
+  );
+};

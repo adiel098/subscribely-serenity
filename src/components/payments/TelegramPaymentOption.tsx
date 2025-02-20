@@ -12,6 +12,7 @@ interface TelegramPaymentOptionProps {
   title: string;
   isSelected: boolean;
   onSelect: () => void;
+  disabled?: boolean;
   demoDelay?: number;
 }
 
@@ -20,11 +21,14 @@ export const TelegramPaymentOption = ({
   title,
   isSelected,
   onSelect,
+  disabled = false,
   demoDelay = 1500
 }: TelegramPaymentOptionProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleClick = async () => {
+    if (disabled) return;
+    
     setIsProcessing(true);
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, demoDelay));
@@ -36,7 +40,8 @@ export const TelegramPaymentOption = ({
     <Card 
       className={cn(
         "cursor-pointer transition-all duration-300 hover:scale-105",
-        isSelected ? 'border-primary shadow-lg' : 'hover:border-primary/50 hover:shadow-md'
+        isSelected ? 'border-primary shadow-lg' : 'hover:border-primary/50 hover:shadow-md',
+        disabled ? 'opacity-50 cursor-not-allowed hover:scale-100' : ''
       )}
       onClick={handleClick}
     >

@@ -96,10 +96,7 @@ const Messages = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodTabs 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab} 
-          />
+          {selectedCommunityId && <PaymentMethodTabs communityId={selectedCommunityId} />}
         </CardContent>
       </Card>
     </div>

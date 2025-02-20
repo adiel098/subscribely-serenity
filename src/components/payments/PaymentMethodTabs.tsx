@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Loader2, Wallet } from "lucide-react";
+import { PayPalIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,12 +67,9 @@ export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
   return (
     <Tabs defaultValue="stripe" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="stripe">
-          <CreditCard className="mr-2 h-4 w-4" />
-          Stripe
-        </TabsTrigger>
+        <TabsTrigger value="stripe">Stripe</TabsTrigger>
         <TabsTrigger value="paypal">
-          <Wallet className="mr-2 h-4 w-4" />
+          <PayPalIcon className="mr-2 h-4 w-4" />
           PayPal
         </TabsTrigger>
       </TabsList>

@@ -1,21 +1,15 @@
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useSubscribers } from "@/hooks/useSubscribers";
-import { Loader2, Users, Search, Filter, CheckSquare, XSquare, RefreshCw, FileSpreadsheet } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { EditSubscriberDialog } from "@/components/subscribers/EditSubscriberDialog";
 import { SubscribersTable } from "@/components/subscribers/SubscribersTable";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { SearchBar } from "@/components/subscribers/SearchBar";
+import { StatusFilter } from "@/components/subscribers/StatusFilter";
+import { PlanFilter } from "@/components/subscribers/PlanFilter";
+import { SubscribersHeader } from "@/components/subscribers/SubscribersHeader";
 
 interface MSNavigator extends Navigator {
   msSaveBlob?: (blob: Blob, defaultName: string) => boolean;
@@ -186,106 +180,28 @@ const Subscribers = () => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Users className="h-6 w-6" />
-            <h1 className="text-2xl font-semibold">Subscribers</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUpdateStatus}
-              disabled={isUpdating}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-              Update Member Status
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExport}
-              className="bg-green-100 hover:bg-green-200 text-green-700 border-green-200"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Manage your community subscribers and monitor their subscription status
-        </p>
-      </div>
+      <SubscribersHeader
+        onUpdateStatus={handleUpdateStatus}
+        onExport={handleExport}
+        isUpdating={isUpdating}
+      />
 
       <div className="flex items-center space-x-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by username or Telegram ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Filter className="h-4 w-4" />
-              <span>Status</span>
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="ml-2">
-                  {statusFilter}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setStatusFilter("all")}>
-                <span className="mr-2">All</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("active")}>
-                <CheckSquare className="mr-2 h-4 w-4 text-green-500" />
-                <span>Active</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setStatusFilter("inactive")}>
-                <XSquare className="mr-2 h-4 w-4 text-red-500" />
-                <span>Inactive</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <StatusFilter
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Filter className="h-4 w-4" />
-              <span>Plan</span>
-              {planFilter && (
-                <Badge variant="secondary" className="ml-2">
-                  {uniquePlans.find((p) => p.id === planFilter)?.name}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setPlanFilter(null)}>
-                <span className="mr-2">All Plans</span>
-              </DropdownMenuItem>
-              {uniquePlans.map((plan) => (
-                <DropdownMenuItem
-                  key={plan.id}
-                  onClick={() => setPlanFilter(plan.id)}
-                >
-                  <span>{plan.name}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PlanFilter
+          planFilter={planFilter}
+          uniquePlans={uniquePlans}
+          onPlanFilterChange={setPlanFilter}
+        />
       </div>
 
       <SubscribersTable 

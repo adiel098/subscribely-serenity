@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useCommunityContext } from '@/contexts/CommunityContext';
-import { BotStatsHeader } from '@/group_owners/components/bot-settings/BotStatsHeader';
-import { WelcomeMessageSection } from '@/group_owners/components/bot-settings/WelcomeMessageSection';
-import { SubscriptionSection } from '@/group_owners/components/bot-settings/SubscriptionSection';
-import { MessagePreview } from '@/group_owners/components/bot-settings/MessagePreview';
+import { BotStatsHeader } from '@/components/bot-settings/BotStatsHeader';
+import { WelcomeMessageSection } from '@/components/bot-settings/WelcomeMessageSection';
+import { SubscriptionSection } from '@/components/bot-settings/SubscriptionSection';
+import { MessagePreview } from '@/components/bot-settings/MessagePreview';
 import {
   Accordion,
 } from "@/components/ui/accordion";

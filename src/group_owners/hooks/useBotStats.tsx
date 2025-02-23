@@ -9,26 +9,28 @@ interface BotStats {
 }
 
 export const useBotStats = (communityId: string) => {
-  const { data, isLoading, error, refetch } = useQuery({
+  return useQuery({
     queryKey: ['bot-stats', communityId],
-    queryFn: async () => {
-      const { data: members, error } = await supabase
+    queryFn: async (): Promise<BotStats> => {
+      if (!communityId) throw new Error('Community ID is required');
+
+      const { data, error } = await supabase
         .from('telegram_chat_members')
         .select('*')
         .eq('community_id', communityId);
 
       if (error) throw error;
 
-      const stats: BotStats = {
-        totalMembers: members.length,
-        activeMembers: members.filter(m => m.subscription_status).length,
-        inactiveMembers: members.filter(m => !m.subscription_status).length
+      const totalMembers = data.length;
+      const activeMembers = data.filter(member => member.subscription_status).length;
+      const inactiveMembers = totalMembers - activeMembers;
+
+      return {
+        totalMembers,
+        activeMembers,
+        inactiveMembers
       };
-
-      return stats;
     },
-    enabled: Boolean(communityId),
+    enabled: Boolean(communityId)
   });
-
-  return { data, isLoading, error, refetch };
 };

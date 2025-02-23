@@ -9,16 +9,7 @@ import { SubscriptionPlans } from "@/mini_app/components/SubscriptionPlans";
 import { PaymentMethods } from "@/mini_app/components/PaymentMethods";
 import { LoadingScreen } from "@/mini_app/components/LoadingScreen";
 import { CommunityNotFound } from "@/mini_app/components/CommunityNotFound";
-
-export interface Plan {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  interval: string;
-  features: string[];
-  community_id: string;
-}
+import { Plan } from "@/types/subscription";
 
 export interface Community {
   id: string;

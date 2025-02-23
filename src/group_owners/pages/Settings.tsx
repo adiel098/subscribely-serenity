@@ -18,12 +18,12 @@ import { useCommunityContext } from '@/contexts/CommunityContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
-  const { user, updateUserProfile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState(user?.user_metadata?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [isUpdating, setIsUpdating] = useState(false);
-	const { selectedCommunityId } = useCommunityContext();
+  const { selectedCommunityId } = useCommunityContext();
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
   const handleProfileUpdate = useCallback(async () => {
@@ -33,21 +33,14 @@ const Settings = () => {
         throw new Error("User not authenticated.");
       }
 
-      const updates = {
-        id: user.id,
+      const { error } = await supabase.auth.updateUser({
+        data: { name },
         email: email,
-        data: {
-          name: name,
-        },
-      };
-
-      const { error } = await supabase.auth.updateUser(updates);
+      });
 
       if (error) {
         throw error;
       }
-
-      await updateUserProfile({ name: name });
 
       toast.success("Profile updated successfully!");
     } catch (error: any) {
@@ -56,7 +49,7 @@ const Settings = () => {
     } finally {
       setIsUpdating(false);
     }
-  }, [user, name, email, updateUserProfile]);
+  }, [user, name, email]);
 
   const handleDeleteAccount = async () => {
     try {

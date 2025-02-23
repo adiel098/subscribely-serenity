@@ -60,7 +60,7 @@ const Messages = () => {
         toast({
           title: "Warning",
           description: "No members found in the selected community.",
-          variant: "warning",
+          variant: "destructive",
         });
         return;
       }

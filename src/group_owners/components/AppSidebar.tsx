@@ -5,11 +5,12 @@ import {
   Bot,
   BarChart,
   BadgeDollarSign,
-  Wallet
+  Wallet,
+  LogOut
 } from 'lucide-react';
-import { LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +20,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Button } from './ui/button';
 
 const menuItems = [
   {
@@ -85,7 +85,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sign Out Button */}
         <div className="absolute bottom-4 left-0 right-0 px-4">
           <Button 
             variant="destructive" 

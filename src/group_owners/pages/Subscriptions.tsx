@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ const Subscriptions = () => {
         open={open}
         setOpen={setOpen}
         onSubmit={selectedPlan ? updatePlan.mutate : createPlan.mutate}
-        isLoading={selectedPlan ? updatePlan.isLoading : createPlan.isLoading}
+        isLoading={selectedPlan ? updatePlan.isPending : createPlan.isPending}
         plan={selectedPlan}
         communityId={selectedCommunityId}
       />

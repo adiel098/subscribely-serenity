@@ -12,7 +12,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
+import TelegramMiniApp from "./mini_app/pages/TelegramMiniApp";
+import Dashboard from "./group_owners/pages/Dashboard";
 import Members from "./pages/Members";
 import Subscribers from "./pages/Subscribers";
 import Subscriptions from "./pages/Subscriptions";
@@ -25,7 +26,6 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import PlatformSelect from "./pages/PlatformSelect";
 import TelegramConnect from "./pages/connect/TelegramConnect";
-import TelegramMiniApp from "./pages/TelegramMiniApp";
 
 const queryClient = new QueryClient();
 

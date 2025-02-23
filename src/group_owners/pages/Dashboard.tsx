@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";

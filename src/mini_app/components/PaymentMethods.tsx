@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart } from "lucide-react";
 import { TelegramPaymentOption } from "@/components/payments/TelegramPaymentOption";
-import { Plan } from "@/pages/TelegramMiniApp";
-import { SuccessScreen } from "./SuccessScreen";
+import { Plan } from "@/mini_app/pages/TelegramMiniApp";
+import { SuccessScreen } from "@/mini_app/components/SuccessScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";

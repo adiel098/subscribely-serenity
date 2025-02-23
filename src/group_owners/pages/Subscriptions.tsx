@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,8 @@ import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans"
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
-import { columns } from "@/components/subscriptions/columns";
-import { SubscriptionPlanForm } from "@/components/subscriptions/SubscriptionPlanForm";
+import { columns } from "@/group_owners/components/subscriptions/columns";
+import { SubscriptionPlanForm } from "@/group_owners/components/subscriptions/SubscriptionPlanForm";
 
 const Subscriptions = () => {
   const { selectedCommunityId } = useCommunityContext();

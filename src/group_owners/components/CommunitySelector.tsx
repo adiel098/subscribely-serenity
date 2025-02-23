@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
+import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import {
   AlertDialog,
   AlertDialogCancel,

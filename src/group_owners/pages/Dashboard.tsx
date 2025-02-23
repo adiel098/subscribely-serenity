@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useSubscribers } from '@/hooks/useSubscribers';
+import { useSubscribers } from '@/group_owners/hooks/useSubscribers';
 
 const Dashboard = () => {
   const { user } = useAuth();

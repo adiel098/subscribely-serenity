@@ -1,7 +1,7 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { Plan } from "@/types/subscription";
 
 export interface Subscriber {
   id: string;
@@ -13,12 +13,7 @@ export interface Subscriber {
   subscription_end_date: string | null;
   subscription_status: boolean;
   total_messages: number | null;
-  plan: {
-    id: string;
-    name: string;
-    interval: string;
-    price: number;
-  } | null;
+  plan: Plan | null;
 }
 
 export const useSubscribers = (communityId: string) => {

@@ -1,2 +1,4 @@
 
-This directory contains all admin-related components, hooks, and pages.
+# Admin Panel
+
+This directory contains all components, hooks, and pages related to the admin dashboard functionality.

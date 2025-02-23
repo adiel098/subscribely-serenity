@@ -1,2 +1,4 @@
 
-This directory contains all group owner-related components, hooks, and pages.
+# Group Owners Interface
+
+This directory contains all components, hooks, and pages related to group owner functionality.

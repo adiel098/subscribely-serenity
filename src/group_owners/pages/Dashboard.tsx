@@ -51,9 +51,7 @@ const Dashboard = () => {
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   
-  // Calculate total revenue from all payments ever made (including expired subscriptions)
   const totalRevenue = (subscribers || []).reduce((sum, sub) => {
-    // Sum all plan prices regardless of subscription status
     if (sub.plan) {
       const subscriptionAmount = sub.plan.price || 0;
       return sum + subscriptionAmount;
@@ -133,4 +131,26 @@ const Dashboard = () => {
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Over Time</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart 
+                data={subscribers?.filter(sub => sub.plan).map(sub => ({
+                  date: new Date(sub.subscription_start_date || '').toLocaleDateString(),
+                  revenue: sub.plan?.price || 0
+                }))} 
+                margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#6ee7b7" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;

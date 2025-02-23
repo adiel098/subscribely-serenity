@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscribers } from "@/hooks/useSubscribers";
-import { Subscriber } from "@/hooks/useSubscribers";
+import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
+import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 export const useSubscriberManagement = (communityId: string) => {
   const { data: subscribers, isLoading, refetch } = useSubscribers(communityId || "");

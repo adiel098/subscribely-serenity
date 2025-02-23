@@ -1,161 +1,53 @@
 
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { CommunityProvider } from "@/contexts/CommunityContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DashboardLayout } from "@/components/DashboardLayout";
-
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import TelegramMiniApp from "./mini_app/pages/TelegramMiniApp";
-import Dashboard from "./group_owners/pages/Dashboard";
-import Members from "./pages/Members";
-import Subscribers from "./pages/Subscribers";
-import Subscriptions from "./pages/Subscriptions";
-import Messages from "./pages/Messages";
-import Analytics from "./pages/Analytics";
-import BotSettings from "./pages/BotSettings";
-import Events from "./pages/Events";
-import Rewards from "./pages/Rewards";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import PlatformSelect from "./pages/PlatformSelect";
-import TelegramConnect from "./pages/connect/TelegramConnect";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CommunityProvider } from '@/contexts/CommunityContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import Index from '@/pages/Index';
+import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
+import PlatformSelect from '@/pages/PlatformSelect';
+import TelegramConnect from '@/pages/connect/TelegramConnect';
+import Dashboard from '@/group_owners/pages/Dashboard';
+import Subscriptions from '@/group_owners/pages/Subscriptions';
+import Analytics from '@/group_owners/pages/Analytics';
+import BotSettings from '@/group_owners/pages/BotSettings';
+import Messages from '@/group_owners/pages/Messages';
+import Settings from '@/group_owners/pages/Settings';
+import Subscribers from '@/group_owners/pages/Subscribers';
+import TelegramMiniApp from '@/mini_app/pages/TelegramMiniApp';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <SidebarProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CommunityProvider>
+          <Router>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Dashboard />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/members" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Members />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscribers" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Subscribers />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/subscriptions" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Subscriptions />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/messages" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Messages />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Analytics />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/bot-settings" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <BotSettings />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/events" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Events />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/rewards" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Rewards />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <Settings />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/platform-select" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <PlatformSelect />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
-              <Route path="/connect/telegram" element={
-                <ProtectedRoute>
-                  <CommunityProvider>
-                    <DashboardLayout>
-                      <TelegramConnect />
-                    </DashboardLayout>
-                  </CommunityProvider>
-                </ProtectedRoute>
-              } />
+              <Route path="/platform-select" element={<ProtectedRoute><PlatformSelect /></ProtectedRoute>} />
+              <Route path="/connect/telegram" element={<ProtectedRoute><TelegramConnect /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/bot-settings" element={<ProtectedRoute><BotSettings /></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/subscribers" element={<ProtectedRoute><Subscribers /></ProtectedRoute>} />
+              <Route path="/mini-app/:communityId" element={<TelegramMiniApp />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </SidebarProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+          </Router>
+          <Toaster />
+        </CommunityProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

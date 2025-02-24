@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, TrendingUp, ArrowUpRight, PlusCircle } from 'lucide-react';
 import { Card } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCommunities } from '@/hooks/useCommunities';
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useSubscribers } from '@/group_owners/hooks/useSubscribers';
+import { useSubscribers } from '@/hooks/useSubscribers';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -50,7 +51,9 @@ const Dashboard = () => {
   const activeSubscribers = subscribers?.filter(s => s.subscription_status) || [];
   const inactiveSubscribers = subscribers?.filter(s => !s.subscription_status) || [];
   
+  // Calculate total revenue from all payments ever made (including expired subscriptions)
   const totalRevenue = (subscribers || []).reduce((sum, sub) => {
+    // Sum all plan prices regardless of subscription status
     if (sub.plan) {
       const subscriptionAmount = sub.plan.price || 0;
       return sum + subscriptionAmount;

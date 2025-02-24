@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Bell, Copy, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
+import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import {
   AlertDialog,
   AlertDialogCancel,

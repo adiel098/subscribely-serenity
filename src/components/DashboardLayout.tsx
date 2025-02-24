@@ -1,6 +1,7 @@
+
 import Navbar from "@/components/Navbar";
-import { AppSidebar } from "@/group_owners/components/AppSidebar";
-import { CommunitySelector } from "@/group_owners/components/CommunitySelector";
+import { AppSidebar } from "@/components/AppSidebar";
+import { CommunitySelector } from "@/components/CommunitySelector";
 
 export const DashboardLayout = ({
   children

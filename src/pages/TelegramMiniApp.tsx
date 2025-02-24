@@ -1,16 +1,25 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { CommunityHeader } from "@/mini_app/components/CommunityHeader";
-import { SubscriptionPlans } from "@/mini_app/components/SubscriptionPlans";
-import { PaymentMethods } from "@/mini_app/components/PaymentMethods";
-import { LoadingScreen } from "@/mini_app/components/LoadingScreen";
-import { CommunityNotFound } from "@/mini_app/components/CommunityNotFound";
-import { Plan } from "@/types/subscription";
+import { CommunityHeader } from "@/components/telegram-mini-app/CommunityHeader";
+import { SubscriptionPlans } from "@/components/telegram-mini-app/SubscriptionPlans";
+import { PaymentMethods } from "@/components/telegram-mini-app/PaymentMethods";
+import { LoadingScreen } from "@/components/telegram-mini-app/LoadingScreen";
+import { CommunityNotFound } from "@/components/telegram-mini-app/CommunityNotFound";
+
+export interface Plan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  interval: string;
+  features: string[];
+  community_id: string;
+}
 
 export interface Community {
   id: string;

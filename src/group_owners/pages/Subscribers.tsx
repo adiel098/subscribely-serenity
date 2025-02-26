@@ -61,18 +61,14 @@ const Subscribers = () => {
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     
-    // Use modern browser APIs with fallback
-    if (navigator.msSaveBlob) {
-      // For IE and Edge Legacy
-      navigator.msSaveBlob(blob, 'subscribers.csv');
-    } else {
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', 'subscribers.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    // Create a download link and trigger it
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'subscribers.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href); // Clean up the URL object
 
     toast({
       title: "Success",

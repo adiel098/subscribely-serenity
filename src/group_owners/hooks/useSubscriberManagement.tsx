@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +61,7 @@ export const useSubscriberManagement = (communityId: string) => {
 
       console.log('Successfully removed user from Telegram channel');
 
-      // Then update the database record
+      // Then update the database record - now we keep the subscription_plan_id
       console.log('Updating subscription status in database...');
       
       const { data: updateData, error: updateError } = await supabase
@@ -70,8 +69,8 @@ export const useSubscriberManagement = (communityId: string) => {
         .update({
           subscription_status: false,
           is_active: false,
-          subscription_end_date: new Date().toISOString(),
-          subscription_plan_id: null
+          subscription_end_date: new Date().toISOString()
+          // We no longer reset subscription_plan_id to null
         })
         .eq('id', subscriber.id)
         .select();
@@ -87,7 +86,7 @@ export const useSubscriberManagement = (communityId: string) => {
 
       toast({
         title: "Success",
-        description: "Subscriber removed successfully from channel and database updated",
+        description: "Subscriber removed successfully from channel and subscription deactivated",
       });
       
       console.log('Refreshing data...');
@@ -113,4 +112,3 @@ export const useSubscriberManagement = (communityId: string) => {
     handleRemoveSubscriber
   };
 };
-

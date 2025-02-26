@@ -30,11 +30,7 @@ export const usePaymentProcessing = (
     try {
       setState(prev => ({ ...prev, isProcessing: true }));
 
-      const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
-      if (!telegramUserId) {
-        throw new Error('Telegram user ID is missing');
-      }
-
+      // Create invite link first
       const newInviteLink = await createInviteLink(selectedPlan.community_id);
 
       const paymentData = {
@@ -44,27 +40,9 @@ export const usePaymentProcessing = (
         payment_method: selectedPaymentMethod,
         status: 'completed',
         invite_link: newInviteLink,
-        telegram_user_id: telegramUserId
       };
 
       const payment = await createPayment(paymentData);
-
-      const subscriptionStartDate = new Date();
-      const subscriptionEndDate = new Date();
-      
-      if (selectedPlan.interval === 'monthly') {
-        subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-      } else if (selectedPlan.interval === 'yearly') {
-        subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
-      }
-
-      await createOrUpdateMember({
-        telegramUserId,
-        communityId: selectedPlan.community_id,
-        planId: selectedPlan.id,
-        subscriptionStartDate,
-        subscriptionEndDate
-      });
 
       if (payment?.invite_link) {
         setState(prev => ({ ...prev, paymentInviteLink: payment.invite_link }));
@@ -94,3 +72,4 @@ export const usePaymentProcessing = (
     handlePayment,
   };
 };
+

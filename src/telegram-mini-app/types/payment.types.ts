@@ -21,5 +21,6 @@ export interface PaymentData {
   payment_method: string;
   status: string;
   invite_link: string;
-  telegram_user_id: string;
+  telegram_user_id?: string; // Made optional
 }
+

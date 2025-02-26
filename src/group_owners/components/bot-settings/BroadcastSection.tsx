@@ -1,3 +1,4 @@
+
 import { Send } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +34,7 @@ interface BroadcastSectionProps {
 
 export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
   const [message, setMessage] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState<"all" | "active" | "expired" | "plan">("all");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [isSending, setIsSending] = useState(false);
   const [includeButton, setIncludeButton] = useState(false);
@@ -68,8 +69,8 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
     try {
       await sendBroadcast({
         message: message.trim(),
-        filterType: filterType as 'all' | 'active' | 'expired' | 'plan',
-        subscriptionPlanId: selectedPlanId,
+        filterType,
+        subscriptionPlanId: filterType === 'plan' ? selectedPlanId : undefined,
         includeButton
       });
 
@@ -102,7 +103,7 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
             <div className="space-y-2">
               <Select
                 value={filterType}
-                onValueChange={(value) => {
+                onValueChange={(value: "all" | "active" | "expired" | "plan") => {
                   setFilterType(value);
                   if (value !== 'plan') {
                     setSelectedPlanId("");

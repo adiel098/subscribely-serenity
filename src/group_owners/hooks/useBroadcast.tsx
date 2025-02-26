@@ -22,24 +22,45 @@ export const useBroadcast = (communityId: string) => {
       subscriptionPlanId?: string;
       includeButton?: boolean;
     }): Promise<BroadcastStatus> => {
-      // בדיקת משתמשים פעילים לפני שליחת הברודקאסט
-      const { data: activeMembers, error: membersError } = await supabase
+      // Build the query based on filter type
+      let query = supabase
         .from('telegram_chat_members')
         .select('*')
         .eq('community_id', communityId)
         .eq('is_active', true);
+
+      // Apply filters based on filterType
+      switch (filterType) {
+        case 'active':
+          query = query.eq('subscription_status', true);
+          break;
+        case 'expired':
+          query = query
+            .eq('subscription_status', false)
+            .not('subscription_end_date', 'is', null);
+          break;
+        case 'plan':
+          if (subscriptionPlanId) {
+            query = query.eq('subscription_plan_id', subscriptionPlanId);
+          }
+          break;
+        // 'all' case doesn't need additional filters
+      }
+
+      const { data: activeMembers, error: membersError } = await query;
 
       if (membersError) {
         console.error('Error checking active members:', membersError);
         throw membersError;
       }
 
-      console.log('Active members found:', {
+      console.log('Filtered members found:', {
         totalActive: activeMembers?.length || 0,
-        members: activeMembers
+        filterType,
+        subscriptionPlanId,
       });
 
-      // אם אין משתמשים פעילים, נחזיר מיד תשובה מתאימה
+      // If no active members found, return early
       if (!activeMembers || activeMembers.length === 0) {
         return {
           successCount: 0,
@@ -47,15 +68,6 @@ export const useBroadcast = (communityId: string) => {
           totalRecipients: 0
         };
       }
-
-      console.log('Sending broadcast with params:', {
-        communityId,
-        message,
-        filterType,
-        subscriptionPlanId,
-        includeButton,
-        activeUsersCount: activeMembers.length
-      });
 
       const { data: settings, error: settingsError } = await supabase
         .from('telegram_global_settings')
@@ -70,7 +82,7 @@ export const useBroadcast = (communityId: string) => {
       let successCount = 0;
       let failureCount = 0;
 
-      // שליחת הודעות בצורה סדרתית
+      // Send messages to filtered members
       for (const member of activeMembers) {
         try {
           const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
@@ -95,7 +107,7 @@ export const useBroadcast = (communityId: string) => {
             console.error(`Failed to send message to ${member.telegram_username || member.telegram_user_id}:`, result);
           }
 
-          // להוסיף השהייה קטנה בין הודעות כדי להימנע מחסימה
+          // Add small delay between messages to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 35));
         } catch (error) {
           console.error(`Error sending message to ${member.telegram_username || member.telegram_user_id}:`, error);
@@ -109,9 +121,8 @@ export const useBroadcast = (communityId: string) => {
         totalRecipients: activeMembers.length
       };
 
-      // בדיקה שבאמת היו הצלחות בשליחה
       if (status.successCount === 0 && status.totalRecipients > 0) {
-        throw new Error('לא הצלחנו לשלוח את ההודעה לאף משתמש');
+        throw new Error('Failed to send message to any users');
       }
 
       console.log('Broadcast completed with status:', status);
@@ -119,16 +130,16 @@ export const useBroadcast = (communityId: string) => {
     },
     onSuccess: (data) => {
       if (data.totalRecipients === 0) {
-        toast.warning('לא נמצאו משתמשים פעילים לשליחת ההודעה');
+        toast.warning('No active users found to send the message');
       } else {
         toast.success(
-          `ההודעה נשלחה בהצלחה ל-${data.successCount} מתוך ${data.totalRecipients} משתמשים`
+          `Message sent successfully to ${data.successCount} out of ${data.totalRecipients} users`
         );
       }
     },
     onError: (error) => {
       console.error('Error sending broadcast:', error);
-      toast.error(error instanceof Error ? error.message : 'שגיאה בשליחת ההודעות');
+      toast.error(error instanceof Error ? error.message : 'Error sending messages');
     }
   });
 };

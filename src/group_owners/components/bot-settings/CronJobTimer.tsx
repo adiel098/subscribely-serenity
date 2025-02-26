@@ -18,8 +18,8 @@ export const CronJobTimer = () => {
       
       const newTimeLeft = Math.max(0, Math.floor((nextMinute.getTime() - now.getTime()) / 1000));
       
-      // If we've reached 0, update the last check time
-      if (newTimeLeft === 59) {
+      // If we've reached a new minute, update the last check time
+      if (timeLeft === 0) {
         setLastCheck(new Date());
       }
       
@@ -31,12 +31,11 @@ export const CronJobTimer = () => {
 
     // Update timer every second
     const timer = setInterval(() => {
-      const newTimeLeft = calculateTimeLeft();
-      setTimeLeft(newTimeLeft);
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [timeLeft]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -47,7 +46,7 @@ export const CronJobTimer = () => {
         <div className="flex items-center space-x-2">
           <Clock className={cn(
             "h-5 w-5 text-purple-600",
-            seconds === 59 && "animate-ping"
+            timeLeft === 0 && "animate-ping"
           )} />
           <CardTitle className="text-lg font-semibold text-purple-900">Subscription Manager</CardTitle>
         </div>

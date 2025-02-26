@@ -31,6 +31,7 @@ export const useSubscribers = (communityId: string) => {
         .from('telegram_chat_members')
         .select(`
           *,
+          telegram_bot_settings!inner(community_id),
           plan:subscription_plans(
             id,
             name,
@@ -54,7 +55,6 @@ export const useSubscribers = (communityId: string) => {
 
   useEffect(() => {
     if (communityId) {
-      // בדיקת סטטוס המשתמשים בעת טעינת הדף
       const checkStatus = async () => {
         try {
           const { error } = await supabase.functions.invoke('telegram-webhook', {
@@ -66,8 +66,7 @@ export const useSubscribers = (communityId: string) => {
 
           if (error) throw error;
           
-          // רענון הנתונים לאחר העדכון
-          refetch();
+          await refetch();
         } catch (error) {
           console.error('Error checking member status:', error);
         }

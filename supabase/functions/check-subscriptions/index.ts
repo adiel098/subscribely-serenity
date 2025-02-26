@@ -53,8 +53,7 @@ Deno.serve(async (req) => {
         )
       `)
       .eq('subscription_status', true)
-      .eq('is_active', true)
-      .or(`subscription_end_date.lt.${new Date().toISOString()},and(subscription_end_date.gt.${new Date().toISOString()},subscription_end_date.lt.${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()})`);
+      .eq('is_active', true);
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
@@ -105,11 +104,15 @@ Deno.serve(async (req) => {
 
             // Send expiration message
             if (member.telegram_bot_settings.expired_subscription_message) {
-              await sendTelegramMessage(
-                globalSettings.bot_token,
-                member.telegram_user_id,
-                member.telegram_bot_settings.expired_subscription_message
-              );
+              try {
+                await sendTelegramMessage(
+                  globalSettings.bot_token,
+                  member.telegram_user_id,
+                  member.telegram_bot_settings.expired_subscription_message
+                );
+              } catch (error) {
+                console.error('Error sending expiration message:', error);
+              }
             }
 
             // Log notification
@@ -126,23 +129,53 @@ Deno.serve(async (req) => {
             if (member.telegram_bot_settings.chat_id) {
               console.log(`Attempting to remove member ${member.telegram_user_id} from chat ${member.telegram_bot_settings.chat_id}`);
               
-              const kickResponse = await fetch(
-                `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    chat_id: member.telegram_bot_settings.chat_id,
-                    user_id: member.telegram_user_id,
-                    until_date: Math.floor(Date.now() / 1000) + 32 // Ban for 32 seconds (minimum time)
-                  })
-                }
-              );
+              try {
+                const kickResponse = await fetch(
+                  `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: member.telegram_bot_settings.chat_id,
+                      user_id: parseInt(member.telegram_user_id),
+                      until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
+                    })
+                  }
+                );
 
-              if (!kickResponse.ok) {
-                const errorData = await kickResponse.json();
-                console.error('Failed to remove member from channel:', errorData);
-                throw new Error(`Failed to remove member: ${JSON.stringify(errorData)}`);
+                const kickResponseData = await kickResponse.json();
+                console.log('Kick response:', kickResponseData);
+
+                if (!kickResponse.ok) {
+                  throw new Error(`Failed to remove member: ${JSON.stringify(kickResponseData)}`);
+                }
+
+                // If kick was successful, unban after 32 seconds to allow future joins
+                setTimeout(async () => {
+                  try {
+                    const unbanResponse = await fetch(
+                      `https://api.telegram.org/bot${globalSettings.bot_token}/unbanChatMember`,
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          chat_id: member.telegram_bot_settings.chat_id,
+                          user_id: parseInt(member.telegram_user_id),
+                          only_if_banned: true
+                        })
+                      }
+                    );
+
+                    const unbanData = await unbanResponse.json();
+                    console.log('Unban response:', unbanData);
+                  } catch (error) {
+                    console.error('Error unbanning member:', error);
+                  }
+                }, 32000);
+
+              } catch (error) {
+                console.error('Failed to remove member from channel:', error);
+                throw error;
               }
             }
           }
@@ -163,22 +196,26 @@ Deno.serve(async (req) => {
           if (!recentNotification && member.telegram_bot_settings.subscription_reminder_message) {
             console.log('Sending reminder message...');
             
-            // Send reminder message
-            await sendTelegramMessage(
-              globalSettings.bot_token,
-              member.telegram_user_id,
-              member.telegram_bot_settings.subscription_reminder_message
-            );
+            try {
+              // Send reminder message
+              await sendTelegramMessage(
+                globalSettings.bot_token,
+                member.telegram_user_id,
+                member.telegram_bot_settings.subscription_reminder_message
+              );
 
-            // Log notification
-            await supabase
-              .from('subscription_notifications')
-              .insert({
-                member_id: member.id,
-                community_id: member.community_id,
-                notification_type: 'reminder',
-                status: 'sent'
-              });
+              // Log notification
+              await supabase
+                .from('subscription_notifications')
+                .insert({
+                  member_id: member.id,
+                  community_id: member.community_id,
+                  notification_type: 'reminder',
+                  status: 'sent'
+                });
+            } catch (error) {
+              console.error('Error sending reminder message:', error);
+            }
           }
         }
 
@@ -225,4 +262,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-

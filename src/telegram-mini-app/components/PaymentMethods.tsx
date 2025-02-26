@@ -10,6 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { loadStripe } from "@stripe/stripe-js";
 
+// For development, set this to true to bypass real payment processing
+const TEST_MODE = true;
+
 interface PaymentMethodsProps {
   selectedPlan: Plan;
   selectedPaymentMethod: string | null;
@@ -70,6 +73,57 @@ export const PaymentMethods = ({
     try {
       setIsProcessing(true);
 
+      if (TEST_MODE) {
+        console.log('Test mode: Simulating successful payment');
+        
+        const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
+          'create-invite-link',
+          {
+            body: { communityId: selectedPlan.community_id },
+          }
+        );
+
+        if (inviteLinkError) {
+          throw inviteLinkError;
+        }
+
+        const newInviteLink = inviteLinkData?.inviteLink;
+        const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
+
+        const paymentData = {
+          plan_id: selectedPlan.id,
+          community_id: selectedPlan.community_id,
+          amount: selectedPlan.price,
+          payment_method: selectedPaymentMethod,
+          status: 'completed',
+          invite_link: newInviteLink,
+          telegram_user_id: telegramUserId
+        };
+
+        const { data: payment, error } = await supabase
+          .from('subscription_payments')
+          .insert([paymentData])
+          .select()
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (payment?.invite_link) {
+          setPaymentInviteLink(payment.invite_link);
+        }
+
+        toast({
+          title: "Test Payment Successful! 🎉",
+          description: "You can now join the community.",
+        });
+        
+        onCompletePurchase();
+        return;
+      }
+
+      // Original payment processing logic for non-test mode
       if (selectedPaymentMethod === 'card' && stripeConfig) {
         const stripe = await loadStripe(stripeConfig.public_key);
         if (!stripe) {

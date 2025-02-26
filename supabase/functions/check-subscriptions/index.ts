@@ -47,7 +47,11 @@ Deno.serve(async (req) => {
     // Process each member
     for (const member of membersToCheck) {
       try {
-        console.log(`Processing member ${member.telegram_user_id} for community ${member.community_id}`);
+        console.log('Processing member:', {
+          memberId: member.member_id,
+          telegramUserId: member.telegram_user_id,
+          communityId: member.community_id
+        });
 
         // Get bot settings for the community
         const { data: botSettings, error: botSettingsError } = await supabase
@@ -58,8 +62,14 @@ Deno.serve(async (req) => {
 
         if (botSettingsError || !botSettings) {
           console.error('Error fetching bot settings:', botSettingsError);
+          console.log('Community ID used for query:', member.community_id);
           continue;
         }
+
+        console.log('Bot settings found:', {
+          communityId: botSettings.community_id,
+          chatId: botSettings.chat_id
+        });
 
         // Only proceed if auto_remove_expired is enabled
         if (!botSettings.auto_remove_expired) {
@@ -78,7 +88,11 @@ Deno.serve(async (req) => {
           ? botSettings.chat_id 
           : `-100${botSettings.chat_id.replace('-', '')}`;
 
-        console.log('Using formatted chat ID:', formattedChatId);
+        console.log('Chat ID details:', {
+          originalChatId: botSettings.chat_id,
+          formattedChatId: formattedChatId,
+          communityId: member.community_id
+        });
 
         // Check if member is still in the channel
         const getChatMemberResponse = await fetch(
@@ -218,3 +232,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export const handleChatMember = async (update: any, supabase: ReturnType<typeof createClient>) => {
+export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createClient>, update: any) => {
   console.log('Processing chat member update:', update);
 
   const chatMember = update.chat_member || update.my_chat_member;
@@ -102,4 +102,3 @@ export const handleChatMember = async (update: any, supabase: ReturnType<typeof 
     });
   }
 };
-

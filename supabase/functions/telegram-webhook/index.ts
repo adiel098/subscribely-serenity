@@ -64,10 +64,7 @@ serve(async (req) => {
     // טיפול באירוע chat_member (הצטרפות/עזיבה)
     if (body.chat_member) {
       console.log('[WEBHOOK] Handling chat member update:', body.chat_member);
-      const success = await handleChatMemberUpdate(supabaseClient, body.chat_member);
-      return new Response(JSON.stringify({ success }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return await handleChatMemberUpdate(supabaseClient, body.chat_member);
     }
 
     // טיפול בהודעות רגילות

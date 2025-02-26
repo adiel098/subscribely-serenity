@@ -78,7 +78,9 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('Bot token not found');
       }
 
-      // If button is included, get the mini app URL
+      const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
+
+      // If button is included, add the web_app button with the mini app URL
       let messageOptions: any = {
         parse_mode: 'HTML'
       };
@@ -87,8 +89,8 @@ export const useBroadcast = (communityId: string) => {
         messageOptions.reply_markup = {
           inline_keyboard: [[
             {
-              text: "💫 Join Now",
-              url: `https://t.me/YourBotUsername/app?startapp=${communityId}`
+              text: "Join Community 🚀",
+              web_app: { url: `${miniAppUrl}?start=${communityId}` }
             }
           ]]
         };
@@ -158,3 +160,4 @@ export const useBroadcast = (communityId: string) => {
     }
   });
 };
+

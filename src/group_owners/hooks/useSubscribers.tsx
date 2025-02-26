@@ -13,6 +13,7 @@ export interface Subscriber {
   subscription_end_date: string | null;
   subscription_status: boolean;
   total_messages: number | null;
+  community_id: string;  // Added this property
   plan: {
     id: string;
     name: string;
@@ -78,3 +79,4 @@ export const useSubscribers = (communityId: string) => {
 
   return { data, isLoading, error, refetch };
 };
+

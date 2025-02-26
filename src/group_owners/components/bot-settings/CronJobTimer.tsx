@@ -2,11 +2,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const CRON_INTERVAL_MINUTES = 1;
+import { cn } from "@/lib/utils";
 
 export const CronJobTimer = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [lastCheck, setLastCheck] = useState<Date>(new Date());
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -16,7 +16,14 @@ export const CronJobTimer = () => {
       nextMinute.setSeconds(0);
       nextMinute.setMilliseconds(0);
       
-      return Math.max(0, Math.floor((nextMinute.getTime() - now.getTime()) / 1000));
+      const newTimeLeft = Math.max(0, Math.floor((nextMinute.getTime() - now.getTime()) / 1000));
+      
+      // If we've reached 0, update the last check time
+      if (newTimeLeft === 59) {
+        setLastCheck(new Date());
+      }
+      
+      return newTimeLeft;
     };
 
     // Initial calculation
@@ -31,22 +38,29 @@ export const CronJobTimer = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
   return (
     <Card className="animate-fade-in bg-purple-100/70 border-purple-200">
       <CardHeader className="pb-2">
         <div className="flex items-center space-x-2">
-          <Clock className="h-5 w-5 text-purple-600" />
+          <Clock className={cn(
+            "h-5 w-5 text-purple-600",
+            seconds === 59 && "animate-ping"
+          )} />
           <CardTitle className="text-lg font-semibold text-purple-900">Subscription Manager</CardTitle>
         </div>
         <CardDescription className="text-purple-700 font-medium">
-          Next check in: 0:{seconds.toString().padStart(2, '0')}
+          Next check in: {minutes}:{seconds.toString().padStart(2, '0')}
+        </CardDescription>
+        <CardDescription className="text-purple-600 text-xs">
+          Last check: {lastCheck.toLocaleTimeString()}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-purple-700">
-          Automatically manages subscriptions by checking member status, removing expired members, and sending renewal notifications.
+          Automatically manages subscriptions by checking member status, removing expired members, and sending renewal notifications every minute.
         </p>
       </CardContent>
     </Card>

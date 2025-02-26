@@ -67,6 +67,19 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Make sure chat_id exists and format it correctly
+        if (!botSettings.chat_id) {
+          console.error('Chat ID is missing for community:', member.community_id);
+          continue;
+        }
+
+        // Format chat ID - ensure it starts with -100 for supergroups/channels
+        const formattedChatId = botSettings.chat_id.startsWith('-100') 
+          ? botSettings.chat_id 
+          : `-100${botSettings.chat_id.replace('-', '')}`;
+
+        console.log('Using formatted chat ID:', formattedChatId);
+
         // Check if member is still in the channel
         const getChatMemberResponse = await fetch(
           `https://api.telegram.org/bot${globalSettings.bot_token}/getChatMember`,
@@ -74,7 +87,7 @@ Deno.serve(async (req) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              chat_id: botSettings.chat_id,
+              chat_id: formattedChatId,
               user_id: parseInt(member.telegram_user_id)
             })
           }
@@ -97,7 +110,7 @@ Deno.serve(async (req) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  chat_id: botSettings.chat_id,
+                  chat_id: formattedChatId,
                   user_id: parseInt(member.telegram_user_id),
                   until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
                 })
@@ -141,7 +154,7 @@ Deno.serve(async (req) => {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                        chat_id: botSettings.chat_id,
+                        chat_id: formattedChatId,
                         user_id: parseInt(member.telegram_user_id),
                         only_if_banned: true
                       })

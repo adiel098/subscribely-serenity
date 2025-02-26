@@ -32,9 +32,9 @@ Deno.serve(async (req) => {
       throw new Error('Bot token not found');
     }
 
-    console.log('Fetching expired and expiring memberships...');
+    console.log('Fetching inactive members...');
 
-    // Get members that need to be checked - both expired and about to expire
+    // Get members that need to be checked
     const { data: members, error: membersError } = await supabase
       .from('telegram_chat_members')
       .select(`
@@ -46,111 +46,81 @@ Deno.serve(async (req) => {
         is_active,
         telegram_bot_settings!inner (
           auto_remove_expired,
-          subscription_reminder_days,
-          subscription_reminder_message,
-          expired_subscription_message,
           chat_id
         )
       `)
-      .eq('subscription_status', true)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('subscription_status', false);
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
       throw membersError;
     }
 
-    console.log(`Found ${members?.length || 0} members to process`);
-
-    if (!members || members.length === 0) {
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'No members to process' 
-      }), { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      });
-    }
+    console.log(`Found ${members?.length || 0} inactive members to process`);
 
     for (const member of members) {
       console.log(`Processing member ${member.telegram_user_id} for community ${member.community_id}`);
       
       try {
-        const now = new Date();
-        const endDate = new Date(member.subscription_end_date);
-        const daysUntilEnd = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-        // Handle expired subscriptions
-        if (daysUntilEnd <= 0) {
-          console.log(`Subscription expired for member ${member.telegram_user_id}`);
+        if (member.telegram_bot_settings.auto_remove_expired) {
+          console.log('Auto-remove is enabled, checking member status in channel...');
           
-          if (member.telegram_bot_settings.auto_remove_expired) {
-            console.log('Auto-remove is enabled, updating member status...');
-            
-            // Update member status
-            const { error: updateError } = await supabase
-              .from('telegram_chat_members')
-              .update({
-                subscription_status: false,
-                is_active: false,
-                last_checked: new Date().toISOString()
-              })
-              .eq('id', member.id);
-
-            if (updateError) {
-              console.error('Error updating member status:', updateError);
-              throw updateError;
-            }
-
-            // Send expiration message
-            if (member.telegram_bot_settings.expired_subscription_message) {
-              try {
-                await sendTelegramMessage(
-                  globalSettings.bot_token,
-                  member.telegram_user_id,
-                  member.telegram_bot_settings.expired_subscription_message
-                );
-              } catch (error) {
-                console.error('Error sending expiration message:', error);
+          // Check if member is still in the channel
+          try {
+            const getChatMemberResponse = await fetch(
+              `https://api.telegram.org/bot${globalSettings.bot_token}/getChatMember`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: member.telegram_bot_settings.chat_id,
+                  user_id: parseInt(member.telegram_user_id)
+                })
               }
-            }
+            );
 
-            // Log notification
-            await supabase
-              .from('subscription_notifications')
-              .insert({
-                member_id: member.id,
-                community_id: member.community_id,
-                notification_type: 'expiration',
-                status: 'sent'
-              });
+            const chatMemberData = await getChatMemberResponse.json();
+            console.log('GetChatMember response:', chatMemberData);
 
-            // Kick member from channel
-            if (member.telegram_bot_settings.chat_id) {
-              console.log(`Attempting to remove member ${member.telegram_user_id} from chat ${member.telegram_bot_settings.chat_id}`);
+            if (chatMemberData.ok && ['member', 'administrator', 'creator'].includes(chatMemberData.result.status)) {
+              console.log(`Member ${member.telegram_user_id} is still in the channel, attempting removal...`);
               
-              try {
-                const kickResponse = await fetch(
-                  `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
-                  {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      chat_id: member.telegram_bot_settings.chat_id,
-                      user_id: parseInt(member.telegram_user_id),
-                      until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
-                    })
-                  }
-                );
+              // Remove member from channel
+              const kickResponse = await fetch(
+                `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: member.telegram_bot_settings.chat_id,
+                    user_id: parseInt(member.telegram_user_id),
+                    until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
+                  })
+                }
+              );
 
-                const kickResponseData = await kickResponse.json();
-                console.log('Kick response:', kickResponseData);
+              const kickData = await kickResponse.json();
+              console.log('Kick response:', kickData);
 
-                if (!kickResponse.ok) {
-                  throw new Error(`Failed to remove member: ${JSON.stringify(kickResponseData)}`);
+              if (kickData.ok) {
+                console.log(`Successfully removed member ${member.telegram_user_id}`);
+                
+                // Update member status in database
+                const { error: updateError } = await supabase
+                  .from('telegram_chat_members')
+                  .update({ 
+                    is_active: false,
+                    last_checked: new Date().toISOString()
+                  })
+                  .eq('id', member.id);
+
+                if (updateError) {
+                  console.error('Error updating member status:', updateError);
+                  throw updateError;
                 }
 
-                // If kick was successful, unban after 32 seconds to allow future joins
+                // Unban after 32 seconds to allow future joins
                 setTimeout(async () => {
                   try {
                     const unbanResponse = await fetch(
@@ -173,71 +143,51 @@ Deno.serve(async (req) => {
                   }
                 }, 32000);
 
-              } catch (error) {
-                console.error('Failed to remove member from channel:', error);
-                throw error;
+                // Log the removal
+                await supabase
+                  .from('subscription_notifications')
+                  .insert({
+                    member_id: member.id,
+                    community_id: member.community_id,
+                    notification_type: 'removal',
+                    status: 'completed'
+                  });
+              } else {
+                console.error(`Failed to remove member ${member.telegram_user_id}:`, kickData);
+                throw new Error(`Failed to remove member: ${JSON.stringify(kickData)}`);
               }
-            }
-          }
-        }
-        // Handle subscriptions about to expire
-        else if (daysUntilEnd <= member.telegram_bot_settings.subscription_reminder_days) {
-          console.log(`Subscription expiring soon for member ${member.telegram_user_id} (${daysUntilEnd} days left)`);
-          
-          // Check if we haven't already sent a reminder recently
-          const { data: recentNotification } = await supabase
-            .from('subscription_notifications')
-            .select()
-            .eq('member_id', member.id)
-            .eq('notification_type', 'reminder')
-            .gte('sent_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-            .maybeSingle();
-
-          if (!recentNotification && member.telegram_bot_settings.subscription_reminder_message) {
-            console.log('Sending reminder message...');
-            
-            try {
-              // Send reminder message
-              await sendTelegramMessage(
-                globalSettings.bot_token,
-                member.telegram_user_id,
-                member.telegram_bot_settings.subscription_reminder_message
-              );
-
-              // Log notification
+            } else {
+              console.log(`Member ${member.telegram_user_id} is not in the channel or already left`);
+              
+              // Update member status as inactive
               await supabase
-                .from('subscription_notifications')
-                .insert({
-                  member_id: member.id,
-                  community_id: member.community_id,
-                  notification_type: 'reminder',
-                  status: 'sent'
-                });
-            } catch (error) {
-              console.error('Error sending reminder message:', error);
+                .from('telegram_chat_members')
+                .update({ 
+                  is_active: false,
+                  last_checked: new Date().toISOString()
+                })
+                .eq('id', member.id);
             }
+          } catch (error) {
+            console.error('Error checking/removing member:', error);
+            
+            // Log the error
+            await supabase
+              .from('subscription_notifications')
+              .insert({
+                member_id: member.id,
+                community_id: member.community_id,
+                notification_type: 'removal',
+                status: 'failed',
+                error: error.message
+              });
           }
+        } else {
+          console.log('Auto-remove is disabled for this community');
         }
-
-        // Update last checked timestamp
-        await supabase
-          .from('telegram_chat_members')
-          .update({ last_checked: new Date().toISOString() })
-          .eq('id', member.id);
 
       } catch (error) {
-        console.error('Error processing member:', member.id, error);
-        
-        // Log failed notification
-        await supabase
-          .from('subscription_notifications')
-          .insert({
-            member_id: member.id,
-            community_id: member.community_id,
-            notification_type: 'error',
-            status: 'failed',
-            error: error.message
-          });
+        console.error('Error processing member:', error);
       }
     }
 

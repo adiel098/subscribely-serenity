@@ -1,0 +1,59 @@
+I am developing a paid Telegram group management platform. I need the code to be highly modular and well-structured into dedicated folders, ensuring smooth scalability and maintenance
+System Description
+A platform that allows group owners to manage Telegram groups with paid memberships, automate user access, and track payments efficiently.
+
+🔹 Key Features
+🎟 Subscription & Payments – Charge users for group access (monthly/one-time), integrate with PayPal, Stripe, Crypto, and manage active/expired users.
+🔄 User & Permission Management – Auto-add/remove users based on payment status, set custom access levels, and send renewal reminders.
+📊 Admin Panel – Full control over groups, users, and payments via an interactive dashboard.
+
+📱 Telegram Mini App – A lightweight, fast, and interactive web-based app inside Telegram for managing payments and subscriptions
+. Please follow these guidelines:
+
+📌 Code Structure & Modularity
+1️⃣ Organize files into well-structured directories, ensuring that related files are grouped together. Example structure:
+
+admin/ → All files related to platform administrators, including hooks, pages, and components.
+group_owners/ → All files related to group owners, including hooks, pages, and components.
+mini app telegram/ → All files related to mini app telegram page, including hooks, pages, and components.
+
+hooks/ → Global hooks should be well-organized and categorized.
+components/ → Shared components should be modular and reusable.
+
+example:
+/src  
+│── /admin/             # Admin panel (hooks, pages, components)  
+│── /group_owners/      # Group owners' interface (hooks, pages, components)  
+│── /mini_app/          # Telegram Mini App for users (hooks, pages, components)  
+│── /hooks/             # Global hooks  
+│── /components/        # Shared UI components 
+
+
+2️⃣ Every function should be isolated in its own file/class to prevent breaking existing code in large-scale projects.
+
+
+🛠 Database & Functionality Rules
+✅ Each database-related function must be independent – No function should handle multiple responsibilities (Single Responsibility Principle).
+
+✅ Every function that interacts with the database must first check the required structure – Functions should adapt to the existing schema instead of assuming a fixed structure.
+
+✅ Global Logging System
+
+Every database action (insert, update, delete) must call a single log function to store logs in a dedicated database table.
+The log function should be reusable and called in every function that modifies data.
+
+🔒 Feature Safety & Compatibility
+ When developing a new feature, do not delete or modify existing features in a way that could break them.
+ Ensure backward compatibility and avoid overwriting/removing functionalities that are already implemented.
+
+🎨 High-Quality UI (English Only)
+3️⃣ The UI must be modern, stylish, and in English only.
+4️⃣ Use Lucide Icons 🚀 and Shadcn/UI 🌟 for a sleek and professional look.
+5️⃣ Add emojis and icons where appropriate to enhance user experience.
+
+⚡ Additional Requirements
+6️⃣ Ensure the code is clean, optimized, and follows best practices.
+7️⃣ Include comments and explanations for better maintainability.
+8️⃣ Avoid unnecessary dependencies and keep the project lightweight.
+
+Please generate/improve/debug the code while strictly adhering to these rules."

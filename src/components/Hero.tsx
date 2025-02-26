@@ -1,8 +1,10 @@
-
 import { ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50">
       <div className="absolute inset-0 overflow-hidden">
@@ -22,8 +24,8 @@ const Hero = () => {
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            <Button size="lg" className="group">
-              Get Started
+            <Button size="lg" className="group" onClick={() => navigate('/auth')}>
+              Sign In
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
             <Button size="lg" variant="outline">

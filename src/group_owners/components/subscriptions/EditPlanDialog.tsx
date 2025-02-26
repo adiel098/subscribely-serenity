@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SparklesIcon, CheckIcon, PlusIcon } from "lucide-react";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 interface Props {
   isOpen: boolean;
@@ -23,9 +24,8 @@ interface Props {
 }
 
 export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) => {
-  const { data: communities } = useCommunities();
-  const community = communities?.[0];
-  const { updatePlan } = useSubscriptionPlans(community?.id || "");
+  const { selectedCommunityId } = useCommunityContext();
+  const { updatePlan } = useSubscriptionPlans(selectedCommunityId || "");
 
   const [planData, setPlanData] = useState(editPlanData);
   const [newFeature, setNewFeature] = useState("");
@@ -52,7 +52,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
   };
 
   const handleUpdatePlan = async () => {
-    if (!community?.id) return;
+    if (!selectedCommunityId) return;
     
     try {
       await updatePlan.mutateAsync({
@@ -184,3 +184,4 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
     </Dialog>
   );
 };
+

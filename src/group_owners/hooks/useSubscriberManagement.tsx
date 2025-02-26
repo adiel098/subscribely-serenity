@@ -44,12 +44,32 @@ export const useSubscriberManagement = (communityId: string) => {
     console.log('Starting subscription removal process for subscriber:', subscriber);
     
     try {
-      console.log('Attempting to update subscription status and end date...');
+      // First, attempt to remove the user from the Telegram channel
+      console.log('Attempting to remove user from Telegram channel...');
+      
+      const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
+        body: { 
+          path: '/remove-member',
+          chat_id: subscriber.community_id,
+          user_id: subscriber.telegram_user_id
+        }
+      });
+
+      if (kickError) {
+        console.error('Error removing member from Telegram:', kickError);
+        throw new Error('Failed to remove member from Telegram channel');
+      }
+
+      console.log('Successfully removed user from Telegram channel');
+
+      // Then update the database record
+      console.log('Updating subscription status in database...');
       
       const { data: updateData, error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
           subscription_status: false,
+          is_active: false,
           subscription_end_date: new Date().toISOString(),
           subscription_plan_id: null
         })
@@ -59,7 +79,7 @@ export const useSubscriberManagement = (communityId: string) => {
       console.log('Update response:', { data: updateData, error: updateError });
 
       if (updateError) {
-        console.error('Error in update:', updateError);
+        console.error('Error in database update:', updateError);
         throw updateError;
       }
 
@@ -67,7 +87,7 @@ export const useSubscriberManagement = (communityId: string) => {
 
       toast({
         title: "Success",
-        description: "Subscription cancelled successfully",
+        description: "Subscriber removed successfully from channel and database updated",
       });
       
       console.log('Refreshing data...');
@@ -78,7 +98,7 @@ export const useSubscriberManagement = (communityId: string) => {
       console.error('Error stack:', (error as Error).stack);
       toast({
         title: "Error",
-        description: "Failed to cancel subscription",
+        description: "Failed to remove subscriber",
         variant: "destructive",
       });
     }
@@ -93,3 +113,4 @@ export const useSubscriberManagement = (communityId: string) => {
     handleRemoveSubscriber
   };
 };
+

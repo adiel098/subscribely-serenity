@@ -60,6 +60,71 @@ export const PaymentMethods = ({
     fetchStripeConfig();
   }, [selectedPlan?.community_id]);
 
+  const createOrUpdateMember = async (telegramUserId: string, inviteLink: string) => {
+    console.log('Creating/updating member:', {
+      telegramUserId,
+      communityId: selectedPlan.community_id,
+      planId: selectedPlan.id
+    });
+
+    const subscriptionStartDate = new Date();
+    const subscriptionEndDate = new Date();
+    
+    // Add 30 days for monthly plans, 365 for yearly
+    if (selectedPlan.interval === 'monthly') {
+      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+    } else if (selectedPlan.interval === 'yearly') {
+      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
+    }
+
+    // Check if member already exists
+    const { data: existingMember } = await supabase
+      .from('telegram_chat_members')
+      .select('*')
+      .eq('community_id', selectedPlan.community_id)
+      .eq('telegram_user_id', telegramUserId)
+      .single();
+
+    if (existingMember) {
+      // Update existing member
+      const { error: updateError } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          is_active: true,
+          subscription_status: true,
+          subscription_start_date: subscriptionStartDate.toISOString(),
+          subscription_end_date: subscriptionEndDate.toISOString(),
+          subscription_plan_id: selectedPlan.id,
+          last_active: new Date().toISOString()
+        })
+        .eq('id', existingMember.id);
+
+      if (updateError) {
+        console.error('Error updating member:', updateError);
+        throw updateError;
+      }
+    } else {
+      // Create new member
+      const { error: insertError } = await supabase
+        .from('telegram_chat_members')
+        .insert([{
+          community_id: selectedPlan.community_id,
+          telegram_user_id: telegramUserId,
+          is_active: true,
+          subscription_status: true,
+          subscription_start_date: subscriptionStartDate.toISOString(),
+          subscription_end_date: subscriptionEndDate.toISOString(),
+          subscription_plan_id: selectedPlan.id,
+          last_active: new Date().toISOString()
+        }]);
+
+      if (insertError) {
+        console.error('Error creating member:', insertError);
+        throw insertError;
+      }
+    }
+  };
+
   const handlePaymentComplete = async () => {
     if (!selectedPlan || !selectedPaymentMethod) {
       toast({
@@ -90,6 +155,10 @@ export const PaymentMethods = ({
         const newInviteLink = inviteLinkData?.inviteLink;
         const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
 
+        if (!telegramUserId) {
+          throw new Error('Telegram user ID is missing');
+        }
+
         const paymentData = {
           plan_id: selectedPlan.id,
           community_id: selectedPlan.community_id,
@@ -100,15 +169,19 @@ export const PaymentMethods = ({
           telegram_user_id: telegramUserId
         };
 
-        const { data: payment, error } = await supabase
+        // Create payment record
+        const { data: payment, error: paymentError } = await supabase
           .from('subscription_payments')
           .insert([paymentData])
           .select()
           .single();
 
-        if (error) {
-          throw error;
+        if (paymentError) {
+          throw paymentError;
         }
+
+        // Create or update member record
+        await createOrUpdateMember(telegramUserId, newInviteLink);
 
         if (payment?.invite_link) {
           setPaymentInviteLink(payment.invite_link);
@@ -130,11 +203,16 @@ export const PaymentMethods = ({
           throw new Error('Failed to load Stripe');
         }
         
+        const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
+        if (!telegramUserId) {
+          throw new Error('Telegram user ID is missing');
+        }
+
         console.log('Creating Stripe session...', {
           planId: selectedPlan.id,
           amount: selectedPlan.price,
           communityId: selectedPlan.community_id,
-          telegramUserId: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+          telegramUserId
         });
 
         // Create payment session using Edge Function
@@ -145,7 +223,7 @@ export const PaymentMethods = ({
               planId: selectedPlan.id,
               amount: selectedPlan.price,
               communityId: selectedPlan.community_id,
-              telegramUserId: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+              telegramUserId
             }
           }
         );
@@ -176,6 +254,9 @@ export const PaymentMethods = ({
       
       // Handle other payment methods
       const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
+      if (!telegramUserId) {
+        throw new Error('Telegram user ID is missing');
+      }
       
       const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
         'create-invite-link',
@@ -206,15 +287,19 @@ export const PaymentMethods = ({
         telegram_user_id: telegramUserId
       };
 
-      const { data: payment, error } = await supabase
+      // Create payment record
+      const { data: payment, error: paymentError } = await supabase
         .from('subscription_payments')
         .insert([paymentData])
         .select()
         .single();
 
-      if (error) {
-        throw error;
+      if (paymentError) {
+        throw paymentError;
       }
+
+      // Create or update member record
+      await createOrUpdateMember(telegramUserId, newInviteLink);
 
       if (payment?.invite_link) {
         setPaymentInviteLink(payment.invite_link);
@@ -299,3 +384,4 @@ export const PaymentMethods = ({
     </div>
   );
 };
+

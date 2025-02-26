@@ -599,6 +599,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_telegram_bot_settings_community"
+            columns: ["community_id"]
+            isOneToOne: true
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "telegram_bot_settings_community_id_fkey"
             columns: ["community_id"]
             isOneToOne: true
@@ -660,6 +667,13 @@ export type Database = {
           trial_end_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_telegram_chat_members_community"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "telegram_chat_members_community_id_fkey"
             columns: ["community_id"]

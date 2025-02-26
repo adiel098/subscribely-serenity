@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -43,8 +44,6 @@ Deno.serve(async (req) => {
         subscription_status,
         subscription_end_date,
         is_active,
-        is_trial,
-        trial_end_date,
         telegram_bot_settings!inner (
           auto_remove_expired,
           subscription_reminder_days,
@@ -135,7 +134,7 @@ Deno.serve(async (req) => {
                   body: JSON.stringify({
                     chat_id: member.telegram_bot_settings.chat_id,
                     user_id: member.telegram_user_id,
-                    until_date: Math.floor(Date.now() / 1000) + 32
+                    until_date: Math.floor(Date.now() / 1000) + 32 // Ban for 32 seconds (minimum time)
                   })
                 }
               );
@@ -226,3 +225,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+

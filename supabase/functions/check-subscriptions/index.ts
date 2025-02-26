@@ -1,6 +1,5 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { sendTelegramMessage } from '../telegram-webhook/telegramClient.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,180 +20,174 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get global bot settings (for bot token)
-    const { data: globalSettings, error: globalSettingsError } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single();
+    console.log('Fetching members to check...');
 
-    if (globalSettingsError || !globalSettings?.bot_token) {
-      console.error('Bot token not found:', globalSettingsError);
-      throw new Error('Bot token not found');
-    }
-
-    console.log('Fetching inactive members...');
-
-    // Get members that need to be checked
-    const { data: members, error: membersError } = await supabase
-      .from('telegram_chat_members')
-      .select(`
-        id,
-        telegram_user_id,
-        community_id,
-        subscription_status,
-        subscription_end_date,
-        is_active,
-        telegram_bot_settings!inner (
-          auto_remove_expired,
-          chat_id
-        )
-      `)
-      .eq('is_active', true)
-      .eq('subscription_status', false);
+    // Get members that need to be checked using our new function
+    const { data: membersToCheck, error: membersError } = await supabase
+      .rpc('get_members_to_check');
 
     if (membersError) {
       console.error('Error fetching members:', membersError);
       throw membersError;
     }
 
-    console.log(`Found ${members?.length || 0} inactive members to process`);
+    console.log(`Found ${membersToCheck?.length || 0} members to process`);
 
-    for (const member of members) {
-      console.log(`Processing member ${member.telegram_user_id} for community ${member.community_id}`);
-      
+    // Get bot token from global settings
+    const { data: globalSettings, error: globalSettingsError } = await supabase
+      .from('telegram_global_settings')
+      .select('bot_token')
+      .single();
+
+    if (globalSettingsError || !globalSettings?.bot_token) {
+      console.error('Error fetching bot token:', globalSettingsError);
+      throw new Error('Bot token not found');
+    }
+
+    // Process each member
+    for (const member of membersToCheck) {
       try {
-        if (member.telegram_bot_settings.auto_remove_expired) {
-          console.log('Auto-remove is enabled, checking member status in channel...');
+        console.log(`Processing member ${member.telegram_user_id} for community ${member.community_id}`);
+
+        // Get bot settings for the community
+        const { data: botSettings, error: botSettingsError } = await supabase
+          .from('telegram_bot_settings')
+          .select('*')
+          .eq('community_id', member.community_id)
+          .single();
+
+        if (botSettingsError || !botSettings) {
+          console.error('Error fetching bot settings:', botSettingsError);
+          continue;
+        }
+
+        // Only proceed if auto_remove_expired is enabled
+        if (!botSettings.auto_remove_expired) {
+          console.log('Auto-remove is disabled for this community, skipping...');
+          continue;
+        }
+
+        // Check if member is still in the channel
+        const getChatMemberResponse = await fetch(
+          `https://api.telegram.org/bot${globalSettings.bot_token}/getChatMember`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: botSettings.chat_id,
+              user_id: parseInt(member.telegram_user_id)
+            })
+          }
+        );
+
+        const chatMemberData = await getChatMemberResponse.json();
+        console.log('GetChatMember response:', chatMemberData);
+
+        if (chatMemberData.ok && ['member', 'administrator', 'creator'].includes(chatMemberData.result.status)) {
+          console.log(`Member ${member.telegram_user_id} is still in the channel, checking subscription...`);
           
-          // Check if member is still in the channel
-          try {
-            const getChatMemberResponse = await fetch(
-              `https://api.telegram.org/bot${globalSettings.bot_token}/getChatMember`,
+          // If subscription has expired, remove member
+          if (!member.subscription_status || (member.subscription_end_date && new Date(member.subscription_end_date) < new Date())) {
+            console.log(`Removing member ${member.telegram_user_id} due to expired subscription`);
+            
+            // Remove member from channel
+            const kickResponse = await fetch(
+              `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  chat_id: member.telegram_bot_settings.chat_id,
-                  user_id: parseInt(member.telegram_user_id)
+                  chat_id: botSettings.chat_id,
+                  user_id: parseInt(member.telegram_user_id),
+                  until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
                 })
               }
             );
 
-            const chatMemberData = await getChatMemberResponse.json();
-            console.log('GetChatMember response:', chatMemberData);
+            const kickData = await kickResponse.json();
+            console.log('Kick response:', kickData);
 
-            if (chatMemberData.ok && ['member', 'administrator', 'creator'].includes(chatMemberData.result.status)) {
-              console.log(`Member ${member.telegram_user_id} is still in the channel, attempting removal...`);
-              
-              // Remove member from channel
-              const kickResponse = await fetch(
-                `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    chat_id: member.telegram_bot_settings.chat_id,
-                    user_id: parseInt(member.telegram_user_id),
-                    until_date: Math.floor(Date.now() / 1000) + 35 // Ban for 35 seconds
-                  })
-                }
-              );
-
-              const kickData = await kickResponse.json();
-              console.log('Kick response:', kickData);
-
-              if (kickData.ok) {
-                console.log(`Successfully removed member ${member.telegram_user_id}`);
-                
-                // Update member status in database
-                const { error: updateError } = await supabase
-                  .from('telegram_chat_members')
-                  .update({ 
-                    is_active: false,
-                    last_checked: new Date().toISOString()
-                  })
-                  .eq('id', member.id);
-
-                if (updateError) {
-                  console.error('Error updating member status:', updateError);
-                  throw updateError;
-                }
-
-                // Unban after 32 seconds to allow future joins
-                setTimeout(async () => {
-                  try {
-                    const unbanResponse = await fetch(
-                      `https://api.telegram.org/bot${globalSettings.bot_token}/unbanChatMember`,
-                      {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          chat_id: member.telegram_bot_settings.chat_id,
-                          user_id: parseInt(member.telegram_user_id),
-                          only_if_banned: true
-                        })
-                      }
-                    );
-
-                    const unbanData = await unbanResponse.json();
-                    console.log('Unban response:', unbanData);
-                  } catch (error) {
-                    console.error('Error unbanning member:', error);
-                  }
-                }, 32000);
-
-                // Log the removal
-                await supabase
-                  .from('subscription_notifications')
-                  .insert({
-                    member_id: member.id,
-                    community_id: member.community_id,
-                    notification_type: 'removal',
-                    status: 'completed'
-                  });
-              } else {
-                console.error(`Failed to remove member ${member.telegram_user_id}:`, kickData);
-                throw new Error(`Failed to remove member: ${JSON.stringify(kickData)}`);
-              }
-            } else {
-              console.log(`Member ${member.telegram_user_id} is not in the channel or already left`);
-              
-              // Update member status as inactive
-              await supabase
+            if (kickData.ok) {
+              // Update member status
+              const { error: updateError } = await supabase
                 .from('telegram_chat_members')
                 .update({ 
                   is_active: false,
                   last_checked: new Date().toISOString()
                 })
-                .eq('id', member.id);
+                .eq('id', member.member_id);
+
+              if (updateError) {
+                console.error('Error updating member status:', updateError);
+                continue;
+              }
+
+              // Log the removal
+              await supabase
+                .from('subscription_notifications')
+                .insert({
+                  member_id: member.member_id,
+                  community_id: member.community_id,
+                  notification_type: 'removal',
+                  status: 'completed'
+                });
+
+              // Unban after 32 seconds to allow future joins
+              setTimeout(async () => {
+                try {
+                  const unbanResponse = await fetch(
+                    `https://api.telegram.org/bot${globalSettings.bot_token}/unbanChatMember`,
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        chat_id: botSettings.chat_id,
+                        user_id: parseInt(member.telegram_user_id),
+                        only_if_banned: true
+                      })
+                    }
+                  );
+
+                  const unbanData = await unbanResponse.json();
+                  console.log('Unban response:', unbanData);
+                } catch (error) {
+                  console.error('Error unbanning member:', error);
+                }
+              }, 32000);
             }
-          } catch (error) {
-            console.error('Error checking/removing member:', error);
-            
-            // Log the error
-            await supabase
-              .from('subscription_notifications')
-              .insert({
-                member_id: member.id,
-                community_id: member.community_id,
-                notification_type: 'removal',
-                status: 'failed',
-                error: error.message
-              });
           }
         } else {
-          console.log('Auto-remove is disabled for this community');
+          console.log(`Member ${member.telegram_user_id} is not in the channel or already left`);
+          
+          // Update member status as inactive
+          await supabase
+            .from('telegram_chat_members')
+            .update({ 
+              is_active: false,
+              last_checked: new Date().toISOString()
+            })
+            .eq('id', member.member_id);
         }
-
       } catch (error) {
         console.error('Error processing member:', error);
+        
+        // Log the error
+        await supabase
+          .from('subscription_notifications')
+          .insert({
+            member_id: member.member_id,
+            community_id: member.community_id,
+            notification_type: 'removal',
+            status: 'failed',
+            error: error.message
+          });
       }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        processed: members.length 
+        processed: membersToCheck.length 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

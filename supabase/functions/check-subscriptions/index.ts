@@ -28,48 +28,45 @@ Deno.serve(async (req) => {
       throw new Error('Bot token not found');
     }
 
-    // Get all communities with their bot settings
-    const { data: communities, error: communitiesError } = await supabase
-      .from('communities')
-      .select(`
-        id,
-        telegram_chat_id,
-        telegram_bot_settings (
-          auto_remove_expired,
-          expired_subscription_message
-        )
-      `);
+    // Get members that need to be checked
+    const { data: membersToCheck, error: membersError } = await supabase
+      .rpc('get_members_to_check');
 
-    if (communitiesError) {
-      throw communitiesError;
+    if (membersError) {
+      throw membersError;
     }
 
-    const processedMembers = [];
+    console.log('Members to check:', membersToCheck.length);
 
-    for (const community of communities) {
-      if (!community.telegram_chat_id) continue;
+    for (const member of membersToCheck) {
+      try {
+        // Get community settings for this member
+        const { data: botSettings } = await supabase
+          .from('telegram_bot_settings')
+          .select('*')
+          .eq('community_id', member.community_id)
+          .single();
 
-      // בדיקת משתמשים לא פעילים באמצעות הפונקציה החדשה
-      const { data: inactiveMembers, error: membersError } = await supabase
-        .rpc('check_inactive_members', {
-          community_id_param: community.id
-        });
+        if (!botSettings) continue;
 
-      if (membersError) {
-        console.error('Error checking inactive members:', membersError);
-        continue;
-      }
+        // Calculate days until subscription ends
+        const daysUntilEnd = Math.ceil(
+          (new Date(member.subscription_end_date).getTime() - Date.now()) / 
+          (1000 * 60 * 60 * 24)
+        );
 
-      let kickedMembers = 0;
-      let errorCount = 0;
+        // If subscription has ended
+        if (daysUntilEnd <= 0) {
+          if (botSettings.auto_remove_expired) {
+            // Update member status
+            await supabase
+              .from('telegram_chat_members')
+              .update({
+                subscription_status: false,
+                is_active: false
+              })
+              .eq('id', member.member_id);
 
-      for (const member of inactiveMembers) {
-        try {
-          // Get bot settings for this community
-          const botSettings = community.telegram_bot_settings?.[0];
-          
-          // Only proceed if auto_remove_expired is enabled
-          if (botSettings?.auto_remove_expired) {
             // Send expiration message
             if (botSettings.expired_subscription_message) {
               await sendTelegramMessage(
@@ -79,87 +76,85 @@ Deno.serve(async (req) => {
               );
             }
 
+            // Log notification
+            await supabase
+              .from('subscription_notifications')
+              .insert({
+                member_id: member.member_id,
+                community_id: member.community_id,
+                notification_type: 'expiration',
+                status: 'sent'
+              });
+
             // Kick member from channel
-            try {
-              await fetch(
-                `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    chat_id: community.telegram_chat_id,
-                    user_id: member.telegram_user_id,
-                    until_date: Math.floor(Date.now() / 1000) + 32, // Minimal ban time
-                  }),
-                }
-              );
-
-              // Update member status
-              await supabase
-                .from('telegram_chat_members')
-                .update({
-                  is_active: false,
-                  subscription_status: false
+            const kickResponse = await fetch(
+              `https://api.telegram.org/bot${globalSettings.bot_token}/banChatMember`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: botSettings.chat_id,
+                  user_id: member.telegram_user_id,
+                  until_date: Math.floor(Date.now() / 1000) + 32
                 })
-                .eq('telegram_user_id', member.telegram_user_id)
-                .eq('community_id', community.id);
+              }
+            );
 
-              // Log the event
-              await supabase.from('analytics_events').insert({
-                community_id: community.id,
-                event_type: 'member_kicked',
-                user_id: member.telegram_user_id,
-                metadata: {
-                  reason: 'subscription_expired',
-                  was_trial: member.is_trial
-                }
-              });
-
-              kickedMembers++;
-            } catch (error) {
-              console.error('Error kicking member:', error);
-              errorCount++;
-              processedMembers.push({
-                telegram_user_id: member.telegram_user_id,
-                status: 'error',
-                error: error.message
-              });
-              continue;
+            if (!kickResponse.ok) {
+              throw new Error('Failed to remove member from channel');
             }
           }
+        }
+        // If subscription is about to end
+        else if (daysUntilEnd <= botSettings.subscription_reminder_days) {
+          // Check if we haven't already sent a reminder recently
+          const { data: recentNotification } = await supabase
+            .from('subscription_notifications')
+            .select()
+            .eq('member_id', member.member_id)
+            .eq('notification_type', 'reminder')
+            .gte('sent_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            .maybeSingle();
 
-          processedMembers.push({
-            telegram_user_id: member.telegram_user_id,
-            status: 'success'
-          });
-        } catch (error) {
-          console.error('Error processing member:', member.telegram_user_id, error);
-          errorCount++;
-          processedMembers.push({
-            telegram_user_id: member.telegram_user_id,
-            status: 'error',
+          if (!recentNotification && botSettings.subscription_reminder_message) {
+            // Send reminder message
+            await sendTelegramMessage(
+              globalSettings.bot_token,
+              member.telegram_user_id,
+              botSettings.subscription_reminder_message
+            );
+
+            // Log notification
+            await supabase
+              .from('subscription_notifications')
+              .insert({
+                member_id: member.member_id,
+                community_id: member.community_id,
+                notification_type: 'reminder',
+                status: 'sent'
+              });
+          }
+        }
+      } catch (error) {
+        console.error('Error processing member:', member.member_id, error);
+        
+        // Log failed notification
+        await supabase
+          .from('subscription_notifications')
+          .insert({
+            member_id: member.member_id,
+            community_id: member.community_id,
+            notification_type: 'error',
+            status: 'failed',
             error: error.message
           });
-        }
       }
-
-      // Add analytics event for the cron job execution
-      await supabase.from('analytics_events').insert({
-        community_id: community.id,
-        event_type: 'subscription_check',
-        metadata: {
-          checked_members: inactiveMembers.length,
-          kicked_members: kickedMembers,
-          errors: errorCount
-        }
-      });
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        processed: processedMembers.length,
-        results: processedMembers 
+        processed: membersToCheck.length 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -177,3 +172,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+

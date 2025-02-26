@@ -9,10 +9,9 @@ const corsHeaders = {
 export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createClient>, update: any) => {
   console.log('Processing chat member update:', update);
 
-  const chatMember = update.chat_member || update.my_chat_member;
-  if (!chatMember) {
-    console.log('No chat member data found in update');
-    return new Response(JSON.stringify({ error: 'No chat member data' }), { 
+  if (!update.chat?.id || !update.new_chat_member?.user?.id) {
+    console.error('Missing required chat member data:', { update });
+    return new Response(JSON.stringify({ error: 'Invalid chat member data' }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400 
     });
@@ -20,11 +19,10 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
 
   try {
     // Get community ID from the chat ID
-    console.log('Fetching community for chat:', chatMember.chat.id);
     const { data: community, error: communityError } = await supabase
       .from('communities')
       .select('id')
-      .eq('telegram_chat_id', chatMember.chat.id.toString())
+      .eq('telegram_chat_id', update.chat.id.toString())
       .single();
 
     if (communityError || !community) {
@@ -37,37 +35,82 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
 
     console.log('Found community:', community.id);
 
-    // If user joins the chat (status changes to 'member', 'administrator', or 'creator')
-    if (['member', 'administrator', 'creator'].includes(chatMember.new_chat_member?.status)) {
+    const telegramUserId = update.new_chat_member.user.id.toString();
+    const username = update.new_chat_member.user.username;
+
+    // If user joins the chat
+    if (['member', 'administrator', 'creator'].includes(update.new_chat_member.status)) {
       console.log('User joined chat:', {
-        userId: chatMember.new_chat_member.user.id,
-        status: chatMember.new_chat_member.status
+        userId: telegramUserId,
+        status: update.new_chat_member.status
       });
 
-      // Update member status to active
-      const { error: updateError } = await supabase
-        .from('telegram_chat_members')
-        .update({ 
-          is_active: true,
-          last_active: new Date().toISOString()
-        })
+      // Find the most recent payment for this user
+      const { data: payment } = await supabase
+        .from('subscription_payments')
+        .select('*')
         .eq('community_id', community.id)
-        .eq('telegram_user_id', chatMember.new_chat_member.user.id.toString());
+        .eq('status', 'completed')
+        .is('telegram_user_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (updateError) {
-        console.error('Error updating member status:', updateError);
-        return new Response(JSON.stringify({ error: 'Failed to update member status' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        });
+      if (payment) {
+        // Update payment with telegram_user_id
+        await supabase
+          .from('subscription_payments')
+          .update({ telegram_user_id: telegramUserId })
+          .eq('id', payment.id);
+
+        // Calculate subscription dates based on the plan
+        const subscriptionStartDate = new Date();
+        const subscriptionEndDate = new Date();
+        if (payment.plan_id) {
+          const { data: plan } = await supabase
+            .from('subscription_plans')
+            .select('interval')
+            .eq('id', payment.plan_id)
+            .single();
+
+          if (plan) {
+            if (plan.interval === 'monthly') {
+              subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+            } else if (plan.interval === 'yearly') {
+              subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
+            }
+          }
+        }
+
+        // Create or update member record
+        const { error: memberError } = await supabase
+          .from('telegram_chat_members')
+          .upsert({
+            telegram_user_id: telegramUserId,
+            telegram_username: username,
+            community_id: community.id,
+            is_active: true,
+            subscription_status: true,
+            subscription_plan_id: payment.plan_id,
+            subscription_start_date: subscriptionStartDate.toISOString(),
+            subscription_end_date: subscriptionEndDate.toISOString(),
+            last_active: new Date().toISOString()
+          }, {
+            onConflict: 'telegram_user_id,community_id'
+          });
+
+        if (memberError) {
+          console.error('Error updating member:', memberError);
+          return new Response(JSON.stringify({ error: 'Failed to update member' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          });
+        }
       }
-
-      console.log('Successfully updated member status to active');
     }
-    // If user leaves chat or is removed
-    else if (chatMember.old_chat_member?.status === 'member' && 
-             chatMember.new_chat_member?.status === 'left') {
-      console.log('User left chat:', chatMember.new_chat_member.user.id);
+    // If user leaves chat
+    else if (update.new_chat_member.status === 'left') {
+      console.log('User left chat:', telegramUserId);
 
       const { error: updateError } = await supabase
         .from('telegram_chat_members')
@@ -76,7 +119,7 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
           last_active: new Date().toISOString()
         })
         .eq('community_id', community.id)
-        .eq('telegram_user_id', chatMember.new_chat_member.user.id.toString());
+        .eq('telegram_user_id', telegramUserId);
 
       if (updateError) {
         console.error('Error updating member status:', updateError);
@@ -85,8 +128,6 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
           status: 500
         });
       }
-
-      console.log('Successfully updated member status to inactive');
     }
 
     return new Response(JSON.stringify({ success: true }), {
@@ -102,3 +143,4 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
     });
   }
 };
+

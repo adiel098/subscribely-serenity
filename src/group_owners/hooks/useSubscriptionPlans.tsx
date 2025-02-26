@@ -43,7 +43,7 @@ export const useSubscriptionPlans = (communityId: string) => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.access_token) {
         console.error('No access token found');
-        return [];
+        throw new Error('Authentication required');
       }
       
       const { data, error } = await supabase
@@ -55,18 +55,17 @@ export const useSubscriptionPlans = (communityId: string) => {
 
       if (error) {
         console.error('Error fetching plans:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        return [];
+        toast.error('Failed to load subscription plans');
+        throw error;
       }
       
       console.log('Successfully fetched plans:', data);
       return data as SubscriptionPlan[];
     },
     enabled: Boolean(communityId),
+    staleTime: 1000, // Consider data fresh for 1 second
+    refetchOnWindowFocus: true,
+    retry: 2,
   });
 
   const createPlan = useMutation({
@@ -75,7 +74,7 @@ export const useSubscriptionPlans = (communityId: string) => {
       
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.access_token) {
-        throw new Error('No access token found');
+        throw new Error('Authentication required');
       }
       
       // Check if community exists first
@@ -108,12 +107,6 @@ export const useSubscriptionPlans = (communityId: string) => {
 
       if (error) {
         console.error('Error creating plan:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         throw error;
       }
       
@@ -121,12 +114,12 @@ export const useSubscriptionPlans = (communityId: string) => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
       toast.success('Subscription plan created successfully ✨');
     },
     onError: (error: any) => {
       console.error('Mutation error:', error);
-      console.error('Full error object:', JSON.stringify(error, null, 2));
       toast.error(`Error creating subscription plan: ${error.message}`);
     }
   });

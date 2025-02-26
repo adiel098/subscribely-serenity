@@ -20,7 +20,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Parse request body
     const { planId, amount, communityId, telegramUserId } = await req.json()
+    console.log('Creating Stripe session with params:', { planId, amount, communityId, telegramUserId })
 
     // Get the Stripe secret key from payment_methods
     const { data: paymentMethod, error: configError } = await supabase
@@ -28,13 +30,17 @@ serve(async (req) => {
       .select('config')
       .eq('community_id', communityId)
       .eq('provider', 'stripe')
+      .eq('is_active', true)
       .single()
 
     if (configError || !paymentMethod?.config?.secret_key) {
       console.error('Error fetching Stripe config:', configError)
       return new Response(
         JSON.stringify({ error: 'Stripe configuration not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 400 
+        }
       )
     }
 
@@ -68,11 +74,10 @@ serve(async (req) => {
       },
     })
 
-    // Log the session creation
     console.log('Created Stripe session:', session.id)
 
     return new Response(
-      JSON.stringify({ id: session.id }),
+      JSON.stringify({ sessionId: session.id, url: session.url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
@@ -80,7 +85,10 @@ serve(async (req) => {
     console.error('Error creating Stripe session:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 400 
+      }
     )
   }
 })

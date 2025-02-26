@@ -76,8 +76,15 @@ export const PaymentMethods = ({
           throw new Error('Failed to load Stripe');
         }
         
+        console.log('Creating Stripe session...', {
+          planId: selectedPlan.id,
+          amount: selectedPlan.price,
+          communityId: selectedPlan.community_id,
+          telegramUserId: window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString()
+        });
+
         // Create payment session using Edge Function
-        const { data: session, error: sessionError } = await supabase.functions.invoke(
+        const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
           'create-stripe-session',
           {
             body: { 
@@ -89,42 +96,51 @@ export const PaymentMethods = ({
           }
         );
 
-        if (sessionError || !session?.id) {
+        console.log('Session creation response:', sessionData);
+
+        if (sessionError || !sessionData?.sessionId) {
           throw sessionError || new Error('Failed to create payment session');
         }
 
-        // Redirect to Stripe Checkout
+        // Redirect to Stripe Checkout using the URL from the session
+        if (sessionData.url) {
+          window.location.href = sessionData.url;
+          return;
+        }
+
+        // Fallback to redirectToCheckout if no URL is provided
         const result = await stripe.redirectToCheckout({
-          sessionId: session.id
+          sessionId: sessionData.sessionId
         });
 
-        if (result.error) {
+        if (result?.error) {
           throw result.error;
         }
 
         return;
       }
       
-      // Handle other payment methods...
+      // Handle other payment methods
       const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
       
-      // TODO: Should be on success page
-      const { data: inviteLinkData, error: inviteLinkError } =
-      await supabase.functions.invoke('create-invite-link', {
-        body: { communityId: selectedPlan.community_id },
-      });
+      const { data: inviteLinkData, error: inviteLinkError } = await supabase.functions.invoke(
+        'create-invite-link',
+        {
+          body: { communityId: selectedPlan.community_id },
+        }
+      );
 
-    if (inviteLinkError) {
-      console.error('Error creating invite link:', inviteLinkError);
-      toast({
-        variant: 'destructive',
-        title: 'Error creating invite link',
-        description: 'Please try again or contact support.',
-      });
-      return;
-    }
+      if (inviteLinkError) {
+        console.error('Error creating invite link:', inviteLinkError);
+        toast({
+          variant: 'destructive',
+          title: 'Error creating invite link',
+          description: 'Please try again or contact support.',
+        });
+        return;
+      }
 
-    const newInviteLink = inviteLinkData?.inviteLink;
+      const newInviteLink = inviteLinkData?.inviteLink;
 
       const paymentData = {
         plan_id: selectedPlan.id,

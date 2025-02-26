@@ -6,22 +6,31 @@ import { useEffect, useState } from "react";
 const CRON_INTERVAL_MINUTES = 1;
 
 export const CronJobTimer = () => {
-  const [timeLeft, setTimeLeft] = useState<number>(CRON_INTERVAL_MINUTES * 60);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const nextMinute = new Date(now);
+      nextMinute.setMinutes(now.getMinutes() + 1);
+      nextMinute.setSeconds(0);
+      nextMinute.setMilliseconds(0);
+      
+      return Math.max(0, Math.floor((nextMinute.getTime() - now.getTime()) / 1000));
+    };
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+
+    // Update timer every second
     const timer = setInterval(() => {
-      setTimeLeft(prevTime => {
-        if (prevTime <= 1) {
-          return CRON_INTERVAL_MINUTES * 60;
-        }
-        return prevTime - 1;
-      });
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
-  const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
   return (
@@ -32,7 +41,7 @@ export const CronJobTimer = () => {
           <CardTitle className="text-lg font-semibold text-purple-900">Subscription Manager</CardTitle>
         </div>
         <CardDescription className="text-purple-700 font-medium">
-          Next check in: {minutes}:{seconds.toString().padStart(2, '0')}
+          Next check in: 0:{seconds.toString().padStart(2, '0')}
         </CardDescription>
       </CardHeader>
       <CardContent>

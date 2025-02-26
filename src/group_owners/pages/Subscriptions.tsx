@@ -1,3 +1,4 @@
+
 import { columns } from "../components/subscriptions/columns";
 import { SubscriptionPlanForm } from "../components/subscriptions/SubscriptionPlanForm";
 
@@ -28,3 +29,4 @@ const Subscriptions = () => {
 };
 
 export default Subscriptions;
+

@@ -30,7 +30,7 @@ export const useSubscriptionPlans = (communityId: string) => {
   
   const queryClient = useQueryClient();
 
-  const { data: plans, isLoading } = useQuery({
+  const { data: plans, isLoading, refetch } = useQuery({
     queryKey: ['subscription-plans', communityId],
     queryFn: async () => {
       console.log('Fetching plans for community:', communityId);
@@ -50,6 +50,7 @@ export const useSubscriptionPlans = (communityId: string) => {
         .from('subscription_plans')
         .select('*')
         .eq('community_id', communityId)
+        .eq('is_active', true)
         .order('price', { ascending: true });
 
       if (error) {
@@ -119,15 +120,14 @@ export const useSubscriptionPlans = (communityId: string) => {
       console.log('Successfully created plan:', data);
       return data;
     },
-    onSuccess: (data) => {
-      console.log('Mutation succeeded, invalidating queries');
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי נוצרה בהצלחה ✨');
+      toast.success('Subscription plan created successfully ✨');
     },
     onError: (error: any) => {
       console.error('Mutation error:', error);
       console.error('Full error object:', JSON.stringify(error, null, 2));
-      toast.error(`שגיאה ביצירת תוכנית המנוי: ${error.message}`);
+      toast.error(`Error creating subscription plan: ${error.message}`);
     }
   });
 
@@ -152,37 +152,62 @@ export const useSubscriptionPlans = (communityId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי עודכנה בהצלחה ✨');
+      toast.success('Subscription plan updated successfully ✨');
     },
     onError: (error: any) => {
       console.error('Error updating subscription plan:', error);
-      toast.error('שגיאה בעדכון תוכנית המנוי');
+      toast.error('Error updating subscription plan');
     }
   });
 
   const deletePlan = useMutation({
-    mutationFn: async (id: string) => {
-      console.log('Attempting to delete plan:', id);
+    mutationFn: async (planId: string) => {
+      console.log('Attempting to delete plan:', planId);
       
-      const { error } = await supabase
-        .from('subscription_plans')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Error deleting plan:', error);
-        throw error;
+      // First, check if plan has any associated payments
+      const { count, error: checkError } = await supabase
+        .from('subscription_payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('plan_id', planId);
+        
+      if (checkError) {
+        console.error('Error checking plan usage:', checkError);
+        throw new Error('Failed to check plan usage');
       }
       
-      console.log('Successfully deleted plan:', id);
+      if (count && count > 0) {
+        // Instead of deleting, we'll set is_active to false
+        const { error } = await supabase
+          .from('subscription_plans')
+          .update({ is_active: false })
+          .eq('id', planId);
+
+        if (error) {
+          console.error('Error deactivating plan:', error);
+          throw error;
+        }
+      } else {
+        // If no payments exist, we can safely delete the plan
+        const { error } = await supabase
+          .from('subscription_plans')
+          .delete()
+          .eq('id', planId);
+
+        if (error) {
+          console.error('Error deleting plan:', error);
+          throw error;
+        }
+      }
+      
+      console.log('Successfully handled plan deletion/deactivation:', planId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('תוכנית המנוי נמחקה בהצלחה 🗑️');
+      toast.success('Subscription plan removed successfully 🗑️');
     },
     onError: (error: any) => {
       console.error('Error deleting subscription plan:', error);
-      toast.error('שגיאה במחיקת תוכנית המנוי');
+      toast.error('Error removing subscription plan');
     }
   });
 
@@ -191,6 +216,7 @@ export const useSubscriptionPlans = (communityId: string) => {
     isLoading,
     createPlan,
     updatePlan,
-    deletePlan
+    deletePlan,
+    refetch
   };
 };

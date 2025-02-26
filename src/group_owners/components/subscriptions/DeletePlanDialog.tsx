@@ -1,3 +1,4 @@
+
 import { 
   AlertDialog,
   AlertDialogContent,
@@ -22,11 +23,12 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
   const { data: communities } = useCommunities();
   const community = communities?.[0];
   
-  const { deletePlan } = useSubscriptionPlans(community?.id || "");
+  const { deletePlan, refetch } = useSubscriptionPlans(community?.id || "");
 
   const handleDelete = async () => {
     try {
       await deletePlan.mutateAsync(planId);
+      await refetch(); // Explicitly refetch after deletion
       onOpenChange(false);
     } catch (error) {
       console.error('Error deleting plan:', error);

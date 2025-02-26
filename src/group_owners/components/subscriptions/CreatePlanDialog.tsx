@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusIcon, SparklesIcon, CheckIcon } from "lucide-react";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 interface Props {
   isOpen: boolean;
@@ -15,9 +16,8 @@ interface Props {
 }
 
 export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
-  const { data: communities } = useCommunities();
-  const community = communities?.[0];
-  const { createPlan } = useSubscriptionPlans(community?.id || "");
+  const { selectedCommunityId } = useCommunityContext();
+  const { createPlan } = useSubscriptionPlans(selectedCommunityId || "");
 
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -47,11 +47,11 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   };
 
   const handleCreatePlan = async () => {
-    if (!community?.id) return;
+    if (!selectedCommunityId) return;
     
     try {
       await createPlan.mutateAsync({
-        community_id: community.id,
+        community_id: selectedCommunityId,
         name: newPlan.name,
         description: newPlan.description,
         price: Number(newPlan.price),
@@ -179,7 +179,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
           <Button 
             onClick={handleCreatePlan} 
             className="gap-2 bg-gradient-to-r from-primary to-primary/90"
-            disabled={!newPlan.name || !newPlan.price || createPlan.isPending}
+            disabled={!newPlan.name || !newPlan.price || createPlan.isPending || !selectedCommunityId}
           >
             <SparklesIcon className="h-4 w-4" />
             {createPlan.isPending ? "Creating..." : "Create Plan"}

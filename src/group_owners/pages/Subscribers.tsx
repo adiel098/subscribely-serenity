@@ -60,10 +60,11 @@ const Subscribers = () => {
     const csvString = csvRows.join('\n');
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const msNavigator = navigator as MSNavigator;
     
-    if (msNavigator.msSaveBlob) {
-      msNavigator.msSaveBlob(blob, 'subscribers.csv');
+    // Use modern browser APIs with fallback
+    if (navigator.msSaveBlob) {
+      // For IE and Edge Legacy
+      navigator.msSaveBlob(blob, 'subscribers.csv');
     } else {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -128,3 +129,4 @@ const Subscribers = () => {
 };
 
 export default Subscribers;
+

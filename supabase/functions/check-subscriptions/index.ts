@@ -53,43 +53,52 @@ Deno.serve(async (req) => {
           communityId: member.community_id
         });
 
-        // Get bot settings for the community
-        const { data: botSettings, error: botSettingsError } = await supabase
-          .from('telegram_bot_settings')
-          .select('*')
-          .eq('community_id', member.community_id)
+        // Get community data to get the chat ID
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('telegram_chat_id, name')
+          .eq('id', member.community_id)
           .single();
 
-        if (botSettingsError || !botSettings) {
-          console.error('Error fetching bot settings:', botSettingsError);
-          console.log('Community ID used for query:', member.community_id);
+        if (communityError || !community?.telegram_chat_id) {
+          console.error('Error fetching community or chat ID missing:', {
+            error: communityError,
+            communityId: member.community_id
+          });
           continue;
         }
 
-        console.log('Bot settings found:', {
-          communityId: botSettings.community_id,
-          chatId: botSettings.chat_id
+        console.log('Community data found:', {
+          communityId: member.community_id,
+          communityName: community.name,
+          chatId: community.telegram_chat_id
         });
 
+        // Get bot settings for auto-remove check
+        const { data: botSettings, error: botSettingsError } = await supabase
+          .from('telegram_bot_settings')
+          .select('auto_remove_expired')
+          .eq('community_id', member.community_id)
+          .single();
+
+        if (botSettingsError) {
+          console.error('Error fetching bot settings:', botSettingsError);
+          continue;
+        }
+
         // Only proceed if auto_remove_expired is enabled
-        if (!botSettings.auto_remove_expired) {
+        if (!botSettings?.auto_remove_expired) {
           console.log('Auto-remove is disabled for this community, skipping...');
           continue;
         }
 
-        // Make sure chat_id exists and format it correctly
-        if (!botSettings.chat_id) {
-          console.error('Chat ID is missing for community:', member.community_id);
-          continue;
-        }
-
         // Format chat ID - ensure it starts with -100 for supergroups/channels
-        const formattedChatId = botSettings.chat_id.startsWith('-100') 
-          ? botSettings.chat_id 
-          : `-100${botSettings.chat_id.replace('-', '')}`;
+        const formattedChatId = community.telegram_chat_id.startsWith('-100') 
+          ? community.telegram_chat_id 
+          : `-100${community.telegram_chat_id.replace('-', '')}`;
 
         console.log('Chat ID details:', {
-          originalChatId: botSettings.chat_id,
+          originalChatId: community.telegram_chat_id,
           formattedChatId: formattedChatId,
           communityId: member.community_id
         });

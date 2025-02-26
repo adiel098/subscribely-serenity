@@ -1,3 +1,4 @@
+
 import { Bell, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BotSettings } from "@/group_owners/hooks/useBotSettings";
+import { BotSettings } from "@/hooks/useBotSettings";
 import { useState } from "react";
 import { toast } from "sonner";
 

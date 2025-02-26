@@ -108,31 +108,13 @@ export const PaymentMethods = ({
       // Handle other payment methods...
       const telegramUserId = window.Telegram?.WebApp.initDataUnsafe.user?.id?.toString();
       
-      // TODO: Should be on success page
-      const { data: inviteLinkData, error: inviteLinkError } =
-      await supabase.functions.invoke('create-invite-link', {
-        body: { communityId: selectedPlan.community_id },
-      });
-
-    if (inviteLinkError) {
-      console.error('Error creating invite link:', inviteLinkError);
-      toast({
-        variant: 'destructive',
-        title: 'Error creating invite link',
-        description: 'Please try again or contact support.',
-      });
-      return;
-    }
-
-    const newInviteLink = inviteLinkData?.inviteLink;
-
       const paymentData = {
         plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
         amount: selectedPlan.price,
         payment_method: selectedPaymentMethod,
         status: 'completed',
-        invite_link: newInviteLink,
+        invite_link: null,
         telegram_user_id: telegramUserId
       };
 

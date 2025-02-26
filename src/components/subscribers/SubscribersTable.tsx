@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -23,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Subscriber } from "@/group_owners/hooks/useSubscribers";
+import { Subscriber } from "@/hooks/useSubscribers";
 
 interface SubscribersTableProps {
   subscribers: Subscriber[];

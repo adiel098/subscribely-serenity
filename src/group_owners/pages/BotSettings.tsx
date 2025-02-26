@@ -10,6 +10,7 @@ import { WelcomeMessageSection } from "@/group_owners/components/bot-settings/We
 import { SubscriptionSection } from "@/group_owners/components/bot-settings/SubscriptionSection";
 import { BroadcastSection } from "@/group_owners/components/bot-settings/BroadcastSection";
 import { BotStatsHeader } from "@/group_owners/components/bot-settings/BotStatsHeader";
+import { CronJobTimer } from "@/group_owners/components/bot-settings/CronJobTimer";
 
 const BotSettings = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -45,6 +46,8 @@ const BotSettings = () => {
           </p>
         </div>
       </div>
+
+      <CronJobTimer />
 
       <BotStatsHeader communityId={selectedCommunityId || ""} />
 

@@ -35,8 +35,7 @@ export const useBroadcast = (communityId: string) => {
           query = query.eq('subscription_status', true);
           break;
         case 'expired':
-          query = query
-            .eq('subscription_status', false)
+          query = query.eq('subscription_status', false)
             .not('subscription_end_date', 'is', null);
           break;
         case 'plan':
@@ -79,6 +78,22 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('Bot token not found');
       }
 
+      // If button is included, get the mini app URL
+      let messageOptions: any = {
+        parse_mode: 'HTML'
+      };
+
+      if (includeButton) {
+        messageOptions.reply_markup = {
+          inline_keyboard: [[
+            {
+              text: "💫 Join Now",
+              url: `https://t.me/YourBotUsername/app?startapp=${communityId}`
+            }
+          ]]
+        };
+      }
+
       let successCount = 0;
       let failureCount = 0;
 
@@ -93,7 +108,7 @@ export const useBroadcast = (communityId: string) => {
             body: JSON.stringify({
               chat_id: member.telegram_user_id,
               text: message,
-              parse_mode: 'HTML'
+              ...messageOptions
             }),
           });
 

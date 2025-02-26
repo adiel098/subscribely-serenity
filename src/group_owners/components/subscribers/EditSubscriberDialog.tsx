@@ -24,7 +24,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
   const [startDate, setStartDate] = useState(
     subscriber.subscription_start_date ? 
     new Date(subscriber.subscription_start_date).toISOString().slice(0, 16) : 
-    ""
+    new Date().toISOString().slice(0, 16)  // Set current date as default for new subscriptions
   );
   const [endDate, setEndDate] = useState(
     subscriber.subscription_end_date ? 
@@ -43,17 +43,19 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         subscription_end_date: endDate
       });
 
-      // עדכון פרטי המנוי במסד הנתונים
+      // אם המנוי מופעל מחדש, נוודא שיש תאריך התחלה
+      const currentDate = new Date().toISOString();
+      const updateData = {
+        telegram_username: username,
+        subscription_status: subscriptionStatus,
+        is_active: subscriptionStatus, // עדכון הסטטוס הפעיל בהתאם לסטטוס המנוי
+        subscription_start_date: subscriptionStatus ? (startDate || currentDate) : null,
+        subscription_end_date: subscriptionStatus ? (endDate || null) : null
+      };
+
       const { error: updateError } = await supabase
         .from('telegram_chat_members')
-        .update({
-          telegram_username: username,
-          subscription_status: subscriptionStatus,
-          subscription_start_date: startDate || null,
-          subscription_end_date: endDate || null,
-          // אם המנוי מבוטל, מעדכנים גם את is_active לfalse
-          ...(subscriptionStatus === false && { is_active: false })
-        })
+        .update(updateData)
         .eq('id', subscriber.id);
 
       if (updateError) {
@@ -169,3 +171,4 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
     </Dialog>
   );
 };
+

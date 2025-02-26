@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,7 +34,7 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
         throw error;
       }
       
-      console.log('Successfully fetched plans:', data);
+      console.log('Successfully fetched plans for community:', communityId, 'Plans:', data);
       return data as SubscriptionPlan[];
     },
     enabled: Boolean(communityId),

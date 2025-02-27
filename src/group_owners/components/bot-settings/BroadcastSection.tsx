@@ -29,7 +29,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
 import { Label } from "@/components/ui/label";
-import { MessagePreview } from "./MessagePreview";
 
 interface BroadcastSectionProps {
   communityId: string;
@@ -101,117 +100,100 @@ export const BroadcastSection = ({ communityId }: BroadcastSectionProps) => {
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4">
-        <div className="grid md:grid-cols-5 gap-6">
-          <div className="md:col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Send Broadcast Message</CardTitle>
-                <CardDescription>
-                  Send a message to your community members
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Select
-                    value={filterType}
-                    onValueChange={(value: "all" | "active" | "expired" | "plan") => {
-                      setFilterType(value);
-                      if (value !== 'plan') {
-                        setSelectedPlanId("");
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select recipients" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Members</SelectItem>
-                      <SelectItem value="active">Active Subscribers</SelectItem>
-                      <SelectItem value="expired">Expired Subscribers</SelectItem>
-                      <SelectItem value="plan">Specific Plan</SelectItem>
-                    </SelectContent>
-                  </Select>
+        <Card>
+          <CardHeader>
+            <CardTitle>Send Broadcast Message</CardTitle>
+            <CardDescription>
+              Send a message to your community members
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Select
+                value={filterType}
+                onValueChange={(value: "all" | "active" | "expired" | "plan") => {
+                  setFilterType(value);
+                  if (value !== 'plan') {
+                    setSelectedPlanId("");
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select recipients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Members</SelectItem>
+                  <SelectItem value="active">Active Subscribers</SelectItem>
+                  <SelectItem value="expired">Expired Subscribers</SelectItem>
+                  <SelectItem value="plan">Specific Plan</SelectItem>
+                </SelectContent>
+              </Select>
 
-                  {filterType === 'plan' && plans && (
-                    <Select
-                      value={selectedPlanId}
-                      onValueChange={setSelectedPlanId}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select subscription plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {plans.map((plan) => (
-                          <SelectItem key={plan.id} value={plan.id}>
-                            {plan.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type your broadcast message..."
-                  className="min-h-[150px]"
-                />
-                
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Image className="h-4 w-4" />
-                    Broadcast Image
-                  </Label>
-                  <ImageUploadSection
-                    image={broadcastImage}
-                    setImage={setBroadcastImage}
-                    updateSettings={{ mutate: () => {} }} // No auto-update for broadcast
-                    settingsKey="broadcast_image"
-                    isUploading={isUploading}
-                    setIsUploading={setIsUploading}
-                    imageError={imageError}
-                    setImageError={setImageError}
-                    label="Broadcast Image"
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="include-button"
-                    checked={includeButton}
-                    onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="include-button"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Include join button with message
-                  </label>
-                </div>
-                <Button 
-                  onClick={handleSendBroadcast} 
-                  disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId) || isUploading}
-                  className="w-full"
+              {filterType === 'plan' && plans && (
+                <Select
+                  value={selectedPlanId}
+                  onValueChange={setSelectedPlanId}
                 >
-                  {isSending ? "Sending..." : "Send Broadcast"}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="md:col-span-2">
-            <Card className="border rounded-lg h-full">
-              <CardContent className="p-4">
-                <h3 className="text-base font-medium mb-3">Message Preview</h3>
-                <MessagePreview 
-                  message={message || "Your broadcast message will appear here"}
-                  image={broadcastImage}
-                  buttonText={includeButton ? "Join Community 🚀" : undefined}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select subscription plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <Textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your broadcast message..."
+              className="min-h-[150px]"
+            />
+            
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Broadcast Image
+              </Label>
+              <ImageUploadSection
+                image={broadcastImage}
+                setImage={setBroadcastImage}
+                updateSettings={{ mutate: () => {} }} // No auto-update for broadcast
+                settingsKey="broadcast_image"
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
+                imageError={imageError}
+                setImageError={setImageError}
+                label="Broadcast Image"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="include-button"
+                checked={includeButton}
+                onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
+              />
+              <label
+                htmlFor="include-button"
+                className="text-sm text-muted-foreground"
+              >
+                Include join button with message
+              </label>
+            </div>
+            <Button 
+              onClick={handleSendBroadcast} 
+              disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId) || isUploading}
+              className="w-full"
+            >
+              {isSending ? "Sending..." : "Send Broadcast"}
+            </Button>
+          </CardContent>
+        </Card>
       </AccordionContent>
     </AccordionItem>
   );

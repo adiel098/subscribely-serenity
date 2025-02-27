@@ -100,3 +100,105 @@ export const createOrUpdateMember = async (data: CreateMemberData) => {
  * Alias for createOrUpdateMember to maintain compatibility with existing code
  */
 export const createMember = createOrUpdateMember;
+
+/**
+ * Fetch all user subscriptions across communities
+ */
+export const getUserSubscriptions = async (telegramUserId: string) => {
+  try {
+    console.log('Fetching subscriptions for user:', telegramUserId);
+    
+    const { data, error } = await supabase
+      .from('community_members')
+      .select(`
+        *,
+        community:communities(id, name, description, telegram_photo_url, telegram_invite_link),
+        plan:subscription_plans(id, name, price, interval, features)
+      `)
+      .eq('telegram_id', telegramUserId)
+      .order('subscription_end_date', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching user subscriptions:', error);
+      throw error;
+    }
+    
+    console.log(`Found ${data?.length || 0} subscriptions for user ${telegramUserId}`);
+    return data || [];
+  } catch (error) {
+    console.error('Error in getUserSubscriptions:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cancel a user's subscription to a community
+ */
+export const cancelSubscription = async (memberId: string) => {
+  try {
+    console.log('Cancelling subscription for member:', memberId);
+    
+    const now = new Date();
+    
+    const { data, error } = await supabase
+      .from('community_members')
+      .update({
+        status: 'cancelled',
+        updated_at: now.toISOString(),
+      })
+      .eq('id', memberId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error cancelling subscription:', error);
+      throw error;
+    }
+    
+    console.log('Successfully cancelled subscription:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in cancelSubscription:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch available communities for search/discovery
+ */
+export const searchCommunities = async (query: string = '') => {
+  try {
+    console.log('Searching communities with query:', query);
+    
+    let searchQuery = supabase
+      .from('communities')
+      .select(`
+        id,
+        name,
+        description,
+        telegram_photo_url,
+        telegram_invite_link,
+        member_count,
+        subscription_plans(id, name, price, interval)
+      `)
+      .limit(20);
+    
+    // Add search filter if query provided
+    if (query && query.trim()) {
+      searchQuery = searchQuery.ilike('name', `%${query.trim()}%`);
+    }
+    
+    const { data, error } = await searchQuery;
+    
+    if (error) {
+      console.error('Error searching communities:', error);
+      throw error;
+    }
+    
+    console.log(`Found ${data?.length || 0} communities matching query "${query}"`);
+    return data || [];
+  } catch (error) {
+    console.error('Error in searchCommunities:', error);
+    throw error;
+  }
+};

@@ -1,103 +1,142 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast";
-import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
-import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
-import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
-import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
-import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
+import { LoadingScreen } from "../components/LoadingScreen";
+import { CommunityHeader } from "../components/CommunityHeader";
+import { SubscriptionPlans } from "../components/SubscriptionPlans";
+import { CommunityNotFound } from "../components/CommunityNotFound";
+import { saveUserData, TelegramUserData, getUserSubscription } from "../services/userService";
+import { SuccessScreen } from "../components/SuccessScreen";
+import { UserDashboard } from "../components/UserDashboard";
 
-export interface Plan {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  interval: string;
-  features: string[];
-  community_id: string;
-}
-
-export interface Community {
-  id: string;
-  name: string;
-  description: string | null;
-  telegram_photo_url: string | null;
-  telegram_invite_link: string | null;
-  subscription_plans: Plan[];
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        initData: string;
+        initDataUnsafe: {
+          user?: {
+            id: number;
+            username?: string;
+            first_name?: string;
+            last_name?: string;
+            photo_url?: string;
+          };
+          start_param?: string;
+        };
+        MainButton: {
+          text: string;
+          isVisible: boolean;
+          onClick: (callback: () => void) => void;
+          show: () => void;
+          hide: () => void;
+          setParams: (params: { text: string; color: string; }) => void;
+        };
+        ready: () => void;
+        expand: () => void;
+        close: () => void;
+      };
+    };
+  }
 }
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [community, setCommunity] = useState<Community | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const { toast } = useToast();
+  const [community, setCommunity] = useState<any>(null);
+  const [userData, setUserData] = useState<TelegramUserData | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  
+  const communityId = searchParams.get("communityId") || window.Telegram?.WebApp?.initDataUnsafe?.start_param || "";
+  const paymentStatus = searchParams.get("status");
 
   useEffect(() => {
-    const initData = searchParams.get("initData");
-    const startParam = searchParams.get("start");
+    // Telegram WebApp initialization
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
 
-    const fetchCommunityData = async () => {
+      // Extract user data from Telegram WebApp
+      const telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
+      if (telegramUser) {
+        const user: TelegramUserData = {
+          id: telegramUser.id.toString(),
+          username: telegramUser.username,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name,
+          photo_url: telegramUser.photo_url
+        };
+        setUserData(user);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Handle payment success
+    if (paymentStatus === "success") {
+      setPaymentSuccess(true);
+    }
+  }, [paymentStatus]);
+
+  useEffect(() => {
+    const fetchCommunityDetails = async () => {
+      if (!communityId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        console.log('Fetching community data with params:', { startParam, initData });
-        const response = await supabase.functions.invoke("telegram-mini-app", {
-          body: { 
-            start: startParam,
-            initData 
+        // Fetch community details
+        const { data: communityData, error: communityError } = await supabase
+          .from("communities")
+          .select("*")
+          .eq("id", communityId)
+          .maybeSingle();
+
+        if (communityError) {
+          console.error("Error fetching community:", communityError);
+          setLoading(false);
+          return;
+        }
+
+        if (!communityData) {
+          console.log("Community not found for ID:", communityId);
+          setLoading(false);
+          return;
+        }
+
+        setCommunity(communityData);
+        
+        // Save user data if available
+        if (userData && communityData) {
+          await saveUserData(userData, communityData.id);
+          
+          // Check if user has an active subscription
+          if (userData.id) {
+            const userSubscription = await getUserSubscription(userData.id, communityData.id);
+            setSubscription(userSubscription);
           }
-        });
-
-        console.log('Response from telegram-mini-app:', response);
-
-        if (response.data?.community) {
-          setCommunity(response.data.community);
         }
       } catch (error) {
-        console.error("Error fetching community data:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load community data. Please try again."
-        });
+        console.error("Error in fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (startParam) {
-      fetchCommunityData();
-    } else {
-      console.error("No start parameter provided");
-      setLoading(false);
+    if (userData || communityId) {
+      fetchCommunityDetails();
     }
-  }, [searchParams, toast]);
-
-  const handlePaymentMethodSelect = (method: string) => {
-    setSelectedPaymentMethod(method);
-    console.log(`Selected payment method: ${method}`);
-  };
-
-  const handleCompletePurchase = () => {
-    setShowSuccess(true);
-    toast({
-      title: "Payment Successful! ",
-      description: "You can now access the community.",
-      duration: 5000,
-    });
-  };
-
-  const handlePlanSelect = (plan: Plan) => {
-    setSelectedPlan(plan);
-    document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [communityId, userData]);
 
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  if (paymentSuccess) {
+    return <SuccessScreen communityName={community?.name} />;
   }
 
   if (!community) {
@@ -105,36 +144,15 @@ const TelegramMiniApp = () => {
   }
 
   return (
-    <ScrollArea className="h-[100vh] w-full">
-      <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
-        <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-12">
-          <CommunityHeader community={community} />
-
-          <SubscriptionPlans
-            plans={community.subscription_plans}
-            selectedPlan={selectedPlan}
-            onPlanSelect={handlePlanSelect}
-          />
-
-          {selectedPlan && (
-            <PaymentMethods
-              selectedPlan={selectedPlan}
-              selectedPaymentMethod={selectedPaymentMethod}
-              onPaymentMethodSelect={handlePaymentMethodSelect}
-              onCompletePurchase={handleCompletePurchase}
-              communityInviteLink={community.telegram_invite_link}
-              showSuccess={showSuccess}
-            />
-          )}
-
-          {!selectedPlan && (
-            <div className="flex justify-center py-8 animate-bounce">
-              <ChevronDown className="h-6 w-6 text-primary/50" />
-            </div>
-          )}
-        </div>
-      </div>
-    </ScrollArea>
+    <div className="min-h-screen bg-gray-50">
+      <CommunityHeader community={community} />
+      
+      {subscription?.subscription_status ? (
+        <UserDashboard subscription={subscription} userData={userData} community={community} />
+      ) : (
+        <SubscriptionPlans communityId={community.id} userId={userData?.id} />
+      )}
+    </div>
   );
 };
 

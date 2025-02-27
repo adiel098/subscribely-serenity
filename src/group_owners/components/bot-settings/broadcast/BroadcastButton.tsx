@@ -1,5 +1,7 @@
 
 import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface BroadcastButtonProps {
   handleSendBroadcast: () => Promise<void>;
@@ -15,10 +17,14 @@ export const BroadcastButton = ({
   return (
     <Button 
       onClick={handleSendBroadcast} 
-      disabled={isDisabled}
-      className="w-full"
+      disabled={isDisabled || isSending}
+      className={cn(
+        "w-full transition-all", 
+        isSending ? "bg-amber-600 hover:bg-amber-700" : "bg-primary hover:bg-primary/90"
+      )}
     >
-      {isSending ? "Sending..." : "Send Broadcast"}
+      <Send className={cn("h-4 w-4 mr-2", isSending && "animate-pulse")} />
+      {isSending ? "Sending Broadcast..." : "Send Broadcast Message"}
     </Button>
   );
 };

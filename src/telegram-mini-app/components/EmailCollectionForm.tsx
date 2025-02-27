@@ -6,16 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { collectUserEmail } from "@/telegram-mini-app/services/memberService";
+import { useSearchParams } from "react-router-dom";
 
 interface EmailCollectionFormProps {
   telegramUserId: string;
+  firstName?: string;
+  lastName?: string;
   onComplete: () => void;
 }
 
-export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollectionFormProps) => {
+export const EmailCollectionForm = ({ 
+  telegramUserId, 
+  firstName, 
+  lastName, 
+  onComplete 
+}: EmailCollectionFormProps) => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Get start parameter from URL which is the community ID
+  const communityId = searchParams.get("start");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +47,16 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     
     try {
       console.log("Saving email for telegram user:", telegramUserId, email);
+      console.log("With additional data:", { firstName, lastName, communityId });
       
-      // Make sure to pass both the telegramUserId and email to the collectUserEmail function
-      const success = await collectUserEmail(telegramUserId, email);
+      // Pass all user details to the collectUserEmail function
+      const success = await collectUserEmail(
+        telegramUserId, 
+        email, 
+        firstName, 
+        lastName, 
+        communityId || undefined
+      );
       
       if (!success) {
         throw new Error("Failed to save email");

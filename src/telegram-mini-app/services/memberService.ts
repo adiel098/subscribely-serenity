@@ -141,7 +141,13 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
   }
 }
 
-export async function collectUserEmail(telegramUserId: string, email: string): Promise<boolean> {
+export async function collectUserEmail(
+  telegramUserId: string, 
+  email: string, 
+  firstName?: string, 
+  lastName?: string, 
+  communityId?: string
+): Promise<boolean> {
   console.log("Collecting email for user ID:", telegramUserId, "Email:", email);
 
   if (!telegramUserId || !email) {
@@ -155,27 +161,44 @@ export async function collectUserEmail(telegramUserId: string, email: string): P
     
     let result;
     if (exists) {
-      // Update existing user
+      // Update existing user with new data
+      const updateData: any = { email };
+      
+      // Only include fields that have values
+      if (firstName) updateData.first_name = firstName;
+      if (lastName) updateData.last_name = lastName;
+      if (communityId) updateData.community_id = communityId;
+      
       result = await supabase
         .from('telegram_mini_app_users')
-        .update({ email: email })
+        .update(updateData)
         .eq('telegram_id', telegramUserId);
     } else {
-      // Create new user
+      // Create new user with all available data
+      const insertData: any = { 
+        telegram_id: telegramUserId, 
+        email 
+      };
+      
+      // Only include fields that have values
+      if (firstName) insertData.first_name = firstName;
+      if (lastName) insertData.last_name = lastName;
+      if (communityId) insertData.community_id = communityId;
+      
       result = await supabase
         .from('telegram_mini_app_users')
-        .insert({ telegram_id: telegramUserId, email: email });
+        .insert(insertData);
     }
     
     if (result.error) {
-      console.error("Error updating/inserting user email:", result.error);
+      console.error("Error updating/inserting user data:", result.error);
       throw new Error(result.error.message);
     }
 
-    console.log("Email collected successfully for user:", telegramUserId);
+    console.log("User data collected successfully for user:", telegramUserId);
     return true;
   } catch (error) {
-    console.error("Failed to collect email:", error);
+    console.error("Failed to collect user data:", error);
     return false;
   }
 }

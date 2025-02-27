@@ -169,7 +169,14 @@ const TelegramMiniApp = () => {
   // Show email collection form if needed
   if (showEmailForm && telegramUser) {
     console.log('📝 Showing email collection form for user ID:', telegramUser.id);
-    return <EmailCollectionForm telegramUserId={telegramUser.id} onComplete={handleEmailFormComplete} />;
+    return (
+      <EmailCollectionForm 
+        telegramUserId={telegramUser.id} 
+        firstName={telegramUser.first_name}
+        lastName={telegramUser.last_name}
+        onComplete={handleEmailFormComplete} 
+      />
+    );
   }
 
   console.log('🎉 Showing main content with:', { 

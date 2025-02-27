@@ -47,6 +47,17 @@ export const EmailCollectionForm = ({
       return;
     }
     
+    // CRITICAL FIX: Validate Telegram ID format
+    if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
+      console.error("Invalid Telegram ID format:", telegramUserId);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid user identification. Please reload the app.",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {

@@ -118,11 +118,16 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
     return { exists: false, hasEmail: false };
   }
 
-  // Ensure the ID is a string and clean it (remove whitespace)
+  // CRITICAL FIX: Validate Telegram ID format - it should be numeric
   const cleanTelegramId = telegramUserId.toString().trim();
   
   if (!cleanTelegramId) {
     console.error("checkUserExists: Empty Telegram ID after cleaning");
+    return { exists: false, hasEmail: false };
+  }
+  
+  if (!/^\d+$/.test(cleanTelegramId)) {
+    console.error("checkUserExists: Invalid Telegram ID format (non-numeric):", cleanTelegramId);
     return { exists: false, hasEmail: false };
   }
 
@@ -175,11 +180,16 @@ export async function collectUserEmail(
     return false;
   }
 
-  // Ensure the ID is a string and clean it (remove whitespace)
+  // CRITICAL FIX: Validate Telegram ID format - it should be numeric
   const cleanTelegramId = telegramUserId.toString().trim();
   
   if (!cleanTelegramId) {
     console.error("collectUserEmail: Empty Telegram ID after cleaning");
+    return false;
+  }
+  
+  if (!/^\d+$/.test(cleanTelegramId)) {
+    console.error("collectUserEmail: Invalid Telegram ID format (non-numeric):", cleanTelegramId);
     return false;
   }
 
@@ -263,11 +273,16 @@ export async function createOrUpdateMember(memberData: CreateMemberData): Promis
     return false;
   }
 
-  // Ensure telegram_id is a string and clean it
+  // CRITICAL FIX: Validate Telegram ID format - it should be numeric
   const cleanTelegramId = memberData.telegram_id.toString().trim();
   
   if (!cleanTelegramId) {
     console.error("createOrUpdateMember: Empty Telegram ID after cleaning");
+    return false;
+  }
+  
+  if (!/^\d+$/.test(cleanTelegramId)) {
+    console.error("createOrUpdateMember: Invalid Telegram ID format (non-numeric):", cleanTelegramId);
     return false;
   }
 

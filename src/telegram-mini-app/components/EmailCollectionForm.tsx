@@ -34,9 +34,6 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     setIsSubmitting(true);
     
     try {
-      console.log('📧 Saving email for Telegram user ID:', telegramUserId);
-      console.log('📧 Email to save:', email);
-      
       // Update the telegram_mini_app_users table with the email
       const { error } = await supabase
         .from('telegram_mini_app_users')
@@ -47,8 +44,6 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
         throw error;
       }
       
-      console.log('✅ Email saved successfully');
-      
       toast({
         title: "Email saved",
         description: "Thank you for providing your email",
@@ -57,7 +52,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
       // Call the onComplete callback to proceed to the community page
       onComplete();
     } catch (error) {
-      console.error("❌ Error saving email:", error);
+      console.error("Error saving email:", error);
       toast({
         variant: "destructive",
         title: "Error",

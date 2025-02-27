@@ -1,5 +1,5 @@
 
-import { MessageSquare, Save, Image as ImageIcon, X, Upload } from "lucide-react";
+import { MessageSquare, Save, X, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface WelcomeMessageSectionProps {
@@ -24,15 +24,27 @@ interface WelcomeMessageSectionProps {
 }
 
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
-  const [draftMessage, setDraftMessage] = useState(settings.welcome_message);
-  const [welcomeImage, setWelcomeImage] = useState(settings.welcome_image || "");
+  const [draftMessage, setDraftMessage] = useState(settings.welcome_message || "");
+  const [welcomeImage, setWelcomeImage] = useState<string>(settings.welcome_image || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when settings change
+  useEffect(() => {
+    setDraftMessage(settings.welcome_message || "");
+    setWelcomeImage(settings.welcome_image || "");
+  }, [settings.welcome_message, settings.welcome_image]);
 
   const handleSave = () => {
     updateSettings.mutate({ 
       welcome_message: draftMessage,
       welcome_image: welcomeImage
     });
+    
+    console.log("Saving welcome settings:", {
+      welcome_message: draftMessage,
+      welcome_image: welcomeImage ? `${welcomeImage.substring(0, 30)}...` : null
+    });
+    
     toast.success("Welcome message saved successfully");
   };
 
@@ -56,6 +68,14 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setWelcomeImage(result);
+      
+      // Save image immediately after upload
+      updateSettings.mutate({ 
+        welcome_image: result
+      });
+      
+      console.log("Image uploaded:", result.substring(0, 30) + "...");
+      toast.success("Welcome image uploaded");
     };
     reader.readAsDataURL(file);
   };
@@ -66,6 +86,11 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
 
   const clearImage = () => {
     setWelcomeImage("");
+    updateSettings.mutate({ 
+      welcome_image: null
+    });
+    toast.success("Welcome image removed");
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

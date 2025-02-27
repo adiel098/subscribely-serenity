@@ -8,15 +8,32 @@ import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollect
 import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ExclamationTriangleIcon } from "lucide-react";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isDevelopment, setIsDevelopment] = useState(false);
   const { toast } = useToast();
 
   // Get parameters from URL
   const initData = searchParams.get("initData");
   const startParam = searchParams.get("start");
+  
+  // Check if we're in development mode
+  useEffect(() => {
+    const devEnvironment = 
+      process.env.NODE_ENV === 'development' || 
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1';
+    
+    setIsDevelopment(devEnvironment);
+    
+    if (devEnvironment && !window.Telegram?.WebApp) {
+      console.log('🧪 Running in development mode without Telegram WebApp object');
+    }
+  }, []);
   
   console.log('💫 TelegramMiniApp initialized with:');
   console.log('📌 initData:', initData);
@@ -97,7 +114,21 @@ const TelegramMiniApp = () => {
     community: community?.name, 
     user: telegramUser?.username 
   });
-  return <MainContent community={community} telegramUser={telegramUser} />;
+  
+  return (
+    <>
+      {isDevelopment && !window.Telegram?.WebApp && (
+        <Alert variant="destructive" className="mb-4 mx-4 mt-4">
+          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertTitle>Development Mode</AlertTitle>
+          <AlertDescription>
+            Running outside of Telegram environment. Using mock data for development.
+          </AlertDescription>
+        </Alert>
+      )}
+      <MainContent community={community} telegramUser={telegramUser} />
+    </>
+  );
 };
 
 export default TelegramMiniApp;

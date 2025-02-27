@@ -72,6 +72,25 @@ const parseInitData = (initDataString: string): TelegramUser | null => {
   }
 };
 
+// Detect if we're in development mode
+const isDevelopment = (): boolean => {
+  return process.env.NODE_ENV === 'development' || 
+         window.location.hostname === 'localhost' || 
+         window.location.hostname === '127.0.0.1';
+};
+
+// Mock data for development/testing
+const getMockUser = (): TelegramUser => {
+  return {
+    id: "123456789",
+    first_name: "Test",
+    last_name: "User",
+    username: "testuser",
+    photo_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=testuser",
+    email: "test@example.com"
+  };
+};
+
 /**
  * Custom hook to retrieve Telegram user data with multiple fallback strategies
  */
@@ -177,7 +196,16 @@ export const useTelegramUser = (communityId: string, initData?: string) => {
           
           setUser(userData);
         } else {
-          // Strategy 3: Fallback - If all else fails, use edge function to get/create user
+          // Strategy 4: Development mode fallback
+          if (isDevelopment()) {
+            console.log('🔍 Development environment detected, using mock user data');
+            const mockUser = getMockUser();
+            console.log('✅ Using mock user:', mockUser);
+            setUser(mockUser);
+            return;
+          }
+          
+          // Strategy 5: Fallback - Last resort using edge function
           console.log('🔍 All direct strategies failed, falling back to edge function as last resort...');
           // This is a last resort as it's less secure than the other methods
           if (communityId && initData) {

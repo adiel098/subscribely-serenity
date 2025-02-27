@@ -174,7 +174,8 @@ const TelegramMiniApp = () => {
 
   console.log('🎉 Showing main content with:', { 
     community: community?.name, 
-    user: telegramUser?.username 
+    user: telegramUser?.username,
+    plans: community?.subscription_plans?.length || 0
   });
   
   return (
@@ -194,7 +195,8 @@ const TelegramMiniApp = () => {
           </AlertDescription>
         </Alert>
       )}
-      <MainContent community={community} telegramUser={telegramUser} />
+      {/* Ensure community data is properly passed to MainContent */}
+      {community && <MainContent community={community} telegramUser={telegramUser} />}
     </>
   );
 };

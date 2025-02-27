@@ -29,7 +29,14 @@ export const useCommunityData = (communityId: string | null) => {
         }
 
         if (response.data?.community) {
-          setCommunity(response.data.community);
+          // Ensure subscription_plans is always an array
+          const communityData = response.data.community;
+          if (!communityData.subscription_plans) {
+            communityData.subscription_plans = [];
+          }
+          
+          console.log('Processed community data:', communityData);
+          setCommunity(communityData);
         } else {
           throw new Error("Community not found");
         }

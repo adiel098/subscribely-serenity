@@ -27,6 +27,10 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const { subscriptions, isLoading: subscriptionsLoading, refetch: refreshSubscriptions } = 
     useUserSubscriptions(telegramUser?.id);
 
+  console.log("🔍 Community in MainContent:", community);
+  console.log("🔍 Community.subscription_plans:", community?.subscription_plans);
+  console.log("🔍 TelegramUser in MainContent:", telegramUser);
+
   // Log user info for debugging
   useEffect(() => {
     if (telegramUser) {
@@ -109,10 +113,30 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     }
   };
 
+  // Ensure we have data before rendering
+  if (!community || !community.subscription_plans) {
+    console.error("❌ Missing community or subscription plans data");
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading community data...</p>
+      </div>
+    );
+  }
+
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
         <div className="container max-w-2xl mx-auto pt-4 px-4 space-y-6">
+          {/* Debug information */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
+              <p><strong>Debug Info:</strong></p>
+              <p>User ID: {telegramUser?.id || 'Not available'}</p>
+              <p>Plans Count: {community.subscription_plans?.length || 0}</p>
+              <p>Active Tab: {activeTab}</p>
+            </div>
+          )}
+          
           {/* Telegram User Info - Moved to top and redesigned */}
           {telegramUser && (
             <Card className="bg-gradient-to-r from-[#9b87f5]/20 to-[#D946EF]/10 border-[#8B5CF6]/30 overflow-hidden relative">
@@ -186,11 +210,17 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             
             <TabsContent value="subscribe" className="space-y-8 mt-0">
               <div id="subscription-plans" className="scroll-mt-4">
-                <SubscriptionPlans
-                  plans={community.subscription_plans}
-                  selectedPlan={selectedPlan}
-                  onPlanSelect={handlePlanSelect}
-                />
+                {community.subscription_plans && community.subscription_plans.length > 0 ? (
+                  <SubscriptionPlans
+                    plans={community.subscription_plans}
+                    selectedPlan={selectedPlan}
+                    onPlanSelect={handlePlanSelect}
+                  />
+                ) : (
+                  <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+                    <p className="text-gray-500">No subscription plans available for this community.</p>
+                  </div>
+                )}
               </div>
 
               {selectedPlan && (
@@ -207,7 +237,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
                 </div>
               )}
 
-              {!selectedPlan && (
+              {!selectedPlan && community.subscription_plans && community.subscription_plans.length > 0 && (
                 <div className="flex justify-center py-6 animate-bounce">
                   <ChevronDown className="h-5 w-5 text-primary/50" />
                 </div>

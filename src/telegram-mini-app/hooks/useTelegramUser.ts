@@ -213,7 +213,7 @@ export const useTelegramUser = (communityId: string) => {
                     ...response.data.user
                   };
                   // CRITICAL FIX: Ensure we're maintaining the correct Telegram ID
-                  userData.id = userData.telegram_id || userData.id;
+                  // We don't need to map telegram_id to id here as our TelegramUser type doesn't have telegram_id
                   console.log('✅ Final user data after edge function:', userData);
                 }
               } catch (edgeFunctionError) {
@@ -279,8 +279,7 @@ export const useTelegramUser = (communityId: string) => {
                       ...userData,
                       ...response.data.user
                     };
-                    // CRITICAL FIX: Ensure we preserve the correct Telegram ID
-                    userData.id = userData.telegram_id || userData.id;
+                    // No need to map telegram_id to id here as our userData already has the correct id
                   }
                 } catch (hashEdgeFunctionError) {
                   console.error("❌ Exception when calling edge function with hash data:", hashEdgeFunctionError);

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CreateMemberData } from "../types/payment.types";
 
@@ -94,3 +95,8 @@ export const createOrUpdateMember = async (data: CreateMemberData) => {
     throw error;
   }
 };
+
+/**
+ * Alias for createOrUpdateMember to maintain compatibility with existing code
+ */
+export const createMember = createOrUpdateMember;

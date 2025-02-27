@@ -34,6 +34,8 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     setIsSubmitting(true);
     
     try {
+      console.log("Saving email for telegram user:", telegramUserId, email);
+      
       // Update the telegram_mini_app_users table with the email
       const { error } = await supabase
         .from('telegram_mini_app_users')
@@ -41,8 +43,11 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
         .eq('telegram_id', telegramUserId);
       
       if (error) {
+        console.error("Error details:", error);
         throw error;
       }
+      
+      console.log("Email saved successfully for user:", telegramUserId);
       
       toast({
         title: "Email saved",

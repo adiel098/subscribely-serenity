@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Subscription } from "@/telegram-mini-app/services/types/memberTypes";
-import { Calendar, Clock, CheckCircle, XCircle, Zap, Crown, Trash, Users } from "lucide-react";
+import { Zap, Crown, Trash, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -11,7 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { SubscriptionStatusBadge } from "./SubscriptionStatusBadge";
+import { SubscriptionDates } from "./SubscriptionDates";
+import { SubscriptionStatus } from "./SubscriptionStatus";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -24,11 +26,6 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onRenew,
   onCancel,
 }) => {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
   const isActive = () => {
     if (!subscription.subscription_end_date && !subscription.expiry_date) return false;
     const endDate = subscription.subscription_end_date || subscription.expiry_date;
@@ -75,37 +72,19 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               )}
             </div>
           </div>
-          <Badge variant={active ? "success" : "outline"} className="ml-2">
-            {active ? "Active" : "Expired"}
-          </Badge>
+          <SubscriptionStatusBadge isActive={active} />
         </div>
       </CardHeader>
       
       <CardContent className="pb-2 text-sm">
-        <div className="flex justify-between text-muted-foreground mb-1">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>Started: {formatDate(subscription.subscription_start_date || subscription.created_at)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            <span>Ends: {formatDate(subscription.subscription_end_date || subscription.expiry_date)}</span>
-          </div>
-        </div>
+        <SubscriptionDates 
+          startDate={subscription.subscription_start_date}
+          endDate={subscription.subscription_end_date}
+          createdAt={subscription.created_at}
+          expiryDate={subscription.expiry_date}
+        />
         
-        {active && daysRemaining < 7 && (
-          <div className="mt-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-md text-sm flex items-center">
-            <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span>Expiring soon! Only {daysRemaining} days remaining</span>
-          </div>
-        )}
-        
-        {!active && (
-          <div className="mt-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md text-sm flex items-center">
-            <XCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span>Your subscription has expired</span>
-          </div>
-        )}
+        <SubscriptionStatus isActive={active} daysRemaining={daysRemaining} />
       </CardContent>
       
       <CardFooter className="pt-2">

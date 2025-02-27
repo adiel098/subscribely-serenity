@@ -79,6 +79,9 @@ export const useTelegramUser = (communityId: string) => {
         console.log('🔍 Attempting to get data from Telegram WebApp...');
         let userData = getWebAppData();
         
+        // Development mode handling
+        const isDevMode = isDevelopment();
+        
         if (userData) {
           console.log('✅ Successfully retrieved user data from Telegram WebApp:', userData);
           
@@ -148,7 +151,7 @@ export const useTelegramUser = (communityId: string) => {
           setUser(userData);
         } else {
           // Development mode fallback
-          if (isDevelopment()) {
+          if (isDevMode) {
             console.log('🔍 Development environment detected, using mock user data');
             const mockUser = getMockUser();
             console.log('✅ Using mock user:', mockUser);
@@ -161,8 +164,13 @@ export const useTelegramUser = (communityId: string) => {
       } catch (err) {
         console.error("❌ Error in useTelegramUser:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");
+        
+        // If in development mode, still use mock data even if there was an error
+        if (isDevelopment()) {
+          console.log('🔄 Using mock data after error in development mode');
+          setUser(getMockUser());
+        }
       } finally {
-        console.log('🏁 User data fetch process completed. User:', user);
         setLoading(false);
       }
     };

@@ -9,7 +9,7 @@ import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -49,10 +49,13 @@ const TelegramMiniApp = () => {
     console.log('❌ Telegram WebApp object is NOT available');
   }
 
+  // Create a default community ID for development mode
+  const effectiveStartParam = isDevelopment && !startParam ? "dev123" : startParam;
+
   // Use our custom hooks to retrieve data
-  const { loading: communityLoading, community } = useCommunityData(startParam);
+  const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError } = 
-    useTelegramUser(startParam || "");
+    useTelegramUser(effectiveStartParam || "");
     
   console.log('📡 Hook Results:');
   console.log('📌 Community loading:', communityLoading);
@@ -115,12 +118,18 @@ const TelegramMiniApp = () => {
   
   return (
     <>
-      {isDevelopment && !window.Telegram?.WebApp && (
-        <Alert variant="destructive" className="mb-4 mx-4 mt-4">
-          <AlertTriangle className="h-4 w-4" />
+      {isDevelopment && (
+        <Alert variant={window.Telegram?.WebApp ? "default" : "destructive"} className="mb-4 mx-4 mt-4">
+          {window.Telegram?.WebApp ? (
+            <Info className="h-4 w-4" />
+          ) : (
+            <AlertTriangle className="h-4 w-4" />
+          )}
           <AlertTitle>Development Mode</AlertTitle>
           <AlertDescription>
-            Running outside of Telegram environment. Using mock data for development.
+            {window.Telegram?.WebApp 
+              ? "Running in development mode with Telegram WebApp available."
+              : "Running outside of Telegram environment. Using mock data for development."}
           </AlertDescription>
         </Alert>
       )}

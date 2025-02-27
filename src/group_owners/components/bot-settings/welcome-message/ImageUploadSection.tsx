@@ -114,11 +114,12 @@ export const ImageUploadSection = ({
       )}
       
       {image && (
-        <div className="relative">
+        <div className="relative flex justify-center bg-gray-100 p-2 rounded-md border">
           <img
             src={image}
             alt={label}
-            className="w-full h-36 object-cover rounded-md border"
+            className="max-h-32 object-contain rounded-md"
+            style={{ maxWidth: "100%" }}
           />
           <Button
             variant="destructive"

@@ -15,11 +15,12 @@ export const MessagePreview = ({ message, signature, image, buttonText }: Messag
     <Card className="border-slate-200 overflow-hidden max-w-md bg-gray-50">
       <CardContent className="p-0">
         {image && (
-          <div className="w-full overflow-hidden">
+          <div className="w-full overflow-hidden flex justify-center bg-gray-100 p-2">
             <img
               src={image}
               alt="Message preview"
-              className="w-full h-40 object-cover"
+              className="max-h-32 object-contain rounded-md"
+              style={{ maxWidth: "100%" }}
             />
           </div>
         )}

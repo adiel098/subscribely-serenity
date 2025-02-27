@@ -81,7 +81,7 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
 
           <Button 
             onClick={handleSaveWelcomeMessage} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
           >
             <Save className="h-4 w-4" /> 
             Save Welcome Message

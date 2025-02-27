@@ -13,7 +13,6 @@ import { UserSubscriptions } from "@/telegram-mini-app/components/UserSubscripti
 import { CommunitySearch } from "@/telegram-mini-app/components/CommunitySearch";
 import { useUserSubscriptions } from "@/telegram-mini-app/hooks/useUserSubscriptions";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MainContentProps {
   community: Community;
@@ -113,61 +112,37 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
-        <div className="container max-w-2xl mx-auto pt-4 px-4 space-y-6">
-          {/* User information card - moved to top */}
+        <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-8">
+          <CommunityHeader community={community} />
+
           {telegramUser && (
-            <Card className="bg-gradient-to-r from-indigo-100 to-purple-100 border-none shadow-md rounded-xl overflow-hidden">
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0 relative">
-                    {telegramUser.photo_url ? (
-                      <Avatar className="h-10 w-10 ring-2 ring-white">
-                        <AvatarImage 
-                          src={telegramUser.photo_url} 
-                          alt={telegramUser.first_name} 
-                          className="object-cover"
-                        />
-                      </Avatar>
-                    ) : (
-                      <Avatar className="h-10 w-10 bg-primary/20">
-                        <User className="h-5 w-5 text-primary" />
-                      </Avatar>
-                    )}
-                    
-                    {/* Community avatar overlay */}
-                    {community.telegram_photo_url && (
-                      <div className="absolute -bottom-1 -right-1">
-                        <Avatar className="h-6 w-6 ring-1 ring-white">
-                          <AvatarImage 
-                            src={community.telegram_photo_url} 
-                            alt={community.name}
-                            className="object-cover" 
-                          />
-                          <AvatarFallback className="text-[8px] bg-primary/20">
-                            {community.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-800 truncate">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                  {telegramUser.photo_url ? (
+                    <img 
+                      src={telegramUser.photo_url} 
+                      alt={telegramUser.first_name} 
+                      className="h-12 w-12 rounded-full object-cover border-2 border-white/50"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-medium">
                       {telegramUser.first_name} {telegramUser.last_name || ''}
-                      {telegramUser.username && (
-                        <span className="text-xs text-indigo-600 ml-1">@{telegramUser.username}</span>
-                      )}
+                      {telegramUser.username && <span className="text-sm text-muted-foreground ml-2">@{telegramUser.username}</span>}
                     </h3>
                     {telegramUser.email && (
-                      <p className="text-xs text-gray-600 truncate">{telegramUser.email}</p>
+                      <p className="text-sm text-muted-foreground">{telegramUser.email}</p>
                     )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
-
-          <CommunityHeader community={community} />
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid grid-cols-3 mb-6 bg-primary/5">

@@ -89,20 +89,7 @@ serve(async (req) => {
     }
     else if (message.text?.startsWith('/start')) {
       console.log("[WEBHOOK] Handling start command...");
-      
-      // Extract parameters after the /start command
-      const params = message.text.split(' ')[1];
-      const communityId = params || null;
-      
-      handled = await handleStartCommand({
-        supabase: supabaseClient,
-        chatId: message.chat.id,
-        userId: message.from.id,
-        username: message.from.username,
-        communityId: communityId,
-        botToken: botToken
-      });
-      
+      handled = await handleStartCommand(supabaseClient, message, botToken);
       console.log("[WEBHOOK] Start command handled:", handled);
     }
     else if (message.text?.startsWith('MBF_')) {

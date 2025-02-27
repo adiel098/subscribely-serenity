@@ -1,126 +1,114 @@
 
-import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Database } from '../types';
-import { sendPhotoMessage, sendTextMessage } from './utils/telegramMessageSender';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { fetchStartCommandData } from './utils/dataSources.ts';
+import { logUserInteraction } from './utils/logHelper.ts';
+import { 
+  sendTextMessage, 
+  sendPhotoMessage, 
+  verifyBotToken 
+} from './utils/telegramMessageSender.ts';
 
-interface StartCommandParams {
-  supabase: SupabaseClient<Database>;
-  chatId: number | string;
-  userId: number;
-  username: string | undefined;
-  communityId: string | null;
-  botToken: string;
-}
-
-export async function handleStartCommand({
-  supabase,
-  chatId,
-  userId,
-  username,
-  communityId,
-  botToken
-}: StartCommandParams): Promise<boolean> {
-  console.log(`[Start] Handling start command for user ${userId}, community: ${communityId}`);
-  
+export async function handleStartCommand(
+  supabase: ReturnType<typeof createClient>,
+  message: any,
+  botToken: string
+): Promise<boolean> {
   try {
-    // If communityId is provided, we're dealing with a deep link
-    if (communityId) {
-      // Fetch community information
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('id, name, telegram_chat_id')
-        .eq('id', communityId)
-        .maybeSingle();
+    console.log('[Start] Processing start command:', { 
+      message,
+      hasBotToken: !!botToken,
+      botTokenLength: botToken?.length
+    });
+    
+    if (!botToken) {
+      console.error('[Start] Bot token is missing!');
+      return false;
+    }
 
-      if (communityError || !community) {
-        console.error('[Start] Error fetching community:', communityError);
-        await sendTextMessage(
-          botToken,
-          chatId,
-          "Sorry, I couldn't find that community. Please try again or contact support.",
-          '',
-          ''
-        );
-        return false;
-      }
+    // Extract required data from message
+    const communityId = message.text.split(' ')[1];
+    if (!communityId || !message.from) {
+      console.log('[Start] Missing required data:', { communityId, from: message.from });
+      return false;
+    }
 
-      // Fetch bot settings for welcome message
-      const { data: botSettings, error: settingsError } = await supabase
-        .from('telegram_bot_settings')
-        .select('welcome_message, welcome_image, bot_signature')
-        .eq('community_id', communityId)
-        .maybeSingle();
+    // Fetch community and bot settings
+    const data = await fetchStartCommandData(supabase, communityId);
+    if (!data.success) {
+      console.error('[Start] Failed to fetch data:', data.error);
+      return false;
+    }
+    
+    const { community, botSettings } = data;
 
-      if (settingsError) {
-        console.error('[Start] Error fetching bot settings:', settingsError);
-        return false;
-      }
+    // Verify bot token
+    if (!await verifyBotToken(botToken)) {
+      return false;
+    }
 
-      // Check if user is already a member
-      const { data: existingMember } = await supabase
-        .from('telegram_chat_members')
-        .select('id, is_active, subscription_status')
-        .eq('community_id', communityId)
-        .eq('telegram_user_id', userId.toString())
-        .maybeSingle();
+    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
+    const welcomeMessage = botSettings.welcome_message || 
+      `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
 
-      const welcomeMessage = (botSettings?.welcome_message || 'Welcome to our community!') + 
-        '\n\n' + (botSettings?.bot_signature || '🤖 Community Bot');
+    console.log('[Start] Sending welcome message to:', message.from.id);
+    console.log('[Start] Message content:', welcomeMessage);
+    console.log('[Start] Welcome image:', botSettings.welcome_image ? 'Present' : 'Not present');
 
-      // Get mini app URL from environment or settings
-      const { data: globalSettings } = await supabase
-        .from('telegram_global_settings')
-        .select('*')
-        .limit(1)
-        .single();
+    let messageSuccess = false;
 
-      const miniAppUrl = Deno.env.get('MINI_APP_URL') || globalSettings?.mini_app_url || 'https://mini.membify.app';
+    // Try to send image with welcome message if available
+    if (botSettings.welcome_image) {
+      console.log('[Start] Welcome image found, sending as photo with caption');
+      messageSuccess = await sendPhotoMessage(
+        botToken,
+        message.from.id,
+        botSettings.welcome_image,
+        welcomeMessage,
+        miniAppUrl,
+        communityId
+      );
       
-      console.log(`[Start] Sending welcome message to: ${chatId}\n`);
-      console.log(`[Start] Welcome message: ${welcomeMessage.substring(0, 50)}...`);
-      console.log(`[Start] Welcome image exists: ${!!botSettings?.welcome_image}`);
-      
-      // If we have a welcome image, use it
-      if (botSettings?.welcome_image) {
-        return await sendPhotoMessage(
-          botToken,
-          chatId,
-          botSettings.welcome_image,
-          welcomeMessage,
-          miniAppUrl,
-          communityId
-        );
-      } else {
-        // Otherwise just send the text
-        return await sendTextMessage(
-          botToken,
-          chatId,
-          welcomeMessage,
-          miniAppUrl,
+      // If photo sending fails, fall back to text-only message
+      if (!messageSuccess) {
+        console.log('[Start] Falling back to text-only message');
+        messageSuccess = await sendTextMessage(
+          botToken, 
+          message.from.id, 
+          welcomeMessage, 
+          miniAppUrl, 
           communityId
         );
       }
     } else {
-      // Generic start command without deep link
-      await sendTextMessage(
-        botToken,
-        chatId,
-        "Welcome to Membify Bot! 👋\n\nPlease use a specific community link to get started.",
-        '',
-        ''
+      // No image, send text-only message
+      console.log('[Start] No welcome image, sending text-only message');
+      messageSuccess = await sendTextMessage(
+        botToken, 
+        message.from.id, 
+        welcomeMessage, 
+        miniAppUrl, 
+        communityId
       );
+    }
+
+    if (messageSuccess) {
+      // Log user interaction in database
+      await logUserInteraction(
+        supabase,
+        'start_command',
+        String(message.from.id),
+        message.from.username,
+        message.text,
+        message
+      );
+      
       return true;
+    } else {
+      console.error('[Start] Failed to send welcome message');
+      return false;
     }
   } catch (error) {
-    console.error('[Start] Error in handleStartCommand:', error);
-    // Try to send a fallback message
-    await sendTextMessage(
-      botToken, 
-      chatId, 
-      "Sorry, something went wrong. Please try again later.",
-      '',
-      ''
-    );
+    console.error('[Start] Critical error:', error);
     return false;
   }
 }

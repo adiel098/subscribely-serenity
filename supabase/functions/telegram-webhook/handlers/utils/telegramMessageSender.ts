@@ -1,116 +1,6 @@
 
-// Implement the sendPhotoMessage function to handle sending images with proper processing of Base64 data
+// Implement the sendPhotoMessage function to handle sending images
 export async function sendPhotoMessage(
-  botToken: string,
-  chatId: number | string,
-  photoData: string,
-  caption: string,
-  miniAppUrl: string,
-  communityId: string
-): Promise<boolean> {
-  try {
-    console.log('[TelegramSender] Sending photo message to:', chatId);
-    
-    // Create inline keyboard for the mini app
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: "Join Community 🚀",
-            web_app: {
-              url: `${miniAppUrl}?start=${communityId}`
-            }
-          }
-        ]
-      ]
-    };
-
-    // For Base64 images, we need to convert them to a Buffer
-    if (photoData && photoData.startsWith('data:image')) {
-      console.log('[TelegramSender] Processing Base64 image');
-      
-      // Extract the Base64 content without the data URL prefix
-      const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      
-      if (!matches || matches.length !== 3) {
-        console.error('[TelegramSender] Invalid Base64 image format');
-        return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
-      }
-      
-      const base64Data = matches[2];
-      const contentType = matches[1];
-      
-      // Create form data for the multipart request
-      const formData = new FormData();
-      
-      // Create a Blob from the base64 data
-      const byteCharacters = atob(base64Data);
-      const byteArrays = [];
-      
-      for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-        const slice = byteCharacters.slice(offset, offset + 1024);
-        
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
-        }
-        
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-      }
-      
-      const blob = new Blob(byteArrays, { type: contentType });
-      
-      // Append the photo as a file
-      formData.append('photo', blob, 'welcome_image.jpg');
-      formData.append('chat_id', chatId.toString());
-      formData.append('caption', caption);
-      formData.append('parse_mode', 'HTML');
-      formData.append('reply_markup', JSON.stringify(inlineKeyboard));
-      
-      // Send the request
-      const response = await fetch(
-        `https://api.telegram.org/bot${botToken}/sendPhoto`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!data.ok) {
-        console.error('[TelegramSender] Error sending photo message:', data);
-        // Try sending as URL instead, sometimes this works better
-        return await sendPhotoAsUrlOrFallback(botToken, chatId, photoData, caption, miniAppUrl, communityId);
-      }
-      
-      console.log('[TelegramSender] Photo message sent successfully');
-      return true;
-    } 
-    else if (photoData && (photoData.startsWith('http://') || photoData.startsWith('https://'))) {
-      // This is a URL, send it directly
-      return await sendPhotoAsUrlOrFallback(botToken, chatId, photoData, caption, miniAppUrl, communityId);
-    } 
-    else {
-      console.log('[TelegramSender] Invalid photo data format, falling back to text message');
-      return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
-    }
-  } catch (error) {
-    console.error('[TelegramSender] Error sending photo message:', error);
-    console.log('[TelegramSender] Falling back to text-only message due to exception');
-    // On any exception, try to at least send the text
-    try {
-      return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
-    } catch (fallbackError) {
-      console.error('[TelegramSender] Even fallback message failed:', fallbackError);
-      return false;
-    }
-  }
-}
-
-// Helper function to try sending the photo as a URL or fall back to text message
-async function sendPhotoAsUrlOrFallback(
   botToken: string,
   chatId: number | string,
   photoUrl: string,
@@ -119,7 +9,8 @@ async function sendPhotoAsUrlOrFallback(
   communityId: string
 ): Promise<boolean> {
   try {
-    console.log('[TelegramSender] Trying to send photo as URL');
+    console.log('[TelegramSender] Sending photo message to:', chatId);
+    console.log('[TelegramSender] Photo URL:', photoUrl.substring(0, 50) + '...');
     
     const inlineKeyboard = {
       inline_keyboard: [
@@ -133,7 +24,7 @@ async function sendPhotoAsUrlOrFallback(
         ]
       ]
     };
-    
+
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendPhoto`,
       {
@@ -150,20 +41,19 @@ async function sendPhotoAsUrlOrFallback(
         }),
       }
     );
-    
+
     const data = await response.json();
     
     if (!data.ok) {
-      console.error('[TelegramSender] Error sending photo as URL:', data);
-      console.log('[TelegramSender] Falling back to text-only message');
-      return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
+      console.error('[TelegramSender] Error sending photo message:', data);
+      return false;
     }
     
-    console.log('[TelegramSender] Photo message sent successfully as URL');
+    console.log('[TelegramSender] Photo message sent successfully');
     return true;
   } catch (error) {
-    console.error('[TelegramSender] Error sending photo as URL:', error);
-    return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
+    console.error('[TelegramSender] Error sending photo message:', error);
+    return false;
   }
 }
 
@@ -178,23 +68,18 @@ export async function sendTextMessage(
   try {
     console.log('[TelegramSender] Sending text message to:', chatId);
     
-    let inlineKeyboard = {};
-    
-    // Only add the inline keyboard if we have a miniAppUrl and communityId
-    if (miniAppUrl && communityId) {
-      inlineKeyboard = {
-        inline_keyboard: [
-          [
-            {
-              text: "Join Community 🚀",
-              web_app: {
-                url: `${miniAppUrl}?start=${communityId}`
-              }
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "Join Community 🚀",
+            web_app: {
+              url: `${miniAppUrl}?start=${communityId}`
             }
-          ]
+          }
         ]
-      };
-    }
+      ]
+    };
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,

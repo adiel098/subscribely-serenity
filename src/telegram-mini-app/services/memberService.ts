@@ -111,18 +111,26 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
 }
 
 export async function checkUserExists(telegramUserId: string): Promise<{exists: boolean, hasEmail: boolean}> {
-  console.log("Checking if user exists:", telegramUserId);
+  console.log("Checking if user exists with Telegram ID:", telegramUserId);
 
-  if (!telegramUserId) {
-    console.error("checkUserExists: No telegram user ID provided");
+  if (!telegramUserId || typeof telegramUserId !== 'string') {
+    console.error("checkUserExists: Invalid Telegram user ID:", telegramUserId);
+    return { exists: false, hasEmail: false };
+  }
+
+  // Clean the telegram ID - ensure it's a string and remove any whitespace
+  const cleanTelegramId = telegramUserId.trim();
+  
+  if (!cleanTelegramId) {
+    console.error("checkUserExists: Empty Telegram ID after cleaning");
     return { exists: false, hasEmail: false };
   }
 
   try {
     const { data, error } = await supabase
       .from('telegram_mini_app_users')
-      .select('id, email')
-      .eq('telegram_id', telegramUserId)
+      .select('id, email, telegram_id')
+      .eq('telegram_id', cleanTelegramId)
       .maybeSingle();
 
     if (error) {
@@ -131,9 +139,14 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
     }
 
     const exists = !!data;
-    const hasEmail = exists && !!data.email;
+    const hasEmail = exists && !!data?.email;
     
-    console.log(`User ${telegramUserId} exists: ${exists}, has email: ${hasEmail}, data:`, data);
+    console.log(`User check results for Telegram ID ${cleanTelegramId}:`, {
+      exists,
+      hasEmail,
+      data
+    });
+
     return { exists, hasEmail };
   } catch (error) {
     console.error("Failed to check user existence:", error);
@@ -150,21 +163,44 @@ export async function collectUserEmail(
   username?: string,
   photoUrl?: string
 ): Promise<boolean> {
-  console.log("Collecting email for user ID:", telegramUserId, "Email:", email);
-  console.log("Additional data:", { firstName, lastName, communityId, username, photoUrl });
+  console.log("Collecting email for Telegram ID:", telegramUserId);
 
-  if (!telegramUserId || !email) {
-    console.error("collectUserEmail: Missing required parameters");
+  if (!telegramUserId || typeof telegramUserId !== 'string') {
+    console.error("collectUserEmail: Invalid Telegram user ID:", telegramUserId);
+    return false;
+  }
+
+  if (!email) {
+    console.error("collectUserEmail: No email provided");
+    return false;
+  }
+
+  // Clean the telegram ID - ensure it's a string and remove any whitespace
+  const cleanTelegramId = telegramUserId.trim();
+  
+  if (!cleanTelegramId) {
+    console.error("collectUserEmail: Empty Telegram ID after cleaning");
     return false;
   }
 
   try {
     // First check if the user exists
-    const { exists } = await checkUserExists(telegramUserId);
+    const { data: existingUser, error: checkError } = await supabase
+      .from('telegram_mini_app_users')
+      .select('*')
+      .eq('telegram_id', cleanTelegramId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing user:", checkError);
+      throw new Error(checkError.message);
+    }
+
+    console.log("Existing user check result:", existingUser);
     
     let result;
-    if (exists) {
-      // Update existing user with new data
+    if (existingUser) {
+      // Update existing user
       const updateData: any = { email };
       
       // Only include fields that have values
@@ -174,14 +210,18 @@ export async function collectUserEmail(
       if (username) updateData.username = username;
       if (photoUrl) updateData.photo_url = photoUrl;
       
+      console.log("Updating existing user with data:", updateData);
+      
       result = await supabase
         .from('telegram_mini_app_users')
         .update(updateData)
-        .eq('telegram_id', telegramUserId);
+        .eq('telegram_id', cleanTelegramId)
+        .select()
+        .single();
     } else {
-      // Create new user with all available data
+      // Create new user
       const insertData: any = { 
-        telegram_id: telegramUserId, 
+        telegram_id: cleanTelegramId, 
         email 
       };
       
@@ -192,9 +232,13 @@ export async function collectUserEmail(
       if (username) insertData.username = username;
       if (photoUrl) insertData.photo_url = photoUrl;
       
+      console.log("Creating new user with data:", insertData);
+      
       result = await supabase
         .from('telegram_mini_app_users')
-        .insert(insertData);
+        .insert(insertData)
+        .select()
+        .single();
     }
     
     if (result.error) {
@@ -202,7 +246,7 @@ export async function collectUserEmail(
       throw new Error(result.error.message);
     }
 
-    console.log("User data collected successfully for user:", telegramUserId);
+    console.log("User data operation successful:", result.data);
     return true;
   } catch (error) {
     console.error("Failed to collect user data:", error);

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Community {
@@ -132,7 +133,7 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
     const exists = !!data;
     const hasEmail = exists && !!data.email;
     
-    console.log(`User ${telegramUserId} exists: ${exists}, has email: ${hasEmail}`);
+    console.log(`User ${telegramUserId} exists: ${exists}, has email: ${hasEmail}, data:`, data);
     return { exists, hasEmail };
   } catch (error) {
     console.error("Failed to check user existence:", error);

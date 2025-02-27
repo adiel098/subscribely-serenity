@@ -123,11 +123,19 @@ const TelegramMiniApp = () => {
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           
           // Only show email form if user doesn't have an email
-          setShowEmailForm(!hasEmail);
+          if (exists && hasEmail) {
+            console.log('✅ User exists and has email, skipping email form');
+            setShowEmailForm(false);
+          } else {
+            console.log('⚠️ User either doesn\'t exist or doesn\'t have an email, showing email form');
+            setShowEmailForm(true);
+          }
         } catch (error) {
           console.error('❌ Error checking user data:', error);
           // If there's an error, fall back to checking if email exists in user object
-          setShowEmailForm(!telegramUser.email);
+          const hasEmailInUserObject = !!telegramUser.email;
+          console.log('📊 Fallback: Has email in user object:', hasEmailInUserObject);
+          setShowEmailForm(!hasEmailInUserObject);
         } finally {
           setIsCheckingUserData(false);
         }

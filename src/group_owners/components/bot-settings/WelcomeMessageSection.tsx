@@ -17,6 +17,8 @@ import {
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;
@@ -26,6 +28,8 @@ interface WelcomeMessageSectionProps {
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
   const [draftMessage, setDraftMessage] = useState(settings.welcome_message || "");
   const [welcomeImage, setWelcomeImage] = useState<string>(settings.welcome_image || "");
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update local state when settings change
@@ -52,31 +56,56 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsUploading(true);
+    setImageError(null);
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error("Please upload an image file (JPEG, PNG, etc.)");
+      setImageError("Please upload an image file (JPEG, PNG, etc.)");
+      setIsUploading(false);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
+      setImageError("Image size should be less than 5MB");
+      setIsUploading(false);
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      setWelcomeImage(result);
       
-      // Save image immediately after upload
-      updateSettings.mutate({ 
-        welcome_image: result
-      });
+      // For additional reliability, create an image to verify the data loads
+      const img = new Image();
+      img.onload = () => {
+        // Image loaded successfully
+        setWelcomeImage(result);
+        
+        // Save image immediately after upload
+        updateSettings.mutate({ 
+          welcome_image: result
+        });
+        
+        console.log("Image uploaded:", result.substring(0, 30) + "...");
+        toast.success("Welcome image uploaded");
+        setIsUploading(false);
+      };
       
-      console.log("Image uploaded:", result.substring(0, 30) + "...");
-      toast.success("Welcome image uploaded");
+      img.onerror = () => {
+        setImageError("The selected file could not be loaded as an image");
+        setIsUploading(false);
+      };
+      
+      img.src = result;
     };
+    
+    reader.onerror = () => {
+      setImageError("Error reading the image file");
+      setIsUploading(false);
+    };
+    
     reader.readAsDataURL(file);
   };
 
@@ -109,16 +138,23 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
           <CardHeader>
             <CardTitle>Welcome Message Settings</CardTitle>
             <CardDescription>
-              Customize the message new members receive when they join
+              Customize the message and image new members receive when they join
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {imageError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{imageError}</AlertDescription>
+              </Alert>
+            )}
+            
             {welcomeImage && (
               <div className="relative">
                 <img
                   src={welcomeImage}
                   alt="Welcome"
-                  className="w-full h-48 object-cover rounded-md"
+                  className="w-full h-48 object-cover rounded-md border"
                 />
                 <Button
                   variant="destructive"
@@ -130,15 +166,22 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
                 </Button>
               </div>
             )}
+            
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
                 className="flex items-center gap-2"
                 onClick={triggerFileInput}
+                disabled={isUploading}
               >
                 <Upload className="h-4 w-4" />
-                {welcomeImage ? "Change Image" : "Upload Image"}
+                {isUploading 
+                  ? "Uploading..." 
+                  : welcomeImage 
+                    ? "Change Image" 
+                    : "Upload Image"
+                }
               </Button>
               <input
                 type="file"
@@ -146,14 +189,22 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
                 className="hidden"
                 accept="image/*"
                 onChange={handleImageUpload}
+                disabled={isUploading}
               />
             </div>
-            <Textarea
-              value={draftMessage}
-              onChange={(e) => setDraftMessage(e.target.value)}
-              placeholder="Enter your welcome message..."
-              className="min-h-[100px]"
-            />
+            
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                When users start a conversation with your bot, they'll see this message and image (if provided).
+              </p>
+              <Textarea
+                value={draftMessage}
+                onChange={(e) => setDraftMessage(e.target.value)}
+                placeholder="Enter your welcome message..."
+                className="min-h-[100px]"
+              />
+            </div>
+            
             <Button 
               onClick={handleSave}
               className="bg-green-500 hover:bg-green-600"

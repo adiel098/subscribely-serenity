@@ -8,6 +8,7 @@ interface TelegramWebApp {
       first_name?: string;
       last_name?: string;
       username?: string;
+      photo_url?: string; // Added photo_url property to match the actual API
     };
   };
   initData?: string;

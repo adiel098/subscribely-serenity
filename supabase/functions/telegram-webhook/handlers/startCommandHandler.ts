@@ -1,7 +1,7 @@
 
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Database, TelegramEvent } from '../types.ts';
-import { sendPhotoMessage, sendTextMessage } from './utils/telegramMessageSender.ts';
+import { Database } from '../types';
+import { sendPhotoMessage, sendTextMessage } from './utils/telegramMessageSender';
 
 interface StartCommandParams {
   supabase: SupabaseClient<Database>;

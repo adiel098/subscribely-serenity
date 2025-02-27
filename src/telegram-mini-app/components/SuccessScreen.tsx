@@ -8,8 +8,25 @@ interface SuccessScreenProps {
 
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const handleJoinClick = () => {
-    if (communityInviteLink) {
-      // Open the invite link directly
+    if (!communityInviteLink) {
+      console.error("No invite link available");
+      return;
+    }
+
+    console.log("Opening community link:", communityInviteLink);
+    
+    // Try to use Telegram WebApp API if available
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      console.log("Using Telegram WebApp.openTelegramLink");
+      window.Telegram.WebApp.openTelegramLink(communityInviteLink);
+    } 
+    else if (window.Telegram?.WebApp?.openLink) {
+      console.log("Using Telegram WebApp.openLink");
+      window.Telegram.WebApp.openLink(communityInviteLink);
+    }
+    else {
+      // Fallback to regular window.open
+      console.log("Fallback: Using window.open");
       window.open(communityInviteLink, '_blank');
     }
   };

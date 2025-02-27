@@ -40,8 +40,15 @@ const TelegramMiniApp = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Parse parameters from URL
     const initData = searchParams.get("initData");
     const startParam = searchParams.get("start");
+    
+    console.log("TelegramMiniApp initialized with:", { 
+      initData, 
+      startParam,
+      telegramWebApp: Boolean(window.Telegram?.WebApp)
+    });
 
     const fetchCommunityData = async () => {
       try {
@@ -63,6 +70,7 @@ const TelegramMiniApp = () => {
 
         if (response.data?.community) {
           setCommunity(response.data.community);
+          console.log('Community data loaded successfully:', response.data.community);
         } else {
           console.error("No community found in response");
         }

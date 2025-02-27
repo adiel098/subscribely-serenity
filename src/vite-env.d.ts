@@ -9,10 +9,14 @@ interface TelegramWebApp {
       last_name?: string;
       username?: string;
     };
+    start_param?: string;
   };
   openLink?: (url: string) => void;
   openTelegramLink?: (url: string) => void;
   close?: () => void;
+  ready?: () => void;
+  expand?: () => void;
+  isExpanded?: boolean;
 }
 
 interface Window {

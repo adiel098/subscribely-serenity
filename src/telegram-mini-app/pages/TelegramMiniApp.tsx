@@ -34,6 +34,10 @@ const TelegramMiniApp = () => {
     if (window.Telegram && window.Telegram.WebApp) {
       console.log("Running inside Telegram WebApp");
       console.log("WebApp data:", window.Telegram.WebApp.initDataUnsafe);
+      
+      // Set up Telegram WebApp
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
     } else {
       console.log("Not running inside Telegram WebApp");
     }

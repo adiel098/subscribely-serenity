@@ -15,6 +15,9 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
   const [processComplete, setProcessComplete] = useState(false);
   const { toast } = useToast();
 
+  // Flag to force email form display for development/testing purposes
+  const FORCE_EMAIL_FORM = false; // Set to true to always show the email form
+
   // Perform user check when telegramUser changes
   useEffect(() => {
     // Reset state when user changes
@@ -97,9 +100,9 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
           }
         }
         
-        // If user doesn't have an email, show the email collection form
-        if (!existingUser.email) {
-          console.log('User has no email, showing email form');
+        // If user doesn't have an email or we're forcing email collection, show the form
+        if (!existingUser.email || FORCE_EMAIL_FORM) {
+          console.log('User has no email or forced collection is enabled, showing email form');
           setShowEmailForm(true);
         } else {
           console.log('User already has email:', existingUser.email);

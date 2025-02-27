@@ -24,6 +24,13 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
         let telegramInitData = initData || '';
         let userDataFromWebApp = null;
         
+        // Debug logging
+        console.log('WebApp data available:', !!webAppData);
+        if (webAppData) {
+          console.log('WebApp data:', JSON.stringify(webAppData, null, 2));
+        }
+        
+        // Extract user data from WebApp if available
         if (webAppData && webAppData.user) {
           console.log('Found Telegram WebApp user data:', webAppData.user);
           userDataFromWebApp = {
@@ -34,7 +41,38 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
             photo_url: ""  // WebApp doesn't provide photo_url directly
           };
         } else {
-          console.log('No WebApp user data available, using initData parameter');
+          console.log('No WebApp user data available, will try using initData parameter');
+          
+          // Attempt to extract user data from initData if it's not empty
+          if (telegramInitData && telegramInitData.length > 0) {
+            try {
+              const parsedData = JSON.parse(telegramInitData);
+              if (parsedData && parsedData.user) {
+                console.log('Parsed user data from initData:', parsedData.user);
+                userDataFromWebApp = {
+                  id: String(parsedData.user.id),
+                  first_name: parsedData.user.first_name || "",
+                  last_name: parsedData.user.last_name || "",
+                  username: parsedData.user.username || "",
+                  photo_url: parsedData.user.photo_url || ""
+                };
+              }
+            } catch (e) {
+              console.error('Failed to parse initData:', e);
+            }
+          }
+        }
+        
+        // If we're in development environment and no user data is available, use a mock user
+        if (!userDataFromWebApp && process.env.NODE_ENV === 'development') {
+          console.log('Using mock user data for development');
+          userDataFromWebApp = {
+            id: "123456789",
+            first_name: "Test",
+            last_name: "User",
+            username: "testuser",
+            photo_url: ""
+          };
         }
         
         console.log('Fetching community data with params:', { 

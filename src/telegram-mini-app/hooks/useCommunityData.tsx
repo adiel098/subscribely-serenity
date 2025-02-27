@@ -7,10 +7,9 @@ import { Community, TelegramUser } from "../types/app.types";
 interface UseCommunityDataProps {
   startParam: string | null;
   initData: string | null;
-  userDataParam: string | null;
 }
 
-export const useCommunityData = ({ startParam, initData, userDataParam }: UseCommunityDataProps) => {
+export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps) => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
   const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
@@ -20,20 +19,7 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
   useEffect(() => {
     const fetchCommunityData = async () => {
       try {
-        // First, try to get user data from URL parameter
-        let userDataFromParams = null;
-        if (userDataParam) {
-          try {
-            const decodedUserData = decodeURIComponent(userDataParam);
-            console.log('Decoded user data from URL:', decodedUserData);
-            userDataFromParams = JSON.parse(decodedUserData);
-            console.log('Parsed user data from URL:', userDataFromParams);
-          } catch (e) {
-            console.error('Failed to parse user data from URL:', e);
-          }
-        }
-        
-        // If URL parameter failed, check if we have access to Telegram WebApp data
+        // Check if we have access to Telegram WebApp data
         const webAppData = window.Telegram?.WebApp?.initDataUnsafe;
         let telegramInitData = initData || '';
         let userDataFromWebApp = null;
@@ -77,13 +63,10 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
           }
         }
         
-        // Prioritize different user data sources
-        let finalUserData = userDataFromParams || userDataFromWebApp;
-        
         // If we're in development environment and no user data is available, use a mock user
-        if (!finalUserData && process.env.NODE_ENV === 'development') {
+        if (!userDataFromWebApp && process.env.NODE_ENV === 'development') {
           console.log('Using mock user data for development');
-          finalUserData = {
+          userDataFromWebApp = {
             id: "123456789",
             first_name: "Test",
             last_name: "User",
@@ -95,9 +78,7 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
         console.log('Fetching community data with params:', { 
           startParam, 
           initDataLength: telegramInitData.length,
-          userDataFromParams: userDataFromParams ? 'Present' : 'Not available',
-          userDataFromWebApp: userDataFromWebApp ? 'Present' : 'Not available',
-          finalUserData: finalUserData ? 'Present' : 'Not available'
+          userDataFromWebApp: userDataFromWebApp ? 'Present' : 'Not available'
         });
         
         // Make sure there's data to send
@@ -112,7 +93,7 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
         const payload = { 
           start: startParam,
           initData: telegramInitData,
-          webAppUser: finalUserData  // Pass final user data
+          webAppUser: userDataFromWebApp  // Pass user data extracted from WebApp
         };
         
         console.log('Sending payload to telegram-mini-app function:', payload);
@@ -150,10 +131,10 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
             } else {
               console.warn("User data missing required fields:", userData);
             }
-          } else if (finalUserData) {
-            // If we have user data from params or WebApp but not from response, use it
-            console.log("Using final user data:", finalUserData);
-            setTelegramUser(finalUserData);
+          } else if (userDataFromWebApp) {
+            // If we have user data from WebApp but not from response, use it
+            console.log("Using WebApp user data:", userDataFromWebApp);
+            setTelegramUser(userDataFromWebApp);
           } else {
             console.warn("No user data available from any source");
             // We still want to proceed even without user data
@@ -177,7 +158,7 @@ export const useCommunityData = ({ startParam, initData, userDataParam }: UseCom
     };
 
     fetchCommunityData();
-  }, [startParam, initData, userDataParam, toast]);
+  }, [startParam, initData, toast]);
 
   return { loading, community, telegramUser, error, setTelegramUser };
 };

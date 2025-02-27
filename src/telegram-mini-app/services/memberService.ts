@@ -1,84 +1,57 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TelegramUser } from "../types/app.types";
+import { CreateMemberData } from "../types/payment.types";
 
-export const createOrUpdateMember = async (
-  telegramUser: TelegramUser,
-  communityId: string,
-  email?: string
-) => {
-  try {
-    // First check if the user already exists
-    const { data: existingUser, error: fetchError } = await supabase
-      .from('telegram_mini_app_users')
-      .select('*')
-      .eq('telegram_id', telegramUser.id)
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error("Error checking if user exists:", fetchError);
-      throw fetchError;
+export const createOrUpdateMember = async (data: CreateMemberData) => {
+  const { telegramUserId, communityId, planId, subscriptionStartDate, subscriptionEndDate } = data;
+
+  console.log('Creating/updating member:', {
+    telegramUserId,
+    communityId: communityId,
+    planId: planId
+  });
+
+  const { data: existingMember } = await supabase
+    .from('telegram_chat_members')
+    .select('*')
+    .eq('community_id', communityId)
+    .eq('telegram_user_id', telegramUserId)
+    .single();
+
+  if (existingMember) {
+    const { error: updateError } = await supabase
+      .from('telegram_chat_members')
+      .update({
+        is_active: true,
+        subscription_status: true,
+        subscription_start_date: subscriptionStartDate.toISOString(),
+        subscription_end_date: subscriptionEndDate.toISOString(),
+        subscription_plan_id: planId,
+        last_active: new Date().toISOString()
+      })
+      .eq('id', existingMember.id);
+
+    if (updateError) {
+      console.error('Error updating member:', updateError);
+      throw updateError;
     }
-    
-    if (existingUser) {
-      // Update existing user
-      const updateData: any = {
-        first_name: telegramUser.first_name,
-        last_name: telegramUser.last_name,
-        username: telegramUser.username,
-        photo_url: telegramUser.photo_url,
-      };
-      
-      // Only update email if provided and not already set
-      if (email && !existingUser.email) {
-        updateData.email = email;
-      }
-      
-      // Only update community_id if provided and not already set
-      if (communityId && !existingUser.community_id) {
-        updateData.community_id = communityId;
-      }
-      
-      const { data: updatedUser, error: updateError } = await supabase
-        .from('telegram_mini_app_users')
-        .update(updateData)
-        .eq('telegram_id', telegramUser.id)
-        .select()
-        .single();
-      
-      if (updateError) {
-        console.error("Error updating user:", updateError);
-        throw updateError;
-      }
-      
-      return updatedUser;
-    } else {
-      // Create new user
-      const newUser = {
-        telegram_id: telegramUser.id,
-        first_name: telegramUser.first_name,
-        last_name: telegramUser.last_name,
-        username: telegramUser.username,
-        photo_url: telegramUser.photo_url,
-        email: email,
-        community_id: communityId
-      };
-      
-      const { data: createdUser, error: createError } = await supabase
-        .from('telegram_mini_app_users')
-        .insert([newUser])
-        .select()
-        .single();
-      
-      if (createError) {
-        console.error("Error creating user:", createError);
-        throw createError;
-      }
-      
-      return createdUser;
+  } else {
+    const { error: insertError } = await supabase
+      .from('telegram_chat_members')
+      .insert([{
+        community_id: communityId,
+        telegram_user_id: telegramUserId,
+        is_active: true,
+        subscription_status: true,
+        subscription_start_date: subscriptionStartDate.toISOString(),
+        subscription_end_date: subscriptionEndDate.toISOString(),
+        subscription_plan_id: planId,
+        last_active: new Date().toISOString()
+      }]);
+
+    if (insertError) {
+      console.error('Error creating member:', insertError);
+      throw insertError;
     }
-  } catch (error) {
-    console.error("Error in createOrUpdateMember:", error);
-    throw error;
   }
 };

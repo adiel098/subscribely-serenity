@@ -15,19 +15,42 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
 
     console.log("Opening community link:", communityInviteLink);
     
-    // Try to use Telegram WebApp API if available
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      console.log("Using Telegram WebApp.openTelegramLink");
-      window.Telegram.WebApp.openTelegramLink(communityInviteLink);
-    } 
-    else if (window.Telegram?.WebApp?.openLink) {
-      console.log("Using Telegram WebApp.openLink");
-      window.Telegram.WebApp.openLink(communityInviteLink);
+    // Format the link correctly for Telegram
+    let formattedLink = communityInviteLink;
+    
+    // If the link doesn't start with 't.me' or 'https://t.me', ensure it's properly formatted
+    if (!formattedLink.includes('t.me/')) {
+      // If it's a joinchat link but missing the proper prefix
+      if (formattedLink.startsWith('+')) {
+        formattedLink = `https://t.me/joinchat/${formattedLink.substring(1)}`;
+      } 
+      // If it's just the invite code
+      else if (!formattedLink.startsWith('https://') && !formattedLink.startsWith('http://')) {
+        formattedLink = `https://t.me/${formattedLink}`;
+      }
     }
+
+    // Try to use Telegram's native APIs if available
+    if (window.Telegram?.WebApp) {
+      console.log("Using Telegram WebApp API with link:", formattedLink);
+      
+      // Try the recommended method first
+      if (window.Telegram.WebApp.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(formattedLink);
+      }
+      // Fall back to regular open link
+      else if (window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(formattedLink);
+      }
+      // Last resort, use window.open
+      else {
+        window.open(formattedLink, '_blank');
+      }
+    } 
+    // If Telegram API is not available, use regular window.open
     else {
-      // Fallback to regular window.open
-      console.log("Fallback: Using window.open");
-      window.open(communityInviteLink, '_blank');
+      console.log("Telegram WebApp not available, using window.open");
+      window.open(formattedLink, '_blank');
     }
   };
 

@@ -50,6 +50,16 @@ const TelegramMiniApp = () => {
       telegramWebApp: Boolean(window.Telegram?.WebApp)
     });
 
+    // If Telegram WebApp is available, expand it for better user experience
+    if (window.Telegram?.WebApp) {
+      if (window.Telegram.WebApp.expand && !window.Telegram.WebApp.isExpanded) {
+        window.Telegram.WebApp.expand();
+      }
+      if (window.Telegram.WebApp.ready) {
+        window.Telegram.WebApp.ready();
+      }
+    }
+
     const fetchCommunityData = async () => {
       try {
         console.log('Fetching community data with params:', { startParam, initData });
@@ -71,6 +81,13 @@ const TelegramMiniApp = () => {
         if (response.data?.community) {
           setCommunity(response.data.community);
           console.log('Community data loaded successfully:', response.data.community);
+          
+          // Log the invite link for debugging
+          if (response.data.community.telegram_invite_link) {
+            console.log('Invite link from database:', response.data.community.telegram_invite_link);
+          } else {
+            console.warn('No invite link found in community data');
+          }
         } else {
           console.error("No community found in response");
         }

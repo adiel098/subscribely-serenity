@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
-import { checkUserExists } from "@/telegram-mini-app/services/memberService";
+import { checkUserExists } from "@/telegram-mini-app/services/userService";
 
 export const useEmailFormStatus = (
   telegramUser: TelegramUser | null,

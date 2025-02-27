@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { collectUserEmail } from "@/telegram-mini-app/services/memberService";
+import { collectUserEmail } from "@/telegram-mini-app/services/userService";
 
 interface EmailCollectionFormProps {
   telegramUserId: string;
@@ -36,7 +36,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     try {
       console.log("Saving email for telegram user:", telegramUserId, email);
       
-      // Use the collectUserEmail function from memberService
+      // Use the collectUserEmail function from userService
       const success = await collectUserEmail(telegramUserId, email);
       
       if (!success) {

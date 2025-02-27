@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -27,6 +28,7 @@ export const CommunitySelector = () => {
   const { toast } = useToast();
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const { user } = useAuth();
 
   const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
   const { plans } = useSubscriptionPlans(selectedCommunityId || "");
@@ -50,7 +52,22 @@ export const CommunitySelector = () => {
       return;
     }
 
-    const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
+    // Create a mock user object for demonstration purposes
+    // In a real implementation, this would be populated when a user clicks the button in Telegram
+    const mockUserData = {
+      id: "123456789",
+      first_name: "Demo",
+      last_name: "User",
+      username: "demouser",
+      photo_url: ""
+    };
+    
+    // Encode the user data to include in the URL
+    const encodedUserData = encodeURIComponent(JSON.stringify(mockUserData));
+    
+    // Create the mini app URL with the user data
+    const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}&user_data=${encodedUserData}`;
+    
     navigator.clipboard.writeText(miniAppUrl);
     toast({
       title: "Link Copied! 🎉",

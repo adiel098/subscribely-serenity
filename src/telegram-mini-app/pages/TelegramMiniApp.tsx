@@ -22,12 +22,14 @@ const TelegramMiniApp = () => {
   
   const initData = searchParams.get("initData");
   const startParam = searchParams.get("start");
+  const userDataParam = searchParams.get("user_data");
   
   // Log params to debug the issue
   useEffect(() => {
     console.log("TelegramMiniApp initialized with params:", { 
       initData: initData ? `${initData.substring(0, 20)}...` : null, 
-      startParam 
+      startParam,
+      userDataParam: userDataParam ? "Present" : null
     });
     
     // Try to get Telegram Web App data if running inside Telegram
@@ -41,10 +43,14 @@ const TelegramMiniApp = () => {
     } else {
       console.log("Not running inside Telegram WebApp");
     }
-  }, [initData, startParam]);
+  }, [initData, startParam, userDataParam]);
   
   // Use our custom hooks to fetch data and manage state
-  const { loading, community, telegramUser, error } = useCommunityData({ startParam, initData });
+  const { loading, community, telegramUser, error } = useCommunityData({ 
+    startParam, 
+    initData,
+    userDataParam
+  });
   
   // Log user data to see if it's being retrieved correctly
   useEffect(() => {
@@ -97,7 +103,7 @@ const TelegramMiniApp = () => {
   }
 
   // Show email collection form if needed and user data is available
-  if (showEmailForm && telegramUser && processComplete) {
+  if (showEmailForm && telegramUser) {
     console.log("Showing email collection form for user:", telegramUser.id);
     return (
       <EmailCollectionForm 

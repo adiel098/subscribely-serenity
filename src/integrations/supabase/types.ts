@@ -813,6 +813,53 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_mini_app_users: {
+        Row: {
+          community_id: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_active: string | null
+          last_name: string | null
+          photo_url: string | null
+          telegram_id: string
+          username: string | null
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_active?: string | null
+          last_name?: string | null
+          photo_url?: string | null
+          telegram_id: string
+          username?: string | null
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_active?: string | null
+          last_name?: string | null
+          photo_url?: string | null
+          telegram_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_mini_app_users_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

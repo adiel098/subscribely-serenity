@@ -11,6 +11,7 @@ import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
 import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
 import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollectionForm";
+import { TelegramMiniAppUser } from "@/telegram-mini-app/types/database.types";
 
 export interface Plan {
   id: string;

@@ -37,7 +37,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
       // Update the telegram_mini_app_users table with the email
       const { error } = await supabase
         .from('telegram_mini_app_users')
-        .update({ email: email })
+        .update({ email })
         .eq('telegram_id', telegramUserId);
       
       if (error) {

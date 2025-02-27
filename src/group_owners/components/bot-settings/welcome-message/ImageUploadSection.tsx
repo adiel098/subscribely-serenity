@@ -27,61 +27,104 @@ export const ImageUploadSection = ({
 }: ImageUploadSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Helper to optimize image size for Telegram
+  const optimizeImageForTelegram = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Create a canvas to resize the image
+          const canvas = document.createElement('canvas');
+          
+          // Telegram recommends images not larger than 1280x1280
+          let width = img.width;
+          let height = img.height;
+          
+          // If image is larger than 1280px in any dimension, scale it down
+          const maxSize = 1280;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = Math.round(height * (maxSize / width));
+              width = maxSize;
+            } else {
+              width = Math.round(width * (maxSize / height));
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw the image on the canvas
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error("Could not get canvas context"));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Get the data URL, using a high quality JPEG (0.9 quality)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          resolve(dataUrl);
+        };
+        
+        img.onerror = () => {
+          reject(new Error("Failed to load image"));
+        };
+        
+        img.src = e.target?.result as string;
+      };
+      
+      reader.onerror = () => {
+        reject(new Error("Failed to read file"));
+      };
+      
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     setImageError(null);
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setImageError("Please upload an image file (JPEG, PNG, etc.)");
-      setIsUploading(false);
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setImageError("Image size should be less than 5MB");
-      setIsUploading(false);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      
-      // For additional reliability, create an image to verify the data loads
-      const img = new Image();
-      img.onload = () => {
-        // Image loaded successfully
-        setWelcomeImage(result);
-        
-        // Save image immediately after upload
-        updateSettings.mutate({ 
-          welcome_image: result
-        });
-        
-        console.log("Image uploaded:", result.substring(0, 30) + "...");
-        toast.success("Welcome image uploaded");
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setImageError("Please upload an image file (JPEG, PNG, etc.)");
         setIsUploading(false);
-      };
-      
-      img.onerror = () => {
-        setImageError("The selected file could not be loaded as an image");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setImageError("Image size should be less than 5MB");
         setIsUploading(false);
-      };
+        return;
+      }
+
+      // Optimize image for Telegram
+      const optimizedImage = await optimizeImageForTelegram(file);
       
-      img.src = result;
-    };
-    
-    reader.onerror = () => {
-      setImageError("Error reading the image file");
+      setWelcomeImage(optimizedImage);
+      
+      // Save image immediately after upload
+      updateSettings.mutate({ 
+        welcome_image: optimizedImage
+      });
+      
+      console.log("Image uploaded and optimized for Telegram");
+      toast.success("Welcome image uploaded");
+    } catch (error) {
+      console.error("Error processing image:", error);
+      setImageError("Error processing the image. Please try another image.");
+    } finally {
       setIsUploading(false);
-    };
-    
-    reader.readAsDataURL(file);
+    }
   };
 
   const triggerFileInput = () => {

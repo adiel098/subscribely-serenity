@@ -1,5 +1,5 @@
 
-import { MessageSquare, Save, Image as ImageIcon, X } from "lucide-react";
+import { MessageSquare, Save, Image as ImageIcon, X, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface WelcomeMessageSectionProps {
@@ -26,6 +26,7 @@ interface WelcomeMessageSectionProps {
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
   const [draftMessage, setDraftMessage] = useState(settings.welcome_message);
   const [welcomeImage, setWelcomeImage] = useState(settings.welcome_image || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     updateSettings.mutate({ 
@@ -35,30 +36,39 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
     toast.success("Welcome message saved successfully");
   };
 
-  const handleImageSelect = () => {
-    // Show a list of predefined images
-    const images = [
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb", // Beautiful landscape
-      "https://images.unsplash.com/photo-1582562124811-c09040d0a901", // Cute cat
-      "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7", // Tech related
-      "https://images.unsplash.com/photo-1721322800607-8c38375eef04", // Living room
-    ];
-    
-    // Use a simple prompt for selecting an image
-    const selectedImageIndex = prompt(
-      "Select an image (enter 1-4):\n1. Landscape\n2. Cat\n3. Technology\n4. Living Room"
-    );
-    
-    if (selectedImageIndex && !isNaN(Number(selectedImageIndex))) {
-      const index = Number(selectedImageIndex) - 1;
-      if (index >= 0 && index < images.length) {
-        setWelcomeImage(images[index]);
-      }
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file (JPEG, PNG, etc.)");
+      return;
     }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setWelcomeImage(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const clearImage = () => {
     setWelcomeImage("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -100,11 +110,18 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
                 type="button"
                 variant="outline"
                 className="flex items-center gap-2"
-                onClick={handleImageSelect}
+                onClick={triggerFileInput}
               >
-                <ImageIcon className="h-4 w-4" />
-                {welcomeImage ? "Change Image" : "Add Image"}
+                <Upload className="h-4 w-4" />
+                {welcomeImage ? "Change Image" : "Upload Image"}
               </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
             </div>
             <Textarea
               value={draftMessage}

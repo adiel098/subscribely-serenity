@@ -1,43 +1,40 @@
 
-import { Bot, Eye } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Bot } from "lucide-react";
 
 interface MessagePreviewProps {
   message: string;
   signature: string;
+  image?: string | null;
 }
 
-export const MessagePreview = ({ message, signature }: MessagePreviewProps) => {
+export const MessagePreview = ({ message, signature, image }: MessagePreviewProps) => {
+  const messageWithSignature = `${message}\n\n${signature}`;
+
   return (
-    <div className="fixed right-4 top-24 w-80">
-      <div className="rounded-lg border bg-card text-card-foreground">
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Message Preview</h3>
-          </div>
-        </div>
-        <div className="p-4">
-          <div className="rounded-lg bg-white/10 backdrop-blur-lg border p-4 space-y-2 font-[system-ui]">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bot className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 space-y-1">
-                <div className="font-medium text-sm text-primary">Bot</div>
-                <div className="text-sm whitespace-pre-wrap">
-                  {message}
-                  {signature && (
-                    <>
-                      {"\n\n"}
-                      <span className="text-muted-foreground">{signature}</span>
-                    </>
-                  )}
-                </div>
-              </div>
+    <div className="space-y-2">
+      <div className="text-sm font-medium">Message Preview</div>
+      <Card className="border-dashed">
+        <CardHeader className="p-3 pb-0">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Telegram Bot
+          </CardTitle>
+          <CardDescription className="text-xs">Preview of the message</CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 pt-1 space-y-3">
+          {image && (
+            <div className="w-full">
+              <img 
+                src={image} 
+                alt="Welcome" 
+                className="w-full h-auto max-h-48 object-cover rounded-md" 
+              />
             </div>
-          </div>
-        </div>
-      </div>
+          )}
+          <div className="text-sm whitespace-pre-wrap">{messageWithSignature}</div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

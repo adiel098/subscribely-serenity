@@ -54,6 +54,7 @@ const BotSettings = () => {
       <MessagePreview 
         message={expandedSection === "welcome" ? settings.welcome_message : settings.subscription_reminder_message}
         signature={settings.bot_signature}
+        image={expandedSection === "welcome" ? settings.welcome_image : null}
       />
 
       <Accordion

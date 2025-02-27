@@ -8,6 +8,7 @@ export interface BotSettings {
   id: string;
   community_id: string;
   welcome_message: string;
+  welcome_image: string | null;
   subscription_reminder_days: number;
   subscription_reminder_message: string;
   auto_remove_expired: boolean;
@@ -83,7 +84,8 @@ export const useBotSettings = (communityId: string) => {
     // For non-text fields (switches, numbers), update immediately
     if (!Object.keys(newSettings).some(key => 
       typeof newSettings[key as keyof BotSettings] === 'string' && 
-      key !== 'language'
+      key !== 'language' && 
+      key !== 'welcome_image'
     )) {
       updateSettingsMutation.mutate(newSettings);
       return;

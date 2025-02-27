@@ -44,7 +44,7 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
           body: payload
         });
 
-        console.log('Response from telegram-mini-app function:', response);
+        console.log('Full response from telegram-mini-app function:', response);
 
         if (response.error) {
           console.error("Error from function:", response.error);
@@ -53,19 +53,26 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
         }
 
         if (response.data?.community) {
+          console.log("Community data received:", response.data.community);
           setCommunity(response.data.community);
           
           // Extract user data if available
           if (response.data.user) {
             const userData = response.data.user;
             console.log("User data from function:", userData);
-            setTelegramUser({
-              id: userData.id,
-              first_name: userData.first_name || "",
-              last_name: userData.last_name || "",
-              username: userData.username || "",
-              photo_url: userData.photo_url || ""
-            });
+            
+            if (userData && userData.id) {
+              setTelegramUser({
+                id: userData.id,
+                first_name: userData.first_name || "",
+                last_name: userData.last_name || "",
+                username: userData.username || "",
+                photo_url: userData.photo_url || "",
+                email: userData.email
+              });
+            } else {
+              console.warn("User data missing required fields:", userData);
+            }
           } else {
             console.warn("No user data returned from function");
             // We still want to proceed even without user data

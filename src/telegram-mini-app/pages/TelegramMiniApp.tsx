@@ -29,6 +29,14 @@ const TelegramMiniApp = () => {
       initData: initData ? `${initData.substring(0, 20)}...` : null, 
       startParam 
     });
+    
+    // Try to get Telegram Web App data if running inside Telegram
+    if (window.Telegram && window.Telegram.WebApp) {
+      console.log("Running inside Telegram WebApp");
+      console.log("WebApp data:", window.Telegram.WebApp.initDataUnsafe);
+    } else {
+      console.log("Not running inside Telegram WebApp");
+    }
   }, [initData, startParam]);
   
   // Use our custom hooks to fetch data and manage state
@@ -40,15 +48,25 @@ const TelegramMiniApp = () => {
     console.log("Community data:", community);
   }, [telegramUser, community]);
   
-  const { showEmailForm, isProcessing, processComplete, handleEmailFormComplete } = useUserEmail({ 
+  const { 
+    showEmailForm, 
+    isProcessing, 
+    processComplete,
+    handleEmailFormComplete 
+  } = useUserEmail({ 
     telegramUser, 
     communityId: community?.id 
   });
   
   // Log the email form state
   useEffect(() => {
-    console.log("Email form state:", { showEmailForm, isProcessing, processComplete });
-  }, [showEmailForm, isProcessing, processComplete]);
+    console.log("Email form state:", { 
+      showEmailForm, 
+      isProcessing, 
+      processComplete,
+      telegramUserId: telegramUser?.id
+    });
+  }, [showEmailForm, isProcessing, processComplete, telegramUser]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -74,7 +92,7 @@ const TelegramMiniApp = () => {
     return <CommunityNotFound errorMessage={error || "Community not found"} />;
   }
 
-  // Show email collection form if needed
+  // Show email collection form if needed and user data is available
   if (showEmailForm && telegramUser && processComplete) {
     console.log("Showing email collection form for user:", telegramUser.id);
     return (

@@ -50,6 +50,8 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
         throw fetchError;
       }
       
+      console.log('User exists check result:', existingUser);
+      
       if (!existingUser) {
         // User doesn't exist, create a new user
         console.log('Creating new Telegram user in database:', user.id);

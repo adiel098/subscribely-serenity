@@ -1,8 +1,7 @@
 
-import { MessageSquare, Image, Send } from "lucide-react";
+import { MessageSquare, Image, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   AccordionContent,
   AccordionItem,
@@ -10,8 +9,10 @@ import {
 } from "@/components/ui/accordion";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
 import { MessageInputSection } from "./welcome-message/MessageInputSection";
+import { toast } from "sonner";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;
@@ -24,8 +25,13 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  const handleAutoWelcomeChange = (value: boolean) => {
-    updateSettings.mutate({ auto_welcome_message: value });
+  const handleSaveWelcomeMessage = () => {
+    updateSettings.mutate({ 
+      welcome_message: welcomeMessage,
+      welcome_image: welcomeImage,
+      auto_welcome_message: true // Always set to true as per requirement
+    });
+    toast.success("Welcome message saved successfully");
   };
 
   return (
@@ -38,25 +44,22 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4">
         <div className="space-y-6">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="auto-welcome"
-              checked={settings.auto_welcome_message}
-              onCheckedChange={handleAutoWelcomeChange}
-            />
-            <Label htmlFor="auto-welcome">
-              Automatically send welcome message to new members
-            </Label>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              A welcome message will be automatically sent to new members when they join.
+            </p>
           </div>
 
-          <MessageInputSection
-            draftMessage={welcomeMessage}
-            setDraftMessage={setWelcomeMessage}
-            updateSettings={updateSettings}
-            settingsKey="welcome_message"
-            label="Welcome Message"
-            placeholder="Enter a welcome message for new members..."
-          />
+          <div className="space-y-2">
+            <Label htmlFor="welcome-message">Welcome Message</Label>
+            <Textarea
+              id="welcome-message"
+              value={welcomeMessage}
+              onChange={(e) => setWelcomeMessage(e.target.value)}
+              placeholder="Enter a welcome message for new members..."
+              className="min-h-[100px]"
+            />
+          </div>
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -66,7 +69,7 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
             <ImageUploadSection
               image={welcomeImage}
               setImage={setWelcomeImage}
-              updateSettings={updateSettings}
+              updateSettings={{ mutate: () => {} }} // Prevent auto-update
               settingsKey="welcome_image"
               isUploading={isUploading}
               setIsUploading={setIsUploading}
@@ -75,6 +78,14 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
               label="Welcome Image"
             />
           </div>
+
+          <Button 
+            onClick={handleSaveWelcomeMessage} 
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" /> 
+            Save Welcome Message
+          </Button>
         </div>
       </AccordionContent>
     </AccordionItem>

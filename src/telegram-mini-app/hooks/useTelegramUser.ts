@@ -27,7 +27,8 @@ const getWebAppData = (): TelegramUser | null => {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
-      // In recent Telegram WebApp versions, photo_url is available directly
+      // In recent Telegram WebApp versions, photo_url might be available directly
+      // We explicitly check for its presence as a property
       const photoUrl = user.photo_url || undefined;
       console.log('📸 Photo URL from WebApp data:', photoUrl);
       

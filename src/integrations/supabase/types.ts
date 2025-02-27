@@ -817,6 +817,7 @@ export type Database = {
         Row: {
           community_id: string | null
           created_at: string | null
+          email: string | null
           first_name: string | null
           id: string
           last_active: string | null
@@ -828,6 +829,7 @@ export type Database = {
         Insert: {
           community_id?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
           last_active?: string | null
@@ -839,6 +841,7 @@ export type Database = {
         Update: {
           community_id?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
           last_active?: string | null

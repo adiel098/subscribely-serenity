@@ -1,28 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { getUserSubscriptions } from "../services/memberService";
-
-interface Subscription {
-  id: string;
-  status: string;
-  subscription_start_date: string | null;
-  subscription_end_date: string | null;
-  community: {
-    id: string;
-    name: string;
-    description: string | null;
-    telegram_photo_url: string | null;
-    telegram_invite_link: string | null;
-  };
-  plan: {
-    id: string;
-    name: string;
-    price: number;
-    interval: string;
-    features: string[];
-  } | null;
-}
+import { getUserSubscriptions, Subscription } from "../services/memberService";
 
 export const useUserSubscriptions = (telegramUserId: string | undefined) => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);

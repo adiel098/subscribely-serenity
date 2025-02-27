@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Calendar, Clock, CheckCircle, XCircle, Zap, Crown, Trash, Users } from "lucide-react";
-import { cancelSubscription } from "../services/memberService";
+import { cancelSubscription, Subscription } from "../services/memberService";
 import {
   Card,
   CardContent,
@@ -23,27 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Subscription {
-  id: string;
-  status: string;
-  subscription_start_date: string | null;
-  subscription_end_date: string | null;
-  community: {
-    id: string;
-    name: string;
-    description: string | null;
-    telegram_photo_url: string | null;
-    telegram_invite_link: string | null;
-  };
-  plan: {
-    id: string;
-    name: string;
-    price: number;
-    interval: string;
-    features: string[];
-  } | null;
-}
 
 interface UserSubscriptionsProps {
   subscriptions: Subscription[];
@@ -97,11 +76,13 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
   };
 
   const isActive = (subscription: Subscription) => {
-    if (!subscription.subscription_end_date) return false;
-    return new Date(subscription.subscription_end_date) > new Date();
+    if (!subscription.subscription_end_date && !subscription.expiry_date) return false;
+    const endDate = subscription.subscription_end_date || subscription.expiry_date;
+    return endDate ? new Date(endDate) > new Date() : false;
   };
 
-  const getDaysRemaining = (endDate: string | null) => {
+  const getDaysRemaining = (subscription: Subscription) => {
+    const endDate = subscription.subscription_end_date || subscription.expiry_date;
     if (!endDate) return 0;
     const end = new Date(endDate);
     const now = new Date();
@@ -131,7 +112,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
       <div className="grid gap-4">
         {subscriptions.map((subscription) => {
           const active = isActive(subscription);
-          const daysRemaining = getDaysRemaining(subscription.subscription_end_date);
+          const daysRemaining = getDaysRemaining(subscription);
           
           return (
             <Card 
@@ -172,11 +153,11 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
                 <div className="flex justify-between text-muted-foreground mb-1">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
-                    <span>Started: {formatDate(subscription.subscription_start_date)}</span>
+                    <span>Started: {formatDate(subscription.subscription_start_date || subscription.created_at)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />
-                    <span>Ends: {formatDate(subscription.subscription_end_date)}</span>
+                    <span>Ends: {formatDate(subscription.subscription_end_date || subscription.expiry_date)}</span>
                   </div>
                 </div>
                 

@@ -16,13 +16,24 @@ export interface Subscription {
   status: string;
   created_at: string;
   expiry_date: string | null;
+  subscription_start_date: string | null;
+  subscription_end_date: string | null;
   community: Community;
   plan: {
     id: string;
     name: string;
     price: number;
     interval: string;
+    features?: string[];
   } | null;
+}
+
+export interface CreateMemberData {
+  telegram_id: string;
+  community_id: string;
+  subscription_plan_id: string;
+  status?: 'active' | 'inactive' | 'pending';
+  payment_id?: string;
 }
 
 export async function getUserSubscriptions(userId: string): Promise<Subscription[]> {
@@ -121,6 +132,39 @@ export async function collectUserEmail(telegramUserId: string, email: string): P
     return true;
   } catch (error) {
     console.error("Failed to collect email:", error);
+    return false;
+  }
+}
+
+export async function createOrUpdateMember(memberData: CreateMemberData): Promise<boolean> {
+  console.log("Creating/updating member:", memberData);
+
+  if (!memberData.telegram_id || !memberData.community_id || !memberData.subscription_plan_id) {
+    console.error("createOrUpdateMember: Missing required parameters");
+    return false;
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("telegram-user-manager", {
+      body: { 
+        action: "create_or_update_member", 
+        telegram_id: memberData.telegram_id,
+        community_id: memberData.community_id,
+        subscription_plan_id: memberData.subscription_plan_id,
+        status: memberData.status || 'active',
+        payment_id: memberData.payment_id
+      }
+    });
+
+    if (error) {
+      console.error("Error creating/updating member:", error);
+      throw new Error(error.message);
+    }
+
+    console.log("Member created/updated successfully:", data);
+    return true;
+  } catch (error) {
+    console.error("Failed to create/update member:", error);
     return false;
   }
 }

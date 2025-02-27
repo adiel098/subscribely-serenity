@@ -60,7 +60,6 @@ export const ImageUploadSection = ({
         return;
       }
       
-      // Store the optimized image
       setWelcomeImage(optimizedImage);
       
       // Save image immediately after upload

@@ -41,7 +41,7 @@ export const optimizeImageForTelegram = (file: File): Promise<string> => {
         ctx.drawImage(img, 0, 0, width, height);
         
         // Get the data URL, using a high quality JPEG (0.9 quality)
-        // IMPORTANT: Use the raw data URL without any modifications to avoid encoding issues
+        // Make sure the image is in JPEG format which is more compatible with Telegram
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         resolve(dataUrl);
       };
@@ -59,38 +59,4 @@ export const optimizeImageForTelegram = (file: File): Promise<string> => {
     
     reader.readAsDataURL(file);
   });
-};
-
-/**
- * Converts a data URL to a Blob object for sending to APIs
- * that require multipart/form-data
- */
-export const dataUrlToBlob = (dataUrl: string): Blob => {
-  // Extract the MIME type and base64 data
-  const arr = dataUrl.split(',');
-  // Extract mime type (e.g., "image/jpeg")
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-  // Get base64 data
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  
-  // Convert to Uint8Array
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  
-  return new Blob([u8arr], { type: mime });
-};
-
-/**
- * Utility function to check if a string is a valid base64 encoded value
- */
-export const isValidBase64 = (str: string): boolean => {
-  // Check if the string is properly base64 encoded
-  try {
-    return btoa(atob(str)) === str;
-  } catch (err) {
-    return false;
-  }
 };

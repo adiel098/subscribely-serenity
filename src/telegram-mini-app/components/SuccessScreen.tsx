@@ -9,7 +9,13 @@ interface SuccessScreenProps {
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const handleJoinClick = () => {
     if (communityInviteLink) {
-      window.open(communityInviteLink, '_blank');
+      // Try to use Telegram WebApp to open the link if available
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.open(communityInviteLink, '_blank');
+      } else {
+        // Fallback to regular window.open
+        window.open(communityInviteLink, '_blank');
+      }
     }
   };
 

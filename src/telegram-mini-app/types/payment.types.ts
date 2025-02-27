@@ -1,5 +1,5 @@
 
-import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Plan } from "./app.types";
 
 export interface PaymentState {
   isProcessing: boolean;
@@ -23,4 +23,3 @@ export interface PaymentData {
   invite_link: string;
   telegram_user_id?: string; // Made optional
 }
-

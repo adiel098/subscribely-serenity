@@ -103,7 +103,11 @@ serve(async (req) => {
     }
 
     const { start, initData } = requestData;
-    console.log("Parsed request payload:", { start, initDataLength: initData ? initData.length : 0 });
+    console.log("Parsed request payload:", { 
+      start, 
+      initDataLength: initData ? initData.length : 0,
+      initDataPrefix: initData ? initData.substring(0, 50) : null
+    });
 
     if (!start) {
       return new Response(
@@ -157,6 +161,7 @@ serve(async (req) => {
         if (parsedInitData.user) {
           const telegramUser = parsedInitData.user;
           userData = telegramUser;
+          console.log("Extracted user data:", userData);
 
           // Check if user exists in the database
           const { data: existingUser } = await supabase
@@ -197,6 +202,7 @@ serve(async (req) => {
                 username: telegramUser.username,
                 photo_url: telegramUser.photo_url,
                 community_id: start,
+                last_active: new Date().toISOString(),
               })
               .eq("telegram_id", telegramUser.id);
               
@@ -211,10 +217,14 @@ serve(async (req) => {
               userData.email = existingUser.email;
             }
           }
+        } else {
+          console.log("No user data in initData");
         }
       } catch (error) {
         console.error("Error processing initData:", error);
       }
+    } else {
+      console.log("No initData provided");
     }
 
     return new Response(

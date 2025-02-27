@@ -26,28 +26,29 @@ const TelegramMiniApp = () => {
   // Log params to debug the issue
   useEffect(() => {
     console.log("TelegramMiniApp initialized with params:", { 
-      initData, 
+      initData: initData ? `${initData.substring(0, 20)}...` : null, 
       startParam 
     });
   }, [initData, startParam]);
   
   // Use our custom hooks to fetch data and manage state
-  const { loading, community, telegramUser } = useCommunityData({ startParam, initData });
+  const { loading, community, telegramUser, error } = useCommunityData({ startParam, initData });
   
   // Log user data to see if it's being retrieved correctly
   useEffect(() => {
     console.log("Telegram user data:", telegramUser);
-  }, [telegramUser]);
+    console.log("Community data:", community);
+  }, [telegramUser, community]);
   
-  const { showEmailForm, isProcessing, handleEmailFormComplete } = useUserEmail({ 
+  const { showEmailForm, isProcessing, processComplete, handleEmailFormComplete } = useUserEmail({ 
     telegramUser, 
     communityId: community?.id 
   });
   
   // Log the email form state
   useEffect(() => {
-    console.log("Email form state:", { showEmailForm, isProcessing });
-  }, [showEmailForm, isProcessing]);
+    console.log("Email form state:", { showEmailForm, isProcessing, processComplete });
+  }, [showEmailForm, isProcessing, processComplete]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -63,16 +64,18 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Show loading screen while initial data is being fetched or user is being processed
   if (loading || isProcessing) {
     return <LoadingScreen />;
   }
 
-  if (!community) {
-    return <CommunityNotFound />;
+  // Show error if community not found
+  if (error || !community) {
+    return <CommunityNotFound errorMessage={error || "Community not found"} />;
   }
 
   // Show email collection form if needed
-  if (showEmailForm && telegramUser) {
+  if (showEmailForm && telegramUser && processComplete) {
     console.log("Showing email collection form for user:", telegramUser.id);
     return (
       <EmailCollectionForm 
@@ -82,9 +85,8 @@ const TelegramMiniApp = () => {
     );
   }
 
-  // Log when showing the community page
+  // Only show community page if email form shouldn't be shown or process is complete
   console.log("Showing community page for:", community.name);
-
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">

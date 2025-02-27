@@ -12,14 +12,20 @@ interface UseUserEmailProps {
 export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) => {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(true); // Start as true to show loading initially
+  const [processComplete, setProcessComplete] = useState(false);
   const { toast } = useToast();
 
+  // Perform user check when telegramUser changes
   useEffect(() => {
+    // Reset state when user changes
+    setProcessComplete(false);
+    
     // Check if user exists and has email in the database when telegramUser changes
     if (telegramUser?.id) {
+      console.log('useUserEmail: Starting user check for', telegramUser.id);
       checkUserExistsAndEmail(telegramUser, communityId);
     } else {
-      // No user data, no processing needed
+      console.log('useUserEmail: No user data available yet');
       setIsProcessing(false);
     }
   }, [telegramUser, communityId]);
@@ -65,12 +71,14 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
         }
         
         // New user has no email, so show the email form
+        console.log('New user created - showing email form');
         setShowEmailForm(true);
       } else {
         console.log('User exists in database:', existingUser);
         
         // Update user data if needed (e.g., new community_id, updated name)
         if (communityId && (!existingUser.community_id || existingUser.community_id !== communityId)) {
+          console.log('Updating user with new community ID:', communityId);
           const { error: updateError } = await supabase
             .from('telegram_mini_app_users')
             .update({ 
@@ -96,6 +104,9 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
           setShowEmailForm(false);
         }
       }
+      
+      // Mark process as complete
+      setProcessComplete(true);
     } catch (error) {
       console.error("Error in user check process:", error);
       toast({
@@ -105,14 +116,16 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
       });
       // Default to showing the form if there's an error
       setShowEmailForm(true);
+      setProcessComplete(true);
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleEmailFormComplete = () => {
+    console.log('Email form completed, hiding form');
     setShowEmailForm(false);
   };
 
-  return { showEmailForm, isProcessing, handleEmailFormComplete };
+  return { showEmailForm, isProcessing, processComplete, handleEmailFormComplete };
 };

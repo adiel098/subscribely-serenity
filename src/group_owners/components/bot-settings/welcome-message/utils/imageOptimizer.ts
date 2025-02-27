@@ -41,6 +41,7 @@ export const optimizeImageForTelegram = (file: File): Promise<string> => {
         ctx.drawImage(img, 0, 0, width, height);
         
         // Get the data URL, using a high quality JPEG (0.9 quality)
+        // Make sure the image is in JPEG format which is more compatible with Telegram
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         resolve(dataUrl);
       };

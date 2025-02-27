@@ -50,6 +50,16 @@ export const ImageUploadSection = ({
       // Optimize image for Telegram
       const optimizedImage = await optimizeImageForTelegram(file);
       
+      // Validate the optimized image size
+      // Base64 data can be roughly estimated by taking the length and dividing by 4/3
+      // Telegram has a limit of around 10MB for photos
+      const estimatedSize = optimizedImage.length * 0.75;
+      if (estimatedSize > 10 * 1024 * 1024) {
+        setImageError("Image is too large after optimization. Please use a smaller image.");
+        setIsUploading(false);
+        return;
+      }
+      
       setWelcomeImage(optimizedImage);
       
       // Save image immediately after upload

@@ -27,12 +27,16 @@ const getWebAppData = (): TelegramUser | null => {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
+      // In recent Telegram WebApp versions, photo_url is available directly
+      const photoUrl = user.photo_url || undefined;
+      console.log('📸 Photo URL from WebApp data:', photoUrl);
+      
       return {
         id: user.id?.toString() || "",
         first_name: user.first_name,
         last_name: user.last_name,
-        username: user.username
-        // Note: photo_url is not available in WebApp data
+        username: user.username,
+        photo_url: photoUrl
       };
     }
 
@@ -51,7 +55,8 @@ const getWebAppData = (): TelegramUser | null => {
             id: user.id?.toString() || "",
             first_name: user.first_name,
             last_name: user.last_name,
-            username: user.username
+            username: user.username,
+            photo_url: user.photo_url
           };
         }
       } catch (parseError) {
@@ -144,7 +149,11 @@ export const useTelegramUser = (communityId: string) => {
               // Merge data from db with data from Telegram
               userData = {
                 ...userData,
-                email: dbUser.email || undefined
+                email: dbUser.email || undefined,
+                // If the database has a photo_url and Telegram doesn't, use the one from the database
+                photo_url: userData.photo_url || dbUser.photo_url || undefined,
+                // Same for username
+                username: userData.username || dbUser.username || undefined
               };
               console.log('✅ Merged user data with database info:', userData);
             } else {
@@ -207,7 +216,8 @@ export const useTelegramUser = (communityId: string) => {
                   id: parsedUser.id?.toString() || "",
                   first_name: parsedUser.first_name,
                   last_name: parsedUser.last_name,
-                  username: parsedUser.username
+                  username: parsedUser.username,
+                  photo_url: parsedUser.photo_url
                 };
                 
                 // Try to create/update user via edge function with hash data
@@ -219,6 +229,7 @@ export const useTelegramUser = (communityId: string) => {
                       first_name: userData.first_name,
                       last_name: userData.last_name,
                       username: userData.username,
+                      photo_url: userData.photo_url,
                       community_id: communityId
                     }
                   });

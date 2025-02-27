@@ -30,6 +30,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   console.log("🔍 Community in MainContent:", community);
   console.log("🔍 Community.subscription_plans:", community?.subscription_plans);
   console.log("🔍 TelegramUser in MainContent:", telegramUser);
+  // Add explicit log for the photo URL to debug
+  console.log("🔍 TelegramUser photo URL:", telegramUser?.photo_url);
 
   // Log user info for debugging
   useEffect(() => {
@@ -132,6 +134,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
               <p><strong>Debug Info:</strong></p>
               <p>User ID: {telegramUser?.id || 'Not available'}</p>
+              <p>Username: {telegramUser?.username || 'Not available'}</p>
+              <p>Photo URL: {telegramUser?.photo_url || 'Not available'}</p>
               <p>Plans Count: {community.subscription_plans?.length || 0}</p>
               <p>Active Tab: {activeTab}</p>
             </div>

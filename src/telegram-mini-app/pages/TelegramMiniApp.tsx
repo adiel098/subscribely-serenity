@@ -119,6 +119,15 @@ const TelegramMiniApp = () => {
         setIsCheckingUserData(true);
         
         try {
+          // First check if the user already has an email in the telegramUser object
+          if (telegramUser.email) {
+            console.log('📧 User already has email in telegramUser object:', telegramUser.email);
+            setShowEmailForm(false);
+            setIsCheckingUserData(false);
+            return;
+          }
+          
+          // If not, check in the database
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           

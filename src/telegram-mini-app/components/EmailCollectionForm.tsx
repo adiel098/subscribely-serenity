@@ -12,6 +12,8 @@ interface EmailCollectionFormProps {
   telegramUserId: string;
   firstName?: string;
   lastName?: string;
+  username?: string;
+  photoUrl?: string;
   onComplete: () => void;
 }
 
@@ -19,6 +21,8 @@ export const EmailCollectionForm = ({
   telegramUserId, 
   firstName, 
   lastName, 
+  username,
+  photoUrl,
   onComplete 
 }: EmailCollectionFormProps) => {
   const [email, setEmail] = useState("");
@@ -47,7 +51,7 @@ export const EmailCollectionForm = ({
     
     try {
       console.log("Saving email for telegram user:", telegramUserId, email);
-      console.log("With additional data:", { firstName, lastName, communityId });
+      console.log("With additional data:", { firstName, lastName, communityId, username, photoUrl });
       
       // Pass all user details to the collectUserEmail function
       const success = await collectUserEmail(
@@ -55,7 +59,9 @@ export const EmailCollectionForm = ({
         email, 
         firstName, 
         lastName, 
-        communityId || undefined
+        communityId || undefined,
+        username,
+        photoUrl
       );
       
       if (!success) {

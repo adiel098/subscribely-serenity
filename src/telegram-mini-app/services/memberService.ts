@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Community {
@@ -146,9 +145,12 @@ export async function collectUserEmail(
   email: string, 
   firstName?: string, 
   lastName?: string, 
-  communityId?: string
+  communityId?: string,
+  username?: string,
+  photoUrl?: string
 ): Promise<boolean> {
   console.log("Collecting email for user ID:", telegramUserId, "Email:", email);
+  console.log("Additional data:", { firstName, lastName, communityId, username, photoUrl });
 
   if (!telegramUserId || !email) {
     console.error("collectUserEmail: Missing required parameters");
@@ -168,6 +170,8 @@ export async function collectUserEmail(
       if (firstName) updateData.first_name = firstName;
       if (lastName) updateData.last_name = lastName;
       if (communityId) updateData.community_id = communityId;
+      if (username) updateData.username = username;
+      if (photoUrl) updateData.photo_url = photoUrl;
       
       result = await supabase
         .from('telegram_mini_app_users')
@@ -184,6 +188,8 @@ export async function collectUserEmail(
       if (firstName) insertData.first_name = firstName;
       if (lastName) insertData.last_name = lastName;
       if (communityId) insertData.community_id = communityId;
+      if (username) insertData.username = username;
+      if (photoUrl) insertData.photo_url = photoUrl;
       
       result = await supabase
         .from('telegram_mini_app_users')

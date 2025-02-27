@@ -174,6 +174,8 @@ const TelegramMiniApp = () => {
         telegramUserId={telegramUser.id} 
         firstName={telegramUser.first_name}
         lastName={telegramUser.last_name}
+        username={telegramUser.username}
+        photoUrl={telegramUser.photo_url}
         onComplete={handleEmailFormComplete} 
       />
     );

@@ -44,7 +44,8 @@ export async function handleStartCommand(
 
     console.log('[Start] Found community and settings:', { 
       communityName: community.name,
-      hasWelcomeMessage: !!botSettings.welcome_message 
+      hasWelcomeMessage: !!botSettings.welcome_message,
+      hasWelcomeImage: !!botSettings.welcome_image
     });
 
     // נוודא שיש לנו טוקן תקין ע"י בדיקה מול טלגרם
@@ -71,43 +72,56 @@ export async function handleStartCommand(
     console.log('[Start] Using bot API URL:', `https://api.telegram.org/bot${botToken.substring(0, 5)}...`);
 
     try {
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'User-Agent': 'Subscribely-Bot/1.0'
-        },
-        body: JSON.stringify({
-          chat_id: message.from.id,
-          text: welcomeMessage,
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: "Join Community 🚀",
-                web_app: { url: `${miniAppUrl}?start=${communityId}` }
-              }
-            ]]
-          }
-        })
-      });
-
-      const responseText = await response.text();
-      console.log('[Start] Raw API response:', responseText);
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('[Start] Error parsing API response:', parseError);
-        return false;
-      }
-
-      console.log('[Start] Telegram API response:', result);
-
-      if (!result.ok) {
-        console.error('[Start] Telegram API error:', result.description);
-        return false;
+      // Check if we have a welcome image to send
+      if (botSettings.welcome_image) {
+        console.log('[Start] Welcome image found, sending as photo with caption');
+        
+        // Send image with caption and inline keyboard
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Subscribely-Bot/1.0'
+          },
+          body: JSON.stringify({
+            chat_id: message.from.id,
+            photo: botSettings.welcome_image,
+            caption: welcomeMessage,
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: "Join Community 🚀",
+                  web_app: { url: `${miniAppUrl}?start=${communityId}` }
+                }
+              ]]
+            }
+          })
+        });
+        
+        const responseText = await response.text();
+        console.log('[Start] Raw API response for image message:', responseText);
+        
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('[Start] Error parsing photo API response:', parseError);
+          return false;
+        }
+        
+        console.log('[Start] Telegram photo API response:', result);
+        
+        if (!result.ok) {
+          console.error('[Start] Telegram photo API error:', result.description);
+          // Fall back to text-only message if photo sending fails
+          console.log('[Start] Falling back to text-only message');
+          return await sendTextOnlyMessage(botToken, message.from.id, welcomeMessage, miniAppUrl, communityId);
+        }
+      } else {
+        // No image, send text-only message
+        console.log('[Start] No welcome image, sending text-only message');
+        return await sendTextOnlyMessage(botToken, message.from.id, welcomeMessage, miniAppUrl, communityId);
       }
 
       // מעקב אחר המשתמש בדאטהבייס
@@ -133,3 +147,57 @@ export async function handleStartCommand(
   }
 }
 
+// Helper function to send text-only welcome message
+async function sendTextOnlyMessage(
+  botToken: string, 
+  chatId: number, 
+  welcomeMessage: string, 
+  miniAppUrl: string, 
+  communityId: string
+): Promise<boolean> {
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'User-Agent': 'Subscribely-Bot/1.0'
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: welcomeMessage,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            {
+              text: "Join Community 🚀",
+              web_app: { url: `${miniAppUrl}?start=${communityId}` }
+            }
+          ]]
+        }
+      })
+    });
+
+    const responseText = await response.text();
+    console.log('[Start] Raw API response for text message:', responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[Start] Error parsing text API response:', parseError);
+      return false;
+    }
+
+    console.log('[Start] Telegram text API response:', result);
+
+    if (!result.ok) {
+      console.error('[Start] Telegram text API error:', result.description);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[Start] Error sending text message:', error);
+    return false;
+  }
+}

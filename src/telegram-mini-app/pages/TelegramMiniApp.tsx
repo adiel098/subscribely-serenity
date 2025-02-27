@@ -52,7 +52,7 @@ const TelegramMiniApp = () => {
     showEmailForm, 
     isProcessing, 
     processComplete,
-    handleEmailFormComplete
+    handleEmailFormComplete: onEmailFormComplete
   } = useUserEmail({ 
     telegramUser, 
     communityId: community?.id 
@@ -66,6 +66,12 @@ const TelegramMiniApp = () => {
     telegramUser,
     toast
   });
+
+  // Combined email form handler that calls both the hook's handler and updates manual collection state
+  const handleEmailFormComplete = () => {
+    onEmailFormComplete(); // Call the handler from the hook
+    setManualEmailCollection(false); // Also update our local state
+  };
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);

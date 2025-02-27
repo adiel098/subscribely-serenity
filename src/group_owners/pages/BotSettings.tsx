@@ -5,12 +5,12 @@ import { Bot } from "lucide-react";
 import { useState } from "react";
 import { Accordion } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessagePreview } from "@/group_owners/components/bot-settings/MessagePreview";
 import { WelcomeMessageSection } from "@/group_owners/components/bot-settings/WelcomeMessageSection";
 import { SubscriptionSection } from "@/group_owners/components/bot-settings/SubscriptionSection";
 import { BroadcastSection } from "@/group_owners/components/bot-settings/BroadcastSection";
 import { BotStatsHeader } from "@/group_owners/components/bot-settings/BotStatsHeader";
 import { CronJobTimer } from "@/group_owners/components/bot-settings/CronJobTimer";
+import { UnifiedMessagePreview } from "@/group_owners/components/bot-settings/UnifiedMessagePreview";
 
 const BotSettings = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -36,7 +36,7 @@ const BotSettings = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-7xl">
       <div className="flex items-center space-x-2">
         <Bot className="h-8 w-8 text-primary" />
         <div>
@@ -51,23 +51,25 @@ const BotSettings = () => {
 
       <BotStatsHeader communityId={selectedCommunityId || ""} />
 
-      <MessagePreview 
-        message={expandedSection === "welcome" ? settings.welcome_message : settings.subscription_reminder_message}
-        signature={settings.bot_signature}
-        image={expandedSection === "welcome" ? settings.welcome_image : null}
-      />
-
-      <Accordion
-        type="single"
-        collapsible
-        value={expandedSection || undefined}
-        onValueChange={(value) => setExpandedSection(value)}
-        className="space-y-4"
-      >
-        <WelcomeMessageSection settings={settings} updateSettings={updateSettings} />
-        <SubscriptionSection settings={settings} updateSettings={updateSettings} />
-        <BroadcastSection communityId={selectedCommunityId || ""} />
-      </Accordion>
+      <div className="grid md:grid-cols-5 gap-6">
+        <div className="md:col-span-3">
+          <Accordion
+            type="single"
+            collapsible
+            value={expandedSection || undefined}
+            onValueChange={(value) => setExpandedSection(value)}
+            className="space-y-4"
+          >
+            <WelcomeMessageSection settings={settings} updateSettings={updateSettings} />
+            <SubscriptionSection settings={settings} updateSettings={updateSettings} />
+            <BroadcastSection communityId={selectedCommunityId || ""} />
+          </Accordion>
+        </div>
+        
+        <div className="md:col-span-2 sticky top-6">
+          <UnifiedMessagePreview settings={settings} activeSection={expandedSection} />
+        </div>
+      </div>
     </div>
   );
 };

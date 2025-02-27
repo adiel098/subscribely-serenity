@@ -12,7 +12,6 @@ import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useState } from "react";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
 import { MessageInputSection } from "./welcome-message/MessageInputSection";
-import { MessagePreview } from "./MessagePreview";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;
@@ -38,53 +37,42 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="auto-welcome"
-                checked={settings.auto_welcome_message}
-                onCheckedChange={handleAutoWelcomeChange}
-              />
-              <Label htmlFor="auto-welcome">
-                Automatically send welcome message to new members
-              </Label>
-            </div>
-
-            <MessageInputSection
-              draftMessage={welcomeMessage}
-              setDraftMessage={setWelcomeMessage}
-              updateSettings={updateSettings}
-              settingsKey="welcome_message"
-              label="Welcome Message"
-              placeholder="Enter a welcome message for new members..."
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="auto-welcome"
+              checked={settings.auto_welcome_message}
+              onCheckedChange={handleAutoWelcomeChange}
             />
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Image className="h-4 w-4" />
-                Welcome Image
-              </Label>
-              <ImageUploadSection
-                image={welcomeImage}
-                setImage={setWelcomeImage}
-                updateSettings={updateSettings}
-                settingsKey="welcome_image"
-                isUploading={isUploading}
-                setIsUploading={setIsUploading}
-                imageError={imageError}
-                setImageError={setImageError}
-                label="Welcome Image"
-              />
-            </div>
+            <Label htmlFor="auto-welcome">
+              Automatically send welcome message to new members
+            </Label>
           </div>
 
-          <div className="border rounded-md p-4">
-            <h3 className="text-sm font-medium mb-2">Welcome Message Preview</h3>
-            <MessagePreview
-              message={welcomeMessage}
-              signature={settings.bot_signature}
+          <MessageInputSection
+            draftMessage={welcomeMessage}
+            setDraftMessage={setWelcomeMessage}
+            updateSettings={updateSettings}
+            settingsKey="welcome_message"
+            label="Welcome Message"
+            placeholder="Enter a welcome message for new members..."
+          />
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Welcome Image
+            </Label>
+            <ImageUploadSection
               image={welcomeImage}
+              setImage={setWelcomeImage}
+              updateSettings={updateSettings}
+              settingsKey="welcome_image"
+              isUploading={isUploading}
+              setIsUploading={setIsUploading}
+              imageError={imageError}
+              setImageError={setImageError}
+              label="Welcome Image"
             />
           </div>
         </div>

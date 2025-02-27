@@ -22,7 +22,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
-import { MessagePreview } from "./MessagePreview";
 
 interface SubscriptionSectionProps {
   settings: BotSettings;
@@ -81,201 +80,166 @@ export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSe
               </TabsList>
               
               <TabsContent value="first-reminder" className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Days Before Expiration
-                      </Label>
-                      <Input
-                        type="number"
-                        value={draftSettings.first_reminder_days}
-                        onChange={(e) =>
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            first_reminder_days: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                        className="max-w-[100px]"
-                        min={1}
-                        max={30}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Send this reminder {draftSettings.first_reminder_days} days before subscription expires
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Send className="h-4 w-4" />
-                        First Reminder Message
-                      </Label>
-                      <Textarea
-                        value={draftSettings.first_reminder_message}
-                        onChange={(e) =>
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            first_reminder_message: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter your first reminder message..."
-                        rows={4}
-                        className="resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        A "Renew Now!" button will be automatically added to this message.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Image className="h-4 w-4" />
-                        First Reminder Image
-                      </Label>
-                      <ImageUploadSection
-                        image={draftSettings.first_reminder_image}
-                        setImage={(image) => 
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            first_reminder_image: image,
-                          }))
-                        }
-                        updateSettings={updateSettings}
-                        settingsKey="first_reminder_image"
-                        isUploading={isFirstImageUploading}
-                        setIsUploading={setIsFirstImageUploading}
-                        imageError={firstImageError}
-                        setImageError={setFirstImageError}
-                        label="First Reminder Image"
-                      />
-                    </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Days Before Expiration
+                    </Label>
+                    <Input
+                      type="number"
+                      value={draftSettings.first_reminder_days}
+                      onChange={(e) =>
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          first_reminder_days: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      className="max-w-[100px]"
+                      min={1}
+                      max={30}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Send this reminder {draftSettings.first_reminder_days} days before subscription expires
+                    </p>
                   </div>
                   
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-sm font-medium mb-2">First Reminder Preview</h3>
-                    <MessagePreview
-                      message={draftSettings.first_reminder_message}
-                      signature={settings.bot_signature}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Send className="h-4 w-4" />
+                      First Reminder Message
+                    </Label>
+                    <Textarea
+                      value={draftSettings.first_reminder_message}
+                      onChange={(e) =>
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          first_reminder_message: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter your first reminder message..."
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A "Renew Now!" button will be automatically added to this message.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Image className="h-4 w-4" />
+                      First Reminder Image
+                    </Label>
+                    <ImageUploadSection
                       image={draftSettings.first_reminder_image}
-                      buttonText="Renew Now!"
+                      setImage={(image) => 
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          first_reminder_image: image,
+                        }))
+                      }
+                      updateSettings={updateSettings}
+                      settingsKey="first_reminder_image"
+                      isUploading={isFirstImageUploading}
+                      setIsUploading={setIsFirstImageUploading}
+                      imageError={firstImageError}
+                      setImageError={setFirstImageError}
+                      label="First Reminder Image"
                     />
                   </div>
                 </div>
               </TabsContent>
               
               <TabsContent value="second-reminder" className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Days Before Expiration
-                      </Label>
-                      <Input
-                        type="number"
-                        value={draftSettings.second_reminder_days}
-                        onChange={(e) =>
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            second_reminder_days: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                        className="max-w-[100px]"
-                        min={0}
-                        max={15}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Send this reminder {draftSettings.second_reminder_days} days before subscription expires
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Send className="h-4 w-4" />
-                        Final Reminder Message
-                      </Label>
-                      <Textarea
-                        value={draftSettings.second_reminder_message}
-                        onChange={(e) =>
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            second_reminder_message: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter your final reminder message..."
-                        rows={4}
-                        className="resize-none"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        A "Renew Now!" button will be automatically added to this message.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Image className="h-4 w-4" />
-                        Final Reminder Image
-                      </Label>
-                      <ImageUploadSection
-                        image={draftSettings.second_reminder_image}
-                        setImage={(image) => 
-                          setDraftSettings(prev => ({
-                            ...prev,
-                            second_reminder_image: image,
-                          }))
-                        }
-                        updateSettings={updateSettings}
-                        settingsKey="second_reminder_image"
-                        isUploading={isSecondImageUploading}
-                        setIsUploading={setIsSecondImageUploading}
-                        imageError={secondImageError}
-                        setImageError={setSecondImageError}
-                        label="Final Reminder Image"
-                      />
-                    </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Days Before Expiration
+                    </Label>
+                    <Input
+                      type="number"
+                      value={draftSettings.second_reminder_days}
+                      onChange={(e) =>
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          second_reminder_days: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      className="max-w-[100px]"
+                      min={0}
+                      max={15}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Send this reminder {draftSettings.second_reminder_days} days before subscription expires
+                    </p>
                   </div>
                   
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-sm font-medium mb-2">Final Reminder Preview</h3>
-                    <MessagePreview
-                      message={draftSettings.second_reminder_message}
-                      signature={settings.bot_signature}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Send className="h-4 w-4" />
+                      Final Reminder Message
+                    </Label>
+                    <Textarea
+                      value={draftSettings.second_reminder_message}
+                      onChange={(e) =>
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          second_reminder_message: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter your final reminder message..."
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A "Renew Now!" button will be automatically added to this message.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Image className="h-4 w-4" />
+                      Final Reminder Image
+                    </Label>
+                    <ImageUploadSection
                       image={draftSettings.second_reminder_image}
-                      buttonText="Renew Now!"
+                      setImage={(image) => 
+                        setDraftSettings(prev => ({
+                          ...prev,
+                          second_reminder_image: image,
+                        }))
+                      }
+                      updateSettings={updateSettings}
+                      settingsKey="second_reminder_image"
+                      isUploading={isSecondImageUploading}
+                      setIsUploading={setIsSecondImageUploading}
+                      imageError={secondImageError}
+                      setImageError={setSecondImageError}
+                      label="Final Reminder Image"
                     />
                   </div>
                 </div>
               </TabsContent>
               
               <TabsContent value="expired" className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Expiration Message</Label>
-                    <Textarea
-                      value={draftSettings.expired_subscription_message}
-                      onChange={(e) =>
-                        setDraftSettings(prev => ({
-                          ...prev,
-                          expired_subscription_message: e.target.value,
-                        }))
-                      }
-                      placeholder="Message to send when subscription expires..."
-                      rows={4}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      This message will be sent when a member's subscription expires.
-                    </p>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-sm font-medium mb-2">Expiration Message Preview</h3>
-                    <MessagePreview
-                      message={draftSettings.expired_subscription_message}
-                      signature={settings.bot_signature}
-                      buttonText="Renew Now!"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Expiration Message</Label>
+                  <Textarea
+                    value={draftSettings.expired_subscription_message}
+                    onChange={(e) =>
+                      setDraftSettings(prev => ({
+                        ...prev,
+                        expired_subscription_message: e.target.value,
+                      }))
+                    }
+                    placeholder="Message to send when subscription expires..."
+                    rows={4}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This message will be sent when a member's subscription expires.
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>

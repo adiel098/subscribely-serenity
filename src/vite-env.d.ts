@@ -10,6 +10,7 @@ interface TelegramWebApp {
       username?: string;
     };
   };
+  openTelegramLink: (url: string) => void;
 }
 
 interface Window {

@@ -20,6 +20,12 @@ interface TelegramInitData {
   hash?: string;
 }
 
+// CORS headers for browser compatibility
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 function extractInitData(initDataString: string): TelegramInitData {
   if (!initDataString) return {};
 
@@ -35,21 +41,59 @@ function extractInitData(initDataString: string): TelegramInitData {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { start, initData } = await req.json();
+    // Safely parse JSON request body
+    let requestData;
+    try {
+      // Check if request body is empty
+      const bodyText = await req.text();
+      console.log("Request body:", bodyText);
+      
+      if (!bodyText || bodyText.trim() === '') {
+        return new Response(
+          JSON.stringify({
+            error: "Empty request body",
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+            status: 400 
+          }
+        );
+      }
+      
+      requestData = JSON.parse(bodyText);
+    } catch (error) {
+      console.error("JSON parsing error:", error);
+      return new Response(
+        JSON.stringify({
+          error: "Invalid JSON in request body",
+          details: error.message,
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
+      );
+    }
 
-    console.log("Request payload:", { start, initData });
+    const { start, initData } = requestData;
+    console.log("Parsed request payload:", { start, initData });
 
     if (!start) {
       return new Response(
         JSON.stringify({
           error: "Missing start parameter",
         }),
-        { headers: { "Content-Type": "application/json" }, status: 400 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
@@ -68,7 +112,8 @@ serve(async (req) => {
           description,
           price,
           interval,
-          features
+          features,
+          community_id
         )
       `)
       .eq("id", start)
@@ -79,8 +124,9 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: "Failed to fetch community data",
+          details: communityError.message,
         }),
-        { headers: { "Content-Type": "application/json" }, status: 500 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
@@ -143,15 +189,16 @@ serve(async (req) => {
         community,
         user: userData,
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Server error:", error);
     return new Response(
       JSON.stringify({
         error: "Internal server error",
+        details: error.message,
       }),
-      { headers: { "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

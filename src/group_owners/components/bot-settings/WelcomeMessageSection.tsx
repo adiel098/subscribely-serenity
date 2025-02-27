@@ -52,8 +52,8 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
             </div>
 
             <MessageInputSection
-              message={welcomeMessage}
-              setMessage={setWelcomeMessage}
+              draftMessage={welcomeMessage}
+              setDraftMessage={setWelcomeMessage}
               updateSettings={updateSettings}
               settingsKey="welcome_message"
               label="Welcome Message"

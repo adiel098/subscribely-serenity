@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -62,7 +61,7 @@ const TelegramMiniApp = () => {
     return <EmailCollectionForm telegramUserId={telegramUser.id} onComplete={handleEmailFormComplete} />;
   }
 
-  return <MainContent community={community} />;
+  return <MainContent community={community} telegramUser={telegramUser} />;
 };
 
 export default TelegramMiniApp;

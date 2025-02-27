@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentState } from "../types/payment.types";
 import { createOrUpdateMember } from "../services/memberService";
@@ -9,7 +8,8 @@ import { createPayment, createInviteLink } from "../services/paymentService";
 export const usePaymentProcessing = (
   selectedPlan: Plan,
   selectedPaymentMethod: string | null,
-  onCompletePurchase: () => void
+  onCompletePurchase: () => void,
+  telegramUserId?: string
 ) => {
   const { toast } = useToast();
   const [state, setState] = useState<PaymentState>({
@@ -33,6 +33,7 @@ export const usePaymentProcessing = (
       // Create invite link first
       const newInviteLink = await createInviteLink(selectedPlan.community_id);
 
+      // Create payment data with Telegram user ID if available
       const paymentData = {
         plan_id: selectedPlan.id,
         community_id: selectedPlan.community_id,
@@ -40,16 +41,35 @@ export const usePaymentProcessing = (
         payment_method: selectedPaymentMethod,
         status: 'completed',
         invite_link: newInviteLink,
+        telegram_user_id: telegramUserId // Add Telegram user ID
       };
 
       const payment = await createPayment(paymentData);
+
+      // Register member with Telegram ID if available
+      if (telegramUserId) {
+        try {
+          await createOrUpdateMember({
+            community_id: selectedPlan.community_id,
+            telegram_id: telegramUserId,
+            subscription_plan_id: selectedPlan.id,
+            status: 'active',
+            payment_id: payment?.id
+          });
+          
+          console.log(`Member created/updated with Telegram ID: ${telegramUserId}`);
+        } catch (memberError) {
+          console.error('Error creating/updating member:', memberError);
+          // Continue with payment flow even if member creation fails
+        }
+      }
 
       if (payment?.invite_link) {
         setState(prev => ({ ...prev, paymentInviteLink: payment.invite_link }));
       }
 
       toast({
-        title: "Payment Successful! 🎉",
+        title: "Payment Successful! ",
         description: "You can now join the community.",
       });
       
@@ -69,6 +89,6 @@ export const usePaymentProcessing = (
 
   return {
     ...state,
-    handlePayment,
+    handlePayment
   };
 };

@@ -1,4 +1,3 @@
-
 import { Plan } from "@/telegram-mini-app/types/community.types";
 
 export interface PaymentState {
@@ -7,11 +6,11 @@ export interface PaymentState {
 }
 
 export interface CreateMemberData {
-  telegramUserId: string;
-  communityId: string;
-  planId: string;
-  subscriptionStartDate: Date;
-  subscriptionEndDate: Date;
+  telegram_id: string;
+  community_id: string;
+  subscription_plan_id: string;
+  status?: 'active' | 'inactive' | 'pending';
+  payment_id?: string;
 }
 
 export interface PaymentData {

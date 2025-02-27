@@ -1,40 +1,48 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface MessagePreviewProps {
   message: string;
-  signature: string;
+  signature?: string;
   image?: string | null;
+  buttonText?: string;
 }
 
-export const MessagePreview = ({ message, signature, image }: MessagePreviewProps) => {
-  const messageWithSignature = `${message}\n\n${signature}`;
-
+export const MessagePreview = ({ message, signature, image, buttonText }: MessagePreviewProps) => {
   return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium">Message Preview</div>
-      <Card className="border-dashed">
-        <CardHeader className="p-3 pb-0">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Bot className="h-4 w-4" />
-            Telegram Bot
-          </CardTitle>
-          <CardDescription className="text-xs">Preview of the message</CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 pt-1 space-y-3">
-          {image && (
-            <div className="w-full">
-              <img 
-                src={image} 
-                alt="Welcome" 
-                className="w-full h-auto max-h-48 object-cover rounded-md" 
-              />
+    <Card className="border-slate-200 overflow-hidden max-w-md bg-gray-50">
+      <CardContent className="p-0">
+        {image && (
+          <div className="w-full overflow-hidden">
+            <img
+              src={image}
+              alt="Message preview"
+              className="w-full h-40 object-cover"
+            />
+          </div>
+        )}
+        <div className="p-4 space-y-4">
+          <div className="text-sm text-gray-700 whitespace-pre-line">
+            {message}
+            {signature && (
+              <div className="text-xs text-gray-500 mt-2">
+                {signature}
+              </div>
+            )}
+          </div>
+          
+          {buttonText && (
+            <div className="mt-2">
+              <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600">
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                {buttonText}
+              </Button>
             </div>
           )}
-          <div className="text-sm whitespace-pre-wrap">{messageWithSignature}</div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

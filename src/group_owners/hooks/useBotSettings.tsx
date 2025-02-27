@@ -4,6 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCallback, useRef } from "react";
 
+export interface ReminderMessage {
+  days_before: number;
+  message: string;
+  image: string | null;
+}
+
 export interface BotSettings {
   id: string;
   community_id: string;
@@ -21,6 +27,12 @@ export interface BotSettings {
   auto_welcome_message: boolean;
   bot_signature: string;
   language: string;
+  first_reminder_days: number;
+  first_reminder_message: string;
+  first_reminder_image: string | null;
+  second_reminder_days: number;
+  second_reminder_message: string;
+  second_reminder_image: string | null;
 }
 
 export const useBotSettings = (communityId: string) => {
@@ -44,10 +56,16 @@ export const useBotSettings = (communityId: string) => {
       }
 
       // Handle the case where welcome_image might not exist in the database yet
-      // by providing a default value
+      // by providing default values
       return {
         ...data,
-        welcome_image: data.welcome_image || null
+        welcome_image: data.welcome_image || null,
+        first_reminder_days: data.first_reminder_days || 3,
+        first_reminder_message: data.first_reminder_message || 'Your subscription will expire soon. Renew now to maintain access!',
+        first_reminder_image: data.first_reminder_image || null,
+        second_reminder_days: data.second_reminder_days || 1,
+        second_reminder_message: data.second_reminder_message || 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
+        second_reminder_image: data.second_reminder_image || null
       } as BotSettings;
     },
     enabled: Boolean(communityId),
@@ -90,7 +108,9 @@ export const useBotSettings = (communityId: string) => {
     if (!Object.keys(newSettings).some(key => 
       typeof newSettings[key as keyof BotSettings] === 'string' && 
       key !== 'language' && 
-      key !== 'welcome_image'
+      key !== 'welcome_image' &&
+      key !== 'first_reminder_image' &&
+      key !== 'second_reminder_image'
     )) {
       updateSettingsMutation.mutate(newSettings);
       return;

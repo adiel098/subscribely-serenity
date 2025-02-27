@@ -7,23 +7,27 @@ import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ImageUploadSectionProps {
-  welcomeImage: string;
-  setWelcomeImage: (image: string) => void;
+  image: string | null;
+  setImage: (image: string | null) => void;
   updateSettings: any;
+  settingsKey?: string;
   isUploading: boolean;
   setIsUploading: (uploading: boolean) => void;
   imageError: string | null;
   setImageError: (error: string | null) => void;
+  label?: string;
 }
 
 export const ImageUploadSection = ({
-  welcomeImage,
-  setWelcomeImage,
+  image,
+  setImage,
   updateSettings,
+  settingsKey = "welcome_image",
   isUploading,
   setIsUploading,
   imageError,
   setImageError,
+  label = "Upload Image"
 }: ImageUploadSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,15 +60,15 @@ export const ImageUploadSection = ({
       const img = new Image();
       img.onload = () => {
         // Image loaded successfully
-        setWelcomeImage(result);
+        setImage(result);
         
         // Save image immediately after upload
-        updateSettings.mutate({ 
-          welcome_image: result
-        });
+        const updateObj: any = {};
+        updateObj[settingsKey] = result;
+        updateSettings.mutate(updateObj);
         
-        console.log("Image uploaded:", result.substring(0, 30) + "...");
-        toast.success("Welcome image uploaded");
+        console.log(`Image uploaded for ${settingsKey}:`, result.substring(0, 30) + "...");
+        toast.success(`${label} uploaded successfully`);
         setIsUploading(false);
       };
       
@@ -89,11 +93,11 @@ export const ImageUploadSection = ({
   };
 
   const clearImage = () => {
-    setWelcomeImage("");
-    updateSettings.mutate({ 
-      welcome_image: null
-    });
-    toast.success("Welcome image removed");
+    setImage(null);
+    const updateObj: any = {};
+    updateObj[settingsKey] = null;
+    updateSettings.mutate(updateObj);
+    toast.success(`${label} removed`);
     
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -109,12 +113,12 @@ export const ImageUploadSection = ({
         </Alert>
       )}
       
-      {welcomeImage && (
+      {image && (
         <div className="relative">
           <img
-            src={welcomeImage}
-            alt="Welcome"
-            className="w-full h-48 object-cover rounded-md border"
+            src={image}
+            alt={label}
+            className="w-full h-36 object-cover rounded-md border"
           />
           <Button
             variant="destructive"
@@ -138,9 +142,9 @@ export const ImageUploadSection = ({
           <Upload className="h-4 w-4" />
           {isUploading 
             ? "Uploading..." 
-            : welcomeImage 
-              ? "Change Image" 
-              : "Upload Image"
+            : image 
+              ? `Change ${label}` 
+              : label
           }
         </Button>
         <input

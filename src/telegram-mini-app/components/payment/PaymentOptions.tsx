@@ -8,7 +8,7 @@ interface PaymentOptionsProps {
   stripeConfig: any;
 }
 
-export const PaymentOptions = ({
+export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
   selectedPaymentMethod,
   onPaymentMethodSelect,
   stripeConfig

@@ -6,7 +6,7 @@ import { PaymentHeader } from "@/telegram-mini-app/components/payment/PaymentHea
 import { PaymentOptions } from "@/telegram-mini-app/components/payment/PaymentOptions";
 import { SuccessScreen } from "@/telegram-mini-app/components/SuccessScreen";
 import { usePaymentProcessing } from "@/telegram-mini-app/hooks/usePaymentProcessing";
-import { createMember } from "@/telegram-mini-app/services/memberService";
+import { createOrUpdateMember } from "@/telegram-mini-app/services/memberService";
 import { createPayment } from "@/telegram-mini-app/services/paymentService";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 
@@ -31,7 +31,12 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
 }) => {
   const { toast } = useToast();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const { processPayment, paymentState } = usePaymentProcessing();
+  const { handlePayment, isProcessing, paymentInviteLink } = usePaymentProcessing(
+    selectedPlan,
+    selectedPaymentMethod,
+    onCompletePurchase,
+    telegramUserId
+  );
 
   const handleCompletePurchase = async () => {
     if (!selectedPaymentMethod) {
@@ -73,17 +78,14 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
           status: 'active'
         };
 
-        const memberResult = await createMember(memberData);
-        console.log("👤 Member created:", memberResult);
+        const memberResult = await createOrUpdateMember(memberData);
+        console.log("👤 Member created/updated:", memberResult);
       } else {
         console.warn("⚠️ No telegramUserId available, skipping member creation");
       }
 
-      // Process the payment
-      await processPayment({
-        amount: selectedPlan.price,
-        paymentMethod: selectedPaymentMethod,
-      });
+      // Use the handlePayment function from usePaymentProcessing
+      await handlePayment();
 
       onCompletePurchase();
     } catch (error) {
@@ -101,18 +103,19 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   if (showSuccess) {
     return (
       <SuccessScreen
-        inviteLink={paymentState.paymentInviteLink || communityInviteLink}
+        communityInviteLink={paymentInviteLink || communityInviteLink}
       />
     );
   }
 
   return (
     <div className="space-y-6" id="payment-methods">
-      <PaymentHeader selectedPlan={selectedPlan} />
+      <PaymentHeader plan={selectedPlan} />
       
       <PaymentOptions
-        selectedMethod={selectedPaymentMethod}
-        onMethodSelect={onPaymentMethodSelect}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentMethodSelect={onPaymentMethodSelect}
+        stripeConfig={null}
       />
       
       <Button

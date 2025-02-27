@@ -1,21 +1,20 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Gift } from "lucide-react";
+import { Plan } from "@/telegram-mini-app/types/community.types";
 
-export const PaymentHeader = () => {
+interface PaymentHeaderProps {
+  plan: Plan;
+}
+
+export const PaymentHeader: React.FC<PaymentHeaderProps> = ({ plan }) => {
   return (
     <div className="text-center space-y-2">
-      <Badge variant="secondary" className="px-4 py-1.5">
-        <Gift className="h-4 w-4 mr-2" />
-        Final Step
-      </Badge>
-      <h2 className="text-3xl font-bold text-gray-900">
-        Choose Payment Method
-      </h2>
-      <p className="text-gray-600">
-        Select your preferred way to pay
-      </p>
+      <h3 className="text-lg font-semibold">Complete Your Purchase</h3>
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-500">Selected Plan</p>
+        <p className="font-medium">{plan.name}</p>
+        <p className="text-primary text-lg font-bold mt-1">${plan.price}</p>
+      </div>
     </div>
   );
 };

@@ -1,26 +1,26 @@
-import React from "react";
-import { Plan } from "@/telegram-mini-app/types/community.types";
-import { SuccessScreen } from "./SuccessScreen";
-import { useStripeConfig } from "../hooks/useStripeConfig";
-import { usePaymentProcessing } from "../hooks/usePaymentProcessing";
-import { PaymentHeader } from "./payment/PaymentHeader";
-import { PaymentOptions } from "./payment/PaymentOptions";
-import { PaymentButton } from "./payment/PaymentButton";
 
-// For development, set this to true to bypass real payment processing
-const TEST_MODE = true;
+import React, { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { PaymentHeader } from "@/telegram-mini-app/components/payment/PaymentHeader";
+import { PaymentOptions } from "@/telegram-mini-app/components/payment/PaymentOptions";
+import { SuccessScreen } from "@/telegram-mini-app/components/SuccessScreen";
+import { usePaymentProcessing } from "@/telegram-mini-app/hooks/usePaymentProcessing";
+import { createMember } from "@/telegram-mini-app/services/memberService";
+import { createPayment } from "@/telegram-mini-app/services/paymentService";
+import { Plan } from "@/telegram-mini-app/types/community.types";
 
 interface PaymentMethodsProps {
   selectedPlan: Plan;
   selectedPaymentMethod: string | null;
   onPaymentMethodSelect: (method: string) => void;
   onCompletePurchase: () => void;
-  communityInviteLink?: string | null;
+  communityInviteLink: string | null | undefined;
   showSuccess: boolean;
   telegramUserId?: string;
 }
 
-export const PaymentMethods = ({
+export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   selectedPlan,
   selectedPaymentMethod,
   onPaymentMethodSelect,
@@ -28,36 +28,100 @@ export const PaymentMethods = ({
   communityInviteLink,
   showSuccess,
   telegramUserId
-}: PaymentMethodsProps) => {
-  const stripeConfig = useStripeConfig(selectedPlan);
-  const { isProcessing, paymentInviteLink, handlePayment } = usePaymentProcessing(
-    selectedPlan,
-    selectedPaymentMethod,
-    onCompletePurchase,
-    telegramUserId
-  );
+}) => {
+  const { toast } = useToast();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { processPayment, paymentState } = usePaymentProcessing();
+
+  const handleCompletePurchase = async () => {
+    if (!selectedPaymentMethod) {
+      toast({
+        variant: "destructive",
+        title: "Payment method required",
+        description: "Please select a payment method to continue.",
+      });
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+
+      console.log("💰 Processing payment with method:", selectedPaymentMethod);
+      console.log("💰 Plan:", selectedPlan);
+      console.log("💰 Telegram User ID:", telegramUserId || "Not available");
+
+      // Create payment record
+      const paymentData = {
+        plan_id: selectedPlan.id,
+        community_id: selectedPlan.community_id,
+        amount: selectedPlan.price,
+        payment_method: selectedPaymentMethod,
+        status: 'completed',
+        invite_link: communityInviteLink || '',
+        telegram_user_id: telegramUserId  // Include Telegram user ID in payment data
+      };
+
+      const paymentResult = await createPayment(paymentData);
+      console.log("💰 Payment created:", paymentResult);
+
+      // If the telegramUserId is available, create a member record
+      if (telegramUserId) {
+        const memberData = {
+          telegram_id: telegramUserId,
+          community_id: selectedPlan.community_id,
+          subscription_plan_id: selectedPlan.id,
+          status: 'active'
+        };
+
+        const memberResult = await createMember(memberData);
+        console.log("👤 Member created:", memberResult);
+      } else {
+        console.warn("⚠️ No telegramUserId available, skipping member creation");
+      }
+
+      // Process the payment
+      await processPayment({
+        amount: selectedPlan.price,
+        paymentMethod: selectedPaymentMethod,
+      });
+
+      onCompletePurchase();
+    } catch (error) {
+      console.error("❌ Error processing payment:", error);
+      toast({
+        variant: "destructive",
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   if (showSuccess) {
-    return <SuccessScreen communityInviteLink={paymentInviteLink || communityInviteLink} />;
+    return (
+      <SuccessScreen
+        inviteLink={paymentState.paymentInviteLink || communityInviteLink}
+      />
+    );
   }
 
   return (
-    <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
-      <PaymentHeader />
+    <div className="space-y-6" id="payment-methods">
+      <PaymentHeader selectedPlan={selectedPlan} />
       
       <PaymentOptions
-        selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={onPaymentMethodSelect}
-        stripeConfig={stripeConfig}
+        selectedMethod={selectedPaymentMethod}
+        onMethodSelect={onPaymentMethodSelect}
       />
-
-      {selectedPaymentMethod && (
-        <PaymentButton
-          price={selectedPlan.price}
-          isProcessing={isProcessing}
-          onClick={handlePayment}
-        />
-      )}
+      
+      <Button
+        className="w-full bg-gradient-to-r from-primary to-primary/80 text-white py-6 rounded-lg font-medium"
+        onClick={handleCompletePurchase}
+        disabled={!selectedPaymentMethod || isProcessingPayment}
+      >
+        {isProcessingPayment ? 'Processing...' : 'Complete Purchase'}
+      </Button>
     </div>
   );
 };

@@ -10,10 +10,11 @@ interface UseEmailVerificationProps {
 
 export const useEmailVerification = ({ telegramUser, toast }: UseEmailVerificationProps) => {
   const [manualEmailCollection, setManualEmailCollection] = useState(false);
+  const [emailCheckComplete, setEmailCheckComplete] = useState(false);
   
   // Check if user has email in database when user data is loaded
   useEffect(() => {
-    if (!telegramUser?.id) return;
+    if (!telegramUser?.id || emailCheckComplete) return;
     
     const checkUserEmail = async () => {
       try {
@@ -32,6 +33,7 @@ export const useEmailVerification = ({ telegramUser, toast }: UseEmailVerificati
             title: "Error",
             description: "Failed to verify user data. Please try again.",
           });
+          setEmailCheckComplete(true);
           return;
         }
         
@@ -42,6 +44,8 @@ export const useEmailVerification = ({ telegramUser, toast }: UseEmailVerificati
           console.log("User already has email:", existingUser.email);
           setManualEmailCollection(false);
         }
+        
+        setEmailCheckComplete(true);
       } catch (error) {
         console.error("Error in checkUserEmail:", error);
         toast({
@@ -49,14 +53,16 @@ export const useEmailVerification = ({ telegramUser, toast }: UseEmailVerificati
           title: "Error",
           description: "Failed to check user data. Please try again.",
         });
+        setEmailCheckComplete(true);
       }
     };
     
     checkUserEmail();
-  }, [telegramUser?.id, toast]);
+  }, [telegramUser?.id, toast, emailCheckComplete]);
 
   return {
     manualEmailCollection,
-    setManualEmailCollection
+    setManualEmailCollection,
+    emailCheckComplete
   };
 };

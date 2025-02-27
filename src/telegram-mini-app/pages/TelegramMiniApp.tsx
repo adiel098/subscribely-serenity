@@ -67,8 +67,9 @@ const TelegramMiniApp = () => {
     toast
   });
 
-  // Combined email form handler that calls both the hook's handler and updates manual collection state
+  // Handle email form completion
   const handleEmailFormComplete = () => {
+    console.log("Email form completed, updating state");
     onEmailFormComplete(); // Call the handler from the hook
     setManualEmailCollection(false); // Also update our local state
   };
@@ -87,8 +88,21 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Debug loading states
+  useEffect(() => {
+    console.log("Loading states:", { 
+      userLoading, 
+      communityLoading, 
+      isProcessing,
+      showEmailForm,
+      processComplete,
+      manualEmailCollection,
+      telegramUser: telegramUser?.id || "none"
+    });
+  }, [userLoading, communityLoading, isProcessing, showEmailForm, processComplete, manualEmailCollection, telegramUser]);
+
   // Show loading screen while initial data is being fetched or user is being processed
-  if (userLoading || communityLoading || isProcessing) {
+  if (userLoading || communityLoading) {
     return <LoadingScreen />;
   }
 
@@ -101,20 +115,18 @@ const TelegramMiniApp = () => {
     return <CommunityNotFound errorMessage={`Error loading user data: ${userError}`} />;
   }
 
-  // Show email collection form if needed
-  if (manualEmailCollection || (showEmailForm && processComplete)) {
-    if (telegramUser?.id) {
-      console.log("Showing email collection form for user:", telegramUser.id);
-      return (
-        <EmailCollectionForm 
-          telegramUserId={telegramUser.id} 
-          onComplete={handleEmailFormComplete} 
-        />
-      );
-    }
+  // Show email collection form if needed - simplified condition to prevent loops
+  if ((manualEmailCollection || showEmailForm) && telegramUser?.id) {
+    console.log("Showing email collection form for user:", telegramUser.id);
+    return (
+      <EmailCollectionForm 
+        telegramUserId={telegramUser.id} 
+        onComplete={handleEmailFormComplete} 
+      />
+    );
   }
 
-  // Only show community page if email form shouldn't be shown or process is complete
+  // Show main content if all checks pass
   console.log("Showing community page for:", community.name);
   return (
     <ScrollArea className="h-[100vh] w-full">

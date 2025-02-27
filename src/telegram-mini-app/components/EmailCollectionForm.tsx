@@ -47,7 +47,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
         throw error;
       }
       
-      console.log('Email saved successfully');
+      console.log('Email saved successfully:', email);
       
       toast({
         title: "Email saved",

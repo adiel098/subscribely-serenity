@@ -29,15 +29,32 @@ const corsHeaders = {
 function extractInitData(initDataString: string): TelegramInitData {
   if (!initDataString) return {};
 
-  const params = new URLSearchParams(initDataString);
-  const user = params.get("user");
+  try {
+    const params = new URLSearchParams(initDataString);
+    const userParam = params.get("user");
+    let user: WebAppUser | undefined = undefined;
+    
+    if (userParam) {
+      try {
+        user = JSON.parse(decodeURIComponent(userParam));
+        console.log("Parsed user data:", user);
+      } catch (error) {
+        console.error("Error parsing user JSON:", error);
+      }
+    } else {
+      console.log("No user param found in initData");
+    }
 
-  return {
-    query_id: params.get("query_id") || undefined,
-    user: user ? JSON.parse(decodeURIComponent(user)) : undefined,
-    auth_date: params.get("auth_date") ? parseInt(params.get("auth_date")!) : undefined,
-    hash: params.get("hash") || undefined,
-  };
+    return {
+      query_id: params.get("query_id") || undefined,
+      user,
+      auth_date: params.get("auth_date") ? parseInt(params.get("auth_date")!) : undefined,
+      hash: params.get("hash") || undefined,
+    };
+  } catch (error) {
+    console.error("Error extracting init data:", error);
+    return {};
+  }
 }
 
 serve(async (req) => {
@@ -86,7 +103,7 @@ serve(async (req) => {
     }
 
     const { start, initData } = requestData;
-    console.log("Parsed request payload:", { start, initData });
+    console.log("Parsed request payload:", { start, initDataLength: initData ? initData.length : 0 });
 
     if (!start) {
       return new Response(
@@ -146,23 +163,33 @@ serve(async (req) => {
             .from("telegram_mini_app_users")
             .select("*")
             .eq("telegram_id", telegramUser.id)
-            .single();
+            .maybeSingle();
+
+          console.log("Existing user check:", existingUser);
 
           if (!existingUser) {
             // Create new user record
-            await supabase.from("telegram_mini_app_users").insert([
-              {
-                telegram_id: telegramUser.id,
-                first_name: telegramUser.first_name,
-                last_name: telegramUser.last_name,
-                username: telegramUser.username,
-                photo_url: telegramUser.photo_url,
-                community_id: start,
-              },
-            ]);
+            const { error: insertError } = await supabase
+              .from("telegram_mini_app_users")
+              .insert([
+                {
+                  telegram_id: telegramUser.id,
+                  first_name: telegramUser.first_name,
+                  last_name: telegramUser.last_name,
+                  username: telegramUser.username,
+                  photo_url: telegramUser.photo_url,
+                  community_id: start,
+                },
+              ]);
+            
+            if (insertError) {
+              console.error("Error creating user:", insertError);
+            } else {
+              console.log("Created new user in database");
+            }
           } else {
             // Update existing user with latest session info
-            await supabase
+            const { error: updateError } = await supabase
               .from("telegram_mini_app_users")
               .update({
                 first_name: telegramUser.first_name,
@@ -173,6 +200,12 @@ serve(async (req) => {
               })
               .eq("telegram_id", telegramUser.id);
               
+            if (updateError) {
+              console.error("Error updating user:", updateError);
+            } else {
+              console.log("Updated existing user in database");
+            }
+            
             // Include email in userData if available
             if (existingUser.email) {
               userData.email = existingUser.email;

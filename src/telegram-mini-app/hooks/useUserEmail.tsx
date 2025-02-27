@@ -11,13 +11,16 @@ interface UseUserEmailProps {
 
 export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) => {
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(true); // Start as true to show loading initially
   const { toast } = useToast();
 
   useEffect(() => {
     // Check if user exists and has email in the database when telegramUser changes
     if (telegramUser?.id) {
       checkUserExistsAndEmail(telegramUser, communityId);
+    } else {
+      // No user data, no processing needed
+      setIsProcessing(false);
     }
   }, [telegramUser, communityId]);
 
@@ -64,7 +67,7 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
         // New user has no email, so show the email form
         setShowEmailForm(true);
       } else {
-        console.log('User exists in database, checking email:', existingUser);
+        console.log('User exists in database:', existingUser);
         
         // Update user data if needed (e.g., new community_id, updated name)
         if (communityId && (!existingUser.community_id || existingUser.community_id !== communityId)) {
@@ -85,7 +88,13 @@ export const useUserEmail = ({ telegramUser, communityId }: UseUserEmailProps) =
         }
         
         // If user doesn't have an email, show the email collection form
-        setShowEmailForm(!existingUser.email);
+        if (!existingUser.email) {
+          console.log('User has no email, showing email form');
+          setShowEmailForm(true);
+        } else {
+          console.log('User already has email:', existingUser.email);
+          setShowEmailForm(false);
+        }
       }
     } catch (error) {
       console.error("Error in user check process:", error);

@@ -10,6 +10,7 @@ import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Info } from "lucide-react";
+import { checkUserExists } from "@/telegram-mini-app/services/memberService";
 
 // Initialize Telegram WebApp
 const initTelegramWebApp = () => {
@@ -49,6 +50,7 @@ const initTelegramWebApp = () => {
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isCheckingUserData, setIsCheckingUserData] = useState(true);
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
   const { toast } = useToast();
@@ -109,16 +111,30 @@ const TelegramMiniApp = () => {
   console.log('📌 User data:', telegramUser);
   console.log('📌 User error:', userError);
 
-  // Check if user needs email collection when user data is loaded
+  // Check if user exists in the database and has an email
   useEffect(() => {
-    if (!userLoading && telegramUser) {
-      console.log('✅ User data loaded, checking if email collection needed');
-      // If user doesn't have an email, show the email collection form
-      const needsEmail = !telegramUser.email;
-      console.log('📧 User has email:', Boolean(telegramUser.email));
-      console.log('📧 Need to collect email:', needsEmail);
-      setShowEmailForm(needsEmail);
-    }
+    const checkUserData = async () => {
+      if (!userLoading && telegramUser) {
+        console.log('✅ User data loaded, checking if user exists in database');
+        setIsCheckingUserData(true);
+        
+        try {
+          const { exists, hasEmail } = await checkUserExists(telegramUser.id);
+          console.log('📊 User exists:', exists, 'Has email:', hasEmail);
+          
+          // Only show email form if user doesn't have an email
+          setShowEmailForm(!hasEmail);
+        } catch (error) {
+          console.error('❌ Error checking user data:', error);
+          // If there's an error, fall back to checking if email exists in user object
+          setShowEmailForm(!telegramUser.email);
+        } finally {
+          setIsCheckingUserData(false);
+        }
+      }
+    };
+
+    checkUserData();
   }, [telegramUser, userLoading]);
 
   // Handle errors from user data fetching
@@ -139,7 +155,7 @@ const TelegramMiniApp = () => {
   };
 
   // Show loading screen while fetching data
-  if (communityLoading || userLoading) {
+  if (communityLoading || userLoading || isCheckingUserData) {
     console.log('⏳ Showing loading screen');
     return <LoadingScreen />;
   }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { collectUserEmail } from "@/telegram-mini-app/services/memberService";
 
 interface EmailCollectionFormProps {
   telegramUserId: string;
@@ -36,15 +36,11 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     try {
       console.log("Saving email for telegram user:", telegramUserId, email);
       
-      // Update the telegram_mini_app_users table with the email
-      const { error } = await supabase
-        .from('telegram_mini_app_users')
-        .update({ email })
-        .eq('telegram_id', telegramUserId);
+      // Use the collectUserEmail function from memberService
+      const success = await collectUserEmail(telegramUserId, email);
       
-      if (error) {
-        console.error("Error details:", error);
-        throw error;
+      if (!success) {
+        throw new Error("Failed to save email");
       }
       
       console.log("Email saved successfully for user:", telegramUserId);

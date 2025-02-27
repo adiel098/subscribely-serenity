@@ -110,6 +110,37 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
   }
 }
 
+export async function checkUserExists(telegramUserId: string): Promise<{exists: boolean, hasEmail: boolean}> {
+  console.log("Checking if user exists:", telegramUserId);
+
+  if (!telegramUserId) {
+    console.error("checkUserExists: No telegram user ID provided");
+    return { exists: false, hasEmail: false };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('telegram_mini_app_users')
+      .select('id, email')
+      .eq('telegram_id', telegramUserId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error checking user existence:", error);
+      throw new Error(error.message);
+    }
+
+    const exists = !!data;
+    const hasEmail = exists && !!data.email;
+    
+    console.log(`User ${telegramUserId} exists: ${exists}, has email: ${hasEmail}`);
+    return { exists, hasEmail };
+  } catch (error) {
+    console.error("Failed to check user existence:", error);
+    return { exists: false, hasEmail: false };
+  }
+}
+
 export async function collectUserEmail(telegramUserId: string, email: string): Promise<boolean> {
   console.log("Collecting email for user ID:", telegramUserId, "Email:", email);
 

@@ -1,8 +1,7 @@
 
 import React from "react";
 import { UserSubscriptions } from "@/telegram-mini-app/components/UserSubscriptions";
-import { Subscription } from "@/telegram-mini-app/services/memberService";
-import { Plan } from "@/telegram-mini-app/types/community.types";
+import { Subscription } from "@/telegram-mini-app/services/types/memberTypes";
 
 interface SubscriptionsTabContentProps {
   subscriptions: Subscription[];

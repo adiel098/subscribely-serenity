@@ -52,7 +52,7 @@ export const usePaymentProcessing = (
             community_id: selectedPlan.community_id,
             telegram_id: telegramUserId,
             subscription_plan_id: selectedPlan.id,
-            status: 'active',
+            status: 'active', // Using the literal string type
             payment_id: payment?.id
           });
           

@@ -75,7 +75,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
           telegram_id: telegramUserId,
           community_id: selectedPlan.community_id,
           subscription_plan_id: selectedPlan.id,
-          status: 'active'
+          status: 'active' as 'active', // Explicitly cast to the literal type
         };
 
         const memberResult = await createOrUpdateMember(memberData);

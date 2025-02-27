@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Community, Plan } from "@/telegram-mini-app/types/community.types";
 import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
 import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
-import { Header } from "@/telegram-mini-app/components/Header";
+import { Card, CardContent } from "@/components/ui/card";
 import { TelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 
 interface MainContentProps {
@@ -18,6 +19,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Log user info for debugging
   useEffect(() => {
     if (telegramUser) {
       console.log("👤 Telegram User Info in MainContent:", telegramUser);
@@ -25,6 +27,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
       console.log("⚠️ No Telegram user data available in MainContent");
     }
     
+    // If we're in Telegram, try to use BackButton
     if (window.Telegram?.WebApp?.BackButton) {
       if (selectedPlan) {
         window.Telegram.WebApp.BackButton.show();
@@ -47,6 +50,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const handleCompletePurchase = () => {
     setShowSuccess(true);
     
+    // If we're in Telegram, use haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
@@ -56,6 +60,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     setSelectedPlan(plan);
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
     
+    // If we're in Telegram, use haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.selectionChanged();
     }
@@ -63,10 +68,38 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
 
   return (
     <ScrollArea className="h-[100vh] w-full">
-      <Header telegramUser={telegramUser} />
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
         <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-12">
           <CommunityHeader community={community} />
+
+          {telegramUser && (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                  {telegramUser.photo_url ? (
+                    <img 
+                      src={telegramUser.photo_url} 
+                      alt={telegramUser.first_name} 
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-medium">
+                      {telegramUser.first_name} {telegramUser.last_name || ''}
+                      {telegramUser.username && <span className="text-sm text-muted-foreground ml-2">@{telegramUser.username}</span>}
+                    </h3>
+                    {telegramUser.email && (
+                      <p className="text-sm text-muted-foreground">{telegramUser.email}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <SubscriptionPlans
             plans={community.subscription_plans}

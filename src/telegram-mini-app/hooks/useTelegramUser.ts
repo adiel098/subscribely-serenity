@@ -160,7 +160,8 @@ export const useTelegramUser = (communityId: string) => {
               photo_url: userData.photo_url,
               community_id: communityId
             }, {
-              onConflict: 'telegram_id'
+              onConflict: 'telegram_id',
+              returning: 'representation'
             });
             
           if (saveError) {

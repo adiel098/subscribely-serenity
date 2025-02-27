@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Plan } from "@/telegram-mini-app/types/community.types";
@@ -13,8 +12,10 @@ export const usePaymentProcessing = (
   telegramUserId?: string
 ) => {
   const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentInviteLink, setPaymentInviteLink] = useState<string | null>(null);
+  const [state, setState] = useState<PaymentState>({
+    isProcessing: false,
+    paymentInviteLink: null,
+  });
 
   const handlePayment = async () => {
     if (!selectedPlan || !selectedPaymentMethod) {
@@ -27,7 +28,7 @@ export const usePaymentProcessing = (
     }
 
     try {
-      setIsProcessing(true);
+      setState(prev => ({ ...prev, isProcessing: true }));
 
       // Create invite link first
       const newInviteLink = await createInviteLink(selectedPlan.community_id);
@@ -52,7 +53,7 @@ export const usePaymentProcessing = (
             community_id: selectedPlan.community_id,
             telegram_id: telegramUserId,
             subscription_plan_id: selectedPlan.id,
-            status: 'active', // Using the literal string type
+            status: 'active',
             payment_id: payment?.id
           });
           
@@ -64,7 +65,7 @@ export const usePaymentProcessing = (
       }
 
       if (payment?.invite_link) {
-        setPaymentInviteLink(payment.invite_link);
+        setState(prev => ({ ...prev, paymentInviteLink: payment.invite_link }));
       }
 
       toast({
@@ -74,7 +75,7 @@ export const usePaymentProcessing = (
       
       onCompletePurchase();
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Payment error:', error);
       toast({
         variant: "destructive",
@@ -82,13 +83,12 @@ export const usePaymentProcessing = (
         description: error.message || "Please try again or contact support."
       });
     } finally {
-      setIsProcessing(false);
+      setState(prev => ({ ...prev, isProcessing: false }));
     }
   };
 
   return {
-    isProcessing,
-    paymentInviteLink,
+    ...state,
     handlePayment
   };
 };

@@ -17,8 +17,7 @@ const TelegramMiniApp = () => {
   const [isDevelopment, setIsDevelopment] = useState(false);
   const { toast } = useToast();
 
-  // Get parameters from URL
-  const initData = searchParams.get("initData");
+  // Get start parameter from URL
   const startParam = searchParams.get("start");
   
   // Check if we're in development mode
@@ -36,7 +35,6 @@ const TelegramMiniApp = () => {
   }, []);
   
   console.log('💫 TelegramMiniApp initialized with:');
-  console.log('📌 initData:', initData);
   console.log('📌 startParam:', startParam);
   
   // Log Telegram WebApp object if available
@@ -54,7 +52,7 @@ const TelegramMiniApp = () => {
   // Use our custom hooks to retrieve data
   const { loading: communityLoading, community } = useCommunityData(startParam);
   const { user: telegramUser, loading: userLoading, error: userError } = 
-    useTelegramUser(startParam || "", initData || undefined);
+    useTelegramUser(startParam || "");
     
   console.log('📡 Hook Results:');
   console.log('📌 Community loading:', communityLoading);

@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar, Clock, CheckCircle, XCircle, Zap, Crown, Trash } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, Zap, Crown, Trash, Users } from "lucide-react";
 import { cancelSubscription } from "../services/memberService";
 import {
   Card,
@@ -162,7 +162,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
                       )}
                     </div>
                   </div>
-                  <Badge variant={active ? "default" : "outline"} className="ml-2">
+                  <Badge variant={active ? "success" : "outline"} className="ml-2">
                     {active ? "Active" : "Expired"}
                   </Badge>
                 </div>

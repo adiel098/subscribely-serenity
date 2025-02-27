@@ -102,8 +102,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const handleSelectCommunity = (selectedCommunity: any) => {
     // In a real app, this would navigate to the community's page
     // For now, we'll just show a message
-    if (window.Telegram?.WebApp?.showAlert) {
-      window.Telegram.WebApp.showAlert(`Navigate to community: ${selectedCommunity.name}`);
+    if (window.Telegram?.WebApp) {
+      alert(`This would navigate to: ${selectedCommunity.name}`);
     } else {
       alert(`This would navigate to: ${selectedCommunity.name}`);
     }

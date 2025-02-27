@@ -59,6 +59,11 @@ const TelegramMiniApp = () => {
     const fetchCommunityData = async () => {
       try {
         console.log('Fetching community data with params:', { startParam, initData });
+        
+        if (!startParam) {
+          throw new Error("No start parameter provided");
+        }
+        
         const response = await supabase.functions.invoke("telegram-mini-app", {
           body: { 
             start: startParam,
@@ -67,6 +72,10 @@ const TelegramMiniApp = () => {
         });
 
         console.log('Response from telegram-mini-app:', response);
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
 
         if (response.data?.community) {
           setCommunity(response.data.community);
@@ -79,7 +88,8 @@ const TelegramMiniApp = () => {
               first_name: userData.first_name,
               last_name: userData.last_name,
               username: userData.username,
-              photo_url: userData.photo_url
+              photo_url: userData.photo_url,
+              email: userData.email
             });
             
             // Check if user has email in the database

@@ -43,7 +43,12 @@ export const useBotSettings = (communityId: string) => {
         throw error;
       }
 
-      return data as BotSettings;
+      // Handle the case where welcome_image might not exist in the database yet
+      // by providing a default value
+      return {
+        ...data,
+        welcome_image: data.welcome_image || null
+      } as BotSettings;
     },
     enabled: Boolean(communityId),
   });

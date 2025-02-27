@@ -10,6 +10,8 @@ interface TelegramWebApp {
       username?: string;
     };
   };
+  ready: () => void;
+  expand: () => void;
 }
 
 interface Window {

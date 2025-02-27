@@ -12,65 +12,105 @@ import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { useUserEmail } from "@/telegram-mini-app/hooks/useUserEmail";
 import { Plan } from "@/telegram-mini-app/types/app.types";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [manualEmailCollection, setManualEmailCollection] = useState(false);
+  const [manualTelegramUserId, setManualTelegramUserId] = useState<string | null>(null);
   const { toast } = useToast();
   
   const initData = searchParams.get("initData");
   const startParam = searchParams.get("start");
   
-  // Log params to debug the issue
+  // Get Telegram user data directly from WebApp object
   useEffect(() => {
-    console.log("TelegramMiniApp initialized with params:", { 
-      initData: initData ? `${initData.substring(0, 20)}...` : null, 
-      startParam 
-    });
+    console.log("Attempting to get Telegram WebApp data...");
     
-    // Try to get Telegram Web App data if running inside Telegram
     if (window.Telegram && window.Telegram.WebApp) {
-      console.log("Running inside Telegram WebApp");
-      console.log("WebApp data:", window.Telegram.WebApp.initDataUnsafe);
-      
-      // Set up Telegram WebApp
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
+      try {
+        console.log("Running inside Telegram WebApp");
+        
+        // Set up Telegram WebApp
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        
+        console.log("WebApp raw data:", window.Telegram.WebApp.initDataUnsafe);
+        
+        // Get user from WebApp
+        const webAppUser = window.Telegram.WebApp.initDataUnsafe.user;
+        if (webAppUser && webAppUser.id) {
+          const userId = String(webAppUser.id);
+          console.log("Successfully got user ID from WebApp:", userId);
+          
+          // Check if user exists and has email
+          checkUserEmail(userId);
+          
+          // Store ID for potential manual email collection
+          setManualTelegramUserId(userId);
+        } else {
+          console.log("No user data in WebApp object");
+        }
+      } catch (error) {
+        console.error("Error accessing WebApp data:", error);
+      }
     } else {
       console.log("Not running inside Telegram WebApp");
     }
-  }, [initData, startParam]);
+  }, []);
   
-  // Use our custom hooks to fetch data and manage state
+  // Check if user has email in database
+  const checkUserEmail = async (telegramUserId: string) => {
+    try {
+      console.log("Checking if user exists:", telegramUserId);
+      
+      const { data: existingUser, error } = await supabase
+        .from('telegram_mini_app_users')
+        .select('email')
+        .eq('telegram_id', telegramUserId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error checking user:", error);
+        return;
+      }
+      
+      if (!existingUser || !existingUser.email) {
+        console.log("User needs to provide email");
+        setManualEmailCollection(true);
+      } else {
+        console.log("User already has email:", existingUser.email);
+        setManualEmailCollection(false);
+      }
+    } catch (error) {
+      console.error("Error in checkUserEmail:", error);
+    }
+  };
+  
+  // Handle email form completion
+  const handleEmailFormComplete = () => {
+    setManualEmailCollection(false);
+  };
+  
+  // Use our custom hook to fetch community data
   const { loading, community, telegramUser, error } = useCommunityData({ startParam, initData });
   
-  // Log user data to see if it's being retrieved correctly
-  useEffect(() => {
-    console.log("Telegram user data:", telegramUser);
-    console.log("Community data:", community);
-  }, [telegramUser, community]);
-  
+  // Use email hook for backward compatibility
   const { 
-    showEmailForm, 
+    showEmailForm: hookShowEmailForm, 
     isProcessing, 
     processComplete,
-    handleEmailFormComplete 
+    handleEmailFormComplete: hookHandleEmailFormComplete
   } = useUserEmail({ 
     telegramUser, 
     communityId: community?.id 
   });
   
-  // Log the email form state
-  useEffect(() => {
-    console.log("Email form state:", { 
-      showEmailForm, 
-      isProcessing, 
-      processComplete,
-      telegramUserId: telegramUser?.id
-    });
-  }, [showEmailForm, isProcessing, processComplete, telegramUser]);
+  // Combine the direct WebApp approach with the hook approach
+  const showEmailForm = manualEmailCollection || (hookShowEmailForm && processComplete);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -96,15 +136,20 @@ const TelegramMiniApp = () => {
     return <CommunityNotFound errorMessage={error || "Community not found"} />;
   }
 
-  // Show email collection form if needed and user data is available
-  if (showEmailForm && telegramUser && processComplete) {
-    console.log("Showing email collection form for user:", telegramUser.id);
-    return (
-      <EmailCollectionForm 
-        telegramUserId={telegramUser.id} 
-        onComplete={handleEmailFormComplete} 
-      />
-    );
+  // Show email collection form if needed
+  if (showEmailForm) {
+    // Use either the WebApp user ID or the one from the hook
+    const emailUserId = manualTelegramUserId || (telegramUser && telegramUser.id);
+    
+    if (emailUserId) {
+      console.log("Showing email collection form for user:", emailUserId);
+      return (
+        <EmailCollectionForm 
+          telegramUserId={emailUserId} 
+          onComplete={handleEmailFormComplete} 
+        />
+      );
+    }
   }
 
   // Only show community page if email form shouldn't be shown or process is complete

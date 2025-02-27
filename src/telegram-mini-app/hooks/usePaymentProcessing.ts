@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Plan } from "../types/app.types";
+import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
 import { PaymentState } from "../types/payment.types";
 import { createOrUpdateMember } from "../services/memberService";
 import { createPayment, createInviteLink } from "../services/paymentService";
@@ -72,3 +72,4 @@ export const usePaymentProcessing = (
     handlePayment,
   };
 };
+

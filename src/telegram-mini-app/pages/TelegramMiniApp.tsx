@@ -1,78 +1,81 @@
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
 import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
+import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
 import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
-import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollectionForm";
-import { PlanSelectionSection } from "@/telegram-mini-app/components/PlanSelectionSection";
-import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
-import { useUserEmail } from "@/telegram-mini-app/hooks/useUserEmail";
-import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
-import { Plan } from "@/telegram-mini-app/types/app.types";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { MainContent } from "@/telegram-mini-app/components/MainContent";
-import { useEmailVerification } from "@/telegram-mini-app/hooks/useEmailVerification";
+
+export interface Plan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  interval: string;
+  features: string[];
+  community_id: string;
+}
+
+export interface Community {
+  id: string;
+  name: string;
+  description: string | null;
+  telegram_photo_url: string | null;
+  telegram_invite_link: string | null;
+  subscription_plans: Plan[];
+}
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [community, setCommunity] = useState<Community | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
-  
-  const initData = searchParams.get("initData");
-  const startParam = searchParams.get("start");
-  
-  // Use our new hook to get Telegram user data
-  const { 
-    loading: userLoading, 
-    telegramUser, 
-    error: userError 
-  } = useTelegramUser({ 
-    initData, 
-    startParam 
-  });
-  
-  // Use our custom hook to fetch community data
-  const { 
-    loading: communityLoading, 
-    community, 
-    error: communityError 
-  } = useCommunityData({ 
-    startParam, 
-    initData 
-  });
-  
-  // Use email hook for handling email collection
-  const { 
-    showEmailForm, 
-    isProcessing, 
-    processComplete,
-    handleEmailFormComplete: onEmailFormComplete
-  } = useUserEmail({ 
-    telegramUser, 
-    communityId: community?.id 
-  });
-  
-  // Use our extracted hook for email verification
-  const { 
-    manualEmailCollection, 
-    setManualEmailCollection 
-  } = useEmailVerification({
-    telegramUser,
-    toast
-  });
 
-  // Handle email form completion
-  const handleEmailFormComplete = () => {
-    console.log("Email form completed, updating state");
-    onEmailFormComplete(); // Call the handler from the hook
-    setManualEmailCollection(false); // Also update our local state
-  };
+  useEffect(() => {
+    const initData = searchParams.get("initData");
+    const startParam = searchParams.get("start");
+
+    const fetchCommunityData = async () => {
+      try {
+        console.log('Fetching community data with params:', { startParam, initData });
+        const response = await supabase.functions.invoke("telegram-mini-app", {
+          body: { 
+            start: startParam,
+            initData 
+          }
+        });
+
+        console.log('Response from telegram-mini-app:', response);
+
+        if (response.data?.community) {
+          setCommunity(response.data.community);
+        }
+      } catch (error) {
+        console.error("Error fetching community data:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load community data. Please try again."
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (startParam) {
+      fetchCommunityData();
+    } else {
+      console.error("No start parameter provided");
+      setLoading(false);
+    }
+  }, [searchParams, toast]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -81,6 +84,11 @@ const TelegramMiniApp = () => {
 
   const handleCompletePurchase = () => {
     setShowSuccess(true);
+    toast({
+      title: "Payment Successful! ",
+      description: "You can now access the community.",
+      duration: 5000,
+    });
   };
 
   const handlePlanSelect = (plan: Plan) => {
@@ -88,57 +96,44 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Debug loading states
-  useEffect(() => {
-    console.log("Loading states:", { 
-      userLoading, 
-      communityLoading, 
-      isProcessing,
-      showEmailForm,
-      processComplete,
-      manualEmailCollection,
-      telegramUser: telegramUser?.id || "none"
-    });
-  }, [userLoading, communityLoading, isProcessing, showEmailForm, processComplete, manualEmailCollection, telegramUser]);
-
-  // Show loading screen while initial data is being fetched or user is being processed
-  if (userLoading || communityLoading) {
+  if (loading) {
     return <LoadingScreen />;
   }
 
-  // Show error if community not found or user data error
-  if (communityError || !community) {
-    return <CommunityNotFound errorMessage={communityError || "Community not found"} />;
-  }
-  
-  if (userError) {
-    return <CommunityNotFound errorMessage={`Error loading user data: ${userError}`} />;
+  if (!community) {
+    return <CommunityNotFound />;
   }
 
-  // Show email collection form if needed - simplified condition to prevent loops
-  if ((manualEmailCollection || showEmailForm) && telegramUser?.id) {
-    console.log("Showing email collection form for user:", telegramUser.id);
-    return (
-      <EmailCollectionForm 
-        telegramUserId={telegramUser.id} 
-        onComplete={handleEmailFormComplete} 
-      />
-    );
-  }
-
-  // Show main content if all checks pass
-  console.log("Showing community page for:", community.name);
   return (
     <ScrollArea className="h-[100vh] w-full">
-      <MainContent
-        community={community}
-        selectedPlan={selectedPlan}
-        onPlanSelect={handlePlanSelect}
-        selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={handlePaymentMethodSelect}
-        onCompletePurchase={handleCompletePurchase}
-        showSuccess={showSuccess}
-      />
+      <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
+        <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-12">
+          <CommunityHeader community={community} />
+
+          <SubscriptionPlans
+            plans={community.subscription_plans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={handlePlanSelect}
+          />
+
+          {selectedPlan && (
+            <PaymentMethods
+              selectedPlan={selectedPlan}
+              selectedPaymentMethod={selectedPaymentMethod}
+              onPaymentMethodSelect={handlePaymentMethodSelect}
+              onCompletePurchase={handleCompletePurchase}
+              communityInviteLink={community.telegram_invite_link}
+              showSuccess={showSuccess}
+            />
+          )}
+
+          {!selectedPlan && (
+            <div className="flex justify-center py-8 animate-bounce">
+              <ChevronDown className="h-6 w-6 text-primary/50" />
+            </div>
+          )}
+        </div>
+      </div>
     </ScrollArea>
   );
 };

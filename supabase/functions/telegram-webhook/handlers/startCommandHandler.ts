@@ -52,6 +52,7 @@ export async function handleStartCommand(
 
     console.log('[Start] Sending welcome message to:', message.from.id);
     console.log('[Start] Message content:', welcomeMessage);
+    console.log('[Start] Welcome image:', botSettings.welcome_image ? 'Present' : 'Not present');
 
     let messageSuccess = false;
 

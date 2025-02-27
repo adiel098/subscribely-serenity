@@ -11,14 +11,57 @@ import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Info } from "lucide-react";
 
+// Initialize Telegram WebApp
+const initTelegramWebApp = () => {
+  try {
+    if (window.Telegram?.WebApp) {
+      console.log('📱 WebApp is already initialized');
+      
+      // Set the correct viewport
+      if (window.Telegram.WebApp.setViewport) {
+        console.log('📏 Setting viewport');
+        window.Telegram.WebApp.setViewport();
+      }
+      
+      // Expand the WebApp to maximum available height
+      if (window.Telegram.WebApp.expand) {
+        console.log('📏 Expanding WebApp');
+        window.Telegram.WebApp.expand();
+      }
+      
+      // Mark as ready
+      if (window.Telegram.WebApp.ready) {
+        console.log('🚀 Marking WebApp as ready');
+        window.Telegram.WebApp.ready();
+      }
+      
+      return true;
+    } else {
+      console.log('❌ WebApp object is not available');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error initializing Telegram WebApp:', error);
+    return false;
+  }
+};
+
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isDevelopment, setIsDevelopment] = useState(false);
+  const [telegramInitialized, setTelegramInitialized] = useState(false);
   const { toast } = useToast();
 
   // Get start parameter from URL
   const startParam = searchParams.get("start");
+  
+  // Initialize Telegram WebApp
+  useEffect(() => {
+    const initialized = initTelegramWebApp();
+    setTelegramInitialized(initialized);
+    console.log('📱 Telegram WebApp initialized:', initialized);
+  }, []);
   
   // Check if we're in development mode
   useEffect(() => {
@@ -36,11 +79,13 @@ const TelegramMiniApp = () => {
   
   console.log('💫 TelegramMiniApp initialized with:');
   console.log('📌 startParam:', startParam);
+  console.log('📌 URL:', window.location.href);
   
   // Log Telegram WebApp object if available
   if (window.Telegram?.WebApp) {
     console.log('📱 Telegram WebApp object is available:');
     console.log('📌 Full WebApp object:', window.Telegram.WebApp);
+    console.log('📌 initData:', window.Telegram.WebApp.initData);
     console.log('📌 initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
     if (window.Telegram.WebApp.initDataUnsafe?.user) {
       console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);

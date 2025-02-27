@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ChevronDown, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,11 +22,25 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   // Log user info for debugging
   useEffect(() => {
     if (telegramUser) {
-      console.log("Telegram User Info:", telegramUser);
+      console.log("👤 Telegram User Info in MainContent:", telegramUser);
     } else {
-      console.log("No Telegram user data available");
+      console.log("⚠️ No Telegram user data available in MainContent");
     }
-  }, [telegramUser]);
+    
+    // If we're in Telegram, try to use BackButton
+    if (window.Telegram?.WebApp?.BackButton) {
+      if (selectedPlan) {
+        window.Telegram.WebApp.BackButton.show();
+        window.Telegram.WebApp.BackButton.onClick(() => {
+          setSelectedPlan(null);
+          setShowSuccess(false);
+          window.Telegram.WebApp.BackButton.hide();
+        });
+      } else {
+        window.Telegram.WebApp.BackButton.hide();
+      }
+    }
+  }, [telegramUser, selectedPlan]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -34,11 +49,21 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
 
   const handleCompletePurchase = () => {
     setShowSuccess(true);
+    
+    // If we're in Telegram, use haptic feedback
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
   };
 
   const handlePlanSelect = (plan: Plan) => {
     setSelectedPlan(plan);
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
+    
+    // If we're in Telegram, use haptic feedback
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
   };
 
   return (

@@ -18,6 +18,10 @@ export interface TelegramUser {
 const getWebAppData = (): TelegramUser | null => {
   try {
     console.log('🔍 Attempting to get WebApp data from window.Telegram...');
+    console.log('📊 window.Telegram exists:', Boolean(window.Telegram));
+    console.log('📊 window.Telegram.WebApp exists:', Boolean(window.Telegram?.WebApp));
+    console.log('📊 initDataUnsafe exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe));
+    console.log('📊 user exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user));
     
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -31,6 +35,30 @@ const getWebAppData = (): TelegramUser | null => {
         // Note: photo_url is not available in WebApp data
       };
     }
+
+    // If we have initData but no user, try parsing the initData
+    if (window.Telegram?.WebApp?.initData && !window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      console.log('🔄 Trying to manually parse initData:', window.Telegram.WebApp.initData);
+      try {
+        // initData is a URLEncoded string with key=value pairs
+        const data = new URLSearchParams(window.Telegram.WebApp.initData);
+        const userStr = data.get('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          console.log('✅ Successfully parsed user data from initData:', user);
+          
+          return {
+            id: user.id?.toString() || "",
+            first_name: user.first_name,
+            last_name: user.last_name,
+            username: user.username
+          };
+        }
+      } catch (parseError) {
+        console.error('❌ Error parsing initData:', parseError);
+      }
+    }
+    
     console.log('❌ WebApp data not available in window.Telegram');
     return null;
   } catch (error) {
@@ -71,9 +99,21 @@ export const useTelegramUser = (communityId: string) => {
       try {
         console.log('🚀 Starting user data fetch process...');
         console.log('📌 Community ID:', communityId);
+        console.log('📌 Current URL:', window.location.href);
         
         setLoading(true);
         setError(null);
+        
+        // Try to force Telegram Web App initialization if needed
+        if (window.Telegram && !window.Telegram.WebApp) {
+          console.log('⚠️ Telegram object exists but WebApp is not initialized. Trying to initialize...');
+          try {
+            // @ts-ignore - Attempting to access the Telegram object directly
+            window.Telegram.WebApp = window.Telegram.WebApp || {};
+          } catch (initError) {
+            console.error('❌ Failed to initialize WebApp:', initError);
+          }
+        }
         
         // Strategy 1: Try to get data from Telegram WebApp
         console.log('🔍 Attempting to get data from Telegram WebApp...');
@@ -150,6 +190,32 @@ export const useTelegramUser = (communityId: string) => {
           
           setUser(userData);
         } else {
+          // Check if there's initData in the URL hash (Telegram mini apps sometimes put it there)
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const initData = hashParams.get('tgWebAppData');
+          
+          if (initData) {
+            console.log('🔍 Found initData in URL hash:', initData);
+            try {
+              const data = new URLSearchParams(initData);
+              const userStr = data.get('user');
+              if (userStr) {
+                const parsedUser = JSON.parse(userStr);
+                console.log('✅ Successfully parsed user data from hash:', parsedUser);
+                userData = {
+                  id: parsedUser.id?.toString() || "",
+                  first_name: parsedUser.first_name,
+                  last_name: parsedUser.last_name,
+                  username: parsedUser.username
+                };
+                setUser(userData);
+                return;
+              }
+            } catch (parseError) {
+              console.error('❌ Error parsing initData from hash:', parseError);
+            }
+          }
+          
           // Development mode fallback
           if (isDevMode) {
             console.log('🔍 Development environment detected, using mock user data');

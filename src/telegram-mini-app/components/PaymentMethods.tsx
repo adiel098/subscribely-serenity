@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./SuccessScreen";
 import { useStripeConfig } from "../hooks/useStripeConfig";
 import { usePaymentProcessing } from "../hooks/usePaymentProcessing";

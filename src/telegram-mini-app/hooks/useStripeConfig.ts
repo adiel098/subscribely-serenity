@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Plan } from "@/telegram-mini-app/types/community.types";
 
 export const useStripeConfig = (selectedPlan: Plan) => {
   const [stripeConfig, setStripeConfig] = useState<any>(null);

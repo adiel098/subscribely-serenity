@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./SuccessScreen";
@@ -30,15 +31,22 @@ export const PaymentMethods = ({
   telegramUserId
 }: PaymentMethodsProps) => {
   const stripeConfig = useStripeConfig(selectedPlan);
-  const { isProcessing, paymentInviteLink, handlePayment } = usePaymentProcessing(
-    selectedPlan,
-    selectedPaymentMethod,
-    onCompletePurchase,
-    telegramUserId
-  );
+  const { processPayment, isLoading, isSuccess, error, resetState } = usePaymentProcessing({
+    communityId: selectedPlan.community_id,
+    planId: selectedPlan.id,
+    communityInviteLink,
+    telegramUserId,
+    onSuccess: onCompletePurchase
+  });
+
+  const handlePayment = () => {
+    if (selectedPaymentMethod) {
+      processPayment(selectedPaymentMethod);
+    }
+  };
 
   if (showSuccess) {
-    return <SuccessScreen communityInviteLink={paymentInviteLink || communityInviteLink} />;
+    return <SuccessScreen communityInviteLink={communityInviteLink} />;
   }
 
   return (
@@ -54,7 +62,7 @@ export const PaymentMethods = ({
       {selectedPaymentMethod && (
         <PaymentButton
           price={selectedPlan.price}
-          isProcessing={isProcessing}
+          isProcessing={isLoading}
           onClick={handlePayment}
         />
       )}

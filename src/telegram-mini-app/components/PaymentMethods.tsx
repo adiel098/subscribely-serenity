@@ -7,6 +7,8 @@ import { usePaymentProcessing } from "../hooks/usePaymentProcessing";
 import { PaymentHeader } from "./payment/PaymentHeader";
 import { PaymentOptions } from "./payment/PaymentOptions";
 import { PaymentButton } from "./payment/PaymentButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // For development, set this to true to bypass real payment processing
 const TEST_MODE = true;
@@ -28,7 +30,7 @@ export const PaymentMethods = ({
   communityInviteLink,
   showSuccess
 }: PaymentMethodsProps) => {
-  const stripeConfig = useStripeConfig(selectedPlan);
+  const { stripeConfig, isLoading, error } = useStripeConfig(selectedPlan);
   const { isProcessing, paymentInviteLink, handlePayment } = usePaymentProcessing(
     selectedPlan,
     selectedPaymentMethod,
@@ -43,10 +45,20 @@ export const PaymentMethods = ({
     <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
       <PaymentHeader />
       
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <PaymentOptions
         selectedPaymentMethod={selectedPaymentMethod}
         onPaymentMethodSelect={onPaymentMethodSelect}
         stripeConfig={stripeConfig}
+        isLoading={isLoading}
       />
 
       {selectedPaymentMethod && (

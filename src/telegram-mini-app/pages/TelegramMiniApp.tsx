@@ -9,7 +9,7 @@ import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ExclamationTriangleIcon } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -119,7 +119,7 @@ const TelegramMiniApp = () => {
     <>
       {isDevelopment && !window.Telegram?.WebApp && (
         <Alert variant="destructive" className="mb-4 mx-4 mt-4">
-          <ExclamationTriangleIcon className="h-4 w-4" />
+          <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Development Mode</AlertTitle>
           <AlertDescription>
             Running outside of Telegram environment. Using mock data for development.

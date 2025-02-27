@@ -1,19 +1,16 @@
 
 import React, { useState, useEffect } from "react";
-import { ChevronDown, User, UserPlus, Search, LayoutGrid } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Community, Plan } from "@/telegram-mini-app/types/community.types";
 import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
-import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
-import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
-import { Card, CardContent } from "@/components/ui/card";
 import { TelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserSubscriptions } from "@/telegram-mini-app/components/UserSubscriptions";
-import { CommunitySearch } from "@/telegram-mini-app/components/CommunitySearch";
+import { TabsContent } from "@/components/ui/tabs";
 import { useUserSubscriptions } from "@/telegram-mini-app/hooks/useUserSubscriptions";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserInfoCard } from "@/telegram-mini-app/components/UserInfoCard";
+import { TabNavigation } from "@/telegram-mini-app/components/TabNavigation";
+import { SubscribeTabContent } from "@/telegram-mini-app/components/SubscribeTabContent";
+import { SubscriptionsTabContent } from "@/telegram-mini-app/components/SubscriptionsTabContent";
+import { DiscoverTabContent } from "@/telegram-mini-app/components/DiscoverTabContent";
 
 interface MainContentProps {
   community: Community;
@@ -114,123 +111,40 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
         <div className="container max-w-2xl mx-auto pt-4 px-4 space-y-6">
-          {/* User information card - moved to top */}
-          {telegramUser && (
-            <Card className="bg-gradient-to-r from-indigo-100 to-purple-100 border-none shadow-md rounded-xl overflow-hidden">
-              <CardContent className="p-3">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0 relative">
-                    {telegramUser.photo_url ? (
-                      <Avatar className="h-10 w-10 ring-2 ring-white">
-                        <AvatarImage 
-                          src={telegramUser.photo_url} 
-                          alt={telegramUser.first_name} 
-                          className="object-cover"
-                        />
-                      </Avatar>
-                    ) : (
-                      <Avatar className="h-10 w-10 bg-primary/20">
-                        <User className="h-5 w-5 text-primary" />
-                      </Avatar>
-                    )}
-                    
-                    {/* Community avatar overlay */}
-                    {community.telegram_photo_url && (
-                      <div className="absolute -bottom-1 -right-1">
-                        <Avatar className="h-6 w-6 ring-1 ring-white">
-                          <AvatarImage 
-                            src={community.telegram_photo_url} 
-                            alt={community.name}
-                            className="object-cover" 
-                          />
-                          <AvatarFallback className="text-[8px] bg-primary/20">
-                            {community.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-800 truncate">
-                      {telegramUser.first_name} {telegramUser.last_name || ''}
-                      {telegramUser.username && (
-                        <span className="text-xs text-indigo-600 ml-1">@{telegramUser.username}</span>
-                      )}
-                    </h3>
-                    {telegramUser.email && (
-                      <p className="text-xs text-gray-600 truncate">{telegramUser.email}</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* User information card */}
+          <UserInfoCard telegramUser={telegramUser} community={community} />
 
           <CommunityHeader community={community} />
 
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6 bg-primary/5">
-              <TabsTrigger value="subscribe" className="flex items-center gap-1.5">
-                <UserPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Subscribe</span>
-              </TabsTrigger>
-              <TabsTrigger value="mySubscriptions" className="flex items-center gap-1.5">
-                <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">My Memberships</span>
-              </TabsTrigger>
-              <TabsTrigger value="discover" className="flex items-center gap-1.5">
-                <Search className="h-4 w-4" />
-                <span className="hidden sm:inline">Discover</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="subscribe" className="space-y-8 mt-0">
-              <div id="subscription-plans" className="scroll-mt-4">
-                <SubscriptionPlans
-                  plans={community.subscription_plans}
-                  selectedPlan={selectedPlan}
-                  onPlanSelect={handlePlanSelect}
-                />
-              </div>
-
-              {selectedPlan && (
-                <div id="payment-methods" className="scroll-mt-4">
-                  <PaymentMethods
-                    selectedPlan={selectedPlan}
-                    selectedPaymentMethod={selectedPaymentMethod}
-                    onPaymentMethodSelect={handlePaymentMethodSelect}
-                    onCompletePurchase={handleCompletePurchase}
-                    communityInviteLink={community.telegram_invite_link}
-                    showSuccess={showSuccess}
-                    telegramUserId={telegramUser?.id}
-                  />
-                </div>
-              )}
-
-              {!selectedPlan && (
-                <div className="flex justify-center py-8 animate-bounce">
-                  <ChevronDown className="h-6 w-6 text-primary/50" />
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="mySubscriptions" className="mt-0">
-              <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
-                <UserSubscriptions 
-                  subscriptions={subscriptions} 
-                  onRefresh={refreshSubscriptions}
-                  onRenew={handleRenewSubscription}
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="discover" className="mt-0">
-              <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
-                <CommunitySearch onSelectCommunity={handleSelectCommunity} />
-              </div>
-            </TabsContent>
-          </Tabs>
+          {/* Tab Navigation */}
+          <TabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+          
+          {/* Tab Content */}
+          <TabsContent value="subscribe" className="mt-0">
+            <SubscribeTabContent 
+              communityInviteLink={community.telegram_invite_link}
+              plans={community.subscription_plans}
+              selectedPlan={selectedPlan}
+              onPlanSelect={handlePlanSelect}
+              selectedPaymentMethod={selectedPaymentMethod}
+              onPaymentMethodSelect={handlePaymentMethodSelect}
+              showSuccess={showSuccess}
+              onCompletePurchase={handleCompletePurchase}
+              telegramUserId={telegramUser?.id}
+            />
+          </TabsContent>
+          
+          <TabsContent value="mySubscriptions" className="mt-0">
+            <SubscriptionsTabContent 
+              subscriptions={subscriptions}
+              onRefresh={refreshSubscriptions}
+              onRenew={handleRenewSubscription}
+            />
+          </TabsContent>
+          
+          <TabsContent value="discover" className="mt-0">
+            <DiscoverTabContent onSelectCommunity={handleSelectCommunity} />
+          </TabsContent>
           
           <div className="pb-10"></div>
         </div>

@@ -33,7 +33,6 @@ export const saveUserData = async (userData: TelegramUserData, communityId: stri
         last_active: new Date().toISOString()
       }, {
         onConflict: 'telegram_id',
-        returning: 'minimal'
       });
     
     if (error) {
@@ -57,9 +56,9 @@ export const getUserByTelegramId = async (telegramId: string) => {
       .from('telegram_mini_app_users')
       .select('*')
       .eq('telegram_id', telegramId)
-      .single();
+      .maybeSingle();
       
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+    if (error) {
       console.error('Error fetching user data:', error);
       throw error;
     }

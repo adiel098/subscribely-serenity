@@ -1,21 +1,67 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Sparkles } from "lucide-react";
-import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Plan } from "@/telegram-mini-app/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SubscriptionPlansProps {
-  plans: Plan[];
-  selectedPlan: Plan | null;
-  onPlanSelect: (plan: Plan) => void;
+  communityId: string;
+  userId?: string;
+  onPlanSelect?: (plan: Plan) => void;
 }
 
-
 export const SubscriptionPlans = ({
-  plans,
-  selectedPlan,
+  communityId,
+  userId,
   onPlanSelect
 }: SubscriptionPlansProps) => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('community_id', communityId)
+          .eq('is_active', true);
+
+        if (error) {
+          console.error('Error fetching plans:', error);
+          return;
+        }
+
+        setPlans(data || []);
+      } catch (error) {
+        console.error('Exception in fetchPlans:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (communityId) {
+      fetchPlans();
+    }
+  }, [communityId]);
+
+  const handlePlanSelect = (plan: Plan) => {
+    setSelectedPlan(plan);
+    if (onPlanSelect) {
+      onPlanSelect(plan);
+    }
+  };
+
+  if (loading) {
+    return <div className="py-8 text-center">Loading available plans...</div>;
+  }
+
+  if (plans.length === 0) {
+    return <div className="py-8 text-center">No subscription plans available.</div>;
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
@@ -36,7 +82,7 @@ export const SubscriptionPlans = ({
                 ? 'border-primary shadow-xl bg-primary/5'
                 : 'border-gray-200 hover:border-primary/50 hover:shadow-lg'
             }`}
-            onClick={() => onPlanSelect(plan)}
+            onClick={() => handlePlanSelect(plan)}
           >
             <div className="flex justify-between items-start">
               <div className="space-y-2">

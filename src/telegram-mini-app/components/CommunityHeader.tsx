@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown } from "lucide-react";
-import { Community } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Community } from "@/telegram-mini-app/types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface CommunityHeaderProps {

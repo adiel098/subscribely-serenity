@@ -9,34 +9,12 @@ import { CommunityNotFound } from "../components/CommunityNotFound";
 import { saveUserData, TelegramUserData, getUserSubscription } from "../services/userService";
 import { SuccessScreen } from "../components/SuccessScreen";
 import { UserDashboard } from "../components/UserDashboard";
+import { Community, TelegramWebApp } from "../types";
 
 declare global {
   interface Window {
     Telegram?: {
-      WebApp?: {
-        initData: string;
-        initDataUnsafe: {
-          user?: {
-            id: number;
-            username?: string;
-            first_name?: string;
-            last_name?: string;
-            photo_url?: string;
-          };
-          start_param?: string;
-        };
-        MainButton: {
-          text: string;
-          isVisible: boolean;
-          onClick: (callback: () => void) => void;
-          show: () => void;
-          hide: () => void;
-          setParams: (params: { text: string; color: string; }) => void;
-        };
-        ready: () => void;
-        expand: () => void;
-        close: () => void;
-      };
+      WebApp?: TelegramWebApp;
     };
   }
 }
@@ -44,7 +22,7 @@ declare global {
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const [community, setCommunity] = useState<any>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
   const [userData, setUserData] = useState<TelegramUserData | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);

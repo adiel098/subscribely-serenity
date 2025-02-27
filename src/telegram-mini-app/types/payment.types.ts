@@ -1,26 +1,37 @@
 
-import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { Plan } from "@/telegram-mini-app/types";
 
-export interface PaymentState {
-  isProcessing: boolean;
-  paymentInviteLink: string | null;
+export interface PaymentConfig {
+  stripePublicKey?: string;
+  merchantId?: string;
+  environment?: 'test' | 'production';
 }
 
-export interface CreateMemberData {
-  telegramUserId: string;
-  communityId: string;
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  icon: string;
+  description?: string;
+  isAvailable: boolean;
+}
+
+export interface PaymentResponse {
+  success: boolean;
+  transactionId?: string;
+  errorMessage?: string;
+  redirectUrl?: string;
+  inviteLink?: string;
+}
+
+export interface CreatePaymentIntent {
   planId: string;
-  subscriptionStartDate: Date;
-  subscriptionEndDate: Date;
+  userId: string;
+  paymentMethod: string;
 }
 
-export interface PaymentData {
-  plan_id: string;
-  community_id: string;
+export interface PaymentIntent {
+  id: string;
   amount: number;
-  payment_method: string;
+  clientSecret: string;
   status: string;
-  invite_link: string;
-  telegram_user_id?: string; // Made optional
 }
-

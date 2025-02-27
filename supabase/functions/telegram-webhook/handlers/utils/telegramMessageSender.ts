@@ -33,22 +33,18 @@ export async function sendPhotoMessage(
       const matches = photoData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
       
       if (!matches || matches.length !== 3) {
-        console.error('[TelegramSender] Invalid Base64 image format');
+        console.error('[TelegramSender] Invalid Base64 image format, falling back to text message');
         return await sendTextMessage(botToken, chatId, caption, miniAppUrl, communityId);
       }
       
       const base64Data = matches[2];
-      const contentType = matches[1];
       
-      // Create form data for the multipart request
-      const formData = new FormData();
-      
-      // Create a Blob from the base64 data
+      // Create a binary blob for the multipart request
       const byteCharacters = atob(base64Data);
       const byteArrays = [];
       
-      for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-        const slice = byteCharacters.slice(offset, offset + 1024);
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
         
         const byteNumbers = new Array(slice.length);
         for (let i = 0; i < slice.length; i++) {
@@ -59,11 +55,12 @@ export async function sendPhotoMessage(
         byteArrays.push(byteArray);
       }
       
-      const blob = new Blob(byteArrays, { type: contentType });
+      const blob = new Blob(byteArrays, { type: 'image/jpeg' });
       
-      // Append the photo as a file
-      formData.append('photo', blob, 'welcome_image.jpg');
+      // Create form data for the multipart request
+      const formData = new FormData();
       formData.append('chat_id', chatId.toString());
+      formData.append('photo', blob, 'welcome_image.jpg');
       formData.append('caption', caption);
       formData.append('parse_mode', 'HTML');
       formData.append('reply_markup', JSON.stringify(inlineKeyboard));

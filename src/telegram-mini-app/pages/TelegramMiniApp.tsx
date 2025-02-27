@@ -21,124 +21,140 @@ const TelegramMiniApp = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [manualEmailCollection, setManualEmailCollection] = useState(false);
   const [manualTelegramUserId, setManualTelegramUserId] = useState<string | null>(null);
+  const [webAppReady, setWebAppReady] = useState(false);
   const telegramInitialized = useRef(false);
   const { toast } = useToast();
   
   const initData = searchParams.get("initData");
   const startParam = searchParams.get("start");
   
-  // Extract Telegram WebApp data
+  // Check if Telegram WebApp script has loaded
   useEffect(() => {
+    // Create a script loading detector if the WebApp isn't already available
+    if (!window.Telegram?.WebApp) {
+      console.log("Telegram WebApp script not found, checking if it's loading...");
+      
+      const checkWebAppLoaded = () => {
+        if (window.Telegram?.WebApp) {
+          console.log("Telegram WebApp script loaded!");
+          setWebAppReady(true);
+          clearInterval(checkInterval);
+        }
+      };
+      
+      // Check immediately and then periodically
+      checkWebAppLoaded();
+      const checkInterval = setInterval(checkWebAppLoaded, 100);
+      
+      // Clean up interval on unmount
+      return () => clearInterval(checkInterval);
+    } else {
+      console.log("Telegram WebApp already available");
+      setWebAppReady(true);
+    }
+  }, []);
+  
+  // Extract Telegram WebApp data once it's ready
+  useEffect(() => {
+    if (!webAppReady) return;
+    
     const extractTelegramData = () => {
-      console.log("Attempting to get Telegram WebApp data...");
+      console.log("WebApp ready, attempting to extract Telegram data...");
       
       // Only run this once
       if (telegramInitialized.current) return;
       telegramInitialized.current = true;
       
       try {
-        // Check if we're running inside Telegram WebApp
-        if (window.Telegram && window.Telegram.WebApp) {
-          console.log("Running inside Telegram WebApp");
-          
-          // Initialize WebApp
-          window.Telegram.WebApp.ready();
-          window.Telegram.WebApp.expand();
-          
-          // Access WebApp data after a short delay to ensure it's fully initialized
-          setTimeout(() => {
-            try {
-              const webAppData = window.Telegram.WebApp.initDataUnsafe;
-              console.log("WebApp data available:", !!webAppData);
-              console.log("Full WebApp data:", JSON.stringify(webAppData, null, 2));
+        // Initialize WebApp
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        
+        console.log("WebApp info:", {
+          version: window.Telegram.WebApp.version,
+          platform: window.Telegram.WebApp.platform,
+          colorScheme: window.Telegram.WebApp.colorScheme,
+          isExpanded: window.Telegram.WebApp.isExpanded
+        });
+        
+        // Access WebApp data with a short delay to ensure it's fully initialized
+        setTimeout(() => {
+          try {
+            const webAppData = window.Telegram.WebApp.initDataUnsafe;
+            console.log("WebApp data available:", !!webAppData);
+            console.log("Full WebApp data:", JSON.stringify(webAppData, null, 2));
+            
+            if (webAppData && webAppData.user) {
+              const user = webAppData.user;
+              console.log("Successfully got user from WebApp:", user);
               
-              if (webAppData && webAppData.user) {
-                const user = webAppData.user;
-                console.log("Successfully got user from WebApp:", user);
+              if (user.id) {
+                const userId = String(user.id);
+                console.log("Successfully extracted user ID:", userId);
                 
-                if (user.id) {
-                  const userId = String(user.id);
-                  console.log("Successfully extracted user ID:", userId);
-                  
-                  // Check if user exists and has email
-                  checkUserEmail(userId);
-                  
-                  // Store ID for potential manual email collection
-                  setManualTelegramUserId(userId);
-                } else {
-                  console.warn("User object doesn't contain ID:", user);
-                }
+                // Check if user exists and has email
+                checkUserEmail(userId);
+                
+                // Store ID for potential manual email collection
+                setManualTelegramUserId(userId);
               } else {
-                console.warn("No user data in WebApp object");
-                
-                // For development/fallback, use a test ID
-                if (process.env.NODE_ENV === 'development') {
-                  console.log("Using test ID for development");
-                  const testId = "123456789";
-                  checkUserEmail(testId);
-                  setManualTelegramUserId(testId);
-                }
+                console.warn("User object doesn't contain ID:", user);
+                fallbackToParams();
               }
-            } catch (error) {
-              console.error("Error accessing WebApp data after delay:", error);
-              handleWebAppFallback();
+            } else {
+              console.warn("No user data in WebApp object");
+              fallbackToParams();
             }
-          }, 300); // Small delay to ensure WebApp is fully initialized
-        } else {
-          console.log("Not running inside Telegram WebApp environment");
-          handleWebAppFallback();
-        }
+          } catch (error) {
+            console.error("Error accessing WebApp data after delay:", error);
+            fallbackToParams();
+          }
+        }, 500); // Increased delay to ensure WebApp is fully initialized
       } catch (error) {
         console.error("Error in extractTelegramData:", error);
-        handleWebAppFallback();
+        fallbackToParams();
       }
     };
     
-    // Fallback for when WebApp data isn't available
-    const handleWebAppFallback = () => {
-      console.log("Using fallback method for Telegram data");
+    // Fallback to use URL parameters or development defaults
+    const fallbackToParams = () => {
+      console.log("Falling back to URL parameters for Telegram data");
       
-      // For development/testing
+      // First try to use initData parameter if provided
+      if (initData && initData.length > 0) {
+        try {
+          console.log("Trying to parse initData from URL:", initData);
+          const parsedData = JSON.parse(initData);
+          if (parsedData && parsedData.user && parsedData.user.id) {
+            console.log("Using user data from initData:", parsedData.user);
+            checkUserEmail(String(parsedData.user.id));
+            setManualTelegramUserId(String(parsedData.user.id));
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse initData:", e);
+        }
+      }
+      
+      // For development/fallback, use a test ID when in development mode
       if (process.env.NODE_ENV === 'development') {
         console.log("Using test ID for development");
         const testId = "123456789";
         checkUserEmail(testId);
         setManualTelegramUserId(testId);
       } else {
-        // Try to use initData parameter if provided
-        if (initData && initData.length > 0) {
-          try {
-            const parsedData = JSON.parse(initData);
-            if (parsedData && parsedData.user && parsedData.user.id) {
-              console.log("Using user data from initData:", parsedData.user);
-              checkUserEmail(String(parsedData.user.id));
-              setManualTelegramUserId(String(parsedData.user.id));
-            }
-          } catch (e) {
-            console.error("Failed to parse initData:", e);
-          }
-        }
+        console.error("Could not retrieve Telegram user ID from any source");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to retrieve user information. Please try again later.",
+        });
       }
     };
     
-    // Add the script to detect when Telegram WebApp is available
-    const checkTelegramWebApp = () => {
-      if (window.Telegram && window.Telegram.WebApp) {
-        console.log("Telegram WebApp object found");
-        extractTelegramData();
-        clearInterval(checkInterval);
-      }
-    };
-    
-    // Check immediately
-    checkTelegramWebApp();
-    
-    // Also set an interval to check again (in case the WebApp object loads after this component)
-    const checkInterval = setInterval(checkTelegramWebApp, 100);
-    
-    // Clean up the interval on unmount
-    return () => clearInterval(checkInterval);
-  }, [initData]);
+    // Execute the data extraction
+    extractTelegramData();
+  }, [webAppReady, initData, toast]);
   
   // Check if user has email in database
   const checkUserEmail = async (telegramUserId: string) => {

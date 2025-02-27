@@ -1,353 +1,440 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.1.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
-// Get environment variables
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-// Initialize the Supabase client
-const supabase = createClient(supabaseUrl, supabaseKey);
+interface SubscriptionMember {
+  id: string;
+  community_id: string;
+  telegram_user_id: string;
+  subscription_end_date: string | null;
+  is_active: boolean;
+  subscription_status: boolean;
+}
 
-Deno.cron("check-subscriptions", "*/30 * * * *", async () => {
-  console.log("[check-subscriptions] Starting subscription check...");
-  
+interface BotSettings {
+  community_id: string;
+  auto_remove_expired: boolean;
+  expired_subscription_message: string;
+  subscription_reminder_days: number;
+  subscription_reminder_message: string;
+  first_reminder_days: number;
+  first_reminder_message: string;
+  first_reminder_image: string | null;
+  second_reminder_days: number;
+  second_reminder_message: string;
+  second_reminder_image: string | null;
+  bot_signature: string;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response("OK", { headers: corsHeaders });
+  }
+
   try {
-    const today = new Date();
-    console.log(`[check-subscriptions] Current date: ${today.toISOString()}`);
-    
-    // Step 1: Query members with subscription end dates to check
-    const { data: membersToCheck, error: membersError } = await supabase
-      .from('get_members_to_check')
-      .select(`
-        member_id,
-        community_id,
-        telegram_user_id,
-        subscription_end_date,
-        is_active,
-        subscription_status
-      `);
-      
-    if (membersError) {
-      console.error("[check-subscriptions] Error fetching members to check:", membersError);
-      return;
-    }
-    
-    console.log(`[check-subscriptions] Found ${membersToCheck?.length || 0} members to check`);
-    
-    // Group by community to retrieve settings once per community
-    const communitiesWithMembers = membersToCheck?.reduce((acc, member) => {
-      if (!acc[member.community_id]) {
-        acc[member.community_id] = [];
-      }
-      acc[member.community_id].push(member);
-      return acc;
-    }, {} as Record<string, typeof membersToCheck>);
-    
-    for (const communityId in communitiesWithMembers) {
-      if (!communitiesWithMembers[communityId]?.length) continue;
-      
-      // Get community details and bot settings
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select(`
-          *,
-          telegram_bot_settings (*)
-        `)
-        .eq('id', communityId)
-        .single();
-        
-      if (communityError) {
-        console.error(`[check-subscriptions] Error fetching community ${communityId}:`, communityError);
-        continue;
-      }
-      
-      const botSettings = community.telegram_bot_settings;
-      const chatId = community.telegram_chat_id;
-      
-      console.log(`[check-subscriptions] Processing community: ${community.name} (${communityId})`);
-      
-      if (!botSettings || !chatId) {
-        console.log(`[check-subscriptions] Missing bot settings or chat ID for community ${communityId}`);
-        continue;
-      }
-      
-      // Process each member in this community
-      for (const member of communitiesWithMembers[communityId]) {
-        try {
-          // Get the bot URL for the specific community (for the "Renew Now!" button)
-          const { data: botUrl } = await supabase
-            .from('telegram_global_settings')
-            .select('mini_app_url')
-            .single();
-          
-          const miniAppUrl = botUrl?.mini_app_url || 'https://t.me/membifybot/app';
-          const communityMiniAppUrl = `${miniAppUrl}?c=${communityId}`;
-          
-          // Check if member is active but subscription is expired
-          if (member.is_active && !member.subscription_status) {
-            console.log(`[check-subscriptions] Member ${member.telegram_user_id} is active but subscription is expired`);
-            
-            // Kick expired member logic would go here
-            // ...
-            continue;
-          }
-          
-          // Skip if there's no subscription end date (lifetime member?)
-          if (!member.subscription_end_date) {
-            console.log(`[check-subscriptions] Member ${member.telegram_user_id} has no subscription end date`);
-            continue;
-          }
-          
-          const endDate = new Date(member.subscription_end_date);
-          const daysUntilExpiration = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          
-          console.log(`[check-subscriptions] Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration`);
-          
-          // Check for different reminder days
-          const firstReminderDays = botSettings.first_reminder_days || 3;
-          const secondReminderDays = botSettings.second_reminder_days || 1;
+    // Create a Supabase client with the service role key
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-          // Check for first reminder (earlier)
-          if (daysUntilExpiration === firstReminderDays) {
-            console.log(`[check-subscriptions] Sending first reminder to member ${member.telegram_user_id}`);
-            
-            await sendReminderMessage(
-              telegramBotToken,
-              member.telegram_user_id,
-              botSettings.first_reminder_message || "Your subscription is expiring soon! Renew now to maintain access.",
-              botSettings.bot_signature || "",
-              botSettings.first_reminder_image || null,
-              communityMiniAppUrl,
-              "Renew Now!"
-            );
-            
-            // Log the reminder
-            await supabase.from('subscription_activity_logs').insert({
-              community_id: communityId,
-              telegram_user_id: member.telegram_user_id,
-              activity_type: 'reminder_sent',
-              details: `First reminder sent (${firstReminderDays} days before expiration)`
-            });
-          }
-          // Check for second/final reminder (closer to expiration)
-          else if (daysUntilExpiration === secondReminderDays) {
-            console.log(`[check-subscriptions] Sending second/final reminder to member ${member.telegram_user_id}`);
-            
-            await sendReminderMessage(
-              telegramBotToken,
-              member.telegram_user_id,
-              botSettings.second_reminder_message || "FINAL REMINDER: Your subscription is about to expire! Renew now to avoid losing access.",
-              botSettings.bot_signature || "",
-              botSettings.second_reminder_image || null,
-              communityMiniAppUrl,
-              "Renew Now!"
-            );
-            
-            // Log the reminder
-            await supabase.from('subscription_activity_logs').insert({
-              community_id: communityId,
-              telegram_user_id: member.telegram_user_id,
-              activity_type: 'reminder_sent',
-              details: `Final reminder sent (${secondReminderDays} days before expiration)`
-            });
-          }
-          // Check for expired subscription
-          else if (daysUntilExpiration <= 0 && member.subscription_status) {
-            console.log(`[check-subscriptions] Subscription expired for member ${member.telegram_user_id}`);
-            
-            // Send expiration message
-            await sendReminderMessage(
-              telegramBotToken,
-              member.telegram_user_id,
-              botSettings.expired_subscription_message || "Your subscription has expired. You will lose access to the group.",
-              botSettings.bot_signature || "",
-              null,
-              communityMiniAppUrl,
-              "Renew Now!"
-            );
-            
-            // Mark subscription as expired
-            await supabase
-              .from('telegram_chat_members')
-              .update({ subscription_status: false })
-              .eq('id', member.member_id);
-              
-            // Log the expiration
-            await supabase.from('subscription_activity_logs').insert({
-              community_id: communityId,
-              telegram_user_id: member.telegram_user_id,
-              activity_type: 'subscription_expired',
-              details: 'Subscription expired and marked as inactive'
-            });
-          }
-        } catch (memberError) {
-          console.error(`[check-subscriptions] Error processing member ${member.telegram_user_id}:`, memberError);
+    console.log("Starting subscription check process...");
+
+    // Get members to check from our database function
+    const { data: membersToCheck, error: memberError } = await supabase.rpc(
+      "get_members_to_check"
+    );
+
+    if (memberError) {
+      console.error("Error getting members to check:", memberError);
+      throw memberError;
+    }
+
+    console.log(`Found ${membersToCheck?.length || 0} members to process`);
+
+    // Process each member
+    const logs = [];
+    for (const member of membersToCheck || []) {
+      try {
+        // Get bot settings for this community
+        const { data: botSettings, error: settingsError } = await supabase
+          .from("telegram_bot_settings")
+          .select("*")
+          .eq("community_id", member.community_id)
+          .single();
+
+        if (settingsError) {
+          console.error("Error getting bot settings:", settingsError);
+          continue;
         }
+
+        // Process this member
+        const result = await processMember(supabase, member, botSettings);
+        logs.push(result);
+        
+      } catch (memberProcessError) {
+        console.error(
+          `Error processing member ${member.telegram_user_id}:`,
+          memberProcessError
+        );
       }
     }
-    
-    console.log("[check-subscriptions] Subscription check completed successfully");
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Processed ${membersToCheck?.length || 0} members`,
+        logs,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
-    console.error("[check-subscriptions] Error in subscription check:", error);
+    console.error("Error in check-subscriptions function:", error);
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 });
 
-// Function to send reminder message with optional image and button
-async function sendReminderMessage(
-  botToken: string, 
-  userId: string, 
-  message: string, 
-  signature: string, 
-  imageUrl: string | null,
-  buttonUrl: string,
-  buttonText: string
+async function processMember(supabase: any, member: SubscriptionMember, botSettings: BotSettings) {
+  // Initialize result object
+  const result = {
+    memberId: member.id,
+    telegramUserId: member.telegram_user_id,
+    action: "none",
+    details: "",
+  };
+
+  // If not active, do nothing
+  if (!member.is_active) {
+    result.action = "skip";
+    result.details = "Member is not active";
+    return result;
+  }
+
+  // If no subscription end date, do nothing
+  if (!member.subscription_end_date) {
+    result.action = "skip";
+    result.details = "No subscription end date";
+    return result;
+  }
+
+  const now = new Date();
+  const subscriptionEndDate = new Date(member.subscription_end_date);
+  const daysUntilExpiration = Math.ceil(
+    (subscriptionEndDate.getTime() - now.getTime()) / (1000 * 3600 * 24)
+  );
+
+  // Log for debugging
+  console.log(`Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration`);
+
+  // Check if subscription has expired
+  if (daysUntilExpiration <= 0 && member.subscription_status) {
+    // Subscription has expired
+    await handleExpiredSubscription(supabase, member, botSettings, result);
+    return result;
+  }
+
+  // Send reminders if subscription is active and expiration is coming soon
+  if (member.subscription_status) {
+    await sendReminderNotifications(supabase, member, botSettings, daysUntilExpiration, result);
+  }
+
+  return result;
+}
+
+async function handleExpiredSubscription(
+  supabase: any,
+  member: SubscriptionMember,
+  botSettings: BotSettings,
+  result: any
 ) {
-  try {
-    const formattedMessage = `${message}\n\n${signature}`;
-    
-    // Prepare inline keyboard with the "Renew Now!" button
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          { 
-            text: buttonText, 
-            url: buttonUrl 
-          }
-        ]
-      ]
-    };
-    
-    // If image exists, send photo with caption
-    if (imageUrl) {
-      console.log(`[check-subscriptions] Sending photo message to user ${userId}`);
-      
-      // Handle base64 images
-      if (imageUrl.startsWith('data:image')) {
-        console.log(`[check-subscriptions] Base64 image detected, converting to multipart form...`);
-        
-        // Extract base64 data
-        const base64Data = imageUrl.split(',')[1];
-        
-        // Determine image format from data URL
-        const matches = imageUrl.match(/^data:image\/([a-zA-Z+]+);base64,/);
-        const imageFormat = matches ? matches[1] : 'jpeg'; // Default to jpeg if format can't be determined
-        
-        // Create a FormData object
-        const formData = new FormData();
-        formData.append('chat_id', userId);
-        
-        // Convert Base64 string to Blob
-        const byteCharacters = atob(base64Data);
-        const byteArrays = [];
-        
-        for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-          const slice = byteCharacters.slice(offset, offset + 1024);
-          
-          const byteNumbers = new Array(slice.length);
-          for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-          }
-          
-          const byteArray = new Uint8Array(byteNumbers);
-          byteArrays.push(byteArray);
-        }
-        
-        const blob = new Blob(byteArrays, { type: `image/${imageFormat}` });
-        
-        // Append the Blob as a file
-        formData.append('photo', blob, `photo.${imageFormat}`);
-        
-        formData.append('caption', formattedMessage);
-        formData.append('parse_mode', 'HTML');
-        formData.append('reply_markup', JSON.stringify(inlineKeyboard));
-        
-        // Send the request with FormData
-        const response = await fetch(
-          `https://api.telegram.org/bot${botToken}/sendPhoto`,
-          {
-            method: 'POST',
-            body: formData
-          }
-        );
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(`[check-subscriptions] Error sending photo message:`, errorData);
-          
-          // Fallback to text message if photo fails
-          await sendTextMessage(botToken, userId, formattedMessage, inlineKeyboard);
-        }
-      } else {
-        // For regular URLs, use JSON approach
-        const response = await fetch(
-          `https://api.telegram.org/bot${botToken}/sendPhoto`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: userId,
-              photo: imageUrl,
-              caption: formattedMessage,
-              parse_mode: 'HTML',
-              reply_markup: inlineKeyboard
-            })
-          }
-        );
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error(`[check-subscriptions] Error sending photo message:`, errorData);
-          
-          // Fallback to text message if photo fails
-          await sendTextMessage(botToken, userId, formattedMessage, inlineKeyboard);
-        }
-      }
-    } else {
-      // If no image, send text message
-      await sendTextMessage(botToken, userId, formattedMessage, inlineKeyboard);
+  result.action = "expiration";
+  result.details = "Subscription expired";
+
+  // Update member status in database
+  await supabase
+    .from("telegram_chat_members")
+    .update({
+      subscription_status: false,
+    })
+    .eq("id", member.id);
+
+  // Log the expiration in activity logs
+  await supabase.from("subscription_activity_logs").insert({
+    community_id: member.community_id,
+    telegram_user_id: member.telegram_user_id,
+    activity_type: "subscription_expired",
+    details: "Subscription expired automatically",
+  });
+
+  // Send expiration notification to member
+  if (botSettings.expired_subscription_message) {
+    await sendTelegramMessage(
+      supabase,
+      member.community_id,
+      member.telegram_user_id,
+      botSettings.expired_subscription_message,
+      null,
+      botSettings.bot_signature,
+      "Renew Now!"
+    );
+
+    // Log the notification
+    await supabase.from("subscription_notifications").insert({
+      community_id: member.community_id,
+      member_id: member.id,
+      notification_type: "expiration",
+      status: "sent",
+    });
+  }
+
+  // Remove member from chat if auto-remove is enabled
+  if (botSettings.auto_remove_expired) {
+    try {
+      await supabase.functions.invoke("telegram-webhook", {
+        body: {
+          path: "/remove-member",
+          chat_id: member.community_id,
+          user_id: member.telegram_user_id,
+        },
+      });
+
+      await supabase.from("telegram_chat_members").update({
+        is_active: false,
+      }).eq("id", member.id);
+
+      result.details += ", removed from chat";
+    } catch (error) {
+      console.error("Error removing member from chat:", error);
+      result.details += ", failed to remove from chat";
     }
-    
-    return true;
-  } catch (error) {
-    console.error(`[check-subscriptions] Error sending reminder message to ${userId}:`, error);
-    return false;
   }
 }
 
-// Helper function to send text message
-async function sendTextMessage(
-  botToken: string, 
-  userId: string, 
-  message: string, 
-  inlineKeyboard: any
+async function sendReminderNotifications(
+  supabase: any,
+  member: SubscriptionMember,
+  botSettings: BotSettings,
+  daysUntilExpiration: number,
+  result: any
+) {
+  // First Reminder
+  if (daysUntilExpiration === botSettings.first_reminder_days) {
+    console.log(`Sending first reminder to ${member.telegram_user_id}, ${daysUntilExpiration} days before expiration`);
+    result.action = "first_reminder";
+    result.details = `Sent first reminder (${daysUntilExpiration} days before expiration)`;
+
+    // Check if already notified today
+    const { data: existingNotifications } = await supabase
+      .from("subscription_notifications")
+      .select("*")
+      .eq("member_id", member.id)
+      .eq("notification_type", "first_reminder")
+      .gte("sent_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+      .lt("sent_at", new Date(new Date().setHours(23, 59, 59, 999)).toISOString());
+
+    if (existingNotifications && existingNotifications.length > 0) {
+      console.log("First reminder already sent today, skipping");
+      result.details = "First reminder already sent today";
+      return;
+    }
+
+    // Send first reminder notification
+    await sendTelegramMessage(
+      supabase,
+      member.community_id,
+      member.telegram_user_id,
+      botSettings.first_reminder_message,
+      botSettings.first_reminder_image,
+      botSettings.bot_signature,
+      "Renew Now!"
+    );
+
+    // Log the notification
+    await supabase.from("subscription_notifications").insert({
+      community_id: member.community_id,
+      member_id: member.id,
+      notification_type: "first_reminder",
+      status: "sent",
+    });
+
+    // Log in activity logs
+    await supabase.from("subscription_activity_logs").insert({
+      community_id: member.community_id,
+      telegram_user_id: member.telegram_user_id,
+      activity_type: "first_reminder_sent",
+      details: `First reminder sent (${daysUntilExpiration} days before expiration)`,
+    });
+  }
+  // Second Reminder
+  else if (daysUntilExpiration === botSettings.second_reminder_days) {
+    console.log(`Sending second reminder to ${member.telegram_user_id}, ${daysUntilExpiration} days before expiration`);
+    result.action = "second_reminder";
+    result.details = `Sent second reminder (${daysUntilExpiration} days before expiration)`;
+
+    // Check if already notified today
+    const { data: existingNotifications } = await supabase
+      .from("subscription_notifications")
+      .select("*")
+      .eq("member_id", member.id)
+      .eq("notification_type", "second_reminder")
+      .gte("sent_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+      .lt("sent_at", new Date(new Date().setHours(23, 59, 59, 999)).toISOString());
+
+    if (existingNotifications && existingNotifications.length > 0) {
+      console.log("Second reminder already sent today, skipping");
+      result.details = "Second reminder already sent today";
+      return;
+    }
+
+    // Send second reminder notification
+    await sendTelegramMessage(
+      supabase,
+      member.community_id,
+      member.telegram_user_id,
+      botSettings.second_reminder_message,
+      botSettings.second_reminder_image,
+      botSettings.bot_signature,
+      "Renew Now!"
+    );
+
+    // Log the notification
+    await supabase.from("subscription_notifications").insert({
+      community_id: member.community_id,
+      member_id: member.id,
+      notification_type: "second_reminder",
+      status: "sent",
+    });
+
+    // Log in activity logs
+    await supabase.from("subscription_activity_logs").insert({
+      community_id: member.community_id,
+      telegram_user_id: member.telegram_user_id,
+      activity_type: "second_reminder_sent",
+      details: `Second reminder sent (${daysUntilExpiration} days before expiration)`,
+    });
+  }
+  // Legacy reminder (for backward compatibility)
+  else if (daysUntilExpiration === botSettings.subscription_reminder_days) {
+    console.log(`Sending legacy reminder to ${member.telegram_user_id}, ${daysUntilExpiration} days before expiration`);
+    result.action = "legacy_reminder";
+    result.details = `Sent legacy reminder (${daysUntilExpiration} days before expiration)`;
+
+    // Check if already notified today
+    const { data: existingNotifications } = await supabase
+      .from("subscription_notifications")
+      .select("*")
+      .eq("member_id", member.id)
+      .eq("notification_type", "reminder")
+      .gte("sent_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+      .lt("sent_at", new Date(new Date().setHours(23, 59, 59, 999)).toISOString());
+
+    if (existingNotifications && existingNotifications.length > 0) {
+      console.log("Legacy reminder already sent today, skipping");
+      result.details = "Legacy reminder already sent today";
+      return;
+    }
+
+    // Only send if days match the original reminder setting
+    await sendTelegramMessage(
+      supabase,
+      member.community_id,
+      member.telegram_user_id,
+      botSettings.subscription_reminder_message,
+      null,
+      botSettings.bot_signature,
+      "Renew Now!"
+    );
+
+    // Log the notification
+    await supabase.from("subscription_notifications").insert({
+      community_id: member.community_id,
+      member_id: member.id,
+      notification_type: "reminder",
+      status: "sent",
+    });
+  }
+}
+
+async function sendTelegramMessage(
+  supabase: any,
+  communityId: string,
+  userId: string,
+  message: string,
+  imageData: string | null,
+  signature: string | null,
+  buttonText: string | null
 ) {
   try {
-    console.log(`[check-subscriptions] Sending text message to user ${userId}`);
-    
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: userId,
-          text: message,
-          parse_mode: 'HTML',
-          reply_markup: inlineKeyboard
-        })
-      }
-    );
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`[check-subscriptions] Error sending text message:`, errorData);
-      return false;
+    // Get subscription payment URL
+    const { data: community } = await supabase
+      .from("communities")
+      .select("telegram_chat_id, miniapp_url")
+      .eq("id", communityId)
+      .single();
+
+    // Format message with signature if present
+    const formattedMessage = signature 
+      ? `${message}\n\n${signature}` 
+      : message;
+
+    // Send message with or without image
+    if (imageData) {
+      await supabase.functions.invoke("telegram-webhook", {
+        body: {
+          path: "/send-photo",
+          chat_id: community.telegram_chat_id,
+          user_id: userId,
+          caption: formattedMessage,
+          photo: imageData,
+          button_text: buttonText,
+          button_url: community.miniapp_url,
+        },
+      });
+    } else {
+      await supabase.functions.invoke("telegram-webhook", {
+        body: {
+          path: "/send-message",
+          chat_id: community.telegram_chat_id,
+          user_id: userId,
+          text: formattedMessage,
+          button_text: buttonText,
+          button_url: community.miniapp_url,
+        },
+      });
     }
-    
+
+    // Log message sending in community_logs
+    await supabase.from("community_logs").insert({
+      community_id: communityId,
+      event_type: "notification_sent",
+      user_id: userId,
+      metadata: {
+        message_type: imageData ? "photo_message" : "text_message",
+        has_button: buttonText ? true : false,
+      },
+    });
+
     return true;
   } catch (error) {
-    console.error(`[check-subscriptions] Error sending text message to ${userId}:`, error);
+    console.error("Error sending Telegram message:", error);
     return false;
   }
 }

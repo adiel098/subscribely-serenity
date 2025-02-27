@@ -333,6 +333,41 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_activity_logs: {
+        Row: {
+          activity_type: string
+          community_id: string
+          created_at: string | null
+          details: string | null
+          id: string
+          telegram_user_id: string
+        }
+        Insert: {
+          activity_type: string
+          community_id: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          telegram_user_id: string
+        }
+        Update: {
+          activity_type?: string
+          community_id?: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          telegram_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_activity_logs_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_notifications: {
         Row: {
           community_id: string | null
@@ -536,6 +571,9 @@ export type Database = {
           community_id: string
           created_at: string
           expired_subscription_message: string | null
+          first_reminder_days: number | null
+          first_reminder_image: string | null
+          first_reminder_message: string | null
           id: string
           is_admin: boolean | null
           language: string | null
@@ -544,6 +582,9 @@ export type Database = {
           quiet_hours_start: string | null
           renewal_discount_enabled: boolean | null
           renewal_discount_percentage: number | null
+          second_reminder_days: number | null
+          second_reminder_image: string | null
+          second_reminder_message: string | null
           subscription_reminder_days: number | null
           subscription_reminder_message: string | null
           updated_at: string
@@ -560,6 +601,9 @@ export type Database = {
           community_id: string
           created_at?: string
           expired_subscription_message?: string | null
+          first_reminder_days?: number | null
+          first_reminder_image?: string | null
+          first_reminder_message?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -568,6 +612,9 @@ export type Database = {
           quiet_hours_start?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
+          second_reminder_days?: number | null
+          second_reminder_image?: string | null
+          second_reminder_message?: string | null
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string
@@ -584,6 +631,9 @@ export type Database = {
           community_id?: string
           created_at?: string
           expired_subscription_message?: string | null
+          first_reminder_days?: number | null
+          first_reminder_image?: string | null
+          first_reminder_message?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -592,6 +642,9 @@ export type Database = {
           quiet_hours_start?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
+          second_reminder_days?: number | null
+          second_reminder_image?: string | null
+          second_reminder_message?: string | null
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string

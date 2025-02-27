@@ -1,21 +1,18 @@
 
-import { MessageSquare } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { MessageSquare, Image, Send } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
 import { MessageInputSection } from "./welcome-message/MessageInputSection";
+import { MessagePreview } from "./MessagePreview";
 
 interface WelcomeMessageSectionProps {
   settings: BotSettings;
@@ -23,16 +20,14 @@ interface WelcomeMessageSectionProps {
 }
 
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
-  const [draftMessage, setDraftMessage] = useState(settings.welcome_message || "");
-  const [welcomeImage, setWelcomeImage] = useState<string>(settings.welcome_image || "");
+  const [welcomeMessage, setWelcomeMessage] = useState(settings.welcome_message);
+  const [welcomeImage, setWelcomeImage] = useState(settings.welcome_image);
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  // Update local state when settings change
-  useEffect(() => {
-    setDraftMessage(settings.welcome_message || "");
-    setWelcomeImage(settings.welcome_image || "");
-  }, [settings.welcome_message, settings.welcome_image]);
+  const handleAutoWelcomeChange = (value: boolean) => {
+    updateSettings.mutate({ auto_welcome_message: value });
+  };
 
   return (
     <AccordionItem value="welcome" className="border rounded-lg">
@@ -43,32 +38,56 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome Message Settings</CardTitle>
-            <CardDescription>
-              Customize the message and image new members receive when they join
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ImageUploadSection 
-              welcomeImage={welcomeImage}
-              setWelcomeImage={setWelcomeImage}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="auto-welcome"
+                checked={settings.auto_welcome_message}
+                onCheckedChange={handleAutoWelcomeChange}
+              />
+              <Label htmlFor="auto-welcome">
+                Automatically send welcome message to new members
+              </Label>
+            </div>
+
+            <MessageInputSection
+              message={welcomeMessage}
+              setMessage={setWelcomeMessage}
               updateSettings={updateSettings}
-              isUploading={isUploading}
-              setIsUploading={setIsUploading}
-              imageError={imageError}
-              setImageError={setImageError}
+              settingsKey="welcome_message"
+              label="Welcome Message"
+              placeholder="Enter a welcome message for new members..."
             />
-            
-            <MessageInputSection 
-              settings={settings}
-              draftMessage={draftMessage}
-              setDraftMessage={setDraftMessage}
-              updateSettings={updateSettings}
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Welcome Image
+              </Label>
+              <ImageUploadSection
+                image={welcomeImage}
+                setImage={setWelcomeImage}
+                updateSettings={updateSettings}
+                settingsKey="welcome_image"
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
+                imageError={imageError}
+                setImageError={setImageError}
+                label="Welcome Image"
+              />
+            </div>
+          </div>
+
+          <div className="border rounded-md p-4">
+            <h3 className="text-sm font-medium mb-2">Welcome Message Preview</h3>
+            <MessagePreview
+              message={welcomeMessage}
+              signature={settings.bot_signature}
+              image={welcomeImage}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </AccordionContent>
     </AccordionItem>
   );

@@ -55,8 +55,7 @@ export const useBotSettings = (communityId: string) => {
         throw error;
       }
 
-      // Handle the case where welcome_image might not exist in the database yet
-      // by providing default values
+      // Ensure all required properties have default values
       return {
         ...data,
         welcome_image: data.welcome_image || null,

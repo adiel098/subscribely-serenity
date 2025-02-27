@@ -154,36 +154,37 @@ export const useTelegramUser = (communityId: string) => {
             // If user doesn't exist in DB, create or update them via edge function
             if (!dbUser) {
               console.log('🔍 Creating/updating user via edge function...');
-              console.log('📌 Edge function payload:', { 
+              const payload = { 
                 telegram_id: userData.id,
                 first_name: userData.first_name,
                 last_name: userData.last_name,
                 username: userData.username,
                 photo_url: userData.photo_url,
                 community_id: communityId
-              });
+              };
               
-              const response = await supabase.functions.invoke("telegram-user-manager", {
-                body: { 
-                  telegram_id: userData.id,
-                  first_name: userData.first_name,
-                  last_name: userData.last_name,
-                  username: userData.username,
-                  photo_url: userData.photo_url,
-                  community_id: communityId
+              console.log('📌 Edge function payload:', payload);
+              
+              try {
+                const response = await supabase.functions.invoke("telegram-user-manager", {
+                  body: payload
+                });
+                
+                console.log('📊 Edge function response:', response);
+                
+                if (response.error) {
+                  console.error("❌ Error from edge function:", response.error);
+                } else if (response.data?.user) {
+                  console.log('✅ User created/updated via edge function:', response.data.user);
+                  // Update with more complete data from edge function
+                  userData = {
+                    ...userData,
+                    ...response.data.user
+                  };
+                  console.log('✅ Final user data after edge function:', userData);
                 }
-              });
-              
-              if (response.error) {
-                console.error("❌ Error from edge function:", response.error);
-              } else if (response.data?.user) {
-                console.log('✅ User created/updated via edge function:', response.data.user);
-                // Update with more complete data from edge function
-                userData = {
-                  ...userData,
-                  ...response.data.user
-                };
-                console.log('✅ Final user data after edge function:', userData);
+              } catch (edgeFunctionError) {
+                console.error("❌ Exception when calling edge function:", edgeFunctionError);
               }
             }
           }
@@ -208,6 +209,33 @@ export const useTelegramUser = (communityId: string) => {
                   last_name: parsedUser.last_name,
                   username: parsedUser.username
                 };
+                
+                // Try to create/update user via edge function with hash data
+                try {
+                  console.log('🔍 Creating/updating user from hash data via edge function...');
+                  const response = await supabase.functions.invoke("telegram-user-manager", {
+                    body: { 
+                      telegram_id: userData.id,
+                      first_name: userData.first_name,
+                      last_name: userData.last_name,
+                      username: userData.username,
+                      community_id: communityId
+                    }
+                  });
+                  
+                  if (response.error) {
+                    console.error("❌ Error from edge function with hash data:", response.error);
+                  } else if (response.data?.user) {
+                    console.log('✅ User created/updated from hash via edge function:', response.data.user);
+                    userData = {
+                      ...userData,
+                      ...response.data.user
+                    };
+                  }
+                } catch (hashEdgeFunctionError) {
+                  console.error("❌ Exception when calling edge function with hash data:", hashEdgeFunctionError);
+                }
+                
                 setUser(userData);
                 return;
               }

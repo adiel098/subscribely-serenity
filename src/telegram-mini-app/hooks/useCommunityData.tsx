@@ -19,9 +19,28 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
   useEffect(() => {
     const fetchCommunityData = async () => {
       try {
+        // Check if we have access to Telegram WebApp data
+        const webAppData = window.Telegram?.WebApp?.initDataUnsafe;
+        let telegramInitData = initData || '';
+        let userDataFromWebApp = null;
+        
+        if (webAppData && webAppData.user) {
+          console.log('Found Telegram WebApp user data:', webAppData.user);
+          userDataFromWebApp = {
+            id: String(webAppData.user.id), // Convert to string to match our expected format
+            first_name: webAppData.user.first_name || "",
+            last_name: webAppData.user.last_name || "",
+            username: webAppData.user.username || "",
+            photo_url: ""  // WebApp doesn't provide photo_url directly
+          };
+        } else {
+          console.log('No WebApp user data available, using initData parameter');
+        }
+        
         console.log('Fetching community data with params:', { 
           startParam, 
-          initData: initData ? `${initData.substring(0, 20)}...` : null 
+          initDataLength: telegramInitData.length,
+          userDataFromWebApp: userDataFromWebApp ? 'Present' : 'Not available'
         });
         
         // Make sure there's data to send
@@ -35,7 +54,8 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
         // Prepare payload for the Edge Function
         const payload = { 
           start: startParam,
-          initData 
+          initData: telegramInitData,
+          webAppUser: userDataFromWebApp  // Pass user data extracted from WebApp
         };
         
         console.log('Sending payload to telegram-mini-app function:', payload);
@@ -73,8 +93,12 @@ export const useCommunityData = ({ startParam, initData }: UseCommunityDataProps
             } else {
               console.warn("User data missing required fields:", userData);
             }
+          } else if (userDataFromWebApp) {
+            // If we have user data from WebApp but not from response, use it
+            console.log("Using WebApp user data:", userDataFromWebApp);
+            setTelegramUser(userDataFromWebApp);
           } else {
-            console.warn("No user data returned from function");
+            console.warn("No user data available from any source");
             // We still want to proceed even without user data
             // This allows the app to work in non-Telegram environments for testing
           }

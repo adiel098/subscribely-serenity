@@ -12,6 +12,10 @@ interface TelegramWebApp {
   };
   ready: () => void;
   expand: () => void;
+  version: string;
+  platform: string;
+  colorScheme: string;
+  isExpanded: boolean;
 }
 
 interface Window {

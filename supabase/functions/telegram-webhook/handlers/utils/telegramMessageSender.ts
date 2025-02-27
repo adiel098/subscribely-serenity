@@ -44,7 +44,7 @@ export async function sendPhotoMessage(
       const base64Data = photoData.split(',')[1];
       
       // Create a buffer from the Base64 data
-      const imageBuffer = Buffer.from(base64Data, 'base64');
+      const imageBuffer = new Uint8Array(atob(base64Data).split('').map(char => char.charCodeAt(0)));
       
       // Use multipart/form-data to send the image
       formData = new FormData();
@@ -119,18 +119,23 @@ export async function sendTextMessage(
   try {
     console.log('[TelegramSender] Sending text message to:', chatId);
     
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: "Join Community 🚀",
-            web_app: {
-              url: `${miniAppUrl}?start=${communityId}`
+    let inlineKeyboard = {};
+    
+    // Only add the inline keyboard if we have a miniAppUrl and communityId
+    if (miniAppUrl && communityId) {
+      inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "Join Community 🚀",
+              web_app: {
+                url: `${miniAppUrl}?start=${communityId}`
+              }
             }
-          }
+          ]
         ]
-      ]
-    };
+      };
+    }
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,

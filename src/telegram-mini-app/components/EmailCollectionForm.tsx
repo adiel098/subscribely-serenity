@@ -34,6 +34,8 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     setIsSubmitting(true);
     
     try {
+      console.log('Updating email for Telegram user:', telegramUserId);
+      
       // Update the telegram_mini_app_users table with the email
       const { error } = await supabase
         .from('telegram_mini_app_users')
@@ -41,8 +43,11 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
         .eq('telegram_id', telegramUserId);
       
       if (error) {
+        console.error('Error saving email:', error);
         throw error;
       }
+      
+      console.log('Email saved successfully');
       
       toast({
         title: "Email saved",
@@ -67,7 +72,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-6 animate-fade-up">
       <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
         <div className="space-y-2 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4 animate-bounce">
             <Mail className="h-6 w-6 text-primary" />
           </div>
           
@@ -88,6 +93,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full"
+              autoFocus
             />
           </div>
           

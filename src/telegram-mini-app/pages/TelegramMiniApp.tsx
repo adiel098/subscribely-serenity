@@ -23,7 +23,10 @@ const TelegramMiniApp = () => {
   
   // Use our custom hooks to fetch data and manage state
   const { loading, community, telegramUser } = useCommunityData({ startParam, initData });
-  const { showEmailForm, handleEmailFormComplete } = useUserEmail({ telegramUser });
+  const { showEmailForm, isProcessing, handleEmailFormComplete } = useUserEmail({ 
+    telegramUser, 
+    communityId: community?.id 
+  });
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -39,7 +42,7 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loading) {
+  if (loading || isProcessing) {
     return <LoadingScreen />;
   }
 

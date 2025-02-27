@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
@@ -10,6 +10,7 @@ import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollect
 import { PlanSelectionSection } from "@/telegram-mini-app/components/PlanSelectionSection";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { useUserEmail } from "@/telegram-mini-app/hooks/useUserEmail";
+import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { Plan } from "@/telegram-mini-app/types/app.types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,201 +21,90 @@ const TelegramMiniApp = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [manualEmailCollection, setManualEmailCollection] = useState(false);
-  const [manualTelegramUserId, setManualTelegramUserId] = useState<string | null>(null);
-  const [webAppReady, setWebAppReady] = useState(false);
-  const telegramInitialized = useRef(false);
   const { toast } = useToast();
   
   const initData = searchParams.get("initData");
   const startParam = searchParams.get("start");
   
-  // Check if Telegram WebApp script has loaded
-  useEffect(() => {
-    // Create a script loading detector if the WebApp isn't already available
-    if (!window.Telegram?.WebApp) {
-      console.log("Telegram WebApp script not found, checking if it's loading...");
-      
-      const checkWebAppLoaded = () => {
-        if (window.Telegram?.WebApp) {
-          console.log("Telegram WebApp script loaded!");
-          setWebAppReady(true);
-          clearInterval(checkInterval);
-        }
-      };
-      
-      // Check immediately and then periodically
-      checkWebAppLoaded();
-      const checkInterval = setInterval(checkWebAppLoaded, 100);
-      
-      // Clean up interval on unmount
-      return () => clearInterval(checkInterval);
-    } else {
-      console.log("Telegram WebApp already available");
-      setWebAppReady(true);
-    }
-  }, []);
-  
-  // Extract Telegram WebApp data once it's ready
-  useEffect(() => {
-    if (!webAppReady) return;
-    
-    const extractTelegramData = () => {
-      console.log("WebApp ready, attempting to extract Telegram data...");
-      
-      // Only run this once
-      if (telegramInitialized.current) return;
-      telegramInitialized.current = true;
-      
-      try {
-        // Initialize WebApp
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-        
-        console.log("WebApp info:", {
-          version: window.Telegram.WebApp.version,
-          platform: window.Telegram.WebApp.platform,
-          colorScheme: window.Telegram.WebApp.colorScheme,
-          isExpanded: window.Telegram.WebApp.isExpanded
-        });
-        
-        // Access WebApp data with a short delay to ensure it's fully initialized
-        setTimeout(() => {
-          try {
-            const webAppData = window.Telegram.WebApp.initDataUnsafe;
-            console.log("WebApp data available:", !!webAppData);
-            console.log("Full WebApp data:", JSON.stringify(webAppData, null, 2));
-            
-            if (webAppData && webAppData.user) {
-              const user = webAppData.user;
-              console.log("Successfully got user from WebApp:", user);
-              
-              if (user.id) {
-                const userId = String(user.id);
-                console.log("Successfully extracted user ID:", userId);
-                
-                // Check if user exists and has email
-                checkUserEmail(userId);
-                
-                // Store ID for potential manual email collection
-                setManualTelegramUserId(userId);
-              } else {
-                console.warn("User object doesn't contain ID:", user);
-                fallbackToParams();
-              }
-            } else {
-              console.warn("No user data in WebApp object");
-              fallbackToParams();
-            }
-          } catch (error) {
-            console.error("Error accessing WebApp data after delay:", error);
-            fallbackToParams();
-          }
-        }, 500); // Increased delay to ensure WebApp is fully initialized
-      } catch (error) {
-        console.error("Error in extractTelegramData:", error);
-        fallbackToParams();
-      }
-    };
-    
-    // Fallback to use URL parameters or development defaults
-    const fallbackToParams = () => {
-      console.log("Falling back to URL parameters for Telegram data");
-      
-      // First try to use initData parameter if provided
-      if (initData && initData.length > 0) {
-        try {
-          console.log("Trying to parse initData from URL:", initData);
-          const parsedData = JSON.parse(initData);
-          if (parsedData && parsedData.user && parsedData.user.id) {
-            console.log("Using user data from initData:", parsedData.user);
-            checkUserEmail(String(parsedData.user.id));
-            setManualTelegramUserId(String(parsedData.user.id));
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to parse initData:", e);
-        }
-      }
-      
-      // For development/fallback, use a test ID when in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Using test ID for development");
-        const testId = "123456789";
-        checkUserEmail(testId);
-        setManualTelegramUserId(testId);
-      } else {
-        console.error("Could not retrieve Telegram user ID from any source");
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to retrieve user information. Please try again later.",
-        });
-      }
-    };
-    
-    // Execute the data extraction
-    extractTelegramData();
-  }, [webAppReady, initData, toast]);
-  
-  // Check if user has email in database
-  const checkUserEmail = async (telegramUserId: string) => {
-    try {
-      console.log("Checking if user exists:", telegramUserId);
-      
-      const { data: existingUser, error } = await supabase
-        .from('telegram_mini_app_users')
-        .select('email')
-        .eq('telegram_id', telegramUserId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error checking user:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to verify user data. Please try again.",
-        });
-        return;
-      }
-      
-      if (!existingUser || !existingUser.email) {
-        console.log("User needs to provide email");
-        setManualEmailCollection(true);
-      } else {
-        console.log("User already has email:", existingUser.email);
-        setManualEmailCollection(false);
-      }
-    } catch (error) {
-      console.error("Error in checkUserEmail:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to check user data. Please try again.",
-      });
-    }
-  };
-  
-  // Handle email form completion
-  const handleEmailFormComplete = () => {
-    setManualEmailCollection(false);
-  };
+  // Use our new hook to get Telegram user data
+  const { 
+    loading: userLoading, 
+    telegramUser, 
+    error: userError 
+  } = useTelegramUser({ 
+    initData, 
+    startParam 
+  });
   
   // Use our custom hook to fetch community data
-  const { loading, community, telegramUser, error } = useCommunityData({ startParam, initData });
-  
-  // Use email hook for backward compatibility
   const { 
-    showEmailForm: hookShowEmailForm, 
+    loading: communityLoading, 
+    community, 
+    error: communityError 
+  } = useCommunityData({ 
+    startParam, 
+    initData 
+  });
+  
+  // Use email hook for handling email collection
+  const { 
+    showEmailForm, 
     isProcessing, 
     processComplete,
-    handleEmailFormComplete: hookHandleEmailFormComplete
+    handleEmailFormComplete
   } = useUserEmail({ 
     telegramUser, 
     communityId: community?.id 
   });
   
-  // Combine the direct WebApp approach with the hook approach
-  const showEmailForm = manualEmailCollection || (hookShowEmailForm && processComplete);
+  // Check if user has email in database when user data is loaded
+  useEffect(() => {
+    if (!telegramUser?.id) return;
+    
+    const checkUserEmail = async () => {
+      try {
+        console.log("Checking if user has email:", telegramUser.id);
+        
+        const { data: existingUser, error } = await supabase
+          .from('telegram_mini_app_users')
+          .select('email')
+          .eq('telegram_id', telegramUser.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error checking user:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to verify user data. Please try again.",
+          });
+          return;
+        }
+        
+        if (!existingUser || !existingUser.email) {
+          console.log("User needs to provide email");
+          setManualEmailCollection(true);
+        } else {
+          console.log("User already has email:", existingUser.email);
+          setManualEmailCollection(false);
+        }
+      } catch (error) {
+        console.error("Error in checkUserEmail:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to check user data. Please try again.",
+        });
+      }
+    };
+    
+    checkUserEmail();
+  }, [telegramUser?.id, toast]);
+  
+  // Handle email form completion
+  const handleEmailFormComplete = () => {
+    setManualEmailCollection(false);
+  };
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -231,25 +121,26 @@ const TelegramMiniApp = () => {
   };
 
   // Show loading screen while initial data is being fetched or user is being processed
-  if (loading || isProcessing) {
+  if (userLoading || communityLoading || isProcessing) {
     return <LoadingScreen />;
   }
 
-  // Show error if community not found
-  if (error || !community) {
-    return <CommunityNotFound errorMessage={error || "Community not found"} />;
+  // Show error if community not found or user data error
+  if (communityError || !community) {
+    return <CommunityNotFound errorMessage={communityError || "Community not found"} />;
+  }
+  
+  if (userError) {
+    return <CommunityNotFound errorMessage={`Error loading user data: ${userError}`} />;
   }
 
   // Show email collection form if needed
-  if (showEmailForm) {
-    // Use either the WebApp user ID or the one from the hook
-    const emailUserId = manualTelegramUserId || (telegramUser && telegramUser.id);
-    
-    if (emailUserId) {
-      console.log("Showing email collection form for user:", emailUserId);
+  if (manualEmailCollection || (showEmailForm && processComplete)) {
+    if (telegramUser?.id) {
+      console.log("Showing email collection form for user:", telegramUser.id);
       return (
         <EmailCollectionForm 
-          telegramUserId={emailUserId} 
+          telegramUserId={telegramUser.id} 
           onComplete={handleEmailFormComplete} 
         />
       );

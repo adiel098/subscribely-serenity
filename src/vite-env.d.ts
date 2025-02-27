@@ -10,10 +10,13 @@ interface TelegramWebApp {
       username?: string;
     };
   };
+  openLink?: (url: string) => void;
+  openTelegramLink?: (url: string) => void;
+  close?: () => void;
 }
 
 interface Window {
   Telegram?: {
-    WebApp: TelegramWebApp;
+    WebApp?: TelegramWebApp;
   };
 }

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,12 @@ const TelegramMiniApp = () => {
     const fetchCommunityData = async () => {
       try {
         console.log('Fetching community data with params:', { startParam, initData });
+        if (!startParam) {
+          console.error("No community ID provided");
+          setLoading(false);
+          return;
+        }
+
         const response = await supabase.functions.invoke("telegram-mini-app", {
           body: { 
             start: startParam,
@@ -56,6 +63,8 @@ const TelegramMiniApp = () => {
 
         if (response.data?.community) {
           setCommunity(response.data.community);
+        } else {
+          console.error("No community found in response");
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
@@ -69,12 +78,8 @@ const TelegramMiniApp = () => {
       }
     };
 
-    if (startParam) {
-      fetchCommunityData();
-    } else {
-      console.error("No start parameter provided");
-      setLoading(false);
-    }
+    // Always attempt to fetch community data, even without initData
+    fetchCommunityData();
   }, [searchParams, toast]);
 
   const handlePaymentMethodSelect = (method: string) => {

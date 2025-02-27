@@ -9,20 +9,15 @@ interface SuccessScreenProps {
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const handleJoinClick = () => {
     if (communityInviteLink) {
-      // Try to use Telegram WebApp to open the link if available
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.open(communityInviteLink, '_blank');
-      } else {
-        // Fallback to regular window.open
-        window.open(communityInviteLink, '_blank');
-      }
+      // Open the invite link directly
+      window.open(communityInviteLink, '_blank');
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-fade-up">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-        <Check className="w-8 h-8 text-green-600" />
+        <Check className="h-8 w-8 text-green-600" />
       </div>
       <h2 className="text-2xl font-bold text-gray-900">
         Payment Successful!

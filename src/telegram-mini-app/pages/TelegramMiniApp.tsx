@@ -14,13 +14,14 @@ import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { Plan } from "@/telegram-mini-app/types/app.types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { MainContent } from "@/telegram-mini-app/components/MainContent";
+import { useEmailVerification } from "@/telegram-mini-app/hooks/useEmailVerification";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [manualEmailCollection, setManualEmailCollection] = useState(false);
   const { toast } = useToast();
   
   const initData = searchParams.get("initData");
@@ -57,54 +58,14 @@ const TelegramMiniApp = () => {
     communityId: community?.id 
   });
   
-  // Check if user has email in database when user data is loaded
-  useEffect(() => {
-    if (!telegramUser?.id) return;
-    
-    const checkUserEmail = async () => {
-      try {
-        console.log("Checking if user has email:", telegramUser.id);
-        
-        const { data: existingUser, error } = await supabase
-          .from('telegram_mini_app_users')
-          .select('email')
-          .eq('telegram_id', telegramUser.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Error checking user:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to verify user data. Please try again.",
-          });
-          return;
-        }
-        
-        if (!existingUser || !existingUser.email) {
-          console.log("User needs to provide email");
-          setManualEmailCollection(true);
-        } else {
-          console.log("User already has email:", existingUser.email);
-          setManualEmailCollection(false);
-        }
-      } catch (error) {
-        console.error("Error in checkUserEmail:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to check user data. Please try again.",
-        });
-      }
-    };
-    
-    checkUserEmail();
-  }, [telegramUser?.id, toast]);
-  
-  // Handle email form completion
-  const handleEmailFormComplete = () => {
-    setManualEmailCollection(false);
-  };
+  // Use our extracted hook for email verification
+  const { 
+    manualEmailCollection, 
+    setManualEmailCollection 
+  } = useEmailVerification({
+    telegramUser,
+    toast
+  });
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -151,28 +112,15 @@ const TelegramMiniApp = () => {
   console.log("Showing community page for:", community.name);
   return (
     <ScrollArea className="h-[100vh] w-full">
-      <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
-        <div className="container max-w-2xl mx-auto pt-8 px-4 space-y-12">
-          <CommunityHeader community={community} />
-
-          <PlanSelectionSection 
-            plans={community.subscription_plans}
-            selectedPlan={selectedPlan}
-            onPlanSelect={handlePlanSelect}
-          />
-
-          {selectedPlan && (
-            <PaymentMethods
-              selectedPlan={selectedPlan}
-              selectedPaymentMethod={selectedPaymentMethod}
-              onPaymentMethodSelect={handlePaymentMethodSelect}
-              onCompletePurchase={handleCompletePurchase}
-              communityInviteLink={community.telegram_invite_link}
-              showSuccess={showSuccess}
-            />
-          )}
-        </div>
-      </div>
+      <MainContent
+        community={community}
+        selectedPlan={selectedPlan}
+        onPlanSelect={handlePlanSelect}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentMethodSelect={handlePaymentMethodSelect}
+        onCompletePurchase={handleCompletePurchase}
+        showSuccess={showSuccess}
+      />
     </ScrollArea>
   );
 };

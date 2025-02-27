@@ -27,13 +27,18 @@ const getWebAppData = (): TelegramUser | null => {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
+      // Ensure ID is a string and properly extracted
+      // The Telegram user ID can be a number in the API response but we need to store as string
+      const telegramId = user.id?.toString() || "";
+      console.log('🔑 Extracted Telegram ID:', telegramId);
+      
       // In recent Telegram WebApp versions, photo_url might be available directly
       // We explicitly check for its presence as a property
       const photoUrl = user.photo_url || undefined;
       console.log('📸 Photo URL from WebApp data:', photoUrl);
       
       return {
-        id: user.id?.toString() || "",
+        id: telegramId,
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
@@ -52,8 +57,12 @@ const getWebAppData = (): TelegramUser | null => {
           const user = JSON.parse(userStr);
           console.log('✅ Successfully parsed user data from initData:', user);
           
+          // Ensure ID is stored as string
+          const telegramId = user.id?.toString() || "";
+          console.log('🔑 Extracted Telegram ID from initData:', telegramId);
+          
           return {
-            id: user.id?.toString() || "",
+            id: telegramId,
             first_name: user.first_name,
             last_name: user.last_name,
             username: user.username,
@@ -213,8 +222,13 @@ export const useTelegramUser = (communityId: string) => {
               if (userStr) {
                 const parsedUser = JSON.parse(userStr);
                 console.log('✅ Successfully parsed user data from hash:', parsedUser);
+                
+                // Always ensure the ID is a string
+                const telegramId = parsedUser.id?.toString() || "";
+                console.log('🔑 Extracted Telegram ID from hash:', telegramId);
+                
                 userData = {
-                  id: parsedUser.id?.toString() || "",
+                  id: telegramId,
                   first_name: parsedUser.first_name,
                   last_name: parsedUser.last_name,
                   username: parsedUser.username,

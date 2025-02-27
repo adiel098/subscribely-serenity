@@ -118,8 +118,8 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
     return { exists: false, hasEmail: false };
   }
 
-  // Clean the telegram ID - ensure it's a string and remove any whitespace
-  const cleanTelegramId = telegramUserId.trim();
+  // Ensure the ID is a string and clean it (remove whitespace)
+  const cleanTelegramId = telegramUserId.toString().trim();
   
   if (!cleanTelegramId) {
     console.error("checkUserExists: Empty Telegram ID after cleaning");
@@ -175,8 +175,8 @@ export async function collectUserEmail(
     return false;
   }
 
-  // Clean the telegram ID - ensure it's a string and remove any whitespace
-  const cleanTelegramId = telegramUserId.trim();
+  // Ensure the ID is a string and clean it (remove whitespace)
+  const cleanTelegramId = telegramUserId.toString().trim();
   
   if (!cleanTelegramId) {
     console.error("collectUserEmail: Empty Telegram ID after cleaning");
@@ -211,6 +211,7 @@ export async function collectUserEmail(
       if (photoUrl) updateData.photo_url = photoUrl;
       
       console.log("Updating existing user with data:", updateData);
+      console.log("Using Telegram ID for update:", cleanTelegramId);
       
       result = await supabase
         .from('telegram_mini_app_users')
@@ -262,11 +263,19 @@ export async function createOrUpdateMember(memberData: CreateMemberData): Promis
     return false;
   }
 
+  // Ensure telegram_id is a string and clean it
+  const cleanTelegramId = memberData.telegram_id.toString().trim();
+  
+  if (!cleanTelegramId) {
+    console.error("createOrUpdateMember: Empty Telegram ID after cleaning");
+    return false;
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke("telegram-user-manager", {
       body: { 
         action: "create_or_update_member", 
-        telegram_id: memberData.telegram_id,
+        telegram_id: cleanTelegramId,
         community_id: memberData.community_id,
         subscription_plan_id: memberData.subscription_plan_id,
         status: memberData.status || 'active',

@@ -50,12 +50,15 @@ export const EmailCollectionForm = ({
     setIsSubmitting(true);
     
     try {
-      console.log("Saving email for telegram user:", telegramUserId, email);
+      // Ensure telegramUserId is a string
+      const cleanId = telegramUserId.toString().trim();
+      
+      console.log("Saving email for telegram user:", cleanId, email);
       console.log("With additional data:", { firstName, lastName, communityId, username, photoUrl });
       
       // Pass all user details to the collectUserEmail function
       const success = await collectUserEmail(
-        telegramUserId, 
+        cleanId, 
         email, 
         firstName, 
         lastName, 
@@ -68,7 +71,7 @@ export const EmailCollectionForm = ({
         throw new Error("Failed to save email");
       }
       
-      console.log("Email saved successfully for user:", telegramUserId);
+      console.log("Email saved successfully for user:", cleanId);
       
       toast({
         title: "Email saved",

@@ -1,10 +1,52 @@
 
-project_id = "trkiniaqliiwdkrvvuky"
-[functions.create-stripe-session]
-verify_jwt = false
+# project_id = "trkiniaqliiwdkrvvuky" (This is just a comment, the actual project_id is defined in the Supabase environment)
 
-[functions.telegram-webhook]
-verify_jwt = false
+[global]
+tls_verification_mode = "off"
 
-[functions.telegram-mini-app]
+[global.extensions]
+import_map = "supabase/functions/import_map.json"
+
+[[global.build.command]]
+command = "npm i @supabase/supabase-js"
+working_directory = "/opt"
+
+[[function]]
+name = "telegram-mini-app"
 verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "telegram-user-manager"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "telegram-community-data"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "create-stripe-session"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "create-invite-link"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "kick-member"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "check-subscriptions"
+verify_jwt = false
+max_duration = 5
+
+[[function]]
+name = "telegram-webhook"
+verify_jwt = false
+max_duration = 60

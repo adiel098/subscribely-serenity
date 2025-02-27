@@ -11,7 +11,7 @@ import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
 import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
 import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollectionForm";
-import { TelegramMiniAppUser } from "@/telegram-mini-app/types/database.types";
+import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 
 export interface Plan {
   id: string;
@@ -32,15 +32,6 @@ export interface Community {
   subscription_plans: Plan[];
 }
 
-interface TelegramUser {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  email?: string;
-}
-
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -49,29 +40,30 @@ const TelegramMiniApp = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const initData = searchParams.get("initData");
-    const startParam = searchParams.get("start");
+  // Get parameters from URL
+  const initData = searchParams.get("initData");
+  const startParam = searchParams.get("start");
 
+  // Use our custom hook to retrieve user data
+  const { user: telegramUser, loading: userLoading, error: userError } = 
+    useTelegramUser(startParam || "", initData || undefined);
+
+  useEffect(() => {
     const fetchCommunityData = async () => {
       try {
-        console.log('Fetching community data with params:', { startParam, initData });
-        
         if (!startParam) {
-          throw new Error("No start parameter provided");
+          throw new Error("No community ID provided");
         }
         
-        const response = await supabase.functions.invoke("telegram-mini-app", {
-          body: { 
-            start: startParam,
-            initData 
-          }
+        console.log('Fetching community data with ID:', startParam);
+        
+        const response = await supabase.functions.invoke("telegram-community-data", {
+          body: { community_id: startParam }
         });
 
-        console.log('Response from telegram-mini-app:', response);
+        console.log('Response from telegram-community-data:', response);
 
         if (response.error) {
           throw new Error(response.error);
@@ -79,24 +71,8 @@ const TelegramMiniApp = () => {
 
         if (response.data?.community) {
           setCommunity(response.data.community);
-          
-          // Extract user data if available
-          if (response.data.user) {
-            const userData = response.data.user;
-            setTelegramUser({
-              id: userData.id,
-              first_name: userData.first_name,
-              last_name: userData.last_name,
-              username: userData.username,
-              photo_url: userData.photo_url,
-              email: userData.email
-            });
-            
-            // Check if user has email in the database
-            if (userData.id) {
-              checkUserEmail(userData.id);
-            }
-          }
+        } else {
+          throw new Error("Community not found");
         }
       } catch (error) {
         console.error("Error fetching community data:", error);
@@ -116,30 +92,27 @@ const TelegramMiniApp = () => {
       console.error("No start parameter provided");
       setLoading(false);
     }
-  }, [searchParams, toast]);
+  }, [startParam, toast]);
 
-  const checkUserEmail = async (telegramId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('telegram_mini_app_users')
-        .select('email')
-        .eq('telegram_id', telegramId)
-        .single();
-      
-      if (error) throw error;
-      
+  // Check if user needs email collection when user data is loaded
+  useEffect(() => {
+    if (!userLoading && telegramUser) {
       // If user doesn't have an email, show the email collection form
-      setShowEmailForm(!data.email);
-      
-      if (data.email) {
-        setTelegramUser(prev => prev ? { ...prev, email: data.email } : null);
-      }
-    } catch (error) {
-      console.error("Error checking user email:", error);
-      // Default to showing the form if there's an error
-      setShowEmailForm(true);
+      setShowEmailForm(!telegramUser.email);
     }
-  };
+  }, [telegramUser, userLoading]);
+
+  // Handle errors from user data fetching
+  useEffect(() => {
+    if (userError) {
+      console.error("Error getting user data:", userError);
+      toast({
+        variant: "destructive",
+        title: "User Data Error",
+        description: "There was a problem retrieving your information. Some features may be limited."
+      });
+    }
+  }, [userError, toast]);
 
   const handleEmailFormComplete = () => {
     setShowEmailForm(false);
@@ -164,10 +137,12 @@ const TelegramMiniApp = () => {
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loading) {
+  // Show loading screen while fetching data
+  if (loading || userLoading) {
     return <LoadingScreen />;
   }
 
+  // Show error if community not found
   if (!community) {
     return <CommunityNotFound />;
   }

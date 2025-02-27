@@ -36,7 +36,7 @@ export const EmailCollectionForm = ({ telegramUserId, onComplete }: EmailCollect
     try {
       console.log("Saving email for telegram user:", telegramUserId, email);
       
-      // Use the collectUserEmail function from memberService
+      // Make sure to pass both the telegramUserId and email to the collectUserEmail function
       const success = await collectUserEmail(telegramUserId, email);
       
       if (!success) {

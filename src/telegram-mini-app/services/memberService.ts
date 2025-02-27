@@ -150,16 +150,29 @@ export async function collectUserEmail(telegramUserId: string, email: string): P
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke("telegram-user-manager", {
-      body: { action: "update_user_email", telegram_user_id: telegramUserId, email: email }
-    });
-
-    if (error) {
-      console.error("Error updating user email:", error);
-      throw new Error(error.message);
+    // First check if the user exists
+    const { exists } = await checkUserExists(telegramUserId);
+    
+    let result;
+    if (exists) {
+      // Update existing user
+      result = await supabase
+        .from('telegram_mini_app_users')
+        .update({ email: email })
+        .eq('telegram_id', telegramUserId);
+    } else {
+      // Create new user
+      result = await supabase
+        .from('telegram_mini_app_users')
+        .insert({ telegram_id: telegramUserId, email: email });
+    }
+    
+    if (result.error) {
+      console.error("Error updating/inserting user email:", result.error);
+      throw new Error(result.error.message);
     }
 
-    console.log("Email collected successfully:", data);
+    console.log("Email collected successfully for user:", telegramUserId);
     return true;
   } catch (error) {
     console.error("Failed to collect email:", error);

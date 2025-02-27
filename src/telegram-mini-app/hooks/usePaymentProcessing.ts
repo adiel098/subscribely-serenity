@@ -1,94 +1,100 @@
+
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Plan } from "@/telegram-mini-app/types/community.types";
-import { PaymentState } from "../types/payment.types";
-import { createOrUpdateMember } from "../services/memberService";
-import { createPayment, createInviteLink } from "../services/paymentService";
+import { createOrUpdateMember } from "@/telegram-mini-app/services/memberService";
 
-export const usePaymentProcessing = (
-  selectedPlan: Plan,
-  selectedPaymentMethod: string | null,
-  onCompletePurchase: () => void,
-  telegramUserId?: string
-) => {
-  const { toast } = useToast();
-  const [state, setState] = useState<PaymentState>({
-    isProcessing: false,
-    paymentInviteLink: null,
-  });
+interface UsePaymentProcessingOptions {
+  communityId: string;
+  planId: string;
+  communityInviteLink: string | null;
+  telegramUserId?: string;
+  onSuccess?: () => void;
+}
 
-  const handlePayment = async () => {
-    if (!selectedPlan || !selectedPaymentMethod) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a payment method"
-      });
-      return;
+export const usePaymentProcessing = ({
+  communityId,
+  planId,
+  communityInviteLink,
+  telegramUserId,
+  onSuccess
+}: UsePaymentProcessingOptions) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const processPayment = async (paymentMethod: string) => {
+    if (!telegramUserId) {
+      setError("User ID not found. Please try again later.");
+      return false;
     }
 
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setState(prev => ({ ...prev, isProcessing: true }));
+      console.log(`Processing payment for plan ${planId} with ${paymentMethod}`);
+      
+      const paymentId = `demo-${Date.now()}`;
+      
+      // In a real app, this would involve Stripe, PayPal, etc.
+      // For now, we'll just simulate a successful payment
+      
+      // Log the payment to the database
+      const { error: paymentError } = await supabase
+        .from('subscription_payments')
+        .insert({
+          telegram_user_id: telegramUserId,
+          community_id: communityId,
+          plan_id: planId,
+          payment_method: paymentMethod,
+          amount: 0, // This would be the actual amount in a real implementation
+          status: 'successful',
+          invite_link: communityInviteLink
+        });
 
-      // Create invite link first
-      const newInviteLink = await createInviteLink(selectedPlan.community_id);
-
-      // Create payment data with Telegram user ID if available
-      const paymentData = {
-        plan_id: selectedPlan.id,
-        community_id: selectedPlan.community_id,
-        amount: selectedPlan.price,
-        payment_method: selectedPaymentMethod,
-        status: 'completed',
-        invite_link: newInviteLink,
-        telegram_user_id: telegramUserId // Add Telegram user ID
-      };
-
-      const payment = await createPayment(paymentData);
-
-      // Register member with Telegram ID if available
-      if (telegramUserId) {
-        try {
-          await createOrUpdateMember({
-            community_id: selectedPlan.community_id,
-            telegram_id: telegramUserId,
-            subscription_plan_id: selectedPlan.id,
-            status: 'active',
-            payment_id: payment?.id
-          });
-          
-          console.log(`Member created/updated with Telegram ID: ${telegramUserId}`);
-        } catch (memberError) {
-          console.error('Error creating/updating member:', memberError);
-          // Continue with payment flow even if member creation fails
-        }
+      if (paymentError) {
+        console.error("Error recording payment:", paymentError);
+        throw new Error(`Payment recording failed: ${paymentError.message}`);
       }
 
-      if (payment?.invite_link) {
-        setState(prev => ({ ...prev, paymentInviteLink: payment.invite_link }));
+      // Update or create member status
+      const success = await createOrUpdateMember({
+        telegram_id: telegramUserId,
+        community_id: communityId,
+        subscription_plan_id: planId,
+        status: 'active',
+        payment_id: paymentId
+      });
+
+      if (!success) {
+        throw new Error("Failed to update membership status");
       }
 
-      toast({
-        title: "Payment Successful! ",
-        description: "You can now join the community.",
-      });
-      
-      onCompletePurchase();
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error processing payment",
-        description: error.message || "Please try again or contact support."
-      });
+      setIsSuccess(true);
+      onSuccess?.();
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Payment processing failed";
+      console.error("Payment processing error:", errorMessage);
+      setError(errorMessage);
+      return false;
     } finally {
-      setState(prev => ({ ...prev, isProcessing: false }));
+      setIsLoading(false);
     }
   };
 
+  const resetState = () => {
+    setIsLoading(false);
+    setError(null);
+    setIsSuccess(false);
+  };
+
   return {
-    ...state,
-    handlePayment
+    processPayment,
+    isLoading,
+    error,
+    isSuccess,
+    resetState
   };
 };

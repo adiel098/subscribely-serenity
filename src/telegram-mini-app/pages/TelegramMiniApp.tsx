@@ -73,6 +73,16 @@ const TelegramMiniApp = () => {
   // Combine all loading states
   const isLoading = communityLoading || userLoading || isCheckingUserData;
 
+  console.log("Debug state:", {
+    isLoading,
+    communityLoading,
+    userLoading,
+    isCheckingUserData,
+    showEmailForm,
+    telegramUser: telegramUser ? "exists" : "null",
+    community: community ? "exists" : "null"
+  });
+
   return (
     <TelegramAppContent
       isDevelopment={isDevelopment}

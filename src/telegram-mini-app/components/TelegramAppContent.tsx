@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { TelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
@@ -27,6 +27,16 @@ export const TelegramAppContent: React.FC<TelegramAppContentProps> = ({
   showEmailForm,
   onEmailFormComplete
 }) => {
+  useEffect(() => {
+    // Log component rendering state to debug blank page issue
+    console.log('🔍 TelegramAppContent rendering with state:', {
+      isLoading,
+      hasCommunity: Boolean(community),
+      hasUser: Boolean(telegramUser),
+      showEmailForm,
+    });
+  }, [isLoading, community, telegramUser, showEmailForm]);
+
   if (isLoading) {
     console.log('⏳ Showing loading screen');
     return <LoadingScreen />;

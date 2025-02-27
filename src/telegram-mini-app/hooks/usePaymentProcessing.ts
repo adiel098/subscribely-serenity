@@ -1,50 +1,75 @@
 
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Plan } from '@/telegram-mini-app/types';
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
+import { PaymentState } from "../types/payment.types";
+import { createOrUpdateMember } from "../services/memberService";
+import { createPayment, createInviteLink } from "../services/paymentService";
 
 export const usePaymentProcessing = (
   selectedPlan: Plan,
   selectedPaymentMethod: string | null,
   onCompletePurchase: () => void
 ) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentInviteLink, setPaymentInviteLink] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [state, setState] = useState<PaymentState>({
+    isProcessing: false,
+    paymentInviteLink: null,
+  });
 
   const handlePayment = async () => {
-    if (!selectedPaymentMethod) {
-      setError('Please select a payment method');
+    if (!selectedPlan || !selectedPaymentMethod) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a payment method"
+      });
       return;
     }
 
-    setIsProcessing(true);
-    setError(null);
-
     try {
-      // In a real implementation, this would connect to a payment processor
-      // For demo purposes, we'll simulate a successful payment
+      setState(prev => ({ ...prev, isProcessing: true }));
+
+      // Create invite link first
+      const newInviteLink = await createInviteLink(selectedPlan.community_id);
+
+      const paymentData = {
+        plan_id: selectedPlan.id,
+        community_id: selectedPlan.community_id,
+        amount: selectedPlan.price,
+        payment_method: selectedPaymentMethod,
+        status: 'completed',
+        invite_link: newInviteLink,
+      };
+
+      const payment = await createPayment(paymentData);
+
+      if (payment?.invite_link) {
+        setState(prev => ({ ...prev, paymentInviteLink: payment.invite_link }));
+      }
+
+      toast({
+        title: "Payment Successful! 🎉",
+        description: "You can now join the community.",
+      });
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For testing, always succeed
-      const inviteLink = 'https://t.me/+abcd1234';
-      setPaymentInviteLink(inviteLink);
       onCompletePurchase();
       
-    } catch (err) {
-      console.error('Payment processing error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred during payment processing');
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error processing payment",
+        description: error.message || "Please try again or contact support."
+      });
     } finally {
-      setIsProcessing(false);
+      setState(prev => ({ ...prev, isProcessing: false }));
     }
   };
 
   return {
-    isProcessing,
-    paymentInviteLink,
-    error,
-    handlePayment
+    ...state,
+    handlePayment,
   };
 };
+

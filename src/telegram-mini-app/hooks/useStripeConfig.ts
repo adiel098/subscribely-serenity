@@ -1,41 +1,35 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Plan } from '@/telegram-mini-app/types';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Plan } from "@/telegram-mini-app/pages/TelegramMiniApp";
 
-export const useStripeConfig = (plan: Plan) => {
+export const useStripeConfig = (selectedPlan: Plan) => {
   const [stripeConfig, setStripeConfig] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStripeConfig = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('payment_methods')
-          .select('*')
-          .eq('provider', 'stripe')
-          .eq('is_active', true)
-          .eq('community_id', plan.id)
-          .maybeSingle();
+      if (!selectedPlan?.community_id) return;
+      
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('config')
+        .eq('community_id', selectedPlan.community_id)
+        .eq('provider', 'stripe')
+        .eq('is_active', true)
+        .single();
 
-        if (error) {
-          throw new Error(error.message);
-        }
+      if (error) {
+        console.error('Error fetching Stripe config:', error);
+        return;
+      }
 
-        setStripeConfig(data?.config || null);
-      } catch (err) {
-        console.error('Error fetching Stripe config:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
+      if (data?.config) {
+        setStripeConfig(data.config);
       }
     };
 
-    if (plan) {
-      fetchStripeConfig();
-    }
-  }, [plan]);
+    fetchStripeConfig();
+  }, [selectedPlan?.community_id]);
 
-  return { stripeConfig, loading, error };
+  return stripeConfig;
 };

@@ -1,37 +1,41 @@
 
-import React from "react";
-import { CheckCircle, ExternalLink } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SuccessScreenProps } from "../types";
 
-export const SuccessScreen = ({ communityName, communityInviteLink }: SuccessScreenProps) => {
+interface SuccessScreenProps {
+  communityInviteLink: string | null;
+}
+
+export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const handleJoinClick = () => {
     if (communityInviteLink) {
-      window.open(communityInviteLink, "_blank");
+      window.open(communityInviteLink, '_blank');
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen -mt-16 animate-fade-in">
-      <div className="bg-green-100 p-4 rounded-full mb-6">
-        <CheckCircle className="h-16 w-16 text-green-600" />
+    <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-fade-up">
+      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+        <Check className="w-8 h-8 text-green-600" />
       </div>
-      
-      <h1 className="text-3xl font-bold text-center mb-2">Payment Successful!</h1>
-      
-      <p className="text-gray-600 text-center mb-8 max-w-xs">
-        {communityName 
-          ? `Thank you for subscribing to ${communityName}. Your access has been activated.`
-          : "Thank you for your subscription. Your access has been activated."}
+      <h2 className="text-2xl font-bold text-gray-900">
+        Payment Successful!
+      </h2>
+      <p className="text-gray-600 max-w-sm">
+        Your payment has been processed. Click the button below to join the community.
       </p>
-      
-      {communityInviteLink && (
-        <Button 
+      {communityInviteLink ? (
+        <Button
+          size="lg"
           onClick={handleJoinClick}
-          className="flex items-center"
+          className="px-8 py-6 text-lg font-semibold"
         >
-          Join Community <ExternalLink className="ml-2 h-4 w-4" />
+          Join Community
         </Button>
+      ) : (
+        <p className="text-red-500">
+          Error: No invite link available. Please contact support.
+        </p>
       )}
     </div>
   );

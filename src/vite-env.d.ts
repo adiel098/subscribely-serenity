@@ -10,6 +10,21 @@ interface TelegramWebApp {
       username?: string;
     };
   };
+  initData?: string;
+  BackButton?: {
+    show: () => void;
+    hide: () => void;
+    onClick: (callback: () => void) => void;
+    isVisible: boolean;
+  };
+  HapticFeedback?: {
+    impactOccurred: (style: string) => void;
+    notificationOccurred: (type: string) => void;
+    selectionChanged: () => void;
+  };
+  setViewport?: () => void;
+  expand?: () => void;
+  ready?: () => void;
 }
 
 interface Window {

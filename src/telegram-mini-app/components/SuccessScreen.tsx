@@ -9,14 +9,7 @@ interface SuccessScreenProps {
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const handleJoinClick = () => {
     if (communityInviteLink) {
-      // For Telegram Mini App integration, try to open the link in Telegram first
-      // This should use the Telegram WebApp API if available
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.openTelegramLink(communityInviteLink);
-      } else {
-        // Fallback to opening in a new browser tab if the Telegram WebApp API is not available
-        window.open(communityInviteLink, '_blank');
-      }
+      window.open(communityInviteLink, '_blank');
     }
   };
 

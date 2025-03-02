@@ -53,27 +53,31 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
-          // CRITICAL FIX: Always show email form for new users (not in DB)
-          if (!exists) {
-            console.log('🔴 NEW USER DETECTION: User not in database, forcing email collection');
-            toast({
-              title: "Welcome to our community!",
-              description: "Please provide your email to continue.",
-            });
-            setShowEmailForm(true);
-          } 
-          // Also show email form for existing users without email
-          else if (!hasEmail) {
-            console.log('🔍 Existing user but missing email, requesting email info');
-            toast({
-              title: "Please provide your email",
-              description: "We need your email address to continue."
-            });
+          // Enforce email collection in ALL cases where either:
+          // 1. User is new (not in DB) OR
+          // 2. User exists but doesn't have an email
+          if (!exists || !hasEmail) {
+            console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
+            
+            if (!exists) {
+              toast({
+                title: "Welcome to our community!",
+                description: "Please provide your email to continue.",
+              });
+            } else {
+              toast({
+                title: "Email required",
+                description: "Please provide your email address to continue.",
+              });
+            }
+            
+            // Force showing email form - this is critical
             setShowEmailForm(true);
           } else {
             console.log('✅ User exists and has email, proceeding to community page');
             setShowEmailForm(false);
           }
+          
           setErrorState(null);
         } catch (error) {
           console.error('❌ Error checking user data:', error);

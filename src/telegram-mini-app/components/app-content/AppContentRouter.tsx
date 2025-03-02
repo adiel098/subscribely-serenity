@@ -77,10 +77,28 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // CRITICAL FIX: Show email form if needed - this check needs to happen BEFORE showing the main content
-  // This enforces that new users must provide an email before seeing the community page
+  // STRICT ENFORCEMENT: Email form must be shown before community content
+  // This is our critical gate that ensures users provide email before accessing content
   if (showEmailForm && telegramUser) {
-    console.log('📧 ROUTING: User needs to provide email before accessing community content');
+    console.log('📧 ROUTING: User MUST provide email before accessing community content');
+    return (
+      <>
+        {renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, now showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
+    );
+  }
+  
+  // Additional safety check - if user has no email, force email collection
+  // This is a failsafe in case the showEmailForm flag wasn't properly set
+  if (telegramUser && !telegramUser.email) {
+    console.log('🛑 SAFETY CHECK: User missing email, redirecting to email collection form');
     return (
       <>
         {renderDebugInfo()}
@@ -95,12 +113,13 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // Main content - only show if not loading, community exists, and email form is not needed
+  // Main content - only show if not loading, community exists, email form is not needed,
+  // and the user has provided an email
   console.log('🎉 Showing main content with:', { 
     community: community?.name, 
     user: telegramUser?.username,
     plans: community?.subscription_plans?.length || 0,
-    showEmailForm, // Log this to verify the state
+    showEmailForm, 
     emailProvided: telegramUser?.email ? true : false
   });
   

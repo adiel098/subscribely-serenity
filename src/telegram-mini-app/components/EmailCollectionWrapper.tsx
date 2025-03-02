@@ -11,7 +11,18 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   telegramUser, 
   onComplete 
 }) => {
-  if (!telegramUser) return null;
+  if (!telegramUser) {
+    console.error('❌ EMAIL COLLECTION: No user data provided to wrapper');
+    return null;
+  }
+  
+  // Check if user already has an email (should never happen due to our router logic, but just in case)
+  if (telegramUser.email) {
+    console.warn('⚠️ EMAIL COLLECTION: User already has email, calling onComplete directly', telegramUser.email);
+    // Call onComplete on next tick to avoid rendering issues
+    setTimeout(onComplete, 0);
+    return null;
+  }
   
   console.log('📝 EMAIL COLLECTION: Showing form for user ID:', telegramUser.id);
   console.log('📝 EMAIL COLLECTION: User data:', {

@@ -42,6 +42,20 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     isCheckingUserData
   });
   
+  // Debug section at the top that will show ONLY when debug=true is in URL
+  const activeTab = "subscribe"; // Default active tab
+  
+  // Define renderDebugInfo function BEFORE using it
+  const renderDebugInfo = () => (
+    <DebugInfo 
+      telegramUser={telegramUser} 
+      community={community} 
+      activeTab={activeTab}
+      showEmailForm={showEmailForm}
+      isCheckingUserData={isCheckingUserData}
+    />
+  );
+  
   // HIGHEST PRIORITY: Show email form whenever possible
   // This takes precedence over everything else to ensure users can provide email
   if (telegramUserId && showEmailForm) {
@@ -79,19 +93,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Debug section at the top that will show ONLY when debug=true is in URL
-  const activeTab = "subscribe"; // Default active tab
-  
-  const renderDebugInfo = () => (
-    <DebugInfo 
-      telegramUser={telegramUser} 
-      community={community} 
-      activeTab={activeTab}
-      showEmailForm={showEmailForm}
-      isCheckingUserData={isCheckingUserData}
-    />
-  );
-
   // Error boundary for debugging - show when nothing else renders
   const renderErrorBoundary = () => (
     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md m-4">

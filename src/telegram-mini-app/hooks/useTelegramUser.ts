@@ -19,7 +19,38 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
     
     try {
       if (!telegramUserId) {
-        console.error('❌ FLOW: Missing telegramUserId parameter');
+        console.error('❌ FLOW: Missing telegramUserId parameter in useTelegramUser');
+        console.error('❌ FLOW: telegramUserId type:', typeof telegramUserId);
+        console.error('❌ FLOW: telegramUserId value:', telegramUserId);
+        
+        // Debug the ID extraction process
+        if (window.Telegram) {
+          console.log('🔍 DEBUG: window.Telegram exists');
+          if (window.Telegram.WebApp) {
+            console.log('🔍 DEBUG: window.Telegram.WebApp exists');
+            console.log('🔍 DEBUG: WebApp properties:', Object.keys(window.Telegram.WebApp));
+            if (window.Telegram.WebApp.initDataUnsafe) {
+              console.log('🔍 DEBUG: initDataUnsafe exists');
+              console.log('🔍 DEBUG: initDataUnsafe properties:', 
+                          Object.keys(window.Telegram.WebApp.initDataUnsafe));
+              if (window.Telegram.WebApp.initDataUnsafe.user) {
+                console.log('🔍 DEBUG: user object exists');
+                console.log('🔍 DEBUG: user properties:', 
+                           Object.keys(window.Telegram.WebApp.initDataUnsafe.user));
+                console.log('🔍 DEBUG: user.id:', window.Telegram.WebApp.initDataUnsafe.user.id);
+              } else {
+                console.log('❌ DEBUG: user object does not exist in initDataUnsafe');
+              }
+            } else {
+              console.log('❌ DEBUG: initDataUnsafe does not exist');
+            }
+          } else {
+            console.log('❌ DEBUG: window.Telegram.WebApp does not exist');
+          }
+        } else {
+          console.log('❌ DEBUG: window.Telegram does not exist');
+        }
+        
         throw new Error('Missing Telegram user ID');
       }
       
@@ -50,6 +81,10 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
           lastName = window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '';
           username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '';
           photoUrl = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+          
+          console.log('📝 FLOW: Extracted user details from WebApp:', {
+            firstName, lastName, username, photoUrl
+          });
         } catch (e) {
           console.warn('⚠️ Could not extract user details from WebApp:', e);
         }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
@@ -7,6 +6,7 @@ import { UserDataChecker } from "@/telegram-mini-app/components/app-content/User
 import { ErrorNotifier } from "@/telegram-mini-app/components/app-content/ErrorNotifier";
 import { AppContentRouter } from "@/telegram-mini-app/components/app-content/AppContentRouter";
 import { UILogger } from "@/telegram-mini-app/components/debug/UILogger";
+import { TelegramDebugPanel } from "@/telegram-mini-app/components/debug/TelegramDebugPanel";
 
 interface AppContentProps {
   communityLoading: boolean;
@@ -41,13 +41,10 @@ export const AppContent: React.FC<AppContentProps> = ({
   setIsCheckingUserData,
   setErrorState
 }) => {
-  // Track when email is submitted
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   
-  // All component state and functionality is now split into smaller components
   const isLoading = communityLoading || userLoading || isCheckingUserData;
   
-  // Log state changes for debugging
   useEffect(() => {
     console.log('📊 FLOW: AppContent state changed:', {
       communityLoading,
@@ -60,7 +57,6 @@ export const AppContent: React.FC<AppContentProps> = ({
       emailSubmitted
     });
     
-    // If email was submitted but we're still showing the email form, force hide it
     if (emailSubmitted && showEmailForm) {
       console.log('🚨 FLOW: Email was submitted but form is still showing - forcing transition');
       setShowEmailForm(false);
@@ -70,10 +66,8 @@ export const AppContent: React.FC<AppContentProps> = ({
 
   return (
     <>
-      {/* Error notifications */}
       <ErrorNotifier errorState={errorState} />
       
-      {/* User data checking logic */}
       <UserDataChecker
         telegramUser={telegramUser}
         userLoading={userLoading}
@@ -83,7 +77,6 @@ export const AppContent: React.FC<AppContentProps> = ({
         setErrorState={setErrorState}
       />
       
-      {/* Loading screen with debug info */}
       <LoadingIndicator 
         isLoading={isLoading}
         onTimeout={() => {
@@ -93,7 +86,6 @@ export const AppContent: React.FC<AppContentProps> = ({
         onRetry={onRetry}
       />
       
-      {/* Main routing logic */}
       <AppContentRouter
         loading={isLoading}
         errorState={errorState}
@@ -107,15 +99,14 @@ export const AppContent: React.FC<AppContentProps> = ({
         setShowEmailForm={(show) => {
           console.log('📱 FLOW: Setting showEmailForm in AppContentRouter:', show);
           if (!show && showEmailForm) {
-            // Email form is being hidden after being shown - mark as submitted
             setEmailSubmitted(true);
           }
           setShowEmailForm(show);
         }}
       />
       
-      {/* UI Logger component */}
       <UILogger />
+      <TelegramDebugPanel />
     </>
   );
 };

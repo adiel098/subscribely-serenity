@@ -33,6 +33,39 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     // Make sure we have a valid user object
     if (!telegramUser || !telegramUser.id) {
       console.error('❌ FLOW: No valid user data available - cannot proceed', telegramUser);
+      console.log('❌ DEBUG: telegramUser:', telegramUser);
+      console.log('❌ DEBUG: telegramUser type:', typeof telegramUser);
+      
+      if (telegramUser) {
+        console.log('❌ DEBUG: telegramUser.id:', telegramUser.id);
+        console.log('❌ DEBUG: telegramUser.id type:', typeof telegramUser.id);
+      }
+      
+      // Try to debug the Telegram WebApp data
+      console.log('🔍 DEBUG: Checking Telegram WebApp data:');
+      if (window.Telegram) {
+        console.log('- window.Telegram exists');
+        if (window.Telegram.WebApp) {
+          console.log('- window.Telegram.WebApp exists');
+          if (window.Telegram.WebApp.initDataUnsafe) {
+            console.log('- initDataUnsafe exists');
+            
+            if (window.Telegram.WebApp.initDataUnsafe.user) {
+              console.log('- user object exists');
+              console.log('- user.id:', window.Telegram.WebApp.initDataUnsafe.user.id);
+            } else {
+              console.log('- user object is missing from initDataUnsafe');
+            }
+          } else {
+            console.log('- initDataUnsafe is missing');
+          }
+        } else {
+          console.log('- WebApp object is missing');
+        }
+      } else {
+        console.log('- window.Telegram is missing');
+      }
+      
       setErrorState("User data unavailable. Please try refreshing the page.");
       setIsCheckingUserData(false);
       return;
@@ -60,6 +93,8 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     // Handle edge case - userExistsInDatabase is null
     else {
       console.error('❓ FLOW: Unexpected state - userExistsInDatabase is null');
+      console.log('❓ DEBUG: userExistsInDatabase:', userExistsInDatabase);
+      console.log('❓ DEBUG: telegramUser:', telegramUser);
       setErrorState("User verification error. Please try again.");
     }
     

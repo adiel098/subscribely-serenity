@@ -42,10 +42,28 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     isCheckingUserData
   });
   
-  // Show debug info for development
+  // Render email form whenever possible - most important priority
+  // If we have valid telegramUserId and either showEmailForm is true or user has no email
+  if (telegramUserId && (showEmailForm || (telegramUser && !telegramUser.email))) {
+    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately with ID:', telegramUserId);
+    return (
+      <>
+        {/* Debug info intentionally not shown by default */}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser || { id: telegramUserId }} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
+    );
+  }
+  
+  // Show debug info for development - but only when explicitly enabled with URL param
   const activeTab = "subscribe"; // Default active tab
   
-  // Debug section at the top that will show in dev mode
+  // Debug section at the top that will show ONLY when debug=true is in URL
   const renderDebugInfo = () => (
     <DebugInfo 
       telegramUser={telegramUser} 
@@ -80,8 +98,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       </button>
     </div>
   );
-
-  // OPTIMIZED ROUTING FLOW: Reduce page transitions for new users
+  
+  // The rest of the routing logic
   
   // First, handle error cases
   if (errorState && telegramUserId) {
@@ -112,25 +130,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       </>
     );
   }
-
-  // DIRECT EMAIL COLLECTION FOR NEW USERS
-  // If we have the telegramUser but they don't have an email, show email form immediately
-  // This prevents unnecessary transitions
-  if (telegramUser && !telegramUser.email) {
-    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately for new user');
-    return (
-      <>
-        {renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
-  }
   
   // Main content - only show if we have both a telegramUser (with email) and community
   if (telegramUser && telegramUser.email && community) {
@@ -157,6 +156,20 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Fallback for any edge cases
+  // Fallback for any edge cases - show email form as priority if we have a userId
+  if (telegramUserId) {
+    console.log('📧 FALLBACK EMAIL COLLECTION: Showing email form with ID:', telegramUserId);
+    return (
+      <EmailCollectionWrapper 
+        telegramUser={{ id: telegramUserId }} 
+        onComplete={() => {
+          console.log('📧 Email collection completed, showing community content');
+          setShowEmailForm(false);
+        }}
+      />
+    );
+  }
+  
+  // Last resort - error boundary
   return renderErrorBoundary();
 };

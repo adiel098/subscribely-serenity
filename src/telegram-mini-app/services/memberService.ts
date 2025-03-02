@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Community {
@@ -132,6 +131,9 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
   }
 
   try {
+    // IMPORTANT FIX: Make sure we're querying specifically by telegram_id, not id
+    console.log(`📊 Running query to check user with telegram_id = "${cleanTelegramId}"`);
+    
     const { data, error } = await supabase
       .from('telegram_mini_app_users')
       .select('id, email, telegram_id')

@@ -53,19 +53,19 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   console.log('📝 EMAIL COLLECTION: Showing form for user ID:', telegramUserId);
   console.log('📝 EMAIL COLLECTION: User data:', {
     id: telegramUserId,
-    firstName: telegramUser.first_name || '',
-    lastName: telegramUser.last_name || '',
-    username: telegramUser.username || '',
+    firstName: telegramUser.first_name,
+    lastName: telegramUser.last_name,
+    username: telegramUser.username,
     hasEmail: !!telegramUser.email
   });
   
   return (
     <EmailCollectionForm 
       telegramUserId={telegramUserId} 
-      firstName={telegramUser.first_name || ''}
-      lastName={telegramUser.last_name || ''}
-      username={telegramUser.username || ''}
-      photoUrl={telegramUser.photo_url || ''}
+      firstName={telegramUser.first_name}
+      lastName={telegramUser.last_name}
+      username={telegramUser.username}
+      photoUrl={telegramUser.photo_url}
       onComplete={() => {
         console.log('📝 EMAIL COLLECTION: Form submitted successfully, completing flow');
         // Ensure we're calling onComplete to redirect to community page

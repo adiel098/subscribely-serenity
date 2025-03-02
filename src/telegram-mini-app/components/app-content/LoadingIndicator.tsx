@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw } from "lucide-react";
 
@@ -24,16 +25,16 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     let interval: number | null = null;
     
     if (isLoading) {
-      interval = window.setTimeout(() => {
+      interval = window.setInterval(() => {
         setLoadingTime(prev => prev + 1);
       }, 1000);
     } else {
       setLoadingTime(0);
-      if (interval) window.clearTimeout(interval);
+      if (interval) window.clearInterval(interval);
     }
     
     return () => {
-      if (interval) window.clearTimeout(interval);
+      if (interval) window.clearInterval(interval);
     };
   }, [isLoading]);
 
@@ -45,26 +46,38 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     }
   }, [loadingTime, timeoutDuration, onTimeout]);
 
-  // Only show retry debugging tool, not the loading animation
-  if (!isLoading || loadingTime < 3) return null;
+  // Handle debug info visibility
+  const toggleDebugInfo = () => {
+    setShowDebugInfo(!showDebugInfo);
+  };
+
+  if (!isLoading) return null;
 
   return (
     <AnimatePresence>
-      {isLoading && loadingTime >= 3 && (
+      {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed bottom-4 right-4 z-50"
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50"
         >
-          <motion.button 
-            onClick={() => setShowDebugInfo(!showDebugInfo)}
-            className="bg-gray-800/80 backdrop-blur-sm text-white p-2 rounded-full text-xs shadow-lg"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {showDebugInfo ? "Hide Debug" : "Debug"}
-          </motion.button>
+          <LoadingScreen />
+          
+          {/* Debug info that can be shown after clicking 5 times */}
+          {loadingTime > 5 && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <motion.button 
+                onClick={toggleDebugInfo}
+                className="bg-gray-800/80 backdrop-blur-sm text-white p-2 rounded-full text-xs shadow-lg"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {showDebugInfo ? "Hide Debug" : "Debug"}
+              </motion.button>
+            </div>
+          )}
           
           {showDebugInfo && (
             <motion.div 

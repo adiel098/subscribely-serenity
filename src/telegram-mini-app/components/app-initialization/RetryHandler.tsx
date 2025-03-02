@@ -48,7 +48,8 @@ export const RetryHandler: React.FC<RetryHandlerProps> = ({
     console.log('🔄 Retrying user data fetch');
     setErrorState(null);
     setIsCheckingUserData(true);
-    setRetryCount(prev => prev + 1);
+    // Fix: Use a direct number value instead of a function
+    setRetryCount(retryCount + 1);
     refetchUser();
     
     const initialized = initTelegramWebApp();

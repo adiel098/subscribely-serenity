@@ -60,17 +60,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           if (!exists || !hasEmail) {
             console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
             
-            if (!exists) {
-              toast({
-                title: "Welcome to our community!",
-                description: "Please provide your email to continue.",
-              });
-            } else {
-              toast({
-                title: "Email required",
-                description: "Please provide your email address to continue.",
-              });
-            }
+            // Removed welcome toast notification
             
             // Force showing email form - this is critical
             setShowEmailForm(true);

@@ -6,6 +6,7 @@ import { LoadingIndicator } from "@/telegram-mini-app/components/app-content/Loa
 import { UserDataChecker } from "@/telegram-mini-app/components/app-content/UserDataChecker";
 import { ErrorNotifier } from "@/telegram-mini-app/components/app-content/ErrorNotifier";
 import { AppContentRouter } from "@/telegram-mini-app/components/app-content/AppContentRouter";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface AppContentProps {
   communityLoading: boolean;
@@ -77,24 +78,34 @@ export const AppContent: React.FC<AppContentProps> = ({
         onRetry={onRetry}
       />
       
-      {/* Main routing logic */}
-      <AppContentRouter
-        loading={isLoading}
-        errorState={errorState}
-        telegramUserId={telegramUserId}
-        community={community}
-        telegramUser={telegramUser}
-        showEmailForm={showEmailForm}
-        isCheckingUserData={isCheckingUserData}
-        onRetry={onRetry}
-        setShowEmailForm={(show) => {
-          if (showEmailForm && !show) {
-            // Email form is being closed - mark as completed to trigger refetch
-            setEmailFormCompleted(true);
-          }
-          setShowEmailForm(show);
-        }}
-      />
+      {/* Main routing logic with smooth transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`${isLoading}-${errorState}-${showEmailForm}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AppContentRouter
+            loading={isLoading}
+            errorState={errorState}
+            telegramUserId={telegramUserId}
+            community={community}
+            telegramUser={telegramUser}
+            showEmailForm={showEmailForm}
+            isCheckingUserData={isCheckingUserData}
+            onRetry={onRetry}
+            setShowEmailForm={(show) => {
+              if (showEmailForm && !show) {
+                // Email form is being closed - mark as completed to trigger refetch
+                setEmailFormCompleted(true);
+              }
+              setShowEmailForm(show);
+            }}
+          />
+        </motion.div>
+      </AnimatePresence>
     </>
   );
 };

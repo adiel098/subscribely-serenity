@@ -1,13 +1,11 @@
 
 import React, { useState, FormEvent } from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { FormHeader } from "./FormHeader";
 import { EmailInput } from "./EmailInput";
 import { SubmitButton } from "./SubmitButton";
 import { PrivacyNote } from "./PrivacyNote";
-import { isValidEmail } from "./emailFormUtils";
-import { collectUserEmail } from "@/telegram-mini-app/services/userProfileService";
 import { useEmailSubmit } from "./hooks/useEmailSubmit";
+import { motion } from "framer-motion";
 
 export interface EmailFormProps {
   telegramUserId: string;
@@ -43,13 +41,24 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-sm max-w-md mx-auto">
+    <motion.div 
+      className="p-8 bg-white/90 backdrop-blur-lg rounded-xl shadow-xl max-w-md mx-auto border border-purple-100"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <FormHeader 
         firstName={firstName}
         photoUrl={photoUrl} 
       />
       
-      <form onSubmit={onFormSubmit} className="space-y-6 mt-6">
+      <motion.form 
+        onSubmit={onFormSubmit} 
+        className="space-y-6 mt-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
         <EmailInput 
           email={email}
           setEmail={setEmail}
@@ -59,7 +68,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
         <SubmitButton isSubmitting={isSubmitting} />
         
         <PrivacyNote />
-      </form>
-    </div>
+      </motion.form>
+    </motion.div>
   );
 };

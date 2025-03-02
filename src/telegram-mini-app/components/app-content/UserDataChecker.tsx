@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { useUserDataValidation } from "./hooks/useUserDataValidation";
+import { triggerHapticFeedback } from "@/telegram-mini-app/components/email-collection/emailFormUtils";
 
 interface UserDataCheckerProps {
   telegramUser: TelegramUser | null;
@@ -29,6 +30,11 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     if (!userLoading && telegramUser) {
       console.log('✅ User data loaded, checking if user exists in database');
       validateUserData(telegramUser);
+      
+      // Provide haptic feedback for state transitions on supported devices
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        triggerHapticFeedback('success');
+      }
     }
   }, [telegramUser, userLoading, validateUserData]);
 

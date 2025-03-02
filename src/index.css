@@ -35,10 +35,11 @@
 
   body {
     @apply bg-background text-foreground font-inter antialiased;
+    scroll-behavior: smooth;
   }
 
   .glass-card {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl;
+    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl;
   }
 
   .hover-scale {
@@ -47,6 +48,33 @@
 
   .fade-in {
     @apply animate-fade-in;
+  }
+  
+  .glassmorphism {
+    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl;
+  }
+  
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::after {
+    @apply absolute inset-0 -translate-x-full;
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.5) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+    content: '';
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
@@ -75,3 +103,4 @@
 .animate-slide-up {
   animation: slide-up 0.6s ease-out forwards;
 }
+

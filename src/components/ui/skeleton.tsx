@@ -27,10 +27,10 @@ function FullScreenSkeleton({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-background/80 backdrop-blur-sm h-[100vh] w-full">
       <Skeleton
         className={cn(
-          "w-full max-w-md h-[60vh] rounded-xl bg-gradient-to-br from-purple-100/50 to-blue-100/50",
+          "w-full max-w-md h-[80vh] rounded-xl bg-gradient-to-br from-purple-100/50 to-blue-100/50",
           className
         )}
         {...props}

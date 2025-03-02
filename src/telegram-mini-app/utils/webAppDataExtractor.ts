@@ -1,3 +1,4 @@
+
 import { TelegramUser } from '../types/telegramTypes';
 import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegramUtils';
 
@@ -11,6 +12,16 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     console.log('📊 window.Telegram.WebApp exists:', Boolean(window.Telegram?.WebApp));
     console.log('📊 initDataUnsafe exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe));
     console.log('📊 user exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user));
+    console.log('📊 viewport height:', window.innerHeight);
+    console.log('📊 viewport width:', window.innerWidth);
+    console.log('📊 User Agent:', navigator.userAgent);
+    
+    // Check if we have WebView attributes
+    if (window.Telegram?.WebApp) {
+      console.log('📊 WebApp viewport height:', window.Telegram.WebApp.viewportHeight);
+      console.log('📊 WebApp viewport stable height:', window.Telegram.WebApp.viewportStableHeight);
+      console.log('📊 WebApp isExpanded:', window.Telegram.WebApp.isExpanded);
+    }
     
     // Log the raw user object for debugging
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {

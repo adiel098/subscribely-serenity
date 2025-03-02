@@ -13,7 +13,10 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 
   useEffect(() => {
-    // Initialize Telegram WebApp which will try to expand to full screen
+    // Apply full screen immediately 
+    ensureFullScreen();
+    
+    // Initialize Telegram WebApp which will also try to expand to full screen
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     console.log('📱 Telegram WebApp initialized:', initialized);
@@ -26,28 +29,51 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
       console.log('🧪 Running in development mode without Telegram WebApp object');
     }
     
-    // Ensure full screen on mount
-    ensureFullScreen();
+    // Additionally try to ensure full screen after component mounted
+    const fullScreenTimeouts = [100, 500, 1000, 2000].map(delay => 
+      setTimeout(() => ensureFullScreen(), delay)
+    );
     
-    // Additionally ensure full screen after a slight delay
-    const fullScreenTimeout = setTimeout(() => {
-      ensureFullScreen();
-    }, 500);
-    
-    // Also call ensureFullScreen on window resize to maintain full screen
+    // Add resize handler to maintain full screen on orientation changes
     const handleResize = () => {
+      console.log('📏 Window resize detected, re-ensuring full screen');
       ensureFullScreen();
     };
     
     window.addEventListener('resize', handleResize);
     
+    // Force viewport update on orientation change
+    const handleOrientationChange = () => {
+      console.log('📱 Orientation change detected');
+      ensureFullScreen();
+      
+      // Also try again after a delay to catch any adjustments
+      setTimeout(ensureFullScreen, 300);
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
     // Inform parent component about initialization state
     onInitialized(initialized, devEnvironment);
     
+    // Apply CSS fixes for specific platforms
+    const applyPlatformFixes = () => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      
+      if (isIOS || isAndroid) {
+        document.documentElement.classList.add('telegram-mobile');
+        document.body.classList.add('telegram-mobile');
+      }
+    };
+    
+    applyPlatformFixes();
+    
     // Cleanup
     return () => {
-      clearTimeout(fullScreenTimeout);
+      fullScreenTimeouts.forEach(clearTimeout);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, [onInitialized]);
 

@@ -60,20 +60,8 @@ export const initTelegramWebApp = (): boolean => {
     if (window.Telegram?.WebApp) {
       console.log('📱 WebApp is already initialized');
       
-      // Expand the WebApp to maximum available height
-      // We call this first to ensure the app gets full screen immediately
-      if (window.Telegram.WebApp.expand) {
-        console.log('📏 Expanding WebApp to full screen');
-        window.Telegram.WebApp.expand();
-        
-        // Force expand again after a short delay to ensure it takes effect
-        setTimeout(() => {
-          if (window.Telegram?.WebApp?.expand) {
-            console.log('📏 Re-expanding WebApp to ensure full screen');
-            window.Telegram.WebApp.expand();
-          }
-        }, 100);
-      }
+      // Force expand to full screen with multiple attempts
+      forceExpandToFullScreen();
       
       // Set the correct viewport
       if (window.Telegram.WebApp.setViewport) {
@@ -96,6 +84,27 @@ export const initTelegramWebApp = (): boolean => {
     console.error('❌ Error initializing Telegram WebApp:', error);
     return false;
   }
+};
+
+/**
+ * Force the WebApp to expand with multiple attempts to ensure it works
+ */
+const forceExpandToFullScreen = () => {
+  if (!window.Telegram?.WebApp?.expand) return;
+  
+  // Immediate expand
+  console.log('📏 Forcing full screen expansion (first attempt)');
+  window.Telegram.WebApp.expand();
+  
+  // Schedule multiple expand attempts with increasing delays
+  [50, 100, 300, 500, 1000, 2000].forEach(delay => {
+    setTimeout(() => {
+      if (window.Telegram?.WebApp?.expand) {
+        console.log(`📏 Re-expanding WebApp after ${delay}ms`);
+        window.Telegram.WebApp.expand();
+      }
+    }, delay);
+  });
 };
 
 /**
@@ -129,8 +138,33 @@ export const parseUserFromUrlHash = (): { [key: string]: any } | null => {
  * This can be called at any time to force full screen mode
  */
 export const ensureFullScreen = (): void => {
-  if (window.Telegram?.WebApp?.expand) {
-    console.log('📏 Ensuring full screen mode');
-    window.Telegram.WebApp.expand();
+  // Aggressively apply full screen mode
+  forceExpandToFullScreen();
+  
+  // Additional platform-specific handling
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  
+  if (isIOS) {
+    // iOS specific handling
+    document.documentElement.style.height = '100vh';
+    document.body.style.height = '100vh';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
   }
+  
+  if (isAndroid) {
+    // Android specific handling
+    document.documentElement.style.height = '100%';
+    document.body.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+  
+  // Apply general full screen styles
+  document.documentElement.style.overflow = 'hidden';
+  document.documentElement.style.position = 'fixed';
+  document.documentElement.style.width = '100%';
+  document.documentElement.style.maxHeight = '100vh';
 };
+

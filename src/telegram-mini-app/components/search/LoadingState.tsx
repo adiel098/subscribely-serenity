@@ -43,7 +43,10 @@ export const LoadingState: React.FC = () => {
 // A version of LoadingState that takes up more vertical space for fullscreen views
 export const FullscreenLoadingState: React.FC = () => {
   return (
-    <div className="w-full h-full px-4 py-8 flex flex-col justify-center">
+    <div className="w-full min-h-[100vh] px-4 py-8 flex flex-col justify-center">
+      <div className="py-4">
+        <Skeleton className="h-8 w-32 mx-auto mb-8 bg-purple-100/60 rounded-lg" />
+      </div>
       {Array(4).fill(0).map((_, i) => (
         <motion.div 
           key={i}

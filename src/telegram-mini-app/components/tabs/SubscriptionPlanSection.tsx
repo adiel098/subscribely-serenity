@@ -1,8 +1,8 @@
 
 import React from "react";
-import { ChevronDown } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
-import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
+import { SubscriptionPlans } from "../SubscriptionPlans";
+import { PaymentMethods } from "../PaymentMethods";
 
 interface SubscriptionPlanSectionProps {
   plans: Plan[];
@@ -15,33 +15,18 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   plans,
   selectedPlan,
   onPlanSelect,
-  showPaymentMethods
+  showPaymentMethods,
 }) => {
-  // Safe guard against undefined or non-array plans
-  const validPlans = Array.isArray(plans) ? plans : [];
-  
-  if (validPlans.length === 0) {
-    return (
-      <div className="text-center p-6 bg-white rounded-lg border border-gray-200 w-full">
-        <p className="text-gray-500">No subscription plans available for this community.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full mx-0 overflow-hidden">
-      <div id="subscription-plans" className="scroll-mt-4 w-full mx-0">
+    <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full">
+      {!showPaymentMethods ? (
         <SubscriptionPlans
-          plans={validPlans}
+          plans={plans}
           selectedPlan={selectedPlan}
           onPlanSelect={onPlanSelect}
         />
-      </div>
-
-      {!selectedPlan && !showPaymentMethods && (
-        <div className="flex justify-center py-6 animate-bounce">
-          <ChevronDown className="h-5 w-5 text-primary/50" />
-        </div>
+      ) : (
+        <PaymentMethods plan={selectedPlan!} />
       )}
     </div>
   );

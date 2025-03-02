@@ -46,7 +46,7 @@ export const SubscriptionPlans = ({
   };
 
   return (
-    <div className="space-y-8 px-4">
+    <div className="space-y-8">
       <motion.div 
         className="text-center space-y-3"
         initial={{ opacity: 0, y: -20 }}

@@ -50,13 +50,15 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="subscribe" className="space-y-8 mt-0">
-        <SubscriptionPlanSection
-          plans={communitySubscriptionPlans}
-          selectedPlan={selectedPlan}
-          onPlanSelect={onPlanSelect}
-          showPaymentMethods={showPaymentMethods}
-        />
+      <TabsContent value="subscribe" className="mt-0">
+        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
+          <SubscriptionPlanSection
+            plans={communitySubscriptionPlans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={onPlanSelect}
+            showPaymentMethods={showPaymentMethods}
+          />
+        </div>
       </TabsContent>
       
       <TabsContent value="mySubscriptions" className="mt-0">

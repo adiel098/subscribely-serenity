@@ -48,9 +48,26 @@ export const EmailCollectionForm = ({
       return;
     }
     
+    // Log the telegram user ID for debugging
+    console.log("🧪 DEBUG - Form submission with Telegram user ID:", telegramUserId);
+    console.log("🧪 DEBUG - Telegram user ID type:", typeof telegramUserId);
+    
     // Validate telegram user ID - must be a numeric string
-    if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
-      console.error("Invalid Telegram user ID format:", telegramUserId);
+    if (!telegramUserId) {
+      console.error("❌ FORM ERROR: Missing Telegram user ID");
+      toast({
+        variant: "destructive",
+        title: "User identification error",
+        description: "Missing Telegram ID. Please try reloading the app.",
+      });
+      return;
+    }
+    
+    // Ensure we're working with a string ID
+    const formattedTelegramId = String(telegramUserId).trim();
+    
+    if (!/^\d+$/.test(formattedTelegramId)) {
+      console.error("❌ FORM ERROR: Invalid Telegram ID format:", formattedTelegramId);
       toast({
         variant: "destructive",
         title: "User identification error",
@@ -62,12 +79,12 @@ export const EmailCollectionForm = ({
     setIsSubmitting(true);
     
     try {
-      console.log("Saving email for telegram user:", telegramUserId, email);
-      console.log("With additional data:", { firstName, lastName, communityId, username, photoUrl });
+      console.log("📝 Saving email for telegram user:", formattedTelegramId, email);
+      console.log("📝 With additional data:", { firstName, lastName, communityId, username, photoUrl });
       
       // Pass all user details to the collectUserEmail function
       const success = await collectUserEmail(
-        telegramUserId, 
+        formattedTelegramId, 
         email, 
         firstName, 
         lastName, 
@@ -80,7 +97,7 @@ export const EmailCollectionForm = ({
         throw new Error("Failed to save email");
       }
       
-      console.log("Email saved successfully for user:", telegramUserId);
+      console.log("✅ Email saved successfully for user:", formattedTelegramId);
       
       toast({
         title: "Email saved",
@@ -95,7 +112,7 @@ export const EmailCollectionForm = ({
       // Call the onComplete callback to proceed to the community page
       onComplete();
     } catch (error) {
-      console.error("Error saving email:", error);
+      console.error("❌ Error saving email:", error);
       toast({
         variant: "destructive",
         title: "Error",

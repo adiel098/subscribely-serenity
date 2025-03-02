@@ -1,4 +1,3 @@
-
 /**
  * Shared utility functions for services
  */
@@ -12,26 +11,29 @@ export const logServiceAction = (action: string, data?: any) => {
 };
 
 /**
- * Validate Telegram ID format (must be numeric string)
+ * Validates that the Telegram ID is in the correct format (numeric string)
  */
-export const validateTelegramId = (telegramId: string): boolean => {
-  if (!telegramId || telegramId.trim() === '') {
-    console.error('❌ Empty or null Telegram ID');
+export function validateTelegramId(telegramUserId: string | null | undefined): boolean {
+  if (!telegramUserId) {
+    console.error("❌ validateTelegramId: Missing Telegram ID");
     return false;
   }
   
-  // Format and validate the ID
-  const formattedId = String(telegramId).trim();
-  const isValid = /^\d+$/.test(formattedId);
+  // Convert to string and trim any whitespace
+  const stringId = String(telegramUserId).trim();
+  console.log('🔍 Validating Telegram ID:', stringId, 'type:', typeof stringId);
+  
+  // Check if it's a numeric string
+  const isValid = /^\d+$/.test(stringId);
   
   if (!isValid) {
-    console.error('❌ Invalid Telegram ID format:', telegramId);
+    console.error("❌ validateTelegramId: Invalid Telegram ID format:", stringId);
   } else {
-    console.log('✅ Valid Telegram ID format:', telegramId);
+    console.log('✅ validateTelegramId: Valid Telegram ID:', stringId);
   }
   
   return isValid;
-};
+}
 
 /**
  * Invoke Supabase Edge Functions with consistent error handling

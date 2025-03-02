@@ -11,10 +11,11 @@ export const ErrorNotifier: React.FC<ErrorNotifierProps> = ({ errorState }) => {
 
   useEffect(() => {
     if (errorState) {
+      console.error('❌ FLOW: Error state detected:', errorState);
       toast({
         variant: "destructive",
-        title: "User Data Error",
-        description: "There was a problem retrieving your information. Some features may be limited."
+        title: "Error",
+        description: errorState
       });
     }
   }, [errorState, toast]);

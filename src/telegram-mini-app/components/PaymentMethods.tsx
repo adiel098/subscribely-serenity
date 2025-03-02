@@ -50,24 +50,22 @@ export const PaymentMethods = ({
   }
 
   return (
-    <div className="w-full mx-0 overflow-hidden">
-      <div id="payment-methods" className="space-y-8 animate-fade-in pb-12 w-full mx-0 px-4">
-        <PaymentHeader />
-        
-        <PaymentOptions
-          selectedPaymentMethod={selectedPaymentMethod}
-          onPaymentMethodSelect={onPaymentMethodSelect}
-          stripeConfig={stripeConfig}
-        />
+    <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
+      <PaymentHeader />
+      
+      <PaymentOptions
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentMethodSelect={onPaymentMethodSelect}
+        stripeConfig={stripeConfig}
+      />
 
-        {selectedPaymentMethod && (
-          <PaymentButton
-            price={selectedPlan.price}
-            isProcessing={isLoading}
-            onClick={handlePayment}
-          />
-        )}
-      </div>
+      {selectedPaymentMethod && (
+        <PaymentButton
+          price={selectedPlan.price}
+          isProcessing={isLoading}
+          onClick={handlePayment}
+        />
+      )}
     </div>
   );
 };

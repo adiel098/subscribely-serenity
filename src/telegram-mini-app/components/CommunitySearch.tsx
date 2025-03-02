@@ -45,33 +45,31 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   }, [debouncedQuery]);
 
   return (
-    <div className="w-full">
-      <div className="space-y-5 w-full">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Search className="h-5 w-5 text-primary" />
-            Discover Communities
-          </h2>
-          <p className="text-sm text-muted-foreground">Find and join communities that interest you</p>
-        </div>
-        
-        <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        
-        <div className="space-y-4 pt-2 w-full">
-          {isLoading ? (
-            <LoadingState />
-          ) : communities.length === 0 ? (
-            <EmptyState searchQuery={searchQuery} />
-          ) : (
-            communities.map((community) => (
-              <CommunityCard 
-                key={community.id} 
-                community={community} 
-                onSelect={onSelectCommunity} 
-              />
-            ))
-          )}
-        </div>
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Search className="h-5 w-5 text-primary" />
+          Discover Communities
+        </h2>
+        <p className="text-sm text-muted-foreground">Find and join communities that interest you</p>
+      </div>
+      
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      
+      <div className="space-y-4 pt-2">
+        {isLoading ? (
+          <LoadingState />
+        ) : communities.length === 0 ? (
+          <EmptyState searchQuery={searchQuery} />
+        ) : (
+          communities.map((community) => (
+            <CommunityCard 
+              key={community.id} 
+              community={community} 
+              onSelect={onSelectCommunity} 
+            />
+          ))
+        )}
       </div>
     </div>
   );

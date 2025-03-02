@@ -33,11 +33,9 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   onRenewSubscription,
   onSelectCommunity
 }) => {
-  const tabContentClass = "bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full";
-
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-full">
-      <TabsList className="grid grid-cols-3 mb-6 bg-primary/5 w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="grid grid-cols-3 mb-6 bg-primary/5">
         <TabsTrigger value="subscribe" className="flex items-center gap-1.5">
           <UserPlus className="h-4 w-4" />
           <span className="hidden sm:inline">Subscribe</span>
@@ -52,19 +50,17 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="subscribe" className="mt-0 w-full">
-        <div className={tabContentClass}>
-          <SubscriptionPlanSection
-            plans={communitySubscriptionPlans}
-            selectedPlan={selectedPlan}
-            onPlanSelect={onPlanSelect}
-            showPaymentMethods={showPaymentMethods}
-          />
-        </div>
+      <TabsContent value="subscribe" className="space-y-8 mt-0">
+        <SubscriptionPlanSection
+          plans={communitySubscriptionPlans}
+          selectedPlan={selectedPlan}
+          onPlanSelect={onPlanSelect}
+          showPaymentMethods={showPaymentMethods}
+        />
       </TabsContent>
       
-      <TabsContent value="mySubscriptions" className="mt-0 w-full">
-        <div className={tabContentClass}>
+      <TabsContent value="mySubscriptions" className="mt-0">
+        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
           <UserSubscriptions 
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
@@ -73,8 +69,8 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </div>
       </TabsContent>
       
-      <TabsContent value="discover" className="mt-0 w-full">
-        <div className={tabContentClass}>
+      <TabsContent value="discover" className="mt-0">
+        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
           <CommunitySearch onSelectCommunity={onSelectCommunity} />
         </div>
       </TabsContent>

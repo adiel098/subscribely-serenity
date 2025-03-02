@@ -1,8 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, CreditCard, Loader2, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Heart, CreditCard, Loader2 } from "lucide-react";
 
 interface PaymentButtonProps {
   price: number;
@@ -13,44 +12,29 @@ interface PaymentButtonProps {
 export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonProps) => {
   return (
     <div className="flex flex-col items-center space-y-4 animate-fade-in">
-      <motion.div 
-        className="w-full"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+      <Button 
+        size="lg" 
+        className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+        onClick={onClick}
+        disabled={isProcessing}
       >
-        <Button 
-          size="lg" 
-          className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-purple-600"
-          onClick={onClick}
-          disabled={isProcessing}
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Processing payment...
-            </>
-          ) : (
-            <>
-              <CreditCard className="h-5 w-5" />
-              Pay ${price} 
-              <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </>
-          )}
-        </Button>
-      </motion.div>
-      <motion.p 
-        className="text-sm text-muted-foreground pb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <CreditCard className="h-5 w-5" />
+            Pay ${price}
+          </>
+        )}
+      </Button>
+      <p className="text-sm text-muted-foreground pb-8 animate-pulse">
         {isProcessing ? 
-          '⏳ Please wait while we process your payment...' : 
-          '🔒 Secure payment - Click the button above to complete payment'}
-      </motion.p>
+          'Please wait while we process your payment...' : 
+          'Click the button above to complete your payment'}
+      </p>
     </div>
   );
 };

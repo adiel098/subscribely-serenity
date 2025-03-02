@@ -3,7 +3,7 @@ import { logServiceAction, invokeSupabaseFunction } from "./utils/serviceUtils";
 import { Community } from "../types/community.types";
 
 export async function searchCommunities(query: string = ""): Promise<Community[]> {
-  logServiceAction("🔍 searchCommunities", { query });
+  logServiceAction("searchCommunities", { query });
 
   try {
     // Create payload with detailed logging
@@ -30,7 +30,7 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
     console.log(`📋 Received ${communities.length} communities from API`);
     console.log("📊 Raw response from API:", JSON.stringify(data));
     
-    communities.forEach((community: Community, index: number) => {
+    communities.forEach((community, index) => {
       if (!community.subscription_plans) {
         console.warn(`⚠️ Community ${community.name} (${community.id}) missing subscription_plans - adding empty array`);
         community.subscription_plans = [];
@@ -41,20 +41,13 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
       } else {
         console.log(`✅ Community ${index + 1}: ${community.name} has ${community.subscription_plans.length} subscription plans`);
         if (community.subscription_plans.length > 0) {
-          console.log(`   💰 Plan names: ${community.subscription_plans.map((p: any) => p.name).join(', ')}`);
-          console.log(`   📝 First plan details:`, JSON.stringify(community.subscription_plans[0]));
-          
-          // Add debug information for plan properties
-          const firstPlan = community.subscription_plans[0];
-          console.log(`   🔍 Plan ID: ${firstPlan.id}`);
-          console.log(`   💲 Plan price: ${firstPlan.price}`);
-          console.log(`   🔄 Plan interval: ${firstPlan.interval}`);
-          console.log(`   ✨ Plan features:`, firstPlan.features || []);
+          console.log(`   Plan names: ${community.subscription_plans.map(p => p.name).join(', ')}`);
+          console.log(`   First plan details:`, JSON.stringify(community.subscription_plans[0]));
         }
       }
     });
 
-    logServiceAction("✅ Processed communities data", communities);
+    logServiceAction("Processed communities data", communities);
     return communities;
   } catch (error) {
     console.error("❌ Failed to search communities:", error);

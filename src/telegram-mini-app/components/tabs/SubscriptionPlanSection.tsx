@@ -1,8 +1,8 @@
 
 import React from "react";
+import { ChevronDown } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
-import { SubscriptionPlans } from "../SubscriptionPlans";
-import { PaymentMethods } from "../PaymentMethods";
+import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
 
 interface SubscriptionPlanSectionProps {
   plans: Plan[];
@@ -15,35 +15,34 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   plans,
   selectedPlan,
   onPlanSelect,
-  showPaymentMethods,
+  showPaymentMethods
 }) => {
-  // These are dummy handlers since we're not actually using them in this component
-  // but they're required by the PaymentMethods component
-  const handlePaymentMethodSelect = (method: string) => {
-    console.log("Payment method selected:", method);
-  };
-
-  const handleCompletePurchase = () => {
-    console.log("Purchase completed");
-  };
+  // Safe guard against undefined or non-array plans
+  const validPlans = Array.isArray(plans) ? plans : [];
+  
+  if (validPlans.length === 0) {
+    return (
+      <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+        <p className="text-gray-500">No subscription plans available for this community.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full">
-      {!showPaymentMethods ? (
+    <>
+      <div id="subscription-plans" className="scroll-mt-4">
         <SubscriptionPlans
-          plans={plans}
+          plans={validPlans}
           selectedPlan={selectedPlan}
           onPlanSelect={onPlanSelect}
         />
-      ) : (
-        <PaymentMethods
-          selectedPlan={selectedPlan!}
-          selectedPaymentMethod={null}
-          onPaymentMethodSelect={handlePaymentMethodSelect}
-          onCompletePurchase={handleCompletePurchase}
-          showSuccess={false}
-        />
+      </div>
+
+      {!selectedPlan && !showPaymentMethods && (
+        <div className="flex justify-center py-6 animate-bounce">
+          <ChevronDown className="h-5 w-5 text-primary/50" />
+        </div>
       )}
-    </div>
+    </>
   );
 };

@@ -81,9 +81,10 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     </div>
   );
 
-  // Handle error state but with valid user ID
+  // OPTIMIZED ROUTING FLOW: Reduce page transitions for new users
+  
+  // First, handle error cases
   if (errorState && telegramUserId) {
-    console.log('🔄 We have an error but also have a direct telegramUserId:', telegramUserId);
     return (
       <>
         {renderDebugInfo()}
@@ -96,22 +97,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // Don't render anything else during loading
-  if (loading) {
-    console.log('⏳ Still loading, not rendering content yet');
-    return (
-      <>
-        {renderDebugInfo()}
-        <div className="p-4 text-center text-gray-600">
-          <p>Loading... Please wait.</p>
-        </div>
-      </>
-    );
+  // During initial loading, show minimal UI
+  if (loading && !telegramUser) {
+    // Completely blank during initial load - no transitions
+    return renderDebugInfo();
   }
-
+  
   // Missing community
-  if (!community) {
-    console.log('❌ Community not found');
+  if (!community && !loading) {
     return (
       <>
         {renderDebugInfo()}
@@ -120,18 +113,18 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // STRICT ENFORCEMENT: Email form must be shown before community content
-  // This is our critical gate that ensures users provide email before accessing content
-  if (showEmailForm && telegramUser) {
-    console.log('📧 ROUTING: User MUST provide email before accessing community content');
+  // DIRECT EMAIL COLLECTION FOR NEW USERS
+  // If we have the telegramUser but they don't have an email, show email form immediately
+  // This prevents unnecessary transitions
+  if (telegramUser && !telegramUser.email) {
+    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately for new user');
     return (
       <>
         {renderDebugInfo()}
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 Email collection completed, now showing community content');
-            // Set showEmailForm to false to trigger redirect to main content
+            console.log('📧 Email collection completed, showing community content');
             setShowEmailForm(false);
           }}
         />
@@ -139,35 +132,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Additional safety check - if user has no email, force email collection
-  // This is a failsafe in case the showEmailForm flag wasn't properly set
-  if (telegramUser && !telegramUser.email) {
-    console.log('🛑 SAFETY CHECK: User missing email, redirecting to email collection form');
-    return (
-      <>
-        {renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, now showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
-  }
-
-  // Main content - only show if not loading, community exists, email form is not needed,
-  // and the user has provided an email
-  if (telegramUser && community) {
-    console.log('🎉 Showing main content with:', { 
-      community: community?.name, 
-      user: telegramUser?.username,
-      plans: community?.subscription_plans?.length || 0,
-      showEmailForm, 
-      emailProvided: telegramUser?.email ? true : false
-    });
-    
+  // Main content - only show if we have both a telegramUser (with email) and community
+  if (telegramUser && telegramUser.email && community) {
     return (
       <>
         {renderDebugInfo()}
@@ -176,11 +142,21 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // If we get here, something went wrong in the routing logic
-  console.error('❌ ROUTER ERROR: No routing condition matched!', {
-    loading, errorState, telegramUserId, community, telegramUser, showEmailForm
-  });
+  // If we're still loading but have some data, show appropriate loading state
+  if (loading) {
+    return (
+      <>
+        {renderDebugInfo()}
+        <div className="h-screen w-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your experience...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
   
-  // Render a fallback with debug info
+  // Fallback for any edge cases
   return renderErrorBoundary();
 };

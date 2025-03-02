@@ -26,9 +26,28 @@ interface TelegramWebApp {
   viewportHeight?: number;
   viewportStableHeight?: number;
   isExpanded?: boolean;
-  setViewport?: () => void;
-  expand?: () => void;
+  setViewport?: (params?: { height?: number }) => void;
+  expand?: () => Promise<void>;
   ready?: () => void;
+  enableClosingConfirmation?: () => void;
+  disableClosingConfirmation?: () => void;
+  onEvent?: (eventType: string, eventHandler: Function) => void;
+  offEvent?: (eventType: string, eventHandler: Function) => void;
+  MainButton?: {
+    text: string;
+    isVisible: boolean;
+    isActive: boolean;
+    isProgressVisible: boolean;
+    setText: (text: string) => void;
+    show: () => void;
+    hide: () => void;
+    enable: () => void;
+    disable: () => void;
+    showProgress: (leaveActive: boolean) => void;
+    hideProgress: () => void;
+    onClick: (callback: () => void) => void;
+    offClick: (callback: () => void) => void;
+  };
 }
 
 interface Window {

@@ -10,7 +10,7 @@ import { initTelegramWebApp } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(true); // Default to true to prioritize email collection
   const [isCheckingUserData, setIsCheckingUserData] = useState(true);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);

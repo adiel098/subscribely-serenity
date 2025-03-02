@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { checkUserExists } from "@/telegram-mini-app/services/userProfileService";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,11 +20,12 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
   setErrorState
 }) => {
   const { toast } = useToast();
+  const [checkedOnce, setCheckedOnce] = useState(false);
 
   // Check if user exists and has email
   useEffect(() => {
     const checkUserData = async () => {
-      if (!userLoading && telegramUser) {
+      if (!userLoading && telegramUser && !checkedOnce) {
         console.log('✅ User data loaded, checking if user exists in database');
         setIsCheckingUserData(true);
         
@@ -64,12 +65,13 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           setErrorState(null);
         } finally {
           setIsCheckingUserData(false);
+          setCheckedOnce(true);
         }
       }
     };
 
     checkUserData();
-  }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState, toast]);
+  }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState, toast, checkedOnce]);
 
   return null; // This is a non-visual component
 };

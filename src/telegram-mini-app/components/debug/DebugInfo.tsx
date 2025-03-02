@@ -18,10 +18,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
   showEmailForm,
   isCheckingUserData
 }) => {
-  // IMPORTANT: NEVER show debug info unless explicitly enabled with debug=true
-  const showDebug = window.location.search.includes('debug=true');
-  
-  if (!showDebug) return null;
+  if (process.env.NODE_ENV !== 'development') return null;
   
   // Flow state calculation
   let userFlowState = 'Loading User';

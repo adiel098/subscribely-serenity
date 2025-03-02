@@ -42,10 +42,10 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     isCheckingUserData
   });
   
-  // Debug section at the top that will show ONLY when debug=true is in URL
+  // Show debug info for development
   const activeTab = "subscribe"; // Default active tab
   
-  // Define renderDebugInfo function BEFORE using it
+  // Debug section at the top that will show in dev mode
   const renderDebugInfo = () => (
     <DebugInfo 
       telegramUser={telegramUser} 
@@ -55,44 +55,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       isCheckingUserData={isCheckingUserData}
     />
   );
-  
-  // HIGHEST PRIORITY: Show email form whenever possible
-  // This takes precedence over everything else to ensure users can provide email
-  if (telegramUserId && showEmailForm) {
-    console.log('📧 TOP PRIORITY EMAIL COLLECTION: Showing email form immediately with ID:', telegramUserId);
-    return (
-      <>
-        {/* Only show debug if explicitly enabled */}
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser || { id: telegramUserId }} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
-  }
-  
-  // Second priority: Also show email form if user exists but has no email
-  if (telegramUserId && telegramUser && !telegramUser.email) {
-    console.log('📧 SECONDARY EMAIL COLLECTION: User exists but missing email');
-    return (
-      <>
-        {/* Only show debug if explicitly enabled */}
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
-  }
-  
+
   // Error boundary for debugging - show when nothing else renders
   const renderErrorBoundary = () => (
     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md m-4">
@@ -117,14 +80,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       </button>
     </div>
   );
-  
-  // The rest of the routing logic
+
+  // OPTIMIZED ROUTING FLOW: Reduce page transitions for new users
   
   // First, handle error cases
   if (errorState && telegramUserId) {
     return (
       <>
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        {renderDebugInfo()}
         <ErrorDisplay 
           errorMessage={errorState}
           telegramUserId={telegramUserId}
@@ -137,15 +100,34 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   // During initial loading, show minimal UI
   if (loading && !telegramUser) {
     // Completely blank during initial load - no transitions
-    return window.location.search.includes('debug=true') ? renderDebugInfo() : null;
+    return renderDebugInfo();
   }
   
   // Missing community
   if (!community && !loading) {
     return (
       <>
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        {renderDebugInfo()}
         <CommunityNotFound />
+      </>
+    );
+  }
+
+  // DIRECT EMAIL COLLECTION FOR NEW USERS
+  // If we have the telegramUser but they don't have an email, show email form immediately
+  // This prevents unnecessary transitions
+  if (telegramUser && !telegramUser.email) {
+    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately for new user');
+    return (
+      <>
+        {renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, showing community content');
+            setShowEmailForm(false);
+          }}
+        />
       </>
     );
   }
@@ -154,7 +136,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (telegramUser && telegramUser.email && community) {
     return (
       <>
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        {renderDebugInfo()}
         <MainContent community={community} telegramUser={telegramUser} />
       </>
     );
@@ -164,7 +146,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (loading) {
     return (
       <>
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        {renderDebugInfo()}
         <div className="h-screen w-full flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -175,36 +157,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Fallback for any edge cases - show email form as priority if we have a userId
-  if (telegramUserId) {
-    console.log('📧 FALLBACK EMAIL COLLECTION: Showing email form with ID:', telegramUserId);
-    return (
-      <>
-        {window.location.search.includes('debug=true') && renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={{ id: telegramUserId }} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
-  }
-  
-  // Last resort - error boundary (only shown when debug=true in URL)
-  return window.location.search.includes('debug=true') ? renderErrorBoundary() : (
-    <div className="h-screen w-full flex items-center justify-center">
-      <div className="text-center p-4">
-        <h3 className="font-bold text-gray-700 mb-2">Connection Issue</h3>
-        <p className="text-gray-600 mb-4">Unable to connect to Telegram. Please try again.</p>
-        <button 
-          onClick={onRetry}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md"
-        >
-          Retry Connection
-        </button>
-      </div>
-    </div>
-  );
+  // Fallback for any edge cases
+  return renderErrorBoundary();
 };

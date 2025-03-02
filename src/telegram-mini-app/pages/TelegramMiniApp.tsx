@@ -10,7 +10,7 @@ import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
-  const [showEmailForm, setShowEmailForm] = useState(true); // Default to showing email form
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [isCheckingUserData, setIsCheckingUserData] = useState(true);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
@@ -26,6 +26,7 @@ const TelegramMiniApp = () => {
   console.log('📌 URL:', window.location.href);
   console.log('📌 isDevelopmentMode:', isDevelopmentMode);
   console.log('📌 retryCount:', retryCount);
+  console.log('📌 User Agent:', navigator.userAgent);
 
   // Force development mode on localhost
   useEffect(() => {
@@ -44,7 +45,29 @@ const TelegramMiniApp = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Get Telegram user ID directly from WebApp object as suggested
+  // Log Telegram WebApp object if available
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      console.log('📱 Telegram WebApp object is available:');
+      console.log('📌 Full WebApp object:', window.Telegram.WebApp);
+      console.log('📌 initData:', window.Telegram.WebApp.initData);
+      console.log('📌 initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
+      if (window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
+        console.log('🆔 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user.id);
+        console.log('🆔 User ID type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
+      } else {
+        console.log('❌ No user data in WebApp.initDataUnsafe');
+      }
+      
+      // Ensure we're in full screen mode
+      ensureFullScreen();
+    } else {
+      console.log('❌ Telegram WebApp object is NOT available');
+    }
+  }, [telegramInitialized]);
+
+  // Get Telegram user ID directly from WebApp object
   let telegramUserId = null;
   
   if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
@@ -100,6 +123,23 @@ const TelegramMiniApp = () => {
     }
   }, [userError]);
 
+  // Auto retry once if loading takes too long
+  useEffect(() => {
+    let timeout: number | null = null;
+    
+    // If we're in loading state for more than 10 seconds and retry count is 0, auto retry
+    if ((communityLoading || userLoading) && retryCount === 0) {
+      timeout = window.setTimeout(() => {
+        console.log('🔄 Auto retrying due to long loading time');
+        handleRetry();
+      }, 10000);
+    }
+    
+    return () => {
+      if (timeout) window.clearTimeout(timeout);
+    };
+  }, [communityLoading, userLoading, retryCount]);
+
   // Handle retry button click
   const handleRetry = () => {
     console.log('🔄 Retrying user data fetch');
@@ -120,11 +160,15 @@ const TelegramMiniApp = () => {
     });
   };
 
+  // Debug email form state changes
+  useEffect(() => {
+    console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
+  }, [showEmailForm]);
+
   // CRITICAL FIX: Force email collection for users without email
   useEffect(() => {
     if (!userLoading && telegramUser && !telegramUser.email) {
-      console.log('🚨 User loaded without email - forcing email collection:', telegramUser);
-      setShowEmailForm(true);
+      console.log('🚨 User loaded without email - this should trigger email collection:', telegramUser);
     }
   }, [telegramUser, userLoading]);
 

@@ -24,7 +24,7 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
     return null;
   }
   
-  // Ensure the Telegram ID is properly formatted - this is critical for the form to work
+  // Ensure the Telegram ID is properly formatted
   const telegramUserId = telegramUser.id ? String(telegramUser.id).trim() : null;
   
   console.log('🔑 EmailCollectionWrapper - Raw Telegram ID:', telegramUser.id);

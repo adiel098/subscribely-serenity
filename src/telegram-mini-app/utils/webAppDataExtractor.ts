@@ -1,3 +1,4 @@
+
 import { TelegramUser } from '../types/telegramTypes';
 import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegramUtils';
 
@@ -11,8 +12,36 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     console.log('📊 window.Telegram.WebApp exists:', Boolean(window.Telegram?.WebApp));
     console.log('📊 initDataUnsafe exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe));
     console.log('📊 user exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user));
+    console.log('📊 viewport height:', window.innerHeight);
+    console.log('📊 viewport width:', window.innerWidth);
+    console.log('📊 User Agent:', navigator.userAgent);
     
-    // Extract Telegram ID directly from window.Telegram using the suggested approach
+    // Check if we have WebView attributes - using optional chaining to safely access properties
+    if (window.Telegram?.WebApp) {
+      // Only log these properties if they exist to avoid TypeScript errors
+      if (typeof window.Telegram.WebApp.viewportHeight !== 'undefined') {
+        console.log('📊 WebApp viewport height:', window.Telegram.WebApp.viewportHeight);
+      }
+      
+      if (typeof window.Telegram.WebApp.viewportStableHeight !== 'undefined') {
+        console.log('📊 WebApp viewport stable height:', window.Telegram.WebApp.viewportStableHeight);
+      }
+      
+      if (typeof window.Telegram.WebApp.isExpanded !== 'undefined') {
+        console.log('📊 WebApp isExpanded:', window.Telegram.WebApp.isExpanded);
+      }
+    }
+    
+    // Log the raw user object for debugging
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      console.log('📊 Raw user object:', JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user));
+      console.log('📊 Raw user id:', window.Telegram.WebApp.initDataUnsafe.user.id);
+      console.log('📊 Raw user id type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
+    }
+    
+    console.log('📊 Direct Telegram User ID:', directTelegramUserId);
+    
+    // Extract Telegram ID directly from window.Telegram
     const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
     console.log('🔑 Directly extracted Telegram ID:', telegramUserId);
     

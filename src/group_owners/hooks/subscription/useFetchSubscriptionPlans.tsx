@@ -23,6 +23,9 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
       
       console.log('✅ useFetchSubscriptionPlans: Session found, proceeding with query');
       
+      console.log('📤 SQL Query: SELECT * FROM subscription_plans WHERE community_id = ? AND is_active = true');
+      console.log('   With params:', { communityId });
+      
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -32,16 +35,19 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
 
       if (error) {
         console.error('❌ useFetchSubscriptionPlans: Error fetching plans:', error);
+        console.error('   Query params:', { communityId });
         toast.error('Failed to load subscription plans');
         throw error;
       }
       
+      console.log('📥 useFetchSubscriptionPlans: Raw SQL response:', JSON.stringify(data, null, 2));
       console.log('✅ useFetchSubscriptionPlans: Successfully fetched plans for community:', communityId);
       console.log('🔍 useFetchSubscriptionPlans: Retrieved plans count:', data?.length || 0);
       
       if (data?.length) {
         data.forEach((plan, index) => {
           console.log(`   Plan ${index + 1}: ${plan.name}, $${plan.price}/${plan.interval}`);
+          console.log(`   Plan details:`, JSON.stringify(plan, null, 2));
         });
       } else {
         console.warn('⚠️ useFetchSubscriptionPlans: No active plans found for this community');

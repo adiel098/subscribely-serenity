@@ -46,19 +46,24 @@ export const invokeSupabaseFunction = async (functionName: string, payload: any)
   logServiceAction(`Invoking Edge Function: ${functionName}`, payload);
   
   try {
+    console.log(`📤 PAYLOAD TO ${functionName}:`, JSON.stringify(payload, null, 2));
+    
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
     });
     
     if (error) {
       console.error(`❌ Edge Function Error (${functionName}):`, error);
+      console.error(`❌ Payload that caused error:`, JSON.stringify(payload, null, 2));
       return { data: null, error };
     }
     
+    console.log(`📥 RESPONSE FROM ${functionName}:`, JSON.stringify(data, null, 2));
     logServiceAction(`Edge Function Response (${functionName}):`, data);
     return { data, error: null };
   } catch (err) {
     console.error(`❌ Edge Function Exception (${functionName}):`, err);
+    console.error(`❌ Payload that caused exception:`, JSON.stringify(payload, null, 2));
     return { 
       data: null, 
       error: { message: err instanceof Error ? err.message : 'Unknown error occurred' } 

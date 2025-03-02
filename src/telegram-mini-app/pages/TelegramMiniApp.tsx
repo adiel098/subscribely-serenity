@@ -6,7 +6,7 @@ import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
 import { AppContent } from "@/telegram-mini-app/components/AppContent";
-import { initTelegramWebApp } from "@/telegram-mini-app/utils/telegramUtils";
+import { AppInitializer } from "@/telegram-mini-app/components/app-initialization/AppInitializer";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -28,24 +28,15 @@ const TelegramMiniApp = () => {
   console.log('📌 retryCount:', retryCount);
   console.log('📌 User Agent:', navigator.userAgent);
 
-  // Force development mode on localhost
-  useEffect(() => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      setIsDevelopmentMode(true);
-    }
-  }, []);
+  // Handle initialization callback
+  const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
+    setTelegramInitialized(isInitialized);
+    setIsDevelopmentMode(prev => prev || isDev);
+  };
 
-  // Log Telegram WebApp object if available
-  useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      console.log('📱 Telegram WebApp object is available');
-      if (window.Telegram.WebApp.initDataUnsafe?.user) {
-        console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
-      }
-    } else {
-      console.log('❌ Telegram WebApp object is NOT available');
-    }
-  }, [telegramInitialized]);
+  // Set effective start parameter (use default in dev mode)
+  const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
+  console.log('📌 Effective startParam:', effectiveStartParam);
 
   // Get Telegram user ID directly from WebApp object
   let telegramUserId = null;
@@ -60,16 +51,6 @@ const TelegramMiniApp = () => {
   }
   
   console.log('🔑 Final telegram user ID:', telegramUserId);
-  
-  // Handle initialization callback
-  const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
-    setTelegramInitialized(isInitialized);
-    setIsDevelopmentMode(prev => prev || isDev);
-  };
-
-  // Set effective start parameter (use default in dev mode)
-  const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
-  console.log('📌 Effective startParam:', effectiveStartParam);
 
   // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
@@ -107,31 +88,6 @@ const TelegramMiniApp = () => {
     setErrorState(error);
   }, []);
 
-  // Handle user error
-  useEffect(() => {
-    if (userError) {
-      console.error("❌ Error getting user data:", userError);
-      setErrorState("User identification error. Please try reloading the app or contact support.");
-    }
-  }, [userError]);
-
-  // Auto retry once if loading takes too long
-  useEffect(() => {
-    let timeout: number | null = null;
-    
-    // If we're in loading state for more than 10 seconds and retry count is 0, auto retry
-    if ((communityLoading || userLoading) && retryCount === 0) {
-      timeout = window.setTimeout(() => {
-        console.log('🔄 Auto retrying due to long loading time');
-        handleRetry();
-      }, 10000);
-    }
-    
-    return () => {
-      if (timeout) window.clearTimeout(timeout);
-    };
-  }, [communityLoading, userLoading, retryCount]);
-
   // Handle retry button click
   const handleRetry = () => {
     console.log('🔄 Retrying user data fetch');
@@ -139,28 +95,25 @@ const TelegramMiniApp = () => {
     setIsCheckingUserData(true);
     setRetryCount(prev => prev + 1);
     refetchUser();
-    
-    const initialized = initTelegramWebApp();
-    setTelegramInitialized(initialized);
-    
-    toast({
-      title: "Retrying",
-      description: "Attempting to reconnect to Telegram...",
-    });
   };
 
-  // Reset checking state after data loads
-  useEffect(() => {
-    if (!communityLoading && !userLoading && isCheckingUserData) {
-      console.log('🔄 All data loaded, resetting checking state');
-      window.setTimeout(() => {
-        setIsCheckingUserData(false);
-      }, 100);
-    }
-  }, [communityLoading, userLoading, isCheckingUserData]);
-
   return (
-    <>
+    <AppInitializer
+      startParam={startParam}
+      isDevelopmentMode={isDevelopmentMode}
+      setIsDevelopmentMode={setIsDevelopmentMode}
+      telegramInitialized={telegramInitialized}
+      setTelegramInitialized={setTelegramInitialized}
+      communityLoading={communityLoading}
+      userLoading={userLoading}
+      retryCount={retryCount}
+      setRetryCount={setRetryCount}
+      setErrorState={setErrorState}
+      isCheckingUserData={isCheckingUserData}
+      setIsCheckingUserData={setIsCheckingUserData}
+      refetchUser={refetchUser}
+      userError={userError}
+    >
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
       <AppContent
         communityLoading={communityLoading}
@@ -178,7 +131,7 @@ const TelegramMiniApp = () => {
         setIsCheckingUserData={handleIsCheckingUserData}
         setErrorState={handleErrorState}
       />
-    </>
+    </AppInitializer>
   );
 };
 

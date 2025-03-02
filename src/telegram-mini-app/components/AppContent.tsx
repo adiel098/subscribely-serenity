@@ -4,7 +4,7 @@ import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
 import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
 import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
-import { checkUserExists } from "@/telegram-mini-app/services/memberService";
+import { checkUserExists } from "@/telegram-mini-app/services/userProfileService";
 import { useToast } from "@/components/ui/use-toast";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { EmailCollectionWrapper } from "./EmailCollectionWrapper";
@@ -60,10 +60,17 @@ export const AppContent: React.FC<AppContentProps> = ({
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           
-          setShowEmailForm(!hasEmail);
+          if (!exists || !hasEmail) {
+            // If user doesn't exist in DB or doesn't have an email, show email form
+            console.log('🔍 User needs to provide email before proceeding');
+            setShowEmailForm(true);
+          } else {
+            setShowEmailForm(false);
+          }
           setErrorState(null);
         } catch (error) {
           console.error('❌ Error checking user data:', error);
+          // Default to showing email form if there's an error checking the database
           setShowEmailForm(!telegramUser.email);
         } finally {
           setIsCheckingUserData(false);
@@ -110,6 +117,7 @@ export const AppContent: React.FC<AppContentProps> = ({
 
   // Show email form
   if (showEmailForm && telegramUser) {
+    console.log('📧 Showing email collection form for user:', telegramUser.username);
     return (
       <EmailCollectionWrapper 
         telegramUser={telegramUser} 

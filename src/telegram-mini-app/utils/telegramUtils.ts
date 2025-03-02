@@ -5,14 +5,10 @@
 
 /**
  * Checks if the provided ID is a valid Telegram ID (numeric string)
- * More flexible version that accepts both modern and legacy formats
  */
 export const isValidTelegramId = (id: string | number | undefined | null): boolean => {
   if (!id) return false;
   const stringId = id.toString();
-  
-  // A more flexible check for Telegram IDs (numeric characters only)
-  // We removed length check to support various ID formats
   return /^\d+$/.test(stringId);
 };
 
@@ -94,44 +90,6 @@ export const parseUserFromUrlHash = (): { [key: string]: any } | null => {
     return null;
   } catch (error) {
     console.error('❌ Error parsing user data from URL hash:', error);
-    return null;
-  }
-};
-
-/**
- * Extract user ID directly from Telegram WebApp
- * This is a more direct method to try and get the user ID
- */
-export const getTelegramUserId = (): string | null => {
-  try {
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-      console.log('❌ No user data in WebApp.initDataUnsafe');
-      return null;
-    }
-    
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    // Handle different types of ID that might be returned
-    let userId: string | null = null;
-    
-    if (typeof user.id === 'number') {
-      userId = user.id.toString();
-    } else if (typeof user.id === 'string') {
-      userId = user.id;
-    } else if (user.id) {
-      // Try to convert whatever we have to a string
-      userId = String(user.id);
-    }
-    
-    if (!userId || !isValidTelegramId(userId)) {
-      console.error('❌ Invalid or missing user ID from direct extraction:', userId);
-      return null;
-    }
-    
-    console.log('✅ Successfully extracted user ID directly:', userId);
-    return userId;
-  } catch (error) {
-    console.error('❌ Error extracting user ID directly:', error);
     return null;
   }
 };

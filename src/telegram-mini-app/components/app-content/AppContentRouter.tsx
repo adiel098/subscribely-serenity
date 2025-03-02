@@ -1,12 +1,11 @@
 
+import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
-import { MainContent } from "@/telegram-mini-app/components/MainContent";
+import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
 import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFound";
 import { EmailCollectionWrapper } from "@/telegram-mini-app/components/EmailCollectionWrapper";
-import { DebugInfo } from "@/telegram-mini-app/components/debug/DebugInfo";
-import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
-import { isDevelopment } from "@/telegram-mini-app/utils/telegramUtils";
+import { MainContent } from "@/telegram-mini-app/components/MainContent";
 
 interface AppContentRouterProps {
   loading: boolean;
@@ -29,74 +28,49 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   onRetry,
   setShowEmailForm
 }) => {
-  // Don't render anything if still loading
-  if (loading) return null;
-  
-  // Show error display if there's an error
-  if (errorState) {
+  // Handle error state but with valid user ID
+  if (errorState && telegramUserId) {
+    console.log('🔄 We have an error but also have a direct telegramUserId:', telegramUserId);
     return (
       <ErrorDisplay 
-        errorMessage={errorState} 
+        errorMessage={errorState}
         telegramUserId={telegramUserId}
-        onRetry={onRetry} 
+        onRetry={onRetry}
       />
     );
   }
-  
-  // Debug info in development mode
-  const showDebugInfo = isDevelopment();
 
-  console.log('🧭 App Content Router:');
-  console.log('📌 showEmailForm:', showEmailForm);
-  console.log('📌 telegramUser:', telegramUser);
-  console.log('📌 community:', community);
-
-  // If we're in the email collection phase and we have a valid telegram user
-  if (showEmailForm && telegramUser) {
-    console.log('📬 Rendering email collection form');
-    return (
-      <>
-        <EmailCollectionWrapper
-          telegramUser={telegramUser}
-          onComplete={() => {
-            console.log('📬 Email collection completed');
-            setShowEmailForm(false);
-          }}
-        />
-        {showDebugInfo && <DebugInfo 
-          telegramUser={telegramUser} 
-          community={community} 
-          activeTab="email-collection" 
-        />}
-      </>
-    );
+  // Don't render anything else during loading
+  if (loading) {
+    console.log('⏳ Still loading, not rendering content yet');
+    return null;
   }
-  
-  // If no community found, show the community not found message
+
+  // Missing community
   if (!community) {
-    console.log('🔍 No community found');
+    console.log('❌ Community not found');
+    return <CommunityNotFound />;
+  }
+
+  // Show email form if needed
+  // This check needs to happen BEFORE showing the main content
+  if (showEmailForm && telegramUser) {
+    console.log('📧 Showing email collection form for user:', telegramUser.username);
     return (
-      <>
-        <CommunityNotFound />
-        {showDebugInfo && <DebugInfo 
-          telegramUser={telegramUser} 
-          community={null} 
-          activeTab="community-not-found" 
-        />}
-      </>
+      <EmailCollectionWrapper 
+        telegramUser={telegramUser} 
+        onComplete={() => setShowEmailForm(false)}
+      />
     );
   }
+
+  // Main content - only show if not loading, community exists, and email form is not needed
+  console.log('🎉 Showing main content with:', { 
+    community: community?.name, 
+    user: telegramUser?.username,
+    plans: community?.subscription_plans?.length || 0,
+    showEmailForm // Log this to verify the state
+  });
   
-  // Render the main content with the community data
-  console.log('🚀 Rendering main content with community');
-  return (
-    <>
-      <MainContent community={community} telegramUser={telegramUser} />
-      {showDebugInfo && <DebugInfo 
-        telegramUser={telegramUser} 
-        community={community} 
-        activeTab="main-content" 
-      />}
-    </>
-  );
+  return <MainContent community={community} telegramUser={telegramUser} />;
 };

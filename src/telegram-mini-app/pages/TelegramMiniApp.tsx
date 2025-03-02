@@ -6,11 +6,11 @@ import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
 import { AppContent } from "@/telegram-mini-app/components/AppContent";
-import { initTelegramWebApp, isValidTelegramId, getTelegramUserId } from "@/telegram-mini-app/utils/telegramUtils";
+import { initTelegramWebApp } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
-  const [showEmailForm, setShowEmailForm] = useState(true); // Default to true to prioritize email collection
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [isCheckingUserData, setIsCheckingUserData] = useState(true);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
@@ -31,7 +31,6 @@ const TelegramMiniApp = () => {
   useEffect(() => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       setIsDevelopmentMode(true);
-      console.log('🔧 Development mode activated based on hostname');
     }
   }, []);
 
@@ -54,25 +53,16 @@ const TelegramMiniApp = () => {
     }
   }, [telegramInitialized]);
 
-  // Try multiple methods to get a valid Telegram user ID
-  const extractTelegramUserId = (): string | null => {
-    // First try the direct method
-    const directId = getTelegramUserId();
-    if (directId) return directId;
-    
-    // Then try the traditional way
-    const traditionalId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-    if (traditionalId && isValidTelegramId(traditionalId)) return traditionalId;
-    
-    // Fallback for development
-    return isDevelopmentMode ? "12345678" : null;
-  };
+  // Get Telegram user ID directly from WebApp object
+  const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 
+                         (isDevelopmentMode ? "12345678" : null);
   
-  // Get Telegram user ID using our improved extraction
-  const telegramUserId = extractTelegramUserId();
+  // Use mock user ID in development mode if none provided
+  const effectiveTelegramUserId = isDevelopmentMode && !telegramUserId ? "12345678" : telegramUserId;
   
-  console.log('🔑 Extracted telegram user ID:', telegramUserId);
-  console.log('🔑 ID validation result:', isValidTelegramId(telegramUserId));
+  console.log('🔑 Direct telegram user ID extraction:', telegramUserId);
+  console.log('🔑 Effective telegram user ID:', effectiveTelegramUserId);
+  console.log('🔑 Direct telegram user ID type:', typeof telegramUserId);
 
   // Handle initialization callback
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
@@ -87,7 +77,7 @@ const TelegramMiniApp = () => {
   // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
-    useTelegramUser(effectiveStartParam || "", telegramUserId);
+    useTelegramUser(effectiveStartParam || "", effectiveTelegramUserId);
 
   // Log hook results for debugging
   console.log('📡 Hook Results:');
@@ -97,7 +87,8 @@ const TelegramMiniApp = () => {
   console.log('📌 User data:', telegramUser);
   console.log('📌 User error:', userError);
   console.log('📌 Email form should show:', showEmailForm);
-  console.log('📌 telegramUserId:', telegramUserId);
+  console.log('📌 Direct telegramUserId:', telegramUserId);
+  console.log('📌 Effective telegramUserId:', effectiveTelegramUserId);
 
   // Handle user error
   useEffect(() => {
@@ -151,7 +142,7 @@ const TelegramMiniApp = () => {
         community={community}
         telegramUser={telegramUser}
         errorState={errorState}
-        telegramUserId={telegramUserId}
+        telegramUserId={effectiveTelegramUserId}
         onRefetch={refetchUser}
         onRetry={handleRetry}
         setShowEmailForm={setShowEmailForm}

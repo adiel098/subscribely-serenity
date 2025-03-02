@@ -50,8 +50,8 @@ export const PaymentMethods = ({
   }
 
   return (
-    <div className="w-full mx-0 px-0 overflow-hidden">
-      <div id="payment-methods" className="space-y-8 animate-fade-in pb-12 w-full mx-0 px-0">
+    <div className="w-full mx-0 overflow-hidden">
+      <div id="payment-methods" className="space-y-8 animate-fade-in pb-12 w-full mx-0 px-4">
         <PaymentHeader />
         
         <PaymentOptions

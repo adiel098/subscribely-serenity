@@ -46,9 +46,9 @@ export const SubscriptionPlans = ({
   };
 
   return (
-    <div className="space-y-8 w-full mx-0 px-0 overflow-hidden">
+    <div className="space-y-8 w-full mx-0 overflow-hidden">
       <motion.div 
-        className="text-center space-y-3"
+        className="text-center space-y-3 px-2"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -64,7 +64,7 @@ export const SubscriptionPlans = ({
       </motion.div>
 
       <motion.div 
-        className="grid gap-6 w-full"
+        className="grid gap-6 w-full px-2"
         variants={containerVariants}
         initial="hidden"
         animate="show"
@@ -75,7 +75,7 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer glassmorphism ${
+            className={`group p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer glassmorphism ${
               selectedPlan?.id === plan.id
                 ? 'border-primary shadow-xl bg-primary/5'
                 : 'border-gray-200 hover:border-primary/50 hover:shadow-lg'

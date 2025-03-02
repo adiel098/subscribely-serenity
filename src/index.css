@@ -76,6 +76,13 @@
     margin-left: 0 !important;
   }
 
+  /* Add proper container spacing */
+  .content-container {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
   .glass-card {
     @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl;
   }
@@ -141,3 +148,21 @@
 .animate-slide-up {
   animation: slide-up 0.6s ease-out forwards;
 }
+
+/* Specific styles for Telegram Mini App */
+.telegram-mini-app {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.full-width-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+

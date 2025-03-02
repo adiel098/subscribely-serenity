@@ -29,8 +29,8 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   }
 
   return (
-    <div className="w-full mx-0 px-0 overflow-hidden">
-      <div id="subscription-plans" className="scroll-mt-4 w-full mx-0 px-0">
+    <div className="w-full mx-0 px-4 overflow-hidden">
+      <div id="subscription-plans" className="scroll-mt-4 w-full mx-0">
         <SubscriptionPlans
           plans={validPlans}
           selectedPlan={selectedPlan}

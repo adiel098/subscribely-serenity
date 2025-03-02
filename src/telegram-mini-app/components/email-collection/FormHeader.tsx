@@ -3,7 +3,11 @@ import React from "react";
 import { Mail } from "lucide-react";
 import { motion } from "framer-motion";
 
-export const FormHeader: React.FC = () => {
+interface FormHeaderProps {
+  firstName?: string;
+}
+
+export const FormHeader: React.FC<FormHeaderProps> = ({ firstName }) => {
   return (
     <div className="space-y-2 text-center">
       <motion.div 
@@ -21,7 +25,7 @@ export const FormHeader: React.FC = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        Almost there! ✨
+        {firstName ? `Almost there, ${firstName}! ✨` : "Almost there! ✨"}
       </motion.h1>
       
       <motion.p 

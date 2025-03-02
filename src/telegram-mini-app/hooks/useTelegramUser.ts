@@ -40,7 +40,6 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
         console.log('📱 No user record found, creating temporary user object with ID:', telegramUserId);
         setUser({
           id: telegramUserId,
-          telegram_id: telegramUserId,
           // Set from WebApp object if available
           first_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '',
           last_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',

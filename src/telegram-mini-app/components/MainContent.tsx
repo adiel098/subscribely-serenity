@@ -161,8 +161,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
 
   return (
     <ScrollArea className="h-[100vh] w-full">
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-purple-50/30">
-        <div className="container max-w-2xl mx-auto pt-4 px-4 space-y-6">
+      <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-background to-blue-50/30">
+        <div className="w-full mx-auto px-4 space-y-6 pb-20">
           {/* Debug information */}
           <DebugInfo 
             telegramUser={telegramUser} 
@@ -175,6 +175,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            className="w-full max-w-md mx-auto"
           >
             <UserProfileCard telegramUser={telegramUser} community={community} />
           </motion.div>
@@ -183,6 +184,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
+            className="w-full max-w-md mx-auto"
           >
             <CommunityHeader community={community} />
           </motion.div>
@@ -191,6 +193,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
+            className="w-full"
           >
             <ContentTabs
               activeTab={activeTab}
@@ -214,6 +217,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
+                className="w-full max-w-md mx-auto"
               >
                 <PaymentSection
                   selectedPlan={selectedPlan}

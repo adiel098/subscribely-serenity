@@ -52,34 +52,30 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
       };
     }
     
-    // If no direct ID, try to get from WebApp
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-      const user = window.Telegram.WebApp.initDataUnsafe.user;
-      console.log('✅ Successfully retrieved WebApp data:', user);
+    // Direct access to Telegram WebApp user ID - highest priority
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const rawId = window.Telegram.WebApp.initDataUnsafe.user.id;
+      console.log('🔑 Raw ID from WebApp.initDataUnsafe.user.id:', rawId, 'type:', typeof rawId);
       
-      // Ensure we're getting a proper numeric ID and converting to string
-      const userId = formatTelegramId(user.id);
-      if (!userId) {
-        console.error('❌ No valid user ID in WebApp data, raw ID:', user.id, 'type:', typeof user.id);
+      // Convert to string regardless of type
+      const userId = String(rawId).trim();
+      console.log('🔑 Converted user ID:', userId);
+      
+      if (!/^\d+$/.test(userId)) {
+        console.error('❌ Invalid Telegram ID format from WebApp:', userId);
         return null;
       }
       
-      console.log('🔑 Extracted user ID from WebApp:', userId);
-      
-      // In recent Telegram WebApp versions, photo_url might be available directly
-      // We explicitly check for its presence as a property
-      const photoUrl = user.photo_url || undefined;
-      console.log('📸 Photo URL from WebApp data:', photoUrl);
-      
+      const user = window.Telegram.WebApp.initDataUnsafe.user;
       return {
         id: userId,
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
-        photo_url: photoUrl
+        photo_url: user.photo_url
       };
     }
-
+    
     // If we have initData but no user, try parsing the initData
     if (window.Telegram?.WebApp?.initData && !window.Telegram?.WebApp?.initDataUnsafe?.user) {
       console.log('🔄 Trying to manually parse initData:', window.Telegram.WebApp.initData);
@@ -92,8 +88,8 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
           console.log('✅ Successfully parsed user data from initData:', user);
           
           // Ensure we're getting a proper numeric ID and converting to string
-          const userId = formatTelegramId(user.id);
-          if (!userId) {
+          const userId = String(user.id).trim();
+          if (!userId || !/^\d+$/.test(userId)) {
             console.error('❌ No valid user ID in parsed initData');
             return null;
           }
@@ -114,8 +110,8 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     // Try to get user data from URL hash as a last resort
     const hashUser = parseUserFromUrlHash();
     if (hashUser) {
-      const userId = formatTelegramId(hashUser.id);
-      if (!userId) {
+      const userId = String(hashUser.id).trim();
+      if (!userId || !/^\d+$/.test(userId)) {
         console.error('❌ Invalid Telegram ID format from hash:', hashUser.id);
         return null;
       }

@@ -59,7 +59,7 @@ const TelegramMiniApp = () => {
   
   if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
     // Ensure we're working with a string
-    telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+    telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
     console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
   } else if (isDevelopmentMode) {
     telegramUserId = "12345678"; // Mock ID for development
@@ -72,6 +72,12 @@ const TelegramMiniApp = () => {
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
     setTelegramInitialized(isInitialized);
     setIsDevelopmentMode(prev => prev || isDev);
+    
+    // Recheck telegram user ID after initialization
+    if (isInitialized && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
+      console.log('🔑 User ID after initialization:', userId);
+    }
   };
 
   // Set effective start parameter (use default in dev mode)

@@ -8,6 +8,7 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
   // Extra defensive check for telegramUserId format
   if (!telegramUserId || !validateTelegramId(telegramUserId)) {
     console.error("❌ checkUserExists: Invalid Telegram ID format:", telegramUserId);
+    console.error("❌ checkUserExists: Telegram ID type:", typeof telegramUserId);
     return { exists: false, hasEmail: false };
   }
 
@@ -67,6 +68,7 @@ export async function collectUserEmail(
   // Extra defensive check for telegramUserId format
   if (!validateTelegramId(telegramUserId)) {
     console.error("❌ collectUserEmail: Invalid Telegram ID format:", telegramUserId);
+    console.error("❌ collectUserEmail: Telegram ID type:", typeof telegramUserId);
     return false;
   }
 

@@ -1,3 +1,4 @@
+
 /**
  * Shared utility functions for services
  */

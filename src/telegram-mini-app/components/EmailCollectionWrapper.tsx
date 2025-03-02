@@ -28,6 +28,10 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   // Ensure the Telegram ID is properly formatted
   const telegramUserId = telegramUser.id ? String(telegramUser.id).trim() : null;
   
+  console.log('🔑 EmailCollectionWrapper - Raw Telegram ID:', telegramUser.id);
+  console.log('🔑 EmailCollectionWrapper - Telegram ID Type:', typeof telegramUser.id);
+  console.log('🔑 EmailCollectionWrapper - Processed Telegram ID:', telegramUserId);
+  
   if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
     console.error('❌ EMAIL COLLECTION: Invalid Telegram user ID format:', telegramUser.id);
     return (
@@ -38,6 +42,9 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
         </p>
         <p className="text-sm text-gray-500">
           Please try restarting the app or contact support.
+        </p>
+        <p className="text-xs text-gray-400 mt-4">
+          Technical details: Failed ID validation - Format: {typeof telegramUser.id}, Value: {JSON.stringify(telegramUser.id)}
         </p>
       </div>
     );

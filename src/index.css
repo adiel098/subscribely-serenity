@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -83,6 +82,16 @@
     padding-right: 1rem;
   }
 
+  /* Hide scrollbars but maintain scroll functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
   .glass-card {
     @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl;
   }
@@ -165,4 +174,3 @@
   margin: 0;
   box-sizing: border-box;
 }
-

@@ -9,7 +9,7 @@ interface ContentLayoutProps {
 
 export const ContentLayout: React.FC<ContentLayoutProps> = ({ children }) => {
   return (
-    <ScrollArea className="h-[100vh] w-full">
+    <ScrollArea className="h-[100vh] w-full no-scrollbar">
       <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-background to-blue-50/30">
         <div className="w-full mx-auto space-y-6 pb-20">
           {children}

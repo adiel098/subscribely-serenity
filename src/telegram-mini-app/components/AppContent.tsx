@@ -6,6 +6,7 @@ import { LoadingIndicator } from "@/telegram-mini-app/components/app-content/Loa
 import { UserDataChecker } from "@/telegram-mini-app/components/app-content/UserDataChecker";
 import { ErrorNotifier } from "@/telegram-mini-app/components/app-content/ErrorNotifier";
 import { AppContentRouter } from "@/telegram-mini-app/components/app-content/AppContentRouter";
+import { UILogger } from "@/telegram-mini-app/components/debug/UILogger";
 
 interface AppContentProps {
   communityLoading: boolean;
@@ -48,24 +49,24 @@ export const AppContent: React.FC<AppContentProps> = ({
   
   // Log state changes for debugging
   useEffect(() => {
-    console.log('📊 AppContent state changed:', {
+    console.log('📊 FLOW: AppContent state changed:', {
       communityLoading,
       userLoading,
       isCheckingUserData,
       hasUser: !!telegramUser,
+      userExistsInDatabase,
       showEmailForm,
       isLoading,
-      userExistsInDatabase,
       emailSubmitted
     });
     
     // If email was submitted but we're still showing the email form, force hide it
     if (emailSubmitted && showEmailForm) {
-      console.log('🚨 Email was submitted but form is still showing - forcing transition');
+      console.log('🚨 FLOW: Email was submitted but form is still showing - forcing transition');
       setShowEmailForm(false);
     }
   }, [communityLoading, userLoading, isCheckingUserData, telegramUser, 
-      showEmailForm, emailSubmitted, setShowEmailForm, userExistsInDatabase]);
+      showEmailForm, emailSubmitted, setShowEmailForm, userExistsInDatabase, isLoading]);
 
   return (
     <>
@@ -104,7 +105,7 @@ export const AppContent: React.FC<AppContentProps> = ({
         isCheckingUserData={isCheckingUserData}
         onRetry={onRetry}
         setShowEmailForm={(show) => {
-          console.log('📱 Setting showEmailForm in AppContentRouter:', show);
+          console.log('📱 FLOW: Setting showEmailForm in AppContentRouter:', show);
           if (!show && showEmailForm) {
             // Email form is being hidden after being shown - mark as submitted
             setEmailSubmitted(true);
@@ -112,6 +113,9 @@ export const AppContent: React.FC<AppContentProps> = ({
           setShowEmailForm(show);
         }}
       />
+      
+      {/* UI Logger component */}
+      <UILogger />
     </>
   );
 };

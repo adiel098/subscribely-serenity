@@ -19,28 +19,30 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
     
     try {
       if (!telegramUserId) {
-        console.error('❌ useTelegramUser: Missing telegramUserId parameter');
+        console.error('❌ FLOW: Missing telegramUserId parameter');
         throw new Error('Missing Telegram user ID');
       }
       
       // Validate telegramUserId format
       if (!/^\d+$/.test(telegramUserId)) {
-        console.error('❌ useTelegramUser: Invalid Telegram ID format:', telegramUserId);
+        console.error('❌ FLOW: Invalid Telegram ID format:', telegramUserId);
         throw new Error('Invalid Telegram user ID format');
       }
       
+      console.log('🔍 FLOW: Checking database for user with ID:', telegramUserId);
+      
       // Fetch user data from the database
       const userData = await fetchTelegramUserById(telegramUserId);
-      console.log('📱 Telegram user data fetched:', userData);
+      console.log('📱 FLOW: Telegram user data fetched:', userData);
       
       if (userData) {
         // User exists in database
         setUser(userData);
         setUserExistsInDatabase(true);
-        console.log('✅ User found in database with ID:', telegramUserId);
+        console.log('✅ FLOW: User found in database with ID:', telegramUserId);
       } else {
         // User does not exist in database - create temporary object for the flow
-        console.log('🆕 User not found in database with ID:', telegramUserId);
+        console.log('🆕 FLOW: User not found in database with ID:', telegramUserId);
         setUserExistsInDatabase(false);
         setUser({
           id: telegramUserId,
@@ -53,7 +55,7 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
         });
       }
     } catch (err) {
-      console.error('❌ Error fetching Telegram user:', err);
+      console.error('❌ FLOW: Error fetching Telegram user:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
     } finally {
       setLoading(false);
@@ -62,15 +64,20 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
 
   useEffect(() => {
     if (telegramUserId) {
+      console.log('🔄 FLOW: Initiating user data fetch for ID:', telegramUserId);
       fetchUser();
     } else {
+      console.warn('⚠️ FLOW: No telegramUserId provided, skipping fetch');
       setLoading(false);
     }
   }, [telegramUserId, startParam]);
 
   const refetch = () => {
     if (telegramUserId) {
+      console.log('🔄 FLOW: Refetching user data for ID:', telegramUserId);
       fetchUser();
+    } else {
+      console.warn('⚠️ FLOW: Cannot refetch - no telegramUserId provided');
     }
   };
 

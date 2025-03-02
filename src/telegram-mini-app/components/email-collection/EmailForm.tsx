@@ -31,12 +31,12 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  console.log('📧 EmailForm component rendering for user ID:', telegramUserId);
-  console.log('📧 EmailForm: onComplete function exists:', !!onComplete);
+  console.log('📧 FLOW: EmailForm component rendering for user ID:', telegramUserId);
+  console.log('📧 FLOW: EmailForm: onComplete function exists:', !!onComplete);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📧 Form submitted with email:', email);
+    console.log('📧 FLOW: Form submitted with email:', email);
     
     // Clear any previous errors
     setError(null);
@@ -50,7 +50,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log('📧 Submitting email for Telegram ID:', telegramUserId);
+      console.log('📧 FLOW: Submitting email for Telegram ID:', telegramUserId);
       
       // Submit the email to the database
       const success = await collectUserEmail(
@@ -64,27 +64,27 @@ export const EmailForm: React.FC<EmailFormProps> = ({
       );
       
       if (success) {
-        console.log('✅ Email collection successful, calling onComplete to show community content');
+        console.log('✅ FLOW: Email collection successful, calling onComplete to show community content');
         toast({
           title: "Email saved successfully!",
           description: "You can now access the community content.",
         });
         
         // CRITICAL FIX: Call onComplete immediately and ensure it's executed
-        console.log('🚨 CRITICAL FIX: Directly calling onComplete in EmailForm');
+        console.log('🚨 FLOW: Directly calling onComplete in EmailForm');
         
         // Force immediate execution to ensure state updates propagate
         if (onComplete) {
           window.setTimeout(() => {
             onComplete();
-            console.log('✅ onComplete callback executed with a small delay');
+            console.log('✅ FLOW: onComplete callback executed with a small delay');
           }, 0);
         }
       } else {
         throw new Error("Failed to save email");
       }
     } catch (err) {
-      console.error('❌ Error saving email:', err);
+      console.error('❌ FLOW: Error saving email:', err);
       setError("Failed to save your email. Please try again.");
       toast({
         variant: "destructive",

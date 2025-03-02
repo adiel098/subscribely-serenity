@@ -11,9 +11,9 @@ export const isValidTelegramId = (id: string | number | undefined | null): boole
   if (!id) return false;
   const stringId = id.toString();
   
-  // Modern Telegram IDs are numerical and typically long (> 5 digits)
-  // However, in development or testing, we may use shorter IDs
-  return /^\d+$/.test(stringId) && stringId.length > 0;
+  // A more flexible check for Telegram IDs (numeric characters only)
+  // We removed length check to support various ID formats
+  return /^\d+$/.test(stringId);
 };
 
 /**
@@ -94,6 +94,44 @@ export const parseUserFromUrlHash = (): { [key: string]: any } | null => {
     return null;
   } catch (error) {
     console.error('❌ Error parsing user data from URL hash:', error);
+    return null;
+  }
+};
+
+/**
+ * Extract user ID directly from Telegram WebApp
+ * This is a more direct method to try and get the user ID
+ */
+export const getTelegramUserId = (): string | null => {
+  try {
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      console.log('❌ No user data in WebApp.initDataUnsafe');
+      return null;
+    }
+    
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Handle different types of ID that might be returned
+    let userId: string | null = null;
+    
+    if (typeof user.id === 'number') {
+      userId = user.id.toString();
+    } else if (typeof user.id === 'string') {
+      userId = user.id;
+    } else if (user.id) {
+      // Try to convert whatever we have to a string
+      userId = String(user.id);
+    }
+    
+    if (!userId || !isValidTelegramId(userId)) {
+      console.error('❌ Invalid or missing user ID from direct extraction:', userId);
+      return null;
+    }
+    
+    console.log('✅ Successfully extracted user ID directly:', userId);
+    return userId;
+  } catch (error) {
+    console.error('❌ Error extracting user ID directly:', error);
     return null;
   }
 };

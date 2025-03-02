@@ -1,3 +1,4 @@
+
 import { TelegramUser } from '../types/telegramTypes';
 import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegramUtils';
 
@@ -15,7 +16,7 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     
     // First, handle the case where we have a direct user ID
     if (directTelegramUserId) {
-      // Validate the direct ID
+      // Always validate the direct ID
       if (!isValidTelegramId(directTelegramUserId)) {
         console.error('❌ Invalid direct Telegram ID format:', directTelegramUserId);
         return null;
@@ -43,22 +44,36 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
       };
     }
     
-    // If no direct ID, try to get from WebApp
+    // If no direct ID, try to get from WebApp - using proper type checking
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
-      // Ensure we're getting a proper numeric ID and converting to string
-      const userId = formatTelegramId(user.id);
-      if (!userId) {
-        console.error('❌ No valid user ID in WebApp data');
+      // Extra careful handling of the ID to ensure we have a valid format
+      let userId: string | null = null;
+      
+      // Handle numeric and string IDs
+      if (typeof user.id === 'number') {
+        userId = user.id.toString();
+        console.log('🔢 Converted numeric ID to string:', userId);
+      } else if (typeof user.id === 'string') {
+        userId = user.id;
+        console.log('🔤 Using string ID directly:', userId);
+      } else if (user.id) {
+        // Try to convert whatever we have to a string
+        userId = String(user.id);
+        console.log('🔄 Converted unknown ID type to string:', userId);
+      }
+      
+      // Validate the ID format
+      if (!userId || !isValidTelegramId(userId)) {
+        console.error('❌ Invalid or missing user ID from WebApp:', userId);
         return null;
       }
       
-      console.log('🔑 Extracted user ID from WebApp:', userId);
+      console.log('🔑 Validated user ID from WebApp:', userId);
       
       // In recent Telegram WebApp versions, photo_url might be available directly
-      // We explicitly check for its presence as a property
       const photoUrl = user.photo_url || undefined;
       console.log('📸 Photo URL from WebApp data:', photoUrl);
       

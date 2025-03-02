@@ -31,6 +31,9 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
         setIsCheckingUserData(true);
         
         try {
+          // Always default to showing email form for new users
+          let shouldShowEmailForm = true;
+          
           // Use the utility function to validate Telegram ID
           if (!telegramUser.id || !isValidTelegramId(telegramUser.id)) {
             console.error('❌ Invalid Telegram ID format for database check:', telegramUser.id);
@@ -54,21 +57,23 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             return;
           }
           
+          // Only check the database if we have a valid ID
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           
-          // If user doesn't exist in DB or doesn't have an email, show email form
-          if (!exists || !hasEmail) {
+          // If user exists in DB and has an email, don't show email form
+          if (exists && hasEmail) {
+            console.log('✅ User exists and has email, proceeding to community page');
+            shouldShowEmailForm = false;
+          } else {
             console.log('🔍 User needs to provide email before proceeding');
             toast({
               title: "Please provide your email",
               description: "We need your email address to continue."
             });
-            setShowEmailForm(true);
-          } else {
-            console.log('✅ User exists and has email, proceeding to community page');
-            setShowEmailForm(false);
           }
+          
+          setShowEmailForm(shouldShowEmailForm);
           setErrorState(null);
         } catch (error) {
           console.error('❌ Error checking user data:', error);

@@ -135,6 +135,11 @@ const TelegramMiniApp = () => {
     });
   };
 
+  // Debug email form state
+  useEffect(() => {
+    console.log('📧 Email form visibility state changed:', showEmailForm);
+  }, [showEmailForm]);
+
   return (
     <>
       <TelegramInitializer onInitialized={handleTelegramInitialized} />

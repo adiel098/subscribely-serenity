@@ -47,6 +47,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
       <div className="mt-2 border-t border-yellow-400 pt-2">
         <p><strong>🔄 Current URL:</strong> {window.location.href}</p>
         <p><strong>📱 Development Mode:</strong> {process.env.NODE_ENV === 'development' ? '✅ Yes' : '❌ No'}</p>
+        <p><strong>🚦 User Flow:</strong> {!telegramUser ? 'Loading User' : showEmailForm ? 'Email Collection' : 'Community View'}</p>
       </div>
     </div>
   );

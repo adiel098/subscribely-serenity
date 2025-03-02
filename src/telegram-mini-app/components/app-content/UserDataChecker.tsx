@@ -53,7 +53,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
-          // Always show email form for new users (not in DB)
+          // CRITICAL FIX: Always show email form for new users (not in DB)
           if (!exists) {
             console.log('🆕 New user detected, directing to email collection');
             toast({

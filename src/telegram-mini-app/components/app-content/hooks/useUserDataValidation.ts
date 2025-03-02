@@ -52,8 +52,6 @@ export const useUserDataValidation = ({
       if (!exists || !hasEmail) {
         console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
         
-        // No welcome toast notification - as requested
-        
         // Force showing email form - this is critical
         setShowEmailForm(true);
       } else {

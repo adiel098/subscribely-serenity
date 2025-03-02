@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
@@ -8,6 +8,7 @@ import { EmailCollectionWrapper } from "@/telegram-mini-app/components/EmailColl
 import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { DebugInfo } from "@/telegram-mini-app/components/debug/DebugInfo";
 import { AlertTriangle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 interface AppContentRouterProps {
   loading: boolean;
@@ -32,6 +33,9 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   onRetry,
   setShowEmailForm
 }) => {
+  const [searchParams] = useSearchParams();
+  const showDebug = searchParams.get("debug") === "true";
+  
   console.log("🧭 AppContentRouter rendering with:", {
     loading,
     errorState,
@@ -45,16 +49,20 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   // Show debug info for development
   const activeTab = "subscribe"; // Default active tab
   
-  // Debug section at the top that will show in dev mode
-  const renderDebugInfo = () => (
-    <DebugInfo 
-      telegramUser={telegramUser} 
-      community={community} 
-      activeTab={activeTab}
-      showEmailForm={showEmailForm}
-      isCheckingUserData={isCheckingUserData}
-    />
-  );
+  // Debug section at the top that will only show when debug=true
+  const renderDebugInfo = () => {
+    if (!showDebug && process.env.NODE_ENV !== 'development') return null;
+    
+    return (
+      <DebugInfo 
+        telegramUser={telegramUser} 
+        community={community} 
+        activeTab={activeTab}
+        showEmailForm={showEmailForm}
+        isCheckingUserData={isCheckingUserData}
+      />
+    );
+  };
 
   // Error boundary for debugging - show when nothing else renders
   const renderErrorBoundary = () => (
@@ -81,8 +89,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     </div>
   );
 
-  // OPTIMIZED ROUTING FLOW: Reduce page transitions for new users
-  
   // First, handle error cases
   if (errorState && telegramUserId) {
     return (

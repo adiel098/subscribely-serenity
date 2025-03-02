@@ -2,6 +2,7 @@
 import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
+import { useSearchParams } from "react-router-dom";
 
 interface DebugInfoProps {
   telegramUser: TelegramUser | null;
@@ -18,7 +19,11 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
   showEmailForm,
   isCheckingUserData
 }) => {
-  if (process.env.NODE_ENV !== 'development') return null;
+  const [searchParams] = useSearchParams();
+  const showDebug = searchParams.get("debug") === "true";
+  
+  // Only show in development or if debug=true parameter is present
+  if (!showDebug && process.env.NODE_ENV !== 'development') return null;
   
   // Flow state calculation
   let userFlowState = 'Loading User';

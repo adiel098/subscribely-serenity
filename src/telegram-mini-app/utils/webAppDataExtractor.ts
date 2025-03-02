@@ -1,4 +1,3 @@
-
 import { TelegramUser } from '../types/telegramTypes';
 import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegramUtils';
 

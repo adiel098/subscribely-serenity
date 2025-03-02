@@ -33,11 +33,15 @@ export const useCommunityData = (communityId: string | null) => {
           const communityData = response.data.community;
           if (!communityData.subscription_plans) {
             communityData.subscription_plans = [];
+          } else if (!Array.isArray(communityData.subscription_plans)) {
+            console.error('subscription_plans is not an array:', communityData.subscription_plans);
+            communityData.subscription_plans = [];
           }
           
           console.log('Processed community data:', communityData);
           setCommunity(communityData);
         } else {
+          console.error('Community not found in response:', response);
           throw new Error("Community not found");
         }
       } catch (error) {

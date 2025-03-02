@@ -10,7 +10,8 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
     const { data, error } = await invokeSupabaseFunction("telegram-user-manager", {
       action: "search_communities", 
       query: query, 
-      filter_ready: true
+      filter_ready: true,
+      include_plans: true  // Explicitly request plans
     });
 
     if (error) {
@@ -18,8 +19,16 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
       throw new Error(error.message);
     }
 
-    logServiceAction("Received communities data", data);
-    return data?.communities || [];
+    // Ensure each community has subscription_plans array
+    const communities = data?.communities || [];
+    communities.forEach(community => {
+      if (!community.subscription_plans) {
+        community.subscription_plans = [];
+      }
+    });
+
+    logServiceAction("Received communities data", communities);
+    return communities;
   } catch (error) {
     console.error("Failed to search communities:", error);
     return [];

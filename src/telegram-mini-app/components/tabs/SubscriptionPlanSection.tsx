@@ -17,7 +17,10 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   onPlanSelect,
   showPaymentMethods
 }) => {
-  if (!plans || plans.length === 0) {
+  // Safe guard against undefined or non-array plans
+  const validPlans = Array.isArray(plans) ? plans : [];
+  
+  if (validPlans.length === 0) {
     return (
       <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
         <p className="text-gray-500">No subscription plans available for this community.</p>
@@ -29,7 +32,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
     <>
       <div id="subscription-plans" className="scroll-mt-4">
         <SubscriptionPlans
-          plans={plans}
+          plans={validPlans}
           selectedPlan={selectedPlan}
           onPlanSelect={onPlanSelect}
         />

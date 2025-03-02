@@ -30,7 +30,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     community: community?.name,
     telegramUser: telegramUser?.username,
     telegramUserId: telegramUser?.id,
-    plans: community?.subscription_plans?.length || 0
+    plans: community?.subscription_plans?.length || 0,
+    plansData: community?.subscription_plans || []
   });
 
   // Error handling for missing data
@@ -64,6 +65,12 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
         </div>
       </motion.div>
     );
+  }
+
+  // Make sure subscription_plans always exists and is an array
+  if (!community.subscription_plans || !Array.isArray(community.subscription_plans)) {
+    console.warn("⚠️ subscription_plans is missing or not an array, initializing to empty array");
+    community.subscription_plans = [];
   }
 
   // Log user info for debugging

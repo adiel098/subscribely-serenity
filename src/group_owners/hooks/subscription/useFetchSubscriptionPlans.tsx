@@ -38,8 +38,10 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
       return data as SubscriptionPlan[];
     },
     enabled: Boolean(communityId),
-    staleTime: 1000,
-    refetchOnWindowFocus: true,
-    retry: 2,
+    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    retry: 3,
+    retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000)
   });
 };

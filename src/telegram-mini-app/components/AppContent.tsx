@@ -100,7 +100,7 @@ export const AppContent: React.FC<AppContentProps> = ({
         } catch (error) {
           console.error('❌ Error checking user data:', error);
           // Default to showing email form if there's an error checking the database
-          setShowEmailForm(!telegramUser.email);
+          setShowEmailForm(true);
         } finally {
           setIsCheckingUserData(false);
         }

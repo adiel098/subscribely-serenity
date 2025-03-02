@@ -2,15 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Community, Plan } from "@/telegram-mini-app/types/community.types";
+import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { useUserSubscriptions } from "@/telegram-mini-app/hooks/useUserSubscriptions";
+import { UserProfileCard } from "@/telegram-mini-app/components/user-profile/UserProfileCard";
 import { DebugInfo } from "@/telegram-mini-app/components/debug/DebugInfo";
+import { ContentTabs } from "@/telegram-mini-app/components/tabs/ContentTabs";
+import { PaymentSection } from "@/telegram-mini-app/components/payment/PaymentSection";
+import { AlertTriangle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { triggerHapticFeedback } from "@/telegram-mini-app/components/email-collection/emailFormUtils";
-import { ErrorDisplay } from "./main-content/ErrorDisplay";
-import { MainHeader } from "./main-content/MainHeader";
-import { MainTabs } from "./main-content/MainTabs";
-import { PaymentSectionWrapper } from "./main-content/PaymentSection";
-import { useBackButton } from "./main-content/useBackButton";
 
 interface MainContentProps {
   community: Community;
@@ -35,11 +36,35 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
 
   // Error handling for missing data
   if (!community) {
-    return <ErrorDisplay message="Error: Community data is missing" />;
+    return (
+      <motion.div 
+        className="p-4 bg-red-50 text-red-700 rounded-md m-4"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          <span>Error: Community data is missing</span>
+        </div>
+      </motion.div>
+    );
   }
 
   if (!telegramUser) {
-    return <ErrorDisplay message="Error: Telegram user data is missing" />;
+    return (
+      <motion.div 
+        className="p-4 bg-red-50 text-red-700 rounded-md m-4"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          <span>Error: Telegram user data is missing</span>
+        </div>
+      </motion.div>
+    );
   }
 
   // Make sure subscription_plans always exists and is an array
@@ -55,15 +80,21 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     } else {
       console.log("⚠️ No Telegram user data available in MainContent");
     }
-  }, [telegramUser]);
-
-  const resetSelection = () => {
-    setSelectedPlan(null);
-    setShowSuccess(false);
-  };
-
-  // Handle back button
-  useBackButton(selectedPlan, activeTab, resetSelection);
+    
+    // If we're in Telegram, try to use BackButton
+    if (window.Telegram?.WebApp?.BackButton) {
+      if (selectedPlan && activeTab === "subscribe") {
+        window.Telegram.WebApp.BackButton.show();
+        window.Telegram.WebApp.BackButton.onClick(() => {
+          setSelectedPlan(null);
+          setShowSuccess(false);
+          window.Telegram.WebApp.BackButton.hide();
+        });
+      } else {
+        window.Telegram.WebApp.BackButton.hide();
+      }
+    }
+  }, [telegramUser, selectedPlan, activeTab]);
 
   const handlePaymentMethodSelect = (method: string) => {
     setSelectedPaymentMethod(method);
@@ -77,9 +108,17 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     triggerHapticFeedback('success');
   };
 
+  const handlePlanSelect = (plan: Plan) => {
+    setSelectedPlan(plan);
+    document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
+    triggerHapticFeedback('selection');
+  };
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    resetSelection();
+    setSelectedPlan(null);
+    setShowSuccess(false);
+    triggerHapticFeedback('selection');
   };
 
   const handleRenewSubscription = (subscription: any) => {
@@ -92,17 +131,33 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
       setSelectedPlan(matchingPlan);
       setActiveTab("subscribe");
       document.getElementById('subscription-plans')?.scrollIntoView({ behavior: 'smooth' });
+      triggerHapticFeedback('selection');
     }
   };
 
   const handleSelectCommunity = (selectedCommunity: any) => {
     // In a real app, this would navigate to the community's page
+    // For now, we'll just show a message
     if (window.Telegram?.WebApp) {
       alert(`This would navigate to: ${selectedCommunity.name}`);
     } else {
       alert(`This would navigate to: ${selectedCommunity.name}`);
     }
+    triggerHapticFeedback('selection');
   };
+
+  // Ensure we have data before rendering
+  if (!community || !community.subscription_plans) {
+    console.error("❌ Missing community or subscription plans data");
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center space-y-2">
+          <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
+          <p className="text-gray-700">Missing community or subscription plan data</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ScrollArea className="h-[100vh] w-full">
@@ -115,32 +170,63 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             activeTab={activeTab} 
           />
           
-          {/* Header with user profile and community info */}
-          <MainHeader telegramUser={telegramUser} community={community} />
+          {/* Telegram User Info - with animation */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <UserProfileCard telegramUser={telegramUser} community={community} />
+          </motion.div>
           
-          {/* Content tabs */}
-          <MainTabs 
-            community={community}
-            activeTab={activeTab}
-            selectedPlan={selectedPlan}
-            subscriptions={subscriptions}
-            onTabChange={handleTabChange}
-            onPlanSelect={setSelectedPlan}
-            onRenewSubscription={handleRenewSubscription}
-            onSelectCommunity={handleSelectCommunity}
-            refreshSubscriptions={refreshSubscriptions}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <CommunityHeader community={community} />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
+            <ContentTabs
+              activeTab={activeTab}
+              handleTabChange={handleTabChange}
+              communitySubscriptionPlans={community.subscription_plans}
+              selectedPlan={selectedPlan}
+              onPlanSelect={handlePlanSelect}
+              showPaymentMethods={!!selectedPlan}
+              subscriptions={subscriptions}
+              onRefreshSubscriptions={refreshSubscriptions}
+              onRenewSubscription={handleRenewSubscription}
+              onSelectCommunity={handleSelectCommunity}
+            />
+          </motion.div>
           
-          {/* Payment section */}
-          <PaymentSectionWrapper
-            selectedPlan={selectedPlan}
-            selectedPaymentMethod={selectedPaymentMethod}
-            showSuccess={showSuccess}
-            communityInviteLink={community.telegram_invite_link}
-            telegramUserId={telegramUser?.id}
-            onPaymentMethodSelect={handlePaymentMethodSelect}
-            onCompletePurchase={handleCompletePurchase}
-          />
+          <AnimatePresence>
+            {selectedPlan && (
+              <motion.div
+                key="payment-section"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <PaymentSection
+                  selectedPlan={selectedPlan}
+                  selectedPaymentMethod={selectedPaymentMethod}
+                  onPaymentMethodSelect={handlePaymentMethodSelect}
+                  onCompletePurchase={handleCompletePurchase}
+                  communityInviteLink={community.telegram_invite_link}
+                  showSuccess={showSuccess}
+                  telegramUserId={telegramUser?.id}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           <div className="pb-10"></div>
         </div>

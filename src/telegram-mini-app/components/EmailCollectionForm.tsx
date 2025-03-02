@@ -113,7 +113,7 @@ export const EmailCollectionForm = ({
           
           <h1 className="text-2xl font-bold tracking-tight">Welcome!</h1>
           <p className="text-gray-500 text-sm">
-            Please provide your email address to continue to the community
+            Pleaseקק provide your email address to continue to the community
           </p>
         </div>
 

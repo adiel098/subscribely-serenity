@@ -20,6 +20,18 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
 }) => {
   if (process.env.NODE_ENV !== 'development') return null;
   
+  // Flow state calculation
+  let userFlowState = 'Loading User';
+  if (telegramUser) {
+    if (showEmailForm) {
+      userFlowState = 'Email Collection (Required)';
+    } else if (!telegramUser.email) {
+      userFlowState = 'WARNING: Missing Email (Should be redirected)';
+    } else {
+      userFlowState = 'Community View';
+    }
+  }
+  
   return (
     <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
       <p><strong>📊 Debug Info:</strong></p>
@@ -29,7 +41,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
           <p><strong>User ID type:</strong> {telegramUser ? typeof telegramUser.id : 'N/A'}</p>
           <p><strong>Username:</strong> {telegramUser?.username || 'Not available'}</p>
           <p><strong>Name:</strong> {telegramUser?.first_name || ''} {telegramUser?.last_name || ''}</p>
-          <p><strong>Email:</strong> {telegramUser?.email || 'Not available'}</p>
+          <p><strong>Email:</strong> {telegramUser?.email || '❌ Not provided'}</p>
           <p><strong>Photo URL:</strong> {telegramUser?.photo_url ? '✅ Available' : '❌ Not available'}</p>
           <p><strong>WebApp initData:</strong> {window.Telegram?.WebApp?.initData ? '✅ Available' : '❌ Not available'}</p>
         </div>
@@ -47,7 +59,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
       <div className="mt-2 border-t border-yellow-400 pt-2">
         <p><strong>🔄 Current URL:</strong> {window.location.href}</p>
         <p><strong>📱 Development Mode:</strong> {process.env.NODE_ENV === 'development' ? '✅ Yes' : '❌ No'}</p>
-        <p><strong>🚦 User Flow:</strong> {!telegramUser ? 'Loading User' : showEmailForm ? 'Email Collection' : 'Community View'}</p>
+        <p><strong>🚦 User Flow:</strong> {userFlowState}</p>
       </div>
     </div>
   );

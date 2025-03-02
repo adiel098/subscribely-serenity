@@ -55,7 +55,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           
           // CRITICAL FIX: Always show email form for new users (not in DB)
           if (!exists) {
-            console.log('🆕 New user detected, directing to email collection');
+            console.log('🔴 NEW USER DETECTION: User not in database, forcing email collection');
             toast({
               title: "Welcome to our community!",
               description: "Please provide your email to continue.",

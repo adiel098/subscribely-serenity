@@ -135,10 +135,17 @@ const TelegramMiniApp = () => {
     });
   };
 
-  // Debug email form state
+  // Debug email form state changes
   useEffect(() => {
-    console.log('📧 Email form visibility state changed:', showEmailForm);
+    console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
   }, [showEmailForm]);
+
+  // CRITICAL FIX: Force email collection for users without email
+  useEffect(() => {
+    if (!userLoading && telegramUser && !telegramUser.email) {
+      console.log('🚨 User loaded without email - this should trigger email collection:', telegramUser);
+    }
+  }, [telegramUser, userLoading]);
 
   return (
     <>

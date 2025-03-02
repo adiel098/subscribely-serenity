@@ -13,7 +13,14 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
 }) => {
   if (!telegramUser) return null;
   
-  console.log('📝 Showing email collection form for user ID:', telegramUser.id);
+  console.log('📝 EMAIL COLLECTION: Showing form for user ID:', telegramUser.id);
+  console.log('📝 EMAIL COLLECTION: User data:', {
+    id: telegramUser.id,
+    firstName: telegramUser.first_name,
+    lastName: telegramUser.last_name,
+    username: telegramUser.username,
+    hasEmail: !!telegramUser.email
+  });
   
   return (
     <EmailCollectionForm 
@@ -22,7 +29,10 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
       lastName={telegramUser.last_name}
       username={telegramUser.username}
       photoUrl={telegramUser.photo_url}
-      onComplete={onComplete} 
+      onComplete={() => {
+        console.log('📝 EMAIL COLLECTION: Form submitted successfully, completing flow');
+        onComplete();
+      }} 
     />
   );
 };

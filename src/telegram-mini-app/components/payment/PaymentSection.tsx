@@ -2,6 +2,7 @@
 import React from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
+import { motion } from "framer-motion";
 
 interface PaymentSectionProps {
   selectedPlan: Plan | null;
@@ -25,7 +26,13 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   if (!selectedPlan) return null;
   
   return (
-    <div id="payment-methods" className="scroll-mt-4">
+    <motion.div 
+      id="payment-methods" 
+      className="scroll-mt-4 bg-white/70 backdrop-blur-sm p-6 rounded-xl border border-gray-100 shadow-lg"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <PaymentMethods
         selectedPlan={selectedPlan}
         selectedPaymentMethod={selectedPaymentMethod}
@@ -35,6 +42,6 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
         showSuccess={showSuccess}
         telegramUserId={telegramUserId}
       />
-    </div>
+    </motion.div>
   );
 };

@@ -5,10 +5,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Log service actions with consistent formatting
+ * Log service actions with consistent formatting and emojis
  */
 export const logServiceAction = (action: string, data?: any) => {
-  console.log(`🔧 SERVICE: ${action}`, data ? data : '');
+  console.log(`🔧 SERVICE: ${action} 📊`, data ? data : '');
 };
 
 /**
@@ -37,20 +37,23 @@ export function validateTelegramId(telegramUserId: string | null | undefined): b
 }
 
 /**
- * Invoke Supabase Edge Functions with consistent error handling
+ * Invoke Supabase Edge Functions with consistent error handling and improved logging
  * @param functionName Name of the Supabase Edge Function to invoke
  * @param payload Data to send to the function
  * @returns Promise with the function response
  */
 export const invokeSupabaseFunction = async (functionName: string, payload: any) => {
-  logServiceAction(`Invoking Edge Function: ${functionName}`, payload);
+  logServiceAction(`🚀 Invoking Edge Function: ${functionName}`, payload);
   
   try {
     console.log(`📤 PAYLOAD TO ${functionName}:`, JSON.stringify(payload, null, 2));
+    console.time(`⏱️ ${functionName} execution time`);
     
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
     });
+    
+    console.timeEnd(`⏱️ ${functionName} execution time`);
     
     if (error) {
       console.error(`❌ Edge Function Error (${functionName}):`, error);
@@ -59,7 +62,23 @@ export const invokeSupabaseFunction = async (functionName: string, payload: any)
     }
     
     console.log(`📥 RESPONSE FROM ${functionName}:`, JSON.stringify(data, null, 2));
-    logServiceAction(`Edge Function Response (${functionName}):`, data);
+    
+    // Log data structure and types for better debugging
+    if (data) {
+      console.log(`📊 Response structure for ${functionName}:`);
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        console.log(`   🔑 ${key}: ${Array.isArray(value) ? `Array[${value.length}]` : typeof value}`);
+        
+        // For arrays, log their contents type
+        if (Array.isArray(value) && value.length > 0) {
+          console.log(`      📋 First item type: ${typeof value[0]}`);
+          console.log(`      📋 Sample:`, value[0]);
+        }
+      });
+    }
+    
+    logServiceAction(`✅ Edge Function Response (${functionName}):`, data);
     return { data, error: null };
   } catch (err) {
     console.error(`❌ Edge Function Exception (${functionName}):`, err);

@@ -1,13 +1,13 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
-// Define CORS headers for browser compatibility
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Content-Type": "application/json",
 };
+
+console.log("Telegram Community Data function started");
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -16,83 +16,105 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Extract request body
-    let body;
-    try {
-      body = await req.json();
-    } catch (error) {
-      console.error("Error parsing request body:", error);
-      return new Response(
-        JSON.stringify({
-          error: "Invalid request body",
-          details: error.message,
-        }),
-        { headers: corsHeaders, status: 400 }
-      );
-    }
+    const requestData = await req.json();
+    const { community_id, debug = true } = requestData; // Enable debug by default for now
 
-    const { community_id } = body || {};
-    console.log("Request payload:", { community_id });
+    if (debug) {
+      console.log(`🔍 DEBUG: Fetching community data for ID: ${community_id}`);
+    }
 
     if (!community_id) {
+      console.error("❌ Missing community_id parameter");
       return new Response(
-        JSON.stringify({
-          error: "Missing community_id parameter",
-        }),
-        { headers: corsHeaders, status: 400 }
+        JSON.stringify({ error: "Missing community_id parameter" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    // Fetch community data
-    const { data: community, error: communityError } = await supabase
-      .from("communities")
+    // Get community data with subscription plans
+    const { data: community, error } = await supabase
+      .from('communities')
       .select(`
-        id,
-        name,
-        description,
-        telegram_photo_url,
+        id, 
+        name, 
+        description, 
+        telegram_photo_url, 
         telegram_invite_link,
-        subscription_plans (
-          id,
-          name,
-          description,
-          price,
-          interval,
-          features
-        )
+        member_count,
+        subscription_count,
+        subscription_plans(*)
       `)
-      .eq("id", community_id)
+      .eq('id', community_id)
       .single();
 
-    if (communityError) {
-      console.error("Error fetching community:", communityError);
+    if (error) {
+      console.error(`❌ Database error fetching community ${community_id}:`, error);
       return new Response(
-        JSON.stringify({
-          error: "Failed to fetch community data",
-          details: communityError.message,
-        }),
-        { headers: corsHeaders, status: 500 }
+        JSON.stringify({ error: `Error fetching community: ${error.message}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
+    if (!community) {
+      console.error(`❌ Community with ID ${community_id} not found`);
+      return new Response(
+        JSON.stringify({ error: "Community not found" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
+    }
+
+    if (debug) {
+      console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);
+      
+      // Log subscription plans details
+      if (community.subscription_plans) {
+        console.log(`🔍 DEBUG: Community has ${community.subscription_plans.length} subscription plans`);
+        community.subscription_plans.forEach((plan, i) => {
+          console.log(`   - Plan ${i + 1}: ${plan.name}, $${plan.price}/${plan.interval}`);
+          console.log(`     Description: ${plan.description || 'None'}`);
+          console.log(`     Features: ${JSON.stringify(plan.features || [])}`);
+          console.log(`     Is active: ${plan.is_active}`);
+        });
+      } else {
+        console.log(`❌ ERROR: subscription_plans is undefined or null for this community`);
+      }
+      
+      // Check payment methods for this community
+      const { data: paymentMethods, error: pmError } = await supabase
+        .from('payment_methods')
+        .select('id, provider, is_active')
+        .eq('community_id', community_id);
+        
+      if (pmError) {
+        console.error(`❌ Error fetching payment methods:`, pmError);
+      } else {
+        console.log(`🔍 DEBUG: Community has ${paymentMethods?.length || 0} payment methods`);
+        paymentMethods?.forEach((pm, i) => {
+          console.log(`   - Payment method ${i + 1}: ${pm.provider} (Active: ${pm.is_active})`);
+        });
+      }
+    }
+
+    // Ensure subscription_plans is always an array
+    if (!community.subscription_plans) {
+      console.warn(`⚠️ subscription_plans is null/undefined for community ${community_id} - setting to empty array`);
+      community.subscription_plans = [];
+    }
+
     return new Response(
-      JSON.stringify({
-        community
-      }),
-      { headers: corsHeaders }
+      JSON.stringify({ community }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error) {
-    console.error("Server error:", error);
+    console.error("❌ Uncaught error in telegram-community-data function:", error);
     return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        details: error.message,
-      }),
-      { headers: corsHeaders, status: 500 }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

@@ -16,15 +16,19 @@ export const useCommunityData = (communityId: string | null) => {
           throw new Error("No community ID provided");
         }
         
-        console.log('Fetching community data with ID:', communityId);
+        console.log('🔍 useCommunityData: Fetching community data with ID:', communityId);
         
         const response = await supabase.functions.invoke("telegram-community-data", {
-          body: { community_id: communityId }
+          body: { 
+            community_id: communityId,
+            debug: true // Enable debug logs
+          }
         });
 
-        console.log('Response from telegram-community-data:', response);
+        console.log('🔍 useCommunityData: Response from telegram-community-data:', response);
 
         if (response.error) {
+          console.error('❌ useCommunityData: Error from edge function:', response.error);
           throw new Error(response.error);
         }
 
@@ -32,20 +36,26 @@ export const useCommunityData = (communityId: string | null) => {
           // Ensure subscription_plans is always an array
           const communityData = response.data.community;
           if (!communityData.subscription_plans) {
+            console.warn('⚠️ useCommunityData: subscription_plans is missing - adding empty array');
             communityData.subscription_plans = [];
           } else if (!Array.isArray(communityData.subscription_plans)) {
-            console.error('subscription_plans is not an array:', communityData.subscription_plans);
+            console.error('❌ useCommunityData: subscription_plans is not an array:', communityData.subscription_plans);
             communityData.subscription_plans = [];
+          } else {
+            console.log(`✅ useCommunityData: Received ${communityData.subscription_plans.length} subscription plans`);
+            if (communityData.subscription_plans.length > 0) {
+              console.log(`   Plan names: ${communityData.subscription_plans.map(p => p.name).join(', ')}`);
+            }
           }
           
-          console.log('Processed community data:', communityData);
+          console.log('🔍 useCommunityData: Processed community data:', communityData);
           setCommunity(communityData);
         } else {
-          console.error('Community not found in response:', response);
+          console.error('❌ useCommunityData: Community not found in response:', response);
           throw new Error("Community not found");
         }
       } catch (error) {
-        console.error("Error fetching community data:", error);
+        console.error("❌ useCommunityData: Error fetching community data:", error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -59,7 +69,7 @@ export const useCommunityData = (communityId: string | null) => {
     if (communityId) {
       fetchCommunityData();
     } else {
-      console.error("No start parameter provided");
+      console.error("❌ useCommunityData: No start parameter provided");
       setLoading(false);
     }
   }, [communityId, toast]);

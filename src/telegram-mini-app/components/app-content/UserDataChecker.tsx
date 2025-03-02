@@ -1,12 +1,12 @@
 
 import { useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
+import { checkUserExists } from "@/telegram-mini-app/services/userProfileService";
 import { useToast } from "@/components/ui/use-toast";
 
 interface UserDataCheckerProps {
   telegramUser: TelegramUser | null;
   userLoading: boolean;
-  userExistsInDatabase: boolean | null;
   setIsCheckingUserData: (isChecking: boolean) => void;
   setShowEmailForm: (show: boolean) => void;
   setErrorState: (error: string | null) => void;
@@ -15,93 +15,89 @@ interface UserDataCheckerProps {
 export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
   telegramUser,
   userLoading,
-  userExistsInDatabase,
   setIsCheckingUserData,
   setShowEmailForm,
   setErrorState
 }) => {
   const { toast } = useToast();
 
-  // Logic to determine whether to show email form or community content
+  // Check if user exists and has email
   useEffect(() => {
-    // Don't do anything while still loading
-    if (userLoading) {
-      console.log('⏳ FLOW: User data is still loading, waiting...');
-      return;
-    }
-    
-    // Make sure we have a valid user object
-    if (!telegramUser || !telegramUser.id) {
-      console.error('❌ FLOW: No valid user data available - cannot proceed', telegramUser);
-      console.log('❌ DEBUG: telegramUser:', telegramUser);
-      console.log('❌ DEBUG: telegramUser type:', typeof telegramUser);
-      
-      if (telegramUser) {
-        console.log('❌ DEBUG: telegramUser.id:', telegramUser.id);
-        console.log('❌ DEBUG: telegramUser.id type:', typeof telegramUser.id);
-      }
-      
-      // Try to debug the Telegram WebApp data
-      console.log('🔍 DEBUG: Checking Telegram WebApp data:');
-      if (window.Telegram) {
-        console.log('- window.Telegram exists');
-        if (window.Telegram.WebApp) {
-          console.log('- window.Telegram.WebApp exists');
-          if (window.Telegram.WebApp.initDataUnsafe) {
-            console.log('- initDataUnsafe exists');
-            
-            if (window.Telegram.WebApp.initDataUnsafe.user) {
-              console.log('- user object exists');
-              console.log('- user.id:', window.Telegram.WebApp.initDataUnsafe.user.id);
-            } else {
-              console.log('- user object is missing from initDataUnsafe');
-            }
-          } else {
-            console.log('- initDataUnsafe is missing');
+    const checkUserData = async () => {
+      if (!userLoading && telegramUser) {
+        console.log('✅ User data loaded, checking if user exists in database');
+        console.log('📱 Telegram ID for validation:', telegramUser.id);
+        console.log('📱 Telegram ID type:', typeof telegramUser.id);
+        setIsCheckingUserData(true);
+        
+        try {
+          if (!telegramUser.id) {
+            console.error('❌ Missing Telegram ID:', telegramUser);
+            setErrorState("Missing Telegram user ID");
+            setIsCheckingUserData(false);
+            return;
           }
-        } else {
-          console.log('- WebApp object is missing');
+          
+          // Make sure we have a string ID
+          const telegramId = String(telegramUser.id).trim();
+          console.log('📱 Processed Telegram ID:', telegramId);
+          
+          if (!/^\d+$/.test(telegramId)) {
+            console.error('❌ Invalid Telegram ID format for database check:', telegramId);
+            console.error('❌ Full user object:', JSON.stringify(telegramUser));
+            setErrorState("Invalid Telegram user ID format");
+            setIsCheckingUserData(false);
+            return;
+          }
+          
+          // Only check if user exists, don't create the user here
+          const { exists, hasEmail } = await checkUserExists(telegramId);
+          console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
+          
+          // Enforce email collection in ALL cases where either:
+          // 1. User is new (not in DB) OR
+          // 2. User exists but doesn't have an email
+          if (!exists || !hasEmail) {
+            console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
+            
+            if (!exists) {
+              toast({
+                title: "Welcome to our community!",
+                description: "Please provide your email to continue.",
+              });
+            } else {
+              toast({
+                title: "Email required",
+                description: "Please provide your email address to continue.",
+              });
+            }
+            
+            // Force showing email form - this is critical
+            setShowEmailForm(true);
+          } else {
+            console.log('✅ User exists and has email, proceeding to community page');
+            setShowEmailForm(false);
+          }
+          
+          setErrorState(null);
+        } catch (error) {
+          console.error('❌ Error checking user data:', error);
+          // Default to showing email form if there's an error checking the database
+          toast({
+            variant: "destructive",
+            title: "Error checking user data",
+            description: "We'll ask for your information to ensure access."
+          });
+          setShowEmailForm(true);
+          setErrorState(null);
+        } finally {
+          setIsCheckingUserData(false);
         }
-      } else {
-        console.log('- window.Telegram is missing');
       }
-      
-      setErrorState("User data unavailable. Please try refreshing the page.");
-      setIsCheckingUserData(false);
-      return;
-    }
-    
-    console.log('📊 FLOW: User check complete - userExistsInDatabase=', userExistsInDatabase);
-    
-    // Handle new users - need to collect email
-    if (userExistsInDatabase === false) {
-      console.log('🆕 FLOW: New user detected - will show email collection form');
-      setShowEmailForm(true);
-      // Don't set an error state for new users - it's an expected flow
-      setErrorState(null);
-      toast({
-        title: "Welcome to our community!",
-        description: "Please provide your email to continue.",
-      });
-    } 
-    // Handle existing users - proceed to community content
-    else if (userExistsInDatabase === true) {
-      console.log('✅ FLOW: Existing user found - showing community content');
-      setShowEmailForm(false);
-      setErrorState(null);
-    }
-    // Handle edge case - userExistsInDatabase is null
-    else {
-      console.error('❓ FLOW: Unexpected state - userExistsInDatabase is null');
-      console.log('❓ DEBUG: userExistsInDatabase:', userExistsInDatabase);
-      console.log('❓ DEBUG: telegramUser:', telegramUser);
-      setErrorState("User verification error. Please try again.");
-    }
-    
-    // Finish checking
-    setIsCheckingUserData(false);
-  }, [telegramUser, userLoading, userExistsInDatabase, setIsCheckingUserData, setShowEmailForm,
-       setErrorState, toast]);
+    };
+
+    checkUserData();
+  }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState, toast]);
 
   return null; // This is a non-visual component
 };

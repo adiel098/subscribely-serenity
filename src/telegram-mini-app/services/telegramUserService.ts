@@ -1,37 +1,39 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
-import { logServiceAction } from "./utils/serviceUtils";
+import { TelegramUser } from "../types/telegramTypes";
+import { isValidTelegramId } from "../utils/telegramUtils";
 
 /**
- * Fetches a Telegram user by their Telegram ID.
- * This function only retrieves the user and does NOT create a user record.
+ * Fetch a user from the database by Telegram ID
  */
-export async function fetchTelegramUserById(telegramUserId: string): Promise<TelegramUser | null> {
-  logServiceAction("fetchTelegramUserById", { telegramUserId });
-  
-  if (!telegramUserId) {
-    console.error("❌ fetchTelegramUserById: Missing required telegramUserId parameter");
+export const fetchUserFromDatabase = async (telegramId: string): Promise<any | null> => {
+  if (!isValidTelegramId(telegramId)) {
+    console.error("❌ Invalid Telegram ID format for database fetch:", telegramId);
     return null;
   }
 
   try {
-    // Get user data from the database
-    const { data, error } = await supabase
+    console.log('🔍 Fetching user from database with telegram_id:', telegramId);
+    const { data: dbUser, error: dbError } = await supabase
       .from('telegram_mini_app_users')
       .select('*')
-      .eq('telegram_id', telegramUserId)
+      .eq('telegram_id', telegramId)
       .maybeSingle();
     
-    if (error) {
-      console.error("❌ Error fetching user data:", error);
-      throw error;
+    if (dbError) {
+      console.error("❌ Error fetching user from database:", dbError);
+      return null;
     }
     
-    // Return the user data if found
-    return data as TelegramUser | null;
+    if (dbUser) {
+      console.log('✅ User found in database:', dbUser);
+    } else {
+      console.log('⚠️ User not found in database');
+    }
+    
+    return dbUser;
   } catch (error) {
-    console.error("❌ Failed to fetch Telegram user:", error);
+    console.error("❌ Exception when fetching user from database:", error);
     return null;
   }
-}
+};

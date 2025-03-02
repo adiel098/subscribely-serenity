@@ -1,12 +1,12 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
 import { AppContent } from "@/telegram-mini-app/components/AppContent";
-import { AppInitializer } from "@/telegram-mini-app/components/app-initialization/AppInitializer";
+import { initTelegramWebApp } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -28,47 +28,66 @@ const TelegramMiniApp = () => {
   console.log('📌 retryCount:', retryCount);
   console.log('📌 User Agent:', navigator.userAgent);
 
+  // Force development mode on localhost
+  useEffect(() => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      setIsDevelopmentMode(true);
+    }
+  }, []);
+
+  // Log Telegram WebApp object if available
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      console.log('📱 Telegram WebApp object is available:');
+      console.log('📌 Full WebApp object:', window.Telegram.WebApp);
+      console.log('📌 initData:', window.Telegram.WebApp.initData);
+      console.log('📌 initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
+      if (window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
+        console.log('🆔 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user.id);
+        console.log('🆔 User ID type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
+      } else {
+        console.log('❌ No user data in WebApp.initDataUnsafe');
+      }
+    } else {
+      console.log('❌ Telegram WebApp object is NOT available');
+    }
+  }, [telegramInitialized]);
+
+  // Get Telegram user ID directly from WebApp object
+  let telegramUserId = null;
+  
+  if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    // Ensure we're working with a string
+    telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
+    console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
+  } else if (isDevelopmentMode) {
+    telegramUserId = "12345678"; // Mock ID for development
+    console.log('🔑 Using mock ID for development:', telegramUserId);
+  }
+  
+  console.log('🔑 Final telegram user ID:', telegramUserId);
+  
   // Handle initialization callback
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
     setTelegramInitialized(isInitialized);
     setIsDevelopmentMode(prev => prev || isDev);
+    
+    // Recheck telegram user ID after initialization
+    if (isInitialized && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
+      console.log('🔑 User ID after initialization:', userId);
+    }
   };
 
   // Set effective start parameter (use default in dev mode)
   const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
   console.log('📌 Effective startParam:', effectiveStartParam);
 
-  // Get Telegram user ID directly from WebApp object using the method provided by the user
-  let telegramUserId = null;
-  
-  try {
-    // Using the exact format suggested by the user
-    telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-    
-    if (telegramUserId) {
-      console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
-    } else if (isDevelopmentMode) {
-      telegramUserId = "12345678"; // Mock ID for development
-      console.log('🔑 Using mock ID for development:', telegramUserId);
-    }
-  } catch (err) {
-    console.error('❌ Error extracting Telegram user ID:', err);
-    if (isDevelopmentMode) {
-      telegramUserId = "12345678"; // Fallback to mock ID in development
-    }
-  }
-  
-  console.log('🔑 Final telegram user ID:', telegramUserId);
-
   // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
-  const { 
-    user: telegramUser, 
-    loading: userLoading, 
-    error: userError, 
-    refetch: refetchUser,
-    userExistsInDatabase
-  } = useTelegramUser(effectiveStartParam || "", telegramUserId);
+  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
+    useTelegramUser(effectiveStartParam || "", telegramUserId);
 
   // Log hook results for debugging
   console.log('📡 Hook Results:');
@@ -76,27 +95,66 @@ const TelegramMiniApp = () => {
   console.log('📌 Community data:', community);
   console.log('📌 User loading:', userLoading);
   console.log('📌 User data:', telegramUser);
-  console.log('📌 User exists in database:', userExistsInDatabase);
   console.log('📌 User error:', userError);
   console.log('📌 Email form should show:', showEmailForm);
+  console.log('📌 Direct telegramUserId:', telegramUserId);
+
+  // Handle user error
+  useEffect(() => {
+    if (userError) {
+      console.error("❌ Error getting user data:", userError);
+      setErrorState("User identification error. Please try reloading the app or contact support.");
+    }
+  }, [userError]);
+
+  // Auto retry once if loading takes too long
+  useEffect(() => {
+    let timeout: number | null = null;
+    
+    // If we're in loading state for more than 10 seconds and retry count is 0, auto retry
+    if ((communityLoading || userLoading) && retryCount === 0) {
+      timeout = window.setTimeout(() => {
+        console.log('🔄 Auto retrying due to long loading time');
+        handleRetry();
+      }, 10000);
+    }
+    
+    return () => {
+      if (timeout) window.clearTimeout(timeout);
+    };
+  }, [communityLoading, userLoading, retryCount]);
+
+  // Handle retry button click
+  const handleRetry = () => {
+    console.log('🔄 Retrying user data fetch');
+    setErrorState(null);
+    setIsCheckingUserData(true);
+    setRetryCount(prev => prev + 1);
+    refetchUser();
+    
+    const initialized = initTelegramWebApp();
+    setTelegramInitialized(initialized);
+    
+    toast({
+      title: "Retrying",
+      description: "Attempting to reconnect to Telegram...",
+    });
+  };
+
+  // Debug email form state changes
+  useEffect(() => {
+    console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
+  }, [showEmailForm]);
+
+  // CRITICAL FIX: Force email collection for users without email
+  useEffect(() => {
+    if (!userLoading && telegramUser && !telegramUser.email) {
+      console.log('🚨 User loaded without email - this should trigger email collection:', telegramUser);
+    }
+  }, [telegramUser, userLoading]);
 
   return (
-    <AppInitializer
-      startParam={startParam}
-      isDevelopmentMode={isDevelopmentMode}
-      setIsDevelopmentMode={setIsDevelopmentMode}
-      telegramInitialized={telegramInitialized}
-      setTelegramInitialized={setTelegramInitialized}
-      communityLoading={communityLoading}
-      userLoading={userLoading}
-      retryCount={retryCount}
-      setRetryCount={setRetryCount}
-      setErrorState={setErrorState}
-      isCheckingUserData={isCheckingUserData}
-      setIsCheckingUserData={setIsCheckingUserData}
-      refetchUser={refetchUser}
-      userError={userError}
-    >
+    <>
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
       <AppContent
         communityLoading={communityLoading}
@@ -106,21 +164,14 @@ const TelegramMiniApp = () => {
         telegramUser={telegramUser}
         errorState={errorState}
         telegramUserId={telegramUserId}
-        userExistsInDatabase={userExistsInDatabase}
         onRefetch={refetchUser}
-        onRetry={() => {
-          console.log('🔄 Retrying user data fetch');
-          setErrorState(null);
-          setIsCheckingUserData(true);
-          setRetryCount(retryCount + 1);
-          refetchUser();
-        }}
+        onRetry={handleRetry}
         setShowEmailForm={setShowEmailForm}
         showEmailForm={showEmailForm}
         setIsCheckingUserData={setIsCheckingUserData}
         setErrorState={setErrorState}
       />
-    </AppInitializer>
+    </>
   );
 };
 

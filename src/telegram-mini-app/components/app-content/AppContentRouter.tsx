@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
@@ -14,7 +14,6 @@ interface AppContentRouterProps {
   telegramUserId: string | null;
   community: Community | null;
   telegramUser: TelegramUser | null;
-  userExistsInDatabase: boolean | null;
   showEmailForm: boolean;
   isCheckingUserData: boolean;
   onRetry: () => void;
@@ -27,29 +26,15 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   telegramUserId,
   community,
   telegramUser,
-  userExistsInDatabase,
   showEmailForm,
   isCheckingUserData,
   onRetry,
   setShowEmailForm
 }) => {
-  // Default active tab
-  const activeTab = "subscribe";
+  // Show debug info for development
+  const activeTab = "subscribe"; // Default active tab
   
-  // Log state changes for debugging
-  useEffect(() => {
-    console.log('🚦 AppContentRouter state:', {
-      loading,
-      errorState,
-      telegramUserExists: !!telegramUser,
-      communityExists: !!community,
-      userExistsInDatabase,
-      showEmailForm,
-      isCheckingUserData
-    });
-  }, [loading, errorState, telegramUser, community, userExistsInDatabase, showEmailForm, isCheckingUserData]);
-  
-  // Debug section that will show in dev mode
+  // Debug section at the top that will show in dev mode
   const renderDebugInfo = () => (
     <DebugInfo 
       telegramUser={telegramUser} 
@@ -57,7 +42,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       activeTab={activeTab}
       showEmailForm={showEmailForm}
       isCheckingUserData={isCheckingUserData}
-      userExistsInDatabase={userExistsInDatabase}
     />
   );
 
@@ -93,16 +77,35 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // Show email form if needed
+  // STRICT ENFORCEMENT: Email form must be shown before community content
+  // This is our critical gate that ensures users provide email before accessing content
   if (showEmailForm && telegramUser) {
-    console.log('📧 ROUTING: Showing email collection form');
+    console.log('📧 ROUTING: User MUST provide email before accessing community content');
     return (
       <>
         {renderDebugInfo()}
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 Email collection completed in router, showing community content');
+            console.log('📧 Email collection completed, now showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
+    );
+  }
+  
+  // Additional safety check - if user has no email, force email collection
+  // This is a failsafe in case the showEmailForm flag wasn't properly set
+  if (telegramUser && !telegramUser.email) {
+    console.log('🛑 SAFETY CHECK: User missing email, redirecting to email collection form');
+    return (
+      <>
+        {renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, now showing community content');
             setShowEmailForm(false);
           }}
         />
@@ -110,13 +113,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // Main content - only show if not loading, community exists, email form is not needed
+  // Main content - only show if not loading, community exists, email form is not needed,
+  // and the user has provided an email
   console.log('🎉 Showing main content with:', { 
     community: community?.name, 
     user: telegramUser?.username,
     plans: community?.subscription_plans?.length || 0,
-    userExistsInDatabase,
-    showEmailForm
+    showEmailForm, 
+    emailProvided: telegramUser?.email ? true : false
   });
   
   return (

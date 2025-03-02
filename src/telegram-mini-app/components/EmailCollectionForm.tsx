@@ -40,6 +40,8 @@ export const EmailCollectionForm = ({
       photoUrl={photoUrl}
       onComplete={() => {
         console.log("📧 Email collection completed for user:", telegramUserId);
+        console.log("📧 Triggering onComplete to redirect to community page");
+        // Ensure we call onComplete to redirect to community page
         onComplete();
       }}
     />

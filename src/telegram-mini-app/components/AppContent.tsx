@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { LoadingIndicator } from "@/telegram-mini-app/components/app-content/LoadingIndicator";
@@ -38,8 +38,20 @@ export const AppContent: React.FC<AppContentProps> = ({
   setIsCheckingUserData,
   setErrorState
 }) => {
+  // Track when email form is completed
+  const [emailFormCompleted, setEmailFormCompleted] = useState(false);
+  
   // All component state and functionality is now split into smaller components
   const isLoading = communityLoading || userLoading || isCheckingUserData;
+  
+  // Effect to refetch user data after email form is completed
+  useEffect(() => {
+    if (emailFormCompleted) {
+      console.log("📧 Email form completed, refetching user data");
+      onRefetch();
+      setEmailFormCompleted(false);
+    }
+  }, [emailFormCompleted, onRefetch]);
 
   return (
     <>
@@ -75,7 +87,13 @@ export const AppContent: React.FC<AppContentProps> = ({
         showEmailForm={showEmailForm}
         isCheckingUserData={isCheckingUserData}
         onRetry={onRetry}
-        setShowEmailForm={setShowEmailForm}
+        setShowEmailForm={(show) => {
+          if (showEmailForm && !show) {
+            // Email form is being closed - mark as completed to trigger refetch
+            setEmailFormCompleted(true);
+          }
+          setShowEmailForm(show);
+        }}
       />
     </>
   );

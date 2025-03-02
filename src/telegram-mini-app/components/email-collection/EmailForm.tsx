@@ -103,6 +103,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
       
+      // Call onComplete to trigger redirection to the community page
       onComplete();
     } catch (error) {
       console.error("❌ Error saving email:", error);

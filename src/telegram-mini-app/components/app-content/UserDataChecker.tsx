@@ -76,6 +76,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             setShowEmailForm(true);
           } else {
             console.log('✅ User exists and has email, proceeding to community page');
+            // User has email, proceed directly to community page
             setShowEmailForm(false);
           }
           
@@ -98,6 +99,17 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
 
     checkUserData();
   }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState, toast]);
+
+  // Log when user state changes
+  useEffect(() => {
+    if (telegramUser) {
+      console.log('👤 UserDataChecker - User data changed:', {
+        id: telegramUser.id,
+        username: telegramUser.username,
+        email: telegramUser.email
+      });
+    }
+  }, [telegramUser]);
 
   return null; // This is a non-visual component
 };

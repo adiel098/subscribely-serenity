@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
@@ -131,6 +131,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
           telegramUser={telegramUser} 
           onComplete={() => {
             console.log('📧 Email collection completed, now showing community content');
+            // Set showEmailForm to false to trigger redirect to main content
             setShowEmailForm(false);
           }}
         />

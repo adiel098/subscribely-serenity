@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Mail, ArrowRight, Sparkles, Heart, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, ArrowRight, Sparkles, Heart, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,11 +27,26 @@ export const EmailCollectionForm = ({
 }: EmailCollectionFormProps) => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [idError, setIdError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   // Get start parameter from URL which is the community ID
   const communityId = searchParams.get("start");
+  
+  // Validate Telegram ID on component mount
+  useEffect(() => {
+    if (!telegramUserId) {
+      setIdError("No Telegram user ID provided");
+      console.error("Missing Telegram user ID");
+    } else if (!/^\d+$/.test(telegramUserId)) {
+      setIdError(`Invalid Telegram ID format: ${telegramUserId}`);
+      console.error("Invalid Telegram ID format:", telegramUserId);
+    } else {
+      setIdError(null);
+      console.log("Valid Telegram user ID:", telegramUserId);
+    }
+  }, [telegramUserId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +76,7 @@ export const EmailCollectionForm = ({
     setIsSubmitting(true);
     
     try {
-      // Ensure telegramUserId is a string
+      // Ensure telegramUserId is a string and trim any whitespace
       const cleanId = telegramUserId.toString().trim();
       
       console.log("Saving email for telegram user:", cleanId, email);
@@ -132,6 +147,21 @@ export const EmailCollectionForm = ({
           </div>
         </div>
 
+        {/* Display error if there's an ID validation issue */}
+        {idError && (
+          <div className="mx-8 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <p className="text-sm text-red-600 font-medium">
+                User identification error
+              </p>
+            </div>
+            <p className="mt-1 text-xs text-red-500 pl-7">
+              Please try reloading the app or contact support
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5 px-8 pb-8">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-gray-700 flex items-center gap-2">
@@ -147,6 +177,7 @@ export const EmailCollectionForm = ({
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="pr-10 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all"
+                disabled={!!idError || isSubmitting}
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none">
                 {email.length > 0 && email.includes('@') && <CheckCircle2 className="h-4 w-4" />}
@@ -157,7 +188,7 @@ export const EmailCollectionForm = ({
           <Button 
             type="submit" 
             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-2 rounded-md transition-all group shadow-md hover:shadow-lg"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!idError}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center">

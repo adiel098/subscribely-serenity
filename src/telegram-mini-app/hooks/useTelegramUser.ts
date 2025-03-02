@@ -43,55 +43,61 @@ export const useTelegramUser = (communityId: string): UseTelegramUserResult => {
         if (userData) {
           console.log('✅ Successfully retrieved user data from Telegram WebApp:', userData);
           
-          // CRITICAL FIX: Validate that we have a proper Telegram ID format before proceeding
+          // CRITICAL: Validate that we have a proper Telegram ID format before proceeding
           // Telegram IDs are typically numbers, so they should be numeric when converted to string
-          if (userData.id && !/^\d+$/.test(userData.id)) {
-            console.error('❌ INVALID TELEGRAM ID FORMAT:', userData.id);
-            console.error('❌ Telegram IDs should be numeric. This looks like a UUID or another format.');
-            userData.id = ""; // Reset ID to force detection failure and trigger fallback
+          if (!userData.id) {
+            console.error('❌ MISSING TELEGRAM ID');
+            throw new Error('Missing Telegram user ID');
           }
           
+          if (!/^\d+$/.test(userData.id)) {
+            console.error('❌ INVALID TELEGRAM ID FORMAT:', userData.id);
+            console.error('❌ Telegram IDs should be numeric. This looks like a UUID or another format.');
+            throw new Error(`Invalid Telegram ID format: ${userData.id}`);
+          }
+          
+          console.log('✅ Verified valid Telegram ID format:', userData.id);
+          
           // If we have valid user data with proper ID, fetch additional data from database
-          if (userData.id) {
-            // Check if user exists in database and get additional info (like email)
-            const dbUser = await getUserFromDatabase(userData.id);
-            
-            if (dbUser) {
-              console.log('✅ User found in database:', dbUser);
-              // Merge data from db with data from Telegram
-              userData = mergeUserData(userData, dbUser);
-              console.log('✅ Merged user data with database info:', userData);
-            } else {
-              console.log('⚠️ User not found in database, will create via edge function');
-            }
+          const dbUser = await getUserFromDatabase(userData.id);
+          
+          if (dbUser) {
+            console.log('✅ User found in database:', dbUser);
+            // Merge data from db with data from Telegram
+            userData = mergeUserData(userData, dbUser);
+            console.log('✅ Merged user data with database info:', userData);
+          } else {
+            console.log('⚠️ User not found in database, will create via edge function');
             
             // If user doesn't exist in DB, create or update them via edge function
-            if (!dbUser) {
-              const createdUser = await createOrUpdateUser(userData, communityId);
+            const createdUser = await createOrUpdateUser(userData, communityId);
+            
+            if (createdUser) {
+              console.log('✅ User created/updated via edge function:', createdUser);
+              // Update with more complete data from edge function
+              userData = {
+                ...userData,
+                ...createdUser
+              };
               
-              if (createdUser) {
-                console.log('✅ User created/updated via edge function:', createdUser);
-                // Update with more complete data from edge function
-                userData = {
-                  ...userData,
-                  ...createdUser
-                };
-                
-                // Restore the correct original line - this is what we're reverting back to
-                userData.id = userData.id;
-                
-                console.log('✅ Final user data after edge function:', userData);
-              }
+              console.log('✅ Final user data after edge function:', userData);
             }
           }
           
           setUser(userData);
         } else {
           // Try to get user data from URL hash parameters
+          console.log('⚠️ No data from WebApp, trying URL hash...');
           const hashUser = await getUserFromUrlHash(communityId);
           
           if (hashUser) {
             console.log('✅ Successfully retrieved user data from URL hash:', hashUser);
+            
+            // Validate hash user ID
+            if (!hashUser.id || !/^\d+$/.test(hashUser.id)) {
+              console.error('❌ Invalid Telegram ID from hash:', hashUser.id);
+              throw new Error(`Invalid Telegram ID from URL hash: ${hashUser.id}`);
+            }
             
             // Try to create/update user via edge function with hash data
             const createdUser = await createOrUpdateUser(hashUser, communityId);
@@ -102,9 +108,6 @@ export const useTelegramUser = (communityId: string): UseTelegramUserResult => {
                 ...hashUser,
                 ...createdUser
               };
-              
-              // Restore the correct original line - this is what we're reverting back to
-              userData.id = userData.id;
             } else {
               userData = hashUser;
             }
@@ -120,8 +123,8 @@ export const useTelegramUser = (communityId: string): UseTelegramUserResult => {
             console.log('✅ Using mock user:', mockUser);
             setUser(mockUser);
           } else {
-            console.error('❌ Could not retrieve user data from Telegram WebApp');
-            setError("Could not retrieve user data");
+            console.error('❌ Could not retrieve user data from Telegram WebApp or URL hash');
+            throw new Error("Could not retrieve user data from any source");
           }
         }
       } catch (err) {

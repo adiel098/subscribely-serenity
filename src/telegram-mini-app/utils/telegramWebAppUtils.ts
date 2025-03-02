@@ -16,15 +16,26 @@ export const getWebAppData = (): TelegramUser | null => {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
-      // CRITICAL FIX: Ensure we're extracting the actual Telegram ID
-      // The Telegram user ID comes as a number in the API response but we need to store as string
-      // Make sure we're using the ID directly from the user object
-      const telegramId = user.id?.toString() || "";
+      // CRITICAL: Ensure ID is present and correctly formatted
+      if (!user.id) {
+        console.error('❌ Missing Telegram ID in WebApp data');
+        return null;
+      }
+      
+      // Convert to string and validate format
+      const telegramId = user.id.toString().trim();
+      
       console.log('🔑 Raw Telegram ID from WebApp:', user.id);
       console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
       
+      // Validate that ID is numeric (all Telegram IDs should be)
+      if (!/^\d+$/.test(telegramId)) {
+        console.error('❌ Invalid Telegram ID format:', telegramId);
+        console.error('❌ Telegram IDs should be numeric. Returning null.');
+        return null;
+      }
+      
       // In recent Telegram WebApp versions, photo_url might be available directly
-      // We explicitly check for its presence as a property
       const photoUrl = user.photo_url || undefined;
       console.log('📸 Photo URL from WebApp data:', photoUrl);
       
@@ -48,11 +59,21 @@ export const getWebAppData = (): TelegramUser | null => {
           const user = JSON.parse(userStr);
           console.log('✅ Successfully parsed user data from initData:', user);
           
-          // CRITICAL FIX: Ensure we're extracting the actual Telegram ID
-          // Make sure we're using the ID directly from the parsed user object
-          const telegramId = user.id?.toString() || "";
+          // Validate user ID
+          if (!user.id) {
+            console.error('❌ Missing Telegram ID in parsed initData');
+            return null;
+          }
+          
+          const telegramId = user.id.toString().trim();
           console.log('🔑 Raw Telegram ID from parsed initData:', user.id);
           console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
+          
+          // Validate that ID is numeric
+          if (!/^\d+$/.test(telegramId)) {
+            console.error('❌ Invalid Telegram ID format in parsed initData:', telegramId);
+            return null;
+          }
           
           return {
             id: telegramId,
@@ -93,16 +114,20 @@ export const getUserFromUrlHash = async (communityId: string): Promise<TelegramU
           const parsedUser = JSON.parse(userStr);
           console.log('✅ Successfully parsed user data from hash:', parsedUser);
           
-          // CRITICAL FIX: Extract the actual Telegram ID
-          // Always ensure the ID is a string
-          const telegramId = parsedUser.id?.toString() || "";
+          // Validate user ID
+          if (!parsedUser.id) {
+            console.error('❌ Missing Telegram ID in hash data');
+            return null;
+          }
+          
+          const telegramId = parsedUser.id.toString().trim();
           console.log('🔑 Raw Telegram ID from hash:', parsedUser.id);
           console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
           
-          // CRITICAL FIX: Validate ID format
-          if (telegramId && !/^\d+$/.test(telegramId)) {
+          // Validate ID format - must be numeric
+          if (!/^\d+$/.test(telegramId)) {
             console.error('❌ INVALID TELEGRAM ID FORMAT FROM HASH:', telegramId);
-            throw new Error('Invalid Telegram ID format');
+            return null;
           }
           
           const userData: TelegramUser = {

@@ -11,17 +11,26 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     console.log('📊 window.Telegram.WebApp exists:', Boolean(window.Telegram?.WebApp));
     console.log('📊 initDataUnsafe exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe));
     console.log('📊 user exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user));
+    
+    // Log the raw user object for debugging
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      console.log('📊 Raw user object:', JSON.stringify(window.Telegram.WebApp.initDataUnsafe.user));
+      console.log('📊 Raw user id:', window.Telegram.WebApp.initDataUnsafe.user.id);
+      console.log('📊 Raw user id type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
+    }
+    
     console.log('📊 Direct Telegram User ID:', directTelegramUserId);
     
     // First, handle the case where we have a direct user ID
     if (directTelegramUserId) {
-      // Validate the direct ID
-      if (!isValidTelegramId(directTelegramUserId)) {
+      // Validate and format the direct ID
+      const formattedId = formatTelegramId(directTelegramUserId);
+      if (!formattedId) {
         console.error('❌ Invalid direct Telegram ID format:', directTelegramUserId);
         return null;
       }
       
-      console.log('✅ Using direct Telegram User ID:', directTelegramUserId);
+      console.log('✅ Using direct Telegram User ID:', formattedId);
       
       // If we also have WebApp data, we can enrich the user object
       if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
@@ -29,7 +38,7 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
         console.log('✅ Enriching direct ID with WebApp data:', user);
         
         return {
-          id: directTelegramUserId,
+          id: formattedId,
           first_name: user.first_name,
           last_name: user.last_name,
           username: user.username,
@@ -39,7 +48,7 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
       
       // Otherwise, return a minimal user object with just the ID
       return {
-        id: directTelegramUserId
+        id: formattedId
       };
     }
     
@@ -51,7 +60,7 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
       // Ensure we're getting a proper numeric ID and converting to string
       const userId = formatTelegramId(user.id);
       if (!userId) {
-        console.error('❌ No valid user ID in WebApp data');
+        console.error('❌ No valid user ID in WebApp data, raw ID:', user.id, 'type:', typeof user.id);
         return null;
       }
       

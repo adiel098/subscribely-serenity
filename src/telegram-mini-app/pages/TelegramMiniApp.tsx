@@ -26,6 +26,7 @@ const TelegramMiniApp = () => {
   console.log('📌 URL:', window.location.href);
   console.log('📌 isDevelopmentMode:', isDevelopmentMode);
   console.log('📌 retryCount:', retryCount);
+  console.log('📌 User Agent:', navigator.userAgent);
 
   // Force development mode on localhost
   useEffect(() => {
@@ -54,16 +55,19 @@ const TelegramMiniApp = () => {
   }, [telegramInitialized]);
 
   // Get Telegram user ID directly from WebApp object
-  const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 
-                         (isDevelopmentMode ? "12345678" : null);
+  let telegramUserId = null;
   
-  // Use mock user ID in development mode if none provided
-  const effectiveTelegramUserId = isDevelopmentMode && !telegramUserId ? "12345678" : telegramUserId;
+  if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    // Ensure we're working with a string
+    telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id);
+    console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
+  } else if (isDevelopmentMode) {
+    telegramUserId = "12345678"; // Mock ID for development
+    console.log('🔑 Using mock ID for development:', telegramUserId);
+  }
   
-  console.log('🔑 Direct telegram user ID extraction:', telegramUserId);
-  console.log('🔑 Effective telegram user ID:', effectiveTelegramUserId);
-  console.log('🔑 Direct telegram user ID type:', typeof telegramUserId);
-
+  console.log('🔑 Final telegram user ID:', telegramUserId);
+  
   // Handle initialization callback
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
     setTelegramInitialized(isInitialized);
@@ -77,7 +81,7 @@ const TelegramMiniApp = () => {
   // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
-    useTelegramUser(effectiveStartParam || "", effectiveTelegramUserId);
+    useTelegramUser(effectiveStartParam || "", telegramUserId);
 
   // Log hook results for debugging
   console.log('📡 Hook Results:');
@@ -88,7 +92,6 @@ const TelegramMiniApp = () => {
   console.log('📌 User error:', userError);
   console.log('📌 Email form should show:', showEmailForm);
   console.log('📌 Direct telegramUserId:', telegramUserId);
-  console.log('📌 Effective telegramUserId:', effectiveTelegramUserId);
 
   // Handle user error
   useEffect(() => {
@@ -142,7 +145,7 @@ const TelegramMiniApp = () => {
         community={community}
         telegramUser={telegramUser}
         errorState={errorState}
-        telegramUserId={effectiveTelegramUserId}
+        telegramUserId={telegramUserId}
         onRefetch={refetchUser}
         onRetry={handleRetry}
         setShowEmailForm={setShowEmailForm}

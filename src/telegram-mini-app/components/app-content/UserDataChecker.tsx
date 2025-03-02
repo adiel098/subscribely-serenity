@@ -26,17 +26,31 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     const checkUserData = async () => {
       if (!userLoading && telegramUser) {
         console.log('✅ User data loaded, checking if user exists in database');
+        console.log('📱 Telegram ID for validation:', telegramUser.id);
+        console.log('📱 Telegram ID type:', typeof telegramUser.id);
         setIsCheckingUserData(true);
         
         try {
-          if (!telegramUser.id || !/^\d+$/.test(telegramUser.id)) {
-            console.error('❌ Invalid Telegram ID format for database check:', telegramUser.id);
+          if (!telegramUser.id) {
+            console.error('❌ Missing Telegram ID:', telegramUser);
+            setErrorState("Missing Telegram user ID");
+            setIsCheckingUserData(false);
+            return;
+          }
+          
+          // Make sure we have a string ID
+          const telegramId = String(telegramUser.id).trim();
+          console.log('📱 Processed Telegram ID:', telegramId);
+          
+          if (!/^\d+$/.test(telegramId)) {
+            console.error('❌ Invalid Telegram ID format for database check:', telegramId);
+            console.error('❌ Full user object:', JSON.stringify(telegramUser));
             setErrorState("Invalid Telegram user ID format");
             setIsCheckingUserData(false);
             return;
           }
           
-          const { exists, hasEmail } = await checkUserExists(telegramUser.id);
+          const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
           // Always show email form for new users (not in DB)

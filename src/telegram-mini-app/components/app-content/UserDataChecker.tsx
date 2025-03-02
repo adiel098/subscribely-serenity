@@ -31,9 +31,9 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     }
     
     // Make sure we have a valid user object
-    if (!telegramUser) {
-      console.error('❌ FLOW: No user data available - cannot proceed');
-      setErrorState("User data unavailable");
+    if (!telegramUser || !telegramUser.id) {
+      console.error('❌ FLOW: No valid user data available - cannot proceed', telegramUser);
+      setErrorState("User data unavailable. Please try refreshing the page.");
       setIsCheckingUserData(false);
       return;
     }
@@ -60,7 +60,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     // Handle edge case - userExistsInDatabase is null
     else {
       console.error('❓ FLOW: Unexpected state - userExistsInDatabase is null');
-      setErrorState("User verification error");
+      setErrorState("User verification error. Please try again.");
     }
     
     // Finish checking

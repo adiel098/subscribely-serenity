@@ -12,15 +12,23 @@ export const TelegramUserProvider: React.FC<TelegramUserProviderProps> = ({
 }) => {
   // Get Telegram user ID directly from WebApp object using the method provided by the user
   const extractTelegramUserId = (): string | null => {
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      // Ensure we're working with a string
-      const userId = window.Telegram.WebApp.initDataUnsafe.user.id.toString().trim();
-      console.log('🔑 Direct user ID extracted from WebApp:', userId);
-      return userId;
-    } else if (isDevelopmentMode) {
-      const mockId = "12345678"; // Mock ID for development
-      console.log('🔑 Using mock ID for development:', mockId);
-      return mockId;
+    try {
+      // Using the exact format suggested by the user
+      const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+      
+      if (telegramUserId) {
+        console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
+        return telegramUserId;
+      } else if (isDevelopmentMode) {
+        const mockId = "12345678"; // Mock ID for development
+        console.log('🔑 Using mock ID for development:', mockId);
+        return mockId;
+      }
+    } catch (err) {
+      console.error('❌ Error extracting Telegram user ID:', err);
+      if (isDevelopmentMode) {
+        return "12345678"; // Fallback to mock ID in development
+      }
     }
     return null;
   };

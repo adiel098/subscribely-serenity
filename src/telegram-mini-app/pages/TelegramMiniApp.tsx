@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,13 +41,21 @@ const TelegramMiniApp = () => {
   // Get Telegram user ID directly from WebApp object using the method provided by the user
   let telegramUserId = null;
   
-  if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-    // Ensure we're working with a string
-    telegramUserId = window.Telegram.WebApp.initDataUnsafe.user.id.toString().trim();
-    console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
-  } else if (isDevelopmentMode) {
-    telegramUserId = "12345678"; // Mock ID for development
-    console.log('🔑 Using mock ID for development:', telegramUserId);
+  try {
+    // Using the exact format suggested by the user
+    telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+    
+    if (telegramUserId) {
+      console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
+    } else if (isDevelopmentMode) {
+      telegramUserId = "12345678"; // Mock ID for development
+      console.log('🔑 Using mock ID for development:', telegramUserId);
+    }
+  } catch (err) {
+    console.error('❌ Error extracting Telegram user ID:', err);
+    if (isDevelopmentMode) {
+      telegramUserId = "12345678"; // Fallback to mock ID in development
+    }
   }
   
   console.log('🔑 Final telegram user ID:', telegramUserId);
@@ -70,22 +79,6 @@ const TelegramMiniApp = () => {
   console.log('📌 User exists in database:', userExistsInDatabase);
   console.log('📌 User error:', userError);
   console.log('📌 Email form should show:', showEmailForm);
-
-  // Create memoized wrapper functions
-  const handleShowEmailForm = useCallback((show: boolean) => {
-    console.log('📧 Setting showEmailForm state:', show, 'Previous value:', showEmailForm);
-    setShowEmailForm(show);
-  }, [showEmailForm]);
-
-  const handleIsCheckingUserData = useCallback((isChecking: boolean) => {
-    console.log('🔍 Setting isCheckingUserData state:', isChecking, 'Previous value:', isCheckingUserData);
-    setIsCheckingUserData(isChecking);
-  }, [isCheckingUserData]);
-
-  const handleErrorState = useCallback((error: string | null) => {
-    console.log('❌ Setting errorState:', error);
-    setErrorState(error);
-  }, []);
 
   return (
     <AppInitializer

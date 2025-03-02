@@ -23,12 +23,6 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
         throw new Error('Missing Telegram user ID');
       }
       
-      // Validate telegramUserId format
-      if (!/^\d+$/.test(telegramUserId)) {
-        console.error('❌ FLOW: Invalid Telegram ID format:', telegramUserId);
-        throw new Error('Invalid Telegram user ID format');
-      }
-      
       console.log('🔍 FLOW: Checking database for user with ID:', telegramUserId);
       
       // Fetch user data from the database
@@ -44,13 +38,28 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
         // User does not exist in database - create temporary object for the flow
         console.log('🆕 FLOW: User not found in database with ID:', telegramUserId);
         setUserExistsInDatabase(false);
+        
+        // Extract user data from WebApp if available
+        let firstName = '';
+        let lastName = '';
+        let username = '';
+        let photoUrl = '';
+        
+        try {
+          firstName = window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '';
+          lastName = window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '';
+          username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '';
+          photoUrl = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '';
+        } catch (e) {
+          console.warn('⚠️ Could not extract user details from WebApp:', e);
+        }
+        
         setUser({
           id: telegramUserId,
-          // Set from WebApp object if available
-          first_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '',
-          last_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',
-          username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '',
-          photo_url: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
+          first_name: firstName,
+          last_name: lastName,
+          username: username,
+          photo_url: photoUrl,
           email: null
         });
       }

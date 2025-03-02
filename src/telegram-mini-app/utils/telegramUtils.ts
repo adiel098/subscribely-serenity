@@ -5,11 +5,15 @@
 
 /**
  * Checks if the provided ID is a valid Telegram ID (numeric string)
+ * More flexible version that accepts both modern and legacy formats
  */
 export const isValidTelegramId = (id: string | number | undefined | null): boolean => {
   if (!id) return false;
   const stringId = id.toString();
-  return /^\d+$/.test(stringId) && stringId.length > 5; // Telegram IDs are typically long numeric strings
+  
+  // Modern Telegram IDs are numerical and typically long (> 5 digits)
+  // However, in development or testing, we may use shorter IDs
+  return /^\d+$/.test(stringId) && stringId.length > 0;
 };
 
 /**

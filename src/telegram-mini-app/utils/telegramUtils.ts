@@ -60,16 +60,25 @@ export const initTelegramWebApp = (): boolean => {
     if (window.Telegram?.WebApp) {
       console.log('📱 WebApp is already initialized');
       
+      // Expand the WebApp to maximum available height
+      // We call this first to ensure the app gets full screen immediately
+      if (window.Telegram.WebApp.expand) {
+        console.log('📏 Expanding WebApp to full screen');
+        window.Telegram.WebApp.expand();
+        
+        // Force expand again after a short delay to ensure it takes effect
+        setTimeout(() => {
+          if (window.Telegram?.WebApp?.expand) {
+            console.log('📏 Re-expanding WebApp to ensure full screen');
+            window.Telegram.WebApp.expand();
+          }
+        }, 100);
+      }
+      
       // Set the correct viewport
       if (window.Telegram.WebApp.setViewport) {
         console.log('📏 Setting viewport');
         window.Telegram.WebApp.setViewport();
-      }
-      
-      // Expand the WebApp to maximum available height
-      if (window.Telegram.WebApp.expand) {
-        console.log('📏 Expanding WebApp');
-        window.Telegram.WebApp.expand();
       }
       
       // Mark as ready
@@ -112,5 +121,16 @@ export const parseUserFromUrlHash = (): { [key: string]: any } | null => {
   } catch (error) {
     console.error('❌ Error parsing user data from URL hash:', error);
     return null;
+  }
+};
+
+/**
+ * Ensure the WebApp is expanded to full screen
+ * This can be called at any time to force full screen mode
+ */
+export const ensureFullScreen = (): void => {
+  if (window.Telegram?.WebApp?.expand) {
+    console.log('📏 Ensuring full screen mode');
+    window.Telegram.WebApp.expand();
   }
 };

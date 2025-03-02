@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info, AlertTriangle } from "lucide-react";
-import { initTelegramWebApp, isDevelopment } from "@/telegram-mini-app/utils/telegramUtils";
+import { initTelegramWebApp, isDevelopment, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface TelegramInitializerProps {
   onInitialized: (isInitialized: boolean, isDevelopmentMode: boolean) => void;
@@ -13,6 +13,7 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 
   useEffect(() => {
+    // Initialize Telegram WebApp which will try to expand to full screen
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     console.log('📱 Telegram WebApp initialized:', initialized);
@@ -25,8 +26,29 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
       console.log('🧪 Running in development mode without Telegram WebApp object');
     }
     
+    // Ensure full screen on mount
+    ensureFullScreen();
+    
+    // Additionally ensure full screen after a slight delay
+    const fullScreenTimeout = setTimeout(() => {
+      ensureFullScreen();
+    }, 500);
+    
+    // Also call ensureFullScreen on window resize to maintain full screen
+    const handleResize = () => {
+      ensureFullScreen();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
     // Inform parent component about initialization state
     onInitialized(initialized, devEnvironment);
+    
+    // Cleanup
+    return () => {
+      clearTimeout(fullScreenTimeout);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [onInitialized]);
 
   // Development mode banner

@@ -6,7 +6,7 @@ import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
 import { AppContent } from "@/telegram-mini-app/components/AppContent";
-import { initTelegramWebApp } from "@/telegram-mini-app/utils/telegramUtils";
+import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -33,6 +33,16 @@ const TelegramMiniApp = () => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       setIsDevelopmentMode(true);
     }
+    
+    // Ensure full screen mode
+    ensureFullScreen();
+    
+    // Add additional calls to ensure full screen after component is fully mounted
+    const timeoutId = setTimeout(() => {
+      ensureFullScreen();
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Log Telegram WebApp object if available
@@ -49,6 +59,9 @@ const TelegramMiniApp = () => {
       } else {
         console.log('❌ No user data in WebApp.initDataUnsafe');
       }
+      
+      // Ensure we're in full screen mode
+      ensureFullScreen();
     } else {
       console.log('❌ Telegram WebApp object is NOT available');
     }
@@ -78,6 +91,9 @@ const TelegramMiniApp = () => {
       const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
       console.log('🔑 User ID after initialization:', userId);
     }
+    
+    // Ensure full screen mode after initialization
+    ensureFullScreen();
   };
 
   // Set effective start parameter (use default in dev mode)
@@ -134,6 +150,9 @@ const TelegramMiniApp = () => {
     
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
+    
+    // Ensure full screen mode on retry
+    ensureFullScreen();
     
     toast({
       title: "Retrying",

@@ -29,8 +29,8 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   }
 
   return (
-    <>
-      <div id="subscription-plans" className="scroll-mt-4 w-full px-0 mx-0">
+    <div className="w-full mx-0 px-0 overflow-hidden">
+      <div id="subscription-plans" className="scroll-mt-4 w-full mx-0 px-0">
         <SubscriptionPlans
           plans={validPlans}
           selectedPlan={selectedPlan}
@@ -43,6 +43,6 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
           <ChevronDown className="h-5 w-5 text-primary/50" />
         </div>
       )}
-    </>
+    </div>
   );
 };

@@ -46,7 +46,7 @@ export const SubscriptionPlans = ({
   };
 
   return (
-    <div className="space-y-8 px-0 w-full max-w-full mx-0">
+    <div className="space-y-8 w-full mx-0 px-0 overflow-hidden">
       <motion.div 
         className="text-center space-y-3"
         initial={{ opacity: 0, y: -20 }}
@@ -75,7 +75,7 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer glassmorphism ${
+            className={`group p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer glassmorphism ${
               selectedPlan?.id === plan.id
                 ? 'border-primary shadow-xl bg-primary/5'
                 : 'border-gray-200 hover:border-primary/50 hover:shadow-lg'
@@ -98,9 +98,9 @@ export const SubscriptionPlans = ({
               <div className="text-right">
                 <div className="relative">
                   {planIndex === 0 && (
-                    <span className="absolute -top-6 right-0 text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
+                    <div className="absolute -top-6 right-0 text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
                       ⭐ Recommended
-                    </span>
+                    </div>
                   )}
                   <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
                     ${plan.price}

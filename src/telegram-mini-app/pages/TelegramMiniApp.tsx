@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,47 +11,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Info, RefreshCw } from "lucide-react";
 import { checkUserExists } from "@/telegram-mini-app/services/memberService";
 import { Button } from "@/components/ui/button";
-
-// Initialize Telegram WebApp
-const initTelegramWebApp = () => {
-  try {
-    if (window.Telegram?.WebApp) {
-      console.log('📱 WebApp is already initialized');
-      
-      // Log the full user object from WebApp for debugging
-      console.log('👤 User from WebApp (initDataUnsafe):', window.Telegram.WebApp.initDataUnsafe?.user);
-      const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
-      console.log('🔑 User ID from WebApp:', userId);
-      console.log('🔑 User ID type:', typeof userId);
-      
-      // Set the correct viewport
-      if (window.Telegram.WebApp.setViewport) {
-        console.log('📏 Setting viewport');
-        window.Telegram.WebApp.setViewport();
-      }
-      
-      // Expand the WebApp to maximum available height
-      if (window.Telegram.WebApp.expand) {
-        console.log('📏 Expanding WebApp');
-        window.Telegram.WebApp.expand();
-      }
-      
-      // Mark as ready
-      if (window.Telegram.WebApp.ready) {
-        console.log('🚀 Marking WebApp as ready');
-        window.Telegram.WebApp.ready();
-      }
-      
-      return true;
-    } else {
-      console.log('❌ WebApp object is not available');
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ Error initializing Telegram WebApp:', error);
-    return false;
-  }
-};
+import { initTelegramWebApp, isDevelopment } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
@@ -63,35 +22,27 @@ const TelegramMiniApp = () => {
   const [errorState, setErrorState] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get start parameter from URL
   const startParam = searchParams.get("start");
-  
-  // Initialize Telegram WebApp
+
   useEffect(() => {
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     console.log('📱 Telegram WebApp initialized:', initialized);
   }, []);
-  
-  // Check if we're in development mode
+
   useEffect(() => {
-    const devEnvironment = 
-      process.env.NODE_ENV === 'development' || 
-      window.location.hostname === 'localhost' || 
-      window.location.hostname === '127.0.0.1';
-    
+    const devEnvironment = isDevelopment();
     setIsDevelopment(devEnvironment);
     
     if (devEnvironment && !window.Telegram?.WebApp) {
       console.log('🧪 Running in development mode without Telegram WebApp object');
     }
   }, []);
-  
+
   console.log('💫 TelegramMiniApp initialized with:');
   console.log('📌 startParam:', startParam);
   console.log('📌 URL:', window.location.href);
-  
-  // Log Telegram WebApp object if available
+
   if (window.Telegram?.WebApp) {
     console.log('📱 Telegram WebApp object is available:');
     console.log('📌 Full WebApp object:', window.Telegram.WebApp);
@@ -106,20 +57,16 @@ const TelegramMiniApp = () => {
     console.log('❌ Telegram WebApp object is NOT available');
   }
 
-  // Extract user ID directly from WebApp object - CRITICAL FIX
-  // Always use toString() to ensure we have a string value and not a number
   const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
   console.log('🔑 Direct telegram user ID extraction:', telegramUserId);
   console.log('🔑 Direct telegram user ID type:', typeof telegramUserId);
 
-  // Create a default community ID for development mode
   const effectiveStartParam = isDevelopment && !startParam ? "dev123" : startParam;
 
-  // Use our custom hooks to retrieve data
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
     useTelegramUser(effectiveStartParam || "", telegramUserId);
-    
+
   console.log('📡 Hook Results:');
   console.log('📌 Community loading:', communityLoading);
   console.log('📌 Community data:', community);
@@ -128,7 +75,6 @@ const TelegramMiniApp = () => {
   console.log('📌 User error:', userError);
   console.log('📌 Direct telegramUserId:', telegramUserId);
 
-  // Check if user exists in the database and has an email
   useEffect(() => {
     const checkUserData = async () => {
       if (!userLoading && telegramUser) {
@@ -136,7 +82,6 @@ const TelegramMiniApp = () => {
         setIsCheckingUserData(true);
         
         try {
-          // Validate the ID format - ensure it's a numeric string
           if (!telegramUser.id || !/^\d+$/.test(telegramUser.id)) {
             console.error('❌ Invalid Telegram ID format for database check:', telegramUser.id);
             setErrorState("Invalid Telegram user ID format");
@@ -147,12 +92,10 @@ const TelegramMiniApp = () => {
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           
-          // Only show email form if user doesn't have an email
           setShowEmailForm(!hasEmail);
-          setErrorState(null); // Clear any error state
+          setErrorState(null);
         } catch (error) {
           console.error('❌ Error checking user data:', error);
-          // If there's an error, fall back to checking if email exists in user object
           setShowEmailForm(!telegramUser.email);
         } finally {
           setIsCheckingUserData(false);
@@ -163,7 +106,6 @@ const TelegramMiniApp = () => {
     checkUserData();
   }, [telegramUser, userLoading]);
 
-  // Handle errors from user data fetching
   useEffect(() => {
     if (userError) {
       console.error("❌ Error getting user data:", userError);
@@ -188,7 +130,6 @@ const TelegramMiniApp = () => {
     setIsCheckingUserData(true);
     refetchUser();
     
-    // Try to reinitialize Telegram WebApp
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     
@@ -198,7 +139,6 @@ const TelegramMiniApp = () => {
     });
   };
 
-  // Show error state if there's an error but we have a direct telegram user ID
   if (errorState && telegramUserId) {
     console.log('🔄 We have an error but also have a direct telegramUserId:', telegramUserId);
     return (
@@ -234,19 +174,16 @@ const TelegramMiniApp = () => {
     );
   }
 
-  // Show loading screen while fetching data
   if (communityLoading || userLoading || isCheckingUserData) {
     console.log('⏳ Showing loading screen');
     return <LoadingScreen />;
   }
 
-  // Show error if community not found
   if (!community) {
     console.log('❌ Community not found');
     return <CommunityNotFound />;
   }
 
-  // Show email collection form if needed
   if (showEmailForm && telegramUser) {
     console.log('📝 Showing email collection form for user ID:', telegramUser.id);
     return (
@@ -284,7 +221,6 @@ const TelegramMiniApp = () => {
           </AlertDescription>
         </Alert>
       )}
-      {/* Ensure community data is properly passed to MainContent */}
       {community && <MainContent community={community} telegramUser={telegramUser} />}
     </>
   );

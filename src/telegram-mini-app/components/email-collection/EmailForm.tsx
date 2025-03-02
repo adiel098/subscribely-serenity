@@ -7,7 +7,7 @@ import { FormHeader } from "./FormHeader";
 import { EmailInput } from "./EmailInput";
 import { SubmitButton } from "./SubmitButton";
 import { PrivacyNote } from "./PrivacyNote";
-import { validateEmail } from "./emailFormUtils";
+import { validateEmail } from "../email-collection/emailFormUtils";
 
 interface EmailFormProps {
   telegramUserId: string;

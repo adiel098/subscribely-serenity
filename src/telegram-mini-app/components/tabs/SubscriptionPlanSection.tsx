@@ -28,7 +28,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   };
 
   return (
-    <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full">
+    <div className="w-full">
       {!showPaymentMethods ? (
         <SubscriptionPlans
           plans={plans}

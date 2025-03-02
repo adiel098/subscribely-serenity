@@ -45,7 +45,7 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   }, [debouncedQuery]);
 
   return (
-    <div className="w-full mx-0">
+    <div className="w-full">
       <div className="space-y-5 w-full">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold flex items-center gap-2">

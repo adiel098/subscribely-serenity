@@ -36,7 +36,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   const tabContentClass = "bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full";
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-full">
       <TabsList className="grid grid-cols-3 mb-6 bg-primary/5 w-full">
         <TabsTrigger value="subscribe" className="flex items-center gap-1.5">
           <UserPlus className="h-4 w-4" />
@@ -53,12 +53,14 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsList>
       
       <TabsContent value="subscribe" className="mt-0 w-full">
-        <SubscriptionPlanSection
-          plans={communitySubscriptionPlans}
-          selectedPlan={selectedPlan}
-          onPlanSelect={onPlanSelect}
-          showPaymentMethods={showPaymentMethods}
-        />
+        <div className={tabContentClass}>
+          <SubscriptionPlanSection
+            plans={communitySubscriptionPlans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={onPlanSelect}
+            showPaymentMethods={showPaymentMethods}
+          />
+        </div>
       </TabsContent>
       
       <TabsContent value="mySubscriptions" className="mt-0 w-full">

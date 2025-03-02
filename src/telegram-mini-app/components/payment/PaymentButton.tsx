@@ -30,12 +30,12 @@ export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonPro
           {isProcessing ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              מעבד תשלום...
+              Processing payment...
             </>
           ) : (
             <>
               <CreditCard className="h-5 w-5" />
-              שלם ${price} 
+              Pay ${price} 
               <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </>
           )}
@@ -48,8 +48,8 @@ export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonPro
         transition={{ delay: 0.5 }}
       >
         {isProcessing ? 
-          '⏳ אנא המתן בזמן שאנו מעבדים את התשלום שלך...' : 
-          '🔒 תשלום מאובטח - לחץ על הכפתור למעלה להשלמת התשלום'}
+          '⏳ Please wait while we process your payment...' : 
+          '🔒 Secure payment - Click the button above to complete payment'}
       </motion.p>
     </div>
   );

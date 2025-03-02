@@ -22,7 +22,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   
   if (validPlans.length === 0) {
     return (
-      <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+      <div className="text-center p-6 bg-white rounded-lg border border-gray-200 w-full">
         <p className="text-gray-500">No subscription plans available for this community.</p>
       </div>
     );
@@ -30,7 +30,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
 
   return (
     <>
-      <div id="subscription-plans" className="scroll-mt-4">
+      <div id="subscription-plans" className="scroll-mt-4 w-full">
         <SubscriptionPlans
           plans={validPlans}
           selectedPlan={selectedPlan}

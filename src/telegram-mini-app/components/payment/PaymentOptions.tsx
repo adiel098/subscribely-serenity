@@ -32,7 +32,7 @@ export const PaymentOptions = ({
 
   return (
     <motion.div
-      className="grid grid-cols-3 gap-6"
+      className="grid grid-cols-3 gap-4 sm:gap-6 w-full"
       variants={container}
       initial="hidden"
       animate="show"

@@ -14,13 +14,13 @@ export const PaymentHeader = () => {
     >
       <Badge variant="secondary" className="px-4 py-1.5 bg-gradient-to-r from-green-500/20 to-blue-500/20">
         <Gift className="h-4 w-4 mr-2 text-green-500" />
-        השלב האחרון
+        Final Step
       </Badge>
       <h2 className="text-3xl font-bold bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-transparent">
-        בחר אמצעי תשלום
+        Choose Payment Method
       </h2>
       <p className="text-gray-600">
-        בחר את הדרך המועדפת עליך לתשלום 💳
+        Select your preferred way to pay 💳
       </p>
       <motion.div
         className="flex justify-center mt-4"

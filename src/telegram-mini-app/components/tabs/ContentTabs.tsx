@@ -35,7 +35,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-3 mb-6 bg-primary/5">
+      <TabsList className="grid grid-cols-3 mb-6 bg-primary/5 w-full">
         <TabsTrigger value="subscribe" className="flex items-center gap-1.5">
           <UserPlus className="h-4 w-4" />
           <span className="hidden sm:inline">Subscribe</span>
@@ -50,7 +50,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="subscribe" className="space-y-8 mt-0">
+      <TabsContent value="subscribe" className="space-y-8 mt-0 w-full">
         <SubscriptionPlanSection
           plans={communitySubscriptionPlans}
           selectedPlan={selectedPlan}
@@ -59,8 +59,8 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         />
       </TabsContent>
       
-      <TabsContent value="mySubscriptions" className="mt-0">
-        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
+      <TabsContent value="mySubscriptions" className="mt-0 w-full">
+        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full">
           <UserSubscriptions 
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
@@ -69,8 +69,8 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </div>
       </TabsContent>
       
-      <TabsContent value="discover" className="mt-0">
-        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
+      <TabsContent value="discover" className="mt-0 w-full">
+        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full">
           <CommunitySearch onSelectCommunity={onSelectCommunity} />
         </div>
       </TabsContent>

@@ -19,7 +19,6 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   // Check if user already has an email (should never happen due to our router logic, but just in case)
   if (telegramUser.email) {
     console.warn('⚠️ EMAIL COLLECTION: User already has email, calling onComplete directly', telegramUser.email);
-    // CRITICAL FIX: Call onComplete immediately without using setTimeout
     console.log('📧 CRITICAL FIX: Calling onComplete immediately for user with email:', telegramUser.email);
     onComplete();
     return null;
@@ -68,9 +67,8 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
       username={telegramUser.username}
       photoUrl={telegramUser.photo_url}
       onComplete={() => {
-        console.log('📝 EMAIL COLLECTION: Form submitted successfully, completing flow');
+        console.log('📝 EMAIL COLLECTION: Form submitted successfully, IMMEDIATELY completing flow');
         console.log('📝 CRITICAL FIX: Directly calling onComplete in EmailCollectionWrapper');
-        // CRITICAL FIX: Ensure the onComplete function is called directly without delay
         onComplete();
       }} 
     />

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
@@ -99,6 +99,22 @@ const TelegramMiniApp = () => {
   console.log('📌 Email form should show:', showEmailForm);
   console.log('📌 Direct telegramUserId:', telegramUserId);
 
+  // CRITICAL FIX: Create memoized wrapper functions to avoid recreating functions
+  const handleShowEmailForm = useCallback((show: boolean) => {
+    console.log('📧 Setting showEmailForm state:', show, 'Previous value:', showEmailForm);
+    setShowEmailForm(show);
+  }, [showEmailForm]);
+
+  const handleIsCheckingUserData = useCallback((isChecking: boolean) => {
+    console.log('🔍 Setting isCheckingUserData state:', isChecking, 'Previous value:', isCheckingUserData);
+    setIsCheckingUserData(isChecking);
+  }, [isCheckingUserData]);
+
+  const handleErrorState = useCallback((error: string | null) => {
+    console.log('❌ Setting errorState:', error);
+    setErrorState(error);
+  }, []);
+
   // Handle user error
   useEffect(() => {
     if (userError) {
@@ -153,6 +169,16 @@ const TelegramMiniApp = () => {
     }
   }, [telegramUser, userLoading]);
 
+  // CRITICAL FIX: Reset checking state after data loads
+  useEffect(() => {
+    if (!communityLoading && !userLoading && isCheckingUserData) {
+      console.log('🔄 All data loaded, resetting checking state');
+      window.setTimeout(() => {
+        setIsCheckingUserData(false);
+      }, 100);
+    }
+  }, [communityLoading, userLoading, isCheckingUserData]);
+
   return (
     <>
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
@@ -166,10 +192,10 @@ const TelegramMiniApp = () => {
         telegramUserId={telegramUserId}
         onRefetch={refetchUser}
         onRetry={handleRetry}
-        setShowEmailForm={setShowEmailForm}
+        setShowEmailForm={handleShowEmailForm}
         showEmailForm={showEmailForm}
-        setIsCheckingUserData={setIsCheckingUserData}
-        setErrorState={setErrorState}
+        setIsCheckingUserData={handleIsCheckingUserData}
+        setErrorState={handleErrorState}
       />
     </>
   );

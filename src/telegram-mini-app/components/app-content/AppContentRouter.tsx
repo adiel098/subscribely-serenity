@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
@@ -33,6 +33,19 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
 }) => {
   // Show debug info for development
   const activeTab = "subscribe"; // Default active tab
+  
+  // CRITICAL FIX: Add effect to log state changes for debugging
+  useEffect(() => {
+    console.log('🚦 AppContentRouter state:', {
+      loading,
+      errorState,
+      telegramUserExists: !!telegramUser,
+      communityExists: !!community,
+      showEmailForm,
+      isCheckingUserData,
+      hasEmail: telegramUser?.email ? true : false
+    });
+  }, [loading, errorState, telegramUser, community, showEmailForm, isCheckingUserData]);
   
   // Debug section at the top that will show in dev mode
   const renderDebugInfo = () => (
@@ -87,7 +100,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 Email collection completed, now showing community content');
+            console.log('📧 CRITICAL FIX: Email collection completed, now showing community content');
             console.log('📧 CRITICAL FIX: Setting showEmailForm to false to force render of MainContent');
             // CRITICAL FIX: Force update the state to trigger re-render
             setShowEmailForm(false);
@@ -107,7 +120,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 Email collection completed, now showing community content');
+            console.log('📧 SAFETY CHECK: Email collection completed, now showing community content');
             console.log('📧 SAFETY CHECK: Setting showEmailForm to false to force render of MainContent');
             setShowEmailForm(false);
           }}

@@ -60,14 +60,13 @@ export const EmailForm: React.FC<EmailFormProps> = ({
       );
       
       if (success) {
-        console.log('✅ Email collection successful, now redirecting to community content');
+        console.log('✅ Email collection successful, IMMEDIATELY calling onComplete to show community content');
         toast({
           title: "Email saved successfully!",
           description: "You can now access the community content.",
         });
         
-        // CRITICAL FIX: Force immediate completion without any delay to avoid state issues
-        console.log('🚀 IMMEDIATE REDIRECT: Calling onComplete to proceed to community content');
+        // CRITICAL FIX: Call onComplete immediately
         onComplete();
       } else {
         throw new Error("Failed to save email");

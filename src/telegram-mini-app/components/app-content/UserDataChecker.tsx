@@ -28,7 +28,6 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
         console.log('✅ User data loaded, checking if user exists in database');
         console.log('📱 Telegram ID for validation:', telegramUser.id);
         console.log('📱 Telegram ID type:', typeof telegramUser.id);
-        setIsCheckingUserData(true);
         
         try {
           if (!telegramUser.id) {
@@ -37,6 +36,18 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             setIsCheckingUserData(false);
             return;
           }
+          
+          // CRITICAL FIX: First check if the user already has an email directly in the object
+          if (telegramUser.email) {
+            console.log('📧 User already has email in object, skipping database check:', telegramUser.email);
+            setShowEmailForm(false);
+            setIsCheckingUserData(false);
+            setErrorState(null);
+            return;
+          }
+          
+          // Set checking state
+          setIsCheckingUserData(true);
           
           // Make sure we have a string ID
           const telegramId = String(telegramUser.id).trim();

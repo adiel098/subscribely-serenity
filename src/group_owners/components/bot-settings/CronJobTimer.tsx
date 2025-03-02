@@ -54,7 +54,7 @@ export const CronJobTimer = () => {
           Next check in: {minutes}:{seconds.toString().padStart(2, '0')}
         </CardDescription>
         <CardDescription className="text-purple-600 text-xs">
-          Last check: {lastCheck.toLocaleTimeString()}
+          Last check:: {lastCheck.toLocaleTimeString()}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -46,7 +46,7 @@ export const SubscriptionPlans = ({
   };
 
   return (
-    <div className="space-y-8 px-4 w-full max-w-full">
+    <div className="space-y-8 px-0 w-full max-w-full mx-0">
       <motion.div 
         className="text-center space-y-3"
         initial={{ opacity: 0, y: -20 }}
@@ -64,7 +64,7 @@ export const SubscriptionPlans = ({
       </motion.div>
 
       <motion.div 
-        className="grid gap-6"
+        className="grid gap-6 w-full"
         variants={containerVariants}
         initial="hidden"
         animate="show"

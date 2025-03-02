@@ -41,6 +41,19 @@ export const ensureFullScreen = (): void => {
       meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height';
       document.head.appendChild(meta);
     }
+    
+    // Fix any container width issues
+    const containers = document.querySelectorAll('.container, [class*="max-w-"]');
+    containers.forEach((container: Element) => {
+      if (container instanceof HTMLElement) {
+        container.style.maxWidth = '100%';
+        container.style.width = '100%';
+        container.style.paddingLeft = '0';
+        container.style.paddingRight = '0';
+        container.style.marginLeft = '0';
+        container.style.marginRight = '0';
+      }
+    });
   }
   
   if (isAndroid) {
@@ -58,6 +71,19 @@ export const ensureFullScreen = (): void => {
     document.body.style.overflow = 'hidden';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    
+    // Fix any container width issues
+    const containers = document.querySelectorAll('.container, [class*="max-w-"]');
+    containers.forEach((container: Element) => {
+      if (container instanceof HTMLElement) {
+        container.style.maxWidth = '100%';
+        container.style.width = '100%';
+        container.style.paddingLeft = '0';
+        container.style.paddingRight = '0';
+        container.style.marginLeft = '0';
+        container.style.marginRight = '0';
+      }
+    });
   }
   
   // Apply general full screen styles to root app container
@@ -67,6 +93,11 @@ export const ensureFullScreen = (): void => {
     appContainer.style.width = '100%';
     appContainer.style.overflow = 'auto';
     appContainer.style.position = 'relative';
+    appContainer.style.maxWidth = '100%';
+    appContainer.style.paddingLeft = '0';
+    appContainer.style.paddingRight = '0';
+    appContainer.style.marginLeft = '0';
+    appContainer.style.marginRight = '0';
   }
   
   // Apply general full screen styles
@@ -78,4 +109,18 @@ export const ensureFullScreen = (): void => {
   document.body.style.height = '100%';
   document.body.style.margin = '0';
   document.body.style.padding = '0';
+  
+  // Additional fixes for specific components that might have whitespace
+  setTimeout(() => {
+    document.querySelectorAll('[class*="w-full"], [class*="max-w-"]').forEach((element: Element) => {
+      if (element instanceof HTMLElement) {
+        element.style.maxWidth = '100%';
+        element.style.width = '100%';
+        element.style.paddingLeft = '0';
+        element.style.paddingRight = '0';
+        element.style.marginLeft = '0';
+        element.style.marginRight = '0';
+      }
+    });
+  }, 100);
 };

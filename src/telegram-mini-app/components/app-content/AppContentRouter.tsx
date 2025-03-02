@@ -42,6 +42,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
 
   // Don't render anything else during loading
   if (loading) {
+    console.log('⏳ Still loading, not rendering content yet');
     return null;
   }
 
@@ -51,7 +52,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     return <CommunityNotFound />;
   }
 
-  // Show email form
+  // Show email form if needed
+  // This check needs to happen BEFORE showing the main content
   if (showEmailForm && telegramUser) {
     console.log('📧 Showing email collection form for user:', telegramUser.username);
     return (
@@ -62,11 +64,12 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // Main content
+  // Main content - only show if not loading, community exists, and email form is not needed
   console.log('🎉 Showing main content with:', { 
     community: community?.name, 
     user: telegramUser?.username,
-    plans: community?.subscription_plans?.length || 0
+    plans: community?.subscription_plans?.length || 0,
+    showEmailForm // Log this to verify the state
   });
   
   return <MainContent community={community} telegramUser={telegramUser} />;

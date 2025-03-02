@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { checkUserExists } from "@/telegram-mini-app/services/userProfileService";
+import { useToast } from "@/components/ui/use-toast";
 
 interface UserDataCheckerProps {
   telegramUser: TelegramUser | null;
@@ -18,6 +19,8 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
   setShowEmailForm,
   setErrorState
 }) => {
+  const { toast } = useToast();
+
   // Check if user exists and has email
   useEffect(() => {
     const checkUserData = async () => {
@@ -39,15 +42,26 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           if (!exists || !hasEmail) {
             // If user doesn't exist in DB or doesn't have an email, show email form
             console.log('🔍 User needs to provide email before proceeding');
+            toast({
+              title: "Please provide your email",
+              description: "We need your email address to continue."
+            });
             setShowEmailForm(true);
           } else {
+            console.log('✅ User exists and has email, proceeding to community page');
             setShowEmailForm(false);
           }
           setErrorState(null);
         } catch (error) {
           console.error('❌ Error checking user data:', error);
           // Default to showing email form if there's an error checking the database
+          toast({
+            variant: "destructive",
+            title: "Error checking user data",
+            description: "We'll ask for your information again to ensure access."
+          });
           setShowEmailForm(true);
+          setErrorState(null);
         } finally {
           setIsCheckingUserData(false);
         }
@@ -55,7 +69,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
     };
 
     checkUserData();
-  }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState]);
+  }, [telegramUser, userLoading, setIsCheckingUserData, setShowEmailForm, setErrorState, toast]);
 
   return null; // This is a non-visual component
 };

@@ -86,6 +86,7 @@ const TelegramMiniApp = () => {
   console.log('📌 User loading:', userLoading);
   console.log('📌 User data:', telegramUser);
   console.log('📌 User error:', userError);
+  console.log('📌 Email form should show:', showEmailForm);
   console.log('📌 Direct telegramUserId:', telegramUserId);
   console.log('📌 Effective telegramUserId:', effectiveTelegramUserId);
 

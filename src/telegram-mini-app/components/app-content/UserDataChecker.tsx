@@ -50,6 +50,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             return;
           }
           
+          // Only check if user exists, don't create the user here
           const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           

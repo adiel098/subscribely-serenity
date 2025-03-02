@@ -35,6 +35,7 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
   }
 }
 
+// THIS IS THE ONLY FUNCTION THAT SHOULD CREATE OR UPDATE USER DATA
 export async function collectUserEmail(
   telegramUserId: string, 
   email: string, 

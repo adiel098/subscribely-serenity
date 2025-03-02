@@ -4,7 +4,7 @@ import { TelegramUser, TelegramUserHookResult } from "@/telegram-mini-app/types/
 import { getWebAppData } from "@/telegram-mini-app/utils/webAppDataExtractor";
 import { isDevelopment } from "@/telegram-mini-app/utils/telegramUtils";
 import { getMockUser } from "@/telegram-mini-app/utils/mockData";
-import { fetchUserFromDatabase, createOrUpdateUser } from "@/telegram-mini-app/services/telegramUserService";
+import { fetchUserFromDatabase } from "@/telegram-mini-app/services/telegramUserService";
 
 /**
  * Custom hook to retrieve Telegram user data
@@ -53,18 +53,8 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
             };
             console.log('✅ Merged user data with database info:', userData);
           } else {
-            console.log('⚠️ User not found in database, will create via edge function');
-            
-            // If user doesn't exist in DB, create or update them via edge function
-            const createdUser = await createOrUpdateUser(userData, communityId);
-            if (createdUser) {
-              // Update with more complete data from edge function
-              userData = {
-                ...userData,
-                ...createdUser
-              };
-              console.log('✅ Final user data after edge function:', userData);
-            }
+            console.log('⚠️ User not found in database, will NOT create user here');
+            // IMPORTANT: We removed the user creation here to ensure it only happens in the email form
           }
         }
         

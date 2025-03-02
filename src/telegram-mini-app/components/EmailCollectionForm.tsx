@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Mail, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,13 +30,11 @@ export const EmailCollectionForm = ({
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // Get start parameter from URL which is the community ID
   const communityId = searchParams.get("start");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast({
@@ -48,11 +45,9 @@ export const EmailCollectionForm = ({
       return;
     }
     
-    // Log the telegram user ID for debugging
     console.log("🧪 DEBUG - Form submission with Telegram user ID:", telegramUserId);
     console.log("🧪 DEBUG - Telegram user ID type:", typeof telegramUserId);
     
-    // Validate telegram user ID - must be a numeric string
     if (!telegramUserId) {
       console.error("❌ FORM ERROR: Missing Telegram user ID");
       toast({
@@ -63,7 +58,6 @@ export const EmailCollectionForm = ({
       return;
     }
     
-    // Ensure we're working with a string ID
     const formattedTelegramId = String(telegramUserId).trim();
     
     if (!/^\d+$/.test(formattedTelegramId)) {
@@ -82,7 +76,6 @@ export const EmailCollectionForm = ({
       console.log("📝 Saving email for telegram user:", formattedTelegramId, email);
       console.log("📝 With additional data:", { firstName, lastName, communityId, username, photoUrl });
       
-      // Pass all user details to the collectUserEmail function
       const success = await collectUserEmail(
         formattedTelegramId, 
         email, 
@@ -104,12 +97,10 @@ export const EmailCollectionForm = ({
         description: "Thank you for providing your email",
       });
       
-      // Trigger haptic feedback in Telegram if available
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
       
-      // Call the onComplete callback to proceed to the community page
       onComplete();
     } catch (error) {
       console.error("❌ Error saving email:", error);

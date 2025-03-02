@@ -1,5 +1,5 @@
 import { TelegramUser } from '../types/telegramTypes';
-import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegramUtils';
+import { isValidTelegramId, formatTelegramId, parseUserFromUrlHash } from './telegram';
 
 /**
  * Extract Telegram Web App data from window.Telegram

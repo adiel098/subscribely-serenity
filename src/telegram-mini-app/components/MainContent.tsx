@@ -7,7 +7,7 @@ import { CommunityHeader } from "@/telegram-mini-app/components/CommunityHeader"
 import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { Card, CardContent } from "@/components/ui/card";
-import { TelegramUser } from "@/telegram-mini-app/hooks/types/telegramTypes";
+import { TelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserSubscriptions } from "@/telegram-mini-app/components/UserSubscriptions";
 import { CommunitySearch } from "@/telegram-mini-app/components/CommunitySearch";

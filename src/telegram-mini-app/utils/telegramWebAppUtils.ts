@@ -28,10 +28,9 @@ export const getWebAppData = (): TelegramUser | null => {
       console.log('🔑 Raw Telegram ID from WebApp:', user.id);
       console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
       
-      // Validate that ID is numeric (all Telegram IDs should be)
-      if (!/^\d+$/.test(telegramId)) {
-        console.error('❌ Invalid Telegram ID format:', telegramId);
-        console.error('❌ Telegram IDs should be numeric. Returning null.');
+      // Less strict validation - we'll accept any non-empty ID
+      if (!telegramId) {
+        console.error('❌ Empty Telegram ID after conversion');
         return null;
       }
       
@@ -69,9 +68,9 @@ export const getWebAppData = (): TelegramUser | null => {
           console.log('🔑 Raw Telegram ID from parsed initData:', user.id);
           console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
           
-          // Validate that ID is numeric
-          if (!/^\d+$/.test(telegramId)) {
-            console.error('❌ Invalid Telegram ID format in parsed initData:', telegramId);
+          // Less strict validation
+          if (!telegramId) {
+            console.error('❌ Empty Telegram ID after conversion from initData');
             return null;
           }
           
@@ -85,6 +84,35 @@ export const getWebAppData = (): TelegramUser | null => {
         }
       } catch (parseError) {
         console.error('❌ Error parsing initData:', parseError);
+      }
+    }
+    
+    // Try to use the raw initData as a fallback (some bots pass data differently)
+    if (window.Telegram?.WebApp?.initData) {
+      console.log('🔄 Examining raw initData for user info...');
+      try {
+        const initData = window.Telegram.WebApp.initData;
+        // Look for a pattern that might contain user ID like user={"id":123456789,...}
+        const userMatch = initData.match(/user=(\{.*?\})/);
+        if (userMatch && userMatch[1]) {
+          const userData = JSON.parse(decodeURIComponent(userMatch[1]));
+          console.log('✅ Found user data in raw initData:', userData);
+          
+          if (userData.id) {
+            const telegramId = userData.id.toString().trim();
+            console.log('🔑 Extracted Telegram ID from raw initData:', telegramId);
+            
+            return {
+              id: telegramId,
+              first_name: userData.first_name || "Telegram",
+              last_name: userData.last_name,
+              username: userData.username,
+              photo_url: userData.photo_url
+            };
+          }
+        }
+      } catch (parseError) {
+        console.error('❌ Error processing raw initData:', parseError);
       }
     }
     
@@ -124,9 +152,9 @@ export const getUserFromUrlHash = async (communityId: string): Promise<TelegramU
           console.log('🔑 Raw Telegram ID from hash:', parsedUser.id);
           console.log('🔑 Extracted Telegram ID (stringified):', telegramId);
           
-          // Validate ID format - must be numeric
-          if (!/^\d+$/.test(telegramId)) {
-            console.error('❌ INVALID TELEGRAM ID FORMAT FROM HASH:', telegramId);
+          // Less strict validation
+          if (!telegramId) {
+            console.error('❌ Empty Telegram ID after conversion from hash');
             return null;
           }
           
@@ -144,6 +172,65 @@ export const getUserFromUrlHash = async (communityId: string): Promise<TelegramU
         console.error('❌ Error parsing initData from hash:', parseError);
       }
     }
+    
+    // Also check for direct user parameter in the URL hash or search params
+    const directUserInHash = hashParams.get('user');
+    if (directUserInHash) {
+      try {
+        const parsedUser = JSON.parse(directUserInHash);
+        console.log('✅ Found direct user param in hash:', parsedUser);
+        
+        if (parsedUser.id) {
+          const telegramId = parsedUser.id.toString().trim();
+          return {
+            id: telegramId,
+            first_name: parsedUser.first_name || "Telegram",
+            last_name: parsedUser.last_name,
+            username: parsedUser.username,
+            photo_url: parsedUser.photo_url
+          };
+        }
+      } catch (error) {
+        console.error('❌ Error parsing direct user in hash:', error);
+      }
+    }
+    
+    // Check URL search params as well
+    const searchParams = new URLSearchParams(window.location.search);
+    const directUserInSearch = searchParams.get('user');
+    if (directUserInSearch) {
+      try {
+        const parsedUser = JSON.parse(directUserInSearch);
+        console.log('✅ Found direct user param in search:', parsedUser);
+        
+        if (parsedUser.id) {
+          const telegramId = parsedUser.id.toString().trim();
+          return {
+            id: telegramId,
+            first_name: parsedUser.first_name || "Telegram",
+            last_name: parsedUser.last_name,
+            username: parsedUser.username,
+            photo_url: parsedUser.photo_url
+          };
+        }
+      } catch (error) {
+        console.error('❌ Error parsing direct user in search:', error);
+      }
+    }
+    
+    // Look for a direct telegram_id parameter as a fallback
+    const directTelegramId = searchParams.get('telegram_id') || hashParams.get('telegram_id');
+    if (directTelegramId) {
+      console.log('✅ Found direct telegram_id in URL:', directTelegramId);
+      return {
+        id: directTelegramId,
+        first_name: "Telegram",
+        last_name: "User",
+        username: undefined,
+        photo_url: undefined
+      };
+    }
+    
     return null;
   } catch (error) {
     console.error('❌ Error extracting user from URL hash:', error);

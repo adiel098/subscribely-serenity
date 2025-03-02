@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingScreen } from "@/telegram-mini-app/components/LoadingScreen";
@@ -9,8 +9,17 @@ import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info, RefreshCw } from "lucide-react";
 import { checkUserExists } from "@/telegram-mini-app/services/memberService";
+import { Button } from "@/components/ui/button";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 // Initialize Telegram WebApp
 const initTelegramWebApp = () => {
@@ -53,6 +62,8 @@ const TelegramMiniApp = () => {
   const [isCheckingUserData, setIsCheckingUserData] = useState(true);
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
 
   // Get start parameter from URL
@@ -82,6 +93,7 @@ const TelegramMiniApp = () => {
   console.log('💫 TelegramMiniApp initialized with:');
   console.log('📌 startParam:', startParam);
   console.log('📌 URL:', window.location.href);
+  console.log('📌 Retry Count:', retryCount);
   
   // Log Telegram WebApp object if available
   if (window.Telegram?.WebApp) {
@@ -101,7 +113,7 @@ const TelegramMiniApp = () => {
 
   // Use our custom hooks to retrieve data
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
-  const { user: telegramUser, loading: userLoading, error: userError } = 
+  const { user: telegramUser, loading: userLoading, error: userError, refetch } = 
     useTelegramUser(effectiveStartParam || "");
     
   console.log('📡 Hook Results:');
@@ -110,6 +122,14 @@ const TelegramMiniApp = () => {
   console.log('📌 User loading:', userLoading);
   console.log('📌 User data:', telegramUser);
   console.log('📌 User error:', userError);
+
+  // Handle retry
+  const handleRetry = useCallback(() => {
+    console.log('🔄 Retrying user fetch...');
+    setRetryCount(prev => prev + 1);
+    setShowErrorDialog(false);
+    refetch();
+  }, [refetch]);
 
   // Check if user exists in the database and has an email
   useEffect(() => {
@@ -152,10 +172,11 @@ const TelegramMiniApp = () => {
   useEffect(() => {
     if (userError) {
       console.error("❌ Error getting user data:", userError);
+      setShowErrorDialog(true);
       toast({
         variant: "destructive",
-        title: "User Data Error",
-        description: "There was a problem retrieving your information. Some features may be limited."
+        title: "User Identification Error",
+        description: "There was a problem retrieving your information. Please try again."
       });
     }
   }, [userError, toast]);
@@ -215,8 +236,34 @@ const TelegramMiniApp = () => {
           </AlertDescription>
         </Alert>
       )}
+
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              User Identification Error
+            </DialogTitle>
+            <DialogDescription>
+              We couldn't identify your Telegram account. This may happen if:
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>The app was opened outside of Telegram</li>
+                <li>There's a connection issue with Telegram servers</li>
+                <li>The session data is invalid or expired</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleRetry} className="w-full gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Ensure community data is properly passed to MainContent */}
-      {community && <MainContent community={community} telegramUser={telegramUser} />}
+      {community && telegramUser && <MainContent community={community} telegramUser={telegramUser} />}
     </>
   );
 };

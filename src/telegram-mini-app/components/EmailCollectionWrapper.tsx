@@ -1,7 +1,6 @@
 
 import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollectionForm";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
-import { formatTelegramId } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface EmailCollectionWrapperProps {
   telegramUser: TelegramUser;

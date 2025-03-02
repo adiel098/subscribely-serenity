@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { ErrorDisplay } from "@/telegram-mini-app/components/ErrorDisplay";
@@ -81,7 +81,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     </div>
   );
 
-  // OPTIMIZED ROUTING FLOW: Reduce page transitions for new users
+  // DIRECT ROUTING - Skip loading screens as much as possible
   
   // First, handle error cases
   if (errorState && telegramUserId) {
@@ -97,37 +97,38 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // During initial loading, show minimal UI
-  if (loading && !telegramUser) {
-    // Completely blank during initial load - no transitions
-    return renderDebugInfo();
-  }
-  
-  // Missing community
-  if (!community && !loading) {
-    return (
-      <>
-        {renderDebugInfo()}
-        <CommunityNotFound />
-      </>
-    );
-  }
-
-  // DIRECT EMAIL COLLECTION FOR NEW USERS
-  // If we have the telegramUser but they don't have an email, show email form immediately
-  // This prevents unnecessary transitions
-  if (telegramUser && !telegramUser.email) {
-    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately for new user');
+  // DIRECT EMAIL COLLECTION FOR ANY USER WITHOUT EMAIL
+  // If we have telegramUserId, immediately set up for email collection - don't wait for full user data
+  if (telegramUserId && (!telegramUser || (telegramUser && !telegramUser.email))) {
+    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately, bypassing loading');
+    
+    // If we have telegramUserId but not the user object yet, create minimal user object for email form
+    const minimalUser = telegramUser || {
+      id: telegramUserId,
+      first_name: '',
+      username: ''
+    };
+    
     return (
       <>
         {renderDebugInfo()}
         <EmailCollectionWrapper 
-          telegramUser={telegramUser} 
+          telegramUser={minimalUser} 
           onComplete={() => {
             console.log('📧 Email collection completed, showing community content');
             setShowEmailForm(false);
           }}
         />
+      </>
+    );
+  }
+  
+  // Missing community - only show if we're not still loading
+  if (!community && !loading) {
+    return (
+      <>
+        {renderDebugInfo()}
+        <CommunityNotFound />
       </>
     );
   }
@@ -138,21 +139,6 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       <>
         {renderDebugInfo()}
         <MainContent community={community} telegramUser={telegramUser} />
-      </>
-    );
-  }
-  
-  // If we're still loading but have some data, show appropriate loading state
-  if (loading) {
-    return (
-      <>
-        {renderDebugInfo()}
-        <div className="h-screen w-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your experience...</p>
-          </div>
-        </div>
       </>
     );
   }

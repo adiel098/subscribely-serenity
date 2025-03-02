@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,8 +9,8 @@ import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [isCheckingUserData, setIsCheckingUserData] = useState(true);
+  const [showEmailForm, setShowEmailForm] = useState(true);
+  const [isCheckingUserData, setIsCheckingUserData] = useState(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
   const [errorState, setErrorState] = useState<string | null>(null);
@@ -20,7 +19,6 @@ const TelegramMiniApp = () => {
 
   const startParam = searchParams.get("start");
   
-  // Debug URL and parameters
   console.log('💫 TelegramMiniApp initialized with:');
   console.log('📌 startParam:', startParam);
   console.log('📌 URL:', window.location.href);
@@ -28,16 +26,13 @@ const TelegramMiniApp = () => {
   console.log('📌 retryCount:', retryCount);
   console.log('📌 User Agent:', navigator.userAgent);
 
-  // Force development mode on localhost
   useEffect(() => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       setIsDevelopmentMode(true);
     }
     
-    // Ensure full screen mode
     ensureFullScreen();
     
-    // Add additional calls to ensure full screen after component is fully mounted
     const timeoutId = setTimeout(() => {
       ensureFullScreen();
     }, 1000);
@@ -45,7 +40,6 @@ const TelegramMiniApp = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Log Telegram WebApp object if available
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       console.log('📱 Telegram WebApp object is available:');
@@ -60,62 +54,43 @@ const TelegramMiniApp = () => {
         console.log('❌ No user data in WebApp.initDataUnsafe');
       }
       
-      // Ensure we're in full screen mode
       ensureFullScreen();
     } else {
       console.log('❌ Telegram WebApp object is NOT available');
     }
   }, [telegramInitialized]);
 
-  // Get Telegram user ID directly from WebApp object
   let telegramUserId = null;
   
   if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-    // Ensure we're working with a string
     telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
     console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
   } else if (isDevelopmentMode) {
-    telegramUserId = "12345678"; // Mock ID for development
+    telegramUserId = "12345678";
     console.log('🔑 Using mock ID for development:', telegramUserId);
   }
   
   console.log('🔑 Final telegram user ID:', telegramUserId);
   
-  // Handle initialization callback
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
     setTelegramInitialized(isInitialized);
     setIsDevelopmentMode(prev => prev || isDev);
     
-    // Recheck telegram user ID after initialization
     if (isInitialized && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
       console.log('🔑 User ID after initialization:', userId);
     }
     
-    // Ensure full screen mode after initialization
     ensureFullScreen();
   };
 
-  // Set effective start parameter (use default in dev mode)
   const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
   console.log('📌 Effective startParam:', effectiveStartParam);
 
-  // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
     useTelegramUser(effectiveStartParam || "", telegramUserId);
 
-  // Log hook results for debugging
-  console.log('📡 Hook Results:');
-  console.log('📌 Community loading:', communityLoading);
-  console.log('📌 Community data:', community);
-  console.log('📌 User loading:', userLoading);
-  console.log('📌 User data:', telegramUser);
-  console.log('📌 User error:', userError);
-  console.log('📌 Email form should show:', showEmailForm);
-  console.log('📌 Direct telegramUserId:', telegramUserId);
-
-  // Handle user error
   useEffect(() => {
     if (userError) {
       console.error("❌ Error getting user data:", userError);
@@ -123,11 +98,9 @@ const TelegramMiniApp = () => {
     }
   }, [userError]);
 
-  // Auto retry once if loading takes too long
   useEffect(() => {
     let timeout: number | null = null;
     
-    // If we're in loading state for more than 10 seconds and retry count is 0, auto retry
     if ((communityLoading || userLoading) && retryCount === 0) {
       timeout = window.setTimeout(() => {
         console.log('🔄 Auto retrying due to long loading time');
@@ -140,18 +113,16 @@ const TelegramMiniApp = () => {
     };
   }, [communityLoading, userLoading, retryCount]);
 
-  // Handle retry button click
   const handleRetry = () => {
     console.log('🔄 Retrying user data fetch');
     setErrorState(null);
-    setIsCheckingUserData(true);
+    setIsCheckingUserData(false);
     setRetryCount(prev => prev + 1);
     refetchUser();
     
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     
-    // Ensure full screen mode on retry
     ensureFullScreen();
     
     toast({
@@ -160,15 +131,19 @@ const TelegramMiniApp = () => {
     });
   };
 
-  // Debug email form state changes
   useEffect(() => {
     console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
   }, [showEmailForm]);
 
-  // CRITICAL FIX: Force email collection for users without email
   useEffect(() => {
-    if (!userLoading && telegramUser && !telegramUser.email) {
-      console.log('🚨 User loaded without email - this should trigger email collection:', telegramUser);
+    if (!userLoading && telegramUser) {
+      if (telegramUser.email) {
+        console.log('📧 User has email, hiding email form:', telegramUser.email);
+        setShowEmailForm(false);
+      } else {
+        console.log('📧 User loaded without email - keeping email form visible');
+        setShowEmailForm(true);
+      }
     }
   }, [telegramUser, userLoading]);
 

@@ -47,13 +47,17 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (telegramUserId && showEmailForm) {
     console.log('📧 TOP PRIORITY EMAIL COLLECTION: Showing email form immediately with ID:', telegramUserId);
     return (
-      <EmailCollectionWrapper 
-        telegramUser={telegramUser || { id: telegramUserId }} 
-        onComplete={() => {
-          console.log('📧 Email collection completed, showing community content');
-          setShowEmailForm(false);
-        }}
-      />
+      <>
+        {/* Only show debug if explicitly enabled */}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser || { id: telegramUserId }} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
     );
   }
   
@@ -61,13 +65,17 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (telegramUserId && telegramUser && !telegramUser.email) {
     console.log('📧 SECONDARY EMAIL COLLECTION: User exists but missing email');
     return (
-      <EmailCollectionWrapper 
-        telegramUser={telegramUser} 
-        onComplete={() => {
-          console.log('📧 Email collection completed, showing community content');
-          setShowEmailForm(false);
-        }}
-      />
+      <>
+        {/* Only show debug if explicitly enabled */}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={telegramUser} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
     );
   }
   
@@ -115,7 +123,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (errorState && telegramUserId) {
     return (
       <>
-        {renderDebugInfo()}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
         <ErrorDisplay 
           errorMessage={errorState}
           telegramUserId={telegramUserId}
@@ -128,14 +136,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   // During initial loading, show minimal UI
   if (loading && !telegramUser) {
     // Completely blank during initial load - no transitions
-    return renderDebugInfo();
+    return window.location.search.includes('debug=true') ? renderDebugInfo() : null;
   }
   
   // Missing community
   if (!community && !loading) {
     return (
       <>
-        {renderDebugInfo()}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
         <CommunityNotFound />
       </>
     );
@@ -145,7 +153,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (telegramUser && telegramUser.email && community) {
     return (
       <>
-        {renderDebugInfo()}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
         <MainContent community={community} telegramUser={telegramUser} />
       </>
     );
@@ -155,7 +163,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (loading) {
     return (
       <>
-        {renderDebugInfo()}
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
         <div className="h-screen w-full flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -170,16 +178,32 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (telegramUserId) {
     console.log('📧 FALLBACK EMAIL COLLECTION: Showing email form with ID:', telegramUserId);
     return (
-      <EmailCollectionWrapper 
-        telegramUser={{ id: telegramUserId }} 
-        onComplete={() => {
-          console.log('📧 Email collection completed, showing community content');
-          setShowEmailForm(false);
-        }}
-      />
+      <>
+        {window.location.search.includes('debug=true') && renderDebugInfo()}
+        <EmailCollectionWrapper 
+          telegramUser={{ id: telegramUserId }} 
+          onComplete={() => {
+            console.log('📧 Email collection completed, showing community content');
+            setShowEmailForm(false);
+          }}
+        />
+      </>
     );
   }
   
-  // Last resort - error boundary
-  return renderErrorBoundary();
+  // Last resort - error boundary (only shown when debug=true in URL)
+  return window.location.search.includes('debug=true') ? renderErrorBoundary() : (
+    <div className="h-screen w-full flex items-center justify-center">
+      <div className="text-center p-4">
+        <h3 className="font-bold text-gray-700 mb-2">Connection Issue</h3>
+        <p className="text-gray-600 mb-4">Unable to connect to Telegram. Please try again.</p>
+        <button 
+          onClick={onRetry}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md"
+        >
+          Retry Connection
+        </button>
+      </div>
+    </div>
+  );
 };

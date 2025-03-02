@@ -18,9 +18,8 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
   showEmailForm,
   isCheckingUserData
 }) => {
-  // IMPORTANT: Only show debug info in development AND when manually enabled
-  // Change this to ensure debug doesn't show in production environments
-  const showDebug = process.env.NODE_ENV === 'development' && window.location.search.includes('debug=true');
+  // IMPORTANT: NEVER show debug info unless explicitly enabled with debug=true
+  const showDebug = window.location.search.includes('debug=true');
   
   if (!showDebug) return null;
   

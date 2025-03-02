@@ -10,11 +10,11 @@ export const TelegramUserProvider: React.FC<TelegramUserProviderProps> = ({
   children,
   isDevelopmentMode
 }) => {
-  // Get Telegram user ID directly from WebApp object
+  // Get Telegram user ID directly from WebApp object using the method provided by the user
   const extractTelegramUserId = (): string | null => {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       // Ensure we're working with a string
-      const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
+      const userId = window.Telegram.WebApp.initDataUnsafe.user.id.toString().trim();
       console.log('🔑 Direct user ID extracted from WebApp:', userId);
       return userId;
     } else if (isDevelopmentMode) {

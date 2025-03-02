@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -38,12 +37,12 @@ const TelegramMiniApp = () => {
   const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
   console.log('📌 Effective startParam:', effectiveStartParam);
 
-  // Get Telegram user ID directly from WebApp object
+  // Get Telegram user ID directly from WebApp object using the method provided by the user
   let telegramUserId = null;
   
   if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
     // Ensure we're working with a string
-    telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
+    telegramUserId = window.Telegram.WebApp.initDataUnsafe.user.id.toString().trim();
     console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
   } else if (isDevelopmentMode) {
     telegramUserId = "12345678"; // Mock ID for development
@@ -88,15 +87,6 @@ const TelegramMiniApp = () => {
     setErrorState(error);
   }, []);
 
-  // Handle retry button click
-  const handleRetry = () => {
-    console.log('🔄 Retrying user data fetch');
-    setErrorState(null);
-    setIsCheckingUserData(true);
-    setRetryCount(prev => prev + 1);
-    refetchUser();
-  };
-
   return (
     <AppInitializer
       startParam={startParam}
@@ -125,11 +115,17 @@ const TelegramMiniApp = () => {
         telegramUserId={telegramUserId}
         userExistsInDatabase={userExistsInDatabase}
         onRefetch={refetchUser}
-        onRetry={handleRetry}
-        setShowEmailForm={handleShowEmailForm}
+        onRetry={() => {
+          console.log('🔄 Retrying user data fetch');
+          setErrorState(null);
+          setIsCheckingUserData(true);
+          setRetryCount(retryCount + 1);
+          refetchUser();
+        }}
+        setShowEmailForm={setShowEmailForm}
         showEmailForm={showEmailForm}
-        setIsCheckingUserData={handleIsCheckingUserData}
-        setErrorState={handleErrorState}
+        setIsCheckingUserData={setIsCheckingUserData}
+        setErrorState={setErrorState}
       />
     </AppInitializer>
   );

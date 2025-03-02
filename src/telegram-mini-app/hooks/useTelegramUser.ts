@@ -1,98 +1,76 @@
 
-import { useEffect, useState } from "react";
-import { TelegramUser, TelegramUserHookResult } from "@/telegram-mini-app/types/telegramTypes";
-import { getWebAppData } from "@/telegram-mini-app/utils/webAppDataExtractor";
-import { isDevelopment } from "@/telegram-mini-app/utils/telegramUtils";
-import { getMockUser } from "@/telegram-mini-app/utils/mockData";
-import { fetchUserFromDatabase } from "@/telegram-mini-app/services/telegramUserService";
-
 /**
- * Custom hook to retrieve Telegram user data
+ * Adjust this hook to only fetch user data without creating a user record
+ * This ensures that user creation only happens in the email collection form
  */
-export const useTelegramUser = (communityId: string, directTelegramUserId?: string | null): TelegramUserHookResult => {
-  const [user, setUser] = useState<TelegramUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+import { useState, useEffect } from 'react';
+import { fetchTelegramUserById } from '@/telegram-mini-app/services/telegramUserService';
+import { TelegramUser } from '@/telegram-mini-app/types/telegramTypes';
 
-  const fetchUserData = async () => {
+export const useTelegramUser = (startParam: string, telegramUserId: string | null) => {
+  const [user, setUser] = useState<TelegramUser | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchUser = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      console.log('🚀 Starting user data fetch process...');
-      console.log('📌 Community ID:', communityId);
-      console.log('📌 Direct Telegram User ID:', directTelegramUserId);
-      console.log('📌 Current URL:', window.location.href);
+      if (!telegramUserId) {
+        console.error('❌ useTelegramUser: Missing telegramUserId parameter');
+        throw new Error('Missing Telegram user ID');
+      }
       
-      setLoading(true);
-      setError(null);
+      // Validate telegramUserId format
+      if (!/^\d+$/.test(telegramUserId)) {
+        console.error('❌ useTelegramUser: Invalid Telegram ID format:', telegramUserId);
+        throw new Error('Invalid Telegram user ID format');
+      }
       
-      // Strategy 1: Try to get data from Telegram WebApp
-      console.log('🔍 Attempting to get data from Telegram WebApp...');
-      let userData = getWebAppData(directTelegramUserId);
-      
-      // Development mode handling
-      const isDevMode = isDevelopment();
+      // Only fetch the user data, don't create a user record
+      const userData = await fetchTelegramUserById(telegramUserId);
+      console.log('📱 Telegram user data fetched:', userData);
       
       if (userData) {
-        console.log('✅ Successfully retrieved user data from Telegram WebApp or direct ID:', userData);
-        
-        // If we have user data, fetch additional data from database
-        if (userData.id) {
-          console.log('🔍 Fetching additional info from database...');
-          
-          // Check if user exists in database and get additional info (like email)
-          const dbUser = await fetchUserFromDatabase(userData.id);
-          
-          if (dbUser) {
-            // Merge data from db with data from Telegram
-            userData = {
-              ...userData,
-              email: dbUser.email || undefined,
-              // If the database has a photo_url and Telegram doesn't, use the one from the database
-              photo_url: userData.photo_url || dbUser.photo_url || undefined,
-              // Same for username
-              username: userData.username || dbUser.username || undefined
-            };
-            console.log('✅ Merged user data with database info:', userData);
-          } else {
-            console.log('⚠️ User not found in database, will NOT create user here');
-            // IMPORTANT: We removed the user creation here to ensure it only happens in the email form
-          }
-        }
-        
         setUser(userData);
       } else {
-        // Development mode fallback
-        if (isDevMode) {
-          console.log('🔍 Development environment detected, using mock user data');
-          const mockUser = getMockUser();
-          console.log('✅ Using mock user:', mockUser);
-          setUser(mockUser);
-        } else {
-          console.error('❌ Could not retrieve user data from Telegram WebApp');
-          setError("Could not retrieve user data");
-        }
+        // If no user data is found in the database, still provide an object with the ID
+        // This allows the app to show the email collection form without a database record
+        console.log('📱 No user record found, creating temporary user object with ID:', telegramUserId);
+        setUser({
+          id: telegramUserId,
+          telegram_id: telegramUserId,
+          // Set from WebApp object if available
+          first_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || '',
+          last_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',
+          username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '',
+          photo_url: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
+          // The email will definitely be empty, forcing the email collection form
+          email: null
+        });
       }
     } catch (err) {
-      console.error("❌ Error in useTelegramUser:", err);
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
-      
-      // If in development mode, still use mock data even if there was an error
-      if (isDevelopment()) {
-        console.log('🔄 Using mock data after error in development mode');
-        setUser(getMockUser());
-      }
+      console.error('❌ Error fetching Telegram user:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUserData();
-  }, [communityId, directTelegramUserId]);
+    if (telegramUserId) {
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, [telegramUserId, startParam]);
 
-  return { 
-    user, 
-    loading, 
-    error,
-    refetch: fetchUserData
+  const refetch = () => {
+    if (telegramUserId) {
+      fetchUser();
+    }
   };
+
+  return { user, loading, error, refetch };
 };

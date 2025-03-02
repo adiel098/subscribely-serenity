@@ -68,6 +68,7 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
       photoUrl={telegramUser.photo_url}
       onComplete={() => {
         console.log('📝 EMAIL COLLECTION: Form submitted successfully, completing flow');
+        // Ensure that onComplete is called to finalize the flow
         onComplete();
       }} 
     />

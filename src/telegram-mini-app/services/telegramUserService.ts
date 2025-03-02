@@ -1,39 +1,37 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TelegramUser } from "../types/telegramTypes";
-import { isValidTelegramId } from "../utils/telegramUtils";
+import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
+import { logServiceAction } from "./utils/serviceUtils";
 
 /**
- * Fetch a user from the database by Telegram ID
+ * Fetches a Telegram user by their Telegram ID.
+ * This function only retrieves the user and does NOT create a user record.
  */
-export const fetchUserFromDatabase = async (telegramId: string): Promise<any | null> => {
-  if (!isValidTelegramId(telegramId)) {
-    console.error("❌ Invalid Telegram ID format for database fetch:", telegramId);
+export async function fetchTelegramUserById(telegramUserId: string): Promise<TelegramUser | null> {
+  logServiceAction("fetchTelegramUserById", { telegramUserId });
+  
+  if (!telegramUserId) {
+    console.error("❌ fetchTelegramUserById: Missing required telegramUserId parameter");
     return null;
   }
 
   try {
-    console.log('🔍 Fetching user from database with telegram_id:', telegramId);
-    const { data: dbUser, error: dbError } = await supabase
+    // Get user data from the database
+    const { data, error } = await supabase
       .from('telegram_mini_app_users')
       .select('*')
-      .eq('telegram_id', telegramId)
+      .eq('telegram_id', telegramUserId)
       .maybeSingle();
     
-    if (dbError) {
-      console.error("❌ Error fetching user from database:", dbError);
-      return null;
+    if (error) {
+      console.error("❌ Error fetching user data:", error);
+      throw error;
     }
     
-    if (dbUser) {
-      console.log('✅ User found in database:', dbUser);
-    } else {
-      console.log('⚠️ User not found in database');
-    }
-    
-    return dbUser;
+    // Return the user data if found
+    return data as TelegramUser | null;
   } catch (error) {
-    console.error("❌ Exception when fetching user from database:", error);
+    console.error("❌ Failed to fetch Telegram user:", error);
     return null;
   }
-};
+}

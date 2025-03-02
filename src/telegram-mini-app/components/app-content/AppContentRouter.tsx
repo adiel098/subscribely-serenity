@@ -36,7 +36,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   if (errorState) {
     return (
       <ErrorDisplay 
-        error={errorState} 
+        errorMessage={errorState} 
+        telegramUserId={telegramUserId}
         onRetry={onRetry} 
       />
     );
@@ -62,7 +63,11 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
             setShowEmailForm(false);
           }}
         />
-        {showDebugInfo && <DebugInfo data={{ telegramUser, showEmailForm, community }} />}
+        {showDebugInfo && <DebugInfo 
+          telegramUser={telegramUser} 
+          community={community} 
+          activeTab="email-collection" 
+        />}
       </>
     );
   }
@@ -73,7 +78,11 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     return (
       <>
         <CommunityNotFound />
-        {showDebugInfo && <DebugInfo data={{ telegramUser, showEmailForm, community }} />}
+        {showDebugInfo && <DebugInfo 
+          telegramUser={telegramUser} 
+          community={null} 
+          activeTab="community-not-found" 
+        />}
       </>
     );
   }
@@ -82,8 +91,12 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   console.log('🚀 Rendering main content with community');
   return (
     <>
-      <MainContent community={community} />
-      {showDebugInfo && <DebugInfo data={{ telegramUser, showEmailForm, community }} />}
+      <MainContent community={community} telegramUser={telegramUser} />
+      {showDebugInfo && <DebugInfo 
+        telegramUser={telegramUser} 
+        community={community} 
+        activeTab="main-content" 
+      />}
     </>
   );
 };

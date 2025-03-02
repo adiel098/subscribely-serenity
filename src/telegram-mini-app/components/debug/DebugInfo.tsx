@@ -5,7 +5,7 @@ import { Community } from "@/telegram-mini-app/types/community.types";
 
 interface DebugInfoProps {
   telegramUser: TelegramUser | null;
-  community: Community;
+  community: Community | null;
   activeTab: string;
 }
 
@@ -18,7 +18,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ telegramUser, community, a
       <p>User ID: {telegramUser?.id || 'Not available'}</p>
       <p>Username: {telegramUser?.username || 'Not available'}</p>
       <p>Photo URL: {telegramUser?.photo_url || 'Not available'}</p>
-      <p>Plans Count: {community.subscription_plans?.length || 0}</p>
+      <p>Plans Count: {community?.subscription_plans?.length || 0}</p>
       <p>Active Tab: {activeTab}</p>
     </div>
   );

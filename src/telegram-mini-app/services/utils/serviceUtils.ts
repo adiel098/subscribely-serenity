@@ -24,7 +24,7 @@ export function validateTelegramId(telegramUserId: string | null | undefined): b
   const stringId = String(telegramUserId).trim();
   console.log('🔍 Validating Telegram ID:', stringId, 'type:', typeof stringId);
   
-  // Check if it's a numeric string
+  // Check if it's a numeric string (Telegram IDs are always numeric)
   const isValid = /^\d+$/.test(stringId);
   
   if (!isValid) {

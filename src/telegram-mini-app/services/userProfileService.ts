@@ -5,8 +5,8 @@ import { logServiceAction, validateTelegramId } from "./utils/serviceUtils";
 export async function checkUserExists(telegramUserId: string): Promise<{exists: boolean, hasEmail: boolean}> {
   logServiceAction("checkUserExists", { telegramUserId });
 
-  // Extra defensive check for telegramUserId format
-  if (!telegramUserId || !validateTelegramId(telegramUserId)) {
+  // Validate that telegramUserId is a numeric string (proper Telegram ID format)
+  if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
     console.error("❌ checkUserExists: Invalid Telegram ID format:", telegramUserId);
     console.error("❌ checkUserExists: Telegram ID type:", typeof telegramUserId);
     return { exists: false, hasEmail: false };
@@ -65,8 +65,8 @@ export async function collectUserEmail(
     return false;
   }
   
-  // Extra defensive check for telegramUserId format
-  if (!validateTelegramId(telegramUserId)) {
+  // Validate that telegramUserId is a numeric string (proper Telegram ID format)
+  if (!/^\d+$/.test(telegramUserId)) {
     console.error("❌ collectUserEmail: Invalid Telegram ID format:", telegramUserId);
     console.error("❌ collectUserEmail: Telegram ID type:", typeof telegramUserId);
     return false;

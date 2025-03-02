@@ -32,6 +32,7 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   console.log('🔑 EmailCollectionWrapper - Telegram ID Type:', typeof telegramUser.id);
   console.log('🔑 EmailCollectionWrapper - Processed Telegram ID:', telegramUserId);
   
+  // Validate that the telegramUserId is a numeric string (proper Telegram ID format)
   if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
     console.error('❌ EMAIL COLLECTION: Invalid Telegram user ID format:', telegramUser.id);
     return (

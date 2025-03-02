@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ChevronDown, User, UserPlus, Search, LayoutGrid } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,19 +27,13 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const { subscriptions, isLoading: subscriptionsLoading, refetch: refreshSubscriptions } = 
     useUserSubscriptions(telegramUser?.id);
 
-  useEffect(() => {
-    console.log("🔍 Community in MainContent:", community);
-    console.log("🔍 Community.subscription_plans:", {
-      exists: Boolean(community?.subscription_plans),
-      isArray: Array.isArray(community?.subscription_plans),
-      length: community?.subscription_plans?.length,
-      data: community?.subscription_plans
-    });
-    console.log("🔍 TelegramUser in MainContent:", telegramUser);
-  }, [community, telegramUser]);
-
+  console.log("🔍 Community in MainContent:", community);
+  console.log("🔍 Community.subscription_plans:", community?.subscription_plans);
+  console.log("🔍 TelegramUser in MainContent:", telegramUser);
+  // Add explicit log for the photo URL to debug
   console.log("🔍 TelegramUser photo URL:", telegramUser?.photo_url);
 
+  // Log user info for debugging
   useEffect(() => {
     if (telegramUser) {
       console.log("👤 Telegram User Info in MainContent:", telegramUser);
@@ -46,6 +41,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
       console.log("⚠️ No Telegram user data available in MainContent");
     }
     
+    // If we're in Telegram, try to use BackButton
     if (window.Telegram?.WebApp?.BackButton) {
       if (selectedPlan && activeTab === "subscribe") {
         window.Telegram.WebApp.BackButton.show();
@@ -69,6 +65,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     setShowSuccess(true);
     refreshSubscriptions();
     
+    // If we're in Telegram, use haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
@@ -78,6 +75,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     setSelectedPlan(plan);
     document.getElementById('payment-methods')?.scrollIntoView({ behavior: 'smooth' });
     
+    // If we're in Telegram, use haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.selectionChanged();
     }
@@ -88,12 +86,14 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     setSelectedPlan(null);
     setShowSuccess(false);
     
+    // If we're in Telegram, use haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.selectionChanged();
     }
   };
 
   const handleRenewSubscription = (subscription: any) => {
+    // Find matching plan in current community
     const matchingPlan = community.subscription_plans.find(
       (plan) => plan.id === subscription.plan?.id
     );
@@ -106,6 +106,8 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   };
 
   const handleSelectCommunity = (selectedCommunity: any) => {
+    // In a real app, this would navigate to the community's page
+    // For now, we'll just show a message
     if (window.Telegram?.WebApp) {
       alert(`This would navigate to: ${selectedCommunity.name}`);
     } else {
@@ -113,6 +115,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     }
   };
 
+  // Ensure we have data before rendering
   if (!community || !community.subscription_plans) {
     console.error("❌ Missing community or subscription plans data");
     return (
@@ -126,6 +129,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-primary/10 via-background to-primary/5">
         <div className="container max-w-2xl mx-auto pt-4 px-4 space-y-6">
+          {/* Debug information */}
           {process.env.NODE_ENV === 'development' && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
               <p><strong>Debug Info:</strong></p>
@@ -137,6 +141,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             </div>
           )}
           
+          {/* Telegram User Info - Moved to top and redesigned */}
           {telegramUser && (
             <Card className="bg-gradient-to-r from-[#9b87f5]/20 to-[#D946EF]/10 border-[#8B5CF6]/30 overflow-hidden relative">
               <CardContent className="p-3">
@@ -161,6 +166,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
                       </Avatar>
                     )}
                     
+                    {/* Community logo overlay */}
                     {community.telegram_photo_url && (
                       <div className="absolute -bottom-1 -right-1 border-2 border-white rounded-full overflow-hidden h-6 w-6">
                         <img 
@@ -208,7 +214,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             
             <TabsContent value="subscribe" className="space-y-8 mt-0">
               <div id="subscription-plans" className="scroll-mt-4">
-                {community?.subscription_plans && Array.isArray(community.subscription_plans) && community.subscription_plans.length > 0 ? (
+                {community.subscription_plans && community.subscription_plans.length > 0 ? (
                   <SubscriptionPlans
                     plans={community.subscription_plans}
                     selectedPlan={selectedPlan}
@@ -217,12 +223,6 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
                 ) : (
                   <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
                     <p className="text-gray-500">No subscription plans available for this community.</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      {!community ? "Community data not loaded" : 
-                       !community.subscription_plans ? "Subscription plans data is missing" : 
-                       !Array.isArray(community.subscription_plans) ? "Subscription plans is not an array" :
-                       "No active subscription plans found"}
-                    </p>
                   </div>
                 )}
               </div>

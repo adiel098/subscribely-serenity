@@ -13,7 +13,6 @@ export const useCommunityData = (communityId: string | null) => {
     const fetchCommunityData = async () => {
       try {
         if (!communityId) {
-          console.error("No community ID provided");
           throw new Error("No community ID provided");
         }
         
@@ -26,24 +25,19 @@ export const useCommunityData = (communityId: string | null) => {
         console.log('Response from telegram-community-data:', response);
 
         if (response.error) {
-          console.error("Error from telegram-community-data:", response.error);
-          throw new Error(response.error.message || response.error);
+          throw new Error(response.error);
         }
 
         if (response.data?.community) {
           // Ensure subscription_plans is always an array
           const communityData = response.data.community;
-          
-          // Check if subscription_plans exists and is valid
-          if (!communityData.subscription_plans || !Array.isArray(communityData.subscription_plans)) {
+          if (!communityData.subscription_plans) {
             communityData.subscription_plans = [];
           }
           
           console.log('Processed community data:', communityData);
-          console.log('Subscription plans count:', communityData.subscription_plans.length);
           setCommunity(communityData);
         } else {
-          console.error("Community data missing in response");
           throw new Error("Community not found");
         }
       } catch (error) {

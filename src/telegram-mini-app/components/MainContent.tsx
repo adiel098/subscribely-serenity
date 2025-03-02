@@ -9,6 +9,7 @@ import { UserProfileCard } from "@/telegram-mini-app/components/user-profile/Use
 import { DebugInfo } from "@/telegram-mini-app/components/debug/DebugInfo";
 import { ContentTabs } from "@/telegram-mini-app/components/tabs/ContentTabs";
 import { PaymentSection } from "@/telegram-mini-app/components/payment/PaymentSection";
+import { AlertTriangle } from "lucide-react";
 
 interface MainContentProps {
   community: Community;
@@ -23,10 +24,35 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   const { subscriptions, isLoading: subscriptionsLoading, refetch: refreshSubscriptions } = 
     useUserSubscriptions(telegramUser?.id);
 
-  console.log("🔍 Community in MainContent:", community);
-  console.log("🔍 Community.subscription_plans:", community?.subscription_plans);
-  console.log("🔍 TelegramUser in MainContent:", telegramUser);
-  console.log("🔍 TelegramUser photo URL:", telegramUser?.photo_url);
+  console.log("🔍 MainContent rendering with:", {
+    community: community?.name,
+    telegramUser: telegramUser?.username,
+    telegramUserId: telegramUser?.id,
+    plans: community?.subscription_plans?.length || 0
+  });
+
+  // Error handling for missing data
+  if (!community) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-md m-4">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          <span>Error: Community data is missing</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!telegramUser) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-md m-4">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          <span>Error: Telegram user data is missing</span>
+        </div>
+      </div>
+    );
+  }
 
   // Log user info for debugging
   useEffect(() => {
@@ -115,7 +141,10 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     console.error("❌ Missing community or subscription plans data");
     return (
       <div className="flex justify-center items-center h-screen">
-        <p>Loading community data...</p>
+        <div className="text-center space-y-2">
+          <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
+          <p className="text-gray-700">Missing community or subscription plan data</p>
+        </div>
       </div>
     );
   }

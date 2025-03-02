@@ -7,6 +7,7 @@ import { CommunityNotFound } from "@/telegram-mini-app/components/CommunityNotFo
 import { EmailCollectionWrapper } from "@/telegram-mini-app/components/EmailCollectionWrapper";
 import { MainContent } from "@/telegram-mini-app/components/MainContent";
 import { DebugInfo } from "@/telegram-mini-app/components/debug/DebugInfo";
+import { AlertTriangle } from "lucide-react";
 
 interface AppContentRouterProps {
   loading: boolean;
@@ -31,6 +32,16 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   onRetry,
   setShowEmailForm
 }) => {
+  console.log("🧭 AppContentRouter rendering with:", {
+    loading,
+    errorState,
+    telegramUserId,
+    communityExists: !!community,
+    telegramUserExists: !!telegramUser,
+    showEmailForm,
+    isCheckingUserData
+  });
+  
   // Show debug info for development
   const activeTab = "subscribe"; // Default active tab
   
@@ -43,6 +54,31 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       showEmailForm={showEmailForm}
       isCheckingUserData={isCheckingUserData}
     />
+  );
+
+  // Error boundary for debugging - show when nothing else renders
+  const renderErrorBoundary = () => (
+    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md m-4">
+      <div className="flex items-center mb-2">
+        <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
+        <h3 className="font-semibold text-yellow-700">Routing Debug Info</h3>
+      </div>
+      <ul className="text-xs text-gray-600 space-y-1">
+        <li><span className="font-bold">Loading:</span> {loading ? 'Yes' : 'No'}</li>
+        <li><span className="font-bold">Error:</span> {errorState || 'None'}</li>
+        <li><span className="font-bold">Telegram User ID:</span> {telegramUserId || 'Missing'}</li>
+        <li><span className="font-bold">Community:</span> {community?.name || 'Not loaded'}</li>
+        <li><span className="font-bold">Telegram User:</span> {telegramUser?.username || 'Not loaded'}</li>
+        <li><span className="font-bold">Show Email Form:</span> {showEmailForm ? 'Yes' : 'No'}</li>
+        <li><span className="font-bold">Checking User Data:</span> {isCheckingUserData ? 'Yes' : 'No'}</li>
+      </ul>
+      <button 
+        onClick={onRetry}
+        className="mt-3 text-xs bg-blue-500 text-white px-2 py-1 rounded"
+      >
+        Retry
+      </button>
+    </div>
   );
 
   // Handle error state but with valid user ID
@@ -63,7 +99,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   // Don't render anything else during loading
   if (loading) {
     console.log('⏳ Still loading, not rendering content yet');
-    return renderDebugInfo();
+    return (
+      <>
+        {renderDebugInfo()}
+        <div className="p-4 text-center text-gray-600">
+          <p>Loading... Please wait.</p>
+        </div>
+      </>
+    );
   }
 
   // Missing community
@@ -115,18 +158,28 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
 
   // Main content - only show if not loading, community exists, email form is not needed,
   // and the user has provided an email
-  console.log('🎉 Showing main content with:', { 
-    community: community?.name, 
-    user: telegramUser?.username,
-    plans: community?.subscription_plans?.length || 0,
-    showEmailForm, 
-    emailProvided: telegramUser?.email ? true : false
+  if (telegramUser && community) {
+    console.log('🎉 Showing main content with:', { 
+      community: community?.name, 
+      user: telegramUser?.username,
+      plans: community?.subscription_plans?.length || 0,
+      showEmailForm, 
+      emailProvided: telegramUser?.email ? true : false
+    });
+    
+    return (
+      <>
+        {renderDebugInfo()}
+        <MainContent community={community} telegramUser={telegramUser} />
+      </>
+    );
+  }
+  
+  // If we get here, something went wrong in the routing logic
+  console.error('❌ ROUTER ERROR: No routing condition matched!', {
+    loading, errorState, telegramUserId, community, telegramUser, showEmailForm
   });
   
-  return (
-    <>
-      {renderDebugInfo()}
-      <MainContent community={community} telegramUser={telegramUser} />
-    </>
-  );
+  // Render a fallback with debug info
+  return renderErrorBoundary();
 };

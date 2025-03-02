@@ -19,6 +19,18 @@ export const EmailCollectionForm = ({
   photoUrl,
   onComplete 
 }: EmailCollectionFormProps) => {
+  console.log("📧 Rendering EmailCollectionForm with userId:", telegramUserId);
+  
+  if (!telegramUserId) {
+    console.error("❌ EmailCollectionForm: No telegramUserId provided!");
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-md">
+        <h3 className="font-bold">Missing User ID</h3>
+        <p>Unable to proceed without Telegram user identification.</p>
+      </div>
+    );
+  }
+  
   return (
     <EmailForm
       telegramUserId={telegramUserId}
@@ -26,7 +38,10 @@ export const EmailCollectionForm = ({
       lastName={lastName}
       username={username}
       photoUrl={photoUrl}
-      onComplete={onComplete}
+      onComplete={() => {
+        console.log("📧 Email collection completed for user:", telegramUserId);
+        onComplete();
+      }}
     />
   );
 };

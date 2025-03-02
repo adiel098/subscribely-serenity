@@ -1,6 +1,7 @@
 
 import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertCircle } from "lucide-react";
 
 interface ErrorNotifierProps {
   errorState: string | null;
@@ -11,13 +12,26 @@ export const ErrorNotifier: React.FC<ErrorNotifierProps> = ({ errorState }) => {
 
   useEffect(() => {
     if (errorState) {
+      console.error("🚨 ERROR NOTIFIER:", errorState);
       toast({
         variant: "destructive",
-        title: "User Data Error",
-        description: "There was a problem retrieving your information. Some features may be limited."
+        title: "Application Error",
+        description: errorState || "There was a problem loading the application. Please try again.",
       });
     }
   }, [errorState, toast]);
 
-  return null; // This is a non-visual component
+  // If there's an error, we also show it on screen for development purposes
+  if (errorState) {
+    return (
+      <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white p-3 text-sm">
+        <div className="flex items-center">
+          <AlertCircle className="mr-2 h-4 w-4" />
+          <span>Error: {errorState}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 };

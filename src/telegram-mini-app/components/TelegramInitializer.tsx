@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Info, AlertTriangle } from "lucide-react";
-import { initTelegramWebApp, isDevelopment, ensureFullScreen } from "@/telegram-mini-app/utils/telegram";
+import { initTelegramWebApp, isDevelopment, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface TelegramInitializerProps {
   onInitialized: (isInitialized: boolean, isDevelopmentMode: boolean) => void;

@@ -1,15 +1,5 @@
 
-/**
- * Re-export all Telegram utilities from the organized structure
- * This file ensures backward compatibility with existing imports
- */
-
-export {
-  isValidTelegramId,
-  formatTelegramId,
-  isDevelopment,
-  parseUserFromUrlHash,
-  initTelegramWebApp,
-  forceExpandToFullScreen,
-  ensureFullScreen
-} from './telegram';
+// This file serves as the main entry point for Telegram utility functions
+export { initTelegramWebApp, ensureFullScreen } from "./telegram/webAppInitializer";
+export { isDevelopment } from "./telegram/environmentUtils";
+export { isValidTelegramId } from "./telegram/idValidation";

@@ -14,6 +14,7 @@ interface AppContentRouterProps {
   telegramUserId: string | null;
   community: Community | null;
   telegramUser: TelegramUser | null;
+  userExistsInDatabase: boolean | null;
   showEmailForm: boolean;
   isCheckingUserData: boolean;
   onRetry: () => void;
@@ -26,28 +27,29 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   telegramUserId,
   community,
   telegramUser,
+  userExistsInDatabase,
   showEmailForm,
   isCheckingUserData,
   onRetry,
   setShowEmailForm
 }) => {
-  // Show debug info for development
-  const activeTab = "subscribe"; // Default active tab
+  // Default active tab
+  const activeTab = "subscribe";
   
-  // CRITICAL FIX: Add effect to log state changes for debugging
+  // Log state changes for debugging
   useEffect(() => {
     console.log('🚦 AppContentRouter state:', {
       loading,
       errorState,
       telegramUserExists: !!telegramUser,
       communityExists: !!community,
+      userExistsInDatabase,
       showEmailForm,
-      isCheckingUserData,
-      hasEmail: telegramUser?.email ? true : false
+      isCheckingUserData
     });
-  }, [loading, errorState, telegramUser, community, showEmailForm, isCheckingUserData]);
+  }, [loading, errorState, telegramUser, community, userExistsInDatabase, showEmailForm, isCheckingUserData]);
   
-  // Debug section at the top that will show in dev mode
+  // Debug section that will show in dev mode
   const renderDebugInfo = () => (
     <DebugInfo 
       telegramUser={telegramUser} 
@@ -55,6 +57,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       activeTab={activeTab}
       showEmailForm={showEmailForm}
       isCheckingUserData={isCheckingUserData}
+      userExistsInDatabase={userExistsInDatabase}
     />
   );
 
@@ -90,8 +93,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
 
-  // STRICT ENFORCEMENT: Email form must be shown before community content
-  // This is our critical gate that ensures users provide email before accessing content
+  // Show email form if needed
   if (showEmailForm && telegramUser) {
     console.log('📧 ROUTING: Showing email collection form');
     return (
@@ -100,27 +102,12 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 CRITICAL FIX: Email collection completed in router, now showing community content');
-            console.log('📧 CRITICAL FIX: Setting showEmailForm to false to force render of MainContent');
-            // Force update the state to trigger re-render with setTimeout(0)
-            window.setTimeout(() => {
-              setShowEmailForm(false);
-              console.log('📧 showEmailForm set to false after short delay');
-            }, 0);
+            console.log('📧 Email collection completed in router, showing community content');
+            setShowEmailForm(false);
           }}
         />
       </>
     );
-  }
-  
-  // Force check if user needs email collection
-  if (telegramUser && !telegramUser.email && !isCheckingUserData) {
-    console.log('🛑 SAFETY CHECK: User missing email, forcing email collection');
-    window.setTimeout(() => {
-      setShowEmailForm(true);
-      console.log('📧 SAFETY CHECK: Forced showEmailForm to true');
-    }, 0);
-    return renderDebugInfo();
   }
 
   // Main content - only show if not loading, community exists, email form is not needed
@@ -128,8 +115,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     community: community?.name, 
     user: telegramUser?.username,
     plans: community?.subscription_plans?.length || 0,
-    showEmailForm, 
-    emailProvided: telegramUser?.email ? true : false
+    userExistsInDatabase,
+    showEmailForm
   });
   
   return (

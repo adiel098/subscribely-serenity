@@ -38,16 +38,9 @@ const TelegramMiniApp = () => {
   // Log Telegram WebApp object if available
   useEffect(() => {
     if (window.Telegram?.WebApp) {
-      console.log('📱 Telegram WebApp object is available:');
-      console.log('📌 Full WebApp object:', window.Telegram.WebApp);
-      console.log('📌 initData:', window.Telegram.WebApp.initData);
-      console.log('📌 initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
+      console.log('📱 Telegram WebApp object is available');
       if (window.Telegram.WebApp.initDataUnsafe?.user) {
         console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
-        console.log('🆔 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user.id);
-        console.log('🆔 User ID type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
-      } else {
-        console.log('❌ No user data in WebApp.initDataUnsafe');
       }
     } else {
       console.log('❌ Telegram WebApp object is NOT available');
@@ -72,12 +65,6 @@ const TelegramMiniApp = () => {
   const handleTelegramInitialized = (isInitialized: boolean, isDev: boolean) => {
     setTelegramInitialized(isInitialized);
     setIsDevelopmentMode(prev => prev || isDev);
-    
-    // Recheck telegram user ID after initialization
-    if (isInitialized && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
-      console.log('🔑 User ID after initialization:', userId);
-    }
   };
 
   // Set effective start parameter (use default in dev mode)
@@ -86,8 +73,13 @@ const TelegramMiniApp = () => {
 
   // Fetch data using hooks
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
-  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
-    useTelegramUser(effectiveStartParam || "", telegramUserId);
+  const { 
+    user: telegramUser, 
+    loading: userLoading, 
+    error: userError, 
+    refetch: refetchUser,
+    userExistsInDatabase
+  } = useTelegramUser(effectiveStartParam || "", telegramUserId);
 
   // Log hook results for debugging
   console.log('📡 Hook Results:');
@@ -95,11 +87,11 @@ const TelegramMiniApp = () => {
   console.log('📌 Community data:', community);
   console.log('📌 User loading:', userLoading);
   console.log('📌 User data:', telegramUser);
+  console.log('📌 User exists in database:', userExistsInDatabase);
   console.log('📌 User error:', userError);
   console.log('📌 Email form should show:', showEmailForm);
-  console.log('📌 Direct telegramUserId:', telegramUserId);
 
-  // CRITICAL FIX: Create memoized wrapper functions to avoid recreating functions
+  // Create memoized wrapper functions
   const handleShowEmailForm = useCallback((show: boolean) => {
     console.log('📧 Setting showEmailForm state:', show, 'Previous value:', showEmailForm);
     setShowEmailForm(show);
@@ -157,19 +149,7 @@ const TelegramMiniApp = () => {
     });
   };
 
-  // Debug email form state changes
-  useEffect(() => {
-    console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
-  }, [showEmailForm]);
-
-  // CRITICAL FIX: Force email collection for users without email
-  useEffect(() => {
-    if (!userLoading && telegramUser && !telegramUser.email) {
-      console.log('🚨 User loaded without email - this should trigger email collection:', telegramUser);
-    }
-  }, [telegramUser, userLoading]);
-
-  // CRITICAL FIX: Reset checking state after data loads
+  // Reset checking state after data loads
   useEffect(() => {
     if (!communityLoading && !userLoading && isCheckingUserData) {
       console.log('🔄 All data loaded, resetting checking state');
@@ -190,6 +170,7 @@ const TelegramMiniApp = () => {
         telegramUser={telegramUser}
         errorState={errorState}
         telegramUserId={telegramUserId}
+        userExistsInDatabase={userExistsInDatabase}
         onRefetch={refetchUser}
         onRetry={handleRetry}
         setShowEmailForm={handleShowEmailForm}

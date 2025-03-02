@@ -1,7 +1,7 @@
 
 /**
- * Adjust this hook to only fetch user data without creating a user record
- * This ensures that user creation only happens in the email collection form
+ * Hook to fetch Telegram user data from the database
+ * Clearly differentiates between "user not found" and "user exists without email"
  */
 import { useState, useEffect } from 'react';
 import { fetchTelegramUserById } from '@/telegram-mini-app/services/telegramUserService';
@@ -11,6 +11,7 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [userExistsInDatabase, setUserExistsInDatabase] = useState<boolean | null>(null);
 
   const fetchUser = async () => {
     setLoading(true);
@@ -28,16 +29,19 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
         throw new Error('Invalid Telegram user ID format');
       }
       
-      // Only fetch the user data, don't create a user record
+      // Fetch user data from the database
       const userData = await fetchTelegramUserById(telegramUserId);
       console.log('📱 Telegram user data fetched:', userData);
       
       if (userData) {
+        // User exists in database
         setUser(userData);
+        setUserExistsInDatabase(true);
+        console.log('✅ User found in database with ID:', telegramUserId);
       } else {
-        // If no user data is found in the database, still provide an object with the ID
-        // This allows the app to show the email collection form without a database record
-        console.log('📱 No user record found, creating temporary user object with ID:', telegramUserId);
+        // User does not exist in database - create temporary object for the flow
+        console.log('🆕 User not found in database with ID:', telegramUserId);
+        setUserExistsInDatabase(false);
         setUser({
           id: telegramUserId,
           // Set from WebApp object if available
@@ -45,7 +49,6 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
           last_name: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',
           username: window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '',
           photo_url: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || '',
-          // The email will definitely be empty, forcing the email collection form
           email: null
         });
       }
@@ -71,5 +74,5 @@ export const useTelegramUser = (startParam: string, telegramUserId: string | nul
     }
   };
 
-  return { user, loading, error, refetch };
+  return { user, loading, error, refetch, userExistsInDatabase };
 };

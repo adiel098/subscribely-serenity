@@ -15,6 +15,7 @@ interface AppContentProps {
   telegramUser: TelegramUser | null;
   errorState: string | null;
   telegramUserId: string | null;
+  userExistsInDatabase: boolean | null;
   onRefetch: () => void;
   onRetry: () => void;
   setShowEmailForm: (show: boolean) => void;
@@ -31,6 +32,7 @@ export const AppContent: React.FC<AppContentProps> = ({
   telegramUser,
   errorState,
   telegramUserId,
+  userExistsInDatabase,
   onRefetch,
   onRetry,
   setShowEmailForm,
@@ -38,13 +40,13 @@ export const AppContent: React.FC<AppContentProps> = ({
   setIsCheckingUserData,
   setErrorState
 }) => {
-  // CRITICAL FIX: Track when email is submitted
+  // Track when email is submitted
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   
   // All component state and functionality is now split into smaller components
   const isLoading = communityLoading || userLoading || isCheckingUserData;
   
-  // CRITICAL FIX: Log state changes for debugging
+  // Log state changes for debugging
   useEffect(() => {
     console.log('📊 AppContent state changed:', {
       communityLoading,
@@ -53,21 +55,17 @@ export const AppContent: React.FC<AppContentProps> = ({
       hasUser: !!telegramUser,
       showEmailForm,
       isLoading,
-      hasEmail: telegramUser?.email ? true : false,
+      userExistsInDatabase,
       emailSubmitted
     });
     
-    // CRITICAL FIX: If email was submitted but we're still showing the email form, force hide it
-    if (emailSubmitted && showEmailForm && telegramUser) {
+    // If email was submitted but we're still showing the email form, force hide it
+    if (emailSubmitted && showEmailForm) {
       console.log('🚨 Email was submitted but form is still showing - forcing transition');
       setShowEmailForm(false);
     }
-    
-    // Force a re-check of user data when the user object changes
-    if (telegramUser && !isCheckingUserData && !userLoading) {
-      console.log('👤 User object available, has email:', !!telegramUser.email);
-    }
-  }, [communityLoading, userLoading, isCheckingUserData, telegramUser, showEmailForm, emailSubmitted, setShowEmailForm]);
+  }, [communityLoading, userLoading, isCheckingUserData, telegramUser, 
+      showEmailForm, emailSubmitted, setShowEmailForm, userExistsInDatabase]);
 
   return (
     <>
@@ -78,6 +76,7 @@ export const AppContent: React.FC<AppContentProps> = ({
       <UserDataChecker
         telegramUser={telegramUser}
         userLoading={userLoading}
+        userExistsInDatabase={userExistsInDatabase}
         setIsCheckingUserData={setIsCheckingUserData}
         setShowEmailForm={setShowEmailForm}
         setErrorState={setErrorState}
@@ -100,6 +99,7 @@ export const AppContent: React.FC<AppContentProps> = ({
         telegramUserId={telegramUserId}
         community={community}
         telegramUser={telegramUser}
+        userExistsInDatabase={userExistsInDatabase}
         showEmailForm={showEmailForm}
         isCheckingUserData={isCheckingUserData}
         onRetry={onRetry}

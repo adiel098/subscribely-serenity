@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { EmailCollectionForm } from "@/telegram-mini-app/components/EmailCollectionForm";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 
@@ -15,16 +16,21 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
     telegramUser ? `ID: ${telegramUser.id}, Email: ${telegramUser.email}` : 'null');
   console.log('🧩 EmailCollectionWrapper: onComplete function exists:', !!onComplete);
   
+  useEffect(() => {
+    // If user already has an email, skip the form
+    if (telegramUser?.email) {
+      console.log('📧 User already has email, calling onComplete directly:', telegramUser.email);
+      onComplete();
+    }
+  }, [telegramUser, onComplete]);
+  
   if (!telegramUser) {
     console.error('❌ EMAIL COLLECTION: No user data provided to wrapper');
     return null;
   }
   
-  // Check if user already has an email (should never happen due to our router logic, but just in case)
+  // If user already has an email from a previous useEffect check, don't render the form
   if (telegramUser.email) {
-    console.warn('⚠️ EMAIL COLLECTION: User already has email, calling onComplete directly', telegramUser.email);
-    console.log('📧 CRITICAL FIX: Calling onComplete immediately for user with email:', telegramUser.email);
-    onComplete();
     return null;
   }
   
@@ -72,8 +78,8 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
       photoUrl={telegramUser.photo_url}
       onComplete={() => {
         console.log('📝 EMAIL COLLECTION: Form submitted successfully, calling parent onComplete');
-        // Ensure we're calling the parent onComplete function
-        if (onComplete) onComplete();
+        // Call the parent onComplete function to proceed to main content
+        onComplete();
       }} 
     />
   );

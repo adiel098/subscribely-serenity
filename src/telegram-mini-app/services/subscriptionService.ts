@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logServiceAction, validateTelegramId, invokeSupabaseFunction } from "./utils/serviceUtils";
-import { Subscription, Community } from "../types/community.types";
+import { Community, Subscription } from "../types/community.types";
 
 export async function getUserSubscriptions(userId: string): Promise<Subscription[]> {
   logServiceAction("getUserSubscriptions", { userId });

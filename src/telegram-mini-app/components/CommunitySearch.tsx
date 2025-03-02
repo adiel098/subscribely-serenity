@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { searchCommunities } from "../services/memberService";
+import { searchCommunities } from "../services/communityService";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { SearchBar } from "./search/SearchBar";
 import { CommunityCard } from "./search/CommunityCard";

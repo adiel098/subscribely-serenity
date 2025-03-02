@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Users, ChevronRight } from "lucide-react";
-import { Community } from "@/telegram-mini-app/services/memberService";
+import { Community } from "@/telegram-mini-app/types/community.types";
 
 interface CommunityCardProps {
   community: Community;

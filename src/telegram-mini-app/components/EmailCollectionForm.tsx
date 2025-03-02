@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { collectUserEmail } from "@/telegram-mini-app/services/memberService";
+import { collectUserEmail } from "@/telegram-mini-app/services/userProfileService";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 

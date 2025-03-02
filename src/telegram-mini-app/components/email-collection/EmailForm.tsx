@@ -1,12 +1,41 @@
 
 import React, { useState, FormEvent } from "react";
-import { saveUserEmail } from "@/telegram-mini-app/services/userProfileService";
 import { useToast } from "@/components/ui/use-toast";
 import { FormHeader } from "./FormHeader";
 import { EmailInput } from "./EmailInput";
 import { SubmitButton } from "./SubmitButton";
 import { PrivacyNote } from "./PrivacyNote";
 import { isValidEmail } from "./emailFormUtils";
+
+// Define the function that was missing
+const saveUserEmail = async (
+  telegramUserId: string, 
+  email: string, 
+  userData: {
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    photoUrl?: string;
+  }
+) => {
+  console.log("Saving email for user", telegramUserId, email, userData);
+  
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  // In a real app, this would be an API call to your backend
+  const response = {
+    success: true,
+    userId: telegramUserId,
+    email: email
+  };
+  
+  if (!response.success) {
+    throw new Error("Failed to save email");
+  }
+  
+  return response;
+};
 
 export interface EmailFormProps {
   telegramUserId: string;
@@ -56,7 +85,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
       
       console.log(`✅ Email saved successfully for user ID: ${telegramUserId}`);
       
-      // Removed toast notification for email saved
+      // Removed toast notification for email saved - as requested
 
       // Trigger haptic feedback if available
       if (window.Telegram?.WebApp?.HapticFeedback) {

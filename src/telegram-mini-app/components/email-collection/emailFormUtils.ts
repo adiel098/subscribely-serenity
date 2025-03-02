@@ -2,7 +2,7 @@
 /**
  * Validates if the provided email has a valid format
  */
-export const validateEmail = (email: string): boolean => {
+export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };

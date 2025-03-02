@@ -42,28 +42,38 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     isCheckingUserData
   });
   
-  // Render email form whenever possible - most important priority
-  // If we have valid telegramUserId and either showEmailForm is true or user has no email
-  if (telegramUserId && (showEmailForm || (telegramUser && !telegramUser.email))) {
-    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately with ID:', telegramUserId);
+  // HIGHEST PRIORITY: Show email form whenever possible
+  // This takes precedence over everything else to ensure users can provide email
+  if (telegramUserId && showEmailForm) {
+    console.log('📧 TOP PRIORITY EMAIL COLLECTION: Showing email form immediately with ID:', telegramUserId);
     return (
-      <>
-        {/* Debug info intentionally not shown by default */}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser || { id: telegramUserId }} 
-          onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
+      <EmailCollectionWrapper 
+        telegramUser={telegramUser || { id: telegramUserId }} 
+        onComplete={() => {
+          console.log('📧 Email collection completed, showing community content');
+          setShowEmailForm(false);
+        }}
+      />
     );
   }
   
-  // Show debug info for development - but only when explicitly enabled with URL param
-  const activeTab = "subscribe"; // Default active tab
+  // Second priority: Also show email form if user exists but has no email
+  if (telegramUserId && telegramUser && !telegramUser.email) {
+    console.log('📧 SECONDARY EMAIL COLLECTION: User exists but missing email');
+    return (
+      <EmailCollectionWrapper 
+        telegramUser={telegramUser} 
+        onComplete={() => {
+          console.log('📧 Email collection completed, showing community content');
+          setShowEmailForm(false);
+        }}
+      />
+    );
+  }
   
   // Debug section at the top that will show ONLY when debug=true is in URL
+  const activeTab = "subscribe"; // Default active tab
+  
   const renderDebugInfo = () => (
     <DebugInfo 
       telegramUser={telegramUser} 

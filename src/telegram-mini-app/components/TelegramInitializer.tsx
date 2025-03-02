@@ -13,6 +13,16 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 
   useEffect(() => {
+    // Force expand immediately
+    if (window.Telegram?.WebApp) {
+      console.log('📱 Forcing immediate WebApp expansion');
+      try {
+        window.Telegram.WebApp.expand();
+      } catch (err) {
+        console.error('📱 Error in immediate expand:', err);
+      }
+    }
+    
     // Apply aggressive fullscreen strategy
     const applyFullScreen = () => {
       // Force fullscreen with multiple strategies
@@ -23,6 +33,16 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
         }).catch(err => {
           console.error('📱 WebApp expansion error:', err);
         });
+      }
+      
+      // Alternative direct call if available
+      if (window.Telegram?.WebApp?.expand) {
+        try {
+          console.log('📱 Forcing WebApp expansion (direct call)');
+          window.Telegram.WebApp.expand();
+        } catch (err) {
+          console.error('📱 Error in direct expand:', err);
+        }
       }
       
       // Apply CSS fullscreen fixes
@@ -141,8 +161,10 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
     };
   }, [onInitialized]);
 
-  // Development mode banner
-  if (isDevelopmentMode) {
+  // Only show development mode banner if debug is enabled in URL
+  const showDebugInfo = isDevelopmentMode && window.location.search.includes('debug=true');
+  
+  if (showDebugInfo) {
     return (
       <Alert variant={window.Telegram?.WebApp ? "default" : "destructive"} className="mb-4 mx-4 mt-4">
         {window.Telegram?.WebApp ? (

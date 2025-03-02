@@ -20,7 +20,16 @@ export const useUserDataValidation = ({
   const validateUserData = useCallback(async (telegramUser: TelegramUser) => {
     console.log('📱 Telegram ID for validation:', telegramUser.id);
     console.log('📱 Telegram ID type:', typeof telegramUser.id);
+    
+    // Set checking to true
     setIsCheckingUserData(true);
+    
+    // IMPORTANT: Set showEmailForm to true by default
+    // This ensures the email form shows immediately, even during validation
+    if (!telegramUser.email) {
+      console.log('🔴 PROACTIVE EMAIL FORM: Setting email form to show immediately');
+      setShowEmailForm(true);
+    }
     
     try {
       if (!telegramUser.id) {
@@ -51,8 +60,6 @@ export const useUserDataValidation = ({
       // 2. User exists but doesn't have an email
       if (!exists || !hasEmail) {
         console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
-        
-        // No welcome toast notification - as requested
         
         // Force showing email form - this is critical
         setShowEmailForm(true);

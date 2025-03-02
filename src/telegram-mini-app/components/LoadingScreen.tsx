@@ -19,6 +19,8 @@ export const LoadingScreen = () => {
   const getLoadingMessage = () => {
     if (loadingTime > 10) {
       return "Still loading, please be patient";
+    } else if (loadingTime > 5) {
+      return "Almost there...";
     } else {
       return "Loading amazing content";
     }
@@ -37,8 +39,8 @@ export const LoadingScreen = () => {
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
         >
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
-            <Sparkles className="h-10 w-10 text-white" />
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-full w-24 h-24 mx-auto flex items-center justify-center">
+            <Sparkles className="h-12 w-12 text-white" />
           </div>
         </motion.div>
         
@@ -57,7 +59,14 @@ export const LoadingScreen = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          <div className="relative">
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            <motion.div 
+              className="absolute inset-0 rounded-full bg-primary/10"
+              animate={{ scale: [1, 1.5, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
         </motion.div>
         
         {loadingTime > 5 && (

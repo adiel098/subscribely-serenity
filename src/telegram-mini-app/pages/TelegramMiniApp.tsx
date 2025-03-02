@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,7 +18,7 @@ const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isCheckingUserData, setIsCheckingUserData] = useState(true);
-  const [isDevelopment, setIsDevelopment] = useState(false);
+  const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
   const [errorState, setErrorState] = useState<string | null>(null);
   const { toast } = useToast();
@@ -31,8 +32,9 @@ const TelegramMiniApp = () => {
   }, []);
 
   useEffect(() => {
+    // Use the isDevelopment utility as a function, not as a Boolean value
     const devEnvironment = isDevelopment();
-    setIsDevelopment(devEnvironment);
+    setIsDevelopmentMode(devEnvironment);
     
     if (devEnvironment && !window.Telegram?.WebApp) {
       console.log('🧪 Running in development mode without Telegram WebApp object');
@@ -61,7 +63,7 @@ const TelegramMiniApp = () => {
   console.log('🔑 Direct telegram user ID extraction:', telegramUserId);
   console.log('🔑 Direct telegram user ID type:', typeof telegramUserId);
 
-  const effectiveStartParam = isDevelopment && !startParam ? "dev123" : startParam;
+  const effectiveStartParam = isDevelopmentMode && !startParam ? "dev123" : startParam;
 
   const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 

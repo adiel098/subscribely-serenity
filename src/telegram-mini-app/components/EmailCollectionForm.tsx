@@ -147,7 +147,7 @@ export const EmailCollectionForm = ({
           </Button>
           
           <p className="text-xs text-center text-gray-500 mt-4">
-            We'llsss only use your email to send important updates about your membership
+            We'llsssasas only use your email to send important updates about your membership
           </p>
         </form>
       </div>

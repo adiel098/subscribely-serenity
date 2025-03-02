@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TelegramMiniAppUser } from "@/telegram-mini-app/types/database.types";
@@ -15,14 +14,40 @@ export interface TelegramUser {
 /**
  * Extract Telegram Web App data from window.Telegram
  */
-const getWebAppData = (): TelegramUser | null => {
+const getWebAppData = (directTelegramUserId?: string | null): TelegramUser | null => {
   try {
     console.log('🔍 Attempting to get WebApp data from window.Telegram...');
     console.log('📊 window.Telegram exists:', Boolean(window.Telegram));
     console.log('📊 window.Telegram.WebApp exists:', Boolean(window.Telegram?.WebApp));
     console.log('📊 initDataUnsafe exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe));
     console.log('📊 user exists:', Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user));
+    console.log('📊 Direct Telegram User ID:', directTelegramUserId);
     
+    // First, handle the case where we have a direct user ID
+    if (directTelegramUserId) {
+      console.log('✅ Using direct Telegram User ID:', directTelegramUserId);
+      
+      // If we also have WebApp data, we can enrich the user object
+      if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        console.log('✅ Enriching direct ID with WebApp data:', user);
+        
+        return {
+          id: directTelegramUserId,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          photo_url: user.photo_url
+        };
+      }
+      
+      // Otherwise, return a minimal user object with just the ID
+      return {
+        id: directTelegramUserId
+      };
+    }
+    
+    // If no direct ID, try to get from WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
@@ -95,194 +120,200 @@ const getMockUser = (): TelegramUser => {
 /**
  * Custom hook to retrieve Telegram user data
  */
-export const useTelegramUser = (communityId: string) => {
+export const useTelegramUser = (communityId: string, directTelegramUserId?: string | null) => {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        console.log('🚀 Starting user data fetch process...');
-        console.log('📌 Community ID:', communityId);
-        console.log('📌 Current URL:', window.location.href);
+  const fetchUserData = async () => {
+    try {
+      console.log('🚀 Starting user data fetch process...');
+      console.log('📌 Community ID:', communityId);
+      console.log('📌 Direct Telegram User ID:', directTelegramUserId);
+      console.log('📌 Current URL:', window.location.href);
+      
+      setLoading(true);
+      setError(null);
+      
+      // Try to force Telegram Web App initialization if needed
+      if (window.Telegram && !window.Telegram.WebApp) {
+        console.log('⚠️ Telegram object exists but WebApp is not initialized. Trying to initialize...');
+        try {
+          // @ts-ignore - Attempting to access the Telegram object directly
+          window.Telegram.WebApp = window.Telegram.WebApp || {};
+        } catch (initError) {
+          console.error('❌ Failed to initialize WebApp:', initError);
+        }
+      }
+      
+      // Strategy 1: Try to get data from Telegram WebApp
+      console.log('🔍 Attempting to get data from Telegram WebApp...');
+      let userData = getWebAppData(directTelegramUserId);
+      
+      // Development mode handling
+      const isDevMode = isDevelopment();
+      
+      if (userData) {
+        console.log('✅ Successfully retrieved user data from Telegram WebApp or direct ID:', userData);
         
-        setLoading(true);
-        setError(null);
-        
-        // Try to force Telegram Web App initialization if needed
-        if (window.Telegram && !window.Telegram.WebApp) {
-          console.log('⚠️ Telegram object exists but WebApp is not initialized. Trying to initialize...');
-          try {
-            // @ts-ignore - Attempting to access the Telegram object directly
-            window.Telegram.WebApp = window.Telegram.WebApp || {};
-          } catch (initError) {
-            console.error('❌ Failed to initialize WebApp:', initError);
+        // If we have user data, fetch additional data from database
+        if (userData.id) {
+          console.log('🔍 Fetching additional info from database...');
+          console.log('📌 Looking up user with telegram_id:', userData.id);
+          
+          // Check if user exists in database and get additional info (like email)
+          const { data: dbUser, error: dbError } = await supabase
+            .from('telegram_mini_app_users')
+            .select('*')
+            .eq('telegram_id', userData.id)
+            .maybeSingle();
+          
+          if (dbError) {
+            console.error("❌ Error fetching user from database:", dbError);
+          } else if (dbUser) {
+            console.log('✅ User found in database:', dbUser);
+            // Merge data from db with data from Telegram
+            userData = {
+              ...userData,
+              email: dbUser.email || undefined,
+              // If the database has a photo_url and Telegram doesn't, use the one from the database
+              photo_url: userData.photo_url || dbUser.photo_url || undefined,
+              // Same for username
+              username: userData.username || dbUser.username || undefined
+            };
+            console.log('✅ Merged user data with database info:', userData);
+          } else {
+            console.log('⚠️ User not found in database, will create via edge function');
+          }
+          
+          // If user doesn't exist in DB, create or update them via edge function
+          if (!dbUser) {
+            console.log('🔍 Creating/updating user via edge function...');
+            const payload = { 
+              telegram_id: userData.id,
+              first_name: userData.first_name,
+              last_name: userData.last_name,
+              username: userData.username,
+              photo_url: userData.photo_url,
+              community_id: communityId
+            };
+            
+            console.log('📌 Edge function payload:', payload);
+            
+            try {
+              const response = await supabase.functions.invoke("telegram-user-manager", {
+                body: payload
+              });
+              
+              console.log('📊 Edge function response:', response);
+              
+              if (response.error) {
+                console.error("❌ Error from edge function:", response.error);
+              } else if (response.data?.user) {
+                console.log('✅ User created/updated via edge function:', response.data.user);
+                // Update with more complete data from edge function
+                userData = {
+                  ...userData,
+                  ...response.data.user
+                };
+                console.log('✅ Final user data after edge function:', userData);
+              }
+            } catch (edgeFunctionError) {
+              console.error("❌ Exception when calling edge function:", edgeFunctionError);
+            }
           }
         }
         
-        // Strategy 1: Try to get data from Telegram WebApp
-        console.log('🔍 Attempting to get data from Telegram WebApp...');
-        let userData = getWebAppData();
+        setUser(userData);
+      } else {
+        // Check if there's initData in the URL hash (Telegram mini apps sometimes put it there)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const initData = hashParams.get('tgWebAppData');
         
-        // Development mode handling
-        const isDevMode = isDevelopment();
-        
-        if (userData) {
-          console.log('✅ Successfully retrieved user data from Telegram WebApp:', userData);
-          
-          // If we have user data, fetch additional data from database
-          if (userData.id) {
-            console.log('🔍 Fetching additional info from database...');
-            console.log('📌 Looking up user with telegram_id:', userData.id);
-            
-            // Check if user exists in database and get additional info (like email)
-            const { data: dbUser, error: dbError } = await supabase
-              .from('telegram_mini_app_users')
-              .select('*')
-              .eq('telegram_id', userData.id)
-              .maybeSingle();
-            
-            if (dbError) {
-              console.error("❌ Error fetching user from database:", dbError);
-            } else if (dbUser) {
-              console.log('✅ User found in database:', dbUser);
-              // Merge data from db with data from Telegram
+        if (initData) {
+          console.log('🔍 Found initData in URL hash:', initData);
+          try {
+            const data = new URLSearchParams(initData);
+            const userStr = data.get('user');
+            if (userStr) {
+              const parsedUser = JSON.parse(userStr);
+              console.log('✅ Successfully parsed user data from hash:', parsedUser);
               userData = {
-                ...userData,
-                email: dbUser.email || undefined,
-                // If the database has a photo_url and Telegram doesn't, use the one from the database
-                photo_url: userData.photo_url || dbUser.photo_url || undefined,
-                // Same for username
-                username: userData.username || dbUser.username || undefined
-              };
-              console.log('✅ Merged user data with database info:', userData);
-            } else {
-              console.log('⚠️ User not found in database, will create via edge function');
-            }
-            
-            // If user doesn't exist in DB, create or update them via edge function
-            if (!dbUser) {
-              console.log('🔍 Creating/updating user via edge function...');
-              const payload = { 
-                telegram_id: userData.id,
-                first_name: userData.first_name,
-                last_name: userData.last_name,
-                username: userData.username,
-                photo_url: userData.photo_url,
-                community_id: communityId
+                id: parsedUser.id?.toString() || "",
+                first_name: parsedUser.first_name,
+                last_name: parsedUser.last_name,
+                username: parsedUser.username,
+                photo_url: parsedUser.photo_url
               };
               
-              console.log('📌 Edge function payload:', payload);
-              
+              // Try to create/update user via edge function with hash data
               try {
+                console.log('🔍 Creating/updating user from hash data via edge function...');
                 const response = await supabase.functions.invoke("telegram-user-manager", {
-                  body: payload
+                  body: { 
+                    telegram_id: userData.id,
+                    first_name: userData.first_name,
+                    last_name: userData.last_name,
+                    username: userData.username,
+                    photo_url: userData.photo_url,
+                    community_id: communityId
+                  }
                 });
                 
-                console.log('📊 Edge function response:', response);
-                
                 if (response.error) {
-                  console.error("❌ Error from edge function:", response.error);
+                  console.error("❌ Error from edge function with hash data:", response.error);
                 } else if (response.data?.user) {
-                  console.log('✅ User created/updated via edge function:', response.data.user);
-                  // Update with more complete data from edge function
+                  console.log('✅ User created/updated from hash via edge function:', response.data.user);
                   userData = {
                     ...userData,
                     ...response.data.user
                   };
-                  console.log('✅ Final user data after edge function:', userData);
                 }
-              } catch (edgeFunctionError) {
-                console.error("❌ Exception when calling edge function:", edgeFunctionError);
+              } catch (hashEdgeFunctionError) {
+                console.error("❌ Exception when calling edge function with hash data:", hashEdgeFunctionError);
               }
+              
+              setUser(userData);
+              return;
             }
-          }
-          
-          setUser(userData);
-        } else {
-          // Check if there's initData in the URL hash (Telegram mini apps sometimes put it there)
-          const hashParams = new URLSearchParams(window.location.hash.substring(1));
-          const initData = hashParams.get('tgWebAppData');
-          
-          if (initData) {
-            console.log('🔍 Found initData in URL hash:', initData);
-            try {
-              const data = new URLSearchParams(initData);
-              const userStr = data.get('user');
-              if (userStr) {
-                const parsedUser = JSON.parse(userStr);
-                console.log('✅ Successfully parsed user data from hash:', parsedUser);
-                userData = {
-                  id: parsedUser.id?.toString() || "",
-                  first_name: parsedUser.first_name,
-                  last_name: parsedUser.last_name,
-                  username: parsedUser.username,
-                  photo_url: parsedUser.photo_url
-                };
-                
-                // Try to create/update user via edge function with hash data
-                try {
-                  console.log('🔍 Creating/updating user from hash data via edge function...');
-                  const response = await supabase.functions.invoke("telegram-user-manager", {
-                    body: { 
-                      telegram_id: userData.id,
-                      first_name: userData.first_name,
-                      last_name: userData.last_name,
-                      username: userData.username,
-                      photo_url: userData.photo_url,
-                      community_id: communityId
-                    }
-                  });
-                  
-                  if (response.error) {
-                    console.error("❌ Error from edge function with hash data:", response.error);
-                  } else if (response.data?.user) {
-                    console.log('✅ User created/updated from hash via edge function:', response.data.user);
-                    userData = {
-                      ...userData,
-                      ...response.data.user
-                    };
-                  }
-                } catch (hashEdgeFunctionError) {
-                  console.error("❌ Exception when calling edge function with hash data:", hashEdgeFunctionError);
-                }
-                
-                setUser(userData);
-                return;
-              }
-            } catch (parseError) {
-              console.error('❌ Error parsing initData from hash:', parseError);
-            }
-          }
-          
-          // Development mode fallback
-          if (isDevMode) {
-            console.log('🔍 Development environment detected, using mock user data');
-            const mockUser = getMockUser();
-            console.log('✅ Using mock user:', mockUser);
-            setUser(mockUser);
-          } else {
-            console.error('❌ Could not retrieve user data from Telegram WebApp');
-            setError("Could not retrieve user data");
+          } catch (parseError) {
+            console.error('❌ Error parsing initData from hash:', parseError);
           }
         }
-      } catch (err) {
-        console.error("❌ Error in useTelegramUser:", err);
-        setError(err instanceof Error ? err.message : "Unknown error occurred");
         
-        // If in development mode, still use mock data even if there was an error
-        if (isDevelopment()) {
-          console.log('🔄 Using mock data after error in development mode');
-          setUser(getMockUser());
+        // Development mode fallback
+        if (isDevMode) {
+          console.log('🔍 Development environment detected, using mock user data');
+          const mockUser = getMockUser();
+          console.log('✅ Using mock user:', mockUser);
+          setUser(mockUser);
+        } else {
+          console.error('❌ Could not retrieve user data from Telegram WebApp');
+          setError("Could not retrieve user data");
         }
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error("❌ Error in useTelegramUser:", err);
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      
+      // If in development mode, still use mock data even if there was an error
+      if (isDevelopment()) {
+        console.log('🔄 Using mock data after error in development mode');
+        setUser(getMockUser());
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
-  }, [communityId]);
+  }, [communityId, directTelegramUserId]);
 
-  return { user, loading, error };
+  return { 
+    user, 
+    loading, 
+    error,
+    refetch: fetchUserData
+  };
 };

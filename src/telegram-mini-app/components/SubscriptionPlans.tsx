@@ -10,12 +10,33 @@ interface SubscriptionPlansProps {
   onPlanSelect: (plan: Plan) => void;
 }
 
-
 export const SubscriptionPlans = ({
   plans,
   selectedPlan,
   onPlanSelect
 }: SubscriptionPlansProps) => {
+  // Debug logs
+  console.log("SubscriptionPlans component rendering with:", {
+    plansCount: plans?.length,
+    plansData: plans,
+    selectedPlan
+  });
+
+  if (!plans || plans.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <Badge variant="secondary" className="px-4 py-1.5">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Subscription Plans
+          </Badge>
+          <h2 className="text-3xl font-bold text-gray-900">No Plans Available</h2>
+          <p className="text-gray-600">Please contact the community administrator</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
@@ -31,7 +52,7 @@ export const SubscriptionPlans = ({
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`group p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer hover-scale ${
+            className={`group p-6 rounded-xl border-2 transition-all duration-300 cursor-pointer hover:scale-[1.01] ${
               selectedPlan?.id === plan.id
                 ? 'border-primary shadow-xl bg-primary/5'
                 : 'border-gray-200 hover:border-primary/50 hover:shadow-lg'

@@ -15,30 +15,36 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
         return [];
       }
 
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        console.error('No access token found');
-        throw new Error('Authentication required');
-      }
-      
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('community_id', communityId)
-        .eq('is_active', true)
-        .order('price', { ascending: true });
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.access_token) {
+          console.error('No access token found');
+          throw new Error('Authentication required');
+        }
+        
+        const { data, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('community_id', communityId)
+          .eq('is_active', true)
+          .order('price', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching plans:', error);
+        if (error) {
+          console.error('Error fetching plans:', error);
+          toast.error('Failed to load subscription plans');
+          throw error;
+        }
+        
+        console.log('Successfully fetched plans for community:', communityId, 'Plans count:', data?.length, 'Plans:', data);
+        return data as SubscriptionPlan[];
+      } catch (error) {
+        console.error('Error in useFetchSubscriptionPlans:', error);
         toast.error('Failed to load subscription plans');
         throw error;
       }
-      
-      console.log('Successfully fetched plans for community:', communityId, 'Plans:', data);
-      return data as SubscriptionPlan[];
     },
     enabled: Boolean(communityId),
-    staleTime: 1000,
+    staleTime: 1000 * 60, // Increase stale time to 1 minute for better caching
     refetchOnWindowFocus: true,
     retry: 2,
   });

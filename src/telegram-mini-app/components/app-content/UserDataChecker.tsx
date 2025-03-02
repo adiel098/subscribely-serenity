@@ -54,10 +54,14 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
+          // CRITICAL FIX: Additional check - if user data contains email directly, skip email form
+          const userHasEmailDirectly = !!telegramUser.email && telegramUser.email.length > 0;
+          console.log('📧 User has email directly in user object:', userHasEmailDirectly, telegramUser.email);
+          
           // Enforce email collection in ALL cases where either:
           // 1. User is new (not in DB) OR
           // 2. User exists but doesn't have an email
-          if (!exists || !hasEmail) {
+          if (!exists || (!hasEmail && !userHasEmailDirectly)) {
             console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
             
             if (!exists) {

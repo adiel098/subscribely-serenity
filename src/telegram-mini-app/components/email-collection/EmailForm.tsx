@@ -66,12 +66,9 @@ export const EmailForm: React.FC<EmailFormProps> = ({
           description: "You can now access the community content.",
         });
         
-        // CRITICAL FIX: Ensure onComplete is called after successful submission
-        // Use setTimeout to allow the UI to update before navigation
-        setTimeout(() => {
-          console.log('🔄 Calling onComplete callback to proceed to community content');
-          onComplete();
-        }, 500);
+        // CRITICAL FIX: Force immediate completion without any delay to avoid state issues
+        console.log('🚀 IMMEDIATE REDIRECT: Calling onComplete to proceed to community content');
+        onComplete();
       } else {
         throw new Error("Failed to save email");
       }

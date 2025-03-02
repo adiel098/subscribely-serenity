@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { LoadingIndicator } from "@/telegram-mini-app/components/app-content/LoadingIndicator";
@@ -40,6 +40,24 @@ export const AppContent: React.FC<AppContentProps> = ({
 }) => {
   // All component state and functionality is now split into smaller components
   const isLoading = communityLoading || userLoading || isCheckingUserData;
+  
+  // CRITICAL FIX: Add effect to log state changes for debugging
+  useEffect(() => {
+    console.log('📊 AppContent state changed:', {
+      communityLoading,
+      userLoading,
+      isCheckingUserData,
+      hasUser: !!telegramUser,
+      showEmailForm,
+      isLoading,
+      hasEmail: telegramUser?.email ? true : false
+    });
+    
+    // Force a re-check of user data when the user object changes
+    if (telegramUser && !isCheckingUserData && !userLoading) {
+      console.log('👤 User object available, has email:', !!telegramUser.email);
+    }
+  }, [communityLoading, userLoading, isCheckingUserData, telegramUser, showEmailForm]);
 
   return (
     <>

@@ -88,7 +88,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
           telegramUser={telegramUser} 
           onComplete={() => {
             console.log('📧 Email collection completed, now showing community content');
-            // CRITICAL FIX: Make sure to update state to show community content
+            console.log('📧 CRITICAL FIX: Setting showEmailForm to false to force render of MainContent');
+            // CRITICAL FIX: Force update the state to trigger re-render
             setShowEmailForm(false);
           }}
         />
@@ -107,6 +108,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
           telegramUser={telegramUser} 
           onComplete={() => {
             console.log('📧 Email collection completed, now showing community content');
+            console.log('📧 SAFETY CHECK: Setting showEmailForm to false to force render of MainContent');
             setShowEmailForm(false);
           }}
         />

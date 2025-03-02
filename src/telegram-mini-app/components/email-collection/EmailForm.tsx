@@ -6,36 +6,7 @@ import { EmailInput } from "./EmailInput";
 import { SubmitButton } from "./SubmitButton";
 import { PrivacyNote } from "./PrivacyNote";
 import { isValidEmail } from "./emailFormUtils";
-
-// Define the function that was missing
-const saveUserEmail = async (
-  telegramUserId: string, 
-  email: string, 
-  userData: {
-    firstName?: string;
-    lastName?: string;
-    username?: string;
-    photoUrl?: string;
-  }
-) => {
-  console.log("Saving email for user", telegramUserId, email, userData);
-  
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 700));
-  
-  // In a real app, this would be an API call to your backend
-  const response = {
-    success: true,
-    userId: telegramUserId,
-    email: email
-  };
-  
-  if (!response.success) {
-    throw new Error("Failed to save email");
-  }
-  
-  return response;
-};
+import { collectUserEmail } from "@/telegram-mini-app/services/userProfileService";
 
 export interface EmailFormProps {
   telegramUserId: string;
@@ -75,18 +46,25 @@ export const EmailForm: React.FC<EmailFormProps> = ({
       console.log(`📧 Saving email ${email} for user ID: ${telegramUserId}`);
       setIsSubmitting(true);
       
-      // Save email to database
-      await saveUserEmail(telegramUserId, email, {
+      // Save email to database using the collectUserEmail service function
+      const success = await collectUserEmail(
+        telegramUserId, 
+        email, 
         firstName,
         lastName,
+        undefined, // communityId
         username,
         photoUrl
-      });
+      );
+      
+      if (!success) {
+        throw new Error("Failed to save email to database");
+      }
       
       console.log(`✅ Email saved successfully for user ID: ${telegramUserId}`);
       
-      // Removed toast notification for email saved - as requested
-
+      // No toast notification for email saved - as requested
+      
       // Trigger haptic feedback if available
       if (window.Telegram?.WebApp?.HapticFeedback) {
         console.log("📱 Triggering haptic feedback");

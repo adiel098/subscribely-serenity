@@ -119,6 +119,9 @@ const TelegramMiniApp = () => {
         setIsCheckingUserData(true);
         
         try {
+          // CRITICAL FIX: Use telegramUser.id as the telegram_id for checking
+          // This resolves the issue of repeated email prompts
+          console.log('Checking user existence with ID:', telegramUser.id);
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           

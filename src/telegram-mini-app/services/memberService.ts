@@ -132,6 +132,8 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
   }
 
   try {
+    console.log("Running database query with telegram_id =", cleanTelegramId);
+    
     const { data, error } = await supabase
       .from('telegram_mini_app_users')
       .select('id, email, telegram_id')
@@ -195,6 +197,7 @@ export async function collectUserEmail(
 
   try {
     // First check if the user exists
+    console.log("Checking if user already exists with telegram_id =", cleanTelegramId);
     const { data: existingUser, error: checkError } = await supabase
       .from('telegram_mini_app_users')
       .select('*')

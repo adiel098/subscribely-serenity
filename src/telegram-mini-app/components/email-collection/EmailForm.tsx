@@ -31,8 +31,12 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  console.log('📧 EmailForm component rendering for user ID:', telegramUserId);
+  console.log('📧 EmailForm: onComplete function exists:', !!onComplete);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📧 Form submitted with email:', email);
     
     // Clear any previous errors
     setError(null);
@@ -60,14 +64,22 @@ export const EmailForm: React.FC<EmailFormProps> = ({
       );
       
       if (success) {
-        console.log('✅ Email collection successful, IMMEDIATELY calling onComplete to show community content');
+        console.log('✅ Email collection successful, calling onComplete to show community content');
         toast({
           title: "Email saved successfully!",
           description: "You can now access the community content.",
         });
         
-        // CRITICAL FIX: Call onComplete immediately
-        onComplete();
+        // CRITICAL FIX: Call onComplete immediately and ensure it's executed
+        console.log('🚨 CRITICAL FIX: Directly calling onComplete in EmailForm');
+        
+        // Force immediate execution to ensure state updates propagate
+        if (onComplete) {
+          window.setTimeout(() => {
+            onComplete();
+            console.log('✅ onComplete callback executed with a small delay');
+          }, 0);
+        }
       } else {
         throw new Error("Failed to save email");
       }

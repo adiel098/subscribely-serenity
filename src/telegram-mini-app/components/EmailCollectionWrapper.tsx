@@ -11,6 +11,10 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
   telegramUser, 
   onComplete 
 }) => {
+  console.log('🧩 EmailCollectionWrapper: Starting with user:', 
+    telegramUser ? `ID: ${telegramUser.id}, Email: ${telegramUser.email}` : 'null');
+  console.log('🧩 EmailCollectionWrapper: onComplete function exists:', !!onComplete);
+  
   if (!telegramUser) {
     console.error('❌ EMAIL COLLECTION: No user data provided to wrapper');
     return null;
@@ -67,9 +71,9 @@ export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({
       username={telegramUser.username}
       photoUrl={telegramUser.photo_url}
       onComplete={() => {
-        console.log('📝 EMAIL COLLECTION: Form submitted successfully, IMMEDIATELY completing flow');
-        console.log('📝 CRITICAL FIX: Directly calling onComplete in EmailCollectionWrapper');
-        onComplete();
+        console.log('📝 EMAIL COLLECTION: Form submitted successfully, calling parent onComplete');
+        // Ensure we're calling the parent onComplete function
+        if (onComplete) onComplete();
       }} 
     />
   );

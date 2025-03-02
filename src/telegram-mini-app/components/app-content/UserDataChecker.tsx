@@ -51,7 +51,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           
           // Make sure we have a string ID
           const telegramId = String(telegramUser.id).trim();
-          console.log('📱 Processed Telegram ID:', telegramId);
+          console.log('📱 Processed Telegram ID for user data check:', telegramId);
           
           if (!/^\d+$/.test(telegramId)) {
             console.error('❌ Invalid Telegram ID format for database check:', telegramId);
@@ -61,18 +61,21 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             return;
           }
           
-          // Only check if user exists, don't create the user here
+          // Check if user exists in the database
           const { exists, hasEmail } = await checkUserExists(telegramId);
           console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
-          // CRITICAL FIX: Additional check - if user data contains email directly, skip email form
-          const userHasEmailDirectly = !!telegramUser.email && telegramUser.email.length > 0;
-          console.log('📧 User has email directly in user object:', userHasEmailDirectly, telegramUser.email);
+          // CRITICAL FIX: Additional logging for user state
+          console.log('📧 Complete user state:', {
+            id: telegramUser.id,
+            email: telegramUser.email,
+            firstName: telegramUser.first_name,
+            existsInDB: exists,
+            hasEmailInDB: hasEmail
+          });
           
-          // Enforce email collection in ALL cases where either:
-          // 1. User is new (not in DB) OR
-          // 2. User exists but doesn't have an email
-          if (!exists || (!hasEmail && !userHasEmailDirectly)) {
+          // CRITICAL FIX: Show email form if user doesn't have email
+          if (!exists || !hasEmail) {
             console.log('🔴 EMAIL REQUIRED: User needs to provide email before proceeding');
             
             if (!exists) {
@@ -88,7 +91,10 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
             }
             
             // Force showing email form - this is critical
-            setShowEmailForm(true);
+            window.setTimeout(() => {
+              setShowEmailForm(true);
+              console.log('🚨 CRITICAL FIX: Forced showEmailForm to true in UserDataChecker');
+            }, 0);
           } else {
             console.log('✅ User exists and has email, proceeding to community page');
             setShowEmailForm(false);

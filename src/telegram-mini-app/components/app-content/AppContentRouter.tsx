@@ -93,44 +93,37 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
   // STRICT ENFORCEMENT: Email form must be shown before community content
   // This is our critical gate that ensures users provide email before accessing content
   if (showEmailForm && telegramUser) {
-    console.log('📧 ROUTING: User MUST provide email before accessing community content');
+    console.log('📧 ROUTING: Showing email collection form');
     return (
       <>
         {renderDebugInfo()}
         <EmailCollectionWrapper 
           telegramUser={telegramUser} 
           onComplete={() => {
-            console.log('📧 CRITICAL FIX: Email collection completed, now showing community content');
+            console.log('📧 CRITICAL FIX: Email collection completed in router, now showing community content');
             console.log('📧 CRITICAL FIX: Setting showEmailForm to false to force render of MainContent');
-            // CRITICAL FIX: Force update the state to trigger re-render
-            setShowEmailForm(false);
+            // Force update the state to trigger re-render with setTimeout(0)
+            window.setTimeout(() => {
+              setShowEmailForm(false);
+              console.log('📧 showEmailForm set to false after short delay');
+            }, 0);
           }}
         />
       </>
     );
   }
   
-  // Additional safety check - if user has no email, force email collection
-  // This is a failsafe in case the showEmailForm flag wasn't properly set
-  if (telegramUser && !telegramUser.email) {
-    console.log('🛑 SAFETY CHECK: User missing email, redirecting to email collection form');
-    return (
-      <>
-        {renderDebugInfo()}
-        <EmailCollectionWrapper 
-          telegramUser={telegramUser} 
-          onComplete={() => {
-            console.log('📧 SAFETY CHECK: Email collection completed, now showing community content');
-            console.log('📧 SAFETY CHECK: Setting showEmailForm to false to force render of MainContent');
-            setShowEmailForm(false);
-          }}
-        />
-      </>
-    );
+  // Force check if user needs email collection
+  if (telegramUser && !telegramUser.email && !isCheckingUserData) {
+    console.log('🛑 SAFETY CHECK: User missing email, forcing email collection');
+    window.setTimeout(() => {
+      setShowEmailForm(true);
+      console.log('📧 SAFETY CHECK: Forced showEmailForm to true');
+    }, 0);
+    return renderDebugInfo();
   }
 
-  // Main content - only show if not loading, community exists, email form is not needed,
-  // and the user has provided an email
+  // Main content - only show if not loading, community exists, email form is not needed
   console.log('🎉 Showing main content with:', { 
     community: community?.name, 
     user: telegramUser?.username,

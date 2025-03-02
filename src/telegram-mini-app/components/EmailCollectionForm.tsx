@@ -19,6 +19,9 @@ export const EmailCollectionForm = ({
   photoUrl,
   onComplete 
 }: EmailCollectionFormProps) => {
+  console.log('📧 EmailCollectionForm: Rendering with telegramUserId:', telegramUserId);
+  console.log('📧 EmailCollectionForm: onComplete function exists:', !!onComplete);
+  
   return (
     <EmailForm
       telegramUserId={telegramUserId}
@@ -26,7 +29,11 @@ export const EmailCollectionForm = ({
       lastName={lastName}
       username={username}
       photoUrl={photoUrl}
-      onComplete={onComplete}
+      onComplete={() => {
+        console.log('📧 EmailCollectionForm: Email submitted successfully, calling onComplete');
+        // Ensure onComplete is called correctly
+        if (onComplete) onComplete();
+      }}
     />
   );
 };

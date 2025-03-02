@@ -29,7 +29,7 @@ export const FormHeader: React.FC<FormHeaderProps> = ({ firstName }) => {
       </motion.h1>
       
       <motion.p 
-        className="text-gray-500 text-sm"
+        className="text-sm text-gray-500"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}

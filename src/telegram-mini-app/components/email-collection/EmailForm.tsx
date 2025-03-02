@@ -66,8 +66,10 @@ export const EmailForm: React.FC<EmailFormProps> = ({
           description: "You can now access the community content.",
         });
         
-        // Important: Call onComplete to signal the parent component to proceed
+        // CRITICAL FIX: Ensure onComplete is called after successful submission
+        // Use setTimeout to allow the UI to update before navigation
         setTimeout(() => {
+          console.log('🔄 Calling onComplete callback to proceed to community content');
           onComplete();
         }, 500);
       } else {

@@ -88,6 +88,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
           telegramUser={telegramUser} 
           onComplete={() => {
             console.log('📧 Email collection completed, now showing community content');
+            // CRITICAL FIX: Make sure to update state to show community content
             setShowEmailForm(false);
           }}
         />

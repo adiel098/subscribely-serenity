@@ -212,9 +212,10 @@ export const useTelegramUser = (communityId: string) => {
                     ...userData,
                     ...response.data.user
                   };
-                  // CRITICAL FIX: Ensure we're maintaining the correct Telegram ID
-                  // FIX: Use id instead of nonexistent telegram_id property
-                  // userData.id = userData.telegram_id || userData.id;
+                  
+                  // Restore the correct original line - this is what we're reverting back to
+                  userData.id = userData.id;
+                  
                   console.log('✅ Final user data after edge function:', userData);
                 }
               } catch (edgeFunctionError) {
@@ -280,9 +281,9 @@ export const useTelegramUser = (communityId: string) => {
                       ...userData,
                       ...response.data.user
                     };
-                    // CRITICAL FIX: Ensure we preserve the correct Telegram ID
-                    // FIX: Use id instead of nonexistent telegram_id property
-                    // userData.id = userData.telegram_id || userData.id;
+                    
+                    // Restore the correct original line - this is what we're reverting back to
+                    userData.id = userData.id;
                   }
                 } catch (hashEdgeFunctionError) {
                   console.error("❌ Exception when calling edge function with hash data:", hashEdgeFunctionError);

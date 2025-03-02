@@ -17,6 +17,16 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   onPlanSelect,
   showPaymentMethods,
 }) => {
+  // These are dummy handlers since we're not actually using them in this component
+  // but they're required by the PaymentMethods component
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log("Payment method selected:", method);
+  };
+
+  const handleCompletePurchase = () => {
+    console.log("Purchase completed");
+  };
+
   return (
     <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6 w-full">
       {!showPaymentMethods ? (
@@ -26,7 +36,13 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
           onPlanSelect={onPlanSelect}
         />
       ) : (
-        <PaymentMethods plan={selectedPlan!} />
+        <PaymentMethods
+          selectedPlan={selectedPlan!}
+          selectedPaymentMethod={null}
+          onPaymentMethodSelect={handlePaymentMethodSelect}
+          onCompletePurchase={handleCompletePurchase}
+          showSuccess={false}
+        />
       )}
     </div>
   );

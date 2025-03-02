@@ -30,7 +30,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
 
   return (
     <>
-      <div id="subscription-plans" className="scroll-mt-4 w-full">
+      <div id="subscription-plans" className="scroll-mt-4 w-full px-0">
         <SubscriptionPlans
           plans={validPlans}
           selectedPlan={selectedPlan}
@@ -46,3 +46,4 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
     </>
   );
 };
+

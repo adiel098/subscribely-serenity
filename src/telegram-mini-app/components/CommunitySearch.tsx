@@ -45,7 +45,7 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   }, [debouncedQuery]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full px-0">
       <div className="space-y-2">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Search className="h-5 w-5 text-primary" />
@@ -56,7 +56,7 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
       
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       
-      <div className="space-y-4 pt-2">
+      <div className="space-y-4 pt-2 w-full">
         {isLoading ? (
           <LoadingState />
         ) : communities.length === 0 ? (
@@ -74,3 +74,4 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
     </div>
   );
 };
+

@@ -162,7 +162,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
   return (
     <ScrollArea className="h-[100vh] w-full">
       <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-background to-blue-50/30">
-        <div className="w-full mx-auto px-4 space-y-6 pb-20">
+        <div className="w-full mx-auto space-y-6 pb-20">
           {/* Debug information */}
           <DebugInfo 
             telegramUser={telegramUser} 
@@ -175,7 +175,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="w-full max-w-md mx-auto"
+            className="w-full"
           >
             <UserProfileCard telegramUser={telegramUser} community={community} />
           </motion.div>
@@ -184,7 +184,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="w-full max-w-md mx-auto"
+            className="w-full"
           >
             <CommunityHeader community={community} />
           </motion.div>
@@ -217,7 +217,7 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="w-full max-w-md mx-auto"
+                className="w-full"
               >
                 <PaymentSection
                   selectedPlan={selectedPlan}
@@ -238,3 +238,4 @@ export const MainContent: React.FC<MainContentProps> = ({ community, telegramUse
     </ScrollArea>
   );
 };
+

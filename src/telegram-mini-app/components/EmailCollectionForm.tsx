@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { collectUserEmail } from "@/telegram-mini-app/services/userProfileService";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { isValidTelegramId } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface EmailCollectionFormProps {
   telegramUserId: string;
@@ -48,8 +49,8 @@ export const EmailCollectionForm = ({
       return;
     }
     
-    // Validate telegram user ID - must be a numeric string
-    if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
+    // Validate telegram user ID using utility function
+    if (!telegramUserId || !isValidTelegramId(telegramUserId)) {
       console.error("Invalid Telegram user ID format:", telegramUserId);
       toast({
         variant: "destructive",

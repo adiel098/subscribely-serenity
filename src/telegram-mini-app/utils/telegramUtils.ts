@@ -9,7 +9,7 @@
 export const isValidTelegramId = (id: string | number | undefined | null): boolean => {
   if (!id) return false;
   const stringId = id.toString();
-  return /^\d+$/.test(stringId);
+  return /^\d+$/.test(stringId) && stringId.length > 5; // Telegram IDs are typically long numeric strings
 };
 
 /**

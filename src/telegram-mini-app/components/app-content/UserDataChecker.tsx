@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { checkUserExists } from "@/telegram-mini-app/services/userProfileService";
 import { useToast } from "@/components/ui/use-toast";
+import { isValidTelegramId } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface UserDataCheckerProps {
   telegramUser: TelegramUser | null;
@@ -30,7 +31,8 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
         setIsCheckingUserData(true);
         
         try {
-          if (!telegramUser.id || !/^\d+$/.test(telegramUser.id)) {
+          // Use the utility function to validate Telegram ID
+          if (!telegramUser.id || !isValidTelegramId(telegramUser.id)) {
             console.error('❌ Invalid Telegram ID format for database check:', telegramUser.id);
             setErrorState("Invalid Telegram user ID format");
             setIsCheckingUserData(false);

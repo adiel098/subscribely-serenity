@@ -1,11 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { logServiceAction, validateTelegramId } from "./utils/serviceUtils";
+import { logServiceAction } from "./utils/serviceUtils";
+import { isValidTelegramId } from "../utils/telegramUtils";
 
 export async function checkUserExists(telegramUserId: string): Promise<{exists: boolean, hasEmail: boolean}> {
   logServiceAction("checkUserExists", { telegramUserId });
 
-  if (!validateTelegramId(telegramUserId)) {
+  if (!isValidTelegramId(telegramUserId)) {
+    console.error("❌ Invalid Telegram ID format in checkUserExists:", telegramUserId);
     return { exists: false, hasEmail: false };
   }
 
@@ -56,7 +58,8 @@ export async function collectUserEmail(
     return false;
   }
   
-  if (!validateTelegramId(telegramUserId)) {
+  if (!isValidTelegramId(telegramUserId)) {
+    console.error("❌ Invalid Telegram ID format in collectUserEmail:", telegramUserId);
     return false;
   }
 

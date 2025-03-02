@@ -73,6 +73,7 @@ export const AppContent: React.FC<AppContentProps> = ({
         community={community}
         telegramUser={telegramUser}
         showEmailForm={showEmailForm}
+        isCheckingUserData={isCheckingUserData}
         onRetry={onRetry}
         setShowEmailForm={setShowEmailForm}
       />

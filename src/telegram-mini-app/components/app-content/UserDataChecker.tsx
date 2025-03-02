@@ -37,11 +37,20 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           }
           
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
-          console.log('📊 User exists:', exists, 'Has email:', hasEmail);
+          console.log('📊 User exists in DB:', exists, 'Has email:', hasEmail);
           
-          if (!exists || !hasEmail) {
-            // If user doesn't exist in DB or doesn't have an email, show email form
-            console.log('🔍 User needs to provide email before proceeding');
+          // Always show email form for new users (not in DB)
+          if (!exists) {
+            console.log('🆕 New user detected, directing to email collection');
+            toast({
+              title: "Welcome to our community!",
+              description: "Please provide your email to continue.",
+            });
+            setShowEmailForm(true);
+          } 
+          // Also show email form for existing users without email
+          else if (!hasEmail) {
+            console.log('🔍 Existing user but missing email, requesting email info');
             toast({
               title: "Please provide your email",
               description: "We need your email address to continue."
@@ -58,7 +67,7 @@ export const UserDataChecker: React.FC<UserDataCheckerProps> = ({
           toast({
             variant: "destructive",
             title: "Error checking user data",
-            description: "We'll ask for your information again to ensure access."
+            description: "We'll ask for your information to ensure access."
           });
           setShowEmailForm(true);
           setErrorState(null);

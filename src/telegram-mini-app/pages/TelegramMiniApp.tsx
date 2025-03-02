@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,7 +10,7 @@ import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/
 
 const TelegramMiniApp = () => {
   const [searchParams] = useSearchParams();
-  const [showEmailForm, setShowEmailForm] = useState(true);
+  const [showEmailForm, setShowEmailForm] = useState(true); // Default to showing email form
   const [isCheckingUserData, setIsCheckingUserData] = useState(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
   const [telegramInitialized, setTelegramInitialized] = useState(false);
@@ -27,29 +28,45 @@ const TelegramMiniApp = () => {
   console.log('📌 User Agent:', navigator.userAgent);
 
   useEffect(() => {
+    // Detect development mode
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       setIsDevelopmentMode(true);
     }
     
+    // Apply immediate tg.expand() if available
+    if (window.Telegram?.WebApp?.expand) {
+      console.log('📱 Initial tg.expand() call');
+      window.Telegram.WebApp.expand();
+    }
+    
     ensureFullScreen();
     
-    const timeoutId = setTimeout(() => {
-      ensureFullScreen();
-    }, 1000);
+    // Apply delayed tg.expand() as well
+    const expandTimeouts = [100, 500, 1000].map(delay => 
+      setTimeout(() => {
+        if (window.Telegram?.WebApp?.expand) {
+          console.log(`📱 Delayed tg.expand() after ${delay}ms`);
+          window.Telegram.WebApp.expand();
+        }
+        ensureFullScreen();
+      }, delay)
+    );
     
-    return () => clearTimeout(timeoutId);
+    return () => expandTimeouts.forEach(clearTimeout);
   }, []);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
-      console.log('📱 Telegram WebApp object is available:');
-      console.log('📌 Full WebApp object:', window.Telegram.WebApp);
-      console.log('📌 initData:', window.Telegram.WebApp.initData);
-      console.log('📌 initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
+      console.log('📱 Telegram WebApp object is available');
+      
+      // Call tg.expand() directly
+      if (window.Telegram.WebApp.expand) {
+        window.Telegram.WebApp.expand();
+      }
+      
       if (window.Telegram.WebApp.initDataUnsafe?.user) {
         console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
         console.log('🆔 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user.id);
-        console.log('🆔 User ID type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
       } else {
         console.log('❌ No user data in WebApp.initDataUnsafe');
       }
@@ -62,6 +79,7 @@ const TelegramMiniApp = () => {
 
   let telegramUserId = null;
   
+  // Extract Telegram User ID with multiple fallbacks
   if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
     telegramUserId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
     console.log('🔑 Direct user ID extracted from WebApp:', telegramUserId);
@@ -76,9 +94,15 @@ const TelegramMiniApp = () => {
     setTelegramInitialized(isInitialized);
     setIsDevelopmentMode(prev => prev || isDev);
     
+    // Re-extract user ID if needed after initialization
     if (isInitialized && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       const userId = String(window.Telegram.WebApp.initDataUnsafe.user.id).trim();
       console.log('🔑 User ID after initialization:', userId);
+    }
+    
+    // Use tg.expand directly
+    if (window.Telegram?.WebApp?.expand) {
+      window.Telegram.WebApp.expand();
     }
     
     ensureFullScreen();
@@ -99,19 +123,13 @@ const TelegramMiniApp = () => {
   }, [userError]);
 
   useEffect(() => {
-    let timeout: number | null = null;
-    
-    if ((communityLoading || userLoading) && retryCount === 0) {
-      timeout = window.setTimeout(() => {
-        console.log('🔄 Auto retrying due to long loading time');
-        handleRetry();
-      }, 10000);
+    // Always attempt to force fullscreen after user data loads
+    if (!userLoading && window.Telegram?.WebApp?.expand) {
+      console.log('📱 tg.expand() after user data loaded');
+      window.Telegram.WebApp.expand();
+      ensureFullScreen();
     }
-    
-    return () => {
-      if (timeout) window.clearTimeout(timeout);
-    };
-  }, [communityLoading, userLoading, retryCount]);
+  }, [userLoading]);
 
   const handleRetry = () => {
     console.log('🔄 Retrying user data fetch');
@@ -120,8 +138,13 @@ const TelegramMiniApp = () => {
     setRetryCount(prev => prev + 1);
     refetchUser();
     
+    // Re-initialize and expand
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
+    
+    if (window.Telegram?.WebApp?.expand) {
+      window.Telegram.WebApp.expand();
+    }
     
     ensureFullScreen();
     
@@ -132,10 +155,17 @@ const TelegramMiniApp = () => {
   };
 
   useEffect(() => {
+    // Log email form state change
     console.log('📧 EMAIL FORM STATE CHANGED:', showEmailForm ? 'SHOWING' : 'HIDDEN');
+    
+    // Always force expansion when email form state changes
+    if (window.Telegram?.WebApp?.expand) {
+      window.Telegram.WebApp.expand();
+    }
   }, [showEmailForm]);
 
   useEffect(() => {
+    // Determine whether to show email form based on user data
     if (!userLoading && telegramUser) {
       if (telegramUser.email) {
         console.log('📧 User has email, hiding email form:', telegramUser.email);

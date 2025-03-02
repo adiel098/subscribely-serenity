@@ -60,8 +60,11 @@ export const initTelegramWebApp = (): boolean => {
     if (window.Telegram?.WebApp) {
       console.log('📱 WebApp is already initialized');
       
-      // Force expand to full screen with multiple attempts
-      forceExpandToFullScreen();
+      // Use tg.expand() directly as requested
+      if (window.Telegram.WebApp.expand) {
+        console.log('📏 Expanding with tg.expand()');
+        window.Telegram.WebApp.expand();
+      }
       
       // Set the correct viewport
       if (window.Telegram.WebApp.setViewport) {
@@ -96,22 +99,16 @@ export const initTelegramWebApp = (): boolean => {
 const forceExpandToFullScreen = () => {
   if (!window.Telegram?.WebApp?.expand) return;
   
-  // Immediate expand (async Promise-based version)
-  console.log('📏 Forcing full screen expansion (first attempt)');
-  window.Telegram.WebApp.expand().then(() => {
-    console.log('📱 Initial expansion successful');
-  }).catch(err => {
-    console.error('📱 Initial expansion error:', err);
-  });
+  // Using tg.expand() directly as requested
+  console.log('📏 Forcing full screen expansion with tg.expand()');
+  window.Telegram.WebApp.expand();
   
   // Schedule multiple expand attempts with increasing delays
   [50, 100, 300, 500, 1000].forEach(delay => {
     setTimeout(() => {
       if (window.Telegram?.WebApp?.expand) {
-        console.log(`📏 Re-expanding WebApp after ${delay}ms`);
-        window.Telegram.WebApp.expand().catch(err => {
-          console.error(`📱 Expansion error after ${delay}ms:`, err);
-        });
+        console.log(`📏 Re-expanding WebApp after ${delay}ms with tg.expand()`);
+        window.Telegram.WebApp.expand();
       }
     }, delay);
   });
@@ -148,8 +145,11 @@ export const parseUserFromUrlHash = (): { [key: string]: any } | null => {
  * This can be called at any time to force full screen mode
  */
 export const ensureFullScreen = (): void => {
-  // Aggressively apply full screen mode
-  forceExpandToFullScreen();
+  // Apply tg.expand() method first if available
+  if (window.Telegram?.WebApp?.expand) {
+    console.log('📏 Expanding with tg.expand()');
+    window.Telegram.WebApp.expand();
+  }
   
   // Additional platform-specific handling
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

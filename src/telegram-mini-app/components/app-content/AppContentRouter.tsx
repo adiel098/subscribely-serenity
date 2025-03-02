@@ -39,7 +39,8 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     communityExists: !!community,
     telegramUserExists: !!telegramUser,
     showEmailForm,
-    isCheckingUserData
+    isCheckingUserData,
+    email: telegramUser?.email || 'none'
   });
   
   // Show debug info for development
@@ -69,6 +70,7 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
         <li><span className="font-bold">Telegram User ID:</span> {telegramUserId || 'Missing'}</li>
         <li><span className="font-bold">Community:</span> {community?.name || 'Not loaded'}</li>
         <li><span className="font-bold">Telegram User:</span> {telegramUser?.username || 'Not loaded'}</li>
+        <li><span className="font-bold">User Email:</span> {telegramUser?.email || 'Not set'}</li>
         <li><span className="font-bold">Show Email Form:</span> {showEmailForm ? 'Yes' : 'No'}</li>
         <li><span className="font-bold">Checking User Data:</span> {isCheckingUserData ? 'Yes' : 'No'}</li>
       </ul>
@@ -81,29 +83,14 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     </div>
   );
 
-  // DIRECT ROUTING - Skip loading screens as much as possible
+  // NEW PRIORITY-BASED ROUTING SYSTEM
   
-  // First, handle error cases
-  if (errorState && telegramUserId) {
-    return (
-      <>
-        {renderDebugInfo()}
-        <ErrorDisplay 
-          errorMessage={errorState}
-          telegramUserId={telegramUserId}
-          onRetry={onRetry}
-        />
-      </>
-    );
-  }
-
-  // DIRECT EMAIL COLLECTION FOR ANY USER WITHOUT EMAIL
-  // If we have telegramUserId, immediately set up for email collection - don't wait for full user data
-  if (telegramUserId && (!telegramUser || (telegramUser && !telegramUser.email))) {
-    console.log('📧 DIRECT EMAIL COLLECTION: Showing email form immediately, bypassing loading');
+  // PRIORITY 1: Show email form if we have a user ID but no email
+  if (telegramUserId && (!telegramUser?.email || showEmailForm)) {
+    console.log('📧 PRIORITY 1: Showing email form (User without email)');
     
-    // If we have telegramUserId but not the user object yet, create minimal user object for email form
-    const minimalUser = telegramUser || {
+    // Create minimal user if needed
+    const userForEmailForm = telegramUser || { 
       id: telegramUserId,
       first_name: '',
       username: ''
@@ -113,9 +100,9 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
       <>
         {renderDebugInfo()}
         <EmailCollectionWrapper 
-          telegramUser={minimalUser} 
+          telegramUser={userForEmailForm} 
           onComplete={() => {
-            console.log('📧 Email collection completed, showing community content');
+            console.log('📧 Email collection completed, redirecting to main content');
             setShowEmailForm(false);
           }}
         />
@@ -123,18 +110,24 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Missing community - only show if we're not still loading
-  if (!community && !loading) {
+  // PRIORITY 2: Show error state
+  if (errorState) {
+    console.log('❌ PRIORITY 2: Showing error state');
     return (
       <>
         {renderDebugInfo()}
-        <CommunityNotFound />
+        <ErrorDisplay 
+          errorMessage={errorState}
+          telegramUserId={telegramUserId || ''}
+          onRetry={onRetry}
+        />
       </>
     );
   }
   
-  // Main content - only show if we have both a telegramUser (with email) and community
-  if (telegramUser && telegramUser.email && community) {
+  // PRIORITY 3: Show main content if we have a user with email and a community
+  if (telegramUser?.email && community) {
+    console.log('✅ PRIORITY 3: Showing main content (User with email and community)');
     return (
       <>
         {renderDebugInfo()}
@@ -143,6 +136,17 @@ export const AppContentRouter: React.FC<AppContentRouterProps> = ({
     );
   }
   
-  // Fallback for any edge cases
+  // PRIORITY 4: Show community not found if no community was found
+  if (!community && !loading) {
+    console.log('❓ PRIORITY 4: Showing community not found');
+    return (
+      <>
+        {renderDebugInfo()}
+        <CommunityNotFound />
+      </>
+    );
+  }
+  
+  // PRIORITY 5: Error boundary (fallback) when no other conditions are met
   return renderErrorBoundary();
 };

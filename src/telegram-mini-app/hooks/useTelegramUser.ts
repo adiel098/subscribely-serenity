@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TelegramMiniAppUser } from "@/telegram-mini-app/types/database.types";
@@ -52,13 +53,22 @@ const getWebAppData = (directTelegramUserId?: string | null): TelegramUser | nul
       const user = window.Telegram.WebApp.initDataUnsafe.user;
       console.log('✅ Successfully retrieved WebApp data:', user);
       
+      // Ensure we're getting a proper numeric ID and converting to string
+      const userId = user.id?.toString();
+      if (!userId) {
+        console.error('❌ No valid user ID in WebApp data');
+        return null;
+      }
+      
+      console.log('🔑 Extracted user ID from WebApp:', userId);
+      
       // In recent Telegram WebApp versions, photo_url might be available directly
       // We explicitly check for its presence as a property
       const photoUrl = user.photo_url || undefined;
       console.log('📸 Photo URL from WebApp data:', photoUrl);
       
       return {
-        id: user.id?.toString() || "",
+        id: userId,
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
@@ -77,8 +87,15 @@ const getWebAppData = (directTelegramUserId?: string | null): TelegramUser | nul
           const user = JSON.parse(userStr);
           console.log('✅ Successfully parsed user data from initData:', user);
           
+          // Ensure we're getting a proper numeric ID and converting to string
+          const userId = user.id?.toString();
+          if (!userId) {
+            console.error('❌ No valid user ID in parsed initData');
+            return null;
+          }
+          
           return {
-            id: user.id?.toString() || "",
+            id: userId,
             first_name: user.first_name,
             last_name: user.last_name,
             username: user.username,
@@ -135,17 +152,6 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
       setLoading(true);
       setError(null);
       
-      // Try to force Telegram Web App initialization if needed
-      if (window.Telegram && !window.Telegram.WebApp) {
-        console.log('⚠️ Telegram object exists but WebApp is not initialized. Trying to initialize...');
-        try {
-          // @ts-ignore - Attempting to access the Telegram object directly
-          window.Telegram.WebApp = window.Telegram.WebApp || {};
-        } catch (initError) {
-          console.error('❌ Failed to initialize WebApp:', initError);
-        }
-      }
-      
       // Strategy 1: Try to get data from Telegram WebApp
       console.log('🔍 Attempting to get data from Telegram WebApp...');
       let userData = getWebAppData(directTelegramUserId);
@@ -155,6 +161,20 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
       
       if (userData) {
         console.log('✅ Successfully retrieved user data from Telegram WebApp or direct ID:', userData);
+        
+        // Validate that we have a proper Telegram ID (numeric string)
+        const telegramId = userData.id;
+        if (!telegramId || !/^\d+$/.test(telegramId)) {
+          console.error('❌ Invalid Telegram ID format:', telegramId);
+          if (isDevMode) {
+            console.log('🔄 Using mock data in development due to invalid ID');
+            userData = getMockUser();
+          } else {
+            setError("Invalid Telegram user ID format");
+            setLoading(false);
+            return;
+          }
+        }
         
         // If we have user data, fetch additional data from database
         if (userData.id) {
@@ -238,8 +258,26 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
             if (userStr) {
               const parsedUser = JSON.parse(userStr);
               console.log('✅ Successfully parsed user data from hash:', parsedUser);
+              
+              // Ensure we're getting a proper numeric ID and converting to string
+              const userId = parsedUser.id?.toString();
+              if (!userId || !/^\d+$/.test(userId)) {
+                console.error('❌ Invalid Telegram ID format from hash:', userId);
+                if (isDevMode) {
+                  console.log('🔄 Using mock data in development due to invalid hash ID');
+                  userData = getMockUser();
+                  setUser(userData);
+                  setLoading(false);
+                  return;
+                } else {
+                  setError("Invalid Telegram user ID format from hash data");
+                  setLoading(false);
+                  return;
+                }
+              }
+              
               userData = {
-                id: parsedUser.id?.toString() || "",
+                id: userId,
                 first_name: parsedUser.first_name,
                 last_name: parsedUser.last_name,
                 username: parsedUser.username,

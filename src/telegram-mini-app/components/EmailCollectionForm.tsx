@@ -48,13 +48,13 @@ export const EmailCollectionForm = ({
       return;
     }
     
-    // Validate telegram user ID
-    if (!telegramUserId) {
-      console.error("Missing Telegram user ID:", telegramUserId);
+    // Validate telegram user ID - must be a numeric string
+    if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
+      console.error("Invalid Telegram user ID format:", telegramUserId);
       toast({
         variant: "destructive",
         title: "User identification error",
-        description: "We couldn't identify your Telegram account. Please try reloading the app.",
+        description: "Invalid Telegram ID format. Please try reloading the app.",
       });
       return;
     }

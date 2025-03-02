@@ -21,7 +21,9 @@ const initTelegramWebApp = () => {
       
       // Log the full user object from WebApp for debugging
       console.log('👤 User from WebApp (initDataUnsafe):', window.Telegram.WebApp.initDataUnsafe?.user);
-      console.log('🔑 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user?.id);
+      const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+      console.log('🔑 User ID from WebApp:', userId);
+      console.log('🔑 User ID type:', typeof userId);
       
       // Set the correct viewport
       if (window.Telegram.WebApp.setViewport) {
@@ -98,14 +100,17 @@ const TelegramMiniApp = () => {
     if (window.Telegram.WebApp.initDataUnsafe?.user) {
       console.log('👤 User from WebApp:', window.Telegram.WebApp.initDataUnsafe.user);
       console.log('🆔 User ID from WebApp:', window.Telegram.WebApp.initDataUnsafe.user.id);
+      console.log('🆔 User ID type:', typeof window.Telegram.WebApp.initDataUnsafe.user.id);
     }
   } else {
     console.log('❌ Telegram WebApp object is NOT available');
   }
 
-  // Extract user ID directly from WebApp object
+  // Extract user ID directly from WebApp object - CRITICAL FIX
+  // Always use toString() to ensure we have a string value and not a number
   const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
   console.log('🔑 Direct telegram user ID extraction:', telegramUserId);
+  console.log('🔑 Direct telegram user ID type:', typeof telegramUserId);
 
   // Create a default community ID for development mode
   const effectiveStartParam = isDevelopment && !startParam ? "dev123" : startParam;
@@ -131,6 +136,14 @@ const TelegramMiniApp = () => {
         setIsCheckingUserData(true);
         
         try {
+          // Validate the ID format - ensure it's a numeric string
+          if (!telegramUser.id || !/^\d+$/.test(telegramUser.id)) {
+            console.error('❌ Invalid Telegram ID format for database check:', telegramUser.id);
+            setErrorState("Invalid Telegram user ID format");
+            setIsCheckingUserData(false);
+            return;
+          }
+          
           const { exists, hasEmail } = await checkUserExists(telegramUser.id);
           console.log('📊 User exists:', exists, 'Has email:', hasEmail);
           

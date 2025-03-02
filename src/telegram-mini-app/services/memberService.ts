@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Community {
@@ -40,6 +41,12 @@ export async function getUserSubscriptions(userId: string): Promise<Subscription
 
   if (!userId) {
     console.error("getUserSubscriptions: No user ID provided");
+    return [];
+  }
+  
+  // Validate user ID format - must be a numeric string
+  if (!/^\d+$/.test(userId)) {
+    console.error("getUserSubscriptions: Invalid Telegram ID format:", userId);
     return [];
   }
 
@@ -116,6 +123,12 @@ export async function checkUserExists(telegramUserId: string): Promise<{exists: 
     console.error("checkUserExists: No telegram user ID provided");
     return { exists: false, hasEmail: false };
   }
+  
+  // Validate user ID format - must be a numeric string
+  if (!/^\d+$/.test(telegramUserId)) {
+    console.error("checkUserExists: Invalid Telegram ID format:", telegramUserId);
+    return { exists: false, hasEmail: false };
+  }
 
   try {
     const { data, error } = await supabase
@@ -154,6 +167,12 @@ export async function collectUserEmail(
 
   if (!telegramUserId || !email) {
     console.error("collectUserEmail: Missing required parameters");
+    return false;
+  }
+  
+  // Validate user ID format - must be a numeric string
+  if (!/^\d+$/.test(telegramUserId)) {
+    console.error("collectUserEmail: Invalid Telegram ID format:", telegramUserId);
     return false;
   }
 
@@ -214,6 +233,12 @@ export async function createOrUpdateMember(memberData: CreateMemberData): Promis
 
   if (!memberData.telegram_id || !memberData.community_id || !memberData.subscription_plan_id) {
     console.error("createOrUpdateMember: Missing required parameters");
+    return false;
+  }
+  
+  // Validate user ID format - must be a numeric string
+  if (!/^\d+$/.test(memberData.telegram_id)) {
+    console.error("createOrUpdateMember: Invalid Telegram ID format:", memberData.telegram_id);
     return false;
   }
 

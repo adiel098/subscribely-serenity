@@ -16,11 +16,20 @@ export const getWebAppData = (directTelegramUserId?: string | null): TelegramUse
     console.log('📊 viewport width:', window.innerWidth);
     console.log('📊 User Agent:', navigator.userAgent);
     
-    // Check if we have WebView attributes
+    // Check if we have WebView attributes - using optional chaining to safely access properties
     if (window.Telegram?.WebApp) {
-      console.log('📊 WebApp viewport height:', window.Telegram.WebApp.viewportHeight);
-      console.log('📊 WebApp viewport stable height:', window.Telegram.WebApp.viewportStableHeight);
-      console.log('📊 WebApp isExpanded:', window.Telegram.WebApp.isExpanded);
+      // Only log these properties if they exist to avoid TypeScript errors
+      if (typeof window.Telegram.WebApp.viewportHeight !== 'undefined') {
+        console.log('📊 WebApp viewport height:', window.Telegram.WebApp.viewportHeight);
+      }
+      
+      if (typeof window.Telegram.WebApp.viewportStableHeight !== 'undefined') {
+        console.log('📊 WebApp viewport stable height:', window.Telegram.WebApp.viewportStableHeight);
+      }
+      
+      if (typeof window.Telegram.WebApp.isExpanded !== 'undefined') {
+        console.log('📊 WebApp isExpanded:', window.Telegram.WebApp.isExpanded);
+      }
     }
     
     // Log the raw user object for debugging

@@ -13,13 +13,18 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 
   useEffect(() => {
-    // Apply full screen immediately 
+    // Apply full screen immediately with multiple attempts
     ensureFullScreen();
     
     // Initialize Telegram WebApp which will also try to expand to full screen
     const initialized = initTelegramWebApp();
     setTelegramInitialized(initialized);
     console.log('📱 Telegram WebApp initialized:', initialized);
+    
+    // Debug available Telegram WebApp properties
+    if (window.Telegram?.WebApp) {
+      console.log('📱 Available WebApp methods:', Object.keys(window.Telegram.WebApp));
+    }
     
     // Check if we're in development mode
     const devEnvironment = isDevelopment();
@@ -29,15 +34,18 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
       console.log('🧪 Running in development mode without Telegram WebApp object');
     }
     
-    // Additionally try to ensure full screen after component mounted
-    const fullScreenTimeouts = [100, 500, 1000, 2000].map(delay => 
+    // Additionally try to ensure full screen after component mounted with various delays
+    const fullScreenTimeouts = [100, 300, 500, 1000, 2000, 3000].map(delay => 
       setTimeout(() => ensureFullScreen(), delay)
     );
     
-    // Add resize handler to maintain full screen on orientation changes
+    // Add resize handler to maintain full screen on orientation changes and resize events
     const handleResize = () => {
       console.log('📏 Window resize detected, re-ensuring full screen');
       ensureFullScreen();
+      
+      // Delayed additional call to catch any viewport adjustments
+      setTimeout(ensureFullScreen, 300);
     };
     
     window.addEventListener('resize', handleResize);
@@ -45,10 +53,12 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
     // Force viewport update on orientation change
     const handleOrientationChange = () => {
       console.log('📱 Orientation change detected');
-      ensureFullScreen();
       
-      // Also try again after a delay to catch any adjustments
-      setTimeout(ensureFullScreen, 300);
+      // Multiple calls with increasing delays to ensure it works
+      ensureFullScreen();
+      [100, 300, 500, 1000].forEach(delay => {
+        setTimeout(ensureFullScreen, delay);
+      });
     };
     
     window.addEventListener('orientationchange', handleOrientationChange);
@@ -64,6 +74,18 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInit
       if (isIOS || isAndroid) {
         document.documentElement.classList.add('telegram-mobile');
         document.body.classList.add('telegram-mobile');
+        
+        // Add additional meta tag for better mobile rendering
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        } else {
+          const meta = document.createElement('meta');
+          meta.name = 'viewport';
+          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+          document.head.appendChild(meta);
+        }
       }
     };
     

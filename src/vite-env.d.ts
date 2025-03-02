@@ -23,6 +23,9 @@ interface TelegramWebApp {
     notificationOccurred: (type: string) => void;
     selectionChanged: () => void;
   };
+  viewportHeight?: number;
+  viewportStableHeight?: number;
+  isExpanded?: boolean;
   setViewport?: () => void;
   expand?: () => void;
   ready?: () => void;

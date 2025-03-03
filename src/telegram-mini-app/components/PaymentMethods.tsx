@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./SuccessScreen";
 import { useStripeConfig } from "../hooks/useStripeConfig";
@@ -7,6 +7,7 @@ import { usePaymentProcessing } from "../hooks/usePaymentProcessing";
 import { PaymentHeader } from "./payment/PaymentHeader";
 import { PaymentOptions } from "./payment/PaymentOptions";
 import { PaymentButton } from "./payment/PaymentButton";
+import { toast } from "@/components/ui/use-toast";
 
 // For development, set this to true to bypass real payment processing
 const TEST_MODE = true;
@@ -39,9 +40,34 @@ export const PaymentMethods = ({
     onSuccess: onCompletePurchase
   });
 
+  // Log community invite link for debugging
+  useEffect(() => {
+    console.log('Community invite link in PaymentMethods:', communityInviteLink);
+  }, [communityInviteLink]);
+
+  // Show error toast if payment processing fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Payment Error",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error]);
+
   const handlePayment = () => {
     if (selectedPaymentMethod) {
+      console.log('Processing payment with method:', selectedPaymentMethod);
+      console.log('Community ID:', selectedPlan.community_id);
+      console.log('Plan ID:', selectedPlan.id);
+      console.log('Community invite link:', communityInviteLink);
       processPayment(selectedPaymentMethod);
+    } else {
+      toast({
+        title: "Payment Method Required",
+        description: "Please select a payment method to continue.",
+      });
     }
   };
 

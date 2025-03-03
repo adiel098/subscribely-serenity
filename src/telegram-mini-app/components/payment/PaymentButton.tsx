@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, CreditCard, Loader2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "@/components/ui/use-toast";
 
 interface PaymentButtonProps {
   price: number;
@@ -11,6 +12,18 @@ interface PaymentButtonProps {
 }
 
 export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonProps) => {
+  const handlePaymentClick = () => {
+    // Show toast when payment is initiated
+    if (!isProcessing) {
+      toast({
+        title: "Processing payment",
+        description: "Please wait while we process your payment...",
+        duration: 3000,
+      });
+      onClick();
+    }
+  };
+  
   return (
     <div className="flex flex-col items-center space-y-4 animate-fade-in">
       <motion.div 
@@ -24,7 +37,7 @@ export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonPro
         <Button 
           size="lg" 
           className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-purple-600"
-          onClick={onClick}
+          onClick={handlePaymentClick}
           disabled={isProcessing}
         >
           {isProcessing ? (

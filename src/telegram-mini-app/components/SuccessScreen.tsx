@@ -3,6 +3,7 @@ import { Check, ChevronRight, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
+import { toast } from "@/components/ui/use-toast";
 
 interface SuccessScreenProps {
   communityInviteLink: string | null;
@@ -10,6 +11,11 @@ interface SuccessScreenProps {
 
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const [showConfetti, setShowConfetti] = useState(true);
+  
+  // Log the invite link for debugging
+  useEffect(() => {
+    console.log('Community invite link in SuccessScreen:', communityInviteLink);
+  }, [communityInviteLink]);
 
   useEffect(() => {
     // Trigger confetti effect when component mounts
@@ -54,7 +60,40 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
 
   const handleJoinClick = () => {
     if (communityInviteLink) {
+      // Open the link in a new tab
       window.open(communityInviteLink, '_blank');
+      
+      // Also show a toast notification with the link
+      toast({
+        title: "Invite Link Ready",
+        description: "Opening Telegram invite link...",
+      });
+    } else {
+      toast({
+        title: "No Invite Link",
+        description: "Unable to find invite link. Please contact support.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Copy invite link to clipboard
+  const handleCopyLink = () => {
+    if (communityInviteLink) {
+      navigator.clipboard.writeText(communityInviteLink)
+        .then(() => {
+          toast({
+            title: "Link Copied",
+            description: "Invite link copied to clipboard!",
+          });
+        })
+        .catch(() => {
+          toast({
+            title: "Copy Failed",
+            description: "Failed to copy link. Try manually copying it.",
+            variant: "destructive"
+          });
+        });
     }
   };
 
@@ -83,7 +122,7 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
       </div>
       
       {communityInviteLink ? (
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-sm space-y-4">
           <Button
             size="lg"
             onClick={handleJoinClick}
@@ -92,6 +131,18 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
             Join Community
             <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleCopyLink} 
+            className="mt-2 w-full"
+          >
+            Copy Invite Link
+          </Button>
+          
+          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200 text-xs break-all">
+            <span className="font-mono text-gray-600">{communityInviteLink}</span>
+          </div>
           
           <p className="mt-4 text-xs text-gray-500">
             By joining, you agree to the community's rules and guidelines.

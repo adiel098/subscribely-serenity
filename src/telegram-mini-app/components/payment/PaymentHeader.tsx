@@ -20,7 +20,7 @@ export const PaymentHeader = () => {
         Select Payment Method
       </h3>
       <p className="text-sm text-muted-foreground">
-        Choose your preferred payment option below
+        After payment, you'll receive an invite link to join the community
       </p>
     </motion.div>
   );

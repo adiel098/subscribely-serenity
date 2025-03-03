@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { motion } from "framer-motion";
@@ -23,6 +23,11 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   showSuccess,
   telegramUserId
 }) => {
+  // Log the invite link for debugging
+  useEffect(() => {
+    console.log('Community invite link in PaymentSection:', communityInviteLink);
+  }, [communityInviteLink]);
+  
   if (!selectedPlan) return null;
   
   return (

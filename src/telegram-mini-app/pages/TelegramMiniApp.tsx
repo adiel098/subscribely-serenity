@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
-import AppContent from "@/telegram-mini-app/components/AppContent";
+import AppContent from "@/telegram-mini-app/components/AppContent"; // Fixed import statement
 import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {

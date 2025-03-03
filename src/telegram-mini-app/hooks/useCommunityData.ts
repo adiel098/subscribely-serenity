@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 export const useCommunityData = (communityId: string | null) => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export const useCommunityData = (communityId: string | null) => {
 
         if (response.error) {
           console.error('❌ useCommunityData: Error from edge function:', response.error);
+          setError(response.error.message || "Error fetching community data");
           throw new Error(response.error);
         }
 
@@ -61,10 +63,12 @@ export const useCommunityData = (communityId: string | null) => {
           setCommunity(communityData);
         } else {
           console.error('❌ useCommunityData: Community not found in response:', JSON.stringify(response.data));
+          setError("Community not found");
           throw new Error("Community not found");
         }
       } catch (error) {
         console.error("❌ useCommunityData: Error fetching community data:", error);
+        if (!error) setError("Failed to load community data");
         toast({
           variant: "destructive",
           title: "Error",
@@ -83,5 +87,5 @@ export const useCommunityData = (communityId: string | null) => {
     }
   }, [communityId, toast]);
 
-  return { loading, community };
+  return { loading, community, error };
 };

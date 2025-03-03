@@ -4,12 +4,13 @@ import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { useSearchParams } from "react-router-dom";
 
-interface DebugInfoProps {
+export interface DebugInfoProps {
   telegramUser: TelegramUser | null;
   community: Community | null;
-  activeTab: string;
+  activeTab?: string;
   showEmailForm?: boolean;
   isCheckingUserData?: boolean;
+  activeSubscription?: any; // Added this property
 }
 
 export const DebugInfo: React.FC<DebugInfoProps> = ({ 
@@ -17,7 +18,8 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
   community, 
   activeTab,
   showEmailForm,
-  isCheckingUserData
+  isCheckingUserData,
+  activeSubscription
 }) => {
   const [searchParams] = useSearchParams();
   const showDebug = searchParams.get("debug") === "true";
@@ -58,6 +60,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
           <p><strong>Checking User Data:</strong> {isCheckingUserData ? '⏳ In progress' : '✅ Complete'}</p>
           <p><strong>WebApp Object:</strong> {window.Telegram?.WebApp ? '✅ Available' : '❌ Not available'}</p>
           <p><strong>User in InitData:</strong> {window.Telegram?.WebApp?.initDataUnsafe?.user ? '✅ Available' : '❌ Not available'}</p>
+          <p><strong>Active Subscription:</strong> {activeSubscription ? '✅ Yes' : '❌ No'}</p>
         </div>
       </div>
       

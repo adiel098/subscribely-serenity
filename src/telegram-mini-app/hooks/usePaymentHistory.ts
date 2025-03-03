@@ -54,7 +54,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         ORDER BY: created_at DESC
       `);
       
-      // Modified the query to correctly join the subscription_plans table using plan_id
+      // Using explicit foreign key join for the subscription_plans table
       const { data, error: queryError } = await supabase
         .from('subscription_payments')
         .select(`
@@ -81,90 +81,61 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
 
       console.log(`[usePaymentHistory] Received ${data?.length || 0} payment records`);
       
-      // Log all payment records for debugging
+      // Detailed debug logging for the plan data
       if (data && data.length > 0) {
-        console.log("[usePaymentHistory] Payment records:", JSON.stringify(data, null, 2));
+        console.log("[usePaymentHistory] Full payment records:", JSON.stringify(data, null, 2));
         
-        // Log the first payment's plan info specifically
-        console.log("[usePaymentHistory] First payment plan info:", {
-          payment_id: data[0].id,
-          plan_id: data[0].plan_id,
-          plan: data[0].plan,
-          amount: data[0].amount
+        // Log plan info for each payment
+        data.forEach((payment, index) => {
+          console.log(`[usePaymentHistory] Payment #${index + 1} (${payment.id.substring(0, 8)}) plan info:`, {
+            payment_id: payment.id,
+            plan_id: payment.plan_id,
+            plan: payment.plan,
+            plan_name: payment.plan?.name || "No plan name",
+            amount: payment.amount
+          });
         });
       } else {
         console.log("[usePaymentHistory] No payment records found");
       }
 
-      // Process payment data to ensure plan info is properly filled
-      const processedPayments = data?.map(payment => {
-        // Debug each payment's plan information
-        console.log(`[usePaymentHistory] Processing payment ${payment.id}:`, {
-          plan_id: payment.plan_id,
-          plan: payment.plan,
-          amount: payment.amount
-        });
-        
-        // If plan is null but we have plan_id, try to fetch plan info directly
-        if (!payment.plan && payment.plan_id) {
-          console.log(`[usePaymentHistory] Payment has plan_id ${payment.plan_id} but no plan data, fetching plan directly`);
-          
-          // Return with fallback plan info, will be updated if direct fetch succeeds
-          return {
-            ...payment,
-            plan: {
-              id: payment.plan_id,
-              name: `Plan (${payment.amount})`,
-              interval: "unknown",
-              price: payment.amount
-            }
-          };
-        }
-        return payment;
-      }) || [];
-
-      // For any payments with missing plan info but valid plan_id, try to fetch plans directly
-      const paymentsWithMissingPlans = processedPayments.filter(
-        payment => payment.plan?.name.startsWith('Plan (') && payment.plan_id
-      );
+      // If plans are still missing, fetch them directly as a fallback
+      const missingPlanIds = data?.filter(payment => !payment.plan && payment.plan_id)
+        .map(payment => payment.plan_id) || [];
       
-      if (paymentsWithMissingPlans.length > 0) {
-        console.log(`[usePaymentHistory] Found ${paymentsWithMissingPlans.length} payments with missing plan info. Fetching plans...`);
+      if (missingPlanIds.length > 0) {
+        console.log(`[usePaymentHistory] Need to fetch ${missingPlanIds.length} missing plans:`, missingPlanIds);
         
-        // Collect all unique plan IDs that need fetching
-        const planIdsToFetch = [...new Set(paymentsWithMissingPlans.map(p => p.plan_id))];
-        console.log(`[usePaymentHistory] Fetching plan details for IDs:`, planIdsToFetch);
-        
-        // Fetch plan details for all missing plans in one query
+        const uniquePlanIds = [...new Set(missingPlanIds)];
         const { data: planDetails, error: planError } = await supabase
           .from('subscription_plans')
           .select('id, name, interval, price')
-          .in('id', planIdsToFetch);
+          .in('id', uniquePlanIds);
           
         if (planError) {
           console.error("[usePaymentHistory] Error fetching plan details:", planError);
         } else if (planDetails && planDetails.length > 0) {
-          console.log(`[usePaymentHistory] Found ${planDetails.length} plan details:`, planDetails);
+          console.log(`[usePaymentHistory] Found ${planDetails.length} plans:`, planDetails);
           
-          // Create a map of plan ID to plan details for easy lookup
+          // Create a map for quick lookup
           const planMap = planDetails.reduce((map, plan) => {
             map[plan.id] = plan;
             return map;
           }, {});
           
-          // Update processed payments with actual plan details where available
-          processedPayments.forEach(payment => {
-            if (payment.plan_id && planMap[payment.plan_id]) {
-              console.log(`[usePaymentHistory] Updating payment ${payment.id} with plan details:`, planMap[payment.plan_id]);
+          // Assign plans to payments missing them
+          data?.forEach(payment => {
+            if (!payment.plan && payment.plan_id && planMap[payment.plan_id]) {
               payment.plan = planMap[payment.plan_id];
+              console.log(`[usePaymentHistory] Applied missing plan to payment ${payment.id.substring(0, 8)}:`, payment.plan);
             }
           });
-        } else {
-          console.log("[usePaymentHistory] No additional plan details found");
         }
       }
-
-      setPayments(processedPayments);
+      
+      // Always set the payments data, even with partial or missing plan info
+      setPayments(data || []);
+      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error(`[usePaymentHistory] Error fetching payment history:`, err);

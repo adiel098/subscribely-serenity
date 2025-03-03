@@ -40,12 +40,12 @@ export const usePaymentRecord = () => {
       const price = planPrice;
       console.log(`[usePaymentRecord] Using provided price: ${price} for plan ${planId}`);
       
-      // Verify planId is being properly passed
+      // Verify planId is valid and exists in the database
       if (!planId) {
         console.warn('[usePaymentRecord] WARNING: planId is empty or undefined! This will cause "Unknown Plan" in history.');
       } else {
-        // Verify the plan exists in the database
-        const { data: planExists, error: planCheckError } = await supabase
+        // Verify the plan exists and log its details
+        const { data: planDetails, error: planCheckError } = await supabase
           .from('subscription_plans')
           .select('id, name, price')
           .eq('id', planId)
@@ -53,10 +53,27 @@ export const usePaymentRecord = () => {
         
         if (planCheckError) {
           console.warn(`[usePaymentRecord] Warning: Could not verify plan ${planId} exists:`, planCheckError);
-        } else if (!planExists) {
+        } else if (!planDetails) {
           console.warn(`[usePaymentRecord] WARNING: Plan ${planId} does not exist in database! This will cause "Unknown Plan" in history.`);
         } else {
-          console.log(`[usePaymentRecord] Verified plan exists: ${planExists.name} (${planExists.price})`);
+          console.log(`[usePaymentRecord] Verified plan exists:`, {
+            planExists: true,
+            planDetails,
+            planError: planCheckError
+          });
+          
+          // Check for other payments using this plan to confirm it's properly linked
+          const { data: planPayments, error: planPaymentsError } = await supabase
+            .from('subscription_payments')
+            .select('id, created_at, status')
+            .eq('plan_id', planId)
+            .limit(5);
+            
+          console.log(`[usePaymentRecord] Plan association check:`, {
+            associatedPayments: planPayments,
+            paymentCount: planPayments?.length || 0,
+            planPaymentsError
+          });
         }
       }
       

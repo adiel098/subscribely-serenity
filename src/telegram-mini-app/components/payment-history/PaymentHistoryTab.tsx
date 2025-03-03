@@ -25,20 +25,17 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
     errorMessage: error
   });
 
-  // Debug output for payment plan data
+  // Detailed plan info debug logging
   if (payments?.length) {
-    console.log("[PaymentHistoryTab] First payment plan data:", {
-      plan: payments[0].plan,
-      plan_id: payments[0].plan_id,
-      amount: payments[0].amount
-    });
-    
-    // Log all payment plans for debugging
-    console.log("[PaymentHistoryTab] All payment plans:", 
+    console.log("[PaymentHistoryTab] All payment plans info:", 
       payments.map(p => ({
         id: p.id.substring(0, 8),
         plan_id: p.plan_id,
-        plan_name: p.plan?.name,
+        plan: p.plan ? {
+          id: p.plan.id,
+          name: p.plan.name,
+          price: p.plan.price
+        } : "No plan object",
         amount: p.amount
       }))
     );
@@ -67,22 +64,28 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
     }
   };
 
-  // Improved helper to get plan name with better fallback handling
+  // Enhanced plan name handling with better debugging
   const getPlanName = (payment) => {
-    // If we have a plan object with a non-fallback name, use it
-    if (payment.plan?.name && !payment.plan.name.startsWith('Plan (')) {
-      console.log(`[PaymentHistoryTab] Using real plan name: ${payment.plan.name} for payment ${payment.id.substring(0, 8)}`);
-      return payment.plan.name;
+    console.log(`[PaymentHistoryTab] Getting plan name for payment ${payment.id.substring(0, 8)}:`, {
+      plan_object: payment.plan,
+      plan_id: payment.plan_id,
+      amount: payment.amount
+    });
+    
+    // Direct access to plan name if available - primary option
+    if (payment.plan?.name) {
+      console.log(`[PaymentHistoryTab] Using direct plan name: "${payment.plan.name}" for payment ${payment.id.substring(0, 8)}`);
+      return payment.plan.name; // Use the plan name directly from the plan object
     }
     
-    // If we're using a fallback name with amount, make it clearer
+    // Fallback option using amount
     if (payment.amount) {
-      console.log(`[PaymentHistoryTab] Using fallback plan name with amount: ${payment.amount} for payment ${payment.id.substring(0, 8)}`);
+      console.log(`[PaymentHistoryTab] FALLBACK: Using amount as plan name: ${payment.amount} for payment ${payment.id.substring(0, 8)}`);
       return `Plan (${formatCurrency(payment.amount)})`;
     }
     
     // Last resort fallback
-    console.log(`[PaymentHistoryTab] Using last resort fallback for payment ${payment.id.substring(0, 8)}`);
+    console.log(`[PaymentHistoryTab] FALLBACK: Using "Unknown Plan" for payment ${payment.id.substring(0, 8)}`);
     return "Unknown Plan";
   };
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Sparkles, Star, Zap, Shield, Award, Check } from "lucide-react";
@@ -64,11 +63,10 @@ export const SubscriptionPlans = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Badge variant="secondary" className="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-blue-500/20">
-          <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
+        <Badge variant="secondary" className="px-4 py-1.5 text-base font-medium bg-gradient-to-r from-purple-500/20 to-blue-500/20">
+          <Sparkles className="h-4 w-4 mr-1.5 text-purple-500" />
           Choose Your Plan ✨
         </Badge>
-        {/* Removed the "Choose Your Plan" heading as requested */}
         <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
       </motion.div>
 

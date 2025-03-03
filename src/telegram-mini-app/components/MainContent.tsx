@@ -56,6 +56,7 @@ export const MainContent = ({
           onRefreshSubscriptions={() => {}}
           onRenewSubscription={handleRenewSubscription}
           onSelectCommunity={handleSelectCommunity}
+          telegramUserId={telegramUser.id}
         />
         
         {(showPaymentMethods || showSuccess) && selectedPlan && (

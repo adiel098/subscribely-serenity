@@ -25,17 +25,13 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   // Enhanced logging for debugging
   useEffect(() => {
-    console.log('🔄 PaymentSection component (re)rendered');
-    console.log('📌 Community invite link in PaymentSection:', communityInviteLink);
-    console.log('📌 Selected plan in PaymentSection:', selectedPlan);
-    console.log('📌 Show success in PaymentSection:', showSuccess);
-    console.log('📌 Telegram user ID in PaymentSection:', telegramUserId);
+    console.log('Community invite link in PaymentSection:', communityInviteLink);
+    console.log('Selected plan in PaymentSection:', selectedPlan);
+    console.log('Show success in PaymentSection:', showSuccess);
+    console.log('Telegram user ID in PaymentSection:', telegramUserId);
   }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId]);
   
-  if (!selectedPlan) {
-    console.warn('⚠️ No plan selected in PaymentSection');
-    return null;
-  }
+  if (!selectedPlan) return null;
   
   return (
     <motion.div 

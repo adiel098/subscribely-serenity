@@ -2,7 +2,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminPermission } from "@/admin/hooks/useAdminPermission";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";
 
@@ -28,9 +28,9 @@ export const AdminProtectedRoute = ({
 
   if (loading || isCheckingAdmin) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Verifying admin permissions...</span>
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <span className="text-xl font-medium">Verifying admin permissions...</span>
       </div>
     );
   }
@@ -40,7 +40,19 @@ export const AdminProtectedRoute = ({
   }
   
   if (!isAdmin) {
-    return <Navigate to="/dashboard" />;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+        <p className="text-gray-600 mb-6">You don't have administrator permissions.</p>
+        <Button 
+          onClick={() => navigate("/dashboard")} 
+          className="px-6"
+        >
+          Return to Dashboard
+        </Button>
+      </div>
+    );
   }
 
   return <>{children}</>;

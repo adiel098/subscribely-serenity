@@ -22,17 +22,25 @@ export default function Index() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           {user ? (
             <>
-              <Button asChild size="lg" className="text-lg">
-                <Link to="/dashboard">
-                  Go to Dashboard
-                </Link>
-              </Button>
+              {isAdmin ? (
+                <Button asChild size="lg" className="text-lg bg-indigo-600 hover:bg-indigo-700">
+                  <Link to="/admin/dashboard" className="flex items-center">
+                    <Shield className="mr-2 h-5 w-5" />
+                    Admin Panel
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="text-lg">
+                  <Link to="/dashboard">
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              )}
               
               {isAdmin && (
-                <Button asChild variant="outline" size="lg" className="text-lg flex gap-2 items-center">
-                  <Link to="/admin/dashboard">
-                    <Shield className="h-5 w-5" />
-                    Admin Panel
+                <Button asChild variant="outline" size="lg" className="text-lg">
+                  <Link to="/dashboard">
+                    Group Owner Dashboard
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>

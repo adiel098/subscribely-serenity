@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +20,24 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      // Check if user is admin
+      const checkAdminStatus = async () => {
+        const { data } = await supabase
+          .from('admin_users')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (data) {
+          // User is an admin, redirect to admin panel
+          navigate('/admin/dashboard');
+        } else {
+          // Regular user, redirect to dashboard
+          navigate('/dashboard');
+        }
+      };
+      
+      checkAdminStatus();
     }
   }, [user, navigate]);
 
@@ -46,7 +62,8 @@ const Auth = () => {
           password,
         });
         if (error) throw error;
-        navigate("/dashboard");
+        
+        // Redirection will happen in the useEffect above after auth state changes
       }
     } catch (error: any) {
       toast({

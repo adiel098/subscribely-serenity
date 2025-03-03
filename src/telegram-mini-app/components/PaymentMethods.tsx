@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./SuccessScreen";
 import { useStripeConfig } from "../hooks/useStripeConfig";
@@ -32,7 +32,7 @@ export const PaymentMethods = ({
   telegramUserId
 }: PaymentMethodsProps) => {
   const stripeConfig = useStripeConfig(selectedPlan);
-  const { processPayment, isLoading, isSuccess, error, resetState } = usePaymentProcessing({
+  const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
     communityId: selectedPlan.community_id,
     planId: selectedPlan.id,
     communityInviteLink,
@@ -72,7 +72,8 @@ export const PaymentMethods = ({
   };
 
   if (showSuccess) {
-    return <SuccessScreen communityInviteLink={communityInviteLink} />;
+    // Send both the original community invite link and the possibly updated one from the payment process
+    return <SuccessScreen communityInviteLink={inviteLink || communityInviteLink} />;
   }
 
   return (

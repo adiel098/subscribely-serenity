@@ -1,9 +1,10 @@
 
-import { Check, ChevronRight, PartyPopper } from "lucide-react";
+import { Check, ChevronRight, PartyPopper, Copy, Link, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SuccessScreenProps {
   communityInviteLink: string | null;
@@ -11,11 +12,62 @@ interface SuccessScreenProps {
 
 export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const [showConfetti, setShowConfetti] = useState(true);
+  const [inviteLink, setInviteLink] = useState<string | null>(communityInviteLink);
+  const [isLoadingLink, setIsLoadingLink] = useState<boolean>(false);
   
   // Log the invite link for debugging
   useEffect(() => {
     console.log('Community invite link in SuccessScreen:', communityInviteLink);
+    if (communityInviteLink) {
+      setInviteLink(communityInviteLink);
+    } else {
+      // If no invite link is provided, try to fetch it from recent payments
+      fetchInviteLinkFromRecentPayment();
+    }
   }, [communityInviteLink]);
+
+  // Attempt to fetch invite link from the most recent payment if not provided
+  const fetchInviteLinkFromRecentPayment = async () => {
+    if (inviteLink) return;
+    
+    setIsLoadingLink(true);
+    try {
+      console.log('Attempting to fetch invite link from recent payments...');
+      
+      // Try to get the most recent payment with an invite link
+      const { data: recentPayment, error } = await supabase
+        .from('subscription_payments')
+        .select('invite_link, community_id')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error('Error fetching recent payment:', error);
+      } else if (recentPayment && recentPayment.length > 0 && recentPayment[0].invite_link) {
+        console.log('Found invite link in recent payment:', recentPayment[0].invite_link);
+        setInviteLink(recentPayment[0].invite_link);
+      } else if (recentPayment && recentPayment.length > 0 && recentPayment[0].community_id) {
+        // If we found a payment but no invite link, try to get the invite link from the community
+        console.log('Found community ID in recent payment:', recentPayment[0].community_id);
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('telegram_invite_link')
+          .eq('id', recentPayment[0].community_id)
+          .single();
+        
+        if (communityError) {
+          console.error('Error fetching community:', communityError);
+        } else if (community?.telegram_invite_link) {
+          console.log('Found invite link in community:', community.telegram_invite_link);
+          setInviteLink(community.telegram_invite_link);
+        }
+      }
+    } catch (err) {
+      console.error('Error in fetchInviteLinkFromRecentPayment:', err);
+    } finally {
+      setIsLoadingLink(false);
+    }
+  };
 
   useEffect(() => {
     // Trigger confetti effect when component mounts
@@ -59,9 +111,9 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   }, [showConfetti]);
 
   const handleJoinClick = () => {
-    if (communityInviteLink) {
+    if (inviteLink) {
       // Open the link in a new tab
-      window.open(communityInviteLink, '_blank');
+      window.open(inviteLink, '_blank');
       
       // Also show a toast notification with the link
       toast({
@@ -79,8 +131,8 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
 
   // Copy invite link to clipboard
   const handleCopyLink = () => {
-    if (communityInviteLink) {
-      navigator.clipboard.writeText(communityInviteLink)
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink)
         .then(() => {
           toast({
             title: "Link Copied",
@@ -121,7 +173,14 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
         </p>
       </div>
       
-      {communityInviteLink ? (
+      {isLoadingLink ? (
+        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-blue-700 max-w-sm">
+          <p className="font-medium">Loading invite link...</p>
+          <p className="text-sm mt-1">
+            Please wait while we retrieve your invite link.
+          </p>
+        </div>
+      ) : inviteLink ? (
         <div className="w-full max-w-sm space-y-4">
           <Button
             size="lg"
@@ -135,13 +194,15 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
           <Button 
             variant="outline" 
             onClick={handleCopyLink} 
-            className="mt-2 w-full"
+            className="mt-2 w-full gap-2"
           >
+            <Copy className="h-4 w-4" />
             Copy Invite Link
           </Button>
           
-          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200 text-xs break-all">
-            <span className="font-mono text-gray-600">{communityInviteLink}</span>
+          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200 text-xs break-all flex items-center space-x-2">
+            <Link className="h-4 w-4 flex-shrink-0 text-primary" />
+            <span className="font-mono text-gray-600 overflow-x-auto">{inviteLink}</span>
           </div>
           
           <p className="mt-4 text-xs text-gray-500">
@@ -150,10 +211,20 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
         </div>
       ) : (
         <div className="p-4 bg-red-50 rounded-lg border border-red-100 text-red-700 max-w-sm">
-          <p className="font-medium">Error: No invite link available</p>
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle className="h-5 w-5" />
+            <p>No invite link available</p>
+          </div>
           <p className="text-sm mt-1">
-            Please contact support or try refreshing the page.
+            We couldn't find an invite link for this community. Please contact support or try refreshing the page.
           </p>
+          <Button 
+            variant="outline" 
+            className="mt-3 w-full text-red-600 border-red-200 hover:bg-red-50"
+            onClick={() => window.location.reload()}
+          >
+            Refresh Page
+          </Button>
         </div>
       )}
     </div>

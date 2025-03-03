@@ -1,64 +1,38 @@
 
-// Follow this setup guide to integrate the Deno runtime into your application:
-// https://deno.land/manual/examples/deploy_node_server
+import { createClient } from '@supabase/supabase-js';
+import { corsHeaders } from '../_shared/cors.ts';
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface WebhookPayload {
-  action: string;
-  telegram_id?: string;
-  community_id?: string;
-  subscription_plan_id?: string;
-  status?: string;
-  payment_id?: string;
-  subscription_id?: string;
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const payload = await req.json();
+    const { action, telegram_id, subscription_id, community_id, subscription_plan_id, status, payment_id } = payload;
 
-    // Initialize Supabase client with admin privileges
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log(`Processing request with action: ${action}`);
 
-    // Parse the webhook payload
-    const payload: WebhookPayload = await req.json();
-    console.log("Received payload:", payload);
-
-    const { action } = payload;
-
-    // Handle different actions
     switch (action) {
       case 'get_subscriptions':
-        return await handleGetSubscriptions(payload, supabase);
-      
-      case 'create_or_update_member':
-        return await handleCreateOrUpdateMember(payload, supabase);
-      
+        return await getSubscriptions(telegram_id);
       case 'cancel_subscription':
-        return await handleCancelSubscription(payload, supabase);
-      
+        return await cancelSubscription(subscription_id);
+      case 'create_or_update_member':
+        return await createOrUpdateMember(telegram_id, community_id, subscription_plan_id, status, payment_id);
       default:
         return new Response(
-          JSON.stringify({ error: 'Invalid action' }),
+          JSON.stringify({ error: `Unknown action: ${action}` }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
     }
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('Error processing request:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -66,247 +40,244 @@ serve(async (req) => {
   }
 });
 
-async function handleGetSubscriptions(payload: WebhookPayload, supabase: any) {
-  const { telegram_id } = payload;
-  
-  if (!telegram_id) {
+async function getSubscriptions(telegramId: string) {
+  if (!telegramId) {
     return new Response(
-      JSON.stringify({ error: 'telegram_id is required' }),
+      JSON.stringify({ error: 'Telegram ID is required' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   }
 
-  console.log(`Fetching subscriptions for Telegram user ID: ${telegram_id}`);
+  try {
+    console.log(`Fetching subscriptions for Telegram ID: ${telegramId}`);
+    
+    // Specify the exact foreign key relationship to use
+    const { data, error } = await supabase
+      .from('telegram_chat_members')
+      .select(`
+        *,
+        community:communities!telegram_chat_members_community_id_fkey(
+          id,
+          name,
+          description,
+          telegram_photo_url,
+          telegram_invite_link
+        ),
+        plan:subscription_plans(
+          id,
+          name,
+          description,
+          price,
+          interval
+        )
+      `)
+      .eq('telegram_user_id', telegramId)
+      .order('joined_at', { ascending: false });
 
-  // Get the member data including related community and plan information
-  const { data, error } = await supabase
-    .from('telegram_chat_members')
-    .select(`
-      id,
-      telegram_user_id,
-      telegram_username,
-      joined_at,
-      last_active,
-      subscription_start_date,
-      subscription_end_date,
-      subscription_status,
-      total_messages,
-      community_id,
-      community:communities(
-        id,
-        name,
-        description,
-        telegram_photo_url,
-        telegram_invite_link
-      ),
-      plan:subscription_plans(
-        id,
-        name,
-        description,
-        price,
-        interval
-      )
-    `)
-    .eq('telegram_user_id', telegram_id);
+    if (error) {
+      console.error('Database error fetching subscriptions:', error);
+      throw new Error(`Failed to fetch subscriptions: ${error.message}`);
+    }
 
-  if (error) {
-    console.error('Error fetching subscriptions:', error);
+    console.log(`Found ${data?.length || 0} subscriptions`);
+    
+    return new Response(
+      JSON.stringify({ subscriptions: data || [] }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in getSubscriptions:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
-
-  // Transform the data to the expected format
-  const subscriptions = data.map(item => ({
-    id: item.id,
-    telegram_user_id: item.telegram_user_id,
-    telegram_username: item.telegram_username,
-    joined_at: item.joined_at,
-    last_active: item.last_active,
-    subscription_start_date: item.subscription_start_date,
-    subscription_end_date: item.subscription_end_date,
-    subscription_status: item.subscription_status,
-    total_messages: item.total_messages,
-    community_id: item.community_id,
-    community: item.community,
-    plan: item.plan,
-    expiry_date: item.subscription_end_date // For compatibility
-  }));
-
-  console.log(`Found ${subscriptions.length} subscriptions.`);
-  
-  return new Response(
-    JSON.stringify({ subscriptions }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
 }
 
-async function handleCreateOrUpdateMember(payload: WebhookPayload, supabase: any) {
-  const { telegram_id, community_id, subscription_plan_id, status, payment_id } = payload;
-  
-  if (!telegram_id || !community_id || !subscription_plan_id) {
+async function cancelSubscription(subscriptionId: string) {
+  if (!subscriptionId) {
     return new Response(
-      JSON.stringify({ error: 'telegram_id, community_id, and subscription_plan_id are required' }),
+      JSON.stringify({ error: 'Subscription ID is required' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   }
 
-  console.log(`Creating/updating member with Telegram ID: ${telegram_id} for community: ${community_id}`);
+  try {
+    console.log(`Cancelling subscription with ID: ${subscriptionId}`);
+    
+    // Find the subscription to get necessary data
+    const { data: subscription, error: fetchError } = await supabase
+      .from('telegram_chat_members')
+      .select('*')
+      .eq('id', subscriptionId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching subscription:', fetchError);
+      throw new Error(`Subscription not found: ${fetchError.message}`);
+    }
+
+    // Update the subscription status
+    const { error: updateError } = await supabase
+      .from('telegram_chat_members')
+      .update({
+        subscription_status: false,
+      })
+      .eq('id', subscriptionId);
+
+    if (updateError) {
+      console.error('Error updating subscription:', updateError);
+      throw new Error(`Failed to cancel subscription: ${updateError.message}`);
+    }
+    
+    // Log the cancellation
+    await supabase
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: subscription.telegram_user_id,
+        community_id: subscription.community_id,
+        activity_type: 'subscription_cancelled',
+        details: `Subscription cancelled via mini app`
+      });
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error in cancelSubscription:', error.message);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
+  }
+}
+
+async function createOrUpdateMember(
+  telegramId: string, 
+  communityId: string, 
+  planId: string, 
+  status = 'active',
+  paymentId?: string
+) {
+  if (!telegramId || !communityId || !planId) {
+    return new Response(
+      JSON.stringify({ error: 'Telegram ID, Community ID, and Plan ID are required' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+    );
+  }
 
   try {
-    // Get plan details to calculate subscription end date
+    console.log(`Creating/updating member with Telegram ID: ${telegramId}, Community: ${communityId}, Plan: ${planId}`);
+    
+    // Get plan details to determine subscription duration
     const { data: planData, error: planError } = await supabase
       .from('subscription_plans')
-      .select('interval, price')
-      .eq('id', subscription_plan_id)
+      .select('*')
+      .eq('id', planId)
       .single();
 
     if (planError) {
-      throw new Error(`Error fetching plan details: ${planError.message}`);
+      console.error('Error fetching plan:', planError);
+      throw new Error(`Plan not found: ${planError.message}`);
     }
 
     // Calculate subscription end date based on plan interval
     const startDate = new Date();
     let endDate = new Date(startDate);
-
-    if (planData.interval === 'monthly') {
+    
+    if (planData.interval === 'month') {
       endDate.setMonth(endDate.getMonth() + 1);
-    } else if (planData.interval === 'yearly') {
+    } else if (planData.interval === 'year') {
       endDate.setFullYear(endDate.getFullYear() + 1);
-    } else if (planData.interval === 'weekly') {
+    } else if (planData.interval === 'week') {
       endDate.setDate(endDate.getDate() + 7);
-    } else if (planData.interval === 'daily') {
+    } else if (planData.interval === 'day') {
       endDate.setDate(endDate.getDate() + 1);
     } else {
       // Default to 30 days if interval is not recognized
       endDate.setDate(endDate.getDate() + 30);
     }
 
-    // Upsert the telegram_chat_members record
-    const { data, error } = await supabase
+    // Check if user already exists in the group
+    const { data: existingMember, error: memberError } = await supabase
       .from('telegram_chat_members')
-      .upsert({
-        telegram_user_id: telegram_id,
-        community_id: community_id,
-        subscription_plan_id: subscription_plan_id,
-        subscription_status: status === 'active',
-        is_active: true,
-        subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString(),
-        is_trial: false,
-      })
-      .select();
+      .select('*')
+      .eq('telegram_user_id', telegramId)
+      .eq('community_id', communityId)
+      .maybeSingle();
 
-    if (error) {
-      throw new Error(`Error upserting member: ${error.message}`);
+    let result;
+
+    if (existingMember) {
+      // Update existing member
+      const { error: updateError } = await supabase
+        .from('telegram_chat_members')
+        .update({
+          subscription_status: true,
+          is_active: true,
+          subscription_plan_id: planId,
+          subscription_start_date: startDate.toISOString(),
+          subscription_end_date: endDate.toISOString(),
+          last_active: new Date().toISOString()
+        })
+        .eq('telegram_user_id', telegramId)
+        .eq('community_id', communityId);
+
+      if (updateError) {
+        console.error('Error updating member:', updateError);
+        throw new Error(`Failed to update member: ${updateError.message}`);
+      }
+      
+      result = { success: true, action: 'updated' };
+    } else {
+      // Create new member
+      const { error: insertError } = await supabase
+        .from('telegram_chat_members')
+        .insert({
+          telegram_user_id: telegramId,
+          community_id: communityId,
+          subscription_status: true,
+          is_active: true,
+          subscription_plan_id: planId,
+          subscription_start_date: startDate.toISOString(),
+          subscription_end_date: endDate.toISOString()
+        });
+
+      if (insertError) {
+        console.error('Error creating member:', insertError);
+        throw new Error(`Failed to create member: ${insertError.message}`);
+      }
+      
+      result = { success: true, action: 'created' };
     }
 
-    console.log(`Successfully created/updated member with ID: ${data[0]?.id}`);
-
-    // Log subscription activity
+    // Log the subscription activity
     await supabase
       .from('subscription_activity_logs')
       .insert({
-        telegram_user_id: telegram_id,
-        community_id: community_id,
-        activity_type: 'subscription_created',
-        details: `Plan: ${subscription_plan_id}, Payment: ${payment_id || 'N/A'}`
+        telegram_user_id: telegramId,
+        community_id: communityId,
+        activity_type: existingMember ? 'subscription_renewed' : 'subscription_created',
+        details: `Plan: ${planData.name}, Payment ID: ${paymentId || 'N/A'}`
       });
 
-    // Log community event
-    await supabase
-      .from('community_logs')
-      .insert({
-        community_id: community_id,
-        user_id: telegram_id,
-        event_type: 'subscription_created',
-        metadata: { 
-          plan_id: subscription_plan_id,
-          payment_id: payment_id,
-          amount: planData.price
-        },
-        amount: planData.price
-      });
+    // If payment ID is provided, update payment record as completed
+    if (paymentId) {
+      await supabase
+        .from('subscription_payments')
+        .update({
+          status: 'completed'
+        })
+        .eq('id', paymentId);
+    }
 
     return new Response(
-      JSON.stringify({ success: true, data: data[0] }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in createOrUpdateMember:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
-  }
-}
-
-async function handleCancelSubscription(payload: WebhookPayload, supabase: any) {
-  const { subscription_id } = payload;
-  
-  if (!subscription_id) {
-    return new Response(
-      JSON.stringify({ error: 'subscription_id is required' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    );
-  }
-
-  console.log(`Cancelling subscription with ID: ${subscription_id}`);
-
-  try {
-    // Get the subscription details first
-    const { data: memberData, error: fetchError } = await supabase
-      .from('telegram_chat_members')
-      .select('telegram_user_id, community_id, subscription_plan_id')
-      .eq('id', subscription_id)
-      .single();
-
-    if (fetchError) {
-      throw new Error(`Error fetching subscription details: ${fetchError.message}`);
-    }
-
-    // Update the member record to cancel the subscription
-    const { data, error } = await supabase
-      .from('telegram_chat_members')
-      .update({
-        subscription_status: false
-      })
-      .eq('id', subscription_id)
-      .select();
-
-    if (error) {
-      throw new Error(`Error cancelling subscription: ${error.message}`);
-    }
-
-    console.log(`Successfully cancelled subscription with ID: ${subscription_id}`);
-
-    // Log subscription cancellation activity
-    await supabase
-      .from('subscription_activity_logs')
-      .insert({
-        telegram_user_id: memberData.telegram_user_id,
-        community_id: memberData.community_id,
-        activity_type: 'subscription_expired',
-        details: `Cancelled by user. Plan: ${memberData.subscription_plan_id}`
-      });
-
-    // Log community event
-    await supabase
-      .from('community_logs')
-      .insert({
-        community_id: memberData.community_id,
-        user_id: memberData.telegram_user_id,
-        event_type: 'subscription_expired',
-        metadata: { cancelled_by_user: true }
-      });
-
-    return new Response(
-      JSON.stringify({ success: true, data: data[0] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error in cancelSubscription:', error);
+    console.error('Error in createOrUpdateMember:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

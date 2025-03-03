@@ -20,6 +20,15 @@ export const useMembershipUpdate = () => {
   const updateMembershipStatus = async (params: MembershipUpdateParams) => {
     const { telegramUserId, communityId, planId, paymentId, username } = params;
     
+    if (!telegramUserId || !communityId || !planId) {
+      console.error('[useMembershipUpdate] Missing required parameters:', JSON.stringify({
+        telegramUserId,
+        communityId,
+        planId
+      }));
+      return false;
+    }
+    
     logPaymentAction('Updating membership status', params);
     console.log('[useMembershipUpdate] Updating membership with params:', JSON.stringify(params, null, 2));
     

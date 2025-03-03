@@ -370,13 +370,16 @@ export type Database = {
           amount: number
           community_id: string | null
           created_at: string
+          first_name: string | null
           id: string
           invite_link: string | null
+          last_name: string | null
           payment_method: string | null
           plan_id: string | null
           status: string
           telegram_payment_id: string | null
           telegram_user_id: string | null
+          telegram_username: string | null
           updated_at: string
           user_id: string | null
         }
@@ -384,13 +387,16 @@ export type Database = {
           amount: number
           community_id?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
           invite_link?: string | null
+          last_name?: string | null
           payment_method?: string | null
           plan_id?: string | null
           status: string
           telegram_payment_id?: string | null
           telegram_user_id?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -398,13 +404,16 @@ export type Database = {
           amount?: number
           community_id?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
           invite_link?: string | null
+          last_name?: string | null
           payment_method?: string | null
           plan_id?: string | null
           status?: string
           telegram_payment_id?: string | null
           telegram_user_id?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string | null
         }

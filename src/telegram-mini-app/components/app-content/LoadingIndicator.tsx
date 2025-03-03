@@ -65,19 +65,17 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         >
           <LoadingScreen />
           
-          {/* Debug info that can be shown after clicking 5 times */}
-          {loadingTime > 5 && (
-            <div className="fixed bottom-4 right-4 z-50">
-              <motion.button 
-                onClick={toggleDebugInfo}
-                className="bg-gray-800/80 backdrop-blur-sm text-white p-2 rounded-full text-xs shadow-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {showDebugInfo ? "Hide Debug" : "Debug"}
-              </motion.button>
-            </div>
-          )}
+          {/* Debug info button - show earlier now */}
+          <div className="fixed bottom-4 right-4 z-50">
+            <motion.button 
+              onClick={toggleDebugInfo}
+              className="bg-gray-800/80 backdrop-blur-sm text-white p-2 rounded-full text-xs shadow-lg"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {showDebugInfo ? "Hide Debug" : "Debug"}
+            </motion.button>
+          </div>
           
           {showDebugInfo && (
             <motion.div 
@@ -88,6 +86,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
             >
               <h4 className="font-bold">Debug Info:</h4>
               <p>Loading time: {loadingTime}s</p>
+              <p>Telegram WebApp available: {window.Telegram?.WebApp ? "Yes" : "No"}</p>
+              <p>URL: {window.location.href}</p>
               <motion.button 
                 onClick={onRetry}
                 className="mt-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2 rounded text-xs w-full flex items-center justify-center space-x-2"

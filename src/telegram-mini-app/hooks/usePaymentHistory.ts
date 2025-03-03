@@ -62,7 +62,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
             name,
             telegram_photo_url
           ),
-          plan:subscription_plans!plan_id(
+          plan:subscription_plans(
             id,
             name,
             interval,

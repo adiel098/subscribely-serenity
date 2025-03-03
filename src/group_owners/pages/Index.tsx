@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useAdminPermission } from "@/admin/hooks/useAdminPermission";
+import { ArrowRight, Shield } from "lucide-react";
 
 export default function Index() {
   const { user } = useAuth();
@@ -12,10 +13,10 @@ export default function Index() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <div className="max-w-3xl w-full text-center space-y-8">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
-          Membify - פלטפורמה לניהול קהילות בטלגרם
+          Membify - Telegram Community Management Platform
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          נהל את הקהילות שלך, עקוב אחר מנויים ותשלומים, ואפשר גישה אוטומטית לקבוצות.
+          Manage your communities, track subscriptions and payments, and enable automatic access to groups.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
@@ -23,14 +24,16 @@ export default function Index() {
             <>
               <Button asChild size="lg" className="text-lg">
                 <Link to="/dashboard">
-                  למרחב העבודה שלי
+                  Go to Dashboard
                 </Link>
               </Button>
               
               {isAdmin && (
-                <Button asChild variant="outline" size="lg" className="text-lg">
+                <Button asChild variant="outline" size="lg" className="text-lg flex gap-2 items-center">
                   <Link to="/admin/dashboard">
-                    פאנל אדמין
+                    <Shield className="h-5 w-5" />
+                    Admin Panel
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
               )}
@@ -39,13 +42,13 @@ export default function Index() {
             <>
               <Button asChild size="lg" className="text-lg">
                 <Link to="/auth">
-                  התחברות
+                  Sign In
                 </Link>
               </Button>
               
               <Button asChild variant="outline" size="lg" className="text-lg">
                 <a href="https://t.me/membifybot" target="_blank" rel="noopener noreferrer">
-                  בוט טלגרם
+                  Telegram Bot
                 </a>
               </Button>
             </>

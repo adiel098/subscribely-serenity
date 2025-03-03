@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Subscription } from "../../services/memberService";
-import { SubscriptionCard } from "./SubscriptionCard";
+import { MembershipCard } from "./MembershipCard";
 
 interface SubscriptionsListProps {
   subscriptions: Subscription[];
@@ -15,9 +15,9 @@ export const SubscriptionsList: React.FC<SubscriptionsListProps> = ({
   onRenew,
 }) => {
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-2">
       {subscriptions.map((subscription) => (
-        <SubscriptionCard
+        <MembershipCard
           key={subscription.id}
           subscription={subscription}
           onCancelClick={onCancelClick}

@@ -170,6 +170,14 @@ async function createOrUpdateMember(memberData) {
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (planData.interval === "yearly") {
       endDate.setFullYear(endDate.getFullYear() + 1);
+    } else if (planData.interval === "half-yearly") {
+      // Add 6 months for half-yearly subscriptions
+      endDate.setMonth(endDate.getMonth() + 6);
+      console.log(`[telegram-user-manager] Calculated half-yearly subscription end date: ${endDate.toISOString()}`);
+    } else if (planData.interval === "quarterly") {
+      // Add 3 months for quarterly subscriptions
+      endDate.setMonth(endDate.getMonth() + 3);
+      console.log(`[telegram-user-manager] Calculated quarterly subscription end date: ${endDate.toISOString()}`);
     } else if (planData.interval === "weekly") {
       endDate.setDate(endDate.getDate() + 7);
     } else if (planData.interval === "daily") {

@@ -54,7 +54,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         ORDER BY: created_at DESC
       `);
       
-      // Using explicit foreign key join for the subscription_plans table
+      // Fixed: Using correct Supabase join syntax for the subscription_plans table
       const { data, error: queryError } = await supabase
         .from('subscription_payments')
         .select(`
@@ -64,7 +64,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
             name,
             telegram_photo_url
           ),
-          plan:subscription_plans!plan_id(
+          plan:subscription_plans(
             id,
             name,
             interval,

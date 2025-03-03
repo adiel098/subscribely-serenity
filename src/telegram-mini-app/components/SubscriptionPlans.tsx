@@ -55,12 +55,12 @@ export const SubscriptionPlans = ({
       >
         <Badge variant="secondary" className="px-4 py-1.5 bg-gradient-to-r from-purple-500/20 to-blue-500/20">
           <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
-          פרימיום ✨
+          Premium ✨
         </Badge>
         <h2 className="text-3xl font-bold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          בחר את התוכנית שלך
+          Choose Your Plan
         </h2>
-        <p className="text-gray-600">בחר תוכנית מושלמת לצרכים שלך 🚀</p>
+        <p className="text-gray-600">Select the perfect plan for your needs 🚀</p>
       </motion.div>
 
       <motion.div 
@@ -85,9 +85,9 @@ export const SubscriptionPlans = ({
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <Badge variant={planIndex === 0 ? "default" : "outline"} className="mb-2">
-                  {plan.interval === 'monthly' ? '🔄 חודשי' : 
-                    plan.interval === 'yearly' ? '📅 שנתי' : 
-                    plan.interval === 'lifetime' ? '♾️ לכל החיים' : 
+                  {plan.interval === 'monthly' ? '🔄 Monthly' : 
+                    plan.interval === 'yearly' ? '📅 Yearly' : 
+                    plan.interval === 'lifetime' ? '♾️ Lifetime' : 
                     plan.interval}
                 </Badge>
                 <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary transition-colors">
@@ -99,16 +99,16 @@ export const SubscriptionPlans = ({
                 <div className="relative">
                   {planIndex === 0 && (
                     <span className="absolute -top-6 right-0 text-xs font-medium text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
-                      ⭐ מומלץ
+                      ⭐ Recommended
                     </span>
                   )}
                   <p className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
                     ${plan.price}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {plan.interval === 'monthly' ? 'לחודש' : 
-                      plan.interval === 'yearly' ? 'לשנה' : 
-                      plan.interval === 'lifetime' ? 'חד פעמי' : 
+                    {plan.interval === 'monthly' ? 'per month' : 
+                      plan.interval === 'yearly' ? 'per year' : 
+                      plan.interval === 'lifetime' ? 'one-time' : 
                       plan.interval}
                   </p>
                 </div>
@@ -149,21 +149,6 @@ export const SubscriptionPlans = ({
                 ))}
               </motion.ul>
             )}
-            
-            <motion.div 
-              className="mt-6 pt-4 border-t border-gray-100"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className={`w-full py-2 px-4 text-center rounded-lg ${
-                selectedPlan?.id === plan.id 
-                  ? 'bg-primary text-white font-medium' 
-                  : 'bg-gray-100 text-gray-700 group-hover:bg-gray-200'
-              } transition-colors duration-300`}>
-                {selectedPlan?.id === plan.id ? '✓ נבחר' : 'בחר תוכנית'}
-              </div>
-            </motion.div>
           </motion.div>
         ))}
       </motion.div>

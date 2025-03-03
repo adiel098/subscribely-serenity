@@ -34,28 +34,30 @@ export const usePaymentProcessing = ({
   }, [communityInviteLink]);
 
   // Function to fetch or create an invite link
-  const fetchOrCreateInviteLink = async () => {
-    console.log('[usePaymentProcessing] Attempting to fetch or create invite link');
+  const fetchOrCreateInviteLink = async (forceNew = false) => {
+    console.log('[usePaymentProcessing] Attempting to fetch or create invite link, forceNew:', forceNew);
     try {
-      // First try to get the invite link from the community record
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('telegram_invite_link')
-        .eq('id', communityId)
-        .single();
-      
-      if (communityError) {
-        console.error('[usePaymentProcessing] Error fetching community:', communityError);
-      } else if (community?.telegram_invite_link) {
-        console.log('[usePaymentProcessing] Found invite link in community record:', community.telegram_invite_link);
-        setInviteLink(community.telegram_invite_link);
-        return community.telegram_invite_link;
+      if (!forceNew) {
+        // First try to get the invite link from the community record
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('telegram_invite_link')
+          .eq('id', communityId)
+          .single();
+        
+        if (communityError) {
+          console.error('[usePaymentProcessing] Error fetching community:', communityError);
+        } else if (community?.telegram_invite_link) {
+          console.log('[usePaymentProcessing] Found invite link in community record:', community.telegram_invite_link);
+          setInviteLink(community.telegram_invite_link);
+          return community.telegram_invite_link;
+        }
       }
       
-      // If no invite link was found, try to create one using the edge function
-      console.log('[usePaymentProcessing] No invite link found, calling create-invite-link function');
+      // If no invite link was found or forceNew is true, try to create one using the edge function
+      console.log('[usePaymentProcessing] Calling create-invite-link function with forceNew:', forceNew);
       const { data, error } = await supabase.functions.invoke('create-invite-link', {
-        body: { communityId }
+        body: { communityId, forceNew }
       });
       
       if (error) {
@@ -94,12 +96,16 @@ export const usePaymentProcessing = ({
       
       const paymentId = `demo-${Date.now()}`;
       
-      // If we don't have an invite link, try to get or create one
-      let currentInviteLink = inviteLink;
+      // Always generate a new invite link for new payments
+      console.log('[usePaymentProcessing] Generating fresh invite link for this payment...');
+      const currentInviteLink = await fetchOrCreateInviteLink(true);
+      
       if (!currentInviteLink) {
-        console.log('[usePaymentProcessing] No invite link available. Attempting to fetch or create one...');
-        currentInviteLink = await fetchOrCreateInviteLink();
+        console.warn('[usePaymentProcessing] Could not generate a fresh invite link, will try to use existing one');
       }
+      
+      // Use the new or existing invite link
+      const linkToUse = currentInviteLink || inviteLink;
       
       // Log the payment to the database with the current invite link
       const { data: paymentData, error: paymentError } = await supabase
@@ -111,7 +117,7 @@ export const usePaymentProcessing = ({
           payment_method: paymentMethod,
           amount: 0, // This would be the actual amount in a real implementation
           status: 'successful',
-          invite_link: currentInviteLink
+          invite_link: linkToUse
         })
         .select()
         .single();
@@ -124,10 +130,9 @@ export const usePaymentProcessing = ({
       console.log('[usePaymentProcessing] Payment recorded successfully:', paymentData);
       
       // If we got the invite link from the payment response, use it
-      if (paymentData?.invite_link && !currentInviteLink) {
+      if (paymentData?.invite_link) {
         console.log('[usePaymentProcessing] Got invite link from payment record:', paymentData.invite_link);
         setInviteLink(paymentData.invite_link);
-        currentInviteLink = paymentData.invite_link;
       }
 
       // Update or create member status
@@ -144,15 +149,14 @@ export const usePaymentProcessing = ({
       }
 
       // Final check for invite link - if still not available, try once more
-      if (!currentInviteLink) {
+      if (!linkToUse) {
         console.warn("[usePaymentProcessing] Payment successful but still no invite link available!");
         
-        // Last attempt - try the edge function again
+        // Last attempt - try the edge function again with force new parameter
         try {
-          console.log('[usePaymentProcessing] Making final attempt to create invite link');
-          const link = await fetchOrCreateInviteLink();
+          console.log('[usePaymentProcessing] Making final attempt to create invite link with forceNew=true');
+          const link = await fetchOrCreateInviteLink(true);
           if (link) {
-            currentInviteLink = link;
             setInviteLink(link);
           }
         } catch (err) {
@@ -163,13 +167,13 @@ export const usePaymentProcessing = ({
       setIsSuccess(true);
       toast({
         title: "Payment Successful",
-        description: currentInviteLink 
+        description: linkToUse 
           ? "Thank you for your payment. You can now join the community." 
           : "Payment successful, but no invite link is available. Please contact support.",
       });
       
       // Log final state before completing
-      console.log('[usePaymentProcessing] Final invite link state:', currentInviteLink);
+      console.log('[usePaymentProcessing] Final invite link state:', linkToUse || inviteLink);
       
       onSuccess?.();
       return true;

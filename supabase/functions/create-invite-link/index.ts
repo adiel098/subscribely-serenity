@@ -1,165 +1,146 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
+// CORS headers for browser requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+serve(async (req: Request) => {
+  // Handle preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log('create-invite-link function called')
+    // Parse request
+    const { communityId, forceNew = false } = await req.json()
     
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase credentials')
-      throw new Error('Missing Supabase credentials')
-    }
-
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY
-    )
-
-    // Parse request body
-    let requestData
-    try {
-      requestData = await req.json()
-      console.log('Request data received:', requestData)
-    } catch (error) {
-      console.error('Error parsing request body:', error)
-      throw new Error('Invalid request body')
-    }
-
-    // Get the community ID from the request
-    const { communityId } = requestData
-    console.log('Community ID from request:', communityId)
-
+    console.log(`[create-invite-link] Creating invite link for community: ${communityId}, forceNew: ${forceNew}`)
+    
     if (!communityId) {
-      console.error('Missing community ID in request')
+      console.error('[create-invite-link] Error: Missing community ID')
       return new Response(
-        JSON.stringify({ 
-          error: 'Missing community ID',
-          requestData
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
+        JSON.stringify({ error: 'Missing community ID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Get community details and bot token
-    console.log('Fetching community details for ID:', communityId)
-    const { data: community, error: communityError } = await supabase
+    // Initialize Supabase client with service role key
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { global: { headers: { 'X-Client-Info': 'create-invite-link' } } }
+    )
+
+    // First, check if there's an existing invite link in the community record (unless forceNew is true)
+    if (!forceNew) {
+      const { data: community, error: communityError } = await supabaseAdmin
+        .from('communities')
+        .select('telegram_invite_link, telegram_chat_id')
+        .eq('id', communityId)
+        .single()
+      
+      if (communityError) {
+        console.error(`[create-invite-link] Error fetching community: ${communityError.message}`)
+      } else if (community?.telegram_invite_link) {
+        console.log(`[create-invite-link] Found existing invite link: ${community.telegram_invite_link}`)
+        return new Response(
+          JSON.stringify({ inviteLink: community.telegram_invite_link }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Fetch the community details
+    const { data: community, error: communityError } = await supabaseAdmin
       .from('communities')
-      .select('telegram_chat_id, telegram_invite_link')
+      .select('telegram_chat_id')
       .eq('id', communityId)
       .single()
 
-    if (communityError || !community) {
-      console.error('Error getting community:', communityError)
-      throw new Error(`Community not found: ${communityError?.message || 'Unknown error'}`)
-    }
-
-    console.log('Community details found:', community)
-
-    // If the community already has an invite link, return it instead of creating a new one
-    if (community.telegram_invite_link) {
-      console.log('Existing invite link found:', community.telegram_invite_link)
+    if (communityError) {
+      console.error(`[create-invite-link] Error fetching community: ${communityError.message}`)
       return new Response(
-        JSON.stringify({ inviteLink: community.telegram_invite_link, source: 'existing' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
-        }
+        JSON.stringify({ error: `Error fetching community: ${communityError.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Check if the community has a chat ID
-    if (!community.telegram_chat_id) {
-      console.error('Community has no telegram_chat_id')
-      throw new Error('Community chat ID not found')
+    if (!community?.telegram_chat_id) {
+      console.error('[create-invite-link] Error: Community has no Telegram chat ID')
+      return new Response(
+        JSON.stringify({ error: 'Community has no Telegram chat ID' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    console.log('Fetching bot token from settings')
-    const { data: settings, error: settingsError } = await supabase
-      .from('telegram_global_settings')
-      .select('bot_token')
-      .single()
-
-    if (settingsError || !settings?.bot_token) {
-      console.error('Error getting bot token:', settingsError)
-      throw new Error(`Bot token not found: ${settingsError?.message || 'Unknown error'}`)
+    // Fetch bot token from secrets
+    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+    if (!botToken) {
+      console.error('[create-invite-link] Error: TELEGRAM_BOT_TOKEN not set')
+      return new Response(
+        JSON.stringify({ error: 'Bot token not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    console.log('Bot token retrieved successfully')
-
-    // Create invite link with member limit of 1 and no join request approval needed
-    console.log('Creating new invite link for chat ID:', community.telegram_chat_id)
-    const response = await fetch(
-      `https://api.telegram.org/bot${settings.bot_token}/createChatInviteLink`,
+    // Generate a unique name for the invite link to ensure uniqueness
+    const linkName = `Customer ${new Date().toISOString().split('T')[0]} ${Math.random().toString(36).substring(2, 8)}`
+    
+    // Create a new invite link
+    const createLinkResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/createChatInviteLink`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: community.telegram_chat_id,
-          member_limit: 1
-        })
+          name: linkName,
+          creates_join_request: true,
+          // Making the link expire in 30 days to ensure rotation
+          expire_date: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60),
+          // Optional: Set a member limit if desired
+          // member_limit: 1,
+        }),
       }
     )
 
-    const result = await response.json()
-    console.log('Telegram API response:', result)
-
+    const result = await createLinkResponse.json()
+    
     if (!result.ok) {
-      console.error('Failed to create invite link:', result.description)
-      throw new Error(`Failed to create invite link: ${result.description}`)
+      console.error(`[create-invite-link] Telegram API error: ${JSON.stringify(result)}`)
+      return new Response(
+        JSON.stringify({ error: `Failed to create invite link: ${result.description}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Save the invite link in the community record
     const inviteLink = result.result.invite_link
-    console.log('Saving new invite link to database:', inviteLink)
-    
-    const { error: updateError } = await supabase
+    console.log(`[create-invite-link] Successfully created new invite link: ${inviteLink}`)
+
+    // Update the community record with the new invite link
+    const { error: updateError } = await supabaseAdmin
       .from('communities')
       .update({ telegram_invite_link: inviteLink })
       .eq('id', communityId)
 
     if (updateError) {
-      console.error('Error updating community with new invite link:', updateError)
-      // We'll still return the link even if saving fails
+      console.error(`[create-invite-link] Error updating community with new invite link: ${updateError.message}`)
+      // Continue anyway since we got the link, just couldn't save it
     }
 
     return new Response(
-      JSON.stringify({ inviteLink, source: 'new' }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      JSON.stringify({ inviteLink }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (error) {
-    console.error('Error in create-invite-link function:', error)
+    console.error(`[create-invite-link] Unexpected error: ${error.message}`)
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        stack: error.stack
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
+      JSON.stringify({ error: `Unexpected error: ${error.message}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

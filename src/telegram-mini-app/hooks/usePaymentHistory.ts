@@ -54,6 +54,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         ORDER BY: created_at DESC
       `);
       
+      // Notice we've removed the !plan_id from the query to allow correct join
       const { data, error: queryError } = await supabase
         .from('subscription_payments')
         .select(`
@@ -80,18 +81,27 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
 
       console.log(`[usePaymentHistory] Received ${data?.length || 0} payment records`);
       
-      // Log the first payment record for debugging (if any)
+      // Log all payment records for debugging
       if (data && data.length > 0) {
-        console.log("[usePaymentHistory] First payment record sample:", JSON.stringify(data[0], null, 2));
+        console.log("[usePaymentHistory] Payment records:", JSON.stringify(data, null, 2));
       } else {
         console.log("[usePaymentHistory] No payment records found");
       }
 
       // Process payment data to ensure plan info is properly filled
       const processedPayments = data?.map(payment => {
-        // If plan is null but we have plan_id, add placeholder plan info
+        // Debug each payment's plan information
+        console.log(`[usePaymentHistory] Processing payment ${payment.id}:`, {
+          plan_id: payment.plan_id,
+          plan: payment.plan,
+          amount: payment.amount
+        });
+        
+        // If plan is null but we have plan_id, try to fetch plan info directly
         if (!payment.plan && payment.plan_id) {
-          console.log(`[usePaymentHistory] Payment has plan_id ${payment.plan_id} but no plan data, using fallback info`);
+          console.log(`[usePaymentHistory] Payment has plan_id ${payment.plan_id} but no plan data, fetching plan directly`);
+          
+          // Return with fallback plan info, will be updated if direct fetch succeeds
           return {
             ...payment,
             plan: {
@@ -104,6 +114,47 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         }
         return payment;
       }) || [];
+
+      // For any payments with missing plan info but valid plan_id, try to fetch plans directly
+      const paymentsWithMissingPlans = processedPayments.filter(
+        payment => payment.plan?.name.startsWith('Plan (') && payment.plan_id
+      );
+      
+      if (paymentsWithMissingPlans.length > 0) {
+        console.log(`[usePaymentHistory] Found ${paymentsWithMissingPlans.length} payments with missing plan info. Fetching plans...`);
+        
+        // Collect all unique plan IDs that need fetching
+        const planIdsToFetch = [...new Set(paymentsWithMissingPlans.map(p => p.plan_id))];
+        console.log(`[usePaymentHistory] Fetching plan details for IDs:`, planIdsToFetch);
+        
+        // Fetch plan details for all missing plans in one query
+        const { data: planDetails, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('id, name, interval, price')
+          .in('id', planIdsToFetch);
+          
+        if (planError) {
+          console.error("[usePaymentHistory] Error fetching plan details:", planError);
+        } else if (planDetails && planDetails.length > 0) {
+          console.log(`[usePaymentHistory] Found ${planDetails.length} plan details:`, planDetails);
+          
+          // Create a map of plan ID to plan details for easy lookup
+          const planMap = planDetails.reduce((map, plan) => {
+            map[plan.id] = plan;
+            return map;
+          }, {});
+          
+          // Update processed payments with actual plan details where available
+          processedPayments.forEach(payment => {
+            if (payment.plan_id && planMap[payment.plan_id]) {
+              console.log(`[usePaymentHistory] Updating payment ${payment.id} with plan details:`, planMap[payment.plan_id]);
+              payment.plan = planMap[payment.plan_id];
+            }
+          });
+        } else {
+          console.log("[usePaymentHistory] No additional plan details found");
+        }
+      }
 
       setPayments(processedPayments);
     } catch (err) {

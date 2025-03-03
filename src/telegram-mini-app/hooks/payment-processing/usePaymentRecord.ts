@@ -40,6 +40,26 @@ export const usePaymentRecord = () => {
       const price = planPrice;
       console.log(`[usePaymentRecord] Using provided price: ${price} for plan ${planId}`);
       
+      // Verify planId is being properly passed
+      if (!planId) {
+        console.warn('[usePaymentRecord] WARNING: planId is empty or undefined! This will cause "Unknown Plan" in history.');
+      } else {
+        // Verify the plan exists in the database
+        const { data: planExists, error: planCheckError } = await supabase
+          .from('subscription_plans')
+          .select('id, name, price')
+          .eq('id', planId)
+          .single();
+        
+        if (planCheckError) {
+          console.warn(`[usePaymentRecord] Warning: Could not verify plan ${planId} exists:`, planCheckError);
+        } else if (!planExists) {
+          console.warn(`[usePaymentRecord] WARNING: Plan ${planId} does not exist in database! This will cause "Unknown Plan" in history.`);
+        } else {
+          console.log(`[usePaymentRecord] Verified plan exists: ${planExists.name} (${planExists.price})`);
+        }
+      }
+      
       // Prepare payment data object for logging and insertion
       const paymentData = {
         telegram_user_id: telegramUserId,
@@ -53,11 +73,6 @@ export const usePaymentRecord = () => {
       };
       
       console.log('[usePaymentRecord] Inserting payment record with data:', JSON.stringify(paymentData, null, 2));
-      
-      // Verify planId is being properly passed
-      if (!planId) {
-        console.warn('[usePaymentRecord] Warning: planId is empty or undefined! This will cause "Unknown Plan" in history.');
-      }
       
       // Log the payment to the database with the current invite link
       const { data, error: paymentError } = await supabase

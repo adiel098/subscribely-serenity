@@ -33,6 +33,16 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
       plan_id: payments[0].plan_id,
       amount: payments[0].amount
     });
+    
+    // Log all payment plans for debugging
+    console.log("[PaymentHistoryTab] All payment plans:", 
+      payments.map(p => ({
+        id: p.id.substring(0, 8),
+        plan_id: p.plan_id,
+        plan_name: p.plan?.name,
+        amount: p.amount
+      }))
+    );
   }
 
   const toggleExpand = (paymentId: string) => {
@@ -60,9 +70,24 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
 
   // Helper to get plan name with fallback
   const getPlanName = (payment) => {
-    if (payment.plan?.name) return payment.plan.name;
-    if (payment.amount) return `Plan (${formatCurrency(payment.amount)})`;
+    // If we have a proper plan name that's not a fallback, use it
+    if (payment.plan?.name && !payment.plan.name.startsWith('Plan (')) {
+      return payment.plan.name;
+    }
+    
+    // If we have a fallback plan name but also the original amount, format it nicely
+    if (payment.amount) {
+      return `Plan (${formatCurrency(payment.amount)})`;
+    }
+    
+    // Last resort fallback
     return "Unknown Plan";
+  };
+
+  // Handle refreshing with additional debugging
+  const handleRefresh = () => {
+    console.log("[PaymentHistoryTab] Manual refresh requested");
+    refetch();
   };
 
   if (isLoading) {
@@ -161,7 +186,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
             <Bug className="h-4 w-4 mr-1" />
             {showDiagnostics ? "Hide" : "Debug"}
           </Button>
-          <Button onClick={() => refetch()} variant="outline" size="sm">
+          <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>

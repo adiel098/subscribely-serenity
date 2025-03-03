@@ -66,11 +66,9 @@ export const SubscriptionPlans = ({
       >
         <Badge variant="secondary" className="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-blue-500/20">
           <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
-          Premium ✨
+          Choose Your Plan ✨
         </Badge>
-        <h2 className="text-2xl font-bold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          Choose Your Plan
-        </h2>
+        {/* Removed the "Choose Your Plan" heading as requested */}
         <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
       </motion.div>
 

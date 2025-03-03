@@ -5,10 +5,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard, Wallet, BanknoteIcon } from "lucide-react";
 
 interface TelegramPaymentOptionProps {
-  icon: string;
+  method: 'paypal' | 'card' | 'bank';
   title: string;
   isSelected: boolean;
   onSelect: () => void;
@@ -17,7 +17,7 @@ interface TelegramPaymentOptionProps {
 }
 
 export const TelegramPaymentOption = ({ 
-  icon, 
+  method, 
   title,
   isSelected,
   onSelect,
@@ -36,6 +36,19 @@ export const TelegramPaymentOption = ({
     onSelect();
   };
 
+  const getIcon = () => {
+    switch (method) {
+      case 'paypal':
+        return <Wallet className="h-6 w-6" />;
+      case 'card':
+        return <CreditCard className="h-6 w-6" />;
+      case 'bank':
+        return <BanknoteIcon className="h-6 w-6" />;
+      default:
+        return <CreditCard className="h-6 w-6" />;
+    }
+  };
+
   return (
     <Card 
       className={cn(
@@ -45,20 +58,20 @@ export const TelegramPaymentOption = ({
       )}
       onClick={handleClick}
     >
-      <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
+      <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
         {isProcessing ? (
-          <div className="p-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <div className="p-3">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
           <div className={cn(
-            "p-4 rounded-full transition-colors",
+            "p-3 rounded-full transition-colors",
             isSelected ? 'bg-primary/20' : 'bg-primary/10'
           )}>
-            <img src={icon} alt={title} className="h-12 w-12" />
+            {getIcon()}
           </div>
         )}
-        <h3 className="font-medium text-gray-900 text-lg">{title}</h3>
+        <h3 className="font-medium text-gray-900 text-sm">{title}</h3>
       </CardContent>
     </Card>
   );

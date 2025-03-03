@@ -1,10 +1,11 @@
 
-import { Check, ChevronRight, PartyPopper, Copy, Link, AlertTriangle } from "lucide-react";
+import { Check, ChevronRight, PartyPopper, Copy, Link, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 interface SuccessScreenProps {
   communityInviteLink: string | null;
@@ -117,8 +118,8 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
       
       // Also show a toast notification with the link
       toast({
-        title: "Invite Link Ready",
-        description: "Opening Telegram invite link...",
+        title: "Opening Telegram Group 🚀",
+        description: "Redirecting you to join the community now!",
       });
     } else {
       toast({
@@ -135,8 +136,8 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
       navigator.clipboard.writeText(inviteLink)
         .then(() => {
           toast({
-            title: "Link Copied",
-            description: "Invite link copied to clipboard!",
+            title: "Link Copied! 📋",
+            description: "Invite link copied to your clipboard!",
           });
         })
         .catch(() => {
@@ -182,31 +183,44 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
         </div>
       ) : inviteLink ? (
         <div className="w-full max-w-sm space-y-4">
-          <Button
-            size="lg"
-            onClick={handleJoinClick}
-            className="w-full py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary transition-all group"
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="shadow-lg rounded-xl overflow-hidden"
           >
-            Join Community
-            <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
+            <Button
+              size="lg"
+              onClick={handleJoinClick}
+              className="w-full py-7 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 border-none transition-all group"
+            >
+              <div className="flex items-center gap-2">
+                <span>🚀 Join Community Now</span>
+                <ExternalLink className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Button>
+          </motion.div>
           
-          <Button 
-            variant="outline" 
-            onClick={handleCopyLink} 
-            className="mt-2 w-full gap-2"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Copy className="h-4 w-4" />
-            Copy Invite Link
-          </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleCopyLink} 
+              className="mt-2 w-full py-6 gap-2 text-purple-700 border-purple-200 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 shadow-md"
+            >
+              <Copy className="h-4 w-4" />
+              📋 Copy Invite Link
+            </Button>
+          </motion.div>
           
-          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200 text-xs break-all flex items-center space-x-2">
-            <Link className="h-4 w-4 flex-shrink-0 text-primary" />
+          <div className="mt-4 p-3 bg-gray-50 rounded-md border border-gray-200 text-xs break-all flex items-center space-x-2">
+            <Link className="h-4 w-4 flex-shrink-0 text-purple-500" />
             <span className="font-mono text-gray-600 overflow-x-auto">{inviteLink}</span>
           </div>
           
           <p className="mt-4 text-xs text-gray-500">
-            By joining, you agree to the community's rules and guidelines.
+            By joining, you agree to the community's rules and guidelines. ✨
           </p>
         </div>
       ) : (

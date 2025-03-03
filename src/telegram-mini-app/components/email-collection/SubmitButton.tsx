@@ -13,10 +13,11 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({ isSubmitting }) => {
     <motion.div
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
+      className="shadow-md rounded-lg overflow-hidden"
     >
       <Button 
         type="submit" 
-        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 group"
+        className="w-full py-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 group border-none"
         disabled={isSubmitting}
       >
         {isSubmitting ? (
@@ -26,7 +27,7 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({ isSubmitting }) => {
           </div>
         ) : (
           <div className="flex items-center">
-            Continue
+            Continue ✨
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
         )}

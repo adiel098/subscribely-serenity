@@ -36,7 +36,7 @@ export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonPro
       >
         <Button 
           size="lg" 
-          className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-primary to-purple-600"
+          className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 border-none"
           onClick={handlePaymentClick}
           disabled={isProcessing}
         >
@@ -48,7 +48,7 @@ export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonPro
           ) : (
             <>
               <CreditCard className="h-5 w-5" />
-              Pay ${price} 
+              💳 Pay ${price} 
               <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
             </>
           )}

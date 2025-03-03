@@ -1,19 +1,18 @@
 
 import React, { useState, useEffect } from "react";
-import { LoadingScreen } from "./LoadingScreen";
-import { ErrorDisplay } from "./ErrorDisplay";
-import { CommunityNotFound } from "./CommunityNotFound";
-import { Plan } from "../types/community.types";
+import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "../hooks/useTelegramUser";
 import { useCommunityData } from "../hooks/useCommunityData";
 import { useUserSubscriptions } from "../hooks/useUserSubscriptions";
-import { MainContent } from "./MainContent";
-import { EmailCollectionWrapper } from "./EmailCollectionWrapper";
 import { TelegramInitializer } from "./TelegramInitializer";
 import { UserDataChecker } from "./app-content/UserDataChecker";
 import { ErrorNotifier } from "./app-content/ErrorNotifier";
 import { LoadingIndicator } from "./app-content/LoadingIndicator";
 import { AppContentRouter } from "./app-content/AppContentRouter";
+import { Plan } from "../types/community.types";
+import { ErrorDisplay } from "./ErrorDisplay";
+import { CommunityNotFound } from "./CommunityNotFound";
+import { EmailCollectionWrapper } from "./EmailCollectionWrapper";
 
 interface AppContentProps {
   communityId: string;
@@ -28,6 +27,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
   const [activeTab, setActiveTab] = useState<string>("subscribe");
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { toast } = useToast();
   
   // Telegram user data
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
@@ -40,7 +40,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
   // User subscriptions data
   const { 
     subscriptions, 
-    loading: subscriptionsLoading, 
+    isLoading: subscriptionsLoading, 
     error: subscriptionsError,
     refetch: refetchSubscriptions,
     renewSubscription 
@@ -88,19 +88,40 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     console.log("Selected community:", community);
     // Logic to navigate to the selected community will go here
   };
+
+  const handleRetry = () => {
+    refetchUser();
+    setErrorState(null);
+  };
+
+  const handleTimeout = () => {
+    setErrorState("Loading timeout reached. Please try again.");
+  };
   
   // Loading state
   if (communityLoading || userLoading) {
-    return <LoadingScreen />;
+    return <LoadingIndicator 
+      isLoading={true} 
+      onTimeout={handleTimeout} 
+      onRetry={handleRetry} 
+    />;
   }
   
   // Check for errors
   if (userError) {
-    return <ErrorDisplay message={`Failed to load user data: ${userError}`} />;
+    return <ErrorDisplay 
+      message={`Failed to load user data: ${userError}`} 
+      telegramUserId={telegramUserId} 
+      onRetry={handleRetry} 
+    />;
   }
   
   if (communityError) {
-    return <ErrorDisplay message={`Failed to load community data: ${communityError}`} />;
+    return <ErrorDisplay 
+      message={`Failed to load community data: ${communityError}`} 
+      telegramUserId={telegramUserId}
+      onRetry={handleRetry} 
+    />;
   }
   
   // No community found
@@ -113,8 +134,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     return (
       <EmailCollectionWrapper 
         telegramUser={telegramUser}
-        communityId={communityId}
-        onSuccess={() => {
+        onComplete={() => {
           setShowEmailForm(false);
           refetchUser();
         }}
@@ -124,7 +144,9 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
 
   return (
     <>
-      <TelegramInitializer />
+      <TelegramInitializer onInitialized={(isInitialized, isDev) => {
+        console.log('TelegramInitializer callback:', isInitialized, isDev);
+      }} />
       
       <UserDataChecker
         telegramUser={telegramUser}
@@ -134,9 +156,13 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
         setErrorState={setErrorState}
       />
       
-      <ErrorNotifier error={errorState} />
+      <ErrorNotifier errorState={errorState} />
       
-      <LoadingIndicator isLoading={isCheckingUserData} />
+      <LoadingIndicator 
+        isLoading={isCheckingUserData} 
+        onTimeout={handleTimeout}
+        onRetry={handleRetry}
+      />
       
       <AppContentRouter
         isCheckingUserData={isCheckingUserData}

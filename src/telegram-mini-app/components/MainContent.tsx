@@ -7,6 +7,12 @@ import { UserProfileCard } from "./user-profile/UserProfileCard";
 import { DebugInfo } from "./debug/DebugInfo";
 import { isDevelopment } from "../utils/telegramUtils";
 
+export interface DebugInfoProps {
+  telegramUser: any;
+  community: any;
+  activeSubscription?: any;
+}
+
 export const MainContent = ({
   community,
   telegramUser,
@@ -30,7 +36,7 @@ export const MainContent = ({
         <CommunityHeader community={community} />
         
         <UserProfileCard 
-          fullName={telegramUser.first_name ? 
+          name={telegramUser.first_name ? 
             `${telegramUser.first_name} ${telegramUser.last_name || ''}` : 
             'Telegram User'
           }
@@ -69,7 +75,7 @@ export const MainContent = ({
           <DebugInfo 
             telegramUser={telegramUser}
             community={community}
-            subscription={subscriptions?.[0]}
+            activeSubscription={subscriptions?.[0]}
           />
         )}
       </div>

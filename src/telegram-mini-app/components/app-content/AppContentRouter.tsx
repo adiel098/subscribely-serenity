@@ -26,12 +26,12 @@ export const AppContentRouter = ({
   
   // No community found
   if (!community) {
-    return <ErrorDisplay message="Community not found" />;
+    return <ErrorDisplay message="Community not found" onRetry={() => {}} />;
   }
   
   // No user found
   if (!telegramUser) {
-    return <ErrorDisplay message="Could not retrieve user data" />;
+    return <ErrorDisplay message="Could not retrieve user data" onRetry={() => {}} />;
   }
   
   return (

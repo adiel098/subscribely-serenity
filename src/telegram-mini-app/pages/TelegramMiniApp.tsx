@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
-import { AppContent } from "@/telegram-mini-app/components/AppContent";
+import AppContent from "@/telegram-mini-app/components/AppContent";
 import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
@@ -175,20 +174,10 @@ const TelegramMiniApp = () => {
   return (
     <>
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
+      
       <AppContent
-        communityLoading={communityLoading}
-        userLoading={userLoading}
-        isCheckingUserData={isCheckingUserData}
-        community={community}
-        telegramUser={telegramUser}
-        errorState={errorState}
+        communityId={effectiveStartParam || ""}
         telegramUserId={telegramUserId}
-        onRefetch={refetchUser}
-        onRetry={handleRetry}
-        setShowEmailForm={setShowEmailForm}
-        showEmailForm={showEmailForm}
-        setIsCheckingUserData={setIsCheckingUserData}
-        setErrorState={setErrorState}
       />
     </>
   );

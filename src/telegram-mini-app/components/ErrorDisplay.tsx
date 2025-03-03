@@ -1,17 +1,18 @@
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
-interface ErrorDisplayProps {
-  errorMessage: string;
+export interface ErrorDisplayProps {
+  message: string;
   telegramUserId?: string | null;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ 
-  errorMessage, 
+  message, 
   telegramUserId, 
-  onRetry 
+  onRetry = () => {} 
 }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
@@ -23,7 +24,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
           
           <h1 className="text-2xl font-bold tracking-tight text-red-700">User Identification Error</h1>
           <p className="text-gray-500 text-sm">
-            {errorMessage}
+            {message}
           </p>
         </div>
         

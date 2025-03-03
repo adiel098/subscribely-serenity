@@ -4,11 +4,13 @@ import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 
 interface EmailCollectionWrapperProps {
   telegramUser: TelegramUser;
+  communityId?: string;
   onComplete: () => void;
 }
 
 export const EmailCollectionWrapper: React.FC<EmailCollectionWrapperProps> = ({ 
   telegramUser, 
+  communityId,
   onComplete 
 }) => {
   if (!telegramUser) {

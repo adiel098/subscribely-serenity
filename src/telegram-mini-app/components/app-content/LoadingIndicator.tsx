@@ -6,16 +6,16 @@ import { RefreshCw } from "lucide-react";
 
 interface LoadingIndicatorProps {
   isLoading: boolean;
-  onTimeout: () => void;
+  onTimeout?: () => void;
   timeoutDuration?: number;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   isLoading,
-  onTimeout,
+  onTimeout = () => {},
   timeoutDuration = 15,
-  onRetry
+  onRetry = () => {}
 }) => {
   const [loadingTime, setLoadingTime] = useState(0);
   const [showDebugInfo, setShowDebugInfo] = useState(false);

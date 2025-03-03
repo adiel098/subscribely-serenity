@@ -5,10 +5,12 @@ import { Info, AlertTriangle } from "lucide-react";
 import { initTelegramWebApp, isDevelopment, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 interface TelegramInitializerProps {
-  onInitialized: (isInitialized: boolean, isDevelopmentMode: boolean) => void;
+  onInitialized?: (isInitialized: boolean, isDevelopmentMode: boolean) => void;
 }
 
-export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ onInitialized }) => {
+export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({ 
+  onInitialized = () => {}
+}) => {
   const [telegramInitialized, setTelegramInitialized] = useState(false);
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 

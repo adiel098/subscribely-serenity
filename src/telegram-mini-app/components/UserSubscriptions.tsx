@@ -153,7 +153,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
                 <div className="flex justify-between text-muted-foreground mb-1">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
-                    <span>Started: {formatDate(subscription.subscription_start_date || subscription.created_at)}</span>
+                    <span>Started: {formatDate(subscription.subscription_start_date || subscription.joined_at)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />

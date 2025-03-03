@@ -29,6 +29,9 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   useEffect(() => {
     console.log('[PaymentSection] Community invite link:', communityInviteLink);
     console.log('[PaymentSection] Selected plan:', selectedPlan);
+    if (selectedPlan) {
+      console.log('[PaymentSection] Selected plan price:', selectedPlan.price);
+    }
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);
     console.log('[PaymentSection] Telegram username:', telegramUsername);

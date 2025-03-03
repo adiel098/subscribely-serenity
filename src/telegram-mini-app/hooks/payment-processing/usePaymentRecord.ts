@@ -6,6 +6,7 @@ interface RecordPaymentParams {
   telegramUserId: string;
   communityId: string;
   planId: string;
+  planPrice: number; // Add planPrice parameter
   paymentMethod: string;
   inviteLink: string | null;
   username?: string;
@@ -19,7 +20,7 @@ export const usePaymentRecord = () => {
    * Record payment information in the database
    */
   const recordPayment = async (params: RecordPaymentParams) => {
-    const { telegramUserId, communityId, planId, paymentMethod, inviteLink, username } = params;
+    const { telegramUserId, communityId, planId, planPrice, paymentMethod, inviteLink, username } = params;
     
     logPaymentAction('Recording payment with params', params);
     console.log('[usePaymentRecord] Recording payment with params:', JSON.stringify(params, null, 2));
@@ -30,25 +31,14 @@ export const usePaymentRecord = () => {
       console.log(`- telegramUserId: ${telegramUserId}, type: ${typeof telegramUserId}`);
       console.log(`- communityId: ${communityId}, type: ${typeof communityId}`);
       console.log(`- planId: ${planId}, type: ${typeof planId}`);
+      console.log(`- planPrice: ${planPrice}, type: ${typeof planPrice}`);
       console.log(`- paymentMethod: ${paymentMethod}, type: ${typeof paymentMethod}`);
       console.log(`- inviteLink: ${inviteLink}, type: ${typeof inviteLink}`);
       console.log(`- username: ${username}, type: ${typeof username}`);
       
-      // Get plan details to record accurate amount
-      console.log('[usePaymentRecord] Fetching plan details for planId:', planId);
-      const { data: planData, error: planError } = await supabase
-        .from('subscription_plans')
-        .select('price')
-        .eq('id', planId)
-        .single();
-        
-      if (planError) {
-        console.error("[usePaymentRecord] Error fetching plan details:", planError);
-        console.log("[usePaymentRecord] Plan error details:", JSON.stringify(planError, null, 2));
-      }
-      
-      const price = planData?.price || 0;
-      console.log(`[usePaymentRecord] Retrieved price: ${price} for plan ${planId}`);
+      // Use the provided plan price directly instead of fetching it again
+      const price = planPrice;
+      console.log(`[usePaymentRecord] Using provided price: ${price} for plan ${planId}`);
       
       // Prepare payment data object for logging and insertion
       const paymentData = {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useInviteLink } from "./useInviteLink";
@@ -9,6 +8,7 @@ import { validatePaymentParams, logPaymentAction } from "./utils";
 interface UsePaymentProcessingOptions {
   communityId: string;
   planId: string;
+  planPrice: number;
   communityInviteLink: string | null;
   telegramUserId?: string;
   telegramUsername?: string;
@@ -18,6 +18,7 @@ interface UsePaymentProcessingOptions {
 export const usePaymentProcessing = ({
   communityId,
   planId,
+  planPrice,
   communityInviteLink,
   telegramUserId,
   telegramUsername,
@@ -41,6 +42,7 @@ export const usePaymentProcessing = ({
     console.log(`[usePaymentProcessing] Parameters:
       - communityId: ${communityId}, type: ${typeof communityId}
       - planId: ${planId}, type: ${typeof planId}
+      - planPrice: ${planPrice}, type: ${typeof planPrice}
       - telegramUserId: ${telegramUserId}, type: ${typeof telegramUserId}
       - telegramUsername: ${telegramUsername}, type: ${typeof telegramUsername}
       - paymentMethod: ${paymentMethod}, type: ${typeof paymentMethod}
@@ -64,7 +66,8 @@ export const usePaymentProcessing = ({
         communityId,
         telegramUserId,
         telegramUsername,
-        currentInviteLink: inviteLink
+        currentInviteLink: inviteLink,
+        planPrice
       });
       
       const paymentId = `demo-${Date.now()}`;
@@ -90,6 +93,7 @@ export const usePaymentProcessing = ({
         telegramUserId: telegramUserId!,
         communityId,
         planId,
+        planPrice,
         paymentMethod,
         inviteLink: linkToUse,
         username: telegramUsername
@@ -99,6 +103,7 @@ export const usePaymentProcessing = ({
         telegramUserId: telegramUserId!,
         communityId,
         planId,
+        planPrice,
         paymentMethod,
         inviteLink: linkToUse,
         username: telegramUsername

@@ -37,6 +37,7 @@ export const PaymentMethods = ({
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
     communityId: selectedPlan.community_id,
     planId: selectedPlan.id,
+    planPrice: selectedPlan.price, // Pass the plan price directly
     communityInviteLink,
     telegramUserId,
     telegramUsername,
@@ -47,6 +48,7 @@ export const PaymentMethods = ({
   useEffect(() => {
     console.log('[PaymentMethods] Community invite link:', communityInviteLink);
     console.log('[PaymentMethods] Selected plan:', selectedPlan);
+    console.log('[PaymentMethods] Selected plan price:', selectedPlan.price);
     console.log('[PaymentMethods] Telegram user ID:', telegramUserId);
     console.log('[PaymentMethods] Telegram username:', telegramUsername);
   }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername]);
@@ -67,6 +69,7 @@ export const PaymentMethods = ({
       console.log('[PaymentMethods] Processing payment with method:', selectedPaymentMethod);
       console.log('[PaymentMethods] Community ID:', selectedPlan.community_id);
       console.log('[PaymentMethods] Plan ID:', selectedPlan.id);
+      console.log('[PaymentMethods] Plan price:', selectedPlan.price);
       console.log('[PaymentMethods] Community invite link:', communityInviteLink);
       console.log('[PaymentMethods] Telegram username:', telegramUsername);
       processPayment(selectedPaymentMethod);

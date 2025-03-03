@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, LayoutGrid, Search } from "lucide-react";
@@ -6,7 +5,7 @@ import { Plan } from "@/telegram-mini-app/types/community.types";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { SubscriptionPlanSection } from "./SubscriptionPlanSection";
 import { CommunitySearch } from "@/telegram-mini-app/components/CommunitySearch";
-import { UserSubscriptions } from "@/telegram-mini-app/components/UserSubscriptions";
+import { UserSubscriptions } from "@/telegram-mini-app/components/subscriptions";
 
 interface ContentTabsProps {
   activeTab: string;

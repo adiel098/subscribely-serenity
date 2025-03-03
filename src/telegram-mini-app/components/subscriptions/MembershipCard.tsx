@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Calendar, Clock, Link, RefreshCw, XCircle, Zap, Users } from "lucide-react";
+import { Calendar, Clock, ExternalLink, RefreshCw, XCircle, Zap, Users } from "lucide-react";
 import { Subscription } from "../../services/memberService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,38 +87,40 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 </div>
               </div>
               
-              <div className="flex gap-2 pt-2">
+              {/* Styled Community Link Button */}
+              {subscription.community.telegram_invite_link && (
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full bg-purple-500/10 text-purple-700 hover:bg-purple-500/20 hover:text-purple-800 border border-purple-200 transition-all duration-300"
+                  onClick={handleCommunityLink}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1.5" />
+                  Visit Community ✨
+                </Button>
+              )}
+              
+              {/* Action Buttons Row */}
+              <div className="flex gap-2 pt-1">
+                <Button 
+                  variant="outline" 
                   size="sm" 
                   className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border border-red-100"
                   onClick={() => setCancelDialogOpen(true)}
                 >
                   <XCircle className="h-4 w-4 mr-1.5" />
-                  Cancel
+                  Cancel 🚫
                 </Button>
                 
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1"
+                  className="flex-1 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border border-green-100"
                   onClick={() => onRenew(subscription)}
                 >
                   <RefreshCw className="h-4 w-4 mr-1.5" />
-                  Renew
+                  Renew 🔄
                 </Button>
-                
-                {subscription.community.telegram_invite_link && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={handleCommunityLink}
-                  >
-                    <Link className="h-4 w-4 mr-1.5" />
-                    Community
-                  </Button>
-                )}
               </div>
             </div>
           </AccordionContent>

@@ -33,6 +33,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
 
   const fetchPaymentHistory = async () => {
     if (!telegramUserId) {
+      console.error("[usePaymentHistory] Error: telegramUserId is undefined or empty");
       setError("User ID is required");
       setIsLoading(false);
       return;
@@ -44,11 +45,19 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
     try {
       console.log(`[usePaymentHistory] Fetching payment history for user ${telegramUserId}`);
       
-      const { data, error } = await supabase
+      // Log the SQL query we're about to make (in a readable format)
+      console.log(`[usePaymentHistory] Query: 
+        FROM: subscription_payments
+        SELECT: all columns, community, plan
+        WHERE: telegram_user_id = ${telegramUserId}
+        ORDER BY: created_at DESC
+      `);
+      
+      const { data, error: queryError } = await supabase
         .from('subscription_payments')
         .select(`
           *,
-          community:communities!telegram_chat_members_community_id_fkey(
+          community:communities(
             id,
             name,
             telegram_photo_url
@@ -63,14 +72,26 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         .eq('telegram_user_id', telegramUserId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (queryError) {
+        console.error("[usePaymentHistory] Supabase query error:", queryError);
+        throw queryError;
       }
 
-      console.log(`[usePaymentHistory] Received ${data?.length || 0} payment records`, data);
+      console.log(`[usePaymentHistory] Received ${data?.length || 0} payment records`);
+      
+      // Log the first payment record for debugging (if any)
+      if (data && data.length > 0) {
+        console.log("[usePaymentHistory] First payment record sample:", JSON.stringify(data[0], null, 2));
+      } else {
+        console.log("[usePaymentHistory] No payment records found");
+      }
+
       setPayments(data || []);
     } catch (err) {
-      console.error("Error fetching payment history:", err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`[usePaymentHistory] Error fetching payment history:`, err);
+      console.error(`[usePaymentHistory] Error message:`, errorMessage);
+      
       setError("Failed to fetch your payment history");
       toast({
         title: "Error",
@@ -84,7 +105,10 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
 
   useEffect(() => {
     if (telegramUserId) {
+      console.log(`[usePaymentHistory] useEffect triggered with telegramUserId: ${telegramUserId}`);
       fetchPaymentHistory();
+    } else {
+      console.log(`[usePaymentHistory] useEffect skipped - no telegramUserId provided`);
     }
   }, [telegramUserId]);
 

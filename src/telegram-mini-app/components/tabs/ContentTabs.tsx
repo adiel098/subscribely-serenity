@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, LayoutGrid, Search } from "lucide-react";
@@ -56,6 +57,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             selectedPlan={selectedPlan}
             onPlanSelect={onPlanSelect}
             showPaymentMethods={showPaymentMethods}
+            userSubscriptions={subscriptions}
           />
         </div>
       </TabsContent>

@@ -42,8 +42,10 @@ export const PaymentMethods = ({
 
   // Log community invite link for debugging
   useEffect(() => {
-    console.log('Community invite link in PaymentMethods:', communityInviteLink);
-  }, [communityInviteLink]);
+    console.log('[PaymentMethods] Community invite link:', communityInviteLink);
+    console.log('[PaymentMethods] Selected plan:', selectedPlan);
+    console.log('[PaymentMethods] Telegram user ID:', telegramUserId);
+  }, [communityInviteLink, selectedPlan, telegramUserId]);
 
   // Show error toast if payment processing fails
   useEffect(() => {
@@ -58,10 +60,10 @@ export const PaymentMethods = ({
 
   const handlePayment = () => {
     if (selectedPaymentMethod) {
-      console.log('Processing payment with method:', selectedPaymentMethod);
-      console.log('Community ID:', selectedPlan.community_id);
-      console.log('Plan ID:', selectedPlan.id);
-      console.log('Community invite link:', communityInviteLink);
+      console.log('[PaymentMethods] Processing payment with method:', selectedPaymentMethod);
+      console.log('[PaymentMethods] Community ID:', selectedPlan.community_id);
+      console.log('[PaymentMethods] Plan ID:', selectedPlan.id);
+      console.log('[PaymentMethods] Community invite link:', communityInviteLink);
       processPayment(selectedPaymentMethod);
     } else {
       toast({
@@ -72,6 +74,7 @@ export const PaymentMethods = ({
   };
 
   if (showSuccess) {
+    console.log('[PaymentMethods] Showing success screen with invite link:', inviteLink || communityInviteLink);
     // Send both the original community invite link and the possibly updated one from the payment process
     return <SuccessScreen communityInviteLink={inviteLink || communityInviteLink} />;
   }

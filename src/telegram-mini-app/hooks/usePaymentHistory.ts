@@ -19,6 +19,7 @@ export interface PaymentHistoryItem {
     telegram_photo_url?: string;
   };
   plan?: {
+    id: string;
     name: string;
     interval: string;
     price: number;
@@ -86,7 +87,25 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         console.log("[usePaymentHistory] No payment records found");
       }
 
-      setPayments(data || []);
+      // Process payment data to ensure plan info is properly filled
+      const processedPayments = data?.map(payment => {
+        // If plan is null but we have plan_id, add placeholder plan info
+        if (!payment.plan && payment.plan_id) {
+          console.log(`[usePaymentHistory] Payment has plan_id ${payment.plan_id} but no plan data, using fallback info`);
+          return {
+            ...payment,
+            plan: {
+              id: payment.plan_id,
+              name: `Plan (${payment.amount})`,
+              interval: "unknown",
+              price: payment.amount
+            }
+          };
+        }
+        return payment;
+      }) || [];
+
+      setPayments(processedPayments);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       console.error(`[usePaymentHistory] Error fetching payment history:`, err);

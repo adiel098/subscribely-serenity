@@ -26,6 +26,15 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
     errorMessage: error
   });
 
+  // Debug output for payment plan data
+  if (payments?.length) {
+    console.log("[PaymentHistoryTab] First payment plan data:", {
+      plan: payments[0].plan,
+      plan_id: payments[0].plan_id,
+      amount: payments[0].amount
+    });
+  }
+
   const toggleExpand = (paymentId: string) => {
     if (expandedPaymentId === paymentId) {
       setExpandedPaymentId(null);
@@ -47,6 +56,13 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
       default:
         return 'secondary';
     }
+  };
+
+  // Helper to get plan name with fallback
+  const getPlanName = (payment) => {
+    if (payment.plan?.name) return payment.plan.name;
+    if (payment.amount) return `Plan (${formatCurrency(payment.amount)})`;
+    return "Unknown Plan";
   };
 
   if (isLoading) {
@@ -193,7 +209,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div>
                       <p className="text-muted-foreground">Plan</p>
-                      <p className="font-medium">{payment.plan?.name || "Unknown Plan"}</p>
+                      <p className="font-medium">{getPlanName(payment)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Payment Method</p>

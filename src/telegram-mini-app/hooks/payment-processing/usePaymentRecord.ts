@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { logPaymentAction } from "./utils";
+import { logPaymentAction, logSubscriptionActivity } from "./utils";
 
 interface RecordPaymentParams {
   telegramUserId: string;
@@ -23,6 +23,19 @@ export const usePaymentRecord = () => {
     logPaymentAction('Recording payment', params);
     
     try {
+      // Get plan details to record accurate amount
+      const { data: planData, error: planError } = await supabase
+        .from('subscription_plans')
+        .select('price')
+        .eq('id', planId)
+        .single();
+        
+      if (planError) {
+        console.error("[usePaymentRecord] Error fetching plan details:", planError);
+      }
+      
+      const price = planData?.price || 0;
+      
       // Log the payment to the database with the current invite link
       const { data: paymentData, error: paymentError } = await supabase
         .from('subscription_payments')
@@ -31,7 +44,7 @@ export const usePaymentRecord = () => {
           community_id: communityId,
           plan_id: planId,
           payment_method: paymentMethod,
-          amount: 0, // This would be the actual amount in a real implementation
+          amount: price,
           status: 'successful',
           invite_link: inviteLink
         })
@@ -42,6 +55,14 @@ export const usePaymentRecord = () => {
         console.error("[usePaymentRecord] Error recording payment:", paymentError);
         throw new Error(`Payment recording failed: ${paymentError.message}`);
       }
+
+      // Log payment activity
+      await logSubscriptionActivity(
+        telegramUserId,
+        communityId,
+        'payment_received',
+        `Method: ${paymentMethod}, Amount: ${price}, Plan ID: ${planId}`
+      );
 
       logPaymentAction('Payment recorded successfully', paymentData);
       

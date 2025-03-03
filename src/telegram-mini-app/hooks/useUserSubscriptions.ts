@@ -19,7 +19,9 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
     setError(null);
 
     try {
+      console.log(`[useUserSubscriptions] Fetching subscriptions for user ${telegramUserId}`);
       const data = await getUserSubscriptions(telegramUserId);
+      console.log(`[useUserSubscriptions] Received ${data.length} subscriptions`, data);
       setSubscriptions(data);
     } catch (err) {
       console.error("Error fetching subscriptions:", err);

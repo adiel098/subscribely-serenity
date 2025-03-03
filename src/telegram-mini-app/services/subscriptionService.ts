@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { logServiceAction, validateTelegramId, invokeSupabaseFunction } from "./utils/serviceUtils";
 import { Community, Subscription } from "../types/community.types";

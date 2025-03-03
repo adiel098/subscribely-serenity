@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { createOrUpdateMember } from "@/telegram-mini-app/services/memberService";
-import { logPaymentAction } from "./utils";
+import { logPaymentAction, logSubscriptionActivity } from "./utils";
 
 interface MembershipUpdateParams {
   telegramUserId: string;
@@ -35,6 +35,14 @@ export const useMembershipUpdate = () => {
       if (!success) {
         throw new Error("Failed to update membership status");
       }
+      
+      // Log the membership update activity
+      await logSubscriptionActivity(
+        telegramUserId,
+        communityId,
+        'subscription_renewed',
+        `Plan ID: ${planId}, Payment ID: ${paymentId}`
+      );
       
       logPaymentAction('Membership status updated successfully');
       return true;

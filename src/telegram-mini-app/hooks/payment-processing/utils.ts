@@ -32,3 +32,32 @@ export const validatePaymentParams = (
   
   return { isValid: true };
 };
+
+/**
+ * Log subscription activity to the database
+ */
+export const logSubscriptionActivity = async (
+  telegramUserId: string,
+  communityId: string,
+  activityType: string,
+  details?: string
+) => {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    
+    const { error } = await supabase
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: telegramUserId,
+        community_id: communityId,
+        activity_type: activityType,
+        details
+      });
+      
+    if (error) {
+      console.error(`Failed to log subscription activity: ${error.message}`);
+    }
+  } catch (err) {
+    console.error("Error logging subscription activity:", err);
+  }
+};

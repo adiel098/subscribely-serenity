@@ -1,2 +1,25 @@
 
+# A string used as the project reference
 project_id = "trkiniaqliiwdkrvvuky"
+
+[global.env]
+# Global environment variables to be applied across all functions
+DATABASE_URL = "DATABASE_URL"
+
+[functions.create-invite-link]
+verify_jwt = false
+
+[functions.create-stripe-session]
+verify_jwt = false
+
+[functions.telegram-user-manager]
+verify_jwt = false
+
+[functions.telegram-community-data]
+verify_jwt = false
+
+[functions.telegram-mini-app]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false

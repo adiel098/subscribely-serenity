@@ -37,9 +37,20 @@ export const usePaymentProcessing = ({
   const { recordPayment } = usePaymentRecord();
 
   const processPayment = async (paymentMethod: string) => {
+    console.log('[usePaymentProcessing] Starting payment processing');
+    console.log(`[usePaymentProcessing] Parameters:
+      - communityId: ${communityId}, type: ${typeof communityId}
+      - planId: ${planId}, type: ${typeof planId}
+      - telegramUserId: ${telegramUserId}, type: ${typeof telegramUserId}
+      - telegramUsername: ${telegramUsername}, type: ${typeof telegramUsername}
+      - paymentMethod: ${paymentMethod}, type: ${typeof paymentMethod}
+      - communityInviteLink: ${communityInviteLink}, type: ${typeof communityInviteLink}
+    `);
+    
     // Validate required parameters
     const validation = validatePaymentParams(telegramUserId, communityId, planId);
     if (!validation.isValid) {
+      console.error(`[usePaymentProcessing] Validation failed: ${validation.error}`);
       setError(validation.error);
       return false;
     }
@@ -57,20 +68,34 @@ export const usePaymentProcessing = ({
       });
       
       const paymentId = `demo-${Date.now()}`;
+      console.log(`[usePaymentProcessing] Generated payment ID: ${paymentId}`);
       
       // Always generate a new invite link for new payments
       logPaymentAction('Generating fresh invite link for this payment');
+      console.log(`[usePaymentProcessing] Generating invite link for community: ${communityId}`);
       const currentInviteLink = await fetchOrCreateInviteLink(communityId, true);
       
       if (!currentInviteLink) {
         console.warn('[usePaymentProcessing] Could not generate a fresh invite link, will try to use existing one');
+      } else {
+        console.log(`[usePaymentProcessing] Generated invite link: ${currentInviteLink}`);
       }
       
       // Use the new or existing invite link
       const linkToUse = currentInviteLink || inviteLink;
+      console.log(`[usePaymentProcessing] Using invite link: ${linkToUse}`);
       
       // Record the payment
-      const { success: paymentRecorded, inviteLink: updatedInviteLink } = await recordPayment({
+      console.log('[usePaymentProcessing] Recording payment with params:', {
+        telegramUserId: telegramUserId!,
+        communityId,
+        planId,
+        paymentMethod,
+        inviteLink: linkToUse,
+        username: telegramUsername
+      });
+      
+      const { success: paymentRecorded, inviteLink: updatedInviteLink, error: paymentError } = await recordPayment({
         telegramUserId: telegramUserId!,
         communityId,
         planId,
@@ -80,10 +105,21 @@ export const usePaymentProcessing = ({
       });
 
       if (!paymentRecorded) {
-        throw new Error("Failed to record payment");
+        console.error(`[usePaymentProcessing] Payment recording failed: ${paymentError}`);
+        throw new Error(paymentError || "Failed to record payment");
       }
 
+      console.log(`[usePaymentProcessing] Payment recorded successfully. Updating membership status.`);
+
       // Update membership status
+      console.log('[usePaymentProcessing] Updating membership with params:', {
+        telegramUserId: telegramUserId!,
+        communityId,
+        planId,
+        paymentId,
+        username: telegramUsername
+      });
+      
       const membershipUpdated = await updateMembershipStatus({
         telegramUserId: telegramUserId!,
         communityId,
@@ -93,8 +129,11 @@ export const usePaymentProcessing = ({
       });
 
       if (!membershipUpdated) {
+        console.error(`[usePaymentProcessing] Membership update failed.`);
         throw new Error("Failed to update membership status");
       }
+
+      console.log(`[usePaymentProcessing] Membership updated successfully.`);
 
       // Final check for invite link - if still not available, try once more
       if (!linkToUse) {
@@ -102,7 +141,7 @@ export const usePaymentProcessing = ({
         
         // Last attempt - try the edge function again with force new parameter
         try {
-          logPaymentAction('Making final attempt to create invite link with forceNew=true');
+          console.log('[usePaymentProcessing] Making final attempt to create invite link with forceNew=true');
           await fetchOrCreateInviteLink(communityId, true);
         } catch (err) {
           console.error("[usePaymentProcessing] Final attempt to create invite link failed:", err);
@@ -110,6 +149,8 @@ export const usePaymentProcessing = ({
       }
 
       setIsSuccess(true);
+      console.log(`[usePaymentProcessing] Payment process completed successfully.`);
+      
       toast({
         title: "Payment Successful",
         description: linkToUse 
@@ -125,6 +166,7 @@ export const usePaymentProcessing = ({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Payment processing failed";
       console.error("[usePaymentProcessing] Payment processing error:", errorMessage);
+      console.error("[usePaymentProcessing] Full error details:", err);
       setError(errorMessage);
       toast({
         title: "Payment Error",

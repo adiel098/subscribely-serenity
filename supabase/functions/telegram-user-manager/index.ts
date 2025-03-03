@@ -1,11 +1,18 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Create a Supabase client with the auth admin role
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  { auth: { persistSession: false } }
+);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -14,241 +21,276 @@ serve(async (req) => {
   }
 
   try {
-    // Get request body
+    // Parse request body
     const requestData = await req.json();
-    console.log("Received request data:", requestData);
+    console.log(`[telegram-user-manager] Received request with action: ${requestData.action}`);
+    console.log(`[telegram-user-manager] Request data:`, JSON.stringify(requestData, null, 2));
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Check which action to perform
-    const action = requestData.action;
-    console.log("Requested action:", action);
-
-    let response;
-    switch (action) {
+    // Process based on action
+    switch (requestData.action) {
       case "get_subscriptions":
-        response = await getUserSubscriptions(supabase, requestData);
-        break;
-      case "cancel_subscription":
-        response = await cancelSubscription(supabase, requestData);
-        break;
-      case "create_or_update_member":
-        response = await createOrUpdateMember(supabase, requestData);
-        break;
-      default:
-        throw new Error(`Unsupported action: ${action}`);
-    }
+        const subscriptions = await getUserSubscriptions(requestData.telegram_id);
+        return jsonResponse({ subscriptions });
 
-    // Return successful response
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      case "cancel_subscription":
+        const cancelResult = await cancelSubscription(requestData.subscription_id);
+        return jsonResponse(cancelResult);
+
+      case "create_or_update_member":
+        console.log(`[telegram-user-manager] Starting create_or_update_member`);
+        console.log(`[telegram-user-manager] Member data:`, JSON.stringify(requestData, null, 2));
+        const memberResult = await createOrUpdateMember(requestData);
+        return jsonResponse(memberResult);
+
+      default:
+        return jsonResponse({ error: "Invalid action" }, 400);
+    }
   } catch (error) {
-    console.error("Error processing request:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error(`[telegram-user-manager] Error processing request:`, error);
+    return jsonResponse({ error: error.message }, 500);
   }
 });
 
-async function getUserSubscriptions(supabase, requestData) {
-  const { telegram_id } = requestData;
+async function getUserSubscriptions(telegramId) {
+  console.log(`[telegram-user-manager] Getting subscriptions for telegram ID: ${telegramId}`);
   
-  if (!telegram_id) {
+  if (!telegramId) {
+    console.error(`[telegram-user-manager] Invalid telegram ID provided: ${telegramId}`);
     throw new Error("Telegram ID is required");
   }
-  
-  console.log(`Getting subscriptions for Telegram user ID: ${telegram_id}`);
-  
-  const { data, error } = await supabase
-    .from("telegram_chat_members")
-    .select(`
-      id,
-      telegram_user_id,
-      telegram_username,
-      joined_at,
-      last_active,
-      subscription_start_date,
-      subscription_end_date,
-      subscription_status,
-      total_messages,
-      community_id,
-      community:communities(
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("telegram_chat_members")
+      .select(`
         id,
-        name,
-        description,
-        telegram_photo_url,
-        telegram_invite_link
-      ),
-      plan:subscription_plans(
-        id,
-        name,
-        description,
-        price,
-        interval
-      )
-    `)
-    .eq("telegram_user_id", telegram_id)
-    .order("joined_at", { ascending: false });
-  
-  if (error) {
-    console.error("Database error:", error);
-    throw new Error(`Failed to fetch subscriptions: ${error.message}`);
+        telegram_user_id,
+        telegram_username,
+        joined_at,
+        last_active,
+        subscription_start_date,
+        subscription_end_date,
+        subscription_status,
+        total_messages,
+        community_id,
+        community:communities!telegram_chat_members_community_id_fkey(
+          id,
+          name,
+          description,
+          telegram_photo_url,
+          telegram_invite_link
+        ),
+        plan:subscription_plans(
+          id,
+          name,
+          description,
+          price,
+          interval
+        )
+      `)
+      .eq("telegram_user_id", telegramId);
+
+    if (error) {
+      console.error(`[telegram-user-manager] Database error fetching subscriptions:`, error);
+      throw new Error(`Failed to fetch subscriptions: ${error.message}`);
+    }
+
+    console.log(`[telegram-user-manager] Successfully retrieved ${data?.length || 0} subscriptions`);
+    return data || [];
+  } catch (err) {
+    console.error(`[telegram-user-manager] Error in getUserSubscriptions:`, err);
+    throw err;
   }
-  
-  return { subscriptions: data || [] };
 }
 
-async function cancelSubscription(supabase, requestData) {
-  const { subscription_id } = requestData;
+async function cancelSubscription(subscriptionId) {
+  console.log(`[telegram-user-manager] Cancelling subscription ID: ${subscriptionId}`);
   
-  if (!subscription_id) {
-    throw new Error("Subscription ID is required");
+  if (!subscriptionId) {
+    console.error(`[telegram-user-manager] No subscription ID provided`);
+    return { success: false, error: "Subscription ID is required" };
   }
-  
-  console.log(`Cancelling subscription with ID: ${subscription_id}`);
-  
-  const { data, error } = await supabase
-    .from("telegram_chat_members")
-    .update({
-      subscription_status: false,
-      is_active: false
-    })
-    .eq("id", subscription_id)
-    .select();
-  
-  if (error) {
-    console.error("Database error:", error);
-    throw new Error(`Failed to cancel subscription: ${error.message}`);
-  }
-  
-  return { success: true, subscription: data?.[0] || null };
-}
 
-async function createOrUpdateMember(supabase, requestData) {
-  const { 
-    telegram_id, 
-    community_id, 
-    subscription_plan_id, 
-    status, 
-    payment_id,
-    username 
-  } = requestData;
-  
-  if (!telegram_id || !community_id || !subscription_plan_id) {
-    throw new Error("Required parameters missing");
-  }
-  
-  console.log(`Creating/updating member: ${telegram_id} for community: ${community_id}`);
-  
-  // Check if the member already exists
-  const { data: existingMember, error: checkError } = await supabase
-    .from("telegram_chat_members")
-    .select("*")
-    .eq("telegram_user_id", telegram_id)
-    .eq("community_id", community_id)
-    .maybeSingle();
-  
-  if (checkError) {
-    console.error("Database error checking existing member:", checkError);
-    throw new Error(`Failed to check existing member: ${checkError.message}`);
-  }
-  
-  // Get subscription plan details to determine subscription duration
-  const { data: planData, error: planError } = await supabase
-    .from("subscription_plans")
-    .select("interval")
-    .eq("id", subscription_plan_id)
-    .single();
-  
-  if (planError) {
-    console.error("Database error fetching plan details:", planError);
-    throw new Error(`Failed to fetch plan details: ${planError.message}`);
-  }
-  
-  // Calculate subscription end date based on plan interval
-  const startDate = new Date();
-  let endDate = new Date();
-  
-  switch (planData.interval) {
-    case "monthly":
-      endDate.setMonth(endDate.getMonth() + 1);
-      break;
-    case "quarterly":
-      endDate.setMonth(endDate.getMonth() + 3);
-      break;
-    case "biannual":
-      endDate.setMonth(endDate.getMonth() + 6);
-      break;
-    case "yearly":
-      endDate.setFullYear(endDate.getFullYear() + 1);
-      break;
-    default:
-      endDate.setMonth(endDate.getMonth() + 1); // Default to monthly
-  }
-  
-  // Update or insert the member
-  let result;
-  if (existingMember) {
-    // Update existing member
-    const { data, error } = await supabase
+  try {
+    const { data, error } = await supabaseAdmin
       .from("telegram_chat_members")
       .update({
-        subscription_plan_id: subscription_plan_id,
-        subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString(),
-        subscription_status: true,
-        is_active: true,
-        telegram_username: username || existingMember.telegram_username
+        subscription_status: false,
+        is_active: false,
       })
+      .eq("id", subscriptionId)
+      .select();
+
+    if (error) {
+      console.error(`[telegram-user-manager] Database error cancelling subscription:`, error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`[telegram-user-manager] Successfully cancelled subscription: ${subscriptionId}`);
+    return { success: true, data };
+  } catch (err) {
+    console.error(`[telegram-user-manager] Error in cancelSubscription:`, err);
+    return { success: false, error: err.message };
+  }
+}
+
+async function createOrUpdateMember(memberData) {
+  console.log(`[telegram-user-manager] Creating or updating member with data:`, JSON.stringify(memberData, null, 2));
+  
+  const { telegram_id, community_id, subscription_plan_id, status, payment_id, username } = memberData;
+  
+  // Validate required fields
+  if (!telegram_id || !community_id || !subscription_plan_id) {
+    console.error(`[telegram-user-manager] Missing required member data: telegram_id=${telegram_id}, community_id=${community_id}, subscription_plan_id=${subscription_plan_id}`);
+    return { success: false, error: "Missing required data" };
+  }
+
+  try {
+    // Get plan details to calculate subscription end date
+    console.log(`[telegram-user-manager] Getting plan details for ID: ${subscription_plan_id}`);
+    const { data: planData, error: planError } = await supabaseAdmin
+      .from("subscription_plans")
+      .select("interval, price")
+      .eq("id", subscription_plan_id)
+      .single();
+
+    if (planError) {
+      console.error(`[telegram-user-manager] Error fetching plan details:`, planError);
+      return { success: false, error: planError.message };
+    }
+
+    console.log(`[telegram-user-manager] Retrieved plan details:`, JSON.stringify(planData, null, 2));
+
+    // Calculate subscription end date based on plan interval
+    const startDate = new Date();
+    let endDate = new Date(startDate);
+
+    // Add duration based on interval
+    if (planData.interval === "monthly") {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (planData.interval === "yearly") {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else if (planData.interval === "weekly") {
+      endDate.setDate(endDate.getDate() + 7);
+    } else if (planData.interval === "daily") {
+      endDate.setDate(endDate.getDate() + 1);
+    } else if (planData.interval === "one_time") {
+      // For one-time payments, set a default 1-year validity
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+
+    console.log(`[telegram-user-manager] Calculated subscription: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+
+    // Check if member already exists
+    console.log(`[telegram-user-manager] Checking if member exists: telegramId=${telegram_id}, communityId=${community_id}`);
+    const { data: existingMember, error: memberError } = await supabaseAdmin
+      .from("telegram_chat_members")
+      .select("id, subscription_status")
       .eq("telegram_user_id", telegram_id)
       .eq("community_id", community_id)
-      .select();
-    
-    if (error) {
-      console.error("Database error updating member:", error);
-      throw new Error(`Failed to update member: ${error.message}`);
+      .maybeSingle();
+
+    if (memberError) {
+      console.error(`[telegram-user-manager] Error checking existing member:`, memberError);
+      return { success: false, error: memberError.message };
     }
+
+    let result;
     
-    result = { member: data?.[0], isNewMember: false };
-  } else {
-    // Insert new member
-    const { data, error } = await supabase
-      .from("telegram_chat_members")
-      .insert({
-        telegram_user_id: telegram_id,
-        community_id: community_id,
-        subscription_plan_id: subscription_plan_id,
-        subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString(),
-        subscription_status: true,
-        is_active: true,
-        telegram_username: username
-      })
-      .select();
-    
-    if (error) {
-      console.error("Database error inserting member:", error);
-      throw new Error(`Failed to insert member: ${error.message}`);
+    if (existingMember) {
+      console.log(`[telegram-user-manager] Member exists, updating: ID=${existingMember.id}`);
+      
+      // Update existing member
+      const { data, error } = await supabaseAdmin
+        .from("telegram_chat_members")
+        .update({
+          subscription_plan_id,
+          subscription_start_date: startDate.toISOString(),
+          subscription_end_date: endDate.toISOString(),
+          subscription_status: true,
+          is_active: true,
+          telegram_username: username
+        })
+        .eq("id", existingMember.id)
+        .select();
+
+      if (error) {
+        console.error(`[telegram-user-manager] Error updating member:`, error);
+        return { success: false, error: error.message };
+      }
+
+      result = { success: true, data, isNew: false };
+    } else {
+      console.log(`[telegram-user-manager] Member doesn't exist, creating new member`);
+      
+      // Create new member
+      const { data, error } = await supabaseAdmin
+        .from("telegram_chat_members")
+        .insert({
+          telegram_user_id: telegram_id,
+          community_id,
+          subscription_plan_id,
+          subscription_start_date: startDate.toISOString(),
+          subscription_end_date: endDate.toISOString(),
+          subscription_status: true,
+          is_active: true,
+          telegram_username: username
+        })
+        .select();
+
+      if (error) {
+        console.error(`[telegram-user-manager] Error creating member:`, error);
+        return { success: false, error: error.message };
+      }
+
+      result = { success: true, data, isNew: true };
     }
+
+    console.log(`[telegram-user-manager] Member created/updated successfully:`, JSON.stringify(result, null, 2));
     
-    result = { member: data?.[0], isNewMember: true };
+    // Log subscription activity
+    await logSubscriptionActivity(
+      telegram_id,
+      community_id,
+      existingMember ? 'subscription_renewed' : 'subscription_created',
+      `Plan: ${subscription_plan_id}, Payment: ${payment_id || 'N/A'}`
+    );
+
+    return result;
+  } catch (err) {
+    console.error(`[telegram-user-manager] Unexpected error in createOrUpdateMember:`, err);
+    return { success: false, error: err.message };
   }
-  
-  // Log the activity
-  await supabase
-    .from("subscription_activity_logs")
-    .insert({
-      telegram_user_id: telegram_id,
-      community_id: community_id,
-      activity_type: existingMember ? "subscription_renewed" : "subscription_created",
-      details: `Plan ID: ${subscription_plan_id}, Payment ID: ${payment_id || "N/A"}`
-    });
-  
-  return result;
+}
+
+async function logSubscriptionActivity(telegramUserId, communityId, activityType, details) {
+  console.log(`[telegram-user-manager] Logging subscription activity: ${activityType} for user ${telegramUserId} in community ${communityId}`);
+  try {
+    const { error } = await supabaseAdmin
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: telegramUserId,
+        community_id: communityId,
+        activity_type: activityType,
+        details
+      });
+      
+    if (error) {
+      console.error(`[telegram-user-manager] Error logging subscription activity:`, error);
+    } else {
+      console.log(`[telegram-user-manager] Successfully logged subscription activity`);
+    }
+  } catch (err) {
+    console.error(`[telegram-user-manager] Error in logSubscriptionActivity:`, err);
+  }
+}
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
 }

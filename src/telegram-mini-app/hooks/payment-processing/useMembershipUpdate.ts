@@ -21,6 +21,7 @@ export const useMembershipUpdate = () => {
     const { telegramUserId, communityId, planId, paymentId, username } = params;
     
     logPaymentAction('Updating membership status', params);
+    console.log('[useMembershipUpdate] Updating membership with params:', JSON.stringify(params, null, 2));
     
     try {
       // Prepare data object for creating or updating membership
@@ -33,6 +34,8 @@ export const useMembershipUpdate = () => {
         username: username
       };
       
+      console.log('[useMembershipUpdate] Calling edge function with data:', JSON.stringify(memberData, null, 2));
+      
       // Call the edge function to create or update the member record
       const { data, error } = await supabase.functions.invoke('telegram-user-manager', {
         body: {
@@ -43,14 +46,18 @@ export const useMembershipUpdate = () => {
 
       if (error) {
         console.error("[useMembershipUpdate] Error updating membership:", error);
+        console.log("[useMembershipUpdate] Error details:", JSON.stringify(error, null, 2));
+        console.log("[useMembershipUpdate] Request data that caused error:", JSON.stringify(memberData, null, 2));
         throw new Error(`Membership update failed: ${error.message}`);
       }
 
+      console.log('[useMembershipUpdate] Membership update response:', JSON.stringify(data, null, 2));
       logPaymentAction('Membership status updated successfully', data);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error updating membership";
       console.error("[useMembershipUpdate] Error:", errorMessage);
+      console.error("[useMembershipUpdate] Full error details:", err);
       return false;
     }
   };

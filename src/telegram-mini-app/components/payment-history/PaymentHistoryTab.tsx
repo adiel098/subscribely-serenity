@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,19 +67,22 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
     }
   };
 
-  // Helper to get plan name with fallback
+  // Improved helper to get plan name with better fallback handling
   const getPlanName = (payment) => {
-    // If we have a proper plan name that's not a fallback, use it
+    // If we have a plan object with a non-fallback name, use it
     if (payment.plan?.name && !payment.plan.name.startsWith('Plan (')) {
+      console.log(`[PaymentHistoryTab] Using real plan name: ${payment.plan.name} for payment ${payment.id.substring(0, 8)}`);
       return payment.plan.name;
     }
     
-    // If we have a fallback plan name but also the original amount, format it nicely
+    // If we're using a fallback name with amount, make it clearer
     if (payment.amount) {
+      console.log(`[PaymentHistoryTab] Using fallback plan name with amount: ${payment.amount} for payment ${payment.id.substring(0, 8)}`);
       return `Plan (${formatCurrency(payment.amount)})`;
     }
     
     // Last resort fallback
+    console.log(`[PaymentHistoryTab] Using last resort fallback for payment ${payment.id.substring(0, 8)}`);
     return "Unknown Plan";
   };
 

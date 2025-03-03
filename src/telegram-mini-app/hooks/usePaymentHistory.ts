@@ -54,7 +54,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         ORDER BY: created_at DESC
       `);
       
-      // Notice we've removed the !plan_id from the query to allow correct join
+      // Modified the query to correctly join the subscription_plans table using plan_id
       const { data, error: queryError } = await supabase
         .from('subscription_payments')
         .select(`
@@ -64,7 +64,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
             name,
             telegram_photo_url
           ),
-          plan:subscription_plans(
+          plan:subscription_plans!plan_id(
             id,
             name,
             interval,
@@ -84,6 +84,14 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
       // Log all payment records for debugging
       if (data && data.length > 0) {
         console.log("[usePaymentHistory] Payment records:", JSON.stringify(data, null, 2));
+        
+        // Log the first payment's plan info specifically
+        console.log("[usePaymentHistory] First payment plan info:", {
+          payment_id: data[0].id,
+          plan_id: data[0].plan_id,
+          plan: data[0].plan,
+          amount: data[0].amount
+        });
       } else {
         console.log("[usePaymentHistory] No payment records found");
       }

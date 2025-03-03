@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { useDatabaseDiagnostics } from "@/telegram-mini-app/hooks/useDatabaseDiagnostics";
 import { Button } from "@/components/ui/button";
-import { Loader2, Database, Bug, RefreshCw } from "lucide-react";
+import { Loader2, Database, Bug, RefreshCw, FileText } from "lucide-react";
+import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 
 interface PaymentDiagnosticsProps {
   telegramUserId: string | undefined;
@@ -15,7 +16,8 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
 }) => {
   const { runDiagnostics, isLoading, results, error } = useDatabaseDiagnostics();
   const [diagnosticsRun, setDiagnosticsRun] = useState(false);
-
+  const { payments } = usePaymentHistory(telegramUserId);
+  
   const handleRunDiagnostics = async () => {
     if (!telegramUserId) return;
     
@@ -33,6 +35,7 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
       action: 'check_user_exists', 
       telegram_user_id: telegramUserId 
     });
+    setDiagnosticsRun(true);
   };
 
   const handleCheckTable = async () => {
@@ -40,6 +43,27 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
       action: 'table_info', 
       table_name: 'subscription_payments' 
     });
+    setDiagnosticsRun(true);
+  };
+  
+  const handleCheckPlanDetails = async () => {
+    // Get the plan_id from the first payment if available
+    const planId = payments && payments.length > 0 ? payments[0].plan_id : null;
+    
+    if (planId) {
+      await runDiagnostics({
+        action: 'check_plan_details',
+        plan_id: planId
+      });
+      setDiagnosticsRun(true);
+    } else {
+      // If no plan_id is available, check subscription_plans table structure
+      await runDiagnostics({
+        action: 'table_info',
+        table_name: 'subscription_plans'
+      });
+      setDiagnosticsRun(true);
+    }
   };
 
   return (
@@ -88,6 +112,16 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
           >
             {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Database className="h-4 w-4 mr-2" />}
             Check Payment Table
+          </Button>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            disabled={isLoading} 
+            onClick={handleCheckPlanDetails}
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
+            Check Plan Details
           </Button>
         </div>
       </div>

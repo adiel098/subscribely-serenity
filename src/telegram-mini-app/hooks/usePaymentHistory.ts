@@ -48,7 +48,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
       // Log the SQL query we're about to make (in a readable format)
       console.log(`[usePaymentHistory] Query: 
         FROM: subscription_payments
-        SELECT: all columns, community, plan
+        SELECT: all columns, community, plan using plan_id as foreign key
         WHERE: telegram_user_id = ${telegramUserId}
         ORDER BY: created_at DESC
       `);
@@ -62,7 +62,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
             name,
             telegram_photo_url
           ),
-          plan:subscription_plans(
+          plan:subscription_plans!plan_id(
             id,
             name,
             interval,

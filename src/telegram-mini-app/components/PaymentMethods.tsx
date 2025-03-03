@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
 import { useStripeConfig } from "../hooks/useStripeConfig";
-import { usePaymentProcessing } from "../hooks/usePaymentProcessing";
+import { usePaymentProcessing } from "../hooks/payment-processing/usePaymentProcessing";
 import { PaymentHeader } from "./payment/PaymentHeader";
 import { PaymentOptions } from "./payment/PaymentOptions";
 import { PaymentButton } from "./payment/PaymentButton";

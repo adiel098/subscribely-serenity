@@ -196,54 +196,6 @@ export type Database = {
           },
         ]
       }
-      community_members: {
-        Row: {
-          community_id: string
-          id: string
-          joined_at: string
-          platform_user_id: string | null
-          role: Database["public"]["Enums"]["community_role"]
-          subscription_expires_at: string | null
-          subscription_status: boolean | null
-          user_id: string
-        }
-        Insert: {
-          community_id: string
-          id?: string
-          joined_at?: string
-          platform_user_id?: string | null
-          role?: Database["public"]["Enums"]["community_role"]
-          subscription_expires_at?: string | null
-          subscription_status?: boolean | null
-          user_id: string
-        }
-        Update: {
-          community_id?: string
-          id?: string
-          joined_at?: string
-          platform_user_id?: string | null
-          role?: Database["public"]["Enums"]["community_role"]
-          subscription_expires_at?: string | null
-          subscription_status?: boolean | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_members_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_methods: {
         Row: {
           community_id: string

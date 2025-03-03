@@ -1,54 +1,56 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { createOrUpdateMember } from "@/telegram-mini-app/services/memberService";
-import { logPaymentAction, logSubscriptionActivity } from "./utils";
+import { logPaymentAction } from "./utils";
 
 interface MembershipUpdateParams {
   telegramUserId: string;
   communityId: string;
   planId: string;
-  paymentId: string;
+  paymentId?: string;
+  username?: string;
 }
 
 /**
- * Hook for handling membership status updates
+ * Hook for updating membership status after successful payment
  */
 export const useMembershipUpdate = () => {
   /**
-   * Update or create membership after successful payment
+   * Update membership status in the database
    */
-  const updateMembershipStatus = async (params: MembershipUpdateParams): Promise<boolean> => {
-    const { telegramUserId, communityId, planId, paymentId } = params;
+  const updateMembershipStatus = async (params: MembershipUpdateParams) => {
+    const { telegramUserId, communityId, planId, paymentId, username } = params;
     
     logPaymentAction('Updating membership status', params);
     
     try {
-      // Update or create member status
-      const success = await createOrUpdateMember({
+      // Prepare data object for creating or updating membership
+      const memberData = {
         telegram_id: telegramUserId,
         community_id: communityId,
         subscription_plan_id: planId,
         status: 'active',
-        payment_id: paymentId
+        payment_id: paymentId,
+        username: username
+      };
+      
+      // Call the edge function to create or update the member record
+      const { data, error } = await supabase.functions.invoke('telegram-user-manager', {
+        body: {
+          action: "create_or_update_member",
+          ...memberData
+        }
       });
 
-      if (!success) {
-        throw new Error("Failed to update membership status");
+      if (error) {
+        console.error("[useMembershipUpdate] Error updating membership:", error);
+        throw new Error(`Membership update failed: ${error.message}`);
       }
-      
-      // Log the membership update activity
-      await logSubscriptionActivity(
-        telegramUserId,
-        communityId,
-        'subscription_renewed',
-        `Plan ID: ${planId}, Payment ID: ${paymentId}`
-      );
-      
-      logPaymentAction('Membership status updated successfully');
+
+      logPaymentAction('Membership status updated successfully', data);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error updating membership";
-      console.error(`[useMembershipUpdate] Error:`, errorMessage);
+      console.error("[useMembershipUpdate] Error:", errorMessage);
       return false;
     }
   };

@@ -8,6 +8,7 @@ interface RecordPaymentParams {
   planId: string;
   paymentMethod: string;
   inviteLink: string | null;
+  username?: string;
 }
 
 /**
@@ -18,7 +19,7 @@ export const usePaymentRecord = () => {
    * Record payment information in the database
    */
   const recordPayment = async (params: RecordPaymentParams) => {
-    const { telegramUserId, communityId, planId, paymentMethod, inviteLink } = params;
+    const { telegramUserId, communityId, planId, paymentMethod, inviteLink, username } = params;
     
     logPaymentAction('Recording payment', params);
     
@@ -46,7 +47,8 @@ export const usePaymentRecord = () => {
           payment_method: paymentMethod,
           amount: price,
           status: 'successful',
-          invite_link: inviteLink
+          invite_link: inviteLink,
+          telegram_username: username
         })
         .select()
         .single();

@@ -12,6 +12,7 @@ interface PaymentSectionProps {
   communityInviteLink: string | null;
   showSuccess: boolean;
   telegramUserId?: string;
+  telegramUsername?: string;
 }
 
 export const PaymentSection: React.FC<PaymentSectionProps> = ({
@@ -21,7 +22,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   onCompletePurchase,
   communityInviteLink,
   showSuccess,
-  telegramUserId
+  telegramUserId,
+  telegramUsername
 }) => {
   // Enhanced logging for debugging
   useEffect(() => {
@@ -29,7 +31,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Selected plan:', selectedPlan);
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId]);
+    console.log('[PaymentSection] Telegram username:', telegramUsername);
+  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername]);
   
   if (!selectedPlan) return null;
   
@@ -49,6 +52,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
         communityInviteLink={communityInviteLink}
         showSuccess={showSuccess}
         telegramUserId={telegramUserId}
+        telegramUsername={telegramUsername}
       />
     </motion.div>
   );

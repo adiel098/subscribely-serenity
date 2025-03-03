@@ -33,6 +33,7 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
       
       if (userData) {
         console.log('✅ Successfully retrieved user data from Telegram WebApp or direct ID:', userData);
+        console.log('👤 User username:', userData.username);
         
         // If we have user data, fetch additional data from database
         if (userData.id) {
@@ -52,6 +53,7 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
               username: userData.username || dbUser.username || undefined
             };
             console.log('✅ Merged user data with database info:', userData);
+            console.log('👤 Final username after merge:', userData.username);
           } else {
             console.log('⚠️ User not found in database, will NOT create user here');
             // IMPORTANT: We removed the user creation here to ensure it only happens in the email form
@@ -65,6 +67,7 @@ export const useTelegramUser = (communityId: string, directTelegramUserId?: stri
           console.log('🔍 Development environment detected, using mock user data');
           const mockUser = getMockUser();
           console.log('✅ Using mock user:', mockUser);
+          console.log('👤 Mock user username:', mockUser.username);
           setUser(mockUser);
         } else {
           console.error('❌ Could not retrieve user data from Telegram WebApp');

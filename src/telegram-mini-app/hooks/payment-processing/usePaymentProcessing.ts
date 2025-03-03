@@ -11,6 +11,7 @@ interface UsePaymentProcessingOptions {
   planId: string;
   communityInviteLink: string | null;
   telegramUserId?: string;
+  telegramUsername?: string;
   onSuccess?: () => void;
 }
 
@@ -19,6 +20,7 @@ export const usePaymentProcessing = ({
   planId,
   communityInviteLink,
   telegramUserId,
+  telegramUsername,
   onSuccess
 }: UsePaymentProcessingOptions) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,7 @@ export const usePaymentProcessing = ({
         paymentMethod,
         communityId,
         telegramUserId,
+        telegramUsername,
         currentInviteLink: inviteLink
       });
       
@@ -72,7 +75,8 @@ export const usePaymentProcessing = ({
         communityId,
         planId,
         paymentMethod,
-        inviteLink: linkToUse
+        inviteLink: linkToUse,
+        username: telegramUsername
       });
 
       if (!paymentRecorded) {
@@ -84,7 +88,8 @@ export const usePaymentProcessing = ({
         telegramUserId: telegramUserId!,
         communityId,
         planId,
-        paymentId
+        paymentId,
+        username: telegramUsername
       });
 
       if (!membershipUpdated) {

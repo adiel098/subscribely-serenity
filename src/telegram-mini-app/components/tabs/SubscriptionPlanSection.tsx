@@ -3,19 +3,22 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
+import { Subscription } from "@/telegram-mini-app/services/memberService";
 
 interface SubscriptionPlanSectionProps {
   plans: Plan[];
   selectedPlan: Plan | null;
   onPlanSelect: (plan: Plan) => void;
   showPaymentMethods: boolean;
+  userSubscriptions?: Subscription[];
 }
 
 export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = ({
   plans,
   selectedPlan,
   onPlanSelect,
-  showPaymentMethods
+  showPaymentMethods,
+  userSubscriptions = []
 }) => {
   // Safe guard against undefined or non-array plans
   const validPlans = Array.isArray(plans) ? plans : [];
@@ -35,6 +38,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
           plans={validPlans}
           selectedPlan={selectedPlan}
           onPlanSelect={onPlanSelect}
+          userSubscriptions={userSubscriptions}
         />
       </div>
 

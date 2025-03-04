@@ -3,10 +3,12 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Shield, CreditCard, Settings, Bell } from "lucide-react";
+import { AlertCircle, CheckCircle, Shield, CreditCard, Settings, Bell, Crown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { PurchaseHistoryTable } from "../components/membify-settings/PurchaseHistoryTable";
+import { CurrentPlanCard } from "../components/membify-settings/CurrentPlanCard";
 
 const MembifySettings = () => {
   return (
@@ -38,6 +40,10 @@ const MembifySettings = () => {
             <TabsTrigger value="security" className="flex items-center gap-1.5">
               <Shield className="h-4 w-4" />
               <span>Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="flex items-center gap-1.5">
+              <Crown className="h-4 w-4" />
+              <span>Plans</span>
             </TabsTrigger>
             <TabsTrigger value="billing" className="flex items-center gap-1.5">
               <CreditCard className="h-4 w-4" />
@@ -161,31 +167,45 @@ const MembifySettings = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="plans">
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Plan</CardTitle>
+                <CardDescription>Manage your current platform subscription</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <CurrentPlanCard />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="billing">
             <Card>
               <CardHeader>
-                <CardTitle>Billing Settings</CardTitle>
-                <CardDescription>Manage your billing information and subscription</CardDescription>
+                <CardTitle>Billing Information</CardTitle>
+                <CardDescription>View your billing history and payment information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-6">
-                  <div className="bg-green-50 border border-green-100 rounded-lg p-4 flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-green-700">Active Subscription</h4>
-                      <p className="text-sm text-green-600">
-                        Your platform subscription is active and will renew automatically
-                      </p>
+                  <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-green-700">Active Subscription</h4>
+                        <p className="text-sm text-green-600">
+                          Your platform subscription is active and will renew automatically
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-blue-700">Payment Methods</h4>
-                      <p className="text-sm text-blue-600">
-                        You can manage your payment methods in the billing section
-                      </p>
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                    <h3 className="font-medium text-blue-700 mb-2 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      Purchase History
+                    </h3>
+                    <div className="mt-3 bg-white rounded-lg border overflow-hidden">
+                      <PurchaseHistoryTable />
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -24,6 +24,11 @@ export function PlanSettings() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
   const { toast } = useToast();
+
+  // Debug log to track state changes
+  useEffect(() => {
+    console.log("CreateDialog open state:", isCreateDialogOpen);
+  }, [isCreateDialogOpen]);
 
   const handleAddNewPlan = () => {
     console.log("Add New Plan button clicked");
@@ -57,7 +62,7 @@ export function PlanSettings() {
             <h3 className="text-lg font-medium">Available Plans</h3>
             <Button 
               onClick={handleAddNewPlan}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white pointer-events-auto"
               type="button"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
@@ -81,7 +86,7 @@ export function PlanSettings() {
               <Button 
                 onClick={handleAddNewPlan}
                 variant="outline"
-                className="border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+                className="border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/50 pointer-events-auto"
                 type="button"
               >
                 <PlusIcon className="h-4 w-4 mr-2" /> Create Plan

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -30,7 +30,10 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  console.log("CreatePlanDialog rendered, isOpen:", isOpen);
+  // Add effect to properly track dialog open state
+  useEffect(() => {
+    console.log("CreatePlanDialog received isOpen change:", isOpen);
+  }, [isOpen]);
 
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),
@@ -39,23 +42,39 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
       description: "",
       price: 0,
       interval: "monthly",
-      features: [], // Initialize with empty array to match the expected type
+      features: [], 
       is_active: true,
       max_communities: 1,
       max_members_per_community: "",
     },
   });
 
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: "",
+        description: "",
+        price: 0,
+        interval: "monthly",
+        features: [],
+        is_active: true,
+        max_communities: 1,
+        max_members_per_community: "",
+      });
+    }
+  }, [isOpen, form]);
+
   const onSubmit = async (values: PlanFormValues) => {
     console.log("Submitting form with values:", values);
     setIsSubmitting(true);
     try {
       await createPlan.mutateAsync({
-        name: values.name, // Required field
+        name: values.name,
         description: values.description,
         price: values.price,
         interval: values.interval,
-        features: values.features, // Transformed to string[] by Zod
+        features: values.features,
         is_active: values.is_active,
         max_communities: values.max_communities,
         max_members_per_community: values.max_members_per_community,
@@ -78,8 +97,11 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
     }
   };
 
+  // Log when the component renders
+  console.log("CreatePlanDialog rendered, isOpen:", isOpen);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">

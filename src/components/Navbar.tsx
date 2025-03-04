@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Menu, X, LayoutDashboard, LogOut, Shield } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, Shield, LogIn, UserPlus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -68,10 +68,19 @@ const Navbar = () => {
             </a>
             {!user ? (
               <>
-                <Button variant="outline" onClick={() => navigate('/auth')}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/auth')}
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
                   Sign In
                 </Button>
-                <Button onClick={() => navigate('/auth')}>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
                   Sign Up
                 </Button>
               </>
@@ -153,16 +162,25 @@ const Navbar = () => {
             <div className="pt-4 pb-3 border-t border-gray-200">
               {!user ? (
                 <>
-                  <Button variant="outline" onClick={() => {
-                    navigate('/auth');
-                    setIsOpen(false);
-                  }} className="w-full mb-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      navigate('/auth');
+                      setIsOpen(false);
+                    }} 
+                    className="w-full mb-2 flex items-center gap-2 justify-center"
+                  >
+                    <LogIn className="h-4 w-4" />
                     Sign In
                   </Button>
-                  <Button onClick={() => {
-                    navigate('/auth');
-                    setIsOpen(false);
-                  }} className="w-full">
+                  <Button 
+                    onClick={() => {
+                      navigate('/auth');
+                      setIsOpen(false);
+                    }} 
+                    className="w-full flex items-center gap-2 justify-center"
+                  >
+                    <UserPlus className="h-4 w-4" />
                     Sign Up
                   </Button>
                 </>

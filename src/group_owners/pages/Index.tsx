@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useAdminPermission } from "@/admin/hooks/useAdminPermission";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, LogIn, UserPlus } from "lucide-react";
 
 export default function Index() {
   const { user } = useAuth();
@@ -48,13 +48,21 @@ export default function Index() {
             </>
           ) : (
             <>
-              <Button asChild size="lg" className="text-lg">
+              <Button asChild size="lg" className="text-lg flex items-center gap-2">
                 <Link to="/auth">
+                  <LogIn className="h-5 w-5" />
                   Sign In
                 </Link>
               </Button>
               
-              <Button asChild variant="outline" size="lg" className="text-lg">
+              <Button asChild variant="outline" size="lg" className="text-lg flex items-center gap-2">
+                <Link to="/auth">
+                  <UserPlus className="h-5 w-5" />
+                  Sign Up
+                </Link>
+              </Button>
+              
+              <Button asChild variant="secondary" size="lg" className="text-lg">
                 <a href="https://t.me/membifybot" target="_blank" rel="noopener noreferrer">
                   Telegram Bot
                 </a>

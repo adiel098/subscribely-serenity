@@ -16,19 +16,19 @@ import { AdminLayout } from "@/admin/components/AdminLayout";
 // Main Pages
 import Index from "@/main/pages/Index";
 import NotFound from "@/main/pages/NotFound";
+import Members from "@/main/pages/Members";
+import Events from "@/main/pages/Events";
+import Rewards from "@/main/pages/Rewards";
+import Settings from "@/main/pages/Settings";
 
 // Group Owner Pages
 import Auth from "@/auth/pages/Auth";
 import Dashboard from "@/group_owners/pages/Dashboard";
-import Members from "@/group_owners/pages/Members";
 import Subscribers from "@/group_owners/pages/Subscribers";
 import Subscriptions from "@/group_owners/pages/Subscriptions";
 import Messages from "@/group_owners/pages/Messages";
 import Analytics from "@/group_owners/pages/Analytics";
 import BotSettings from "@/group_owners/pages/BotSettings";
-import Events from "@/group_owners/pages/Events";
-import Rewards from "@/group_owners/pages/Rewards";
-import Settings from "@/group_owners/pages/Settings";
 import PlatformSelect from "@/group_owners/pages/PlatformSelect";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";

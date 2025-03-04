@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -35,7 +34,7 @@ export function GroupOwnerHeader() {
   };
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-20 z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}

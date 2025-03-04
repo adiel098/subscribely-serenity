@@ -13,22 +13,32 @@ export const AdminProtectedRoute = ({
   children: React.ReactNode;
 }) => {
   const { user, loading } = useAuth();
-  const { isAdmin, isLoading: isCheckingAdmin } = useAdminPermission();
+  const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminPermission();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("🔍 AdminProtectedRoute state:", { 
+      user: user?.email,
+      authLoading: loading,
+      isAdmin,
+      isCheckingAdmin,
+      error
+    });
+    
     // Show toast when access is denied due to not being an admin
     if (!loading && !isCheckingAdmin && user && !isAdmin) {
+      console.log("⛔ AdminProtectedRoute: Access denied for user", user.email);
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin panel.",
         variant: "destructive"
       });
     }
-  }, [user, isAdmin, loading, isCheckingAdmin, toast]);
+  }, [user, isAdmin, loading, isCheckingAdmin, toast, error]);
 
   if (loading || isCheckingAdmin) {
+    console.log("⏳ AdminProtectedRoute: Loading state", { authLoading: loading, adminLoading: isCheckingAdmin });
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -38,10 +48,12 @@ export const AdminProtectedRoute = ({
   }
   
   if (!user) {
+    console.log("🚫 AdminProtectedRoute: No authenticated user, redirecting to auth");
     return <Navigate to="/auth" />;
   }
   
   if (!isAdmin) {
+    console.log("🚫 AdminProtectedRoute: User is not an admin, showing access denied");
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />
@@ -57,5 +69,6 @@ export const AdminProtectedRoute = ({
     );
   }
 
+  console.log("✅ AdminProtectedRoute: User is admin, rendering admin content");
   return <>{children}</>;
 };

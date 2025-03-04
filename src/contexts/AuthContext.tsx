@@ -27,6 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAdminAndRedirect = async (userId: string) => {
     console.log(`🔍 Checking admin status for user ${userId}`);
     try {
+      // Add detailed logging for the admin check query
+      console.log(`📊 Querying admin_users table for user_id: ${userId}`);
+      
       const { data, error } = await supabase
         .from('admin_users')
         .select('role')
@@ -40,13 +43,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return false;
       }
       
+      // Log the query result
+      console.log(`📋 Admin check query result:`, JSON.stringify(data, null, 2));
+      
       if (data) {
         console.log(`✅ User ${userId} is an admin with role: ${data.role}`);
-        // Delay navigation slightly to ensure state updates have propagated
-        setTimeout(() => {
+        
+        // Get current URL path to avoid unnecessary navigation
+        const currentPath = window.location.pathname;
+        console.log(`🔍 Current path: ${currentPath}`);
+        
+        if (!currentPath.startsWith('/admin')) {
           console.log('🚀 Redirecting to admin dashboard...');
           navigate('/admin/dashboard');
-        }, 100);
+        } else {
+          console.log('ℹ️ Already on admin path, not redirecting');
+        }
+        
+        // Important: Set loading to false even for admin users
+        setLoading(false);
         return true;
       } else {
         console.log(`ℹ️ User ${userId} is not an admin`);
@@ -111,12 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // If user just signed in, check if they are an admin
       if (event === 'SIGNED_IN' && session?.user) {
         console.log(`👤 User signed in: ${session.user.email}`);
-        const isAdmin = await checkAdminAndRedirect(session.user.id);
-        if (!isAdmin && !loadingHandled) {
-          console.log('📱 Not an admin after sign in, setting loading to false');
-          setLoading(false);
-          loadingHandled = true;
-        }
+        await checkAdminAndRedirect(session.user.id);
       } else {
         if (!loadingHandled) {
           console.log('📱 Auth state changed, setting loading to false');

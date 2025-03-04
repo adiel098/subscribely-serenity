@@ -12,12 +12,15 @@ export const useAdminPermission = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user) {
+        console.log("⚠️ useAdminPermission: No user found");
         setIsAdmin(false);
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
+        
         // Check if the user is in the admin_users table
         const { data, error: queryError } = await supabase
           .from('admin_users')
@@ -26,19 +29,25 @@ export const useAdminPermission = () => {
           .single();
 
         if (queryError) {
-          console.error("Error checking admin status:", queryError);
+          console.error("❌ useAdminPermission: Error checking admin status:", queryError);
+          console.error("❌ Error details:", JSON.stringify(queryError, null, 2));
           setError(queryError.message);
           setIsAdmin(false);
         } else {
           // User is an admin if they exist in the admin_users table
-          setIsAdmin(!!data);
-          console.log("Admin check result:", data);
+          const adminStatus = !!data;
+          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, { 
+            isAdmin: adminStatus, 
+            role: data?.role 
+          });
+          setIsAdmin(adminStatus);
         }
       } catch (err) {
-        console.error("Error in admin check:", err);
+        console.error("❌ useAdminPermission: Error in admin check:", err);
         setError("Failed to verify admin status");
         setIsAdmin(false);
       } finally {
+        console.log("✅ useAdminPermission: Finished loading");
         setIsLoading(false);
       }
     };

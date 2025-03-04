@@ -38,7 +38,7 @@ export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
       description: plan.description || "",
       price: plan.price,
       interval: plan.interval,
-      features: plan.features ? plan.features.join('\n') : "", // Convert array to string for form
+      features: plan.features || [], // Ensure type is string[]
       is_active: plan.is_active,
       max_communities: plan.max_communities,
       max_members_per_community: plan.max_members_per_community === null 
@@ -56,7 +56,9 @@ export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
         description: plan.description || "",
         price: plan.price,
         interval: plan.interval,
-        features: plan.features ? plan.features.join('\n') : "", // Convert array to string for form
+        features: Array.isArray(plan.features) 
+          ? plan.features 
+          : [], // Ensure type is string[]
         is_active: plan.is_active,
         max_communities: plan.max_communities,
         max_members_per_community: plan.max_members_per_community === null 

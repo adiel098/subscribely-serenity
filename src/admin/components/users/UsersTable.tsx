@@ -93,8 +93,8 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-[250px]">User</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[130px]">Role</TableHead>
               <TableHead>Communities</TableHead>
               <TableHead>Subscriptions</TableHead>
               <TableHead>Joined</TableHead>
@@ -133,10 +133,10 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
                     </div>
                   </TableCell>
                   <TableCell>
-                    <UserStatusBadge status={user.status} />
+                    <UserStatusBadge status={user.status} size="sm" />
                   </TableCell>
                   <TableCell>
-                    <UserRoleBadge role={user.role} />
+                    <UserRoleBadge role={user.role} size="sm" />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

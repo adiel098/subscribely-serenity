@@ -1,36 +1,55 @@
 
-import { CheckCircle2, XCircle, AlertTriangle, Clock } from "lucide-react";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
 interface UserStatusBadgeProps {
   status: 'active' | 'inactive' | 'suspended';
+  size?: 'default' | 'sm';
 }
 
-export const UserStatusBadge = ({ status }: UserStatusBadgeProps) => {
-  switch (status) {
-    case "active":
-      return (
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1">
-          <CheckCircle2 className="h-3 w-3" /> Active
-        </Badge>
-      );
-    case "inactive":
-      return (
-        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Inactive
-        </Badge>
-      );
-    case "suspended":
-      return (
-        <Badge className="bg-red-100 text-red-800 hover:bg-red-200 flex items-center gap-1">
-          <XCircle className="h-3 w-3" /> Suspended
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline" className="flex items-center gap-1">
-          <AlertTriangle className="h-3 w-3" /> Unknown
-        </Badge>
-      );
-  }
+export const UserStatusBadge = ({ status, size = 'default' }: UserStatusBadgeProps) => {
+  const getStatusConfig = () => {
+    switch (status) {
+      case 'active':
+        return {
+          icon: <CheckCircle2 className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'success' as const,
+          label: 'Active'
+        };
+      case 'suspended':
+        return {
+          icon: <XCircle className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'destructive' as const,
+          label: 'Suspended'
+        };
+      case 'inactive':
+        return {
+          icon: <Clock className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'outline' as const,
+          label: 'Inactive'
+        };
+      default:
+        return {
+          icon: <Clock className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'outline' as const,
+          label: 'Unknown'
+        };
+    }
+  };
+  
+  const { icon, variant, label } = getStatusConfig();
+  
+  return (
+    <Badge 
+      variant={variant} 
+      className={`
+        flex items-center 
+        ${size === 'sm' ? 'text-xs py-0 px-2 h-5' : ''}
+      `}
+    >
+      {icon}
+      {label}
+    </Badge>
+  );
 };

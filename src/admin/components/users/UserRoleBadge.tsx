@@ -1,43 +1,68 @@
 
-import { Shield, User, Crown, Users } from "lucide-react";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { AdminUserRole } from "@/admin/hooks/useAdminUsers";
+import { User, Users, Shield, ShieldAlert } from "lucide-react";
+import { AdminUserRole } from "@/admin/hooks/types/adminUsers.types";
 
 interface UserRoleBadgeProps {
   role: AdminUserRole;
+  size?: 'default' | 'sm';
 }
 
-export const UserRoleBadge = ({ role }: UserRoleBadgeProps) => {
-  switch (role) {
-    case "super_admin":
-      return (
-        <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200 flex items-center gap-1">
-          <Crown className="h-3 w-3" /> Super Admin
-        </Badge>
-      );
-    case "moderator":
-      return (
-        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 flex items-center gap-1">
-          <Shield className="h-3 w-3" /> Moderator
-        </Badge>
-      );
-    case "community_owner":
-      return (
-        <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 flex items-center gap-1">
-          <Users className="h-3 w-3" /> Community Owner
-        </Badge>
-      );
-    case "user":
-      return (
-        <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200 flex items-center gap-1">
-          <User className="h-3 w-3" /> User
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline" className="flex items-center gap-1">
-          <User className="h-3 w-3" /> Unknown
-        </Badge>
-      );
-  }
+export const UserRoleBadge = ({ role, size = 'default' }: UserRoleBadgeProps) => {
+  const getRoleConfig = () => {
+    switch (role) {
+      case 'super_admin':
+        return {
+          icon: <ShieldAlert className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'default' as const,
+          className: 'bg-red-500 hover:bg-red-600',
+          label: 'Super Admin'
+        };
+      case 'moderator':
+        return {
+          icon: <Shield className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'default' as const,
+          className: 'bg-blue-500 hover:bg-blue-600',
+          label: 'Moderator'
+        };
+      case 'community_owner':
+        return {
+          icon: <Users className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'default' as const,
+          className: 'bg-green-500 hover:bg-green-600',
+          label: 'Community Owner'
+        };
+      case 'user':
+        return {
+          icon: <User className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'outline' as const,
+          className: '',
+          label: 'User'
+        };
+      default:
+        return {
+          icon: <User className={size === 'sm' ? "h-3 w-3 mr-1" : "h-4 w-4 mr-1"} />,
+          variant: 'outline' as const,
+          className: '',
+          label: 'Unknown'
+        };
+    }
+  };
+  
+  const { icon, variant, className, label } = getRoleConfig();
+  
+  return (
+    <Badge 
+      variant={variant} 
+      className={`
+        flex items-center 
+        ${className} 
+        ${size === 'sm' ? 'text-xs py-0 px-2 h-5' : ''}
+      `}
+    >
+      {icon}
+      {label}
+    </Badge>
+  );
 };

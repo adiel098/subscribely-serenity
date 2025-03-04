@@ -57,11 +57,13 @@ const formSchema = z.object({
   ]),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
   const { updatePlan } = usePlatformPlans();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       id: plan.id,
@@ -97,10 +99,20 @@ export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
     }
   }, [plan, isOpen, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      await updatePlan.mutateAsync(values);
+      await updatePlan.mutateAsync({
+        id: values.id, // Required field
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        interval: values.interval,
+        features: values.features, // Already transformed to string[] by zod
+        is_active: values.is_active,
+        max_communities: values.max_communities,
+        max_members_per_community: values.max_members_per_community,
+      });
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating plan:", error);

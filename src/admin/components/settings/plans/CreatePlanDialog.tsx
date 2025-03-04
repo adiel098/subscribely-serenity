@@ -54,11 +54,13 @@ const formSchema = z.object({
   ]),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   const { createPlan } = usePlatformPlans();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -72,10 +74,19 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      await createPlan.mutateAsync(values);
+      await createPlan.mutateAsync({
+        name: values.name, // Required field
+        description: values.description,
+        price: values.price,
+        interval: values.interval,
+        features: values.features, // Already transformed to string[] by zod
+        is_active: values.is_active,
+        max_communities: values.max_communities,
+        max_members_per_community: values.max_members_per_community,
+      });
       onOpenChange(false);
       form.reset();
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -33,6 +32,26 @@ export const useAdminUsers = () => {
     try {
       console.log("🔍 Fetching users from database...");
       
+      // Get current user's admin status using the security definer function
+      const currentUser = await supabase.auth.getUser();
+      console.log("Current user:", currentUser.data.user);
+      
+      const { data: adminStatus, error: adminStatusError } = await supabase.rpc(
+        'get_admin_status', 
+        { user_id_param: currentUser.data.user?.id }
+      );
+      
+      if (adminStatusError) {
+        console.error("Error checking admin status:", adminStatusError);
+        throw adminStatusError;
+      }
+      
+      console.log("Admin status check result:", adminStatus);
+      
+      if (!adminStatus?.is_admin) {
+        throw new Error("Unauthorized: You must be an admin to view users");
+      }
+      
       // Get profiles data which contains most user information
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -44,24 +63,16 @@ export const useAdminUsers = () => {
         throw new Error("Failed to fetch profiles data");
       }
       
-      // Get admin roles using the RPC function to avoid infinite recursion
-      const { data: adminRolesData, error: adminRolesError } = await supabase.rpc(
-        'get_admin_status', 
-        { user_id_param: (await supabase.auth.getUser()).data.user?.id }
-      );
-      
       // Only fetch admin users if the current user is an admin
       let adminUsers = [];
-      if (adminRolesData?.is_admin) {
-        const { data: adminUsersData, error: adminUsersError } = await supabase
-          .from('admin_users')
-          .select('*');
-          
-        if (adminUsersError) throw adminUsersError;
-        adminUsers = adminUsersData || [];
-      } else {
-        console.log("Current user is not an admin, skipping admin_users fetch");
-      }
+      const { data: adminUsersData, error: adminUsersError } = await supabase
+        .from('admin_users')
+        .select('*');
+        
+      if (adminUsersError) throw adminUsersError;
+      adminUsers = adminUsersData || [];
+      
+      console.log("Admin users data:", adminUsers);
       
       // Get community owners count
       const { data: communities, error: communitiesError } = await supabase

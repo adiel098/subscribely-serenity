@@ -15,6 +15,8 @@ export const grantAdminAccess = async (userId: string, role: AdminRole = 'modera
       throw new Error("You don't have permission to grant admin access");
     }
     
+    console.log("Admin status check for granting access:", adminStatus);
+    
     if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
       throw new Error("Only super admins can grant admin access");
     }
@@ -78,6 +80,8 @@ export const revokeAdminAccess = async (userId: string) => {
       throw new Error("You don't have permission to revoke admin access");
     }
     
+    console.log("Admin status check for revoking access:", adminStatus);
+    
     if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
       throw new Error("Only super admins can revoke admin access");
     }
@@ -115,6 +119,8 @@ export const updateAdminRole = async (userId: string, newRole: AdminRole) => {
       throw new Error("You don't have permission to update admin roles");
     }
     
+    console.log("Admin status check for updating role:", adminStatus);
+    
     if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
       throw new Error("Only super admins can update admin roles");
     }
@@ -149,6 +155,7 @@ export const checkSuperAdminStatus = async (userId: string) => {
     
     if (error) throw error;
     
+    console.log("Super admin status check result:", data);
     return data?.admin_role === 'super_admin';
   } catch (error: any) {
     console.error("Error checking super admin status:", error);

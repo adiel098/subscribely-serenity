@@ -29,7 +29,7 @@ export const useAdminPermission = () => {
       }
 
       // If we've already checked this user and they're an admin, don't check again
-      if (lastCheckedId === user.id) {
+      if (lastCheckedId === user.id && isAdmin) {
         console.log(`🔄 useAdminPermission: Using cached admin status for user ${user.id}`);
         setIsLoading(false);
         return;
@@ -39,7 +39,7 @@ export const useAdminPermission = () => {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         setIsLoading(true);
         
-        // Use the new security definer function to avoid infinite recursion
+        // Use the security definer function to avoid infinite recursion
         const { data: adminStatus, error: adminError } = await supabase
           .rpc('get_admin_status', { user_id_param: user.id });
         
@@ -50,7 +50,9 @@ export const useAdminPermission = () => {
         
         if (!mounted) return;
         
-        const isUserAdmin = !!adminStatus?.is_admin;
+        console.log("🔐 useAdminPermission: Admin status response:", adminStatus);
+        
+        const isUserAdmin = adminStatus?.is_admin === true;
         setIsAdmin(isUserAdmin);
         setLastCheckedId(user.id);
         
@@ -79,7 +81,7 @@ export const useAdminPermission = () => {
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user, lastCheckedId, isAdmin]);
 
   // Function to check if user is a super admin using the security definer function
   const isSuperAdmin = async (): Promise<boolean> => {
@@ -90,6 +92,7 @@ export const useAdminPermission = () => {
         .rpc('get_admin_status', { user_id_param: user.id });
         
       if (error) throw error;
+      console.log("🔐 isSuperAdmin check result:", data);
       return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error("❌ useAdminPermission: Error checking super admin status:", err);

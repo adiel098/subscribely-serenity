@@ -11,7 +11,7 @@ export const useCheckAdminStatus = () => {
     
     console.log(`🔍 useCheckAdminStatus: Checking admin status for user ${userId}`);
     try {
-      // Use the new security definer function to avoid infinite recursion
+      // Use the security definer function to avoid infinite recursion
       const { data, error } = await supabase
         .rpc('get_admin_status', { user_id_param: userId });
       
@@ -20,7 +20,8 @@ export const useCheckAdminStatus = () => {
         return false;
       }
       
-      return !!data?.is_admin;
+      console.log('✅ useCheckAdminStatus: Admin status result:', data);
+      return data?.is_admin === true;
     } catch (err) {
       console.error('❌ useCheckAdminStatus: Exception in admin check:', err);
       return false;
@@ -32,7 +33,7 @@ export const useCheckAdminStatus = () => {
     
     console.log(`🔍 useCheckAdminStatus: Checking super admin status for user ${userId}`);
     try {
-      // Use the new security definer function to avoid infinite recursion
+      // Use the security definer function to avoid infinite recursion
       const { data, error } = await supabase
         .rpc('get_admin_status', { user_id_param: userId });
       
@@ -41,6 +42,7 @@ export const useCheckAdminStatus = () => {
         return false;
       }
       
+      console.log('✅ useCheckAdminStatus: Super admin check result:', data);
       return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error('❌ useCheckAdminStatus: Exception in super admin check:', err);

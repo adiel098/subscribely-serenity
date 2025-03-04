@@ -9,6 +9,9 @@ import { AdminLayout } from "@/admin/components/AdminLayout";
 import AdminDashboard from "@/admin/pages/Dashboard";
 import AdminCommunities from "@/admin/pages/Communities";
 import AdminUsers from "@/admin/pages/Users";
+import AdminPayments from "@/admin/pages/Payments";
+import AdminReports from "@/admin/pages/Reports";
+import AdminSettings from "@/admin/pages/Settings";
 import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
@@ -56,6 +59,36 @@ export const AppRoutes = () => {
           <AdminProtectedRoute>
             <AdminLayout>
               <AdminUsers />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/payments" 
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminPayments />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/reports" 
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminReports />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/settings" 
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminSettings />
             </AdminLayout>
           </AdminProtectedRoute>
         } 

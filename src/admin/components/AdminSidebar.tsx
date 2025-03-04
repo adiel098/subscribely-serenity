@@ -27,38 +27,32 @@ const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/admin/dashboard",
-    description: "Platform overview"
+    path: "/admin/dashboard"
   },
   {
     title: "Communities",
     icon: Globe,
-    path: "/admin/communities",
-    description: "Manage communities"
+    path: "/admin/communities"
   },
   {
     title: "Users",
     icon: Users,
-    path: "/admin/users",
-    description: "User management"
+    path: "/admin/users"
   },
   {
     title: "Payments",
     icon: CreditCard,
-    path: "/admin/payments",
-    description: "Track payments"
+    path: "/admin/payments"
   },
   {
     title: "Reports",
     icon: BarChart,
-    path: "/admin/reports",
-    description: "Analytics & reports"
+    path: "/admin/reports"
   },
   {
     title: "Settings",
     icon: Settings,
-    path: "/admin/settings",
-    description: "System settings"
+    path: "/admin/settings"
   }
 ];
 
@@ -86,17 +80,14 @@ export function AdminSidebar() {
                     <SidebarMenuButton asChild>
                       <Link 
                         to={item.path}
-                        className={`w-full flex items-center space-x-3 px-3 py-3 my-1 transition-all rounded-lg ${
+                        className={`w-full flex items-center px-3 py-3 my-1 transition-all rounded-lg ${
                           isActive 
                             ? 'bg-indigo-50 text-indigo-700 shadow-sm' 
                             : 'hover:bg-gray-50 text-gray-700'
                         }`}
                       >
                         <item.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{item.title}</span>
-                          <span className="text-xs text-muted-foreground">{item.description}</span>
-                        </div>
+                        <span className="font-medium">{item.title}</span>
                         {isActive && <Sparkles className="h-3 w-3 ml-auto text-indigo-500" />}
                       </Link>
                     </SidebarMenuButton>

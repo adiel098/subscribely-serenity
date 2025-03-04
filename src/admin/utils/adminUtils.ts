@@ -6,12 +6,9 @@ export type AdminRole = 'super_admin' | 'moderator';
 
 export const grantAdminAccess = async (userId: string, role: AdminRole = 'moderator') => {
   try {
-    // Check if user is already an admin
-    const { data: existingData, error: checkError } = await supabase
-      .from('admin_users')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Check if user is already an admin using the security definer function
+    const { data: isAdmin, error: checkError } = await supabase
+      .rpc('is_admin', { user_uuid: userId });
       
     if (checkError) {
       console.error("Error checking existing admin status:", checkError);
@@ -20,7 +17,7 @@ export const grantAdminAccess = async (userId: string, role: AdminRole = 'modera
     
     // Update or insert based on whether user is already an admin
     let result;
-    if (existingData) {
+    if (isAdmin) {
       // Update existing admin
       result = await supabase
         .from('admin_users')
@@ -116,10 +113,11 @@ export const updateAdminRole = async (userId: string, newRole: AdminRole) => {
   }
 };
 
-// New function to check if current user is a super admin
-export const checkSuperAdminStatus = async () => {
+// Use the security definer function to check super admin status
+export const checkSuperAdminStatus = async (userId: string) => {
   try {
-    const { data, error } = await supabase.rpc('is_super_admin');
+    const { data, error } = await supabase
+      .rpc('is_super_admin', { user_uuid: userId });
     
     if (error) throw error;
     

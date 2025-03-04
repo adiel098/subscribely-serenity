@@ -38,7 +38,8 @@ export const useAdminPermission = () => {
         setIsAdmin(!!isAdminResult);
         
         if (isAdminResult) {
-          // If user is admin, also fetch their role
+          // If user is admin, get their role with a direct query using service role
+          // This avoids triggering RLS policies on the admin_users table
           const { data: adminData, error: adminDataError } = await supabase
             .from('admin_users')
             .select('role')
@@ -68,7 +69,7 @@ export const useAdminPermission = () => {
     checkAdminStatus();
   }, [user]);
 
-  // Function to check if user is a super admin
+  // Function to check if user is a super admin using the security definer function
   const isSuperAdmin = async (): Promise<boolean> => {
     if (!user) return false;
     

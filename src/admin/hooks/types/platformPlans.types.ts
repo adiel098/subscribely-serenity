@@ -17,10 +17,10 @@ export interface PlatformPlan {
 
 export interface CreatePlatformPlanData {
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
   interval: PlatformPlanInterval;
-  features?: string[];
+  features: string[];
   is_active?: boolean;
   max_communities?: number;
   max_members_per_community?: number | null;

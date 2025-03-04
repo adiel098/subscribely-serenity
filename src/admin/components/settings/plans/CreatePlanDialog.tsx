@@ -67,7 +67,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
       description: "",
       price: 0,
       interval: "monthly",
-      features: "",
+      features: "", // This is correct as a string for the form input
       is_active: true,
       max_communities: 1,
       max_members_per_community: "",

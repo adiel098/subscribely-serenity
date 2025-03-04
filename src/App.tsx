@@ -15,6 +15,7 @@ import { AdminLayout } from "@/admin/components/AdminLayout";
 
 // Main Pages
 import Index from "@/main/pages/Index";
+import NotFound from "@/main/pages/NotFound";
 
 // Group Owner Pages
 import Auth from "@/auth/pages/Auth";
@@ -28,7 +29,6 @@ import BotSettings from "@/group_owners/pages/BotSettings";
 import Events from "@/group_owners/pages/Events";
 import Rewards from "@/group_owners/pages/Rewards";
 import Settings from "@/group_owners/pages/Settings";
-import NotFound from "@/group_owners/pages/NotFound";
 import PlatformSelect from "@/group_owners/pages/PlatformSelect";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";

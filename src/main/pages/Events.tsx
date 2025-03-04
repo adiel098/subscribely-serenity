@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 const Events = () => {
   return (
     <div className="space-y-6">

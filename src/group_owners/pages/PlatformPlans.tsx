@@ -19,12 +19,14 @@ import { PlatformPlan } from "@/admin/hooks/types/platformPlans.types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
 
 export default function PlatformPlans() {
   const { plans, isLoading } = usePlatformPlans();
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchCurrentSubscription = async () => {
@@ -68,71 +70,11 @@ export default function PlatformPlans() {
         return;
       }
       
-      // Calculate subscription end date based on interval
-      const calculateEndDate = (interval: string) => {
-        const now = new Date();
-        switch (interval) {
-          case 'monthly':
-            return new Date(now.setMonth(now.getMonth() + 1));
-          case 'quarterly':
-            return new Date(now.setMonth(now.getMonth() + 3));
-          case 'yearly':
-            return new Date(now.setFullYear(now.getFullYear() + 1));
-          case 'lifetime':
-            return new Date(now.setFullYear(now.getFullYear() + 99)); // Effectively lifetime
-          default:
-            return new Date(now.setMonth(now.getMonth() + 1));
-        }
-      };
+      // Store the selected plan in localStorage for the payment page
+      localStorage.setItem('selectedPlatformPlan', JSON.stringify(plan));
       
-      const endDate = calculateEndDate(plan.interval);
-      
-      // Create subscription
-      const { data: subscription, error: subscriptionError } = await supabase
-        .from('platform_subscriptions')
-        .insert({
-          owner_id: session.session.user.id,
-          plan_id: plan.id,
-          subscription_start_date: new Date(),
-          subscription_end_date: endDate,
-          auto_renew: true,
-          is_active: true,
-          status: 'active'
-        })
-        .select()
-        .single();
-      
-      if (subscriptionError) {
-        throw subscriptionError;
-      }
-      
-      // Create payment record
-      const { error: paymentError } = await supabase
-        .from('platform_payments')
-        .insert({
-          owner_id: session.session.user.id,
-          plan_id: plan.id,
-          subscription_id: subscription.id,
-          amount: plan.price,
-          payment_method: 'credit_card',
-          payment_status: 'completed',
-          transaction_id: `manual-${Date.now()}`
-        });
-      
-      if (paymentError) {
-        throw paymentError;
-      }
-      
-      toast({
-        title: "Subscription Activated",
-        description: `Your ${plan.name} subscription has been activated successfully!`,
-      });
-      
-      // Refresh current subscription data
-      setCurrentSubscription({
-        ...subscription,
-        platform_plans: plan
-      });
+      // Navigate to platform payment methods page
+      navigate('/platform-payment-methods');
       
     } catch (error) {
       console.error('Subscription error:', error);

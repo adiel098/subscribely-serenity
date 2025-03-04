@@ -11,7 +11,7 @@ interface PlatformSubscriptionBannerProps {
 }
 
 export const PlatformSubscriptionBanner = ({ hasPlatformPlan: initialValue }: PlatformSubscriptionBannerProps = {}) => {
-  const [hasPlatformPlan, setHasPlatformPlan] = useState(initialValue ?? true);
+  const [hasPlatformPlan, setHasPlatformPlan] = useState(initialValue ?? false);
   const navigate = useNavigate();
 
   // Check if the user has an active platform subscription
@@ -30,7 +30,7 @@ export const PlatformSubscriptionBanner = ({ hasPlatformPlan: initialValue }: Pl
         const { data, error } = await supabase
           .from('platform_subscriptions')
           .select('*')
-          .eq('user_id', session.session.user.id)
+          .eq('owner_id', session.session.user.id)
           .eq('is_active', true)
           .single();
         

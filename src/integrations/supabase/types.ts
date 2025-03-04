@@ -234,6 +234,33 @@ export type Database = {
           },
         ]
       }
+      platform_payment_methods: {
+        Row: {
+          config: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       platform_payments: {
         Row: {
           amount: number

@@ -24,6 +24,7 @@ import BotSettings from "@/group_owners/pages/BotSettings";
 import PlatformSelect from "@/group_owners/pages/PlatformSelect";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import PlatformPlans from "@/group_owners/pages/PlatformPlans";
+import PlatformPaymentMethods from "@/group_owners/pages/PlatformPaymentMethods";
 
 export const AppRoutes = () => {
   return (
@@ -137,6 +138,18 @@ export const AppRoutes = () => {
             <CommunityProvider>
               <DashboardLayout>
                 <PlatformPlans />
+              </DashboardLayout>
+            </CommunityProvider>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/platform-payment-methods" 
+        element={
+          <ProtectedRoute>
+            <CommunityProvider>
+              <DashboardLayout>
+                <PlatformPaymentMethods />
               </DashboardLayout>
             </CommunityProvider>
           </ProtectedRoute>

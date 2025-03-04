@@ -44,32 +44,39 @@ export const useAdminPermission = () => {
         } else {
           console.log(`ℹ️ useAdminPermission: User ${user.id} is not an admin according to direct query`);
           
-          // Try RPC as fallback to verify (with shorter timeout)
+          // Try RPC as fallback to verify (with timeout handling)
           console.log(`🔄 useAdminPermission: Trying RPC fallback for user ${user.id}`);
           
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          // Set up timeout for the RPC call
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error("Admin check timeout")), 2000);
+          });
           
           try {
-            const { data: rpcData, error: rpcError } = await supabase.rpc(
-              'is_admin', 
-              { user_uuid: user.id },
-              { signal: controller.signal }
-            );
+            // Race between the RPC call and the timeout
+            const rpcPromise = supabase.rpc('is_admin', { user_uuid: user.id });
+            const result = await Promise.race([rpcPromise, timeoutPromise]);
             
-            clearTimeout(timeoutId);
-            
-            if (rpcError) {
-              console.error("❌ useAdminPermission: RPC fallback failed:", rpcError);
+            if (result.error) {
+              console.error("❌ useAdminPermission: RPC fallback failed:", result.error);
               setIsAdmin(false);
             } else {
-              console.log(`📋 useAdminPermission: RPC result: ${!!rpcData}`);
-              setIsAdmin(!!rpcData);
+              console.log(`📋 useAdminPermission: RPC result: ${!!result.data}`);
+              setIsAdmin(!!result.data);
             }
           } catch (rpcErr) {
-            clearTimeout(timeoutId);
             console.error("❌ useAdminPermission: RPC fallback error:", rpcErr);
-            setIsAdmin(false);
+            console.log("🔄 useAdminPermission: Timeout occurred, trying fallback admin check...");
+            
+            // Fallback to another direct query if needed
+            const { data: fallbackData } = await supabase
+              .from('admin_users')
+              .select('role')
+              .eq('user_id', user.id)
+              .limit(1)
+              .maybeSingle();
+              
+            setIsAdmin(!!fallbackData);
           }
           
           setIsLoading(false);

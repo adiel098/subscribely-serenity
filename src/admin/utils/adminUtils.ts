@@ -6,7 +6,7 @@ export type AdminRole = 'super_admin' | 'moderator';
 
 export const grantAdminAccess = async (userId: string, role: AdminRole = 'moderator') => {
   try {
-    // Check if current user is a super admin
+    // Check if current user is a super admin using the security definer function
     const { data: adminStatus, error: checkError } = await supabase
       .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
       
@@ -69,7 +69,7 @@ export const grantAdminAccess = async (userId: string, role: AdminRole = 'modera
 
 export const revokeAdminAccess = async (userId: string) => {
   try {
-    // Check if current user is a super admin
+    // Check if current user is a super admin using the security definer function
     const { data: adminStatus, error: checkError } = await supabase
       .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
       
@@ -106,7 +106,7 @@ export const revokeAdminAccess = async (userId: string) => {
 
 export const updateAdminRole = async (userId: string, newRole: AdminRole) => {
   try {
-    // Check if current user is a super admin
+    // Check if current user is a super admin using the security definer function
     const { data: adminStatus, error: checkError } = await supabase
       .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
       

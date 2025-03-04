@@ -20,29 +20,91 @@ export const processPayment = async (
 
   console.log(`Processing ${paymentMethod} payment for plan: ${selectedPlan.name}`);
   
-  // For demo purposes, we'll simulate a successful payment
-  // In a real app, you would integrate with the payment provider's API
+  // Check for existing active subscriptions
+  const { data: existingSubscriptions, error: checkError } = await supabase
+    .from('platform_subscriptions')
+    .select('*')
+    .eq('owner_id', session.session.user.id)
+    .eq('status', 'active');
+
+  if (checkError) {
+    console.error("Error checking existing subscriptions:", checkError);
+    throw checkError;
+  }
 
   // Calculate subscription end date based on interval
   const endDate = calculateEndDate(selectedPlan.interval);
+  
+  let subscription;
 
-  // Create subscription - modified to match the actual database schema
-  const { data: subscription, error: subscriptionError } = await supabase
-    .from('platform_subscriptions')
-    .insert({
-      owner_id: session.session.user.id,
-      plan_id: selectedPlan.id,
-      subscription_start_date: new Date(),
-      subscription_end_date: endDate,
-      auto_renew: true,
-      status: 'active'
-    })
-    .select()
-    .single();
+  // If there's an existing subscription, update it instead of creating a new one
+  if (existingSubscriptions && existingSubscriptions.length > 0) {
+    console.log("Found existing subscription(s). Updating instead of creating new one.");
+    
+    // Get the first active subscription to update
+    const existingSubscription = existingSubscriptions[0];
+    
+    // Update the existing subscription
+    const { data: updatedSubscription, error: updateError } = await supabase
+      .from('platform_subscriptions')
+      .update({
+        plan_id: selectedPlan.id,
+        subscription_start_date: new Date(),
+        subscription_end_date: endDate,
+        auto_renew: true,
+        status: 'active'
+      })
+      .eq('id', existingSubscription.id)
+      .select()
+      .single();
 
-  if (subscriptionError) {
-    console.error("Subscription creation error:", subscriptionError);
-    throw subscriptionError;
+    if (updateError) {
+      console.error("Error updating subscription:", updateError);
+      throw updateError;
+    }
+    
+    subscription = updatedSubscription;
+    
+    // Deactivate any other active subscriptions if multiple exist
+    if (existingSubscriptions.length > 1) {
+      console.log("Multiple active subscriptions found. Deactivating extras.");
+      const otherSubscriptionIds = existingSubscriptions
+        .filter(sub => sub.id !== existingSubscription.id)
+        .map(sub => sub.id);
+        
+      if (otherSubscriptionIds.length > 0) {
+        const { error: deactivateError } = await supabase
+          .from('platform_subscriptions')
+          .update({ status: 'inactive' })
+          .in('id', otherSubscriptionIds);
+          
+        if (deactivateError) {
+          console.error("Error deactivating extra subscriptions:", deactivateError);
+          // Continue despite this error
+        }
+      }
+    }
+  } else {
+    // No existing subscription, create a new one
+    const { data: newSubscription, error: subscriptionError } = await supabase
+      .from('platform_subscriptions')
+      .insert({
+        owner_id: session.session.user.id,
+        plan_id: selectedPlan.id,
+        subscription_start_date: new Date(),
+        subscription_end_date: endDate,
+        auto_renew: true,
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    if (subscriptionError) {
+      console.error("Subscription creation error:", subscriptionError);
+      throw subscriptionError;
+    }
+    
+    subscription = newSubscription;
   }
 
   // Create payment record
@@ -63,7 +125,7 @@ export const processPayment = async (
     throw paymentError;
   }
 
-  console.log("Demo payment processed successfully!");
+  console.log("Payment processed successfully!");
   return subscription;
 };
 

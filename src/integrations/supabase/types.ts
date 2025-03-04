@@ -1043,6 +1043,12 @@ export type Database = {
           trial_end_date: string
         }[]
       }
+      delete_all_platform_subscriptions: {
+        Args: {
+          owner_id_param: string
+        }
+        Returns: undefined
+      }
       get_admin_status: {
         Args: {
           user_id_param: string

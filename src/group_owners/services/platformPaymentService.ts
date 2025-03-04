@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface PlatformPlan {
@@ -151,18 +152,6 @@ export const deleteSubscription = async (subscriptionId: string): Promise<boolea
     
     console.log(`Attempting to delete subscription: ${subscriptionId}`);
     
-    const { error: paymentDeleteError } = await supabase
-      .from('platform_payments')
-      .delete()
-      .eq('subscription_id', subscriptionId);
-      
-    if (paymentDeleteError) {
-      console.error("Error deleting related payment records:", paymentDeleteError);
-      throw paymentDeleteError;
-    }
-    
-    console.log("Successfully deleted related payment records");
-    
     const { error: subscriptionDeleteError } = await supabase
       .from('platform_subscriptions')
       .delete()
@@ -213,6 +202,40 @@ export const deactivateSubscription = async (subscriptionId: string): Promise<bo
     return true;
   } catch (error) {
     console.error("Error in deactivateSubscription function:", error);
+    return false;
+  }
+};
+
+/**
+ * Delete all platform subscriptions for a user
+ * Uses the database function that automatically handles cascade deletion
+ * @returns True if all user subscriptions were deleted successfully
+ */
+export const deleteAllUserSubscriptions = async (): Promise<boolean> => {
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session?.user?.id) {
+      throw new Error("Authentication required");
+    }
+    
+    console.log(`Deleting all subscriptions for user: ${session.session.user.id}`);
+    
+    // Call the database function we created
+    const { error } = await supabase.rpc(
+      'delete_all_platform_subscriptions',
+      { owner_id_param: session.session.user.id }
+    );
+    
+    if (error) {
+      console.error("Error deleting all user subscriptions:", error);
+      throw error;
+    }
+    
+    console.log("Successfully deleted all user subscriptions and related payments");
+    return true;
+  } catch (error) {
+    console.error("Error in deleteAllUserSubscriptions function:", error);
     return false;
   }
 };

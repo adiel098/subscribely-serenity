@@ -10,19 +10,19 @@ export const DashboardLayout = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden">
       <GroupOwnerHeader />
-      <div className="flex w-full pt-16">
+      <div className="flex w-full h-[calc(100vh-64px)]">
         <AppSidebar />
-        <main className="flex-1 min-h-[calc(100vh-4rem)]">
+        <main className="flex-1 overflow-auto">
           <CommunitySelector />
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
-            className="min-h-full w-full px-6 py-8 mt-[4.5rem] ml-[280px]"
+            className="p-6 mt-[4.5rem] ml-[240px] max-w-[calc(100vw-280px)]"
           >
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 overflow-auto">
               {children}
             </div>
           </motion.div>

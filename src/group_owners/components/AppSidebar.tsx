@@ -7,8 +7,6 @@ import {
   TrendingUp,
   Bot,
   LogOut,
-  User,
-  Settings,
   HelpCircle,
   LayoutDashboard
 } from 'lucide-react';
@@ -68,21 +66,10 @@ export function AppSidebar() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="fixed left-4 top-20 h-[calc(100vh-5.5rem)] z-30"
+      className="fixed left-2 top-[72px] h-[calc(100vh-80px)] z-30"
     >
-      <Sidebar className="w-[250px] rounded-xl border border-blue-100 shadow-lg bg-white/95 backdrop-blur-md">
+      <Sidebar className="w-[220px] rounded-xl border border-blue-100 shadow-lg bg-white/95 backdrop-blur-md">
         <SidebarContent>
-          <div className="px-2 py-2">
-            <div className="flex items-center gap-3 mb-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-2 rounded-lg shadow-md">
-                <BarChart className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-blue-700">Community Hub</h2>
-                <p className="text-xs text-blue-500">Manage & Grow</p>
-              </div>
-            </div>
-          </div>
           <SidebarGroup>
             <SidebarGroupContent className="px-2 py-1">
               <SidebarMenu>

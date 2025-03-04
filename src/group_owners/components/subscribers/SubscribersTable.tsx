@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -33,16 +34,16 @@ interface SubscribersTableProps {
 
 export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersTableProps) => {
   return (
-    <div className="border rounded-lg bg-white shadow-sm">
-      <Table>
+    <div className="border rounded-lg bg-white shadow-sm overflow-auto">
+      <Table className="w-full">
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="font-medium">User</TableHead>
-            <TableHead className="font-medium">Telegram ID</TableHead>
-            <TableHead className="font-medium">Subscription Plan</TableHead>
-            <TableHead className="font-medium">Status</TableHead>
-            <TableHead className="font-medium">Subscription Period</TableHead>
-            <TableHead className="font-medium">Activity</TableHead>
+            <TableHead className="font-medium text-sm">User</TableHead>
+            <TableHead className="font-medium text-sm">Telegram ID</TableHead>
+            <TableHead className="font-medium text-sm">Subscription Plan</TableHead>
+            <TableHead className="font-medium text-sm">Status</TableHead>
+            <TableHead className="font-medium text-sm">Subscription Period</TableHead>
+            <TableHead className="font-medium text-sm">Activity</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -50,10 +51,10 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
           {subscribers.length > 0 ? (
             subscribers.map((subscriber) => (
               <TableRow key={subscriber.id}>
-                <TableCell>
+                <TableCell className="py-2">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
-                    <span>
+                    <span className="text-xs">
                       {subscriber.telegram_username ? (
                         <a
                           href={`https://t.me/${subscriber.telegram_username}`}
@@ -69,21 +70,21 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono">{subscriber.telegram_user_id}</TableCell>
-                <TableCell>
+                <TableCell className="font-mono text-xs py-2">{subscriber.telegram_user_id}</TableCell>
+                <TableCell className="py-2">
                   {subscriber.plan ? (
                     <>
-                      <div className="font-medium">{subscriber.plan.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="font-medium text-xs">{subscriber.plan.name}</div>
+                      <div className="text-xs text-muted-foreground">
                         {subscriber.plan.interval} - ${subscriber.plan.price}
                       </div>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">No plan</span>
+                    <span className="text-muted-foreground text-xs">No plan</span>
                   )}
                 </TableCell>
-                <TableCell>
-                  <Badge variant={subscriber.subscription_status ? "success" : "destructive"}>
+                <TableCell className="py-2">
+                  <Badge variant={subscriber.subscription_status ? "success" : "destructive"} className="text-xs py-0.5">
                     {subscriber.subscription_status ? (
                       <span className="flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" />
@@ -97,29 +98,29 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                     )}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   <div className="space-y-1">
-                    <div className="flex items-center text-sm">
+                    <div className="flex items-center text-xs">
                       Start: {subscriber.subscription_start_date
-                        ? format(new Date(subscriber.subscription_start_date), "PPp")
+                        ? format(new Date(subscriber.subscription_start_date), "PP")
                         : "-"}
                     </div>
-                    <div className="flex items-center text-sm">
+                    <div className="flex items-center text-xs">
                       End: {subscriber.subscription_end_date
-                        ? format(new Date(subscriber.subscription_end_date), "PPp")
+                        ? format(new Date(subscriber.subscription_end_date), "PP")
                         : "-"}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    Joined: {format(new Date(subscriber.joined_at), "PPp")}
+                <TableCell className="py-2">
+                  <div className="text-xs">
+                    Joined: {format(new Date(subscriber.joined_at), "PP")}
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="py-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+                      <Button variant="ghost" className="h-7 w-7 p-0">
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>

@@ -64,7 +64,7 @@ export const useAdminUsers = () => {
       if (communitiesError) throw communitiesError;
       
       // Process the data to combine auth users with profiles and roles
-      const processedUsers = authUsers.users.map(user => {
+      const processedUsers: AdminUser[] = authUsers.users.map(user => {
         const profile = profiles?.find(p => p.id === user.id) || {};
         const adminRole = adminUsers?.find(a => a.user_id === user.id)?.role || null;
         const userCommunities = communities?.filter(c => c.owner_id === user.id) || [];
@@ -79,6 +79,14 @@ export const useAdminUsers = () => {
           role = 'community_owner';
         }
         
+        // Determine user status
+        let status: 'active' | 'inactive' | 'suspended' = 'inactive';
+        if (user.banned) {
+          status = 'suspended';
+        } else if (user.confirmed_at) {
+          status = 'active';
+        }
+        
         return {
           id: user.id,
           email: user.email || '',
@@ -86,7 +94,7 @@ export const useAdminUsers = () => {
           last_name: profile.last_name || null,
           full_name: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || user.email?.split('@')[0] || 'Unknown',
           role: role,
-          status: user.banned ? 'suspended' : user.confirmed_at ? 'active' : 'inactive',
+          status: status,
           avatar_url: profile.avatar_url || null,
           communities_count: userCommunities.length,
           subscriptions_count: 0, // We'll need to calculate this from another table if needed
@@ -118,17 +126,17 @@ export const useAdminUsers = () => {
   const updateUserStatus = async (userId: string, status: 'active' | 'inactive' | 'suspended') => {
     try {
       if (status === 'suspended') {
-        // Ban user
+        // Ban user using the correct property according to Supabase API
         const { error } = await supabase.auth.admin.updateUserById(
           userId,
-          { banned: true }
+          { user_metadata: { banned: true } }
         );
         if (error) throw error;
       } else if (status === 'active') {
         // Unban user and confirm if needed
         const { error } = await supabase.auth.admin.updateUserById(
           userId,
-          { banned: false }
+          { user_metadata: { banned: false } }
         );
         if (error) throw error;
       }

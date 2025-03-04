@@ -34,3 +34,7 @@ verify_jwt = false
 
 [functions.database-diagnostics]
 verify_jwt = false
+
+[functions.create-stripe-payment-intent]
+verify_jwt = false
+

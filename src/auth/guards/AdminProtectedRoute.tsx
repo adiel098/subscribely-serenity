@@ -15,6 +15,8 @@ export const AdminProtectedRoute = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [hasShownToast, setHasShownToast] = useState(false);
+  // Add state to avoid showing loading screen on initial render
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     console.log("🔍 AdminProtectedRoute state:", { 
@@ -24,7 +26,8 @@ export const AdminProtectedRoute = () => {
       isAdmin,
       isCheckingAdmin,
       error,
-      currentPath: window.location.pathname
+      currentPath: window.location.pathname,
+      initialLoadComplete
     });
     
     // For debugging only - check admin_users table directly
@@ -74,34 +77,39 @@ export const AdminProtectedRoute = () => {
       setHasShownToast(true);
       hasToastShown.current = true;
     }
-  }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error, hasShownToast]);
+    
+    // Set initialLoadComplete after first check completes
+    if (!initialLoadComplete && !isCheckingAdmin && !authLoading) {
+      setInitialLoadComplete(true);
+    }
+  }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error, hasShownToast, initialLoadComplete]);
 
-  // If still loading auth or checking admin status, show loading state
-  if (authLoading || isCheckingAdmin) {
-    console.log("⏳ AdminProtectedRoute: Loading state", { 
-      authLoading, 
-      adminLoading: isCheckingAdmin,
-      userId: user?.id
-    });
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <span className="text-xl font-medium">Verifying admin permissions...</span>
-        {isCheckingAdmin && (
-          <p className="text-gray-500 mt-2">This may take a moment. Please wait...</p>
-        )}
-      </div>
-    );
-  }
-  
-  // If no user is authenticated, redirect to auth page
-  if (!user) {
+  // If no user is authenticated, redirect to auth page immediately
+  if (!user && !authLoading) {
     console.log("🚫 AdminProtectedRoute: No authenticated user, redirecting to auth");
     return <Navigate to="/auth" />;
   }
   
+  // Only show loading for first page load, not on refreshes
+  // Avoid showing the loading state on subsequent renders
+  // Still show loading for the initial authentication check
+  if (!initialLoadComplete && (authLoading || isCheckingAdmin)) {
+    console.log("⏳ AdminProtectedRoute: Loading state", { 
+      authLoading, 
+      adminLoading: isCheckingAdmin,
+      userId: user?.id,
+      initialLoadComplete
+    });
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <span className="text-xl font-medium">Loading...</span>
+      </div>
+    );
+  }
+  
   // If user is not an admin, show access denied
-  if (!isAdmin) {
+  if (!isAdmin && initialLoadComplete) {
     console.log("🚫 AdminProtectedRoute: User is not an admin, showing access denied");
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">

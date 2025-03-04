@@ -3,6 +3,19 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
+// Create a cache for admin status to avoid repeated checks
+interface AdminStatusCache {
+  [userId: string]: {
+    isAdmin: boolean;
+    role: string | null;
+    timestamp: number;
+  }
+}
+
+// In-memory cache of admin status
+const adminStatusCache: AdminStatusCache = {};
+const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+
 /**
  * Hook to check if the current user has admin permissions
  * Uses security definer functions to avoid infinite recursion in RLS policies
@@ -28,11 +41,19 @@ export const useAdminPermission = () => {
         return;
       }
 
-      // If we've already checked this user and they're an admin, don't check again
-      if (lastCheckedId === user.id && isAdmin) {
-        console.log(`🔄 useAdminPermission: Using cached admin status for user ${user.id}`);
-        setIsLoading(false);
-        return;
+      // Check if we have a valid cached result
+      if (adminStatusCache[user.id]) {
+        const cachedData = adminStatusCache[user.id];
+        const isCacheValid = (Date.now() - cachedData.timestamp) < CACHE_DURATION;
+        
+        if (isCacheValid) {
+          console.log(`🔄 useAdminPermission: Using cached admin status for user ${user.id}`, cachedData);
+          setIsAdmin(cachedData.isAdmin);
+          setRole(cachedData.role);
+          setLastCheckedId(user.id);
+          setIsLoading(false);
+          return;
+        }
       }
 
       try {
@@ -70,7 +91,15 @@ export const useAdminPermission = () => {
         setRole(roleFound);
         setLastCheckedId(user.id);
         
+        // Update the cache
+        adminStatusCache[user.id] = {
+          isAdmin: adminFound,
+          role: roleFound,
+          timestamp: Date.now()
+        };
+        
         console.log(`✅ useAdminPermission: Final status - User ${user.id} is admin: ${adminFound}, role: ${roleFound || 'none'}`);
+        console.log(`✅ useAdminPermission: Admin status cached for user ${user.id}`);
       } catch (err: any) {
         console.error("❌ useAdminPermission: Error in admin check:", err);
         if (mounted) {
@@ -89,11 +118,21 @@ export const useAdminPermission = () => {
     return () => {
       mounted = false;
     };
-  }, [user, lastCheckedId, isAdmin]);
+  }, [user]);
 
   // Function to check if user is a super admin using the security definer function
   const isSuperAdmin = async (): Promise<boolean> => {
     if (!user) return false;
+    
+    // Check cache first
+    if (adminStatusCache[user.id]) {
+      const cachedData = adminStatusCache[user.id];
+      const isCacheValid = (Date.now() - cachedData.timestamp) < CACHE_DURATION;
+      
+      if (isCacheValid) {
+        return cachedData.role === 'super_admin';
+      }
+    }
     
     try {
       const { data, error } = await supabase
@@ -103,13 +142,34 @@ export const useAdminPermission = () => {
       console.log("🔐 isSuperAdmin check result:", data);
       
       // Handle different response formats
+      let isSuperAdmin = false;
       if (Array.isArray(data) && data.length > 0) {
-        return data[0]?.admin_role === 'super_admin';
+        isSuperAdmin = data[0]?.admin_role === 'super_admin';
+      } else {
+        isSuperAdmin = data?.admin_role === 'super_admin';
       }
-      return data?.admin_role === 'super_admin';
+      
+      // Update the cache
+      if (!adminStatusCache[user.id]) {
+        adminStatusCache[user.id] = {
+          isAdmin: !!data?.is_admin,
+          role: data?.admin_role || null,
+          timestamp: Date.now()
+        };
+      }
+      
+      return isSuperAdmin;
     } catch (err) {
       console.error("❌ useAdminPermission: Error checking super admin status:", err);
       return false;
+    }
+  };
+
+  // Method to invalidate the cache when admin status changes
+  const invalidateCache = () => {
+    if (user) {
+      delete adminStatusCache[user.id];
+      console.log(`🔄 useAdminPermission: Cache invalidated for user ${user.id}`);
     }
   };
 
@@ -119,6 +179,7 @@ export const useAdminPermission = () => {
     error, 
     role,
     isSuperAdmin,
+    invalidateCache,
     hasToastShown 
   };
 };

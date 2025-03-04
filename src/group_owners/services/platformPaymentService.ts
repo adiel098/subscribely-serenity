@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface PlatformPlan {
@@ -20,7 +19,6 @@ export const processPayment = async (
 
   console.log(`Processing ${paymentMethod} payment for plan: ${selectedPlan.name}`);
   
-  // Check for existing active subscriptions
   const { data: existingSubscriptions, error: checkError } = await supabase
     .from('platform_subscriptions')
     .select('*')
@@ -32,19 +30,15 @@ export const processPayment = async (
     throw checkError;
   }
 
-  // Calculate subscription end date based on interval
   const endDate = calculateEndDate(selectedPlan.interval);
   
   let subscription;
 
-  // If there's an existing subscription, update it instead of creating a new one
   if (existingSubscriptions && existingSubscriptions.length > 0) {
     console.log("Found existing subscription(s). Updating instead of creating new one.");
     
-    // Get the first active subscription to update
     const existingSubscription = existingSubscriptions[0];
     
-    // Update the existing subscription
     const { data: updatedSubscription, error: updateError } = await supabase
       .from('platform_subscriptions')
       .update({
@@ -65,7 +59,6 @@ export const processPayment = async (
     
     subscription = updatedSubscription;
     
-    // Deactivate any other active subscriptions if multiple exist
     if (existingSubscriptions.length > 1) {
       console.log("Multiple active subscriptions found. Deactivating extras.");
       const otherSubscriptionIds = existingSubscriptions
@@ -85,7 +78,6 @@ export const processPayment = async (
       }
     }
   } else {
-    // No existing subscription, create a new one
     const { data: newSubscription, error: subscriptionError } = await supabase
       .from('platform_subscriptions')
       .insert({
@@ -107,7 +99,6 @@ export const processPayment = async (
     subscription = newSubscription;
   }
 
-  // Create payment record
   const { error: paymentError } = await supabase
     .from('platform_payments')
     .insert({
@@ -129,7 +120,6 @@ export const processPayment = async (
   return subscription;
 };
 
-// Helper function to calculate end date based on interval
 const calculateEndDate = (interval: string) => {
   const now = new Date();
   switch (interval) {
@@ -143,5 +133,86 @@ const calculateEndDate = (interval: string) => {
       return new Date(now.setFullYear(now.getFullYear() + 99)); // Effectively lifetime
     default:
       return new Date(now.setMonth(now.getMonth() + 1));
+  }
+};
+
+/**
+ * Safely delete a platform subscription by first removing related payment records
+ * @param subscriptionId The ID of the subscription to delete
+ * @returns True if the deletion was successful, false otherwise
+ */
+export const deleteSubscription = async (subscriptionId: string): Promise<boolean> => {
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session?.user?.id) {
+      throw new Error("Authentication required");
+    }
+    
+    console.log(`Attempting to delete subscription: ${subscriptionId}`);
+    
+    const { error: paymentDeleteError } = await supabase
+      .from('platform_payments')
+      .delete()
+      .eq('subscription_id', subscriptionId);
+      
+    if (paymentDeleteError) {
+      console.error("Error deleting related payment records:", paymentDeleteError);
+      throw paymentDeleteError;
+    }
+    
+    console.log("Successfully deleted related payment records");
+    
+    const { error: subscriptionDeleteError } = await supabase
+      .from('platform_subscriptions')
+      .delete()
+      .eq('id', subscriptionId)
+      .eq('owner_id', session.session.user.id); // Ensure the user owns this subscription
+      
+    if (subscriptionDeleteError) {
+      console.error("Error deleting subscription:", subscriptionDeleteError);
+      throw subscriptionDeleteError;
+    }
+    
+    console.log("Successfully deleted subscription");
+    return true;
+  } catch (error) {
+    console.error("Error in deleteSubscription function:", error);
+    return false;
+  }
+};
+
+/**
+ * Alternative approach: Deactivate a subscription instead of deleting it
+ * This preserves the payment history
+ * @param subscriptionId The ID of the subscription to deactivate
+ * @returns True if the deactivation was successful, false otherwise
+ */
+export const deactivateSubscription = async (subscriptionId: string): Promise<boolean> => {
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session?.user?.id) {
+      throw new Error("Authentication required");
+    }
+    
+    console.log(`Deactivating subscription: ${subscriptionId}`);
+    
+    const { error } = await supabase
+      .from('platform_subscriptions')
+      .update({ status: 'inactive' })
+      .eq('id', subscriptionId)
+      .eq('owner_id', session.session.user.id); // Ensure the user owns this subscription
+      
+    if (error) {
+      console.error("Error deactivating subscription:", error);
+      throw error;
+    }
+    
+    console.log("Successfully deactivated subscription");
+    return true;
+  } catch (error) {
+    console.error("Error in deactivateSubscription function:", error);
+    return false;
   }
 };

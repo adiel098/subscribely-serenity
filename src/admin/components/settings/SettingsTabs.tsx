@@ -10,6 +10,7 @@ import { NotificationSettings, NotificationFormValues } from "./NotificationSett
 import { SecuritySettings } from "./SecuritySettings";
 import { BillingSettings } from "./BillingSettings";
 import { ApiSettings } from "./ApiSettings";
+import { PlanSettings } from "./PlanSettings";
 
 interface SettingsTabsProps {
   onSaveGeneral: (data: GeneralFormValues) => void;
@@ -27,6 +28,7 @@ export function SettingsTabs({
       <TabsList className="bg-background/90 backdrop-blur-sm border">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="plans">Plans</TabsTrigger>
         <TabsTrigger value="security">Security</TabsTrigger>
         <TabsTrigger value="billing">Billing</TabsTrigger>
         <TabsTrigger value="api">API</TabsTrigger>
@@ -38,6 +40,10 @@ export function SettingsTabs({
       
       <TabsContent value="notifications" className="space-y-6">
         <NotificationSettings onSave={onSaveNotifications} isSaving={isSaving} />
+      </TabsContent>
+      
+      <TabsContent value="plans" className="space-y-6">
+        <PlanSettings />
       </TabsContent>
       
       <TabsContent value="security" className="space-y-6">

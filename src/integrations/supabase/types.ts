@@ -234,6 +234,157 @@ export type Database = {
           },
         ]
       }
+      platform_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          owner_id: string
+          payment_method: string | null
+          payment_status: string | null
+          plan_id: string
+          subscription_id: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          owner_id: string
+          payment_method?: string | null
+          payment_status?: string | null
+          plan_id: string
+          subscription_id?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          owner_id?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          plan_id?: string
+          subscription_id?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_payments_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          interval: Database["public"]["Enums"]["platform_plan_interval"]
+          is_active: boolean | null
+          max_communities: number | null
+          max_members_per_community: number | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          interval: Database["public"]["Enums"]["platform_plan_interval"]
+          is_active?: boolean | null
+          max_communities?: number | null
+          max_members_per_community?: number | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          interval?: Database["public"]["Enums"]["platform_plan_interval"]
+          is_active?: boolean | null
+          max_communities?: number | null
+          max_members_per_community?: number | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      platform_subscriptions: {
+        Row: {
+          auto_renew: boolean | null
+          created_at: string | null
+          id: string
+          owner_id: string
+          plan_id: string
+          status: string | null
+          subscription_end_date: string | null
+          subscription_start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          id?: string
+          owner_id: string
+          plan_id: string
+          status?: string | null
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          id?: string
+          owner_id?: string
+          plan_id?: string
+          status?: string | null
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -924,6 +1075,7 @@ export type Database = {
         | "payment_received"
         | "notification_sent"
       community_role: "owner" | "admin" | "member"
+      platform_plan_interval: "monthly" | "quarterly" | "yearly" | "lifetime"
       platform_type: "telegram" | "discord"
     }
     CompositeTypes: {

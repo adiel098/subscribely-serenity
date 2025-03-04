@@ -4,12 +4,9 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-
-type AuthContextType = {
-  user: User | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-};
+import { AuthContextType } from "../types/authTypes";
+import { useCheckAdminStatus } from "../hooks/useCheckAdminStatus";
+import { handleSignOut } from "../utils/authActions";
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -23,30 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-
-  // Check if user is admin
-  const checkAdminStatus = async (userId: string) => {
-    if (!userId) return false;
-    
-    console.log(`🔍 AuthContext: Checking admin status for user ${userId}`);
-    try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('❌ AuthContext: Error checking admin status:', error);
-        return false;
-      }
-      
-      return !!data;
-    } catch (err) {
-      console.error('❌ AuthContext: Exception in admin check:', err);
-      return false;
-    }
-  };
+  const { checkAdminStatus } = useCheckAdminStatus();
 
   useEffect(() => {
     let mounted = true;
@@ -121,40 +95,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [navigate, location.pathname]);
 
   const signOut = async () => {
-    try {
-      console.log('🚪 User signing out - executing signOut function');
-      setLoading(true);
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('❌ Error signing out:', error);
-        toast({
-          variant: "destructive",
-          title: "Error signing out",
-          description: error.message
-        });
-      } else {
-        console.log('✅ Sign out successful');
-        
-        // Clear user state immediately
-        setUser(null);
-        
-        // Navigate to auth page
-        if (location.pathname !== '/auth') {
-          navigate("/auth", { replace: true });
-        }
-      }
-    } catch (err: any) {
-      console.error('❌ Exception during sign out:', err);
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: err?.message || "An unexpected error occurred"
-      });
-    } finally {
-      setLoading(false);
-    }
+    await handleSignOut(
+      setLoading,
+      setUser,
+      navigate,
+      location.pathname,
+      toast
+    );
   };
 
   return (

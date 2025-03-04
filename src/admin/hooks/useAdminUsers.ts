@@ -44,12 +44,24 @@ export const useAdminUsers = () => {
         throw new Error("Failed to fetch profiles data");
       }
       
-      // Get admin roles
-      const { data: adminUsers, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*');
-        
-      if (adminError) throw adminError;
+      // Get admin roles using the RPC function to avoid infinite recursion
+      const { data: adminRolesData, error: adminRolesError } = await supabase.rpc(
+        'get_admin_status', 
+        { user_id_param: (await supabase.auth.getUser()).data.user?.id }
+      );
+      
+      // Only fetch admin users if the current user is an admin
+      let adminUsers = [];
+      if (adminRolesData?.is_admin) {
+        const { data: adminUsersData, error: adminUsersError } = await supabase
+          .from('admin_users')
+          .select('*');
+          
+        if (adminUsersError) throw adminUsersError;
+        adminUsers = adminUsersData || [];
+      } else {
+        console.log("Current user is not an admin, skipping admin_users fetch");
+      }
       
       // Get community owners count
       const { data: communities, error: communitiesError } = await supabase
@@ -73,8 +85,7 @@ export const useAdminUsers = () => {
           role = 'community_owner';
         }
         
-        // Determine user status - in a real application, you would store this in a user_metadata field
-        // For now, we'll assume active if they have a last_login
+        // Determine user status based on is_suspended flag and last_login
         let status: 'active' | 'inactive' | 'suspended' = 'inactive';
         if (profile.is_suspended) {
           status = 'suspended';
@@ -169,6 +180,18 @@ export const useAdminUsers = () => {
 
   const updateUserRole = async (userId: string, role: AdminUserRole) => {
     try {
+      // Check if the current user has permission to modify admin users
+      const { data: adminStatus, error: statusError } = await supabase.rpc(
+        'get_admin_status', 
+        { user_id_param: (await supabase.auth.getUser()).data.user?.id }
+      );
+      
+      if (statusError) throw statusError;
+      
+      if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
+        throw new Error("You don't have permission to change user roles");
+      }
+      
       // Remove existing admin role if exists
       if (role !== 'super_admin' && role !== 'moderator') {
         const { error: removeError } = await supabase

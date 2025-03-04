@@ -39,31 +39,24 @@ export const useAdminPermission = () => {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         setIsLoading(true);
         
-        // Call the security definer RPC function that avoids infinite recursion
-        const { data: isAdminResult, error: isAdminError } = await supabase
-          .rpc('is_admin', { user_uuid: user.id });
+        // Use the new security definer function to avoid infinite recursion
+        const { data: adminStatus, error: adminError } = await supabase
+          .rpc('get_admin_status', { user_id_param: user.id });
         
-        if (isAdminError) {
-          console.error("❌ useAdminPermission: Error checking admin status:", isAdminError);
-          throw isAdminError;
+        if (adminError) {
+          console.error("❌ useAdminPermission: Error checking admin status:", adminError);
+          throw adminError;
         }
         
         if (!mounted) return;
         
-        setIsAdmin(!!isAdminResult);
+        const isUserAdmin = !!adminStatus?.is_admin;
+        setIsAdmin(isUserAdmin);
         setLastCheckedId(user.id);
         
-        if (isAdminResult) {
-          // Get the role using a security definer function to avoid RLS issues
-          const { data: roleData, error: roleError } = await supabase
-            .rpc('check_admin_role', { user_uuid: user.id });
-            
-          if (roleError) {
-            console.warn("⚠️ useAdminPermission: Could not fetch admin role:", roleError);
-          } else if (roleData) {
-            setRole(roleData);
-            console.log(`✅ useAdminPermission: User ${user.id} is admin with role: ${roleData}`);
-          }
+        if (isUserAdmin) {
+          setRole(adminStatus?.admin_role || null);
+          console.log(`✅ useAdminPermission: User ${user.id} is admin with role: ${adminStatus?.admin_role}`);
         } else {
           console.log(`ℹ️ useAdminPermission: User ${user.id} is not an admin`);
         }
@@ -94,10 +87,10 @@ export const useAdminPermission = () => {
     
     try {
       const { data, error } = await supabase
-        .rpc('is_super_admin', { user_uuid: user.id });
+        .rpc('get_admin_status', { user_id_param: user.id });
         
       if (error) throw error;
-      return !!data;
+      return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error("❌ useAdminPermission: Error checking super admin status:", err);
       return false;

@@ -865,6 +865,15 @@ export type Database = {
           trial_end_date: string
         }[]
       }
+      get_admin_status: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          is_admin: boolean
+          admin_role: string
+        }[]
+      }
       get_members_to_check: {
         Args: Record<PropertyKey, never>
         Returns: {

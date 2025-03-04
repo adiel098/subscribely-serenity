@@ -33,8 +33,8 @@ export const FeatureSection = ({
   demoButtonText = "Book a demo"
 }: FeatureSectionProps) => {
   return (
-    <section className={`py-20 px-4 sm:px-8 lg:px-16 ${bgColor}`}>
-      <div className="max-w-7xl mx-auto">
+    <section className={`py-20 px-4 sm:px-8 lg:px-16 ${bgColor} w-full`}>
+      <div className="container-fluid mx-auto max-w-full">
         <div className={`flex flex-col ${reversed ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12`}>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

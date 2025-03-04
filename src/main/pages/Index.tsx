@@ -36,7 +36,7 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col w-full">
       <Navbar />
       
       {/* Hero Section */}
@@ -82,7 +82,7 @@ export default function Index() {
         buttonText="Get started for free" 
       />
       
-      {/* Revenue Calculator Section - Need to update this component */}
+      {/* Revenue Calculator Section */}
       <RevenueCalculator />
       
       {/* CTA Section */}

@@ -15,9 +15,9 @@ export const HeroSection = () => {
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       transition={{ duration: 0.6 }} 
-      className="pt-32 pb-16 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50"
+      className="pt-32 pb-16 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 w-full"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="container-fluid mx-auto max-w-full">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
           <motion.div 
             initial={{ x: -50, opacity: 0 }} 

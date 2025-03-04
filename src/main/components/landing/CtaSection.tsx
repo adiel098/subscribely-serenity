@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 export const CtaSection = () => {
   return (
-    <section className="py-20 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-500 text-white">
-      <div className="max-w-7xl mx-auto text-center">
+    <section className="py-20 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-500 text-white w-full">
+      <div className="container-fluid mx-auto max-w-full">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}

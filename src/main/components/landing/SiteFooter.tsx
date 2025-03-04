@@ -3,8 +3,8 @@ import { Sparkles } from "lucide-react";
 
 export const SiteFooter = () => {
   return (
-    <footer className="py-12 px-4 sm:px-8 lg:px-16 bg-indigo-950 text-white">
-      <div className="max-w-7xl mx-auto">
+    <footer className="py-12 px-4 sm:px-8 lg:px-16 bg-indigo-950 text-white w-full">
+      <div className="container-fluid mx-auto max-w-full">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-8 md:mb-0">
             <div className="flex items-center">

@@ -118,27 +118,49 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
 
-      {/* Admin Routes - Using nested routes with Outlet pattern */}
-      <Route element={<AdminProtectedRoute />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-        </Route>
-        <Route path="/admin/users" element={<AdminLayout />}>
-          <Route index element={<Users />} />
-        </Route>
-        <Route path="/admin/communities" element={<AdminLayout />}>
-          <Route index element={<Communities />} />
-        </Route>
-        <Route path="/admin/payments" element={<AdminLayout />}>
-          <Route index element={<Payments />} />
-        </Route>
-        <Route path="/admin/reports" element={<AdminLayout />}>
-          <Route index element={<Reports />} />
-        </Route>
-        <Route path="/admin/settings" element={<AdminLayout />}>
-          <Route index element={<Settings />} />
-        </Route>
-      </Route>
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Dashboard />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/users" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Users />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/communities" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Communities />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/payments" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Payments />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/reports" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Reports />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/settings" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <Settings />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      } />
 
       {/* Telegram Mini App Route */}
       <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />

@@ -26,8 +26,10 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
           <AuthProvider>
             <ThemeProvider>
               <CommunityProvider>
-                <SidebarProvider>
-                  {children}
+                <SidebarProvider defaultOpen={true}>
+                  <div className="flex w-full min-h-screen">
+                    {children}
+                  </div>
                 </SidebarProvider>
               </CommunityProvider>
               <Toaster />

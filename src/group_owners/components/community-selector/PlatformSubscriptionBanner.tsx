@@ -1,18 +1,46 @@
 
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Package, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
-interface PlatformSubscriptionBannerProps {
-  hasPlatformPlan: boolean;
-}
-
-export const PlatformSubscriptionBanner = ({ hasPlatformPlan }: PlatformSubscriptionBannerProps) => {
+export const PlatformSubscriptionBanner = () => {
+  const [hasPlatformPlan, setHasPlatformPlan] = useState(true);
   const navigate = useNavigate();
-  
+
+  // Check if the user has an active platform subscription
+  useEffect(() => {
+    const checkPlatformSubscription = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.user?.id) return;
+        
+        const { data, error } = await supabase
+          .from('platform_subscriptions')
+          .select('*')
+          .eq('user_id', session.session.user.id)
+          .eq('is_active', true)
+          .single();
+        
+        if (error || !data) {
+          console.log('No active platform subscription found', error);
+          setHasPlatformPlan(false);
+        } else {
+          console.log('Active platform subscription found', data);
+          setHasPlatformPlan(true);
+        }
+      } catch (err) {
+        console.error('Error checking platform subscription:', err);
+      }
+    };
+    
+    checkPlatformSubscription();
+  }, []);
+
   if (hasPlatformPlan) return null;
-  
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.9 }}

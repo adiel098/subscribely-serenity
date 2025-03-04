@@ -23,6 +23,7 @@ import Analytics from "@/group_owners/pages/Analytics";
 import BotSettings from "@/group_owners/pages/BotSettings";
 import PlatformSelect from "@/group_owners/pages/PlatformSelect";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
+import PlatformPlans from "@/group_owners/pages/PlatformPlans";
 
 export const AppRoutes = () => {
   return (
@@ -124,6 +125,18 @@ export const AppRoutes = () => {
             <CommunityProvider>
               <DashboardLayout>
                 <PlatformSelect />
+              </DashboardLayout>
+            </CommunityProvider>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/platform-plans" 
+        element={
+          <ProtectedRoute>
+            <CommunityProvider>
+              <DashboardLayout>
+                <PlatformPlans />
               </DashboardLayout>
             </CommunityProvider>
           </ProtectedRoute>

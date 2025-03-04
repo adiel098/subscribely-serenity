@@ -100,6 +100,8 @@ const StripePaymentForm = ({ communityId, onSuccess, price }) => {
         setIsLoading(true);
         setError('');
         
+        console.log('Fetching Stripe config for community:', communityId);
+        
         // Fetch the Stripe public key from the payment_methods table
         const { data, error } = await supabase
           .from('payment_methods')
@@ -116,15 +118,18 @@ const StripePaymentForm = ({ communityId, onSuccess, price }) => {
         }
 
         if (!data?.config?.public_key) {
-          console.error('No Stripe public key found in config');
+          console.error('No Stripe public key found in config:', data);
           setError('Payment method not properly configured');
           return;
         }
 
+        console.log('Found Stripe public key, initializing Stripe...');
+        
         // Initialize Stripe with the public key
         setStripePromise(loadStripe(data.config.public_key));
         
         // Create a payment intent
+        console.log('Creating payment intent with params:', { communityId, amount: price });
         const { data: intentData, error: intentError } = await supabase.functions.invoke('create-stripe-payment-intent', {
           body: { 
             communityId,
@@ -132,12 +137,21 @@ const StripePaymentForm = ({ communityId, onSuccess, price }) => {
           }
         });
 
-        if (intentError || !intentData?.clientSecret) {
-          console.error('Error creating payment intent:', intentError || 'No client secret returned');
+        console.log('Payment intent response:', intentData, intentError);
+
+        if (intentError) {
+          console.error('Error creating payment intent:', intentError);
           setError('Unable to initialize payment');
           return;
         }
 
+        if (!intentData?.clientSecret) {
+          console.error('No client secret returned from payment intent:', intentData);
+          setError('Unable to initialize payment');
+          return;
+        }
+
+        console.log('Payment intent created successfully');
         setClientSecret(intentData.clientSecret);
       } catch (err) {
         console.error('Unexpected error in fetchStripeConfig:', err);
@@ -182,6 +196,7 @@ const StripePaymentForm = ({ communityId, onSuccess, price }) => {
     );
   }
 
+  console.log('Rendering Stripe Elements with client secret');
   return (
     <div className="w-full max-w-md mx-auto">
       <Elements stripe={stripePromise} options={{ clientSecret }}>

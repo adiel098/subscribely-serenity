@@ -60,7 +60,6 @@ export const PaymentOptions = ({
             title="Credit Card"
             isSelected={selectedPaymentMethod === 'card'}
             onSelect={() => onPaymentMethodSelect('card')}
-            disabled={!stripeConfig}
           />
         </motion.div>
         
@@ -70,7 +69,6 @@ export const PaymentOptions = ({
             title="Stripe"
             isSelected={selectedPaymentMethod === 'stripe'}
             onSelect={() => onPaymentMethodSelect('stripe')}
-            disabled={!stripeConfig}
           />
         </motion.div>
       </motion.div>

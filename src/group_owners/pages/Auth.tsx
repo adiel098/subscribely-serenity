@@ -32,20 +32,21 @@ const Auth = () => {
             .single();
           
           if (error) {
-            console.error("❌ Error checking admin status:", error);
+            console.error("❌ Error checking admin status on Auth page:", error);
+            console.error("❌ Error details:", JSON.stringify(error, null, 2));
             navigate('/dashboard');
             return;
           }
           
           if (data) {
-            console.log("✅ User is an admin, redirecting to admin panel");
+            console.log("✅ User is an admin on Auth page, redirecting to admin panel");
             navigate('/admin/dashboard');
           } else {
-            console.log("ℹ️ Regular user, redirecting to dashboard");
+            console.log("ℹ️ Regular user on Auth page, redirecting to dashboard");
             navigate('/dashboard');
           }
         } catch (err) {
-          console.error("❌ Exception in admin status check:", err);
+          console.error("❌ Exception in admin status check on Auth page:", err);
           navigate('/dashboard');
         }
       };

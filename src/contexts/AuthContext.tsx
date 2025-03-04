@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 type AuthContextType = {
   user: User | null;
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Check if user is admin and redirect accordingly
   const checkAdminAndRedirect = async (userId: string) => {
@@ -33,38 +35,73 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('❌ Error checking admin status:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        setLoading(false);
         return false;
       }
       
       if (data) {
         console.log(`✅ User ${userId} is an admin with role: ${data.role}`);
-        navigate('/admin/dashboard');
+        // Delay navigation slightly to ensure state updates have propagated
+        setTimeout(() => {
+          console.log('🚀 Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
+        }, 100);
         return true;
       } else {
         console.log(`ℹ️ User ${userId} is not an admin`);
+        setLoading(false);
         return false;
       }
     } catch (err) {
       console.error('❌ Exception in admin check:', err);
+      toast({
+        variant: "destructive",
+        title: "Error checking admin status",
+        description: "Please try refreshing the page"
+      });
+      setLoading(false);
       return false;
     }
   };
 
   useEffect(() => {
+    // Add a flag to track if we've already set loading to false
+    let loadingHandled = false;
+
     // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (currentUser) {
-        console.log(`🔐 User session found for ${currentUser.email}`);
-        checkAdminAndRedirect(currentUser.id);
-      } else {
-        console.log('⚠️ No user session found');
+    const checkSession = async () => {
+      try {
+        console.log('🔄 Checking user session...');
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+          console.log(`🔐 User session found for ${currentUser.email}`);
+          const isAdmin = await checkAdminAndRedirect(currentUser.id);
+          if (!isAdmin && !loadingHandled) {
+            console.log('📱 Not an admin, setting loading to false');
+            setLoading(false);
+            loadingHandled = true;
+          }
+        } else {
+          console.log('⚠️ No user session found');
+          if (!loadingHandled) {
+            setLoading(false);
+            loadingHandled = true;
+          }
+        }
+      } catch (err) {
+        console.error('❌ Error checking session:', err);
+        if (!loadingHandled) {
+          setLoading(false);
+          loadingHandled = true;
+        }
       }
-      
-      setLoading(false);
-    });
+    };
+
+    checkSession();
 
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -74,13 +111,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // If user just signed in, check if they are an admin
       if (event === 'SIGNED_IN' && session?.user) {
         console.log(`👤 User signed in: ${session.user.email}`);
-        await checkAdminAndRedirect(session.user.id);
+        const isAdmin = await checkAdminAndRedirect(session.user.id);
+        if (!isAdmin && !loadingHandled) {
+          console.log('📱 Not an admin after sign in, setting loading to false');
+          setLoading(false);
+          loadingHandled = true;
+        }
+      } else {
+        if (!loadingHandled) {
+          console.log('📱 Auth state changed, setting loading to false');
+          setLoading(false);
+          loadingHandled = true;
+        }
       }
-      
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Set a backup timeout to ensure loading state is cleared if something goes wrong
+    const timeoutId = setTimeout(() => {
+      if (loading && !loadingHandled) {
+        console.log('⚠️ Loading state timeout reached, forcing loading to false');
+        setLoading(false);
+        loadingHandled = true;
+      }
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [navigate]);
 
   const signOut = async () => {

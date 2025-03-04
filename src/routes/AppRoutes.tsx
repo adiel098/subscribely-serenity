@@ -118,9 +118,10 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
 
-      {/* Admin Routes */}
+      {/* Admin Routes - Fixed the route path here */}
       <Route element={<AdminProtectedRoute />}>
         <Route path="/admin" element={<AdminLayout dashboard={<Dashboard />} />} />
+        <Route path="/admin/dashboard" element={<AdminLayout dashboard={<Dashboard />} />} />
         <Route path="/admin/users" element={<AdminLayout dashboard={<Users />} />} />
         <Route path="/admin/communities" element={<AdminLayout dashboard={<Communities />} />} />
         <Route path="/admin/payments" element={<AdminLayout dashboard={<Payments />} />} />

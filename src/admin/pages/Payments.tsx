@@ -1,3 +1,4 @@
+
 import { 
   Card, 
   CardContent, 
@@ -71,6 +72,40 @@ interface CommunityPayment {
   } | null;
 }
 
+// Mock data for status-filtered tabs
+const MOCK_PAYMENTS = [
+  {
+    id: "PAY-1234",
+    user: "John Doe",
+    email: "john@example.com",
+    amount: "29.99",
+    community: "Tech Enthusiasts",
+    date: "Mar 15, 2024",
+    method: "credit_card",
+    status: "completed"
+  },
+  {
+    id: "PAY-2345",
+    user: "Jane Smith",
+    email: "jane@example.com",
+    amount: "49.99",
+    community: "Fitness Club",
+    date: "Mar 14, 2024",
+    method: "paypal",
+    status: "pending"
+  },
+  {
+    id: "PAY-3456",
+    user: "Bob Johnson",
+    email: "bob@example.com",
+    amount: "19.99",
+    community: "Book Club",
+    date: "Mar 13, 2024",
+    method: "bank_transfer",
+    status: "failed"
+  }
+];
+
 export default function Payments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +134,19 @@ export default function Payments() {
           .order('created_at', { ascending: false });
         
         if (platformError) throw platformError;
-        setPlatformPayments(platformData || []);
+        
+        // Transform platform data to match the PlatformPayment interface
+        const transformedPlatformData: PlatformPayment[] = (platformData || []).map(item => ({
+          id: item.id,
+          amount: item.amount,
+          created_at: item.created_at,
+          payment_method: item.payment_method,
+          payment_status: item.payment_status,
+          owner: item.owner?.[0] || null,
+          plan: item.plan?.[0] || null
+        }));
+        
+        setPlatformPayments(transformedPlatformData);
         
         // Fetch community payments
         const { data: communityData, error: communityError } = await supabase
@@ -118,7 +165,21 @@ export default function Payments() {
           .order('created_at', { ascending: false });
         
         if (communityError) throw communityError;
-        setCommunityPayments(communityData || []);
+        
+        // Transform community data to match the CommunityPayment interface
+        const transformedCommunityData: CommunityPayment[] = (communityData || []).map(item => ({
+          id: item.id,
+          amount: item.amount,
+          created_at: item.created_at,
+          payment_method: item.payment_method,
+          status: item.status,
+          first_name: item.first_name,
+          last_name: item.last_name,
+          telegram_username: item.telegram_username,
+          community: item.community?.[0] || null
+        }));
+        
+        setCommunityPayments(transformedCommunityData);
       } catch (error) {
         console.error("Error fetching payments:", error);
       } finally {
@@ -149,6 +210,18 @@ export default function Payments() {
       payment.community?.name?.toLowerCase().includes(searchTerm)
     );
   });
+
+  // For demo tabs (All/Completed/Pending/Failed), we'll use both types of payments
+  const allFilteredPayments = [...filteredPlatformPayments, ...filteredCommunityPayments.map(p => ({
+    id: p.id,
+    user: `${p.first_name} ${p.last_name}`,
+    email: p.telegram_username,
+    amount: p.amount,
+    community: p.community?.name || 'Unknown',
+    date: formatDate(p.created_at),
+    method: p.payment_method,
+    status: p.status
+  }))];
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -419,21 +492,21 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPayments.map((payment) => (
+                    {allFilteredPayments.map((payment) => (
                       <TableRow key={payment.id} className="hover:bg-indigo-50/30">
-                        <TableCell className="font-medium">{payment.id}</TableCell>
+                        <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{payment.user}</p>
                             <p className="text-sm text-muted-foreground">{payment.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-green-600">${payment.amount}</TableCell>
+                        <TableCell className="font-medium text-green-600">${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : payment.amount}</TableCell>
                         <TableCell>{payment.community}</TableCell>
                         <TableCell>{payment.date}</TableCell>
                         <TableCell className="flex items-center gap-1">
                           {getPaymentMethodIcon(payment.method)}
-                          {payment.method.replace('_', ' ')}
+                          {payment.method?.replace('_', ' ') || 'Unknown'}
                         </TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell className="text-right">
@@ -469,11 +542,11 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {PAYMENTS.filter(p => p.status === 'completed').map((payment) => (
+                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'completed').map((payment) => (
                       <TableRow key={payment.id}>
-                        <TableCell className="font-medium">{payment.id}</TableCell>
+                        <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>
-                        <TableCell className="font-medium text-green-600">${payment.amount}</TableCell>
+                        <TableCell className="font-medium text-green-600">${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : payment.amount}</TableCell>
                         <TableCell>{payment.date}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" className="border-indigo-100">
@@ -508,11 +581,11 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {PAYMENTS.filter(p => p.status === 'pending').map((payment) => (
+                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'pending').map((payment) => (
                       <TableRow key={payment.id}>
-                        <TableCell className="font-medium">{payment.id}</TableCell>
+                        <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>
-                        <TableCell className="font-medium text-yellow-600">${payment.amount}</TableCell>
+                        <TableCell className="font-medium text-yellow-600">${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : payment.amount}</TableCell>
                         <TableCell>{payment.date}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" className="border-indigo-100">
@@ -547,11 +620,11 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {PAYMENTS.filter(p => p.status === 'failed').map((payment) => (
+                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'failed').map((payment) => (
                       <TableRow key={payment.id}>
-                        <TableCell className="font-medium">{payment.id}</TableCell>
+                        <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>
-                        <TableCell className="font-medium text-red-600">${payment.amount}</TableCell>
+                        <TableCell className="font-medium text-red-600">${typeof payment.amount === 'number' ? payment.amount.toFixed(2) : payment.amount}</TableCell>
                         <TableCell>{payment.date}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" className="border-indigo-100">

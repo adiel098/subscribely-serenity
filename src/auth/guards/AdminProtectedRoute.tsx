@@ -1,5 +1,6 @@
 
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
 import { Loader2, ShieldAlert } from "lucide-react";

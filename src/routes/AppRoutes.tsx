@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import Index from "@/main/pages/Index";
 import Auth from "@/auth/pages/Auth";
@@ -33,23 +32,14 @@ export const AppRoutes = () => {
       <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
       
       {/* Admin Routes - Wrapped in a single AdminProtectedRoute */}
-      <Route
-        path="/admin/*"
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <Routes>
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="communities" element={<AdminCommunities />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="payments" element={<AdminPayments />} />
-                <Route path="reports" element={<AdminReports />} />
-                <Route path="settings" element={<AdminSettings />} />
-              </Routes>
-            </AdminLayout>
-          </AdminProtectedRoute>
-        }
-      />
+      <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/communities" element={<AdminCommunities />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/payments" element={<AdminPayments />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
+      </Route>
       
       {/* Group Owner Routes */}
       <Route 

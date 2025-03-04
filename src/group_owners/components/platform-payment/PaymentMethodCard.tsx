@@ -1,8 +1,7 @@
 
 import { motion } from "framer-motion";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface PaymentMethodCardProps {
@@ -12,15 +11,16 @@ interface PaymentMethodCardProps {
   price: number;
   isProcessing: boolean;
   onSelect: (provider: string) => void;
+  isSelected?: boolean;
 }
 
 export const PaymentMethodCard = ({ 
   id, 
   provider, 
   icon, 
-  price, 
   isProcessing, 
-  onSelect 
+  onSelect,
+  isSelected = false
 }: PaymentMethodCardProps) => {
   // Check if this is a demo payment method
   const isDemo = id.startsWith('demo-');
@@ -38,8 +38,15 @@ export const PaymentMethodCard = ({
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
       whileTap={{ scale: 0.98 }}
     >
-      <Card className="h-full cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all">
-        <CardHeader className="pb-2">
+      <Card 
+        className={`h-full cursor-pointer transition-all duration-200 ${
+          isSelected 
+            ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200' 
+            : 'hover:border-indigo-300 hover:shadow-md'
+        }`}
+        onClick={() => onSelect(provider)}
+      >
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {icon}
@@ -53,25 +60,11 @@ export const PaymentMethodCard = ({
             Pay with {provider} {isDemo && "(Test Mode)"}
           </CardDescription>
         </CardHeader>
-        <CardFooter className="pt-2">
-          <Button
-            className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
-            onClick={() => onSelect(provider)}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                Pay ${price}
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </>
-            )}
-          </Button>
-        </CardFooter>
+        {isProcessing && (
+          <CardContent className="pt-0 flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+          </CardContent>
+        )}
       </Card>
     </motion.div>
   );

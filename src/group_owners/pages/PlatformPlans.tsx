@@ -8,6 +8,7 @@ import {
   Users,
   Building,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ export default function PlatformPlans() {
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const { data: paymentMethods, isLoading: paymentMethodsLoading } = useActivePaymentMethods();
   const { toast } = useToast();
   
@@ -62,12 +64,18 @@ export default function PlatformPlans() {
     // Toggle off if already selected
     if (selectedPlan?.id === plan.id) {
       setSelectedPlan(null);
+      setSelectedPaymentMethod(null);
     } else {
       setSelectedPlan(plan);
+      setSelectedPaymentMethod(null);
     }
   };
 
-  const handlePaymentProcess = async (paymentMethod: string) => {
+  const handleSelectPaymentMethod = (method: string) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  const handlePaymentProcess = async () => {
     if (!selectedPlan) {
       toast({
         title: "No plan selected",
@@ -77,10 +85,19 @@ export default function PlatformPlans() {
       return;
     }
 
+    if (!selectedPaymentMethod) {
+      toast({
+        title: "No payment method selected",
+        description: "Please select a payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      await processPayment(selectedPlan, paymentMethod);
+      await processPayment(selectedPlan, selectedPaymentMethod);
 
       toast({
         title: "Subscription Activated",
@@ -100,8 +117,9 @@ export default function PlatformPlans() {
         setCurrentSubscription(data);
       }
       
-      // Reset selected plan
+      // Reset selected plan and payment method
       setSelectedPlan(null);
+      setSelectedPaymentMethod(null);
       
     } catch (error) {
       console.error('Payment processing error:', error);
@@ -274,24 +292,43 @@ export default function PlatformPlans() {
               </h2>
               
               <div className="mb-6">
-                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <div>
-                    <p className="font-medium text-indigo-900">{selectedPlan.name} Plan</p>
-                    <p className="text-sm text-indigo-700">
-                      {selectedPlan.interval.charAt(0).toUpperCase() + selectedPlan.interval.slice(1)} billing
-                    </p>
-                  </div>
-                  <div className="text-xl font-bold text-indigo-900">${selectedPlan.price}</div>
-                </div>
+                <PaymentMethodsGrid
+                  paymentMethods={paymentMethods}
+                  isLoading={paymentMethodsLoading}
+                  selectedPlanPrice={selectedPlan.price}
+                  isProcessing={isProcessing}
+                  onSelectPaymentMethod={handleSelectPaymentMethod}
+                  selectedPaymentMethod={selectedPaymentMethod}
+                />
               </div>
               
-              <PaymentMethodsGrid
-                paymentMethods={paymentMethods}
-                isLoading={paymentMethodsLoading}
-                selectedPlanPrice={selectedPlan.price}
-                isProcessing={isProcessing}
-                onSelectPaymentMethod={handlePaymentProcess}
-              />
+              {selectedPaymentMethod && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-6"
+                >
+                  <Button 
+                    onClick={handlePaymentProcess}
+                    disabled={isProcessing}
+                    className="w-full py-6 text-lg font-semibold gap-2 transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    size="lg"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Processing Payment...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-5 w-5" />
+                        Pay ${selectedPlan.price} for {selectedPlan.name} Plan
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </div>

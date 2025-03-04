@@ -15,6 +15,7 @@ interface PaymentMethodsGridProps {
   selectedPlanPrice: number;
   isProcessing: boolean;
   onSelectPaymentMethod: (method: string) => void;
+  selectedPaymentMethod: string | null;
 }
 
 export const PaymentMethodsGrid = ({
@@ -22,7 +23,8 @@ export const PaymentMethodsGrid = ({
   isLoading,
   selectedPlanPrice,
   isProcessing,
-  onSelectPaymentMethod
+  onSelectPaymentMethod,
+  selectedPaymentMethod
 }: PaymentMethodsGridProps) => {
   
   const getPaymentMethodIcon = (method: string) => {
@@ -72,8 +74,9 @@ export const PaymentMethodsGrid = ({
               provider={method.provider}
               icon={getPaymentMethodIcon(method.provider)}
               price={selectedPlanPrice}
-              isProcessing={isProcessing}
+              isProcessing={isProcessing && selectedPaymentMethod === method.provider}
               onSelect={onSelectPaymentMethod}
+              isSelected={selectedPaymentMethod === method.provider}
             />
           ))
         ) : (

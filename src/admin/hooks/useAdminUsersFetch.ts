@@ -21,52 +21,31 @@ export const useAdminUsersFetch = () => {
       const currentUser = await supabase.auth.getUser();
       console.log("Current user:", currentUser.data.user);
       
-      const { data: adminStatusData, error: adminStatusError } = await supabase.rpc(
-        'get_admin_status', 
-        { user_id_param: currentUser.data.user?.id }
-      );
-      
-      if (adminStatusError) {
-        console.error("Error checking admin status:", adminStatusError);
-        throw adminStatusError;
+      // Use the fixed security definer function without recursion issues
+      const { data: adminUsersData, error: adminUsersError } = await supabase
+        .from('admin_users')
+        .select('*');
+        
+      if (adminUsersError) {
+        console.error("Error fetching admin users:", adminUsersError);
+        throw adminUsersError;
       }
       
-      console.log("Admin status check result:", adminStatusData);
-      
-      // Handle different response formats
-      let isAdmin = false;
-      
-      if (Array.isArray(adminStatusData) && adminStatusData.length > 0) {
-        isAdmin = adminStatusData[0]?.is_admin === true;
-      } else if (adminStatusData) {
-        isAdmin = adminStatusData.is_admin === true;
-      }
-      
-      if (!isAdmin) {
-        throw new Error("Unauthorized: You must be an admin to view users");
-      }
+      console.log("Admin users data:", adminUsersData);
       
       // Get profiles data which contains most user information
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
         
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
       
       if (!profiles) {
         throw new Error("Failed to fetch profiles data");
       }
-      
-      // Only fetch admin users if the current user is an admin
-      let adminUsers = [];
-      const { data: adminUsersData, error: adminUsersError } = await supabase
-        .from('admin_users')
-        .select('*');
-        
-      if (adminUsersError) throw adminUsersError;
-      adminUsers = adminUsersData || [];
-      
-      console.log("Admin users data:", adminUsers);
       
       // Get community owners count
       const { data: communities, error: communitiesError } = await supabase
@@ -77,7 +56,7 @@ export const useAdminUsersFetch = () => {
       
       // Process the data to create user objects
       const processedUsers: AdminUser[] = profiles.map(profile => {
-        const adminRole = adminUsers?.find(a => a.user_id === profile.id)?.role || null;
+        const adminRole = adminUsersData?.find(a => a.user_id === profile.id)?.role || null;
         const userCommunities = communities?.filter(c => c.owner_id === profile.id) || [];
         
         // Set role based on admin status or community ownership

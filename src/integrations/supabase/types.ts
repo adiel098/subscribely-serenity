@@ -874,6 +874,16 @@ export type Database = {
           admin_role: string
         }[]
       }
+      get_admin_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          role: Database["public"]["Enums"]["admin_role"]
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_members_to_check: {
         Args: Record<PropertyKey, never>
         Returns: {

@@ -14,7 +14,7 @@ export const useAdminUserRole = (onSuccess?: () => void) => {
     try {
       // Check if the current user has permission to modify admin users using security definer function
       const currentUser = await supabase.auth.getUser();
-      const { data, error: statusError } = await supabase.rpc(
+      const { data: adminStatus, error: statusError } = await supabase.rpc(
         'get_admin_status', 
         { user_id_param: currentUser.data.user?.id }
       );
@@ -24,18 +24,18 @@ export const useAdminUserRole = (onSuccess?: () => void) => {
         throw statusError;
       }
       
-      console.log("🔐 Admin status check result:", data);
+      console.log("🔐 Admin status check result:", adminStatus);
       
       // Handle different response formats
       let isAdmin = false;
       let adminRole = null;
       
-      if (Array.isArray(data) && data.length > 0) {
-        isAdmin = data[0]?.is_admin === true;
-        adminRole = data[0]?.admin_role;
-      } else if (data) {
-        isAdmin = data.is_admin === true;
-        adminRole = data.admin_role;
+      if (Array.isArray(adminStatus) && adminStatus.length > 0) {
+        isAdmin = adminStatus[0]?.is_admin === true;
+        adminRole = adminStatus[0]?.admin_role;
+      } else if (adminStatus) {
+        isAdmin = adminStatus.is_admin === true;
+        adminRole = adminStatus.admin_role;
       }
       
       if (!isAdmin || adminRole !== 'super_admin') {

@@ -24,11 +24,16 @@ export const useAuthRedirect = (user: User | null) => {
           
           console.log("✅ Auth page: Admin check result:", data);
           
+          // Parse the admin check result properly
           let isAdmin = false;
+          let adminRole = null;
+          
           if (Array.isArray(data) && data.length > 0) {
             isAdmin = data[0]?.is_admin === true;
+            adminRole = data[0]?.admin_role;
           } else if (data) {
             isAdmin = data?.is_admin === true;
+            adminRole = data?.admin_role;
           }
           
           if (isAdmin) {

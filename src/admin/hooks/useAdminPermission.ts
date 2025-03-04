@@ -55,7 +55,10 @@ export const useAdminPermission = () => {
           try {
             // Race between the RPC call and the timeout
             const rpcPromise = supabase.rpc('is_admin', { user_uuid: user.id });
-            const result = await Promise.race([rpcPromise, timeoutPromise]);
+            const result = await Promise.race([rpcPromise, timeoutPromise]) as {
+              data: boolean | null;
+              error: Error | null;
+            };
             
             if (result.error) {
               console.error("❌ useAdminPermission: RPC fallback failed:", result.error);

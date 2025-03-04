@@ -5,10 +5,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Loader2, CreditCard, Wallet, BanknoteIcon } from "lucide-react";
+import { Loader2, CreditCard, Wallet, CreditCardIcon } from "lucide-react";
 
 interface TelegramPaymentOptionProps {
-  method: 'paypal' | 'card' | 'bank';
+  method: 'paypal' | 'card' | 'stripe';
   title: string;
   isSelected: boolean;
   onSelect: () => void;
@@ -42,8 +42,8 @@ export const TelegramPaymentOption = ({
         return <Wallet className="h-6 w-6" />;
       case 'card':
         return <CreditCard className="h-6 w-6" />;
-      case 'bank':
-        return <BanknoteIcon className="h-6 w-6" />;
+      case 'stripe':
+        return <CreditCardIcon className="h-6 w-6" />;
       default:
         return <CreditCard className="h-6 w-6" />;
     }

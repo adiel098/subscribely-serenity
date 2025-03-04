@@ -15,6 +15,7 @@ import { EditPlanDialog } from "./plans/EditPlanDialog";
 import { DeletePlanDialog } from "./plans/DeletePlanDialog";
 import { PlatformPlan } from "@/admin/hooks/types/platformPlans.types";
 import { PlusIcon, LayoutGridIcon } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export function PlanSettings() {
   const { plans, isLoading } = usePlatformPlans();
@@ -22,6 +23,12 @@ export function PlanSettings() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
+  const { toast } = useToast();
+
+  const handleAddNewPlan = () => {
+    console.log("Add New Plan button clicked");
+    setIsCreateDialogOpen(true);
+  };
 
   const handleEdit = (plan: PlatformPlan) => {
     setSelectedPlan(plan);
@@ -49,8 +56,9 @@ export function PlanSettings() {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Available Plans</h3>
             <Button 
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={handleAddNewPlan}
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              type="button"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add New Plan
@@ -71,9 +79,10 @@ export function PlanSettings() {
               <h3 className="font-medium text-muted-foreground mb-2">No plans defined</h3>
               <p className="text-sm text-muted-foreground/80 mb-4">Create your first platform subscription plan to get started</p>
               <Button 
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={handleAddNewPlan}
                 variant="outline"
                 className="border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50/50"
+                type="button"
               >
                 <PlusIcon className="h-4 w-4 mr-2" /> Create Plan
               </Button>

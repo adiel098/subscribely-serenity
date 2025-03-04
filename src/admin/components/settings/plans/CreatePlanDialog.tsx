@@ -18,6 +18,7 @@ import { PlanLimitsSection } from "./form-sections/PlanLimitsSection";
 import { PlanDescriptionSection } from "./form-sections/PlanDescriptionSection";
 import { PlanFeaturesSection } from "./form-sections/PlanFeaturesSection";
 import { PlanFormActions } from "./form-sections/PlanFormActions";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +28,9 @@ interface Props {
 export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   const { createPlan } = usePlatformPlans();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  console.log("CreatePlanDialog rendered, isOpen:", isOpen);
 
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planFormSchema),
@@ -43,6 +47,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   });
 
   const onSubmit = async (values: PlanFormValues) => {
+    console.log("Submitting form with values:", values);
     setIsSubmitting(true);
     try {
       await createPlan.mutateAsync({
@@ -55,10 +60,19 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
         max_communities: values.max_communities,
         max_members_per_community: values.max_members_per_community,
       });
+      toast({
+        title: "Success",
+        description: "Plan created successfully",
+      });
       onOpenChange(false);
       form.reset();
     } catch (error) {
       console.error("Error creating plan:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create plan",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

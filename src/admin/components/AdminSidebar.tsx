@@ -1,3 +1,4 @@
+
 import { 
   LayoutDashboard, 
   Users, 
@@ -22,32 +23,32 @@ import { useAuth } from '@/auth/contexts/AuthContext';
 
 const menuItems = [
   {
-    title: "דשבורד",
+    title: "Dashboard",
     icon: LayoutDashboard,
     path: "/admin/dashboard"
   },
   {
-    title: "קהילות",
+    title: "Communities",
     icon: Globe,
     path: "/admin/communities"
   },
   {
-    title: "משתמשים",
+    title: "Users",
     icon: Users,
     path: "/admin/users"
   },
   {
-    title: "תשלומים",
+    title: "Payments",
     icon: CreditCard,
     path: "/admin/payments"
   },
   {
-    title: "דוחות",
+    title: "Reports",
     icon: BarChart,
     path: "/admin/reports"
   },
   {
-    title: "הגדרות",
+    title: "Settings",
     icon: Settings,
     path: "/admin/settings"
   }
@@ -93,7 +94,7 @@ export function AdminSidebar() {
             onClick={signOut}
           >
             <LogOut className="h-5 w-5 ml-2" />
-            התנתקות
+            Sign Out
           </Button>
         </div>
       </SidebarContent>

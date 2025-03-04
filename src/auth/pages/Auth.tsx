@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,42 +20,37 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      console.log("✅ User detected in Auth page, preparing to redirect", user.email);
-      // Check if user is admin
-      const checkAdminStatus = async () => {
-        console.log("🔍 Checking admin status on Auth page...");
+      console.log("✅ Auth page: User detected, preparing to redirect", user.email);
+      
+      // Add a slight delay before checking admin status to ensure auth state is fully updated
+      const redirectTimer = setTimeout(async () => {
         try {
+          console.log("🔍 Auth page: Checking admin status for", user.id);
           const { data, error } = await supabase
             .from('admin_users')
             .select('role')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
           
           if (error) {
-            console.error("❌ Error checking admin status on Auth page:", error);
-            console.log("🚀 Redirecting regular user to dashboard");
-            navigate('/dashboard', { replace: true });
-            return;
+            console.error("❌ Auth page: Error checking admin status:", error);
+            console.log("🚀 Auth page: Redirecting to regular dashboard due to error");
+            return navigate('/dashboard', { replace: true });
           }
           
           if (data) {
-            console.log("✅ User is an admin on Auth page, redirecting to admin panel");
-            navigate('/admin/dashboard', { replace: true });
+            console.log("✅ Auth page: Admin user confirmed, redirecting to admin dashboard");
+            return navigate('/admin/dashboard', { replace: true });
           } else {
-            console.log("ℹ️ Regular user on Auth page, redirecting to dashboard");
-            navigate('/dashboard', { replace: true });
+            console.log("ℹ️ Auth page: Regular user confirmed, redirecting to dashboard");
+            return navigate('/dashboard', { replace: true });
           }
         } catch (err) {
-          console.error("❌ Exception in admin status check on Auth page:", err);
-          console.log("🚀 Redirecting to dashboard due to error");
-          navigate('/dashboard', { replace: true });
+          console.error("❌ Auth page: Exception in admin check:", err);
+          console.log("🚀 Auth page: Redirecting to dashboard due to exception");
+          return navigate('/dashboard', { replace: true });
         }
-      };
-      
-      // Add a slight delay to ensure state is properly updated
-      const redirectTimer = setTimeout(() => {
-        checkAdminStatus();
-      }, 100);
+      }, 300);
       
       return () => clearTimeout(redirectTimer);
     }
@@ -68,7 +62,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        console.log(`🔐 Attempting to sign up user: ${email}`);
+        console.log(`🔐 Auth page: Attempting to sign up user: ${email}`);
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -79,21 +73,23 @@ const Auth = () => {
           title: "Registration Successful",
           description: "Please check your email for verification.",
         });
-        console.log("✅ User registered successfully");
+        console.log("✅ Auth page: User registered successfully");
       } else {
-        console.log(`🔑 Attempting to sign in user: ${email}`);
+        console.log(`🔑 Auth page: Attempting to sign in user: ${email}`);
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         
-        console.log(`✅ User signed in successfully: ${data.user?.id}`);
-        console.log("🔄 Redirection will be handled by useEffect");
-        // The redirection will be handled by the useEffect above
+        console.log(`✅ Auth page: User signed in successfully: ${data.user?.id}`);
+        toast({
+          title: "Login Successful",
+          description: "You are now logged in.",
+        });
       }
     } catch (error: any) {
-      console.error("❌ Authentication error:", error.message);
+      console.error("❌ Auth page: Authentication error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",

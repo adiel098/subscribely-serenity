@@ -37,7 +37,7 @@ export const PaymentMethods = ({
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
     communityId: selectedPlan.community_id,
     planId: selectedPlan.id,
-    planPrice: selectedPlan.price, // Pass the plan price directly
+    planPrice: selectedPlan.price, 
     communityInviteLink,
     telegramUserId,
     telegramUsername,
@@ -81,6 +81,10 @@ export const PaymentMethods = ({
     }
   };
 
+  const handlePaymentSuccess = () => {
+    onCompletePurchase();
+  };
+
   if (showSuccess) {
     console.log('[PaymentMethods] Showing success screen with invite link:', inviteLink || communityInviteLink);
     // Send both the original community invite link and the possibly updated one from the payment process
@@ -95,9 +99,12 @@ export const PaymentMethods = ({
         selectedPaymentMethod={selectedPaymentMethod}
         onPaymentMethodSelect={onPaymentMethodSelect}
         stripeConfig={stripeConfig}
+        communityId={selectedPlan.community_id}
+        price={selectedPlan.price}
+        onPaymentSuccess={handlePaymentSuccess}
       />
 
-      {selectedPaymentMethod && (
+      {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
         <PaymentButton
           price={selectedPlan.price}
           isProcessing={isLoading}

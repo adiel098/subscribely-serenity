@@ -1,3 +1,4 @@
+
 import React from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";

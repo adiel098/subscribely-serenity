@@ -32,7 +32,7 @@ import {
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserRoleBadge } from "./UserRoleBadge";
 import { formatDistanceToNow } from "date-fns";
-import { AdminUser, AdminUserRole } from "@/admin/hooks/useAdminUsers";
+import { AdminUser, AdminUserRole } from "@/admin/hooks/types/adminUsers.types";
 import { EditUserDialog } from "./EditUserDialog";
 import {
   AlertDialog,

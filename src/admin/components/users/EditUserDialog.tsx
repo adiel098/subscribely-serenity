@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AdminUser, AdminUserRole } from "@/admin/hooks/useAdminUsers";
+import { AdminUser, AdminUserRole } from "@/admin/hooks/types/adminUsers.types";
 import { 
   Form,
   FormControl,

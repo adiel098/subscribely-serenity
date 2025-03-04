@@ -74,7 +74,7 @@ export function AppSidebar() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="fixed left-4 top-20 h-[calc(100vh-6rem)] z-30"
+      className="fixed left-4 top-16 h-[calc(100vh-4rem)] z-30"
     >
       <Sidebar className="w-[250px] rounded-xl border-none shadow-xl bg-white/95 backdrop-blur-md">
         <SidebarContent>

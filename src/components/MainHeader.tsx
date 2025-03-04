@@ -19,16 +19,16 @@ export function MainHeader() {
   const navigate = useNavigate();
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-gradient-to-r from-indigo-100 to-purple-200 shadow-md flex items-center justify-between px-6">
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="flex items-center gap-3"
       >
-        <Link to="/" className="text-xl font-bold text-white flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-yellow-300 drop-shadow-md" /> 
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-pink-100 font-extrabold">
+        <Link to="/" className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+          <Sparkles className="h-6 w-6 text-amber-500 drop-shadow-sm" /> 
+          <span className="font-extrabold">
             Membify
           </span>
         </Link>
@@ -45,7 +45,7 @@ export function MainHeader() {
             >
               <Link 
                 to={item.path}
-                className="text-white/90 hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 hover:bg-white/10 transition-colors"
+                className="text-indigo-700 hover:text-indigo-800 px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 hover:bg-indigo-200/50 transition-colors"
               >
                 {item.icon && <item.icon className="h-4 w-4 mr-1" />}
                 <span>{item.name}</span>
@@ -63,7 +63,7 @@ export function MainHeader() {
           >
             <Button 
               onClick={() => navigate('/dashboard')}
-              className="bg-white text-indigo-600 hover:bg-blue-50 border border-indigo-100 shadow-md"
+              className="bg-indigo-600 text-white hover:bg-indigo-700 border border-indigo-300 shadow-md"
             >
               Dashboard
             </Button>
@@ -77,7 +77,7 @@ export function MainHeader() {
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/auth')}
-                className="text-white hover:bg-white/20"
+                className="text-indigo-700 hover:bg-indigo-200/50"
               >
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
@@ -89,7 +89,7 @@ export function MainHeader() {
             >
               <Button 
                 onClick={() => navigate('/auth')}
-                className="bg-white text-indigo-600 hover:bg-blue-50"
+                className="bg-indigo-600 text-white hover:bg-indigo-700"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Sign Up

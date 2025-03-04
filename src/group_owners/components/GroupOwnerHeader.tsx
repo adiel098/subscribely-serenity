@@ -8,7 +8,6 @@ import {
   User, 
   Settings, 
   LogOut, 
-  Sparkles,
   HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export function GroupOwnerHeader() {
   const { signOut, user } = useAuth();
@@ -36,26 +36,19 @@ export function GroupOwnerHeader() {
   };
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 shadow-lg flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-gradient-to-r from-blue-100 to-indigo-200 shadow-md flex items-center justify-between px-6">
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="flex items-center gap-3"
       >
-        <Link to="/dashboard" className="text-xl font-bold text-white flex items-center gap-2">
-          <Crown className="h-6 w-6 text-yellow-300 drop-shadow-md" /> 
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100 font-extrabold">
+        <Link to="/dashboard" className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+          <Crown className="h-6 w-6 text-amber-500 drop-shadow-sm" /> 
+          <span className="font-extrabold">
             Membify
           </span>
         </Link>
-        <div className="bg-white/20 backdrop-blur-sm rounded-md px-3 py-1 ml-4 border border-white/30">
-          <h1 className="text-white flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-yellow-300" />
-            <span className="font-semibold">Group Owner Portal</span>
-            <Sparkles className="h-4 w-4 text-yellow-300" />
-          </h1>
-        </div>
       </motion.div>
       
       <div className="flex items-center space-x-3">
@@ -66,7 +59,7 @@ export function GroupOwnerHeader() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="relative text-white hover:bg-white/20 rounded-full"
+            className="relative text-indigo-700 hover:bg-indigo-200/50 rounded-full"
             onClick={() => setShowHelp(!showHelp)}
           >
             <HelpCircle className="h-5 w-5" />
@@ -80,7 +73,7 @@ export function GroupOwnerHeader() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="relative text-white hover:bg-white/20 rounded-full" 
+            className="relative text-indigo-700 hover:bg-indigo-200/50 rounded-full" 
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
@@ -96,7 +89,7 @@ export function GroupOwnerHeader() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/20 border-2 border-white/60">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/placeholder.svg" alt="Profile" />
                   <AvatarFallback className="bg-gradient-to-br from-blue-400 to-indigo-600 text-white font-bold">
@@ -154,6 +147,3 @@ export function GroupOwnerHeader() {
     </header>
   );
 }
-
-// Don't forget to add the missing import
-import { Link } from 'react-router-dom';

@@ -23,7 +23,7 @@ export const SubscribersHeader = ({
         className="flex items-center justify-between"
       >
         <div className="flex items-center space-x-4">
-          <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+          <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-md">
             <Users className="h-6 w-6" />
           </div>
           <div>
@@ -79,7 +79,7 @@ export const SubscribersHeader = ({
           </motion.div>
         </div>
       </motion.div>
-      <div className="h-1 w-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+      <div className="h-1 w-24 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"></div>
     </div>
   );
 };

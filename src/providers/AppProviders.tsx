@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/auth/contexts/AuthContext";
 import { BrowserRouter } from "react-router-dom";
 import { CommunityProvider } from "@/contexts/CommunityContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -25,7 +26,9 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
           <AuthProvider>
             <ThemeProvider>
               <CommunityProvider>
-                {children}
+                <SidebarProvider>
+                  {children}
+                </SidebarProvider>
               </CommunityProvider>
               <Toaster />
             </ThemeProvider>

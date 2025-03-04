@@ -4,70 +4,75 @@ import { useAuth } from '@/auth/contexts/AuthContext';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-const menuItems = [{
-  title: "Dashboard",
-  icon: LayoutDashboard,
-  path: "/dashboard"
-}, {
-  title: "Subscribers",
-  icon: BadgeDollarSign,
-  path: "/subscribers"
-}, {
-  title: "Subscriptions",
-  icon: CreditCard,
-  path: "/subscriptions"
-}, {
-  title: "Payment Methods",
-  icon: Wallet,
-  path: "/messages"
-}, {
-  title: "Analytics",
-  icon: TrendingUp,
-  path: "/analytics"
-}, {
-  title: "Bot Settings",
-  icon: Bot,
-  path: "/bot-settings"
-}];
+
+const menuItems = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard"
+  },
+  {
+    title: "Subscribers",
+    icon: BadgeDollarSign,
+    path: "/subscribers"
+  },
+  {
+    title: "Subscriptions",
+    icon: CreditCard,
+    path: "/subscriptions"
+  },
+  {
+    title: "Payment Methods",
+    icon: Wallet,
+    path: "/messages"
+  },
+  {
+    title: "Analytics",
+    icon: TrendingUp,
+    path: "/analytics"
+  },
+  {
+    title: "Bot Settings",
+    icon: Bot,
+    path: "/bot-settings"
+  }
+];
+
 export function AppSidebar() {
-  const {
-    signOut
-  } = useAuth();
+  const { signOut } = useAuth();
   const location = useLocation();
-  return <motion.div initial={{
-    opacity: 0,
-    x: -20
-  }} animate={{
-    opacity: 1,
-    x: 0
-  }} transition={{
-    duration: 0.4,
-    delay: 0.2
-  }} className="fixed left-2 top-[68px] h-[calc(100vh-76px)] z-30">
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="fixed left-2 top-[80px] h-[calc(100vh-88px)] z-30"
+    >
       <Sidebar className="w-[220px] rounded-xl border border-blue-100 shadow-lg bg-white/95 backdrop-blur-md">
         <SidebarContent className="my-[64px] py-0 px-0 mx-0">
           <SidebarGroup>
             <SidebarGroupContent className="px-2 py-2">
               <SidebarMenu>
                 {menuItems.map(item => {
-                const isActive = location.pathname === item.path;
-                return <SidebarMenuItem key={item.path}>
-                      <motion.div whileHover={{
-                    x: 4
-                  }} transition={{
-                    duration: 0.2
-                  }} className="w-full">
-                        <SidebarMenuButton asChild>
-                          <Link to={item.path} className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' : 'text-gray-600 hover:bg-blue-50'}`}>
-                            <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'} mr-3`}>
-                              <item.icon className="h-5 w-5" />
-                            </div>
-                            <span className="truncate">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </motion.div>
-                    </SidebarMenuItem>;
-              })}
+                  const isActive = location.pathname === item.path;
+                  return <SidebarMenuItem key={item.path}>
+                    <motion.div whileHover={{
+                      x: 4
+                    }} transition={{
+                      duration: 0.2
+                    }} className="w-full">
+                      <SidebarMenuButton asChild>
+                        <Link to={item.path} className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' : 'text-gray-600 hover:bg-blue-50'}`}>
+                          <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'} mr-3`}>
+                            <item.icon className="h-5 w-5" />
+                          </div>
+                          <span className="truncate">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </motion.div>
+                  </SidebarMenuItem>;
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -85,5 +90,6 @@ export function AppSidebar() {
           </div>
         </SidebarContent>
       </Sidebar>
-    </motion.div>;
+    </motion.div>
+  );
 }

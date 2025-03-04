@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { CommunityDropdown } from "./community-selector/CommunityDropdown";
 import { PlatformSubscriptionBanner } from "./community-selector/PlatformSubscriptionBanner";
-import { MissingPlanBanner } from "./community-selector/MissingPlanBanner";
 import { MiniAppLinkButton } from "./community-selector/MiniAppLinkButton";
 import { HeaderActions } from "./community-selector/HeaderActions";
 import { AlertMessage } from "./community-selector/AlertMessage";
@@ -57,10 +56,6 @@ export const CommunitySelector = () => {
     });
   };
 
-  const navigateToPlans = () => {
-    navigate("/subscriptions");
-  };
-
   return (
     <>
       <motion.div 
@@ -77,14 +72,6 @@ export const CommunitySelector = () => {
           />
 
           <PlatformSubscriptionBanner />
-
-          {selectedCommunityId && !hasPlan && (
-            <MissingPlanBanner 
-              hasPlan={hasPlan} 
-              selectedCommunityId={selectedCommunityId}
-              navigateToPlans={navigateToPlans} 
-            />
-          )}
 
           <MiniAppLinkButton onClick={copyMiniAppLink} />
         </div>

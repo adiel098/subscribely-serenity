@@ -1,6 +1,6 @@
 
+import AppRoutes from "@/routes/AppRoutes";
 import { AppProviders } from "@/providers/AppProviders";
-import { AppRoutes } from "@/routes/AppRoutes";
 
 const App = () => (
   <AppProviders>

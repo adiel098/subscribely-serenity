@@ -120,36 +120,12 @@ const AppRoutes = () => {
 
       {/* Admin Routes */}
       <Route element={<AdminProtectedRoute />}>
-        <Route path="/admin" element={
-          <AdminLayout>
-            <Dashboard />
-          </AdminLayout>
-        } />
-        <Route path="/admin/users" element={
-          <AdminLayout>
-            <Users />
-          </AdminLayout>
-        } />
-        <Route path="/admin/communities" element={
-          <AdminLayout>
-            <Communities />
-          </AdminLayout>
-        } />
-        <Route path="/admin/payments" element={
-          <AdminLayout>
-            <Payments />
-          </AdminLayout>
-        } />
-        <Route path="/admin/reports" element={
-          <AdminLayout>
-            <Reports />
-          </AdminLayout>
-        } />
-        <Route path="/admin/settings" element={
-          <AdminLayout>
-            <Settings />
-          </AdminLayout>
-        } />
+        <Route path="/admin" element={<AdminLayout dashboard={<Dashboard />} />} />
+        <Route path="/admin/users" element={<AdminLayout dashboard={<Users />} />} />
+        <Route path="/admin/communities" element={<AdminLayout dashboard={<Communities />} />} />
+        <Route path="/admin/payments" element={<AdminLayout dashboard={<Payments />} />} />
+        <Route path="/admin/reports" element={<AdminLayout dashboard={<Reports />} />} />
+        <Route path="/admin/settings" element={<AdminLayout dashboard={<Settings />} />} />
       </Route>
 
       {/* Telegram Mini App Route */}

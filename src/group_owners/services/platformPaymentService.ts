@@ -18,6 +18,11 @@ export const processPayment = async (
     throw new Error("Authentication required");
   }
 
+  console.log(`Processing ${paymentMethod} payment for plan: ${selectedPlan.name}`);
+  
+  // For demo purposes, we'll simulate a successful payment
+  // In a real app, you would integrate with the payment provider's API
+
   // Calculate subscription end date based on interval
   const endDate = calculateEndDate(selectedPlan.interval);
 
@@ -37,6 +42,7 @@ export const processPayment = async (
     .single();
 
   if (subscriptionError) {
+    console.error("Subscription creation error:", subscriptionError);
     throw subscriptionError;
   }
 
@@ -54,9 +60,11 @@ export const processPayment = async (
     });
 
   if (paymentError) {
+    console.error("Payment record creation error:", paymentError);
     throw paymentError;
   }
 
+  console.log("Demo payment processed successfully!");
   return subscription;
 };
 

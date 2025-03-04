@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface PaymentMethodCardProps {
   id: string;
@@ -21,6 +22,9 @@ export const PaymentMethodCard = ({
   isProcessing, 
   onSelect 
 }: PaymentMethodCardProps) => {
+  // Check if this is a demo payment method
+  const isDemo = id.startsWith('demo-');
+
   return (
     <motion.div
       key={id}
@@ -29,12 +33,17 @@ export const PaymentMethodCard = ({
     >
       <Card className="h-full cursor-pointer hover:border-indigo-300 transition-all">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {icon}
-            <span className="capitalize">{provider}</span>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="capitalize">{provider}</span>
+            </div>
+            {isDemo && (
+              <Badge className="bg-green-500 hover:bg-green-600">Demo</Badge>
+            )}
           </CardTitle>
           <CardDescription>
-            Pay with {provider}
+            Pay with {provider} {isDemo && "(Test Mode)"}
           </CardDescription>
         </CardHeader>
         <CardFooter>

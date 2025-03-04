@@ -1,33 +1,47 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Search, Plus, Users, RefreshCw } from "lucide-react";
+import {
+  MoreHorizontal,
+  Search,
+  Plus,
+  Users,
+  RefreshCw,
+  Filter,
+  ArrowUpDown,
+  Eye,
+  Edit,
+  AlertTriangle,
+  CheckCircle2,
+  Trash2
+} from "lucide-react";
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Mock data for communities
 const mockCommunities = [
   {
     id: "1",
-    name: "קהילת הסוחרים",
-    owner: "דני כהן",
+    name: "Crypto Traders",
+    owner: "Daniel Cohen",
     members: 128,
     subscriptions: 98,
     revenue: 4900,
@@ -36,8 +50,8 @@ const mockCommunities = [
   },
   {
     id: "2",
-    name: "קהילת המתכנתים",
-    owner: "רותם לוי",
+    name: "Developer Hub",
+    owner: "Rachel Lewis",
     members: 345,
     subscriptions: 290,
     revenue: 14500,
@@ -46,8 +60,8 @@ const mockCommunities = [
   },
   {
     id: "3",
-    name: "קבוצת ההשקעות",
-    owner: "חיים גולדברג",
+    name: "Investment Group",
+    owner: "Henry Goldman",
     members: 76,
     subscriptions: 61,
     revenue: 3050,
@@ -56,8 +70,8 @@ const mockCommunities = [
   },
   {
     id: "4",
-    name: "מועדון הספורט",
-    owner: "שירה אהרוני",
+    name: "Sports Club",
+    owner: "Sarah Anderson",
     members: 210,
     subscriptions: 190,
     revenue: 9500,
@@ -66,8 +80,8 @@ const mockCommunities = [
   },
   {
     id: "5",
-    name: "קהילת הספרות",
-    owner: "יעל שטרן",
+    name: "Book Club",
+    owner: "Jessica Stern",
     members: 42,
     subscriptions: 28,
     revenue: 1400,
@@ -81,8 +95,8 @@ export default function AdminCommunities() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const filteredCommunities = mockCommunities.filter(
-    community => community.name.includes(searchTerm) || 
-                community.owner.includes(searchTerm)
+    community => community.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                community.owner.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleRefresh = () => {
@@ -96,112 +110,159 @@ export default function AdminCommunities() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">פעילה</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200 flex items-center gap-1">
+          <CheckCircle2 className="h-3 w-3" /> Active
+        </Badge>;
       case "inactive":
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">לא פעילה</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" /> Inactive
+        </Badge>;
       case "suspended":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">מושהית</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" /> Suspended
+        </Badge>;
       default:
-        return <Badge variant="outline">לא ידוע</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
   return (
-    <div className="space-y-6 rtl">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">ניהול קהילות</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Communities</h1>
           <p className="text-muted-foreground">
-            ניהול כל הקהילות בפלטפורמה
+            Manage all platform communities 🌐
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          קהילה חדשה
+        <Button className="bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          New Community
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="relative w-96">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="חיפוש לפי שם קהילה או בעלים..."
-            className="pl-8 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-          רענון נתונים
-        </Button>
-      </div>
+      <Card className="border-indigo-100 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Globe className="h-5 w-5 text-indigo-600" />
+            <span>Community Management</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative w-96">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or owner..."
+                className="pl-8 w-full border-indigo-100"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="border-indigo-100 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-indigo-600" />
+                Filter
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-indigo-100 flex items-center gap-2" 
+                onClick={handleRefresh} 
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`h-4 w-4 text-indigo-600 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">שם קהילה</TableHead>
-              <TableHead>בעלים</TableHead>
-              <TableHead className="text-center">חברים</TableHead>
-              <TableHead className="text-center">מנויים</TableHead>
-              <TableHead className="text-right">הכנסות</TableHead>
-              <TableHead className="text-center">סטטוס</TableHead>
-              <TableHead className="text-right">פעולות</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCommunities.map((community) => (
-              <TableRow key={community.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-8 w-8">
-                      {community.photoUrl ? (
-                        <AvatarImage src={community.photoUrl} alt={community.name} />
-                      ) : (
-                        <AvatarFallback>{community.name.charAt(0)}</AvatarFallback>
-                      )}
-                    </Avatar>
-                    <span className="mr-2">{community.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{community.owner}</TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center">
-                    <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {community.members}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">{community.subscriptions}</TableCell>
-                <TableCell className="text-right">${community.revenue}</TableCell>
-                <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">פתח תפריט</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>פעולות</DropdownMenuLabel>
-                      <DropdownMenuItem>צפה בפרטים</DropdownMenuItem>
-                      <DropdownMenuItem>ערוך פרטים</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {community.status === "active" ? (
-                        <DropdownMenuItem className="text-amber-600">השהה קהילה</DropdownMenuItem>
-                      ) : community.status === "suspended" ? (
-                        <DropdownMenuItem className="text-green-600">שחרר השהייה</DropdownMenuItem>
-                      ) : null}
-                      <DropdownMenuItem className="text-red-600">מחק קהילה</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          <div className="rounded-md border border-indigo-100">
+            <Table>
+              <TableHeader className="bg-indigo-50">
+                <TableRow>
+                  <TableHead className="w-[250px]">
+                    <div className="flex items-center gap-1">
+                      Name
+                      <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                  </TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead className="text-center">Members</TableHead>
+                  <TableHead className="text-center">Subscribers</TableHead>
+                  <TableHead className="text-right">Revenue</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCommunities.map((community) => (
+                  <TableRow key={community.id} className="hover:bg-indigo-50/30">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-8 w-8 border border-indigo-100">
+                          {community.photoUrl ? (
+                            <AvatarImage src={community.photoUrl} alt={community.name} />
+                          ) : (
+                            <AvatarFallback className="bg-indigo-100 text-indigo-700">{community.name.charAt(0)}</AvatarFallback>
+                          )}
+                        </Avatar>
+                        <span className="ml-2">{community.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{community.owner}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center">
+                        <Users className="mr-2 h-4 w-4 text-indigo-600" />
+                        {community.members}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">{community.subscriptions}</TableCell>
+                    <TableCell className="text-right font-semibold">${community.revenue}</TableCell>
+                    <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-indigo-50">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-indigo-100">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                            <Eye className="h-4 w-4 text-indigo-600" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                            <Edit className="h-4 w-4 text-indigo-600" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {community.status === "active" ? (
+                            <DropdownMenuItem className="flex items-center gap-2 text-amber-600 cursor-pointer">
+                              <AlertTriangle className="h-4 w-4" />
+                              Suspend Community
+                            </DropdownMenuItem>
+                          ) : community.status === "suspended" ? (
+                            <DropdownMenuItem className="flex items-center gap-2 text-green-600 cursor-pointer">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Reactivate Community
+                            </DropdownMenuItem>
+                          ) : null}
+                          <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
+                            <Trash2 className="h-4 w-4" />
+                            Delete Community
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

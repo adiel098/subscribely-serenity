@@ -9,15 +9,17 @@ interface AuthHeaderProps {
 export const AuthHeader = ({ isSignUp }: AuthHeaderProps) => {
   return (
     <motion.div
-      className="w-full max-w-xl mb-8 text-center"
+      className="w-full text-center"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h1 className="text-5xl font-bold text-primary mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
-        <Sparkles className="inline-block mr-2 text-amber-400" size={36} />
-        Membify
-        <Sparkles className="inline-block ml-2 text-amber-400" size={36} />
+      <h1 className="text-5xl font-bold mb-3 flex items-center justify-center">
+        <Sparkles className="inline-block mr-2 text-indigo-500" size={36} />
+        <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+          Membify
+        </span>
+        <Sparkles className="inline-block ml-2 text-indigo-500" size={36} />
       </h1>
       <p className="text-lg text-muted-foreground">
         {isSignUp 

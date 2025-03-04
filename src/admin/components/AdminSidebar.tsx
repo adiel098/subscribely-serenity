@@ -6,7 +6,9 @@ import {
   CreditCard, 
   Settings, 
   BarChart, 
-  LogOut 
+  LogOut,
+  Sparkles, 
+  Shield
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -25,32 +27,38 @@ const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/admin/dashboard"
+    path: "/admin/dashboard",
+    description: "Platform overview"
   },
   {
     title: "Communities",
     icon: Globe,
-    path: "/admin/communities"
+    path: "/admin/communities",
+    description: "Manage communities"
   },
   {
     title: "Users",
     icon: Users,
-    path: "/admin/users"
+    path: "/admin/users",
+    description: "User management"
   },
   {
     title: "Payments",
     icon: CreditCard,
-    path: "/admin/payments"
+    path: "/admin/payments",
+    description: "Track payments"
   },
   {
     title: "Reports",
     icon: BarChart,
-    path: "/admin/reports"
+    path: "/admin/reports",
+    description: "Analytics & reports"
   },
   {
     title: "Settings",
     icon: Settings,
-    path: "/admin/settings"
+    path: "/admin/settings",
+    description: "System settings"
   }
 ];
 
@@ -59,8 +67,15 @@ export function AdminSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar className="fixed right-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border-none shadow-lg bg-white/80 backdrop-blur-md">
-      <SidebarContent>
+    <Sidebar className="fixed left-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border border-indigo-100 shadow-lg bg-white/90 backdrop-blur-md">
+      <SidebarContent className="p-0">
+        <div className="flex justify-center my-4">
+          <div className="bg-indigo-50 px-4 py-2 rounded-lg flex items-center gap-2">
+            <Shield className="h-4 w-4 text-indigo-700" />
+            <span className="text-sm font-medium text-indigo-700">Admin Portal</span>
+          </div>
+        </div>
+        
         <SidebarGroup>
           <SidebarGroupContent className="px-2 py-2">
             <SidebarMenu>
@@ -71,12 +86,18 @@ export function AdminSidebar() {
                     <SidebarMenuButton asChild>
                       <Link 
                         to={item.path}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 transition-colors rounded-lg text-gray-700 ${
-                          isActive ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100/50'
+                        className={`w-full flex items-center space-x-3 px-3 py-3 my-1 transition-all rounded-lg ${
+                          isActive 
+                            ? 'bg-indigo-50 text-indigo-700 shadow-sm' 
+                            : 'hover:bg-gray-50 text-gray-700'
                         }`}
                       >
-                        <item.icon className="h-5 w-5 ml-3" />
-                        <span className="font-medium">{item.title}</span>
+                        <item.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{item.title}</span>
+                          <span className="text-xs text-muted-foreground">{item.description}</span>
+                        </div>
+                        {isActive && <Sparkles className="h-3 w-3 ml-auto text-indigo-500" />}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -87,13 +108,13 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {/* Sign Out Button */}
-        <div className="absolute bottom-4 left-0 right-0 px-4">
+        <div className="absolute bottom-6 left-0 right-0 px-4">
           <Button 
             variant="destructive" 
-            className="w-full bg-red-500 hover:bg-red-600 text-white gap-2 transition-colors duration-200"
+            className="w-full bg-red-500 hover:bg-red-600 text-white gap-2 transition-colors duration-200 shadow-sm"
             onClick={signOut}
           >
-            <LogOut className="h-5 w-5 ml-2" />
+            <LogOut className="h-5 w-5 mr-2" />
             Sign Out
           </Button>
         </div>

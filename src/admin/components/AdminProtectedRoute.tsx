@@ -18,13 +18,16 @@ export const AdminProtectedRoute = ({
   const navigate = useNavigate();
 
   useEffect(() => {
+    const currentPath = window.location.pathname;
+    
     console.log("🔍 AdminProtectedRoute state:", { 
       user: user?.email,
+      userId: user?.id,
       authLoading: loading,
       isAdmin,
       isCheckingAdmin,
       error,
-      currentPath: window.location.pathname
+      currentPath 
     });
     
     // Show toast when access is denied due to not being an admin
@@ -44,6 +47,7 @@ export const AdminProtectedRoute = ({
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <span className="text-xl font-medium">Verifying admin permissions...</span>
+        <p className="text-gray-500 mt-2">Please wait while we check your access.</p>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { FeatureSection } from "@/main/components/landing/FeatureSection";
 import { RevenueCalculator } from "@/main/components/landing/RevenueCalculator";
 import { ArrowRight, Shield, LogIn, UserPlus, Sparkles, CheckCircle, Globe, Zap, Users, BarChart, MessageCircle, CreditCard, Lock, Headset, Clock, RefreshCw, BadgeCheck } from "lucide-react";
+
 export default function Index() {
   const {
     user
@@ -141,8 +142,8 @@ export default function Index() {
             duration: 0.8
           }} className="lg:w-1/2">
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-75"></div>
-                <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-indigo-50">
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-30"></div>
+                <div className="relative bg-white rounded-2xl shadow-sm overflow-hidden border border-indigo-50/50">
                   <img alt="Membify Dashboard Preview" className="w-full h-auto" src="/lovable-uploads/a88423b8-cf0d-460e-9ab6-e37ba286f2a8.png" />
                 </div>
               </div>

@@ -2,30 +2,27 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Checks if a user is an admin based on their user ID
- * @param userId The user ID to check
- * @returns Promise that resolves to a boolean indicating admin status
+ * Hook to check if a user is an admin
+ * Uses the security definer function to avoid infinite recursion with RLS
  */
 export const useCheckAdminStatus = () => {
   const checkAdminStatus = async (userId: string) => {
     if (!userId) return false;
     
-    console.log(`🔍 AuthContext: Checking admin status for user ${userId}`);
+    console.log(`🔍 useCheckAdminStatus: Checking admin status for user ${userId}`);
     try {
+      // Use RPC with security definer function to avoid infinite recursion
       const { data, error } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .rpc('is_admin', { user_uuid: userId });
       
       if (error) {
-        console.error('❌ AuthContext: Error checking admin status:', error);
+        console.error('❌ useCheckAdminStatus: Error checking admin status:', error);
         return false;
       }
       
       return !!data;
     } catch (err) {
-      console.error('❌ AuthContext: Exception in admin check:', err);
+      console.error('❌ useCheckAdminStatus: Exception in admin check:', err);
       return false;
     }
   };

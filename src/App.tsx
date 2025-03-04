@@ -13,8 +13,10 @@ import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
 import { AdminLayout } from "@/admin/components/AdminLayout";
 
+// Main Pages
+import Index from "@/main/pages/Index";
+
 // Group Owner Pages
-import Index from "@/group_owners/pages/Index";
 import Auth from "@/auth/pages/Auth";
 import Dashboard from "@/group_owners/pages/Dashboard";
 import Members from "@/group_owners/pages/Members";

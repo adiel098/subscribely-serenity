@@ -1,4 +1,36 @@
 
 project_id = "trkiniaqliiwdkrvvuky"
-[functions.create-stripe-session]
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[realtime]
+enabled = true
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.check-subscriptions]
+verify_jwt = false
+
+[functions.database-diagnostics]
 verify_jwt = false

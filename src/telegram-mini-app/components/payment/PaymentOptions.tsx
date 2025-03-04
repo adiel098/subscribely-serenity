@@ -58,10 +58,10 @@ export const PaymentOptions = ({
       
       <motion.div variants={item} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
         <TelegramPaymentOption
-          method="stripe"
-          title="Stripe"
-          isSelected={selectedPaymentMethod === 'stripe'}
-          onSelect={() => onPaymentMethodSelect('stripe')}
+          method="bank"
+          title="Bank Transfer"
+          isSelected={selectedPaymentMethod === 'bank'}
+          onSelect={() => onPaymentMethodSelect('bank')}
         />
       </motion.div>
     </motion.div>

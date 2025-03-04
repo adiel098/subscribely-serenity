@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useInviteLink } from "./useInviteLink";
@@ -71,49 +70,6 @@ export const usePaymentProcessing = ({
         planPrice
       });
       
-      // If the payment method is Stripe, we need to create a Stripe session
-      if (paymentMethod === 'stripe') {
-        try {
-          console.log('[usePaymentProcessing] Creating Stripe session');
-          
-          const response = await fetch('https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/create-stripe-session', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({
-              planId,
-              amount: planPrice,
-              communityId,
-              telegramUserId
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create Stripe session');
-          }
-          
-          const { url } = await response.json();
-          
-          if (url) {
-            // Redirect to Stripe Checkout
-            window.open(url, '_blank');
-            setIsLoading(false);
-            return true;
-          } else {
-            throw new Error('No Stripe checkout URL returned');
-          }
-        } catch (err) {
-          console.error('[usePaymentProcessing] Stripe session error:', err);
-          setError(err instanceof Error ? err.message : 'Failed to create Stripe session');
-          setIsLoading(false);
-          return false;
-        }
-      }
-      
-      // For other payment methods, continue with the existing flow
       const paymentId = `demo-${Date.now()}`;
       console.log(`[usePaymentProcessing] Generated payment ID: ${paymentId}`);
       

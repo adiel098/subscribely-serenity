@@ -8,7 +8,7 @@ import { DeletePlanDialog } from "@/group_owners/components/subscriptions/Delete
 import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, PackagePlus } from "lucide-react";
 
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
@@ -83,25 +83,39 @@ const Subscriptions = () => {
           </p>
         </div>
         <div>
-          <Button onClick={handleCreatePlan}>
+          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Create Plan
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {plans?.map((plan) => (
-          <SubscriptionPlanCard
-            key={plan.id}
-            plan={plan}
-            onEdit={() => handleEditPlan(plan.id)}
-            onDelete={handleDeletePlan}
-            intervalColors={intervalColors}
-            intervalLabels={intervalLabels}
-          />
-        ))}
-      </div>
+      {plans.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+          <PackagePlus className="h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No subscription plans yet</h3>
+          <p className="text-gray-500 text-center mb-6 max-w-md">
+            Create your first subscription plan to start offering premium access to your community.
+          </p>
+          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Plan
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {plans?.map((plan) => (
+            <SubscriptionPlanCard
+              key={plan.id}
+              plan={plan}
+              onEdit={() => handleEditPlan(plan.id)}
+              onDelete={handleDeletePlan}
+              intervalColors={intervalColors}
+              intervalLabels={intervalLabels}
+            />
+          ))}
+        </div>
+      )}
 
       <CreatePlanDialog
         isOpen={createDialogOpen}
@@ -135,4 +149,3 @@ const Subscriptions = () => {
 };
 
 export default Subscriptions;
-

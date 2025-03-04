@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { PencilIcon, TrashIcon, CheckIcon } from "lucide-react";
 import { PlatformPlan } from "@/admin/hooks/types/platformPlans.types";
 import { Badge } from "@/components/ui/badge";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   plan: PlatformPlan;
@@ -44,28 +50,47 @@ export const PlanCard = ({ plan, onEdit, onDelete }: Props) => {
   return (
     <Card className={`overflow-hidden border-2 transition-all duration-200 hover:border-indigo-200 hover:shadow-md group ${getBgColor()}`}>
       <div className="p-6 relative">
-        <div className="absolute top-0 right-0 m-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <div className="flex gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50"
-              onClick={onEdit}
-            >
-              <PencilIcon className="h-3.5 w-3.5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 text-red-400 hover:text-red-500 hover:bg-red-50"
-              onClick={onDelete}
-            >
-              <TrashIcon className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+        <div className="absolute top-2 right-2 flex gap-2 transition-all duration-200">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700"
+                  onClick={onEdit}
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  <span className="sr-only">Edit plan</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit plan</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 w-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600"
+                  onClick={onDelete}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  <span className="sr-only">Delete plan</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete plan</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 pt-4">
           <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
           {!plan.is_active && (
             <Badge variant="outline" className="text-xs border-amber-200 text-amber-600 bg-amber-50">

@@ -12,15 +12,21 @@ export const useAdminUserRole = (onSuccess?: () => void) => {
     setIsUpdating(true);
     
     try {
-      // Check if the current user has permission to modify admin users
-      const { data: adminStatus, error: statusError } = await supabase.rpc(
+      // Check if the current user has permission to modify admin users using security definer function
+      const currentUser = await supabase.auth.getUser();
+      const { data, error: statusError } = await supabase.rpc(
         'get_admin_status', 
-        { user_id_param: (await supabase.auth.getUser()).data.user?.id }
+        { user_id_param: currentUser.data.user?.id }
       );
       
-      if (statusError) throw statusError;
+      if (statusError) {
+        console.error("❌ Error checking admin permissions:", statusError);
+        throw statusError;
+      }
       
-      if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
+      console.log("🔐 Admin status check result:", data);
+      
+      if (!data?.is_admin || data?.admin_role !== 'super_admin') {
         throw new Error("You don't have permission to change user roles");
       }
       
@@ -65,7 +71,7 @@ export const useAdminUserRole = (onSuccess?: () => void) => {
         event_type: 'user_role_update',
         details: `User role updated to ${role}`,
         user_id: userId,
-        metadata: { updated_by: (await supabase.auth.getUser()).data.user?.id }
+        metadata: { updated_by: currentUser.data.user?.id }
       });
       
       toast({

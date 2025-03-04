@@ -40,27 +40,29 @@ export const useAdminPermission = () => {
         setIsLoading(true);
         
         // Use the security definer function to avoid infinite recursion
-        const { data: adminStatus, error: adminError } = await supabase
+        const { data, error } = await supabase
           .rpc('get_admin_status', { user_id_param: user.id });
         
-        if (adminError) {
-          console.error("❌ useAdminPermission: Error checking admin status:", adminError);
-          throw adminError;
+        if (error) {
+          console.error("❌ useAdminPermission: Error checking admin status:", error);
+          throw error;
         }
         
         if (!mounted) return;
         
-        console.log("🔐 useAdminPermission: Admin status response:", adminStatus);
+        console.log("🔐 useAdminPermission: Admin status response:", data);
         
-        const isUserAdmin = adminStatus?.is_admin === true;
-        setIsAdmin(isUserAdmin);
-        setLastCheckedId(user.id);
-        
-        if (isUserAdmin) {
-          setRole(adminStatus?.admin_role || null);
-          console.log(`✅ useAdminPermission: User ${user.id} is admin with role: ${adminStatus?.admin_role}`);
+        if (data) {
+          const isUserAdmin = data.is_admin === true;
+          setIsAdmin(isUserAdmin);
+          setRole(data.admin_role || null);
+          setLastCheckedId(user.id);
+          
+          console.log(`✅ useAdminPermission: User ${user.id} admin status: ${isUserAdmin}, role: ${data.admin_role || 'none'}`);
         } else {
-          console.log(`ℹ️ useAdminPermission: User ${user.id} is not an admin`);
+          console.log(`ℹ️ useAdminPermission: User ${user.id} has no admin data`);
+          setIsAdmin(false);
+          setRole(null);
         }
         
       } catch (err: any) {

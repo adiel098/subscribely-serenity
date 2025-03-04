@@ -21,6 +21,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
+      console.log("✅ User detected in Auth page, preparing to redirect", user.email);
       // Check if user is admin
       const checkAdminStatus = async () => {
         console.log("🔍 Checking admin status on Auth page...");
@@ -33,25 +34,31 @@ const Auth = () => {
           
           if (error) {
             console.error("❌ Error checking admin status on Auth page:", error);
-            console.error("❌ Error details:", JSON.stringify(error, null, 2));
-            navigate('/dashboard');
+            console.log("🚀 Redirecting regular user to dashboard");
+            navigate('/dashboard', { replace: true });
             return;
           }
           
           if (data) {
             console.log("✅ User is an admin on Auth page, redirecting to admin panel");
-            navigate('/admin/dashboard');
+            navigate('/admin/dashboard', { replace: true });
           } else {
             console.log("ℹ️ Regular user on Auth page, redirecting to dashboard");
-            navigate('/dashboard');
+            navigate('/dashboard', { replace: true });
           }
         } catch (err) {
           console.error("❌ Exception in admin status check on Auth page:", err);
-          navigate('/dashboard');
+          console.log("🚀 Redirecting to dashboard due to error");
+          navigate('/dashboard', { replace: true });
         }
       };
       
-      checkAdminStatus();
+      // Add a slight delay to ensure state is properly updated
+      const redirectTimer = setTimeout(() => {
+        checkAdminStatus();
+      }, 100);
+      
+      return () => clearTimeout(redirectTimer);
     }
   }, [user, navigate]);
 
@@ -82,7 +89,8 @@ const Auth = () => {
         if (error) throw error;
         
         console.log(`✅ User signed in successfully: ${data.user?.id}`);
-        // Redirection will happen in the useEffect above after auth state changes
+        console.log("🔄 Redirection will be handled by useEffect");
+        // The redirection will be handled by the useEffect above
       }
     } catch (error: any) {
       console.error("❌ Authentication error:", error.message);

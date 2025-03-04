@@ -43,15 +43,21 @@ export const useAdminPermission = () => {
             setIsAdmin(false);
           } else {
             const adminStatus = fallbackData && fallbackData.length > 0;
-            console.log(`✅ useAdminPermission: Fallback admin check result for ${user.email}:`, { 
+            console.log(`✅ useAdminPermission: Fallback admin check result:`, { 
               isAdmin: adminStatus, 
+              userId: user.id,
+              email: user.email,
               role: fallbackData && fallbackData.length > 0 ? fallbackData[0].role : null
             });
             setIsAdmin(adminStatus);
           }
         } else {
           // is_admin RPC returns a boolean
-          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, data);
+          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, {
+            isAdmin: !!data,
+            userId: user.id,
+            data
+          });
           setIsAdmin(!!data);
         }
       } catch (err) {
@@ -59,11 +65,12 @@ export const useAdminPermission = () => {
         setError("Failed to verify admin status");
         setIsAdmin(false);
       } finally {
-        console.log("✅ useAdminPermission: Finished loading");
+        console.log("✅ useAdminPermission: Finished admin status check");
         setIsLoading(false);
       }
     };
 
+    setIsLoading(true);
     checkAdminStatus();
   }, [user]);
 

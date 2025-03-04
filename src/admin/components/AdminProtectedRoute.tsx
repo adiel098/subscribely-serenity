@@ -40,7 +40,11 @@ export const AdminProtectedRoute = ({
   }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error]);
 
   if (authLoading || isCheckingAdmin) {
-    console.log("⏳ AdminProtectedRoute: Loading state", { authLoading, adminLoading: isCheckingAdmin });
+    console.log("⏳ AdminProtectedRoute: Loading state", { 
+      authLoading, 
+      adminLoading: isCheckingAdmin,
+      userId: user?.id
+    });
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

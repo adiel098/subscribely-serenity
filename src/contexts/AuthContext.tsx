@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('❌ Error checking admin status with RPC:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
         
         // Try fallback with direct select
         console.log('🔄 Trying fallback admin check method...');
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (fallbackError) {
           console.error('❌ Fallback admin check also failed:', fallbackError);
+          console.error('❌ Error details:', JSON.stringify(fallbackError, null, 2));
           setLoading(false);
           return false;
         }
@@ -200,14 +202,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         console.log('✅ Sign out successful');
-        // We'll let the auth state listener handle the navigation
+        // Clear user state immediately (don't wait for auth state listener)
+        setUser(null);
+        // Force navigation to auth page on sign out
+        navigate("/auth");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Exception during sign out:', err);
       toast({
         variant: "destructive",
         title: "Error signing out",
-        description: "An unexpected error occurred"
+        description: err?.message || "An unexpected error occurred"
       });
     }
   };

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Log service actions with consistent formatting and emojis
  */
 export const logServiceAction = (action: string, data?: any) => {
-  console.log(`🔧 SERVICE: ${action} 📊`, data ? data : '');
+  console.log(`🔧 SERVICE: ${action} 📊`, data ? JSON.stringify(data, null, 2) : '');
 };
 
 /**
@@ -46,8 +46,8 @@ export const invokeSupabaseFunction = async (functionName: string, payload: any)
   logServiceAction(`🚀 Invoking Edge Function: ${functionName}`, payload);
   
   try {
-    console.log(`📤 PAYLOAD TO ${functionName}:`, JSON.stringify(payload, null, 2));
     console.time(`⏱️ ${functionName} execution time`);
+    console.log(`📤 PAYLOAD TO ${functionName}:`, JSON.stringify(payload, null, 2));
     
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: payload,
@@ -73,7 +73,7 @@ export const invokeSupabaseFunction = async (functionName: string, payload: any)
         // For arrays, log their contents type
         if (Array.isArray(value) && value.length > 0) {
           console.log(`      📋 First item type: ${typeof value[0]}`);
-          console.log(`      📋 Sample:`, value[0]);
+          console.log(`      📋 Sample:`, JSON.stringify(value[0], null, 2));
         }
       });
     }

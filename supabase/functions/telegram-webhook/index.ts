@@ -8,43 +8,65 @@ import { handleChatMemberUpdate } from './handlers/chatMemberHandler.ts';
 import { kickMember } from './handlers/kickMemberHandler.ts';
 import { corsHeaders } from './cors.ts';
 
-console.log("[WEBHOOK] Starting webhook service...");
+console.log("[WEBHOOK] 🚀 Starting webhook service...");
 
 serve(async (req) => {
+  console.log(`[WEBHOOK] 📥 Received ${req.method} request`);
+  
   try {
     // Handle CORS
     if (req.method === 'OPTIONS') {
+      console.log("[WEBHOOK] ✅ Handling CORS preflight request");
       return new Response('ok', { headers: corsHeaders });
     }
 
-    // יצירת חיבור לסופהבייס
-    console.log("[WEBHOOK] Creating Supabase client...");
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Create Supabase client
+    console.log("[WEBHOOK] 🔌 Creating Supabase client...");
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("[WEBHOOK] ❌ Missing Supabase credentials:", { 
+        urlExists: !!supabaseUrl, 
+        keyExists: !!supabaseServiceKey 
+      });
+      throw new Error('Missing Supabase credentials');
+    }
+    
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("[WEBHOOK] ✅ Supabase client created successfully");
 
-    // קבלת הטוקן של הבוט מההגדרות הגלובליות
-    console.log("[WEBHOOK] Fetching bot token...");
+    // Get bot token from settings
+    console.log("[WEBHOOK] 🔑 Fetching bot token...");
     const { data: settings, error: settingsError } = await supabaseClient
       .from('telegram_global_settings')
       .select('bot_token')
       .single();
 
     if (settingsError || !settings?.bot_token) {
-      console.error("[WEBHOOK] Error fetching bot token:", settingsError);
+      console.error("[WEBHOOK] ❌ Error fetching bot token:", settingsError);
       throw new Error('Bot token not found in settings');
     }
 
     const botToken = settings.bot_token;
-    console.log("[WEBHOOK] Bot token retrieved successfully");
+    console.log("[WEBHOOK] ✅ Bot token retrieved successfully");
 
-    const body = await req.json();
+    // Parse request body
+    let body;
+    try {
+      body = await req.json();
+      console.log("[WEBHOOK] 📝 Request body parsed successfully");
+      console.log("[WEBHOOK] 📦 Request body:", JSON.stringify(body, null, 2));
+    } catch (error) {
+      console.error("[WEBHOOK] ❌ Error parsing request body:", error);
+      throw new Error('Invalid JSON in request body');
+    }
     
-    // טיפול בבקשה להסרת חבר
+    // Handle member removal
     if (body.path === '/remove-member') {
-      console.log('[WEBHOOK] Handling member removal:', body);
+      console.log('[WEBHOOK] 🔄 Handling member removal request:', JSON.stringify(body, null, 2));
       try {
+        console.log(`[WEBHOOK] 👤 Removing user ${body.user_id} from chat ${body.chat_id}`);
         const success = await kickMember(
           supabaseClient,
           body.chat_id,
@@ -52,27 +74,28 @@ serve(async (req) => {
           botToken
         );
 
+        console.log(`[WEBHOOK] ${success ? '✅' : '❌'} Member removal ${success ? 'successful' : 'failed'}`);
         return new Response(JSON.stringify({ success }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('[WEBHOOK] Error removing member:', error);
+        console.error('[WEBHOOK] ❌ Error removing member:', error);
         throw error;
       }
     }
 
-    // טיפול באירוע chat_member (הצטרפות/עזיבה)
+    // Handle chat member updates
     if (body.chat_member) {
-      console.log('[WEBHOOK] Handling chat member update:', body.chat_member);
+      console.log('[WEBHOOK] 👥 Handling chat member update:', JSON.stringify(body.chat_member, null, 2));
       return await handleChatMemberUpdate(supabaseClient, body.chat_member);
     }
 
-    // טיפול בהודעות רגילות
+    // Handle regular messages
     const update = body;
     const message = update.message || update.channel_post;
     
     if (!message) {
-      console.log("[WEBHOOK] No message or channel_post in update:", update);
+      console.log("[WEBHOOK] ℹ️ No message or channel_post in update:", JSON.stringify(update, null, 2));
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -82,39 +105,47 @@ serve(async (req) => {
 
     let handled = false;
 
+    // Handle different message types
     if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
-      console.log("[WEBHOOK] Handling channel verification...");
+      console.log("[WEBHOOK] 🔄 Handling channel verification...");
       handled = await handleChannelVerification(supabaseClient, message, botToken);
-      console.log("[WEBHOOK] Channel verification handled:", handled);
+      console.log(`[WEBHOOK] ${handled ? '✅' : '❌'} Channel verification ${handled ? 'handled successfully' : 'not handled'}`);
     }
     else if (message.text?.startsWith('/start')) {
-      console.log("[WEBHOOK] Handling start command...");
+      console.log("[WEBHOOK] 🚀 Handling start command...");
       handled = await handleStartCommand(supabaseClient, message, botToken);
-      console.log("[WEBHOOK] Start command handled:", handled);
+      console.log(`[WEBHOOK] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
     }
     else if (message.text?.startsWith('MBF_')) {
-      console.log("[WEBHOOK] Handling verification message...");
+      console.log("[WEBHOOK] 🔄 Handling verification message...");
       handled = await handleVerificationMessage(supabaseClient, message);
-      console.log("[WEBHOOK] Verification handled:", handled);
+      console.log(`[WEBHOOK] ${handled ? '✅' : '❌'} Verification ${handled ? 'handled successfully' : 'not handled'}`);
     }
 
-    await supabaseClient
-      .from('telegram_events')
-      .insert({
-        event_type: update.channel_post ? 'channel_post' : 'webhook_update',
-        raw_data: update,
-        handled: handled,
-        chat_id: message.chat?.id?.toString(),
-        message_text: message.text,
-        username: message.from?.username
-      });
+    // Log event to database
+    try {
+      console.log("[WEBHOOK] 📝 Logging event to database...");
+      await supabaseClient
+        .from('telegram_events')
+        .insert({
+          event_type: update.channel_post ? 'channel_post' : 'webhook_update',
+          raw_data: update,
+          handled: handled,
+          chat_id: message.chat?.id?.toString(),
+          message_text: message.text,
+          username: message.from?.username
+        });
+      console.log("[WEBHOOK] ✅ Event logged successfully");
+    } catch (logError) {
+      console.error("[WEBHOOK] ❌ Error logging event:", logError);
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('[WEBHOOK] Error:', error);
+    console.error('[WEBHOOK] ❌ Error processing request:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

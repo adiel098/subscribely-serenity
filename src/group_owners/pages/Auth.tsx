@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,17 +23,29 @@ const Auth = () => {
     if (user) {
       // Check if user is admin
       const checkAdminStatus = async () => {
-        const { data } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
+        console.log("🔍 Checking admin status on Auth page...");
+        try {
+          const { data, error } = await supabase
+            .from('admin_users')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
           
-        if (data) {
-          // User is an admin, redirect to admin panel
-          navigate('/admin/dashboard');
-        } else {
-          // Regular user, redirect to dashboard
+          if (error) {
+            console.error("❌ Error checking admin status:", error);
+            navigate('/dashboard');
+            return;
+          }
+          
+          if (data) {
+            console.log("✅ User is an admin, redirecting to admin panel");
+            navigate('/admin/dashboard');
+          } else {
+            console.log("ℹ️ Regular user, redirecting to dashboard");
+            navigate('/dashboard');
+          }
+        } catch (err) {
+          console.error("❌ Exception in admin status check:", err);
           navigate('/dashboard');
         }
       };
@@ -47,25 +60,31 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
+        console.log(`🔐 Attempting to sign up user: ${email}`);
         const { error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
+        
         toast({
           title: "Registration Successful",
           description: "Please check your email for verification.",
         });
+        console.log("✅ User registered successfully");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log(`🔑 Attempting to sign in user: ${email}`);
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         
+        console.log(`✅ User signed in successfully: ${data.user?.id}`);
         // Redirection will happen in the useEffect above after auth state changes
       }
     } catch (error: any) {
+      console.error("❌ Authentication error:", error.message);
       toast({
         variant: "destructive",
         title: "Error",
@@ -116,11 +135,14 @@ const Auth = () => {
 
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading
-                ? "Processing..."
-                : isSignUp
-                ? "Sign Up"
-                : "Sign In"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                isSignUp ? "Sign Up" : "Sign In"
+              )}
             </Button>
           </div>
         </form>

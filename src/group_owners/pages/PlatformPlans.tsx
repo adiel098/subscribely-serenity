@@ -19,14 +19,17 @@ import { PlatformPlan } from "@/admin/hooks/types/platformPlans.types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNavigate } from "react-router-dom";
+import { useActivePaymentMethods } from "../hooks/useActivePaymentMethods";
+import { processPayment } from "../services/platformPaymentService";
+import { PaymentMethodsGrid } from "../components/platform-payment/PaymentMethodsGrid";
 
 export default function PlatformPlans() {
   const { plans, isLoading } = usePlatformPlans();
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = useActivePaymentMethods();
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchCurrentSubscription = async () => {
@@ -55,32 +58,56 @@ export default function PlatformPlans() {
     fetchCurrentSubscription();
   }, []);
 
-  const handleSubscribe = async (plan: PlatformPlan) => {
+  const handleSelectPlan = (plan: PlatformPlan) => {
+    // Toggle off if already selected
+    if (selectedPlan?.id === plan.id) {
+      setSelectedPlan(null);
+    } else {
+      setSelectedPlan(plan);
+    }
+  };
+
+  const handlePaymentProcess = async (paymentMethod: string) => {
+    if (!selectedPlan) {
+      toast({
+        title: "No plan selected",
+        description: "Please select a subscription plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
-    
+
     try {
+      await processPayment(selectedPlan, paymentMethod);
+
+      toast({
+        title: "Subscription Activated",
+        description: `Your ${selectedPlan.name} subscription has been activated successfully!`,
+      });
+
+      // Refresh current subscription
       const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user?.id) {
-        toast({
-          title: "Authentication Error",
-          description: "Please sign in to subscribe to a plan",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-        return;
+      if (session?.session?.user?.id) {
+        const { data } = await supabase
+          .from('platform_subscriptions')
+          .select('*, platform_plans(*)')
+          .eq('owner_id', session.session.user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+          
+        setCurrentSubscription(data);
       }
       
-      // Store the selected plan in localStorage for the payment page
-      localStorage.setItem('selectedPlatformPlan', JSON.stringify(plan));
-      
-      // Navigate to platform payment methods page
-      navigate('/platform-payment-methods');
+      // Reset selected plan
+      setSelectedPlan(null);
       
     } catch (error) {
-      console.error('Subscription error:', error);
+      console.error('Payment processing error:', error);
       toast({
-        title: "Subscription Failed",
-        description: "There was an error processing your subscription. Please try again.",
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -144,90 +171,129 @@ export default function PlatformPlans() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {plans.filter(plan => plan.is_active).map((plan) => (
-            <motion.div 
-              key={plan.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              whileHover={{ y: -5 }}
-            >
-              <Card className={`h-full flex flex-col border-2 ${
-                plan.name.toLowerCase().includes('pro') ? 'border-indigo-200 shadow-md' : 'border-muted'
-              }`}>
-                <CardHeader>
-                  {plan.name.toLowerCase().includes('pro') && (
-                    <Badge className="self-start mb-2 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 border-none">
-                      Most Popular
-                    </Badge>
-                  )}
-                  <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <div className="flex items-baseline mb-4">
-                    <span className="text-3xl font-bold">${plan.price}</span>
-                    <span className="text-sm text-muted-foreground ml-1">
-                      /{formatInterval(plan.interval)}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-indigo-500" />
-                      <span className="text-sm">Up to {plan.max_communities} communities</span>
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {plans.filter(plan => plan.is_active).map((plan) => (
+              <motion.div 
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                whileHover={{ y: -5 }}
+              >
+                <Card 
+                  className={`h-full flex flex-col border-2 cursor-pointer ${
+                    selectedPlan?.id === plan.id 
+                      ? 'border-indigo-400 shadow-md ring-2 ring-indigo-200'
+                      : plan.name.toLowerCase().includes('pro') 
+                        ? 'border-indigo-200 shadow-sm' 
+                        : 'border-muted'
+                  }`}
+                  onClick={() => handleSelectPlan(plan)}
+                >
+                  <CardHeader>
+                    {plan.name.toLowerCase().includes('pro') && (
+                      <Badge className="self-start mb-2 bg-indigo-100 text-indigo-800 hover:bg-indigo-200 border-none">
+                        Most Popular
+                      </Badge>
+                    )}
+                    <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <div className="flex items-baseline mb-4">
+                      <span className="text-3xl font-bold">${plan.price}</span>
+                      <span className="text-sm text-muted-foreground ml-1">
+                        /{formatInterval(plan.interval)}
+                      </span>
                     </div>
                     
-                    {plan.max_members_per_community && (
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-indigo-500" />
-                        <span className="text-sm">Up to {plan.max_members_per_community} members per community</span>
+                        <Building className="h-4 w-4 text-indigo-500" />
+                        <span className="text-sm">Up to {plan.max_communities} communities</span>
                       </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-indigo-500" />
-                      <span className="text-sm capitalize">{plan.interval} billing</span>
+                      
+                      {plan.max_members_per_community && (
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-indigo-500" />
+                          <span className="text-sm">Up to {plan.max_members_per_community} members per community</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-indigo-500" />
+                        <span className="text-sm capitalize">{plan.interval} billing</span>
+                      </div>
+                      
+                      {plan.features && plan.features.length > 0 && (
+                        <div className="pt-4">
+                          <h4 className="font-medium text-sm mb-2">Features included:</h4>
+                          <ul className="space-y-1">
+                            {plan.features.map((feature, idx) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm">{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                    
-                    {plan.features && plan.features.length > 0 && (
-                      <div className="pt-4">
-                        <h4 className="font-medium text-sm mb-2">Features included:</h4>
-                        <ul className="space-y-1">
-                          {plan.features.map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full gap-1 bg-indigo-600 hover:bg-indigo-700"
-                    onClick={() => handleSubscribe(plan)}
-                    disabled={isProcessing || (currentSubscription && currentSubscription.platform_plans?.id === plan.id)}
-                  >
-                    {isProcessing ? (
-                      "Processing..."
+                  </CardContent>
+                  <CardFooter>
+                    {selectedPlan?.id === plan.id ? (
+                      <Badge className="w-full py-2 justify-center bg-indigo-100 text-indigo-800 hover:bg-indigo-200 border-none">
+                        Selected
+                      </Badge>
                     ) : currentSubscription && currentSubscription.platform_plans?.id === plan.id ? (
-                      "Current Plan"
+                      <Badge className="w-full py-2 justify-center bg-green-100 text-green-800 hover:bg-green-200 border-none">
+                        Current Plan
+                      </Badge>
                     ) : (
-                      <>
-                        <CreditCard className="h-4 w-4" />
-                        Subscribe
-                        <ChevronRight className="h-4 w-4 ml-auto" />
-                      </>
+                      <Badge className="w-full py-2 justify-center bg-gray-100 text-gray-800 hover:bg-gray-200 border-none">
+                        Click to Select
+                      </Badge>
                     )}
-                  </Button>
-                </CardFooter>
-              </Card>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+          
+          {selectedPlan && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              transition={{ duration: 0.3 }}
+              className="bg-white border border-indigo-100 rounded-lg p-6 shadow-sm overflow-hidden"
+            >
+              <h2 className="text-xl font-semibold mb-6 text-center">
+                <CreditCard className="inline-block mr-2 h-5 w-5 text-indigo-500" />
+                Payment Method for {selectedPlan.name} Plan
+              </h2>
+              
+              <div className="mb-6">
+                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div>
+                    <p className="font-medium text-indigo-900">{selectedPlan.name} Plan</p>
+                    <p className="text-sm text-indigo-700">
+                      {selectedPlan.interval.charAt(0).toUpperCase() + selectedPlan.interval.slice(1)} billing
+                    </p>
+                  </div>
+                  <div className="text-xl font-bold text-indigo-900">${selectedPlan.price}</div>
+                </div>
+              </div>
+              
+              <PaymentMethodsGrid
+                paymentMethods={paymentMethods}
+                isLoading={paymentMethodsLoading}
+                selectedPlanPrice={selectedPlan.price}
+                isProcessing={isProcessing}
+                onSelectPaymentMethod={handlePaymentProcess}
+              />
             </motion.div>
-          ))}
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 
 import { Loader2, CreditCard, Wallet, Bitcoin } from "lucide-react";
 import { PaymentMethodCard } from "./PaymentMethodCard";
+import { motion } from "framer-motion";
 
 interface PaymentMethod {
   id: string;
@@ -45,25 +46,42 @@ export const PaymentMethodsGrid = ({
     );
   }
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {paymentMethods && paymentMethods.length > 0 ? (
-        paymentMethods.map((method) => (
-          <PaymentMethodCard
-            key={method.id}
-            id={method.id}
-            provider={method.provider}
-            icon={getPaymentMethodIcon(method.provider)}
-            price={selectedPlanPrice}
-            isProcessing={isProcessing}
-            onSelect={onSelectPaymentMethod}
-          />
-        ))
-      ) : (
-        <div className="col-span-3 p-6 text-center border rounded-lg bg-gray-50">
-          <p className="text-muted-foreground">No payment methods are currently available. Please try again later.</p>
-        </div>
-      )}
+    <div className="space-y-6">
+      <motion.div 
+        className="grid gap-4 md:grid-cols-3"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
+        {paymentMethods && paymentMethods.length > 0 ? (
+          paymentMethods.map((method) => (
+            <PaymentMethodCard
+              key={method.id}
+              id={method.id}
+              provider={method.provider}
+              icon={getPaymentMethodIcon(method.provider)}
+              price={selectedPlanPrice}
+              isProcessing={isProcessing}
+              onSelect={onSelectPaymentMethod}
+            />
+          ))
+        ) : (
+          <div className="col-span-3 p-6 text-center border rounded-lg bg-gray-50">
+            <p className="text-muted-foreground">No payment methods are currently available. Please try again later.</p>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 };

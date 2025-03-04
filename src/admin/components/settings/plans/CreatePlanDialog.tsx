@@ -52,6 +52,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   // Reset form when dialog opens
   useEffect(() => {
     if (isOpen) {
+      console.log("Dialog is open, resetting form");
       form.reset({
         name: "",
         description: "",
@@ -101,7 +102,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   console.log("CreatePlanDialog rendered, isOpen:", isOpen);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange} modal={true}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
@@ -127,4 +128,4 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
       </DialogContent>
     </Dialog>
   );
-};
+}

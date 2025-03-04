@@ -32,66 +32,23 @@ export const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
       
-      {/* Admin Routes */}
-      <Route 
-        path="/admin/dashboard" 
+      {/* Admin Routes - Wrapped in a single AdminProtectedRoute */}
+      <Route
+        path="/admin/*"
         element={
           <AdminProtectedRoute>
             <AdminLayout>
-              <AdminDashboard />
+              <Routes>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="communities" element={<AdminCommunities />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="payments" element={<AdminPayments />} />
+                <Route path="reports" element={<AdminReports />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Routes>
             </AdminLayout>
           </AdminProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/communities" 
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminCommunities />
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/users" 
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminUsers />
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/payments" 
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminPayments />
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/reports" 
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminReports />
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/settings" 
-        element={
-          <AdminProtectedRoute>
-            <AdminLayout>
-              <AdminSettings />
-            </AdminLayout>
-          </AdminProtectedRoute>
-        } 
+        }
       />
       
       {/* Group Owner Routes */}

@@ -72,45 +72,24 @@ interface CommunityPayment {
   } | null;
 }
 
-// Mock data for status-filtered tabs
-const MOCK_PAYMENTS = [
-  {
-    id: "PAY-1234",
-    user: "John Doe",
-    email: "john@example.com",
-    amount: "29.99",
-    community: "Tech Enthusiasts",
-    date: "Mar 15, 2024",
-    method: "credit_card",
-    status: "completed"
-  },
-  {
-    id: "PAY-2345",
-    user: "Jane Smith",
-    email: "jane@example.com",
-    amount: "49.99",
-    community: "Fitness Club",
-    date: "Mar 14, 2024",
-    method: "paypal",
-    status: "pending"
-  },
-  {
-    id: "PAY-3456",
-    user: "Bob Johnson",
-    email: "bob@example.com",
-    amount: "19.99",
-    community: "Book Club",
-    date: "Mar 13, 2024",
-    method: "bank_transfer",
-    status: "failed"
-  }
-];
+// Unified payment type for the status tabs
+interface UnifiedPayment {
+  id: string;
+  user: string;
+  email: string;
+  amount: number | string;
+  community: string;
+  date: string;
+  method: string;
+  status: string;
+}
 
 export default function Payments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [platformPayments, setPlatformPayments] = useState<PlatformPayment[]>([]);
   const [communityPayments, setCommunityPayments] = useState<CommunityPayment[]>([]);
+  const [unifiedPayments, setUnifiedPayments] = useState<UnifiedPayment[]>([]);
   const [paymentType, setPaymentType] = useState<"platform" | "community">("platform");
   
   useEffect(() => {
@@ -140,8 +119,8 @@ export default function Payments() {
           id: item.id,
           amount: item.amount,
           created_at: item.created_at,
-          payment_method: item.payment_method,
-          payment_status: item.payment_status,
+          payment_method: item.payment_method || '',
+          payment_status: item.payment_status || '',
           owner: item.owner?.[0] || null,
           plan: item.plan?.[0] || null
         }));
@@ -171,15 +150,41 @@ export default function Payments() {
           id: item.id,
           amount: item.amount,
           created_at: item.created_at,
-          payment_method: item.payment_method,
+          payment_method: item.payment_method || '',
           status: item.status,
-          first_name: item.first_name,
-          last_name: item.last_name,
-          telegram_username: item.telegram_username,
+          first_name: item.first_name || '',
+          last_name: item.last_name || '',
+          telegram_username: item.telegram_username || '',
           community: item.community?.[0] || null
         }));
         
         setCommunityPayments(transformedCommunityData);
+
+        // Create unified payments data for status tabs
+        const platformUnified: UnifiedPayment[] = transformedPlatformData.map(item => ({
+          id: item.id,
+          user: item.owner?.full_name || 'Unknown',
+          email: item.owner?.email || 'No email',
+          amount: item.amount,
+          community: item.plan?.name || 'Platform Payment',
+          date: formatDate(item.created_at),
+          method: item.payment_method,
+          status: item.payment_status
+        }));
+
+        const communityUnified: UnifiedPayment[] = transformedCommunityData.map(item => ({
+          id: item.id,
+          user: `${item.first_name} ${item.last_name}`.trim() || 'Unknown',
+          email: item.telegram_username || 'No username',
+          amount: item.amount,
+          community: item.community?.name || 'Unknown Community',
+          date: formatDate(item.created_at),
+          method: item.payment_method,
+          status: item.status
+        }));
+
+        setUnifiedPayments([...platformUnified, ...communityUnified]);
+        
       } catch (error) {
         console.error("Error fetching payments:", error);
       } finally {
@@ -211,17 +216,16 @@ export default function Payments() {
     );
   });
 
-  // For demo tabs (All/Completed/Pending/Failed), we'll use both types of payments
-  const allFilteredPayments = [...filteredPlatformPayments, ...filteredCommunityPayments.map(p => ({
-    id: p.id,
-    user: `${p.first_name} ${p.last_name}`,
-    email: p.telegram_username,
-    amount: p.amount,
-    community: p.community?.name || 'Unknown',
-    date: formatDate(p.created_at),
-    method: p.payment_method,
-    status: p.status
-  }))];
+  // Filter unified payments for status tabs
+  const filteredUnifiedPayments = unifiedPayments.filter(payment => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      payment.user.toLowerCase().includes(searchTerm) ||
+      payment.email.toLowerCase().includes(searchTerm) ||
+      payment.id.toLowerCase().includes(searchTerm) ||
+      payment.community.toLowerCase().includes(searchTerm)
+    );
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -492,7 +496,7 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allFilteredPayments.map((payment) => (
+                    {filteredUnifiedPayments.map((payment) => (
                       <TableRow key={payment.id} className="hover:bg-indigo-50/30">
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>
@@ -542,7 +546,7 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'completed').map((payment) => (
+                    {filteredUnifiedPayments.filter(p => p.status.toLowerCase() === 'completed').map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>
@@ -581,7 +585,7 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'pending').map((payment) => (
+                    {filteredUnifiedPayments.filter(p => p.status.toLowerCase() === 'pending').map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>
@@ -620,7 +624,7 @@ export default function Payments() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allFilteredPayments.filter(p => p.status.toLowerCase() === 'failed').map((payment) => (
+                    {filteredUnifiedPayments.filter(p => p.status.toLowerCase() === 'failed').map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>{payment.user}</TableCell>

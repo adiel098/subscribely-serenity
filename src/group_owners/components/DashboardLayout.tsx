@@ -20,7 +20,7 @@ export const DashboardLayout = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.4 }}
-            className="p-4 mt-[95px] ml-[240px] max-w-[calc(100vw-260px)]"
+            className="p-4 mt-[120px] ml-[240px] max-w-[calc(100vw-260px)]"
           >
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 overflow-auto">
               {children}

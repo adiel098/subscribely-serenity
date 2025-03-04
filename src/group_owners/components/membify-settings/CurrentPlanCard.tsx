@@ -20,7 +20,8 @@ import {
   Check, 
   CreditCard,
   Clock,
-  Calendar
+  Calendar,
+  PlusCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useActivePaymentMethods } from "@/group_owners/hooks/useActivePaymentMethods";
@@ -101,10 +102,13 @@ export function CurrentPlanCard() {
           .eq('owner_id', user.id)
           .eq('status', 'active')
           .order('subscription_start_date', { ascending: false })
-          .maybeSingle();
+          .maybeSingle(); // Using maybeSingle() instead of single() to handle cases where there might be no subscription
 
-        if (subscriptionError) throw subscriptionError;
-        setSubscription(subscriptionData);
+        if (subscriptionError && !subscriptionError.message.includes('JSON object requested, multiple (or no) rows returned')) {
+          throw subscriptionError;
+        }
+        
+        setSubscription(subscriptionData || null);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -341,8 +345,17 @@ export function CurrentPlanCard() {
                           : 'border-indigo-200 hover:bg-indigo-50 text-indigo-700'
                       }`}
                     >
-                      <ArrowUpRight className="h-4 w-4 mr-2" /> 
-                      Switch to this Plan
+                      {subscription ? (
+                        <>
+                          <ArrowUpRight className="h-4 w-4 mr-2" /> 
+                          Switch to this Plan
+                        </>
+                      ) : (
+                        <>
+                          <PlusCircle className="h-4 w-4 mr-2" /> 
+                          Choose this Plan
+                        </>
+                      )}
                     </Button>
                   )}
                 </CardFooter>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { useCheckAdminStatus } from "../hooks/useCheckAdminStatus";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,6 +19,7 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { checkAdminStatus } = useCheckAdminStatus();
 
   useEffect(() => {
     if (user) {
@@ -26,19 +29,9 @@ const Auth = () => {
       const redirectTimer = setTimeout(async () => {
         try {
           console.log("🔍 Auth page: Checking admin status for", user.id);
-          const { data, error } = await supabase
-            .from('admin_users')
-            .select('role')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          const isAdmin = await checkAdminStatus(user.id);
           
-          if (error) {
-            console.error("❌ Auth page: Error checking admin status:", error);
-            console.log("🚀 Auth page: Redirecting to regular dashboard due to error");
-            return navigate('/dashboard', { replace: true });
-          }
-          
-          if (data) {
+          if (isAdmin) {
             console.log("✅ Auth page: Admin user confirmed, redirecting to admin dashboard");
             return navigate('/admin/dashboard', { replace: true });
           } else {
@@ -54,7 +47,7 @@ const Auth = () => {
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [user, navigate]);
+  }, [user, navigate, checkAdminStatus]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,13 +69,12 @@ const Auth = () => {
         console.log("✅ Auth page: User registered successfully");
       } else {
         console.log(`🔑 Auth page: Attempting to sign in user: ${email}`);
-        const { error, data } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
         
-        console.log(`✅ Auth page: User signed in successfully: ${data.user?.id}`);
         toast({
           title: "Login Successful",
           description: "You are now logged in.",

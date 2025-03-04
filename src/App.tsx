@@ -4,18 +4,18 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/auth/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CommunityProvider } from "@/contexts/CommunityContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
-import { AdminProtectedRoute } from "@/admin/components/AdminProtectedRoute";
+import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
 import { AdminLayout } from "@/admin/components/AdminLayout";
 
 // Group Owner Pages
 import Index from "@/group_owners/pages/Index";
-import Auth from "@/group_owners/pages/Auth";
+import Auth from "@/auth/pages/Auth";
 import Dashboard from "@/group_owners/pages/Dashboard";
 import Members from "@/group_owners/pages/Members";
 import Subscribers from "@/group_owners/pages/Subscribers";

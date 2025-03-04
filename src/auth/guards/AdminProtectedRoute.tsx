@@ -1,7 +1,7 @@
 
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAdminPermission } from "@/admin/hooks/useAdminPermission";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect } from "react";

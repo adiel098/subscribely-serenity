@@ -1,10 +1,9 @@
-
 import { useState } from 'react';
 import { Menu, X, LayoutDashboard, LogOut, Shield, LogIn, UserPlus } from 'lucide-react';
 import { Button } from './ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useAdminPermission } from '@/admin/hooks/useAdminPermission';
+import { useAdminPermission } from '@/auth/hooks/useAdminPermission';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

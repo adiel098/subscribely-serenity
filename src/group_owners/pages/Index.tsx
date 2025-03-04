@@ -1,8 +1,8 @@
 
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/auth/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useAdminPermission } from "@/admin/hooks/useAdminPermission";
+import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
 import { ArrowRight, Shield, LogIn, UserPlus } from "lucide-react";
 
 export default function Index() {

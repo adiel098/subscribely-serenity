@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,10 +124,10 @@ const Auth = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold text-primary mb-2">
-          <Sparkles className="inline-block mr-2 text-amber-400" size={32} />
-          {isSignUp ? "Join Our Platform" : "Welcome Back"} 
-          <Sparkles className="inline-block ml-2 text-amber-400" size={32} />
+        <h1 className="text-5xl font-bold text-primary mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
+          <Sparkles className="inline-block mr-2 text-amber-400" size={36} />
+          Membify
+          <Sparkles className="inline-block ml-2 text-amber-400" size={36} />
         </h1>
         <p className="text-lg text-muted-foreground">
           {isSignUp 

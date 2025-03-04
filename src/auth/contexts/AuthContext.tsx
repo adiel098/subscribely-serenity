@@ -155,13 +155,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [navigate, location.pathname]);
 
   const signOut = async () => {
-    await handleSignOut(
+    // The correct way to call handleSignOut with only the required arguments
+    await handleSignOut({
       setLoading,
       setUser,
       navigate,
-      location.pathname,
+      currentPath: location.pathname,
       toast
-    );
+    });
   };
 
   return (

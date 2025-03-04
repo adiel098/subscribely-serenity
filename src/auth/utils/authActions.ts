@@ -1,52 +1,53 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { NavigateFunction } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Signs out the current user and redirects to the auth page
- * @param setLoading Function to update loading state
- * @param setUser Function to update user state
- * @param navigate React Router navigate function
- * @param location Current location from useLocation
- * @param toast Toast notification function
- */
-export const handleSignOut = async (
-  setLoading: (loading: boolean) => void,
-  setUser: (user: null) => void,
-  navigate: NavigateFunction,
-  currentPath: string,
-  toast: any
-) => {
+// Define an interface for the handleSignOut parameters
+interface SignOutParams {
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
+  navigate: NavigateFunction;
+  currentPath: string;
+  toast: any;
+}
+
+export const handleSignOut = async ({
+  setLoading,
+  setUser,
+  navigate,
+  currentPath,
+  toast
+}: SignOutParams) => {
   try {
-    console.log('🚪 User signing out - executing signOut function');
     setLoading(true);
     
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      console.error('❌ Error signing out:', error);
-      toast({
-        variant: "destructive",
-        title: "Error signing out",
-        description: error.message
-      });
-    } else {
-      console.log('✅ Sign out successful');
-      
-      // Clear user state immediately
-      setUser(null);
-      
-      // Navigate to auth page
-      if (currentPath !== '/auth') {
-        navigate("/auth", { replace: true });
-      }
+      throw error;
     }
-  } catch (err: any) {
-    console.error('❌ Exception during sign out:', err);
+    
+    // Clear user state
+    setUser(null);
+    
+    // Clear cached session
+    sessionStorage.removeItem('cached_user_session');
+    
+    // Only redirect to auth page if not already there
+    if (currentPath !== '/auth') {
+      navigate("/auth", { replace: true });
+    }
+    
     toast({
-      variant: "destructive",
-      title: "Error signing out",
-      description: err?.message || "An unexpected error occurred"
+      title: "Successfully signed out",
+      description: "You have been signed out from your account."
+    });
+  } catch (error) {
+    console.error("Error signing out:", error);
+    toast({
+      title: "Sign out failed",
+      description: "There was an error signing out. Please try again.",
+      variant: "destructive"
     });
   } finally {
     setLoading(false);

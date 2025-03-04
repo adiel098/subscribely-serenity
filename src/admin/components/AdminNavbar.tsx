@@ -3,7 +3,7 @@ import { Bell, Moon, Sun, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/auth/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { 
   DropdownMenu, 

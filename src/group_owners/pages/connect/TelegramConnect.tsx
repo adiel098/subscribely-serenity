@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { MessageCircle, Copy, CheckCircle, PartyPopper } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,

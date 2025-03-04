@@ -1,3 +1,4 @@
+
 import {
   CreditCard,
   Settings,
@@ -9,7 +10,7 @@ import {
 } from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/auth/contexts/AuthContext';
 import {
   Sidebar,
   SidebarContent,

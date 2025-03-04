@@ -1,5 +1,5 @@
-
-import { useAuth } from "@/contexts/AuthContext";
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/auth/contexts/AuthContext';
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard } from "lucide-react";

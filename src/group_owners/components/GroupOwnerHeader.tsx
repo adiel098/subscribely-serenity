@@ -36,16 +36,16 @@ export function GroupOwnerHeader() {
   };
   
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-gradient-to-r from-blue-100 to-indigo-200 shadow-md flex items-center justify-between px-6">
+    <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="flex items-center gap-3"
       >
-        <Link to="/dashboard" className="text-xl font-bold text-indigo-700 flex items-center gap-2">
+        <Link to="/dashboard" className="text-xl font-bold flex items-center gap-2">
           <Crown className="h-6 w-6 text-amber-500 drop-shadow-sm" /> 
-          <span className="font-extrabold">
+          <span className="font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-500 bg-clip-text text-transparent">
             Membify
           </span>
         </Link>

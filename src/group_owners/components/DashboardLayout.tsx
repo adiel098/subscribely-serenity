@@ -12,9 +12,9 @@ export const DashboardLayout = ({
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50">
       <GroupOwnerHeader />
-      <div className="flex w-full">
+      <div className="flex w-full pt-16">
         <AppSidebar />
-        <main className="flex-1 min-h-[calc(100vh-4rem)] mt-16">
+        <main className="flex-1 min-h-[calc(100vh-4rem)]">
           <CommunitySelector />
           <motion.div 
             initial={{ opacity: 0, y: 10 }}

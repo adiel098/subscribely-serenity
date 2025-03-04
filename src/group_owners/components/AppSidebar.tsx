@@ -30,38 +30,32 @@ const menuItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    path: "/dashboard",
-    emoji: "📊"
+    path: "/dashboard"
   },
   {
     title: "Subscribers",
     icon: BadgeDollarSign,
-    path: "/subscribers",
-    emoji: "👥"
+    path: "/subscribers"
   },
   {
     title: "Subscriptions",
     icon: CreditCard,
-    path: "/subscriptions",
-    emoji: "💳"
+    path: "/subscriptions"
   },
   {
     title: "Payment Methods",
     icon: Wallet,
-    path: "/messages",
-    emoji: "💰"
+    path: "/messages"
   },
   {
     title: "Analytics",
     icon: TrendingUp,
-    path: "/analytics",
-    emoji: "📈"
+    path: "/analytics"
   },
   {
     title: "Bot Settings",
     icon: Bot,
-    path: "/bot-settings",
-    emoji: "🤖"
+    path: "/bot-settings"
   }
 ];
 
@@ -74,12 +68,12 @@ export function AppSidebar() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="fixed left-4 top-16 h-[calc(100vh-4rem)] z-30"
+      className="fixed left-4 top-20 h-[calc(100vh-5.5rem)] z-30"
     >
-      <Sidebar className="w-[250px] rounded-xl border-none shadow-xl bg-white/95 backdrop-blur-md">
+      <Sidebar className="w-[250px] rounded-xl border border-blue-100 shadow-lg bg-white/95 backdrop-blur-md">
         <SidebarContent>
-          <div className="px-3 py-4">
-            <div className="flex items-center gap-3 mb-4 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-3 mb-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
               <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-2 rounded-lg shadow-md">
                 <BarChart className="h-5 w-5" />
               </div>
@@ -105,17 +99,16 @@ export function AppSidebar() {
                         <SidebarMenuButton asChild>
                           <Link 
                             to={item.path}
-                            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                            className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
                               isActive 
                                 ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' 
                                 : 'text-gray-600 hover:bg-blue-50'
                             }`}
                           >
-                            <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                            <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'} mr-3`}>
                               <item.icon className="h-5 w-5" />
                             </div>
-                            <span>{item.title}</span>
-                            <span className="ml-auto opacity-70">{item.emoji}</span>
+                            <span className="truncate">{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
                       </motion.div>

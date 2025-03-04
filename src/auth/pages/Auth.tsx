@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +25,6 @@ const Auth = () => {
     if (user) {
       console.log("✅ Auth page: User detected, preparing to redirect", user.email);
       
-      // Add a slight delay before checking admin status to ensure auth state is fully updated
       const redirectTimer = setTimeout(async () => {
         try {
           console.log("🔍 Auth page: Checking admin status for", user.id);
@@ -118,9 +116,9 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
-        className="max-w-md w-full mb-8 text-center"
+        className="w-full max-w-xl mb-8 text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -138,12 +136,12 @@ const Auth = () => {
       </motion.div>
 
       <motion.div
-        className="w-full max-w-md"
+        className="w-full max-w-xl"
         variants={cardVariants}
         initial="hidden"
         animate="visible"
       >
-        <Card className="glass-card border-2 border-purple-100 shadow-xl">
+        <Card className="glass-card border-2 border-purple-100 shadow-xl w-full">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-2xl font-bold tracking-tight">
               {isSignUp ? "✨ Sign Up" : "👋 Sign In"}

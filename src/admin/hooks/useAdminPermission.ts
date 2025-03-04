@@ -21,14 +21,13 @@ export const useAdminPermission = () => {
       try {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         
-        // Use a direct raw query instead of relying on RLS
+        // Use RPC function which is SECURITY DEFINER to avoid RLS issues
         console.log(`📊 Running SQL query to check admin status without RLS for user ${user.id}`);
         const { data, error: queryError } = await supabase
           .rpc('is_admin', { user_uuid: user.id });
 
         if (queryError) {
           console.error("❌ useAdminPermission: Error checking admin status:", queryError);
-          console.error("❌ Error details:", JSON.stringify(queryError, null, 2));
           
           // Try a fallback approach if RPC fails
           console.log("🔄 useAdminPermission: Trying fallback admin check...");

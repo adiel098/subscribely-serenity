@@ -12,7 +12,7 @@ export const AdminProtectedRoute = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminPermission();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -20,7 +20,8 @@ export const AdminProtectedRoute = ({
   useEffect(() => {
     console.log("🔍 AdminProtectedRoute state:", { 
       user: user?.email,
-      authLoading: loading,
+      userId: user?.id,
+      authLoading,
       isAdmin,
       isCheckingAdmin,
       error,
@@ -28,7 +29,7 @@ export const AdminProtectedRoute = ({
     });
     
     // Show toast when access is denied due to not being an admin
-    if (!loading && !isCheckingAdmin && user && !isAdmin) {
+    if (!authLoading && !isCheckingAdmin && user && !isAdmin) {
       console.log("⛔ AdminProtectedRoute: Access denied for user", user.email);
       toast({
         title: "Access Denied",
@@ -36,10 +37,10 @@ export const AdminProtectedRoute = ({
         variant: "destructive"
       });
     }
-  }, [user, isAdmin, loading, isCheckingAdmin, toast, error]);
+  }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error]);
 
-  if (loading || isCheckingAdmin) {
-    console.log("⏳ AdminProtectedRoute: Loading state", { authLoading: loading, adminLoading: isCheckingAdmin });
+  if (authLoading || isCheckingAdmin) {
+    console.log("⏳ AdminProtectedRoute: Loading state", { authLoading, adminLoading: isCheckingAdmin });
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />

@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAdminAndRedirect = async (userId: string) => {
     console.log(`🔍 Checking admin status for user ${userId}`);
     try {
-      // Use RPC to check admin status to avoid RLS recursion issues
+      // Use RPC to check admin status
       console.log(`📊 Using is_admin RPC for user_id: ${userId}`);
       
       const { data, error } = await supabase
@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('❌ Error checking admin status with RPC:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
         
         // Try fallback with direct select
         console.log('🔄 Trying fallback admin check method...');
@@ -51,12 +50,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return false;
         }
         
-        console.log(`📋 Admin fallback check result:`, JSON.stringify(fallbackData, null, 2));
+        console.log(`📋 Admin fallback check result:`, fallbackData);
         
         if (fallbackData && fallbackData.length > 0) {
-          const isAdmin = true;
-          const role = fallbackData[0].role;
-          console.log(`✅ User ${userId} is an admin with role: ${role}`);
+          console.log(`✅ User ${userId} is an admin with role: ${fallbackData[0].role}`);
           
           // Get current URL path to avoid unnecessary navigation
           const currentPath = window.location.pathname;
@@ -65,11 +62,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!currentPath.startsWith('/admin')) {
             console.log('🚀 Redirecting to admin dashboard...');
             navigate('/admin/dashboard');
-          } else {
-            console.log('ℹ️ Already on admin path, not redirecting');
           }
           
-          // IMPORTANT: Set loading to false for admin users too
           setLoading(false);
           return true;
         } else {
@@ -91,14 +85,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (!currentPath.startsWith('/admin')) {
             console.log('🚀 Redirecting to admin dashboard...');
             navigate('/admin/dashboard');
-          } else {
-            console.log('ℹ️ Already on admin path, not redirecting');
           }
         } else {
           console.log(`ℹ️ User ${userId} is not an admin`);
         }
         
-        // IMPORTANT: Set loading to false for admin users too
         setLoading(false);
         return isAdmin;
       }
@@ -123,13 +114,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log('🔄 Checking user session...');
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('📋 Session data:', session ? `User ID: ${session.user.id}` : 'No session');
+        
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         
         if (currentUser) {
           console.log(`🔐 User session found for ${currentUser.email}`);
-          const isAdmin = await checkAdminAndRedirect(currentUser.id);
-          // Note: checkAdminAndRedirect sets loading to false for both admin and non-admin users
+          await checkAdminAndRedirect(currentUser.id);
         } else {
           console.log('⚠️ No user session found');
           if (!loadingHandled) {
@@ -151,6 +143,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`🔄 Auth state changed: ${event}`);
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setUser(null);
+        if (!loadingHandled) {
+          setLoading(false);
+          loadingHandled = true;
+        }
+        // Force navigation to auth page on sign out
+        navigate("/auth");
+        return;
+      }
+      
       setUser(session?.user ?? null);
       
       // If user just signed in, check if they are an admin
@@ -182,14 +187,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [navigate]);
 
   const signOut = async () => {
-    console.log('🚪 User signing out');
-    await supabase.auth.signOut();
-    navigate("/auth");
+    try {
+      console.log('🚪 User signing out - executing signOut function');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('❌ Error signing out:', error);
+        toast({
+          variant: "destructive",
+          title: "Error signing out",
+          description: error.message
+        });
+      } else {
+        console.log('✅ Sign out successful');
+        // We'll let the auth state listener handle the navigation
+      }
+    } catch (err) {
+      console.error('❌ Exception during sign out:', err);
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "An unexpected error occurred"
+      });
+    }
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

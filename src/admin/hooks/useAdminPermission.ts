@@ -21,98 +21,63 @@ export const useAdminPermission = () => {
       try {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         
-        // Use RPC function which is SECURITY DEFINER to avoid RLS issues
-        console.log(`📊 Running SQL query to check admin status without RLS for user ${user.id}`);
+        // Use direct query to admin_users table first (more reliable)
+        console.log(`📊 useAdminPermission: Directly querying admin_users table for ${user.id}`);
         
-        // Set a timeout for the query
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Admin check timeout")), 4000);
-        });
+        const { data: directData, error: directError } = await supabase
+          .from('admin_users')
+          .select('id, role')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
         
-        // Run the query with a timeout
-        const queryPromise = supabase.rpc('is_admin', { user_uuid: user.id });
+        if (directError) {
+          console.error("❌ useAdminPermission: Error with direct query:", directError);
+          throw directError;
+        }
         
-        // Race the query against the timeout
-        const { data, error: queryError } = await Promise.race([
-          queryPromise,
-          timeoutPromise.then(() => {
-            console.log("⏱️ Admin check RPC timed out, falling back to direct query");
-            throw new Error("Timeout");
-          })
-        ]) as any;
-
-        if (queryError) {
-          console.error("❌ useAdminPermission: Error checking admin status:", queryError);
-          
-          // Try a fallback approach if RPC fails
-          console.log("🔄 useAdminPermission: Trying fallback admin check...");
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('admin_users')
-            .select('id, role')
-            .eq('user_id', user.id)
-            .limit(1);
-            
-          if (fallbackError) {
-            console.error("❌ useAdminPermission: Fallback also failed:", fallbackError);
-            setError(fallbackError.message);
-            setIsAdmin(false);
-          } else {
-            const adminStatus = fallbackData && fallbackData.length > 0;
-            console.log(`✅ useAdminPermission: Fallback admin check result:`, { 
-              isAdmin: adminStatus, 
-              userId: user.id,
-              email: user.email,
-              role: fallbackData && fallbackData.length > 0 ? fallbackData[0].role : null
-            });
-            setIsAdmin(adminStatus);
-          }
+        if (directData) {
+          console.log(`✅ useAdminPermission: User ${user.id} is an admin with role: ${directData.role}`);
+          setIsAdmin(true);
+          setIsLoading(false);
+          return;
         } else {
-          // is_admin RPC returns a boolean
-          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, {
-            isAdmin: !!data,
-            userId: user.id,
-            data
-          });
-          setIsAdmin(!!data);
+          console.log(`ℹ️ useAdminPermission: User ${user.id} is not an admin according to direct query`);
+          
+          // Try RPC as fallback to verify (with shorter timeout)
+          console.log(`🔄 useAdminPermission: Trying RPC fallback for user ${user.id}`);
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          
+          try {
+            const { data: rpcData, error: rpcError } = await supabase.rpc(
+              'is_admin', 
+              { user_uuid: user.id },
+              { signal: controller.signal }
+            );
+            
+            clearTimeout(timeoutId);
+            
+            if (rpcError) {
+              console.error("❌ useAdminPermission: RPC fallback failed:", rpcError);
+              setIsAdmin(false);
+            } else {
+              console.log(`📋 useAdminPermission: RPC result: ${!!rpcData}`);
+              setIsAdmin(!!rpcData);
+            }
+          } catch (rpcErr) {
+            clearTimeout(timeoutId);
+            console.error("❌ useAdminPermission: RPC fallback error:", rpcErr);
+            setIsAdmin(false);
+          }
+          
+          setIsLoading(false);
         }
       } catch (err) {
         console.error("❌ useAdminPermission: Error in admin check:", err);
-        
-        // If it's a timeout error, try the fallback
-        if (err.message === "Timeout" || err.message === "Admin check timeout") {
-          console.log("🔄 useAdminPermission: Timeout occurred, trying fallback admin check...");
-          try {
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from('admin_users')
-              .select('id, role')
-              .eq('user_id', user.id)
-              .limit(1);
-              
-            if (fallbackError) {
-              console.error("❌ useAdminPermission: Fallback also failed:", fallbackError);
-              setError(fallbackError.message);
-              setIsAdmin(false);
-            } else {
-              const adminStatus = fallbackData && fallbackData.length > 0;
-              console.log(`✅ useAdminPermission: Fallback admin check result after timeout:`, { 
-                isAdmin: adminStatus, 
-                userId: user.id,
-                email: user.email,
-                role: fallbackData && fallbackData.length > 0 ? fallbackData[0].role : null
-              });
-              setIsAdmin(adminStatus);
-            }
-          } catch (fallbackErr) {
-            console.error("❌ useAdminPermission: Critical error in fallback:", fallbackErr);
-            setError("Failed to verify admin status after multiple attempts");
-            setIsAdmin(false);
-          }
-        } else {
-          setError("Failed to verify admin status");
-          setIsAdmin(false);
-        }
-      } finally {
-        console.log("✅ useAdminPermission: Finished admin status check");
+        setError("Failed to verify admin status");
+        setIsAdmin(false);
         setIsLoading(false);
       }
     };

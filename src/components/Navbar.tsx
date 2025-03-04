@@ -1,18 +1,24 @@
 
 import { useState } from 'react';
-import { Menu, X, LayoutDashboard, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useAdminPermission } from '@/admin/hooks/useAdminPermission';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminPermission();
   const navigate = useNavigate();
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     console.log("🚪 Navbar: Sign out button clicked");
+    // Close mobile menu if open
+    if (isOpen) {
+      setIsOpen(false);
+    }
     await signOut();
   };
 
@@ -29,14 +35,27 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             {user && (
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Button>
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+                
+                {isAdmin && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => navigate('/admin/dashboard')}
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin Panel
+                  </Button>
+                )}
+              </>
             )}
             <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors">
               Features
@@ -85,14 +104,33 @@ const Navbar = () => {
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-b border-gray-200">
             {user && (
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/dashboard')}
-                className="w-full flex items-center gap-2 justify-start"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Button>
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => {
+                    navigate('/dashboard');
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 justify-start"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+                
+                {isAdmin && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      navigate('/admin/dashboard');
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 justify-start"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin Panel
+                  </Button>
+                )}
+              </>
             )}
             <a
               href="#features"
@@ -115,10 +153,16 @@ const Navbar = () => {
             <div className="pt-4 pb-3 border-t border-gray-200">
               {!user ? (
                 <>
-                  <Button variant="outline" onClick={() => navigate('/auth')} className="w-full mb-2">
+                  <Button variant="outline" onClick={() => {
+                    navigate('/auth');
+                    setIsOpen(false);
+                  }} className="w-full mb-2">
                     Sign In
                   </Button>
-                  <Button onClick={() => navigate('/auth')} className="w-full">
+                  <Button onClick={() => {
+                    navigate('/auth');
+                    setIsOpen(false);
+                  }} className="w-full">
                     Sign Up
                   </Button>
                 </>

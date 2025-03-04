@@ -39,7 +39,7 @@ export const AdminProtectedRoute = ({
     }
 
     // Show toast if there's an error checking admin status
-    if (error) {
+    if (error && !isCheckingAdmin) {
       console.error("❌ AdminProtectedRoute: Error checking admin status:", error);
       toast({
         title: "Error",
@@ -49,6 +49,7 @@ export const AdminProtectedRoute = ({
     }
   }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error]);
 
+  // If still loading auth or checking admin status, show loading state
   if (authLoading || isCheckingAdmin) {
     console.log("⏳ AdminProtectedRoute: Loading state", { 
       authLoading, 
@@ -66,11 +67,13 @@ export const AdminProtectedRoute = ({
     );
   }
   
+  // If no user is authenticated, redirect to auth page
   if (!user) {
     console.log("🚫 AdminProtectedRoute: No authenticated user, redirecting to auth");
     return <Navigate to="/auth" />;
   }
   
+  // If user is not an admin, show access denied
   if (!isAdmin) {
     console.log("🚫 AdminProtectedRoute: User is not an admin, showing access denied");
     return (

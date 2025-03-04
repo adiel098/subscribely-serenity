@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 type AuthContextType = {
@@ -21,143 +21,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   // Check if user is admin and redirect accordingly
   const checkAdminAndRedirect = async (userId: string) => {
     console.log(`🔍 Checking admin status for user ${userId}`);
     try {
-      // Use RPC to check admin status
-      console.log(`📊 Using is_admin RPC for user_id: ${userId}`);
-      
-      // Set a timeout for the query
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Admin check timeout")), 4000);
-      });
-      
-      // Run the query with a timeout
-      const queryPromise = supabase.rpc('is_admin', { user_uuid: userId });
-      
-      // Race the query against the timeout
-      const { data, error } = await Promise.race([
-        queryPromise,
-        timeoutPromise.then(() => {
-          console.log("⏱️ Admin check RPC timed out, falling back to direct query");
-          throw new Error("Timeout");
-        })
-      ]) as any;
+      // Direct query to admin_users table (simpler and more reliable)
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
       
       if (error) {
-        console.error('❌ Error checking admin status with RPC:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ Error checking admin status:', error);
+        setLoading(false);
+        return false;
+      }
+      
+      const isAdmin = !!data;
+      console.log(`📋 Admin check result: ${isAdmin}`);
+      
+      if (isAdmin) {
+        console.log(`✅ User ${userId} is an admin with role: ${data?.role}`);
         
-        // Try fallback with direct select
-        console.log('🔄 Trying fallback admin check method...');
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', userId)
-          .limit(1);
+        // Only redirect if not already on an admin page and not currently signing out
+        const currentPath = location.pathname;
+        console.log(`🔍 Current path: ${currentPath}`);
         
-        if (fallbackError) {
-          console.error('❌ Fallback admin check also failed:', fallbackError);
-          console.error('❌ Error details:', JSON.stringify(fallbackError, null, 2));
-          setLoading(false);
-          return false;
-        }
-        
-        console.log(`📋 Admin fallback check result:`, fallbackData);
-        
-        if (fallbackData && fallbackData.length > 0) {
-          console.log(`✅ User ${userId} is an admin with role: ${fallbackData[0].role}`);
-          
-          // Get current URL path to avoid unnecessary navigation
-          const currentPath = window.location.pathname;
-          console.log(`🔍 Current path: ${currentPath}`);
-          
-          if (!currentPath.startsWith('/admin')) {
-            console.log('🚀 Redirecting to admin dashboard...');
-            navigate('/admin/dashboard');
-          }
-          
-          setLoading(false);
-          return true;
-        } else {
-          console.log(`ℹ️ User ${userId} is not an admin`);
-          setLoading(false);
-          return false;
-        }
-      } else {
-        const isAdmin = !!data;
-        console.log(`📋 Admin RPC check result: ${isAdmin}`);
-        
-        if (isAdmin) {
-          console.log(`✅ User ${userId} is an admin`);
-          
-          // Get current URL path to avoid unnecessary navigation
-          const currentPath = window.location.pathname;
-          console.log(`🔍 Current path: ${currentPath}`);
-          
-          if (!currentPath.startsWith('/admin')) {
-            console.log('🚀 Redirecting to admin dashboard...');
-            navigate('/admin/dashboard');
-          }
-        } else {
-          console.log(`ℹ️ User ${userId} is not an admin`);
+        if (!currentPath.startsWith('/admin') && !currentPath.includes('auth')) {
+          console.log('🚀 Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
         }
         
         setLoading(false);
-        return isAdmin;
+        return true;
+      } else {
+        console.log(`ℹ️ User ${userId} is not an admin`);
+        setLoading(false);
+        return false;
       }
     } catch (err) {
       console.error('❌ Exception in admin check:', err);
-      
-      // If it's a timeout error, try the fallback
-      if (err.message === "Timeout" || err.message === "Admin check timeout") {
-        try {
-          console.log('🔄 Trying fallback admin check after timeout...');
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('admin_users')
-            .select('role')
-            .eq('user_id', userId)
-            .limit(1);
-          
-          if (fallbackError) {
-            console.error('❌ Fallback admin check also failed:', fallbackError);
-            toast({
-              variant: "destructive",
-              title: "Error checking admin status",
-              description: "Please try refreshing the page"
-            });
-            setLoading(false);
-            return false;
-          }
-          
-          if (fallbackData && fallbackData.length > 0) {
-            console.log(`✅ User ${userId} is an admin with role: ${fallbackData[0].role}`);
-            
-            // Get current URL path to avoid unnecessary navigation
-            const currentPath = window.location.pathname;
-            console.log(`🔍 Current path: ${currentPath}`);
-            
-            if (!currentPath.startsWith('/admin')) {
-              console.log('🚀 Redirecting to admin dashboard...');
-              navigate('/admin/dashboard');
-            }
-            
-            setLoading(false);
-            return true;
-          }
-        } catch (fallbackErr) {
-          console.error('❌ Critical error in fallback admin check:', fallbackErr);
-        }
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Error checking admin status",
-        description: "Please try refreshing the page"
-      });
       setLoading(false);
       return false;
     }
@@ -166,6 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Add a flag to track if we've already set loading to false
     let loadingHandled = false;
+    let isCurrentlySigningOut = false;
 
     // Check active sessions and sets the user
     const checkSession = async () => {
@@ -205,12 +114,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
         setUser(null);
+        isCurrentlySigningOut = true;
+        
         if (!loadingHandled) {
           setLoading(false);
           loadingHandled = true;
         }
+        
         // Force navigation to auth page on sign out
-        navigate("/auth");
+        if (location.pathname !== '/auth') {
+          console.log('🚀 Redirecting to auth page after sign out');
+          navigate("/auth");
+        }
         return;
       }
       
@@ -242,11 +157,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const signOut = async () => {
     try {
       console.log('🚪 User signing out - executing signOut function');
+      
+      // Clear user state immediately (don't wait for auth state listener)
+      setUser(null);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -258,10 +177,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else {
         console.log('✅ Sign out successful');
-        // Clear user state immediately (don't wait for auth state listener)
-        setUser(null);
+        
         // Force navigation to auth page on sign out
-        navigate("/auth");
+        if (location.pathname !== '/auth') {
+          console.log('🚀 Redirecting to auth page after successful sign out');
+          navigate("/auth", { replace: true });
+        }
       }
     } catch (err: any) {
       console.error('❌ Exception during sign out:', err);

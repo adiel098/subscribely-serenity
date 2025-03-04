@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, Copy, AlertCircle, PlusCircle, Sparkles, ChevronDown } from "lucide-react";
+import { Bell, Copy, AlertCircle, PlusCircle, Sparkles, ChevronDown, Star, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -67,21 +67,26 @@ export const CommunitySelector = () => {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm"
+        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-white/95 via-indigo-50/90 to-purple-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm"
       >
-        <div className="flex items-center gap-4 ml-[280px]">
-          <div className="flex items-center gap-3 bg-white py-2 px-3 rounded-lg border shadow-sm">
-            <Sparkles className="h-5 w-5 text-blue-500" />
+        <div className="flex items-center gap-4 ml-8">
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="flex items-center gap-3 bg-white py-2 px-3 rounded-lg border shadow-md"
+          >
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+              <Crown className="h-4 w-4 text-white" />
+            </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">ACTIVE COMMUNITY</p>
+              <p className="text-xs text-indigo-600 font-medium">ACTIVE COMMUNITY</p>
               <Select value={selectedCommunityId || undefined} onValueChange={setSelectedCommunityId}>
                 <SelectTrigger className="w-[250px] border-none p-0 h-auto shadow-none focus:ring-0 focus:ring-offset-0">
                   <div className="flex items-center gap-2">
                     {selectedCommunity ? (
                       <>
-                        <Avatar className="h-6 w-6">
+                        <Avatar className="h-6 w-6 ring-2 ring-indigo-100">
                           <AvatarImage src={selectedCommunity.telegram_photo_url || undefined} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                             {selectedCommunity.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -99,7 +104,7 @@ export const CommunitySelector = () => {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={community.telegram_photo_url || undefined} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                             {community.name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -110,7 +115,7 @@ export const CommunitySelector = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -119,7 +124,7 @@ export const CommunitySelector = () => {
             <Button 
               onClick={copyMiniAppLink} 
               size="sm"
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white gap-2 shadow-md hover:shadow-lg transition-all duration-300"
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white gap-2 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <Copy className="h-4 w-4" />
               Copy Mini App Link
@@ -128,9 +133,11 @@ export const CommunitySelector = () => {
         </div>
 
         <div className="flex items-center gap-4 ml-auto">
-          <Button variant="ghost" size="icon" className="rounded-full bg-gray-100 hover:bg-gray-200 transition-all duration-300">
-            <Bell className="h-5 w-5 text-gray-600" />
-          </Button>
+          <motion.div whileHover={{ scale: 1.1 }}>
+            <Button variant="ghost" size="icon" className="rounded-full bg-white hover:bg-indigo-50 transition-all duration-300 shadow-sm">
+              <Bell className="h-5 w-5 text-indigo-600" />
+            </Button>
+          </motion.div>
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -138,7 +145,7 @@ export const CommunitySelector = () => {
             <Button 
               variant="default" 
               onClick={() => navigate("/platform-select")}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 gap-2 shadow-md hover:shadow-lg transition-all duration-300"
+              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 gap-2 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <PlusCircle className="h-4 w-4" />
               New Community

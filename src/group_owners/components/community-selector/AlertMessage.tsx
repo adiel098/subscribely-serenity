@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dispatch, SetStateAction } from "react";
 
 interface AlertMessageProps {
   showAlert: boolean;

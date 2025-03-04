@@ -73,26 +73,29 @@ export const CommunitySelector = () => {
           <CommunityDropdown 
             communities={communities} 
             selectedCommunityId={selectedCommunityId}
-            selectedCommunity={selectedCommunity}
-            onSelectCommunity={setSelectedCommunityId}
+            setSelectedCommunityId={setSelectedCommunityId}
           />
 
           <PlatformSubscriptionBanner />
 
           {selectedCommunityId && !hasPlan && (
-            <MissingPlanBanner onAddPlanClick={navigateToPlans} />
+            <MissingPlanBanner 
+              hasPlan={hasPlan} 
+              selectedCommunityId={selectedCommunityId}
+              navigateToPlans={navigateToPlans} 
+            />
           )}
 
-          <MiniAppLinkButton onCopyLink={copyMiniAppLink} />
+          <MiniAppLinkButton onClick={copyMiniAppLink} />
         </div>
 
         <HeaderActions onNewCommunityClick={() => navigate("/platform-select")} />
       </motion.div>
 
       <AlertMessage 
-        isOpen={showAlert}
-        onOpenChange={setShowAlert}
-        message={alertMessage}
+        showAlert={showAlert}
+        setShowAlert={setShowAlert}
+        alertMessage={alertMessage}
       />
     </>
   );

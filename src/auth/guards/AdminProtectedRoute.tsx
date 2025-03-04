@@ -1,3 +1,4 @@
+
 import { Navigate, Outlet } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -31,11 +32,14 @@ export const AdminProtectedRoute = () => {
       if (user?.id) {
         try {
           const { data, error } = await supabase
-            .from('admin_users')
-            .select('*')
-            .eq('user_id', user.id);
+            .rpc('get_admin_users');
             
-          console.log("🔍 Direct admin_users check:", { data, error });
+          console.log("🔍 Direct admin_users check via get_admin_users():", { data, error });
+          
+          if (data) {
+            const userAdmin = data.find(admin => admin.user_id === user.id);
+            console.log("🔍 Current user admin status:", userAdmin);
+          }
         } catch (e) {
           console.error("Error checking admin_users table:", e);
         }

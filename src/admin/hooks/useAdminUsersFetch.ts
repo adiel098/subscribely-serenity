@@ -21,10 +21,9 @@ export const useAdminUsersFetch = () => {
       const currentUser = await supabase.auth.getUser();
       console.log("Current user:", currentUser.data.user);
       
-      // Use the fixed security definer function without recursion issues
+      // Use the get_admin_users security definer function to avoid recursion
       const { data: adminUsersData, error: adminUsersError } = await supabase
-        .from('admin_users')
-        .select('*');
+        .rpc('get_admin_users');
         
       if (adminUsersError) {
         console.error("Error fetching admin users:", adminUsersError);
@@ -56,7 +55,8 @@ export const useAdminUsersFetch = () => {
       
       // Process the data to create user objects
       const processedUsers: AdminUser[] = profiles.map(profile => {
-        const adminRole = adminUsersData?.find(a => a.user_id === profile.id)?.role || null;
+        const adminData = adminUsersData?.find(a => a.user_id === profile.id);
+        const adminRole = adminData?.role || null;
         const userCommunities = communities?.filter(c => c.owner_id === profile.id) || [];
         
         // Set role based on admin status or community ownership

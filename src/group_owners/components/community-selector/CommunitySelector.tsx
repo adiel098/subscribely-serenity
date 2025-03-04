@@ -109,7 +109,8 @@ export const CommunitySelector = () => {
             />
           </div>
 
-          <PlatformSubscriptionBanner hasPlatformPlan={hasPlatformPlan} />
+          {/* Use the PlatformSubscriptionBanner without the prop since we handle it internally now */}
+          <PlatformSubscriptionBanner />
 
           <MissingPlanBanner 
             hasPlan={hasPlan} 
@@ -120,7 +121,7 @@ export const CommunitySelector = () => {
           <MiniAppLinkButton onClick={copyMiniAppLink} />
         </div>
 
-        <HeaderActions />
+        <HeaderActions onNewCommunityClick={() => navigate("/platform-select")} />
       </motion.div>
 
       <AlertMessage 

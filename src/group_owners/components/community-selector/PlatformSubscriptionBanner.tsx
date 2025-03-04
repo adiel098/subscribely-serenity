@@ -6,12 +6,22 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
-export const PlatformSubscriptionBanner = () => {
-  const [hasPlatformPlan, setHasPlatformPlan] = useState(true);
+interface PlatformSubscriptionBannerProps {
+  hasPlatformPlan?: boolean; // Make this prop optional with a default value
+}
+
+export const PlatformSubscriptionBanner = ({ hasPlatformPlan: initialValue }: PlatformSubscriptionBannerProps = {}) => {
+  const [hasPlatformPlan, setHasPlatformPlan] = useState(initialValue ?? true);
   const navigate = useNavigate();
 
   // Check if the user has an active platform subscription
   useEffect(() => {
+    if (initialValue !== undefined) {
+      // If an initial value was provided, use it and skip the database check
+      setHasPlatformPlan(initialValue);
+      return;
+    }
+    
     const checkPlatformSubscription = async () => {
       try {
         const { data: session } = await supabase.auth.getSession();
@@ -37,7 +47,7 @@ export const PlatformSubscriptionBanner = () => {
     };
     
     checkPlatformSubscription();
-  }, []);
+  }, [initialValue]);
 
   if (hasPlatformPlan) return null;
 

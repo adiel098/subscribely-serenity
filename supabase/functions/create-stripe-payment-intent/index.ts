@@ -78,9 +78,7 @@ serve(async (req) => {
       )
     }
 
-    // Fix: Use the secret key directly without any format modifications
     const secretKey = paymentMethod.config.secret_key;
-    console.log('Using Stripe secret key with prefix:', secretKey.substring(0, 7) + '...');
 
     const stripe = new Stripe(secretKey, {
       apiVersion: '2023-10-16',

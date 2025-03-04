@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { 
   Card, 
@@ -12,9 +12,22 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { CalendarClock, CheckCircle, Crown, ArrowUpRight, Loader2, Check } from "lucide-react";
+import { 
+  CalendarClock, 
+  CheckCircle, 
+  Crown, 
+  ArrowUpRight, 
+  Loader2, 
+  Check, 
+  CreditCard,
+  X
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useActivePaymentMethods } from "@/group_owners/hooks/useActivePaymentMethods";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { PaymentMethodsGrid } from "@/group_owners/components/platform-payment/PaymentMethodsGrid";
+import { processPayment } from "@/group_owners/services/platformPaymentService";
 
 interface PlatformPlan {
   id: string;
@@ -46,9 +59,16 @@ export function CurrentPlanCard() {
   const [subscription, setSubscription] = React.useState<Subscription | null>(null);
   const [allPlans, setAllPlans] = React.useState<PlatformPlan[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { data: paymentMethods, isLoading: isLoadingPaymentMethods } = useActivePaymentMethods();
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -101,7 +121,7 @@ export function CurrentPlanCard() {
     };
 
     fetchData();
-  }, [user, toast]);
+  }, [user, toast, paymentSuccess]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'N/A';
@@ -112,8 +132,54 @@ export function CurrentPlanCard() {
     }
   };
 
-  const goToPlans = () => {
-    navigate('/platform-plans');
+  const handleSwitchPlan = (plan: PlatformPlan) => {
+    setSelectedPlan(plan);
+    setSelectedPaymentMethod(null);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handleSelectPaymentMethod = (method: string) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  const handleProcessPayment = async () => {
+    if (!selectedPlan || !selectedPaymentMethod) {
+      toast({
+        title: "Error",
+        description: "Please select a payment method to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsProcessingPayment(true);
+      
+      await processPayment(selectedPlan, selectedPaymentMethod);
+      
+      toast({
+        title: "Success",
+        description: `Successfully subscribed to the ${selectedPlan.name} plan`,
+      });
+      
+      setPaymentSuccess(true);
+      setIsPaymentDialogOpen(false);
+      
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: "There was an error processing your payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const closePaymentDialog = () => {
+    setIsPaymentDialogOpen(false);
+    setSelectedPaymentMethod(null);
   };
 
   if (isLoading) {
@@ -220,7 +286,7 @@ export function CurrentPlanCard() {
                   </Button>
                 ) : (
                   <Button 
-                    onClick={goToPlans} 
+                    onClick={() => handleSwitchPlan(plan)} 
                     variant="outline" 
                     className="w-full border-indigo-200 hover:bg-indigo-50 text-indigo-700"
                   >
@@ -233,6 +299,69 @@ export function CurrentPlanCard() {
           );
         })}
       </div>
+
+      {/* Payment Method Selection Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <div className="flex justify-between items-center">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-indigo-600" />
+                Select Payment Method
+              </DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={closePaymentDialog}
+                className="h-8 w-8 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogDescription>
+              {selectedPlan && (
+                <div className="mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                  <p className="text-indigo-700">
+                    You're subscribing to <span className="font-semibold">{selectedPlan.name}</span> plan 
+                    for <span className="font-semibold">${selectedPlan.price}</span>/{selectedPlan.interval}
+                  </p>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4">
+            <PaymentMethodsGrid
+              paymentMethods={paymentMethods || []}
+              isLoading={isLoadingPaymentMethods}
+              selectedPlanPrice={selectedPlan?.price || 0}
+              isProcessing={isProcessingPayment}
+              onSelectPaymentMethod={handleSelectPaymentMethod}
+              selectedPaymentMethod={selectedPaymentMethod}
+            />
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={!selectedPaymentMethod || isProcessingPayment}
+              onClick={handleProcessPayment}
+            >
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Complete Payment
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

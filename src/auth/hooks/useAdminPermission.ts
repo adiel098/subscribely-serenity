@@ -53,29 +53,24 @@ export const useAdminPermission = () => {
         console.log("🔐 useAdminPermission: Admin status response:", data);
         
         // Check if data exists and explicitly handle the admin status
-        if (data && Array.isArray(data) && data.length > 0) {
-          // Handle array response format
-          const adminData = data[0];
-          const isUserAdmin = adminData.is_admin === true;
-          setIsAdmin(isUserAdmin);
-          setRole(adminData.admin_role || null);
-          setLastCheckedId(user.id);
-          
-          console.log(`✅ useAdminPermission: User ${user.id} admin status: ${isUserAdmin}, role: ${adminData.admin_role || 'none'}`);
+        let adminFound = false;
+        let roleFound = null;
+        
+        if (Array.isArray(data) && data.length > 0) {
+          adminFound = data[0]?.is_admin === true;
+          roleFound = data[0]?.admin_role || null;
+          console.log(`✅ useAdminPermission: Array response - admin: ${adminFound}, role: ${roleFound}`);
         } else if (data) {
-          // Handle object response format
-          const isUserAdmin = data.is_admin === true;
-          setIsAdmin(isUserAdmin);
-          setRole(data.admin_role || null);
-          setLastCheckedId(user.id);
-          
-          console.log(`✅ useAdminPermission: User ${user.id} admin status: ${isUserAdmin}, role: ${data.admin_role || 'none'}`);
-        } else {
-          console.log(`ℹ️ useAdminPermission: User ${user.id} has no admin data`);
-          setIsAdmin(false);
-          setRole(null);
+          adminFound = data.is_admin === true;
+          roleFound = data.admin_role || null;
+          console.log(`✅ useAdminPermission: Object response - admin: ${adminFound}, role: ${roleFound}`);
         }
         
+        setIsAdmin(adminFound);
+        setRole(roleFound);
+        setLastCheckedId(user.id);
+        
+        console.log(`✅ useAdminPermission: Final status - User ${user.id} is admin: ${adminFound}, role: ${roleFound || 'none'}`);
       } catch (err: any) {
         console.error("❌ useAdminPermission: Error in admin check:", err);
         if (mounted) {

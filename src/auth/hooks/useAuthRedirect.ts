@@ -15,7 +15,21 @@ export const useAuthRedirect = (user: User | null) => {
       const redirectTimer = setTimeout(async () => {
         try {
           console.log("🔍 Auth page: Checking admin status for", user.id);
-          const isAdmin = await checkAdminStatus(user.id);
+          const { data, error } = await checkAdminStatus(user.id);
+          
+          if (error) {
+            console.error("❌ Auth page: Error checking admin status:", error);
+            return navigate('/dashboard', { replace: true });
+          }
+          
+          console.log("✅ Auth page: Admin check result:", data);
+          
+          let isAdmin = false;
+          if (Array.isArray(data) && data.length > 0) {
+            isAdmin = data[0]?.is_admin === true;
+          } else if (data) {
+            isAdmin = data?.is_admin === true;
+          }
           
           if (isAdmin) {
             console.log("✅ Auth page: Admin user confirmed, redirecting to admin dashboard");

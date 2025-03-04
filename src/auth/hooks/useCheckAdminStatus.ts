@@ -7,7 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const useCheckAdminStatus = () => {
   const checkAdminStatus = async (userId: string) => {
-    if (!userId) return false;
+    if (!userId) {
+      console.log("⚠️ useCheckAdminStatus: No user ID provided");
+      return { data: null, error: new Error("No user ID provided") };
+    }
     
     console.log(`🔍 useCheckAdminStatus: Checking admin status for user ${userId}`);
     try {
@@ -17,30 +20,27 @@ export const useCheckAdminStatus = () => {
       
       if (error) {
         console.error('❌ useCheckAdminStatus: Error checking admin status:', error);
-        return false;
+        return { data: null, error };
       }
       
       console.log('✅ useCheckAdminStatus: Admin status result:', data);
+      return { data, error: null };
       
-      // Handle different response formats
-      if (Array.isArray(data) && data.length > 0) {
-        return data[0]?.is_admin === true;
-      }
-      return data?.is_admin === true;
     } catch (err) {
       console.error('❌ useCheckAdminStatus: Exception in admin check:', err);
-      return false;
+      return { data: null, error: err as Error };
     }
   };
 
   const checkSuperAdminStatus = async (userId: string) => {
-    if (!userId) return false;
+    if (!userId) {
+      console.log("⚠️ useCheckAdminStatus: No user ID provided for super admin check");
+      return false;
+    }
     
     console.log(`🔍 useCheckAdminStatus: Checking super admin status for user ${userId}`);
     try {
-      // Use the security definer function to avoid infinite recursion
-      const { data, error } = await supabase
-        .rpc('get_admin_status', { user_id_param: userId });
+      const { data, error } = await checkAdminStatus(userId);
       
       if (error) {
         console.error('❌ useCheckAdminStatus: Error checking super admin status:', error);

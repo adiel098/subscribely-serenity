@@ -32,14 +32,20 @@ export const PlatformSubscriptionBanner = ({ hasPlatformPlan: initialValue }: Pl
           .select('*')
           .eq('owner_id', session.session.user.id)
           .eq('status', 'active')
-          .single();
+          .maybeSingle();
         
-        if (error || !data) {
-          console.log('No active platform subscription found', error);
+        if (error) {
+          console.error('Error fetching subscription:', error);
           setHasPlatformPlan(false);
-        } else {
+          return;
+        }
+        
+        if (data) {
           console.log('Active platform subscription found', data);
           setHasPlatformPlan(true);
+        } else {
+          console.log('No active platform subscription found');
+          setHasPlatformPlan(false);
         }
       } catch (err) {
         console.error('Error checking platform subscription:', err);

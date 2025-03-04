@@ -26,7 +26,7 @@ export const processPayment = async (
   // Calculate subscription end date based on interval
   const endDate = calculateEndDate(selectedPlan.interval);
 
-  // Create subscription
+  // Create subscription - modified to match the actual database schema
   const { data: subscription, error: subscriptionError } = await supabase
     .from('platform_subscriptions')
     .insert({
@@ -35,7 +35,6 @@ export const processPayment = async (
       subscription_start_date: new Date(),
       subscription_end_date: endDate,
       auto_renew: true,
-      is_active: true,
       status: 'active'
     })
     .select()

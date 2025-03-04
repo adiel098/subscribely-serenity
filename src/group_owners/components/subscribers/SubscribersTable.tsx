@@ -34,16 +34,16 @@ interface SubscribersTableProps {
 
 export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersTableProps) => {
   return (
-    <div className="border rounded-lg bg-white shadow-sm overflow-auto">
+    <div className="border rounded-lg bg-white shadow-sm overflow-auto max-h-[calc(100vh-220px)]">
       <Table className="w-full">
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="font-medium text-sm">User</TableHead>
-            <TableHead className="font-medium text-sm">Telegram ID</TableHead>
-            <TableHead className="font-medium text-sm">Subscription Plan</TableHead>
-            <TableHead className="font-medium text-sm">Status</TableHead>
-            <TableHead className="font-medium text-sm">Subscription Period</TableHead>
-            <TableHead className="font-medium text-sm">Activity</TableHead>
+            <TableHead className="font-medium text-xs">User</TableHead>
+            <TableHead className="font-medium text-xs">Telegram ID</TableHead>
+            <TableHead className="font-medium text-xs">Subscription Plan</TableHead>
+            <TableHead className="font-medium text-xs">Status</TableHead>
+            <TableHead className="font-medium text-xs">Subscription Period</TableHead>
+            <TableHead className="font-medium text-xs">Activity</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>

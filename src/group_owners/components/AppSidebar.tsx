@@ -1,14 +1,13 @@
 
 import {
-  BarChart,
+  LayoutDashboard,
   BadgeDollarSign,
   CreditCard,
   Wallet,
   TrendingUp,
   Bot,
   LogOut,
-  HelpCircle,
-  LayoutDashboard
+  HelpCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
@@ -66,12 +65,12 @@ export function AppSidebar() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="fixed left-2 top-[72px] h-[calc(100vh-80px)] z-30"
+      className="fixed left-2 top-[68px] h-[calc(100vh-76px)] z-30"
     >
       <Sidebar className="w-[220px] rounded-xl border border-blue-100 shadow-lg bg-white/95 backdrop-blur-md">
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupContent className="px-2 py-1">
+            <SidebarGroupContent className="px-2 py-2">
               <SidebarMenu>
                 {menuItems.map((item) => {
                   const isActive = location.pathname === item.path;

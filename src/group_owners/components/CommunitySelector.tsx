@@ -30,7 +30,7 @@ export const CommunitySelector = () => {
 
   const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
   const { plans } = useSubscriptionPlans(selectedCommunityId || "");
-  
+
   const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
 
   const copyMiniAppLink = () => {
@@ -66,10 +66,10 @@ export const CommunitySelector = () => {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm"
+        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm h-[60px]"
       >
         <div className="flex items-center gap-4 ml-[230px]">
-          <div className="flex items-center gap-3 bg-white py-1.5 px-3 rounded-lg border shadow-sm">
+          <div className="flex items-center gap-3 bg-white py-1 px-3 rounded-lg border shadow-sm">
             <Sparkles className="h-4 w-4 text-blue-500" />
             <div>
               <p className="text-xs text-gray-500 font-medium">COMMUNITY</p>
@@ -137,7 +137,7 @@ export const CommunitySelector = () => {
             <Button 
               variant="default" 
               onClick={() => navigate("/platform-select")}
-              className="bg-gradient-to-r from-[#1EAEDB] to-[#0FA0CE] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8"
+              className="bg-gradient-to-r from-[#26A5E4] to-[#0088CC] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8"
               size="sm"
             >
               <PlusCircle className="h-3 w-3" />

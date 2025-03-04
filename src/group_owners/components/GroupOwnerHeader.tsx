@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -29,7 +28,6 @@ export function GroupOwnerHeader() {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
   
-  // Get the first letter of the email for the avatar fallback
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();

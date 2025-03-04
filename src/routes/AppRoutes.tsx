@@ -120,36 +120,24 @@ const AppRoutes = () => {
 
       {/* Admin Routes - Using nested routes with Outlet pattern */}
       <Route element={<AdminProtectedRoute />}>
-        <Route path="/admin" element={
-          <AdminLayout>
-            <Dashboard />
-          </AdminLayout>
-        } />
-        <Route path="/admin/users" element={
-          <AdminLayout>
-            <Users />
-          </AdminLayout>
-        } />
-        <Route path="/admin/communities" element={
-          <AdminLayout>
-            <Communities />
-          </AdminLayout>
-        } />
-        <Route path="/admin/payments" element={
-          <AdminLayout>
-            <Payments />
-          </AdminLayout>
-        } />
-        <Route path="/admin/reports" element={
-          <AdminLayout>
-            <Reports />
-          </AdminLayout>
-        } />
-        <Route path="/admin/settings" element={
-          <AdminLayout>
-            <Settings />
-          </AdminLayout>
-        } />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+        </Route>
+        <Route path="/admin/users" element={<AdminLayout />}>
+          <Route index element={<Users />} />
+        </Route>
+        <Route path="/admin/communities" element={<AdminLayout />}>
+          <Route index element={<Communities />} />
+        </Route>
+        <Route path="/admin/payments" element={<AdminLayout />}>
+          <Route index element={<Payments />} />
+        </Route>
+        <Route path="/admin/reports" element={<AdminLayout />}>
+          <Route index element={<Reports />} />
+        </Route>
+        <Route path="/admin/settings" element={<AdminLayout />}>
+          <Route index element={<Settings />} />
+        </Route>
       </Route>
 
       {/* Telegram Mini App Route */}

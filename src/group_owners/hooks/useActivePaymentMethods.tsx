@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 export const useActivePaymentMethods = () => {
-  const [data, setData] = useState<any[]>(null);
+  const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { toast } = useToast();
@@ -24,7 +24,7 @@ export const useActivePaymentMethods = () => {
         }
         
         console.log('Active payment methods from DB:', paymentMethods);
-        setData(paymentMethods);
+        setData(paymentMethods || []);
       } catch (err: any) {
         console.error('Error fetching data:', err);
         setError(err);

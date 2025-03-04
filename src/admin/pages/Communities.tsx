@@ -31,7 +31,8 @@ import {
   Edit,
   AlertTriangle,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Globe
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

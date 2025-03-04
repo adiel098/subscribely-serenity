@@ -63,6 +63,7 @@ export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
   const { updatePlan } = usePlatformPlans();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // We explicitly type features as string in the form and convert array to string
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -108,7 +109,7 @@ export const EditPlanDialog = ({ plan, isOpen, onOpenChange }: Props) => {
         description: values.description,
         price: values.price,
         interval: values.interval,
-        features: values.features, // Already transformed to string[] by zod
+        features: values.features, // Already transformed to string[] by Zod
         is_active: values.is_active,
         max_communities: values.max_communities,
         max_members_per_community: values.max_members_per_community,

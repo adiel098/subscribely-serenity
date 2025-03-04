@@ -60,6 +60,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   const { createPlan } = usePlatformPlans();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // We explicitly type features as string in the form default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,7 +68,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
       description: "",
       price: 0,
       interval: "monthly",
-      features: "", // This is correct as a string for the form input
+      features: "", // This will be transformed to string[] by Zod on submit
       is_active: true,
       max_communities: 1,
       max_members_per_community: "",
@@ -82,7 +83,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
         description: values.description,
         price: values.price,
         interval: values.interval,
-        features: values.features, // Already transformed to string[] by zod
+        features: values.features, // Already transformed to string[] by Zod
         is_active: values.is_active,
         max_communities: values.max_communities,
         max_members_per_community: values.max_members_per_community,

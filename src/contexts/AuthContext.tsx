@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log(`🔍 Checking admin status for user ${userId}`);
     try {
       // Use RPC to check admin status to avoid RLS recursion issues
-      console.log(`📊 Querying admin_users table for user_id: ${userId}`);
+      console.log(`📊 Using is_admin RPC for user_id: ${userId}`);
       
       const { data, error } = await supabase
         .rpc('is_admin', { user_uuid: userId });
@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (fallbackError) {
           console.error('❌ Fallback admin check also failed:', fallbackError);
-          console.error('❌ Fallback error details:', JSON.stringify(fallbackError, null, 2));
           setLoading(false);
           return false;
         }
@@ -129,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (currentUser) {
           console.log(`🔐 User session found for ${currentUser.email}`);
-          await checkAdminAndRedirect(currentUser.id);
+          const isAdmin = await checkAdminAndRedirect(currentUser.id);
           // Note: checkAdminAndRedirect sets loading to false for both admin and non-admin users
         } else {
           console.log('⚠️ No user session found');

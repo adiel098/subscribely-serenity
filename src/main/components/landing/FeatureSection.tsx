@@ -57,8 +57,8 @@ export const FeatureSection = ({
             viewport={{ once: true }}
             className="lg:w-1/2 space-y-6"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">{title}</h2>
-            <p className="text-lg text-gray-600">{description}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-indigo-900">{title}</h2>
+            <p className="text-lg text-indigo-700">{description}</p>
             
             <div className="space-y-4 pt-4">
               {features.map((feature, index) => (
@@ -70,20 +70,20 @@ export const FeatureSection = ({
                   viewport={{ once: true }}
                   className="flex items-start space-x-3"
                 >
-                  <Check className="h-6 w-6 text-emerald-500 flex-shrink-0 mt-1" />
-                  <span className="text-gray-700">{feature.text}</span>
+                  <Check className="h-6 w-6 text-purple-500 flex-shrink-0 mt-1" />
+                  <span className="text-indigo-700">{feature.text}</span>
                 </motion.div>
               ))}
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              <Button asChild size="lg" className="bg-emerald-500 hover:bg-emerald-600">
+              <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700">
                 <Link to="/auth">
                   {buttonText}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="border-purple-300 text-purple-700 hover:bg-purple-50">
                 <a href="#contact">{demoButtonText}</a>
               </Button>
             </div>

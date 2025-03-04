@@ -49,7 +49,7 @@ export default function Index() {
         features={managementFeatures} 
         imageSrc="/lovable-uploads/922e3de0-b097-4b2c-8e97-32aa579d045a.png" 
         imageAlt="Community Management Platform" 
-        bgColor="bg-white" 
+        bgColor="bg-indigo-50" 
       />
       
       <FeatureSection 
@@ -58,7 +58,7 @@ export default function Index() {
         features={paymentFeatures} 
         imageSrc="/lovable-uploads/9ffe418a-ad3f-4a1c-9576-89f7129a1b8f.png" 
         imageAlt="Global Payment Options" 
-        bgColor="bg-green-50" 
+        bgColor="bg-purple-50" 
         reversed={true} 
       />
       
@@ -68,7 +68,7 @@ export default function Index() {
         features={monitorFeatures} 
         imageSrc="/lovable-uploads/1fe01199-01ba-4d5d-9d6e-88af5097a5f0.png" 
         imageAlt="Analytics Dashboard" 
-        bgColor="bg-white" 
+        bgColor="bg-violet-50" 
       />
       
       <FeatureSection 
@@ -77,12 +77,12 @@ export default function Index() {
         features={supportFeatures} 
         imageSrc="/lovable-uploads/d7b82bfb-6189-40c0-8cba-643eb0c03b4c.png" 
         imageAlt="Customer Support" 
-        bgColor="bg-amber-50" 
+        bgColor="bg-fuchsia-50" 
         reversed={true} 
         buttonText="Get started for free" 
       />
       
-      {/* Revenue Calculator Section */}
+      {/* Revenue Calculator Section - Need to update this component */}
       <RevenueCalculator />
       
       {/* CTA Section */}

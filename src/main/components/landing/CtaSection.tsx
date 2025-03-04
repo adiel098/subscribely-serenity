@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export const CtaSection = () => {
   return (
-    <section className="py-20 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white">
+    <section className="py-20 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-500 text-white">
       <div className="max-w-7xl mx-auto text-center">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
@@ -25,7 +25,7 @@ export const CtaSection = () => {
             <Button 
               asChild 
               size="lg" 
-              className="text-lg bg-white text-indigo-600 hover:bg-gray-100 hover:text-indigo-700 rounded-xl shadow-md"
+              className="text-lg bg-white text-purple-700 hover:bg-gray-100 hover:text-purple-800 rounded-xl shadow-md"
             >
               <Link to="/auth">
                 Get Started Now

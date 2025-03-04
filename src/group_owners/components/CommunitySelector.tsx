@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Bell, Copy, AlertCircle, PlusCircle, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";

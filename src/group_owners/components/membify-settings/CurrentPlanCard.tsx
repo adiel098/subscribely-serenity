@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -21,13 +20,15 @@ import {
   CreditCard,
   Clock,
   Calendar,
-  PlusCircle
+  PlusCircle,
+  XCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useActivePaymentMethods } from "@/group_owners/hooks/useActivePaymentMethods";
 import { PaymentMethodsGrid } from "@/group_owners/components/platform-payment/PaymentMethodsGrid";
 import { processPayment } from "@/group_owners/services/platformPaymentService";
 import { formatDate, calculateDaysRemaining } from "@/group_owners/utils/dateUtils";
+import { CancelPlatformSubscriptionDialog } from "@/group_owners/components/platform-subscription/CancelPlatformSubscriptionDialog";
 
 interface PlatformPlan {
   id: string;
@@ -63,6 +64,7 @@ export function CurrentPlanCard() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -75,7 +77,6 @@ export function CurrentPlanCard() {
       try {
         setIsLoading(true);
         
-        // Fetch all active platform plans
         const { data: plansData, error: plansError } = await supabase
           .from('platform_plans')
           .select('*')
@@ -85,7 +86,6 @@ export function CurrentPlanCard() {
         if (plansError) throw plansError;
         setAllPlans(plansData || []);
 
-        // Get the active subscription (if any)
         const { data: subscriptionData, error: subscriptionError } = await supabase
           .from('platform_subscriptions')
           .select(`
@@ -102,7 +102,7 @@ export function CurrentPlanCard() {
           .eq('owner_id', user.id)
           .eq('status', 'active')
           .order('subscription_start_date', { ascending: false })
-          .maybeSingle(); // Using maybeSingle() instead of single() to handle cases where there might be no subscription
+          .maybeSingle();
 
         if (subscriptionError && !subscriptionError.message.includes('JSON object requested, multiple (or no) rows returned')) {
           throw subscriptionError;
@@ -126,7 +126,7 @@ export function CurrentPlanCard() {
 
   const handleSwitchPlan = (plan: PlatformPlan) => {
     if (selectedPlan?.id === plan.id) {
-      setSelectedPlan(null); // Toggle off if clicking the same plan
+      setSelectedPlan(null);
     } else {
       setSelectedPlan(plan);
       setSelectedPaymentMethod(null);
@@ -173,6 +173,10 @@ export function CurrentPlanCard() {
     }
   };
 
+  const handleCancellationSuccess = () => {
+    setPaymentSuccess(prev => !prev);
+  };
+
   if (isLoading) {
     return (
       <Card className="border-indigo-100 shadow-sm">
@@ -202,7 +206,6 @@ export function CurrentPlanCard() {
     );
   }
 
-  // Calculate days remaining for subscription
   const daysRemaining = subscription ? calculateDaysRemaining(subscription.subscription_end_date) : 0;
 
   return (
@@ -221,9 +224,20 @@ export function CurrentPlanCard() {
                 <h3 className="text-lg font-bold text-gray-900">{subscription.plan?.name} Plan</h3>
                 <p className="text-sm text-gray-600">{subscription.plan?.description}</p>
               </div>
-              <Badge className="self-start md:self-auto bg-green-500 text-white px-3 py-1">
-                Active
-              </Badge>
+              <div className="flex gap-2">
+                <Badge className="self-start md:self-auto bg-green-500 text-white px-3 py-1">
+                  Active
+                </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Cancel
+                </Button>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -361,7 +375,6 @@ export function CurrentPlanCard() {
                 </CardFooter>
               </Card>
               
-              {/* Payment methods section that appears when this plan is selected */}
               {selectedPlan?.id === plan.id && (
                 <Card className="border-indigo-200 shadow-sm animate-in fade-in-50 slide-in-from-top-4 duration-300">
                   <CardHeader className="pb-2">
@@ -405,6 +418,16 @@ export function CurrentPlanCard() {
           );
         })}
       </div>
+
+      {subscription && (
+        <CancelPlatformSubscriptionDialog
+          open={cancelDialogOpen}
+          onOpenChange={setCancelDialogOpen}
+          subscriptionId={subscription.id}
+          subscriptionEndDate={subscription.subscription_end_date}
+          onCancellationSuccess={handleCancellationSuccess}
+        />
+      )}
     </div>
   );
 }

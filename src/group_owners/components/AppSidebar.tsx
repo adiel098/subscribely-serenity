@@ -131,7 +131,7 @@ export function AppSidebar() {
             </Button>
             <Button 
               variant="outline" 
-              className="w-full border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-600 gap-2"
+              className="w-full border-red-100 bg-gradient-to-r from-red-50/70 to-rose-50/70 hover:from-red-100/90 hover:to-rose-100/90 text-red-600 hover:text-red-700 hover:border-red-200 gap-2"
               onClick={signOut}
             >
               <LogOut className="h-4 w-4" />

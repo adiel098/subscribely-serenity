@@ -138,7 +138,7 @@ export const CommunitySelector = () => {
             <Button 
               variant="default" 
               onClick={() => navigate("/platform-select")}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 gap-2 shadow-md hover:shadow-lg transition-all duration-300"
+              className="bg-gradient-to-r from-[#1EAEDB] to-[#0FA0CE] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <PlusCircle className="h-4 w-4" />
               New Community

@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, Wallet, Bitcoin, ArrowRight, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useActivePaymentMethods } from "../hooks/useActivePaymentMethods";
 
 interface PlatformPlan {
   id: string;
@@ -19,7 +20,7 @@ interface PlatformPlan {
 export default function PlatformPaymentMethods() {
   const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activePlatformPaymentMethods, setActivePlatformPaymentMethods] = useState<any[]>([]);
+  const { data: activePlatformPaymentMethods, isLoading } = useActivePaymentMethods();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -33,27 +34,6 @@ export default function PlatformPaymentMethods() {
         console.error('Error parsing plan data:', e);
       }
     }
-
-    // Fetch available platform payment methods
-    const fetchPlatformPaymentMethods = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('platform_payment_methods')
-          .select('*')
-          .eq('is_active', true);
-
-        if (error) {
-          console.error('Error fetching platform payment methods:', error);
-          return;
-        }
-
-        setActivePlatformPaymentMethods(data || []);
-      } catch (err) {
-        console.error('Error:', err);
-      }
-    };
-
-    fetchPlatformPaymentMethods();
   }, []);
 
   const handlePaymentProcess = async (paymentMethod: string) => {
@@ -217,52 +197,58 @@ export default function PlatformPaymentMethods() {
 
       <h2 className="text-xl font-semibold mb-4">Available Payment Methods</h2>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        {activePlatformPaymentMethods.length > 0 ? (
-          activePlatformPaymentMethods.map((method) => (
-            <motion.div
-              key={method.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Card className="h-full cursor-pointer hover:border-indigo-300 transition-all">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {getPaymentMethodIcon(method.provider)}
-                    <span className="capitalize">{method.provider}</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Pay with {method.provider}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter>
-                  <Button
-                    className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
-                    onClick={() => handlePaymentProcess(method.provider)}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Pay ${selectedPlan.price}
-                        <ArrowRight className="h-4 w-4 ml-auto" />
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))
-        ) : (
-          <div className="col-span-3 p-6 text-center border rounded-lg bg-gray-50">
-            <p className="text-muted-foreground">No payment methods are currently available. Please try again later.</p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          {activePlatformPaymentMethods && activePlatformPaymentMethods.length > 0 ? (
+            activePlatformPaymentMethods.map((method) => (
+              <motion.div
+                key={method.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="h-full cursor-pointer hover:border-indigo-300 transition-all">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {getPaymentMethodIcon(method.provider)}
+                      <span className="capitalize">{method.provider}</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Pay with {method.provider}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    <Button
+                      className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700"
+                      onClick={() => handlePaymentProcess(method.provider)}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Pay ${selectedPlan.price}
+                          <ArrowRight className="h-4 w-4 ml-auto" />
+                        </>
+                      )}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-3 p-6 text-center border rounded-lg bg-gray-50">
+              <p className="text-muted-foreground">No payment methods are currently available. Please try again later.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-6 text-center">
         <Button 

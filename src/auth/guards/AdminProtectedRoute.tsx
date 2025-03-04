@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 export const AdminProtectedRoute = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminPermission();
+  const { isAdmin, isLoading: isCheckingAdmin, error, hasToastShown } = useAdminPermission();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [hasShownToast, setHasShownToast] = useState(false);
@@ -27,8 +27,8 @@ export const AdminProtectedRoute = () => {
     });
     
     // Show toast when access is denied due to not being an admin
-    // But only if we haven't already shown this toast and the auth check is complete
-    if (!authLoading && !isCheckingAdmin && user && !isAdmin && !hasShownToast) {
+    // Only show once per session and only after authentication checks complete
+    if (!authLoading && !isCheckingAdmin && user && !isAdmin && !hasShownToast && !hasToastShown.current) {
       console.log("⛔ AdminProtectedRoute: Access denied for user", user.email);
       toast({
         title: "Access Denied",
@@ -36,10 +36,11 @@ export const AdminProtectedRoute = () => {
         variant: "destructive"
       });
       setHasShownToast(true);
+      hasToastShown.current = true;
     }
 
     // Show toast if there's an error checking admin status (but only once)
-    if (error && !isCheckingAdmin && !hasShownToast) {
+    if (error && !isCheckingAdmin && !hasShownToast && !hasToastShown.current) {
       console.error("❌ AdminProtectedRoute: Error checking admin status:", error);
       toast({
         title: "Error",
@@ -47,6 +48,7 @@ export const AdminProtectedRoute = () => {
         variant: "destructive"
       });
       setHasShownToast(true);
+      hasToastShown.current = true;
     }
   }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error, hasShownToast]);
 

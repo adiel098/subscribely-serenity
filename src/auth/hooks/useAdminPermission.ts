@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Hook to check if the current user has admin permissions
  * Uses security definer functions to avoid infinite recursion in RLS policies
+ * Implements caching to prevent redundant checks
  */
 export const useAdminPermission = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ export const useAdminPermission = () => {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [lastCheckedId, setLastCheckedId] = useState<string | null>(null);
+  const hasToastShown = useRef<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -27,7 +29,7 @@ export const useAdminPermission = () => {
       }
 
       // If we've already checked this user and they're an admin, don't check again
-      if (lastCheckedId === user.id && isAdmin) {
+      if (lastCheckedId === user.id) {
         console.log(`🔄 useAdminPermission: Using cached admin status for user ${user.id}`);
         setIsLoading(false);
         return;
@@ -84,7 +86,7 @@ export const useAdminPermission = () => {
     return () => {
       mounted = false;
     };
-  }, [user, lastCheckedId, isAdmin]);
+  }, [user]);
 
   // Function to check if user is a super admin using the security definer function
   const isSuperAdmin = async (): Promise<boolean> => {
@@ -107,6 +109,7 @@ export const useAdminPermission = () => {
     isLoading, 
     error, 
     role,
-    isSuperAdmin 
+    isSuperAdmin,
+    hasToastShown 
   };
 };

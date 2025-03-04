@@ -5,18 +5,15 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export const AdminProtectedRoute = ({
-  children
-}: {
-  children: React.ReactNode;
-}) => {
+export const AdminProtectedRoute = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: isCheckingAdmin, error } = useAdminPermission();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [hasShownToast, setHasShownToast] = useState(false);
 
   useEffect(() => {
     console.log("🔍 AdminProtectedRoute state:", { 
@@ -30,25 +27,28 @@ export const AdminProtectedRoute = ({
     });
     
     // Show toast when access is denied due to not being an admin
-    if (!authLoading && !isCheckingAdmin && user && !isAdmin) {
+    // But only if we haven't already shown this toast and the auth check is complete
+    if (!authLoading && !isCheckingAdmin && user && !isAdmin && !hasShownToast) {
       console.log("⛔ AdminProtectedRoute: Access denied for user", user.email);
       toast({
         title: "Access Denied",
         description: "You don't have permission to access the admin panel.",
         variant: "destructive"
       });
+      setHasShownToast(true);
     }
 
-    // Show toast if there's an error checking admin status
-    if (error && !isCheckingAdmin) {
+    // Show toast if there's an error checking admin status (but only once)
+    if (error && !isCheckingAdmin && !hasShownToast) {
       console.error("❌ AdminProtectedRoute: Error checking admin status:", error);
       toast({
         title: "Error",
         description: "There was a problem verifying your admin status. Please try again.",
         variant: "destructive"
       });
+      setHasShownToast(true);
     }
-  }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error]);
+  }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error, hasShownToast]);
 
   // If still loading auth or checking admin status, show loading state
   if (authLoading || isCheckingAdmin) {
@@ -102,5 +102,5 @@ export const AdminProtectedRoute = ({
   }
 
   console.log("✅ AdminProtectedRoute: User is admin, rendering admin content");
-  return <>{children}</>;
+  return <Outlet />;
 };

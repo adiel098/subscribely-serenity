@@ -13,8 +13,11 @@ export const useAdminPermission = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [lastCheckedId, setLastCheckedId] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+    
     const checkAdminStatus = async () => {
       if (!user) {
         console.log("⚠️ useAdminPermission: No user found");
@@ -23,8 +26,16 @@ export const useAdminPermission = () => {
         return;
       }
 
+      // If we've already checked this user and they're an admin, don't check again
+      if (lastCheckedId === user.id && isAdmin) {
+        console.log(`🔄 useAdminPermission: Using cached admin status for user ${user.id}`);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
+        setIsLoading(true);
         
         // Call the security definer RPC function that avoids infinite recursion
         const { data: isAdminResult, error: isAdminError } = await supabase
@@ -35,7 +46,10 @@ export const useAdminPermission = () => {
           throw isAdminError;
         }
         
+        if (!mounted) return;
+        
         setIsAdmin(!!isAdminResult);
+        setLastCheckedId(user.id);
         
         if (isAdminResult) {
           // Get the role using a security definer function to avoid RLS issues
@@ -54,16 +68,23 @@ export const useAdminPermission = () => {
         
       } catch (err: any) {
         console.error("❌ useAdminPermission: Error in admin check:", err);
-        setError(err?.message || "Failed to verify admin status");
-        setIsAdmin(false);
+        if (mounted) {
+          setError(err?.message || "Failed to verify admin status");
+          setIsAdmin(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    setIsLoading(true);
     checkAdminStatus();
-  }, [user]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [user, lastCheckedId, isAdmin]);
 
   // Function to check if user is a super admin using the security definer function
   const isSuperAdmin = async (): Promise<boolean> => {

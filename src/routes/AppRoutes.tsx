@@ -1,20 +1,21 @@
-
-import { Route, Routes } from "react-router-dom";
-import Index from "@/main/pages/Index";
-import Auth from "@/auth/pages/Auth";
-import NotFound from "@/main/pages/NotFound";
-import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";
-import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
-import { AdminLayout } from "@/admin/components/AdminLayout";
-import AdminDashboard from "@/admin/pages/Dashboard";
-import AdminCommunities from "@/admin/pages/Communities";
-import AdminUsers from "@/admin/pages/Users";
-import AdminPayments from "@/admin/pages/Payments";
-import AdminReports from "@/admin/pages/Reports";
-import AdminSettings from "@/admin/pages/Settings";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Auth } from "@/auth/pages/Auth";
 import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
-import { CommunityProvider } from "@/contexts/CommunityContext";
-import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
+import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
+import { NotFound } from "@/main/pages/NotFound";
+import { Index } from "@/main/pages/Index";
+import { TelegramMiniApp } from "@/telegram-mini-app/pages/TelegramMiniApp";
+
+// Admin Pages
+import { Dashboard as AdminDashboard } from "@/admin/pages/Dashboard";
+import { Users as AdminUsers } from "@/admin/pages/Users";
+import { Communities as AdminCommunities } from "@/admin/pages/Communities";
+import { Payments as AdminPayments } from "@/admin/pages/Payments";
+import { Reports as AdminReports } from "@/admin/pages/Reports";
+import { Settings as AdminSettings } from "@/admin/pages/Settings";
+
+// Group Owner Pages
 import Dashboard from "@/group_owners/pages/Dashboard";
 import Subscribers from "@/group_owners/pages/Subscribers";
 import Subscriptions from "@/group_owners/pages/Subscriptions";
@@ -22,141 +23,54 @@ import Messages from "@/group_owners/pages/Messages";
 import Analytics from "@/group_owners/pages/Analytics";
 import BotSettings from "@/group_owners/pages/BotSettings";
 import PlatformSelect from "@/group_owners/pages/PlatformSelect";
-import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import PlatformPlans from "@/group_owners/pages/PlatformPlans";
+import PlatformPayment from "@/group_owners/pages/PlatformPayment";
+import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
+import MembifySettings from "@/group_owners/pages/MembifySettings";
 
-export const AppRoutes = () => {
+// Layouts
+import DashboardLayout from "@/group_owners/components/DashboardLayout";
+import { AdminLayout } from "@/admin/components/AdminLayout";
+
+const AppRoutes = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Main Routes */}
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
-      
-      {/* Admin Routes - Using AdminProtectedRoute as the parent */}
-      <Route element={<AdminProtectedRoute />}>
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/communities" element={<AdminCommunities />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/payments" element={<AdminPayments />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-        </Route>
-      </Route>
-      
-      {/* Group Owner Routes */}
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/subscribers" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <Subscribers />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/subscriptions" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <Subscriptions />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/messages" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <Messages />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/analytics" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <Analytics />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/bot-settings" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <BotSettings />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/platform-select" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <PlatformSelect />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/platform-plans" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <PlatformPlans />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/connect/telegram" 
-        element={
-          <ProtectedRoute>
-            <CommunityProvider>
-              <DashboardLayout>
-                <TelegramConnect />
-              </DashboardLayout>
-            </CommunityProvider>
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* 404 Not Found Route */}
       <Route path="*" element={<NotFound />} />
+
+      {/* Group Owner Routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/subscribers" element={<ProtectedRoute><DashboardLayout><Subscribers /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/subscriptions" element={<ProtectedRoute><DashboardLayout><Subscriptions /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute><DashboardLayout><Messages /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><DashboardLayout><Analytics /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/bot-settings" element={<ProtectedRoute><DashboardLayout><BotSettings /></DashboardLayout></ProtectedRoute>} />
+      <Route path="/platform-select" element={<ProtectedRoute><PlatformSelect /></ProtectedRoute>} />
+      <Route path="/platform-plans" element={<ProtectedRoute><PlatformPlans /></ProtectedRoute>} />
+      <Route path="/platform-payment" element={<ProtectedRoute><PlatformPayment /></ProtectedRoute>} />
+      <Route path="/telegram-connect" element={<ProtectedRoute><TelegramConnect /></ProtectedRoute>} />
+      <Route path="/membify-settings" element={<ProtectedRoute><DashboardLayout><MembifySettings /></DashboardLayout></ProtectedRoute>} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminProtectedRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminProtectedRoute>} />
+      <Route path="/admin/users" element={<AdminProtectedRoute><AdminLayout><AdminUsers /></AdminLayout></AdminProtectedRoute>} />
+      <Route path="/admin/communities" element={<AdminProtectedRoute><AdminLayout><AdminCommunities /></AdminLayout></AdminProtectedRoute>} />
+      <Route path="/admin/payments" element={<AdminProtectedRoute><AdminLayout><AdminPayments /></AdminLayout></AdminProtectedRoute>} />
+      <Route path="/admin/reports" element={<AdminProtectedRoute><AdminLayout><AdminReports /></AdminLayout></AdminProtectedRoute>} />
+      <Route path="/admin/settings" element={<AdminProtectedRoute><AdminLayout><AdminSettings /></AdminLayout></AdminProtectedRoute>} />
+
+      {/* Telegram Mini App Route */}
+      <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
     </Routes>
   );
 };
+
+export default AppRoutes;

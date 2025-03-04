@@ -1,4 +1,5 @@
-import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, TrendingUp, Bot, LogOut, HelpCircle } from 'lucide-react';
+
+import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, TrendingUp, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -35,6 +36,12 @@ const menuItems = [
     title: "Bot Settings",
     icon: Bot,
     path: "/bot-settings"
+  },
+  {
+    title: "Membify Settings",
+    icon: Settings,
+    path: "/membify-settings",
+    highlight: true
   }
 ];
 
@@ -63,11 +70,24 @@ export function AppSidebar() {
                       duration: 0.2
                     }} className="w-full">
                       <SidebarMenuButton asChild>
-                        <Link to={item.path} className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' : 'text-gray-600 hover:bg-blue-50'}`}>
+                        <Link 
+                          to={item.path} 
+                          className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' 
+                              : 'text-gray-600 hover:bg-blue-50'
+                          }`}
+                        >
                           <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'} mr-3`}>
                             <item.icon className="h-5 w-5" />
                           </div>
-                          <span className="truncate">{item.title}</span>
+                          {item.title === "Membify Settings" ? (
+                            <span className="truncate bg-gradient-to-r from-purple-600 to-indigo-500 text-transparent bg-clip-text font-medium">
+                              {item.title}
+                            </span>
+                          ) : (
+                            <span className="truncate">{item.title}</span>
+                          )}
                         </Link>
                       </SidebarMenuButton>
                     </motion.div>

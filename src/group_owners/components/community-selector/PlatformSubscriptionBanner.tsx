@@ -31,7 +31,7 @@ export const PlatformSubscriptionBanner = ({ hasPlatformPlan: initialValue }: Pl
           .from('platform_subscriptions')
           .select('*')
           .eq('owner_id', session.session.user.id)
-          .eq('is_active', true)
+          .eq('status', 'active')
           .single();
         
         if (error || !data) {

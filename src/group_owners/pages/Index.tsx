@@ -5,55 +5,58 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
 import Navbar from "@/components/Navbar";
+import { FeatureSection } from "../components/landing/FeatureSection";
+import { RevenueCalculator } from "../components/landing/RevenueCalculator";
 import { 
   ArrowRight, 
   Shield, 
   LogIn, 
   UserPlus, 
   Sparkles, 
+  CheckCircle,
+  Globe,
   Zap, 
   Users, 
   BarChart,
   MessageCircle,
   CreditCard,
-  Lock
+  Lock,
+  Headset,
+  Clock,
+  RefreshCw,
+  BadgeCheck
 } from "lucide-react";
 
 export default function Index() {
   const { user } = useAuth();
   const { isAdmin } = useAdminPermission();
 
-  const features = [
-    {
-      icon: <CreditCard className="h-10 w-10 text-indigo-500" />,
-      title: "Subscription Management",
-      description: "Create and manage paid memberships for your Telegram groups with ease."
-    },
-    {
-      icon: <Users className="h-10 w-10 text-pink-500" />,
-      title: "Automated User Management",
-      description: "Automatically add or remove users based on payment status."
-    },
-    {
-      icon: <BarChart className="h-10 w-10 text-purple-500" />,
-      title: "Analytics Dashboard",
-      description: "Get detailed insights about your subscribers and revenue."
-    },
-    {
-      icon: <MessageCircle className="h-10 w-10 text-cyan-500" />,
-      title: "Broadcast Messages",
-      description: "Easily communicate with your subscribers through broadcasts."
-    },
-    {
-      icon: <Zap className="h-10 w-10 text-amber-500" />,
-      title: "Multiple Payment Methods",
-      description: "Accept payments via Stripe, PayPal, and cryptocurrency."
-    },
-    {
-      icon: <Lock className="h-10 w-10 text-emerald-500" />,
-      title: "Secure Access Control",
-      description: "Set custom access levels for different subscription tiers."
-    }
+  const managementFeatures = [
+    { text: "Connect new and existing Telegram communities" },
+    { text: "Accept free or paid Telegram members" },
+    { text: "Customize and brand your invite page" },
+    { text: "Embed payments directly on your website" }
+  ];
+
+  const paymentFeatures = [
+    { text: "Stripe integration for global payments" },
+    { text: "All major credit cards supported" },
+    { text: "Apple Pay & Google Pay integration" },
+    { text: "Wide range of Cryptocurrencies" }
+  ];
+  
+  const monitorFeatures = [
+    { text: "Easily track membership activity" },
+    { text: "Monitor your most important metrics" },
+    { text: "Quickly refund or cancel subscriptions" },
+    { text: "Build automated workflows with integrations" }
+  ];
+  
+  const supportFeatures = [
+    { text: "Unlimited 24/7 support" },
+    { text: "1-1 Configuration consultation" },
+    { text: "99.99% Uptime guarantee" },
+    { text: "Dedicated account manager" }
   ];
 
   return (
@@ -163,38 +166,48 @@ export default function Index() {
         </div>
       </motion.section>
       
-      {/* Features Section */}
-      <section className="py-20 px-4 sm:px-8 lg:px-16 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              ✨ Powerful Features
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Everything you need to create, manage, and monetize your Telegram communities
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 hover:border-indigo-200 hover:shadow-xl transition-all duration-300"
-              >
-                <div className="mb-6 inline-block p-4 bg-gray-50 rounded-2xl">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Feature Sections */}
+      <FeatureSection
+        title="Start & Grow 🚀"
+        description="Membify gives you everything you need to build a thriving paid Telegram community. You focus on great content and growth, and we handle everything else, from invites to permissions and more."
+        features={managementFeatures}
+        imageSrc="/lovable-uploads/922e3de0-b097-4b2c-8e97-32aa579d045a.png"
+        imageAlt="Community Management Platform"
+        bgColor="bg-white"
+      />
+      
+      <FeatureSection
+        title="Get Paid Globally 💸"
+        description="Enhance convenience and streamline payments with a flexible wide range of options on Membify."
+        features={paymentFeatures}
+        imageSrc="/lovable-uploads/9ffe418a-ad3f-4a1c-9576-89f7129a1b8f.png"
+        imageAlt="Global Payment Options"
+        bgColor="bg-green-50"
+        reversed={true}
+      />
+      
+      <FeatureSection
+        title="Monitor & Manage 📊"
+        description="Built-in member management features like billing and community analytics make administration a breeze, while your activity feed lets you keep your finger on the pulse of your community."
+        features={monitorFeatures}
+        imageSrc="/lovable-uploads/1fe01199-01ba-4d5d-9d6e-88af5097a5f0.png"
+        imageAlt="Analytics Dashboard"
+        bgColor="bg-white"
+      />
+      
+      <FeatureSection
+        title="Unparalleled Support 🎧"
+        description="Our Customer Success team offers reliable and dedicated support to help you grow your membership business."
+        features={supportFeatures}
+        imageSrc="/lovable-uploads/d7b82bfb-6189-40c0-8cba-643eb0c03b4c.png"
+        imageAlt="Customer Support"
+        bgColor="bg-amber-50"
+        reversed={true}
+        buttonText="Get started for free"
+      />
+      
+      {/* Revenue Calculator Section */}
+      <RevenueCalculator />
       
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-8 lg:px-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white">

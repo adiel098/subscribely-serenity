@@ -6,7 +6,11 @@ import {
   Wallet,
   TrendingUp,
   Bot,
-  LogOut
+  LogOut,
+  User,
+  Settings,
+  HelpCircle,
+  LayoutDashboard
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
@@ -25,7 +29,7 @@ import { motion } from 'framer-motion';
 const menuItems = [
   {
     title: "Dashboard",
-    icon: BarChart,
+    icon: LayoutDashboard,
     path: "/dashboard",
     emoji: "📊"
   },
@@ -66,59 +70,83 @@ export function AppSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar className="fixed left-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border-none shadow-md bg-white">
-      <SidebarContent>
-        <div className="px-3 py-4">
-          <div className="flex items-center gap-3 mb-6 p-2">
-            <div className="bg-blue-500 text-white p-2 rounded-lg">
-              <BarChart className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-800">Community Hub</h2>
-              <p className="text-xs text-gray-500">Manage & Grow</p>
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="fixed left-4 top-20 h-[calc(100vh-6rem)] z-30"
+    >
+      <Sidebar className="w-[250px] rounded-xl border-none shadow-xl bg-white/95 backdrop-blur-md">
+        <SidebarContent>
+          <div className="px-3 py-4">
+            <div className="flex items-center gap-3 mb-4 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-2 rounded-lg shadow-md">
+                <BarChart className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-blue-700">Community Hub</h2>
+                <p className="text-xs text-blue-500">Manage & Grow</p>
+              </div>
             </div>
           </div>
-        </div>
-        <SidebarGroup>
-          <SidebarGroupContent className="px-2 py-2">
-            <SidebarMenu>
-              {menuItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
-                      <Link 
-                        to={item.path}
-                        className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors duration-200 ${
-                          isActive 
-                            ? 'bg-blue-50 text-blue-600 font-medium' 
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
+          <SidebarGroup>
+            <SidebarGroupContent className="px-2 py-1">
+              <SidebarMenu>
+                {menuItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <motion.div
+                        whileHover={{ x: 4 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full"
                       >
-                        <item.icon className={`h-5 w-5 ${isActive ? 'text-blue-500' : 'text-gray-400'}`} />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        <SidebarMenuButton asChild>
+                          <Link 
+                            to={item.path}
+                            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                              isActive 
+                                ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-medium shadow-sm' 
+                                : 'text-gray-600 hover:bg-blue-50'
+                            }`}
+                          >
+                            <div className={`flex items-center justify-center ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                              <item.icon className="h-5 w-5" />
+                            </div>
+                            <span>{item.title}</span>
+                            <span className="ml-auto opacity-70">{item.emoji}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </motion.div>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-        {/* Sign Out Button */}
-        <div className="absolute bottom-6 left-0 right-0 px-4">
-          <Button 
-            variant="outline" 
-            className="w-full border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-600 gap-2"
-            onClick={signOut}
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </SidebarContent>
-    </Sidebar>
+          {/* Sign Out Button */}
+          <div className="absolute bottom-6 left-0 right-0 px-4 space-y-2">
+            <Button 
+              variant="outline" 
+              className="w-full border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-gray-600 gap-2"
+              onClick={() => {}}
+            >
+              <HelpCircle className="h-4 w-4" />
+              Help & Support
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-gray-600 gap-2"
+              onClick={signOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </SidebarContent>
+      </Sidebar>
+    </motion.div>
   );
 }

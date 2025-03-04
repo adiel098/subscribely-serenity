@@ -139,6 +139,14 @@ export const useAdminUsers = () => {
         
       if (error) throw error;
       
+      // Log the status change
+      await supabase.from('system_logs').insert({
+        event_type: `user_status_${status}`,
+        details: `User status updated to ${status}`,
+        user_id: userId,
+        metadata: { updated_by: (await supabase.auth.getUser()).data.user?.id }
+      });
+      
       toast({
         title: "User updated",
         description: `User status changed to ${status}`,
@@ -196,6 +204,14 @@ export const useAdminUsers = () => {
           if (insertError) throw insertError;
         }
       }
+      
+      // Log the role change
+      await supabase.from('system_logs').insert({
+        event_type: 'user_role_update',
+        details: `User role updated to ${role}`,
+        user_id: userId,
+        metadata: { updated_by: (await supabase.auth.getUser()).data.user?.id }
+      });
       
       toast({
         title: "User role updated",

@@ -245,6 +245,7 @@ export type Database = {
           full_name: string | null
           id: string
           initial_telegram_code: string | null
+          is_suspended: boolean | null
           last_login: string | null
           last_name: string | null
           notes: string | null
@@ -263,6 +264,7 @@ export type Database = {
           full_name?: string | null
           id: string
           initial_telegram_code?: string | null
+          is_suspended?: boolean | null
           last_login?: string | null
           last_name?: string | null
           notes?: string | null
@@ -281,6 +283,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           initial_telegram_code?: string | null
+          is_suspended?: boolean | null
           last_login?: string | null
           last_name?: string | null
           notes?: string | null

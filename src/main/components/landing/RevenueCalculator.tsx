@@ -26,7 +26,7 @@ export const RevenueCalculator = () => {
   return (
     <section className="py-20 px-4 sm:px-8 lg:px-16 bg-indigo-50 w-full">
       <div className="container-fluid mx-auto max-w-full">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

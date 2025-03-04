@@ -21,7 +21,7 @@ export const useAdminUsersFetch = () => {
       const currentUser = await supabase.auth.getUser();
       console.log("Current user:", currentUser.data.user);
       
-      const { data: adminStatus, error: adminStatusError } = await supabase.rpc(
+      const { data: adminStatusData, error: adminStatusError } = await supabase.rpc(
         'get_admin_status', 
         { user_id_param: currentUser.data.user?.id }
       );
@@ -31,9 +31,18 @@ export const useAdminUsersFetch = () => {
         throw adminStatusError;
       }
       
-      console.log("Admin status check result:", adminStatus);
+      console.log("Admin status check result:", adminStatusData);
       
-      if (!adminStatus?.is_admin) {
+      // Handle different response formats
+      let isAdmin = false;
+      
+      if (Array.isArray(adminStatusData) && adminStatusData.length > 0) {
+        isAdmin = adminStatusData[0]?.is_admin === true;
+      } else if (adminStatusData) {
+        isAdmin = adminStatusData.is_admin === true;
+      }
+      
+      if (!isAdmin) {
         throw new Error("Unauthorized: You must be an admin to view users");
       }
       

@@ -1,4 +1,3 @@
-
 import { Navigate, Outlet } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -7,6 +6,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AdminProtectedRoute = () => {
   const { user, loading: authLoading } = useAuth();
@@ -25,6 +25,26 @@ export const AdminProtectedRoute = () => {
       error,
       currentPath: window.location.pathname
     });
+    
+    // For debugging only - check admin_users table directly
+    const checkAdminUserTable = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('admin_users')
+            .select('*')
+            .eq('user_id', user.id);
+            
+          console.log("🔍 Direct admin_users check:", { data, error });
+        } catch (e) {
+          console.error("Error checking admin_users table:", e);
+        }
+      }
+    };
+    
+    if (user && !isCheckingAdmin && !isAdmin) {
+      checkAdminUserTable();
+    }
     
     // Show toast when access is denied due to not being an admin
     // Only show once per session and only after authentication checks complete

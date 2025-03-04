@@ -52,7 +52,18 @@ export const useAdminPermission = () => {
         
         console.log("🔐 useAdminPermission: Admin status response:", data);
         
-        if (data) {
+        // Check if data exists and explicitly handle the admin status
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Handle array response format
+          const adminData = data[0];
+          const isUserAdmin = adminData.is_admin === true;
+          setIsAdmin(isUserAdmin);
+          setRole(adminData.admin_role || null);
+          setLastCheckedId(user.id);
+          
+          console.log(`✅ useAdminPermission: User ${user.id} admin status: ${isUserAdmin}, role: ${adminData.admin_role || 'none'}`);
+        } else if (data) {
+          // Handle object response format
           const isUserAdmin = data.is_admin === true;
           setIsAdmin(isUserAdmin);
           setRole(data.admin_role || null);
@@ -95,6 +106,11 @@ export const useAdminPermission = () => {
         
       if (error) throw error;
       console.log("🔐 isSuperAdmin check result:", data);
+      
+      // Handle different response formats
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0]?.admin_role === 'super_admin';
+      }
       return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error("❌ useAdminPermission: Error checking super admin status:", err);

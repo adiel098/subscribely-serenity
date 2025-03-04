@@ -21,6 +21,11 @@ export const useCheckAdminStatus = () => {
       }
       
       console.log('✅ useCheckAdminStatus: Admin status result:', data);
+      
+      // Handle different response formats
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0]?.is_admin === true;
+      }
       return data?.is_admin === true;
     } catch (err) {
       console.error('❌ useCheckAdminStatus: Exception in admin check:', err);
@@ -43,6 +48,11 @@ export const useCheckAdminStatus = () => {
       }
       
       console.log('✅ useCheckAdminStatus: Super admin check result:', data);
+      
+      // Handle different response formats
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0]?.admin_role === 'super_admin';
+      }
       return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error('❌ useCheckAdminStatus: Exception in super admin check:', err);

@@ -26,7 +26,19 @@ export const useAdminUserRole = (onSuccess?: () => void) => {
       
       console.log("🔐 Admin status check result:", data);
       
-      if (!data?.is_admin || data?.admin_role !== 'super_admin') {
+      // Handle different response formats
+      let isAdmin = false;
+      let adminRole = null;
+      
+      if (Array.isArray(data) && data.length > 0) {
+        isAdmin = data[0]?.is_admin === true;
+        adminRole = data[0]?.admin_role;
+      } else if (data) {
+        isAdmin = data.is_admin === true;
+        adminRole = data.admin_role;
+      }
+      
+      if (!isAdmin || adminRole !== 'super_admin') {
         throw new Error("You don't have permission to change user roles");
       }
       

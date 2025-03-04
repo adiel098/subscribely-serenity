@@ -1,14 +1,20 @@
 
 import { useState } from 'react';
-import { Menu, X, LayoutDashboard } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("🚪 Navbar: Sign out button clicked");
+    await signOut();
+  };
 
   return (
     <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -41,7 +47,7 @@ const Navbar = () => {
             <a href="#contact" className="text-gray-700 hover:text-gray-900 transition-colors">
               Contact
             </a>
-            {!user && (
+            {!user ? (
               <>
                 <Button variant="outline" onClick={() => navigate('/auth')}>
                   Sign In
@@ -50,6 +56,15 @@ const Navbar = () => {
                   Sign Up
                 </Button>
               </>
+            ) : (
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
             )}
           </div>
 
@@ -98,7 +113,7 @@ const Navbar = () => {
               Contact
             </a>
             <div className="pt-4 pb-3 border-t border-gray-200">
-              {!user && (
+              {!user ? (
                 <>
                   <Button variant="outline" onClick={() => navigate('/auth')} className="w-full mb-2">
                     Sign In
@@ -107,6 +122,15 @@ const Navbar = () => {
                     Sign Up
                   </Button>
                 </>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2 justify-center"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
               )}
             </div>
           </div>

@@ -30,8 +30,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Use RPC to check admin status
       console.log(`📊 Using is_admin RPC for user_id: ${userId}`);
       
-      const { data, error } = await supabase
-        .rpc('is_admin', { user_uuid: userId });
+      // Set a timeout for the query
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Admin check timeout")), 4000);
+      });
+      
+      // Run the query with a timeout
+      const queryPromise = supabase.rpc('is_admin', { user_uuid: userId });
+      
+      // Race the query against the timeout
+      const { data, error } = await Promise.race([
+        queryPromise,
+        timeoutPromise.then(() => {
+          console.log("⏱️ Admin check RPC timed out, falling back to direct query");
+          throw new Error("Timeout");
+        })
+      ]) as any;
       
       if (error) {
         console.error('❌ Error checking admin status with RPC:', error);
@@ -97,6 +111,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (err) {
       console.error('❌ Exception in admin check:', err);
+      
+      // If it's a timeout error, try the fallback
+      if (err.message === "Timeout" || err.message === "Admin check timeout") {
+        try {
+          console.log('🔄 Trying fallback admin check after timeout...');
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('admin_users')
+            .select('role')
+            .eq('user_id', userId)
+            .limit(1);
+          
+          if (fallbackError) {
+            console.error('❌ Fallback admin check also failed:', fallbackError);
+            toast({
+              variant: "destructive",
+              title: "Error checking admin status",
+              description: "Please try refreshing the page"
+            });
+            setLoading(false);
+            return false;
+          }
+          
+          if (fallbackData && fallbackData.length > 0) {
+            console.log(`✅ User ${userId} is an admin with role: ${fallbackData[0].role}`);
+            
+            // Get current URL path to avoid unnecessary navigation
+            const currentPath = window.location.pathname;
+            console.log(`🔍 Current path: ${currentPath}`);
+            
+            if (!currentPath.startsWith('/admin')) {
+              console.log('🚀 Redirecting to admin dashboard...');
+              navigate('/admin/dashboard');
+            }
+            
+            setLoading(false);
+            return true;
+          }
+        } catch (fallbackErr) {
+          console.error('❌ Critical error in fallback admin check:', fallbackErr);
+        }
+      }
+      
       toast({
         variant: "destructive",
         title: "Error checking admin status",

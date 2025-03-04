@@ -37,6 +37,16 @@ export const AdminProtectedRoute = ({
         variant: "destructive"
       });
     }
+
+    // Show toast if there's an error checking admin status
+    if (error) {
+      console.error("❌ AdminProtectedRoute: Error checking admin status:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem verifying your admin status. Please try again.",
+        variant: "destructive"
+      });
+    }
   }, [user, isAdmin, authLoading, isCheckingAdmin, toast, error]);
 
   if (authLoading || isCheckingAdmin) {
@@ -49,6 +59,9 @@ export const AdminProtectedRoute = ({
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <span className="text-xl font-medium">Verifying admin permissions...</span>
+        {isCheckingAdmin && (
+          <p className="text-gray-500 mt-2">This may take a moment. Please wait...</p>
+        )}
       </div>
     );
   }
@@ -65,12 +78,21 @@ export const AdminProtectedRoute = ({
         <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />
         <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
         <p className="text-gray-600 mb-6">You don't have administrator permissions.</p>
-        <Button 
-          onClick={() => navigate("/dashboard")} 
-          className="px-6"
-        >
-          Return to Dashboard
-        </Button>
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => navigate("/dashboard")} 
+            className="px-6"
+          >
+            Return to Dashboard
+          </Button>
+          <Button 
+            onClick={() => navigate("/auth")} 
+            variant="outline"
+            className="px-6"
+          >
+            Sign In with Different Account
+          </Button>
+        </div>
       </div>
     );
   }

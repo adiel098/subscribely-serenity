@@ -35,7 +35,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
       description: "",
       price: 0,
       interval: "monthly",
-      features: "",  // String for the form, will be transformed to string[] by Zod
+      features: "",  // String in the form, will be transformed to string[] by Zod
       is_active: true,
       max_communities: 1,
       max_members_per_community: "",
@@ -50,7 +50,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
         description: values.description,
         price: values.price,
         interval: values.interval,
-        features: values.features, // Already transformed to string[] by Zod
+        features: values.features, // Transformed to string[] by Zod
         is_active: values.is_active,
         max_communities: values.max_communities,
         max_members_per_community: values.max_members_per_community,

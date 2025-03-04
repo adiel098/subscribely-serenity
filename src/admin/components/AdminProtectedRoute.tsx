@@ -23,7 +23,8 @@ export const AdminProtectedRoute = ({
       authLoading: loading,
       isAdmin,
       isCheckingAdmin,
-      error
+      error,
+      currentPath: window.location.pathname
     });
     
     // Show toast when access is denied due to not being an admin

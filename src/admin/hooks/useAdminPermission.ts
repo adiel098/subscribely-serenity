@@ -21,26 +21,39 @@ export const useAdminPermission = () => {
       try {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         
-        // Check if the user is in the admin_users table
+        // Use a direct raw query instead of relying on RLS
+        console.log(`📊 Running SQL query to check admin status without RLS for user ${user.id}`);
         const { data, error: queryError } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
+          .rpc('is_admin', { user_uuid: user.id });
 
         if (queryError) {
           console.error("❌ useAdminPermission: Error checking admin status:", queryError);
           console.error("❌ Error details:", JSON.stringify(queryError, null, 2));
-          setError(queryError.message);
-          setIsAdmin(false);
+          
+          // Try a fallback approach if RPC fails
+          console.log("🔄 useAdminPermission: Trying fallback admin check...");
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('admin_users')
+            .select('id, role')
+            .eq('user_id', user.id)
+            .limit(1);
+            
+          if (fallbackError) {
+            console.error("❌ useAdminPermission: Fallback also failed:", fallbackError);
+            setError(fallbackError.message);
+            setIsAdmin(false);
+          } else {
+            const adminStatus = fallbackData && fallbackData.length > 0;
+            console.log(`✅ useAdminPermission: Fallback admin check result for ${user.email}:`, { 
+              isAdmin: adminStatus, 
+              role: fallbackData && fallbackData.length > 0 ? fallbackData[0].role : null
+            });
+            setIsAdmin(adminStatus);
+          }
         } else {
-          // User is an admin if they exist in the admin_users table
-          const adminStatus = !!data;
-          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, { 
-            isAdmin: adminStatus, 
-            role: data?.role 
-          });
-          setIsAdmin(adminStatus);
+          // is_admin RPC returns a boolean
+          console.log(`✅ useAdminPermission: Admin check result for ${user.email}:`, data);
+          setIsAdmin(!!data);
         }
       } catch (err) {
         console.error("❌ useAdminPermission: Error in admin check:", err);

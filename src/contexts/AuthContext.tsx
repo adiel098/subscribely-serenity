@@ -27,46 +27,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAdminAndRedirect = async (userId: string) => {
     console.log(`🔍 Checking admin status for user ${userId}`);
     try {
-      // Add detailed logging for the admin check query
-      console.log(`📊 Querying admin_users table for user_id: ${userId}`);
+      // Use RPC to check admin status to avoid RLS recursion issues
+      console.log(`📊 Using is_admin RPC for user_id: ${userId}`);
       
       const { data, error } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+        .rpc('is_admin', { user_uuid: userId });
       
       if (error) {
-        console.error('❌ Error checking admin status:', error);
+        console.error('❌ Error checking admin status with RPC:', error);
         console.error('❌ Error details:', JSON.stringify(error, null, 2));
-        setLoading(false);
-        return false;
-      }
-      
-      // Log the query result
-      console.log(`📋 Admin check query result:`, JSON.stringify(data, null, 2));
-      
-      if (data) {
-        console.log(`✅ User ${userId} is an admin with role: ${data.role}`);
         
-        // Get current URL path to avoid unnecessary navigation
-        const currentPath = window.location.pathname;
-        console.log(`🔍 Current path: ${currentPath}`);
+        // Try fallback with direct select
+        console.log('🔄 Trying fallback admin check method...');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('admin_users')
+          .select('role')
+          .eq('user_id', userId)
+          .limit(1);
         
-        if (!currentPath.startsWith('/admin')) {
-          console.log('🚀 Redirecting to admin dashboard...');
-          navigate('/admin/dashboard');
-        } else {
-          console.log('ℹ️ Already on admin path, not redirecting');
+        if (fallbackError) {
+          console.error('❌ Fallback admin check also failed:', fallbackError);
+          setLoading(false);
+          return false;
         }
         
-        // Important: Set loading to false even for admin users
-        setLoading(false);
-        return true;
+        console.log(`📋 Admin fallback check result:`, JSON.stringify(fallbackData, null, 2));
+        
+        if (fallbackData && fallbackData.length > 0) {
+          const isAdmin = true;
+          const role = fallbackData[0].role;
+          console.log(`✅ User ${userId} is an admin with role: ${role}`);
+          
+          // Get current URL path to avoid unnecessary navigation
+          const currentPath = window.location.pathname;
+          console.log(`🔍 Current path: ${currentPath}`);
+          
+          if (!currentPath.startsWith('/admin')) {
+            console.log('🚀 Redirecting to admin dashboard...');
+            navigate('/admin/dashboard');
+          } else {
+            console.log('ℹ️ Already on admin path, not redirecting');
+          }
+          
+          // IMPORTANT: Set loading to false for admin users too
+          setLoading(false);
+          return true;
+        } else {
+          console.log(`ℹ️ User ${userId} is not an admin`);
+          setLoading(false);
+          return false;
+        }
       } else {
-        console.log(`ℹ️ User ${userId} is not an admin`);
+        const isAdmin = !!data;
+        console.log(`📋 Admin RPC check result: ${isAdmin}`);
+        
+        if (isAdmin) {
+          console.log(`✅ User ${userId} is an admin`);
+          
+          // Get current URL path to avoid unnecessary navigation
+          const currentPath = window.location.pathname;
+          console.log(`🔍 Current path: ${currentPath}`);
+          
+          if (!currentPath.startsWith('/admin')) {
+            console.log('🚀 Redirecting to admin dashboard...');
+            navigate('/admin/dashboard');
+          } else {
+            console.log('ℹ️ Already on admin path, not redirecting');
+          }
+        } else {
+          console.log(`ℹ️ User ${userId} is not an admin`);
+        }
+        
+        // IMPORTANT: Set loading to false for admin users too
         setLoading(false);
-        return false;
+        return isAdmin;
       }
     } catch (err) {
       console.error('❌ Exception in admin check:', err);
@@ -95,11 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentUser) {
           console.log(`🔐 User session found for ${currentUser.email}`);
           const isAdmin = await checkAdminAndRedirect(currentUser.id);
-          if (!isAdmin && !loadingHandled) {
-            console.log('📱 Not an admin, setting loading to false');
-            setLoading(false);
-            loadingHandled = true;
-          }
+          // Note: checkAdminAndRedirect sets loading to false for both admin and non-admin users
         } else {
           console.log('⚠️ No user session found');
           if (!loadingHandled) {

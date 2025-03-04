@@ -16,10 +16,6 @@ import { AdminLayout } from "@/admin/components/AdminLayout";
 // Main Pages
 import Index from "@/main/pages/Index";
 import NotFound from "@/main/pages/NotFound";
-import Members from "@/main/pages/Members";
-import Events from "@/main/pages/Events";
-import Rewards from "@/main/pages/Rewards";
-import Settings from "@/main/pages/Settings";
 
 // Group Owner Pages
 import Auth from "@/auth/pages/Auth";
@@ -88,15 +84,6 @@ const App = () => (
                     </CommunityProvider>
                   </ProtectedRoute>
                 } />
-                <Route path="/members" element={
-                  <ProtectedRoute>
-                    <CommunityProvider>
-                      <DashboardLayout>
-                        <Members />
-                      </DashboardLayout>
-                    </CommunityProvider>
-                  </ProtectedRoute>
-                } />
                 <Route path="/subscribers" element={
                   <ProtectedRoute>
                     <CommunityProvider>
@@ -138,33 +125,6 @@ const App = () => (
                     <CommunityProvider>
                       <DashboardLayout>
                         <BotSettings />
-                      </DashboardLayout>
-                    </CommunityProvider>
-                  </ProtectedRoute>
-                } />
-                <Route path="/events" element={
-                  <ProtectedRoute>
-                    <CommunityProvider>
-                      <DashboardLayout>
-                        <Events />
-                      </DashboardLayout>
-                    </CommunityProvider>
-                  </ProtectedRoute>
-                } />
-                <Route path="/rewards" element={
-                  <ProtectedRoute>
-                    <CommunityProvider>
-                      <DashboardLayout>
-                        <Rewards />
-                      </DashboardLayout>
-                    </CommunityProvider>
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <CommunityProvider>
-                      <DashboardLayout>
-                        <Settings />
                       </DashboardLayout>
                     </CommunityProvider>
                   </ProtectedRoute>

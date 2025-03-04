@@ -52,11 +52,6 @@ const menuItems = [
     title: "Bot Settings",
     icon: Bot,
     path: "/bot-settings"
-  },
-  {
-    title: "Membify Settings",
-    icon: Settings,
-    path: "/settings"
   }
 ];
 

@@ -241,10 +241,12 @@ export type Database = {
           created_at: string
           current_telegram_code: string | null
           email: string | null
+          first_name: string | null
           full_name: string | null
           id: string
           initial_telegram_code: string | null
           last_login: string | null
+          last_name: string | null
           notes: string | null
           phone: string | null
           registration_date: string | null
@@ -257,10 +259,12 @@ export type Database = {
           created_at?: string
           current_telegram_code?: string | null
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id: string
           initial_telegram_code?: string | null
           last_login?: string | null
+          last_name?: string | null
           notes?: string | null
           phone?: string | null
           registration_date?: string | null
@@ -273,10 +277,12 @@ export type Database = {
           created_at?: string
           current_telegram_code?: string | null
           email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
           initial_telegram_code?: string | null
           last_login?: string | null
+          last_name?: string | null
           notes?: string | null
           phone?: string | null
           registration_date?: string | null

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Mail, Key, LogIn, UserPlus, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Key, LogIn, UserPlus, ArrowRight, User } from "lucide-react";
 
 interface AuthFormProps {
   isSignUp: boolean;
@@ -17,6 +17,8 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -29,6 +31,13 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`.trim()
+            }
+          }
         });
         if (error) throw error;
         
@@ -77,12 +86,66 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
   return (
     <form className="space-y-6" onSubmit={handleAuth}>
       <div className="space-y-4">
+        {isSignUp && (
+          <>
+            <div className="space-y-2">
+              <motion.div
+                variants={inputVariants}
+                initial="hidden"
+                animate="visible"
+                custom={1}
+                className="relative"
+              >
+                <Label htmlFor="firstName" className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-purple-500" />
+                  First Name
+                </Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required={isSignUp}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="mt-1 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-200"
+                  placeholder="Your first name"
+                />
+              </motion.div>
+            </div>
+
+            <div className="space-y-2">
+              <motion.div
+                variants={inputVariants}
+                initial="hidden"
+                animate="visible"
+                custom={2}
+                className="relative"
+              >
+                <Label htmlFor="lastName" className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-purple-500" />
+                  Last Name
+                </Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required={isSignUp}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="mt-1 border-purple-200 focus:border-purple-400 focus:ring-purple-400 transition-all duration-200"
+                  placeholder="Your last name"
+                />
+              </motion.div>
+            </div>
+          </>
+        )}
+
         <div className="space-y-2">
           <motion.div
             variants={inputVariants}
             initial="hidden"
             animate="visible"
-            custom={1}
+            custom={isSignUp ? 3 : 1}
             className="relative"
           >
             <Label htmlFor="email" className="flex items-center gap-2">
@@ -107,7 +170,7 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
             variants={inputVariants}
             initial="hidden"
             animate="visible"
-            custom={2}
+            custom={isSignUp ? 4 : 2}
             className="relative"
           >
             <Label htmlFor="password" className="flex items-center gap-2">
@@ -133,7 +196,7 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
         variants={inputVariants}
         initial="hidden"
         animate="visible"
-        custom={3}
+        custom={isSignUp ? 5 : 3}
       >
         <Button 
           type="submit" 

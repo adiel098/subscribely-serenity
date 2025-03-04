@@ -38,19 +38,15 @@ export const useAdminPermission = () => {
         setIsAdmin(!!isAdminResult);
         
         if (isAdminResult) {
-          // If user is admin, get their role with a direct query using service role
-          // This avoids triggering RLS policies on the admin_users table
-          const { data: adminData, error: adminDataError } = await supabase
-            .from('admin_users')
-            .select('role')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          // Get the role using a security definer function to avoid RLS issues
+          const { data: roleData, error: roleError } = await supabase
+            .rpc('check_admin_role', { user_uuid: user.id });
             
-          if (adminDataError) {
-            console.warn("⚠️ useAdminPermission: Could not fetch admin role:", adminDataError);
-          } else if (adminData) {
-            setRole(adminData.role);
-            console.log(`✅ useAdminPermission: User ${user.id} is admin with role: ${adminData.role}`);
+          if (roleError) {
+            console.warn("⚠️ useAdminPermission: Could not fetch admin role:", roleError);
+          } else if (roleData) {
+            setRole(roleData);
+            console.log(`✅ useAdminPermission: User ${user.id} is admin with role: ${roleData}`);
           }
         } else {
           console.log(`ℹ️ useAdminPermission: User ${user.id} is not an admin`);

@@ -27,5 +27,26 @@ export const useCheckAdminStatus = () => {
     }
   };
 
-  return { checkAdminStatus };
+  const checkSuperAdminStatus = async (userId: string) => {
+    if (!userId) return false;
+    
+    console.log(`🔍 useCheckAdminStatus: Checking super admin status for user ${userId}`);
+    try {
+      // Use RPC with security definer function to avoid infinite recursion
+      const { data, error } = await supabase
+        .rpc('is_super_admin', { user_uuid: userId });
+      
+      if (error) {
+        console.error('❌ useCheckAdminStatus: Error checking super admin status:', error);
+        return false;
+      }
+      
+      return !!data;
+    } catch (err) {
+      console.error('❌ useCheckAdminStatus: Exception in super admin check:', err);
+      return false;
+    }
+  };
+
+  return { checkAdminStatus, checkSuperAdminStatus };
 };

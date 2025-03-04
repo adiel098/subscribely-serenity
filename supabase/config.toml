@@ -34,4 +34,3 @@ verify_jwt = false
 
 [functions.database-diagnostics]
 verify_jwt = false
-

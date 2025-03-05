@@ -38,29 +38,47 @@ interface CommunitiesTableProps {
   communities: AdminCommunity[];
   isLoading: boolean;
   isError: boolean;
+  onSort?: (column: string) => void;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
   communities,
   isLoading,
   isError,
+  onSort,
+  sortColumn,
+  sortDirection,
 }) => {
+  const handleSort = (column: string) => {
+    if (onSort) onSort(column);
+  };
+
+  const renderSortIcon = (column: string) => {
+    return (
+      <div 
+        className={`flex items-center gap-1 cursor-pointer hover:text-indigo-800`}
+        onClick={() => handleSort(column)}
+      >
+        {column.charAt(0).toUpperCase() + column.slice(1)}
+        <ArrowUpDown className={`h-3 w-3 ${sortColumn === column ? 'text-indigo-600' : 'text-muted-foreground'}`} />
+      </div>
+    );
+  };
+
   return (
     <div className="rounded-md border border-indigo-100">
       <Table>
         <TableHeader className="bg-indigo-50">
           <TableRow>
             <TableHead className="w-[250px]">
-              <div className="flex items-center gap-1">
-                Name
-                <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
-              </div>
+              {renderSortIcon('name')}
             </TableHead>
-            <TableHead>Owner</TableHead>
-            <TableHead className="text-center">Subscribers</TableHead>
-            <TableHead className="text-center">Members</TableHead>
-            <TableHead className="text-right">Revenue</TableHead>
-            <TableHead className="text-center">Status</TableHead>
+            <TableHead>{renderSortIcon('owner')}</TableHead>
+            <TableHead className="text-center">{renderSortIcon('subscriptions')}</TableHead>
+            <TableHead className="text-right">{renderSortIcon('revenue')}</TableHead>
+            <TableHead className="text-center">{renderSortIcon('status')}</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -72,7 +90,6 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
                 <TableCell><Skeleton className="h-8 w-[200px]" /></TableCell>
                 <TableCell><Skeleton className="h-8 w-[100px]" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-8 w-[50px] mx-auto" /></TableCell>
-                <TableCell className="text-center"><Skeleton className="h-8 w-[50px] mx-auto" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="h-8 w-[60px] ml-auto" /></TableCell>
                 <TableCell className="text-center"><Skeleton className="h-8 w-[80px] mx-auto" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="h-8 w-[40px] ml-auto" /></TableCell>
@@ -80,13 +97,13 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
             ))
           ) : isError ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 Error loading communities. Please try refreshing.
               </TableCell>
             </TableRow>
           ) : communities.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 No communities found.
               </TableCell>
             </TableRow>
@@ -124,7 +141,6 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
                     {community.subscriptions}
                   </div>
                 </TableCell>
-                <TableCell className="text-center">{community.members}</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(community.revenue)}</TableCell>
                 <TableCell className="text-center">
                   <CommunityStatusBadge status={community.status} />

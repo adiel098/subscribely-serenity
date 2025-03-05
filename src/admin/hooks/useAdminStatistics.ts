@@ -69,17 +69,19 @@ export const useAdminStatistics = () => {
 
       const totalMembersInCommunities = membersData.length;
 
-      // Get community revenue from subscription_payments table
+      // Get community revenue from subscription_payments table - now including both 'successful' and 'completed' statuses
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('subscription_payments')
         .select('amount')
-        .eq('status', 'successful');
+        .in('status', ['successful', 'completed']);
       
       if (paymentsError) {
         console.error("Error fetching subscription payments:", paymentsError);
         throw paymentsError;
       }
 
+      console.log(`Found ${paymentsData.length} payments with status 'successful' or 'completed'`);
+      
       const totalCommunityRevenue = paymentsData.reduce((sum, payment) => 
         sum + Number(payment.amount || 0), 0);
 

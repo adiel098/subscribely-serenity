@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, DollarSign, Globe, Users, TrendingUp, Activity, Building, CreditCard, UserCheck, GroupIcon } from "lucide-react";
+import { BarChart, DollarSign, Globe, Users, TrendingUp, Activity, Building, CreditCard, UserCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAdminStatistics } from "@/admin/hooks/useAdminStatistics";
 import { Skeleton } from "@/components/ui/skeleton";

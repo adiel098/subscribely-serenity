@@ -107,6 +107,9 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
           });
         }
       }
+      
+      // Update the community member count
+      await updateCommunityMemberCount(supabase, community.id);
     }
     // If user leaves chat
     else if (update.new_chat_member.status === 'left') {
@@ -128,6 +131,9 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
           status: 500
         });
       }
+      
+      // Update the community member count
+      await updateCommunityMemberCount(supabase, community.id);
     }
 
     return new Response(JSON.stringify({ success: true }), {
@@ -144,3 +150,49 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
   }
 };
 
+// Helper function to update the community member count
+async function updateCommunityMemberCount(supabase: ReturnType<typeof createClient>, communityId: string) {
+  try {
+    // Count active members
+    const { count: memberCount, error: countError } = await supabase
+      .from('telegram_chat_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('community_id', communityId)
+      .eq('is_active', true);
+    
+    if (countError) {
+      console.error('Error counting members:', countError);
+      return;
+    }
+    
+    // Count active subscribers
+    const { count: subscriptionCount, error: subCountError } = await supabase
+      .from('telegram_chat_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('community_id', communityId)
+      .eq('is_active', true)
+      .eq('subscription_status', true);
+    
+    if (subCountError) {
+      console.error('Error counting subscribers:', subCountError);
+      return;
+    }
+    
+    // Update community record
+    const { error: updateError } = await supabase
+      .from('communities')
+      .update({ 
+        member_count: memberCount || 0,
+        subscription_count: subscriptionCount || 0
+      })
+      .eq('id', communityId);
+    
+    if (updateError) {
+      console.error('Error updating community counts:', updateError);
+    } else {
+      console.log(`Updated community ${communityId} counts: members=${memberCount}, subscriptions=${subscriptionCount}`);
+    }
+  } catch (error) {
+    console.error('Error in updateCommunityMemberCount:', error);
+  }
+}

@@ -12,9 +12,7 @@ export async function fetchCommunities() {
         profiles:owner_id (
           full_name
         ),
-        subscription_payments(amount),
-        member_count,
-        subscription_count
+        subscription_payments(amount)
       `)
       .order('created_at', { ascending: false });
 
@@ -22,6 +20,43 @@ export async function fetchCommunities() {
       console.error("Error fetching communities:", error);
       toast.error("Failed to fetch communities");
       throw error;
+    }
+
+    // For each community, fetch the actual member and subscription counts from telegram_chat_members
+    if (communities && communities.length > 0) {
+      const communitiesWithCounts = await Promise.all(communities.map(async (community) => {
+        // Get member count - all active members
+        const { data: memberData, error: memberError } = await supabase
+          .from('telegram_chat_members')
+          .select('id', { count: 'exact' })
+          .eq('community_id', community.id)
+          .eq('is_active', true);
+
+        if (memberError) {
+          console.error(`Error fetching member count for community ${community.id}:`, memberError);
+        }
+
+        // Get subscription count - active members with active subscriptions
+        const { data: subscriptionData, error: subscriptionError } = await supabase
+          .from('telegram_chat_members')
+          .select('id', { count: 'exact' })
+          .eq('community_id', community.id)
+          .eq('is_active', true)
+          .eq('subscription_status', true);
+
+        if (subscriptionError) {
+          console.error(`Error fetching subscription count for community ${community.id}:`, subscriptionError);
+        }
+
+        return {
+          ...community,
+          member_count: memberData?.length || 0,
+          subscription_count: subscriptionData?.length || 0
+        };
+      }));
+
+      console.log("Communities with actual counts:", communitiesWithCounts);
+      return communitiesWithCounts;
     }
 
     console.log("Raw communities data:", communities);

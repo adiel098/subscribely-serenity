@@ -36,77 +36,24 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Mock data for communities
-const mockCommunities = [
-  {
-    id: "1",
-    name: "Crypto Traders",
-    owner: "Daniel Cohen",
-    members: 128,
-    subscriptions: 98,
-    revenue: 4900,
-    status: "active",
-    photoUrl: null
-  },
-  {
-    id: "2",
-    name: "Developer Hub",
-    owner: "Rachel Lewis",
-    members: 345,
-    subscriptions: 290,
-    revenue: 14500,
-    status: "active",
-    photoUrl: null
-  },
-  {
-    id: "3",
-    name: "Investment Group",
-    owner: "Henry Goldman",
-    members: 76,
-    subscriptions: 61,
-    revenue: 3050,
-    status: "suspended",
-    photoUrl: null
-  },
-  {
-    id: "4",
-    name: "Sports Club",
-    owner: "Sarah Anderson",
-    members: 210,
-    subscriptions: 190,
-    revenue: 9500,
-    status: "active",
-    photoUrl: null
-  },
-  {
-    id: "5",
-    name: "Book Club",
-    owner: "Jessica Stern",
-    members: 42,
-    subscriptions: 28,
-    revenue: 1400,
-    status: "inactive",
-    photoUrl: null
-  }
-];
+import { useAdminCommunities } from "@/admin/hooks/useAdminCommunities";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminCommunities() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: communities, isLoading, isError, refetch } = useAdminCommunities();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const filteredCommunities = mockCommunities.filter(
-    community => community.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                community.owner.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
+    await refetch();
+    setIsRefreshing(false);
   };
+
+  const filteredCommunities = communities?.filter(
+    community => community.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                community.owner_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -188,77 +135,104 @@ export default function AdminCommunities() {
                     </div>
                   </TableHead>
                   <TableHead>Owner</TableHead>
-                  <TableHead className="text-center">Members</TableHead>
                   <TableHead className="text-center">Subscribers</TableHead>
+                  <TableHead className="text-center">Members</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCommunities.map((community) => (
-                  <TableRow key={community.id} className="hover:bg-indigo-50/30">
-                    <TableCell className="font-medium">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="h-8 w-8 border border-indigo-100">
-                          {community.photoUrl ? (
-                            <AvatarImage src={community.photoUrl} alt={community.name} />
-                          ) : (
-                            <AvatarFallback className="bg-indigo-100 text-indigo-700">{community.name.charAt(0)}</AvatarFallback>
-                          )}
-                        </Avatar>
-                        <span className="ml-2">{community.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{community.owner}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center">
-                        <Users className="mr-2 h-4 w-4 text-indigo-600" />
-                        {community.members}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">{community.subscriptions}</TableCell>
-                    <TableCell className="text-right font-semibold">${community.revenue}</TableCell>
-                    <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-indigo-50">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-indigo-100">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                            <Eye className="h-4 w-4 text-indigo-600" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                            <Edit className="h-4 w-4 text-indigo-600" />
-                            Edit Details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {community.status === "active" ? (
-                            <DropdownMenuItem className="flex items-center gap-2 text-amber-600 cursor-pointer">
-                              <AlertTriangle className="h-4 w-4" />
-                              Suspend Community
-                            </DropdownMenuItem>
-                          ) : community.status === "suspended" ? (
-                            <DropdownMenuItem className="flex items-center gap-2 text-green-600 cursor-pointer">
-                              <CheckCircle2 className="h-4 w-4" />
-                              Reactivate Community
-                            </DropdownMenuItem>
-                          ) : null}
-                          <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
-                            <Trash2 className="h-4 w-4" />
-                            Delete Community
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {isLoading ? (
+                  // Loading skeleton
+                  Array(5).fill(0).map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell><Skeleton className="h-8 w-[200px]" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-[100px]" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-8 w-[50px] mx-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-8 w-[50px] mx-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-[60px] ml-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-8 w-[80px] mx-auto" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-[40px] ml-auto" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      Error loading communities. Please try refreshing.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredCommunities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No communities found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCommunities.map((community) => (
+                    <TableRow key={community.id} className="hover:bg-indigo-50/30">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="h-8 w-8 border border-indigo-100">
+                            {community.photoUrl ? (
+                              <AvatarImage src={community.photoUrl} alt={community.name} />
+                            ) : (
+                              <AvatarFallback className="bg-indigo-100 text-indigo-700">{community.name.charAt(0)}</AvatarFallback>
+                            )}
+                          </Avatar>
+                          <span className="ml-2">{community.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{community.owner_name}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center">
+                          <Users className="mr-2 h-4 w-4 text-indigo-600" />
+                          {community.subscriptions}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">{community.members}</TableCell>
+                      <TableCell className="text-right font-semibold">${community.revenue}</TableCell>
+                      <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-indigo-50">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="border-indigo-100">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                              <Eye className="h-4 w-4 text-indigo-600" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                              <Edit className="h-4 w-4 text-indigo-600" />
+                              Edit Details
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {community.status === "active" ? (
+                              <DropdownMenuItem className="flex items-center gap-2 text-amber-600 cursor-pointer">
+                                <AlertTriangle className="h-4 w-4" />
+                                Suspend Community
+                              </DropdownMenuItem>
+                            ) : community.status === "suspended" ? (
+                              <DropdownMenuItem className="flex items-center gap-2 text-green-600 cursor-pointer">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Reactivate Community
+                              </DropdownMenuItem>
+                            ) : null}
+                            <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
+                              <Trash2 className="h-4 w-4" />
+                              Delete Community
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

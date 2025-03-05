@@ -56,31 +56,32 @@ export const useAdminStatistics = () => {
       const uniqueSubscribedOwners = [...new Set(activeSubscribersData.map(item => item.owner_id))];
       const activeSubscribedOwners = uniqueSubscribedOwners.length;
 
-      // Get total members in all communities
+      // Get total members from telegram_chat_members table
       const { data: membersData, error: membersError } = await supabase
-        .from('communities')
-        .select('member_count');
+        .from('telegram_chat_members')
+        .select('id, community_id')
+        .eq('is_active', true);
       
       if (membersError) {
-        console.error("Error fetching member counts:", membersError);
+        console.error("Error fetching members:", membersError);
         throw membersError;
       }
 
-      const totalMembersInCommunities = membersData.reduce((sum, community) => 
-        sum + (community.member_count || 0), 0);
+      const totalMembersInCommunities = membersData.length;
 
-      // Get total community revenue
-      const { data: revenueData, error: revenueError } = await supabase
-        .from('communities')
-        .select('subscription_revenue');
+      // Get community revenue from subscription_payments table
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('subscription_payments')
+        .select('amount')
+        .eq('status', 'successful');
       
-      if (revenueError) {
-        console.error("Error fetching community revenue:", revenueError);
-        throw revenueError;
+      if (paymentsError) {
+        console.error("Error fetching subscription payments:", paymentsError);
+        throw paymentsError;
       }
 
-      const totalCommunityRevenue = revenueData.reduce((sum, community) => 
-        sum + Number(community.subscription_revenue || 0), 0);
+      const totalCommunityRevenue = paymentsData.reduce((sum, payment) => 
+        sum + Number(payment.amount || 0), 0);
 
       // Get total platform revenue
       const { data: platformPaymentsData, error: platformPaymentsError } = await supabase

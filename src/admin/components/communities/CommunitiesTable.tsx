@@ -96,9 +96,15 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-8 w-8 border border-indigo-100">
                       {community.photoUrl ? (
-                        <AvatarImage src={community.photoUrl} alt={community.name} />
+                        <AvatarImage 
+                          src={community.photoUrl} 
+                          alt={community.name}
+                          className="object-cover"
+                        />
                       ) : (
-                        <AvatarFallback className="bg-indigo-100 text-indigo-700">{community.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                          {community.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
                       )}
                     </Avatar>
                     <span className="ml-2">{community.name}</span>

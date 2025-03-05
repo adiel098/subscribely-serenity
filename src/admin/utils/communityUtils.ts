@@ -20,7 +20,8 @@ export function processCommunityData(communities: any[]): AdminCommunity[] {
 
     // Determine status based on data
     let status = "active";
-    if (community.member_count === 0 && community.subscription_count === 0) {
+    if ((community.member_count === 0 || community.member_count === null) && 
+        (community.subscription_count === 0 || community.subscription_count === null)) {
       status = "inactive";
     } else if (community.is_suspended) {
       status = "suspended";

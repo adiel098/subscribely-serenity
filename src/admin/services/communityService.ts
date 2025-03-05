@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export async function fetchCommunities() {
   try {
-    // Fetch communities with their owner profiles and subscription data
+    // Fetch communities with their owner profiles, member counts, and subscription data
     const { data: communities, error } = await supabase
       .from('communities')
       .select(`
@@ -12,7 +12,9 @@ export async function fetchCommunities() {
         profiles:owner_id (
           full_name
         ),
-        subscription_payments(amount)
+        subscription_payments(amount),
+        member_count,
+        subscription_count
       `)
       .order('created_at', { ascending: false });
 

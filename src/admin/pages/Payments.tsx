@@ -24,9 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
-  Filter, 
-  CreditCard, 
   Download, 
+  CreditCard, 
   DollarSign, 
   CheckCircle, 
   XCircle, 
@@ -35,189 +34,18 @@ import {
   Users
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
-
-// Payment types
-interface BasePlatformPayment {
-  id: string;
-  amount: number;
-  created_at: string;
-  payment_method: string;
-  payment_status: string;
-}
-
-interface PlatformPayment extends BasePlatformPayment {
-  owner: {
-    full_name: string;
-    email: string;
-  } | null;
-  plan: {
-    name: string;
-  } | null;
-}
-
-interface CommunityPayment {
-  id: string;
-  amount: number;
-  created_at: string;
-  payment_method: string;
-  status: string;
-  first_name: string;
-  last_name: string;
-  telegram_username: string;
-  community: {
-    name: string;
-  } | null;
-}
-
-// Unified payment type for the status tabs
-interface UnifiedPayment {
-  id: string;
-  user: string;
-  email: string;
-  amount: number | string;
-  community: string;
-  date: string;
-  method: string;
-  status: string;
-}
+import { formatCurrency } from "@/lib/utils";
+import { useAdminPayments } from "@/admin/hooks/useAdminPayments";
+import { toast } from "sonner";
 
 export default function Payments() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [platformPayments, setPlatformPayments] = useState<PlatformPayment[]>([]);
-  const [communityPayments, setCommunityPayments] = useState<CommunityPayment[]>([]);
-  const [unifiedPayments, setUnifiedPayments] = useState<UnifiedPayment[]>([]);
   const [paymentType, setPaymentType] = useState<"platform" | "community">("platform");
-  
-  useEffect(() => {
-    const fetchPayments = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch platform payments
-        const { data: platformData, error: platformError } = await supabase
-          .from('platform_payments')
-          .select(`
-            id,
-            amount,
-            created_at,
-            payment_method,
-            payment_status,
-            owner_id,
-            owner:profiles(full_name, email),
-            plan:platform_plans(name)
-          `)
-          .order('created_at', { ascending: false });
-        
-        if (platformError) throw platformError;
-        
-        // Transform platform data to match the PlatformPayment interface
-        const transformedPlatformData: PlatformPayment[] = (platformData || []).map(item => ({
-          id: item.id,
-          amount: item.amount,
-          created_at: item.created_at,
-          payment_method: item.payment_method || '',
-          payment_status: item.payment_status || '',
-          owner: item.owner?.[0] || null,
-          plan: item.plan?.[0] || null
-        }));
-        
-        setPlatformPayments(transformedPlatformData);
-        
-        // Fetch community payments
-        const { data: communityData, error: communityError } = await supabase
-          .from('subscription_payments')
-          .select(`
-            id,
-            amount,
-            created_at,
-            payment_method,
-            status,
-            first_name,
-            last_name,
-            telegram_username,
-            community:communities(name)
-          `)
-          .order('created_at', { ascending: false });
-        
-        if (communityError) throw communityError;
-        
-        // Transform community data to match the CommunityPayment interface
-        const transformedCommunityData: CommunityPayment[] = (communityData || []).map(item => ({
-          id: item.id,
-          amount: item.amount,
-          created_at: item.created_at,
-          payment_method: item.payment_method || '',
-          status: item.status,
-          first_name: item.first_name || '',
-          last_name: item.last_name || '',
-          telegram_username: item.telegram_username || '',
-          community: item.community?.[0] || null
-        }));
-        
-        setCommunityPayments(transformedCommunityData);
-
-        // Create unified payments data for status tabs
-        const platformUnified: UnifiedPayment[] = transformedPlatformData.map(item => ({
-          id: item.id,
-          user: item.owner?.full_name || 'Unknown',
-          email: item.owner?.email || 'No email',
-          amount: item.amount,
-          community: item.plan?.name || 'Platform Payment',
-          date: formatDate(item.created_at),
-          method: item.payment_method,
-          status: item.payment_status
-        }));
-
-        const communityUnified: UnifiedPayment[] = transformedCommunityData.map(item => ({
-          id: item.id,
-          user: `${item.first_name} ${item.last_name}`.trim() || 'Unknown',
-          email: item.telegram_username || 'No username',
-          amount: item.amount,
-          community: item.community?.name || 'Unknown Community',
-          date: formatDate(item.created_at),
-          method: item.payment_method,
-          status: item.status
-        }));
-
-        setUnifiedPayments([...platformUnified, ...communityUnified]);
-        
-      } catch (error) {
-        console.error("Error fetching payments:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPayments();
-  }, []);
+  const { platformPayments, communityPayments, isLoading, refetch } = useAdminPayments();
 
   const filteredPlatformPayments = platformPayments.filter(payment => {
-    const searchTerm = searchQuery.toLowerCase();
-    return (
-      payment.owner?.full_name?.toLowerCase().includes(searchTerm) ||
-      payment.owner?.email?.toLowerCase().includes(searchTerm) ||
-      payment.id.toLowerCase().includes(searchTerm) ||
-      payment.plan?.name?.toLowerCase().includes(searchTerm)
-    );
-  });
-
-  const filteredCommunityPayments = communityPayments.filter(payment => {
-    const searchTerm = searchQuery.toLowerCase();
-    const fullName = `${payment.first_name || ''} ${payment.last_name || ''}`.trim();
-    return (
-      fullName.toLowerCase().includes(searchTerm) ||
-      payment.telegram_username?.toLowerCase().includes(searchTerm) ||
-      payment.id.toLowerCase().includes(searchTerm) ||
-      payment.community?.name?.toLowerCase().includes(searchTerm)
-    );
-  });
-
-  // Filter unified payments for status tabs
-  const filteredUnifiedPayments = unifiedPayments.filter(payment => {
     const searchTerm = searchQuery.toLowerCase();
     return (
       payment.user.toLowerCase().includes(searchTerm) ||
@@ -226,6 +54,56 @@ export default function Payments() {
       payment.community.toLowerCase().includes(searchTerm)
     );
   });
+
+  const filteredCommunityPayments = communityPayments.filter(payment => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      payment.user.toLowerCase().includes(searchTerm) ||
+      payment.email.toLowerCase().includes(searchTerm) ||
+      payment.id.toLowerCase().includes(searchTerm) ||
+      payment.community.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const handleExportReport = () => {
+    const paymentsToExport = paymentType === "platform" ? platformPayments : communityPayments;
+    
+    if (paymentsToExport.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    
+    // Create CSV content
+    const headers = ["ID", "User", "Email", "Amount", "Community/Plan", "Date", "Method", "Status"];
+    const csvContent = [
+      headers.join(","),
+      ...paymentsToExport.map(payment => [
+        payment.id,
+        payment.user.replace(/,/g, ""),
+        payment.email.replace(/,/g, ""),
+        typeof payment.amount === 'number' ? payment.amount.toFixed(2) : payment.amount,
+        payment.community.replace(/,/g, ""),
+        payment.date,
+        payment.method.replace(/,/g, ""),
+        payment.status.replace(/,/g, "")
+      ].join(","))
+    ].join("\n");
+    
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${paymentType}-payments-${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Report exported successfully");
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -263,15 +141,6 @@ export default function Payments() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -290,7 +159,10 @@ export default function Payments() {
             Manage and track all platform payments 💰
           </p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2">
+        <Button 
+          className="bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2"
+          onClick={handleExportReport}
+        >
           <Download className="h-4 w-4" />
           Export Report
         </Button>
@@ -327,10 +199,6 @@ export default function Payments() {
                 className="pl-8 border-indigo-100"
               />
             </div>
-            <Button variant="outline" className="border-indigo-100 flex items-center gap-2">
-              <Filter className="h-4 w-4 text-indigo-600" />
-              Filter Payments
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -366,18 +234,20 @@ export default function Payments() {
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{payment.owner?.full_name || 'Unknown'}</p>
-                            <p className="text-sm text-muted-foreground">{payment.owner?.email || 'No email'}</p>
+                            <p className="font-medium">{payment.user}</p>
+                            <p className="text-sm text-muted-foreground">{payment.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-green-600">${Number(payment.amount).toFixed(2)}</TableCell>
-                        <TableCell>{payment.plan?.name || 'Unknown Plan'}</TableCell>
-                        <TableCell>{formatDate(payment.created_at)}</TableCell>
-                        <TableCell className="flex items-center gap-1">
-                          {getPaymentMethodIcon(payment.payment_method)}
-                          {payment.payment_method?.replace('_', ' ') || 'Unknown'}
+                        <TableCell className="font-medium text-green-600">
+                          {formatCurrency(Number(payment.amount))}
                         </TableCell>
-                        <TableCell>{getStatusBadge(payment.payment_status)}</TableCell>
+                        <TableCell>{payment.community}</TableCell>
+                        <TableCell>{payment.date}</TableCell>
+                        <TableCell className="flex items-center gap-1">
+                          {getPaymentMethodIcon(payment.method)}
+                          {payment.method?.replace('_', ' ') || 'Unknown'}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" className="border-indigo-100">
                             Details
@@ -421,16 +291,18 @@ export default function Payments() {
                         <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{`${payment.first_name || ''} ${payment.last_name || ''}`.trim() || 'Unknown'}</p>
-                            <p className="text-sm text-muted-foreground">@{payment.telegram_username || 'No username'}</p>
+                            <p className="font-medium">{payment.user}</p>
+                            <p className="text-sm text-muted-foreground">@{payment.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-green-600">${Number(payment.amount).toFixed(2)}</TableCell>
-                        <TableCell>{payment.community?.name || 'Unknown Community'}</TableCell>
-                        <TableCell>{formatDate(payment.created_at)}</TableCell>
+                        <TableCell className="font-medium text-green-600">
+                          {formatCurrency(Number(payment.amount))}
+                        </TableCell>
+                        <TableCell>{payment.community}</TableCell>
+                        <TableCell>{payment.date}</TableCell>
                         <TableCell className="flex items-center gap-1">
-                          {getPaymentMethodIcon(payment.payment_method)}
-                          {payment.payment_method?.replace('_', ' ') || 'Unknown'}
+                          {getPaymentMethodIcon(payment.method)}
+                          {payment.method?.replace('_', ' ') || 'Unknown'}
                         </TableCell>
                         <TableCell>{getStatusBadge(payment.status)}</TableCell>
                         <TableCell className="text-right">

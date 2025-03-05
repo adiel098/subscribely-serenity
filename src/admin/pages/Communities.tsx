@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useAdminCommunities } from "@/admin/hooks/useAdminCommunities";
 import { CommunityHeader } from "@/admin/components/communities/CommunityHeader";
 import { CommunityManagementCard } from "@/admin/components/communities/CommunityManagementCard";

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, ArrowUpDown } from "lucide-react";
+import { Globe } from "lucide-react";
 import { CommunitySearchBar } from "./CommunitySearchBar";
 import { CommunitiesTable } from "./CommunitiesTable";
 import { CommunityFiltersBar, CommunityFilters } from "./CommunityFiltersBar";
@@ -151,8 +150,6 @@ export const CommunityManagementCard: React.FC<CommunityManagementCardProps> = (
         <CommunitySearchBar 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          handleRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
         />
         
         <CommunityFiltersBar

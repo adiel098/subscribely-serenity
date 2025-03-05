@@ -38,6 +38,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminCommunities } from "@/admin/hooks/useAdminCommunities";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency } from "@/admin/components/dashboard/formatters";
 
 export default function AdminCommunities() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,6 +74,8 @@ export default function AdminCommunities() {
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
+
+  console.log("Rendering communities:", communities);
 
   return (
     <div className="space-y-6">
@@ -191,7 +194,7 @@ export default function AdminCommunities() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">{community.members}</TableCell>
-                      <TableCell className="text-right font-semibold">${community.revenue}</TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency(community.revenue)}</TableCell>
                       <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

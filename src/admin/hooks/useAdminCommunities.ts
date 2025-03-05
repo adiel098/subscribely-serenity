@@ -20,14 +20,15 @@ export const useAdminCommunities = () => {
     queryKey: ["admin-communities"],
     queryFn: async (): Promise<AdminCommunity[]> => {
       try {
-        // Fetch communities with their owner profiles
+        // Fetch communities with their owner profiles and subscription data
         const { data: communities, error } = await supabase
           .from('communities')
           .select(`
             *,
             profiles:owner_id (
               full_name
-            )
+            ),
+            subscription_payments(amount)
           `)
           .order('created_at', { ascending: false });
 
@@ -37,11 +38,21 @@ export const useAdminCommunities = () => {
           throw error;
         }
 
+        console.log("Raw communities data:", communities);
+
         // Transform the data to match our AdminCommunity interface
         const formattedCommunities: AdminCommunity[] = communities.map(community => {
+          // Calculate total revenue from subscription payments
+          let totalRevenue = 0;
+          if (community.subscription_payments && Array.isArray(community.subscription_payments)) {
+            totalRevenue = community.subscription_payments.reduce((sum, payment) => {
+              return sum + (parseFloat(payment.amount) || 0);
+            }, 0);
+          }
+
           // Determine status based on data
           let status = "active";
-          if (!community.member_count || community.member_count === 0) {
+          if (community.member_count === 0 && community.subscription_count === 0) {
             status = "inactive";
           }
 
@@ -52,12 +63,13 @@ export const useAdminCommunities = () => {
             owner_name: community.profiles?.full_name || "Unknown Owner",
             members: community.member_count || 0,
             subscriptions: community.subscription_count || 0,
-            revenue: community.subscription_revenue || 0,
+            revenue: totalRevenue || community.subscription_revenue || 0,
             status: status,
             photoUrl: community.telegram_photo_url
           };
         });
 
+        console.log("Formatted communities:", formattedCommunities);
         return formattedCommunities;
       } catch (error) {
         console.error("Error in communities query:", error);

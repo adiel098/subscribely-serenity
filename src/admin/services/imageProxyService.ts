@@ -12,8 +12,8 @@ export function getProxiedImageUrl(photoUrl: string | null): string | null {
   
   // Check if this is a Telegram URL that needs proxying
   if (photoUrl.includes('telegram.org') || photoUrl.includes('t.me')) {
-    // Construct the proxy URL
-    const functionUrl = `${supabase.functions.url('telegram-image-proxy')}?url=${encodeURIComponent(photoUrl)}`;
+    // Construct the proxy URL using the correct method
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-image-proxy?url=${encodeURIComponent(photoUrl)}`;
     console.log(`Proxying image: ${photoUrl} -> ${functionUrl}`);
     return functionUrl;
   }

@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.update-community-counts]
 verify_jwt = false
+
+[functions.telegram-image-proxy]
+verify_jwt = false

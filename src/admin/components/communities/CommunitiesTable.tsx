@@ -32,6 +32,7 @@ import {
 import { formatCurrency } from "@/admin/components/dashboard/formatters";
 import { CommunityStatusBadge } from "./CommunityStatusBadge";
 import { AdminCommunity } from "@/admin/hooks/useAdminCommunities";
+import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 interface CommunitiesTableProps {
   communities: AdminCommunity[];
@@ -97,9 +98,15 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
                     <Avatar className="h-8 w-8 border border-indigo-100">
                       {community.photoUrl ? (
                         <AvatarImage 
-                          src={community.photoUrl} 
+                          src={getProxiedImageUrl(community.photoUrl)} 
                           alt={community.name}
                           className="object-cover"
+                          onError={(e) => {
+                            // If image fails to load, use fallback
+                            console.warn(`Failed to load image for ${community.name}`, e);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            e.currentTarget.parentElement?.querySelector('.avatar-fallback')?.classList.remove('hidden');
+                          }}
                         />
                       ) : (
                         <AvatarFallback className="bg-indigo-100 text-indigo-700">

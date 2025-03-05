@@ -43,7 +43,7 @@ export const CommunityDropdown = ({
             </SelectTrigger>
             <SelectContent>
               {communities?.map(community => (
-                <SelectItem key={community.id} value={community.id}>
+                <SelectItem key={community.id} value={community.id || "community-fallback"}>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={community.telegram_photo_url || undefined} />

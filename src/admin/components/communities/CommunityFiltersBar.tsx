@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Filter, 
@@ -345,7 +344,7 @@ export const CommunityFiltersBar: React.FC<CommunityFiltersBarProps> = ({
         {/* Date Range */}
         <Select 
           onValueChange={handleDateRangeChange}
-          value={filters.dateRange || ""}
+          value={filters.dateRange || undefined}
         >
           <SelectTrigger className={`w-[180px] border-indigo-100 h-9 ${activeFilters.includes("date") ? "bg-indigo-50" : ""}`}>
             <div className="flex items-center gap-2">
@@ -354,12 +353,12 @@ export const CommunityFiltersBar: React.FC<CommunityFiltersBarProps> = ({
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All time</SelectItem>
             <SelectItem value="today">Today</SelectItem>
             <SelectItem value="week">This week</SelectItem>
             <SelectItem value="month">This month</SelectItem>
             <SelectItem value="quarter">This quarter</SelectItem>
             <SelectItem value="year">This year</SelectItem>
+            <SelectItem value="all">All time</SelectItem>
           </SelectContent>
         </Select>
         

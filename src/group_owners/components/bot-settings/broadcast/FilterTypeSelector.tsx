@@ -54,7 +54,7 @@ export const FilterTypeSelector = ({
           </SelectTrigger>
           <SelectContent>
             {plans.map((plan) => (
-              <SelectItem key={plan.id} value={plan.id}>
+              <SelectItem key={plan.id} value={plan.id || "plan-fallback"}>
                 {plan.name}
               </SelectItem>
             ))}

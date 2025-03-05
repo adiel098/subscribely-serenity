@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -82,6 +81,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
             Modify the subscription plan details and features.
           </DialogDescription>
         </DialogHeader>
+        
         <div className="grid gap-6 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
           <div className="grid gap-2">
@@ -102,6 +102,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
               className="min-h-[100px] text-base"
             />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-price" className="text-base">Price</Label>
@@ -132,6 +133,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
               </Select>
             </div>
           </div>
+          
           <div className="grid gap-4">
             <Label className="text-base">Features</Label>
             <div className="flex gap-2">
@@ -167,6 +169,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
             </ul>
           </div>
         </div>
+        
         <DialogFooter className="gap-3 pt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
@@ -184,4 +187,3 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
     </Dialog>
   );
 };
-

@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -8,39 +7,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  MoreHorizontal,
-  Users,
-  Eye,
-  Edit,
-  AlertTriangle,
-  CheckCircle2,
-  Trash2,
-  ArrowUpDown,
-} from "lucide-react";
-import { formatCurrency } from "@/admin/components/dashboard/formatters";
-import { CommunityStatusBadge } from "./CommunityStatusBadge";
+import { ArrowUpDown, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AdminCommunity } from "@/admin/hooks/useAdminCommunities";
-import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
+import { formatCurrency } from "@/lib/utils";
 
 interface CommunitiesTableProps {
-  communities: AdminCommunity[];
+  communities: AdminCommunity[] | undefined;
   isLoading: boolean;
   isError: boolean;
-  onSort?: (column: string) => void;
-  sortColumn?: string;
-  sortDirection?: 'asc' | 'desc';
+  onSort: (column: string) => void;
+  sortColumn: string;
+  sortDirection: 'asc' | 'desc';
 }
 
 export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
@@ -49,141 +29,102 @@ export const CommunitiesTable: React.FC<CommunitiesTableProps> = ({
   isError,
   onSort,
   sortColumn,
-  sortDirection,
+  sortDirection
 }) => {
-  const handleSort = (column: string) => {
-    if (onSort) onSort(column);
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirection === 'asc' 
+      ? <ArrowUpDown className="ml-2 h-4 w-4 text-indigo-600" /> 
+      : <ArrowUpDown className="ml-2 h-4 w-4 text-indigo-600 rotate-180" />;
   };
 
-  const renderSortIcon = (column: string) => {
+  const renderSortableHeader = (column: string, label: string) => (
+    <Button
+      variant="ghost"
+      onClick={() => onSort(column)}
+      className="hover:bg-transparent hover:text-indigo-600 p-0 font-medium"
+    >
+      {label}
+      {getSortIcon(column)}
+    </Button>
+  );
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
+      case 'inactive':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Inactive</Badge>;
+      case 'suspended':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Suspended</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (isError) {
     return (
-      <div 
-        className={`flex items-center gap-1 cursor-pointer hover:text-indigo-800`}
-        onClick={() => handleSort(column)}
-      >
-        {column.charAt(0).toUpperCase() + column.slice(1)}
-        <ArrowUpDown className={`h-3 w-3 ${sortColumn === column ? 'text-indigo-600' : 'text-muted-foreground'}`} />
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <AlertCircle className="h-10 w-10 text-red-500 mb-2" />
+        <h3 className="text-lg font-medium">Failed to load communities</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          There was an error loading the community data. Please try again later.
+        </p>
       </div>
     );
-  };
+  }
 
   return (
-    <div className="rounded-md border border-indigo-100">
+    <div className="rounded-md border">
       <Table>
-        <TableHeader className="bg-indigo-50">
+        <TableHeader>
           <TableRow>
-            <TableHead className="w-[250px]">
-              {renderSortIcon('name')}
-            </TableHead>
-            <TableHead>{renderSortIcon('owner')}</TableHead>
-            <TableHead className="text-center">{renderSortIcon('subscriptions')}</TableHead>
-            <TableHead className="text-right">{renderSortIcon('revenue')}</TableHead>
-            <TableHead className="text-center">{renderSortIcon('status')}</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-[250px]">{renderSortableHeader('name', 'Community Name')}</TableHead>
+            <TableHead>{renderSortableHeader('owner', 'Owner')}</TableHead>
+            <TableHead className="text-right">{renderSortableHeader('subscriptions', 'Subscribers')}</TableHead>
+            <TableHead className="text-right">{renderSortableHeader('revenue', 'Revenue')}</TableHead>
+            <TableHead className="text-center">{renderSortableHeader('status', 'Status')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            // Loading skeleton
             Array(5).fill(0).map((_, index) => (
-              <TableRow key={`skeleton-${index}`}>
-                <TableCell><Skeleton className="h-8 w-[200px]" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-[100px]" /></TableCell>
-                <TableCell className="text-center"><Skeleton className="h-8 w-[50px] mx-auto" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-8 w-[60px] ml-auto" /></TableCell>
-                <TableCell className="text-center"><Skeleton className="h-8 w-[80px] mx-auto" /></TableCell>
-                <TableCell className="text-right"><Skeleton className="h-8 w-[40px] ml-auto" /></TableCell>
+              <TableRow key={index}>
+                <TableCell><Skeleton className="h-6 w-[200px]" /></TableCell>
+                <TableCell><Skeleton className="h-6 w-[150px]" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-6 w-[80px] ml-auto" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-6 w-[80px] ml-auto" /></TableCell>
+                <TableCell className="text-center"><Skeleton className="h-6 w-[80px] mx-auto" /></TableCell>
               </TableRow>
             ))
-          ) : isError ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                Error loading communities. Please try refreshing.
-              </TableCell>
-            </TableRow>
-          ) : communities.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                No communities found.
-              </TableCell>
-            </TableRow>
-          ) : (
+          ) : communities && communities.length > 0 ? (
             communities.map((community) => (
-              <TableRow key={community.id} className="hover:bg-indigo-50/30">
-                <TableCell className="font-medium">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-8 w-8 border border-indigo-100">
-                      {community.photoUrl ? (
-                        <AvatarImage 
-                          src={getProxiedImageUrl(community.photoUrl)} 
-                          alt={community.name}
-                          className="object-cover"
-                          onError={(e) => {
-                            // If image fails to load, use fallback
-                            console.warn(`Failed to load image for ${community.name}`, e);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            e.currentTarget.parentElement?.querySelector('.avatar-fallback')?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                          {community.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <span className="ml-2">{community.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{community.owner_name}</TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center">
-                    <Users className="mr-2 h-4 w-4 text-indigo-600" />
-                    {community.subscriptions}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right font-semibold">{formatCurrency(community.revenue)}</TableCell>
-                <TableCell className="text-center">
-                  <CommunityStatusBadge status={community.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-indigo-50">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="border-indigo-100">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                        <Eye className="h-4 w-4 text-indigo-600" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                        <Edit className="h-4 w-4 text-indigo-600" />
-                        Edit Details
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {community.status === "active" ? (
-                        <DropdownMenuItem className="flex items-center gap-2 text-amber-600 cursor-pointer">
-                          <AlertTriangle className="h-4 w-4" />
-                          Suspend Community
-                        </DropdownMenuItem>
-                      ) : community.status === "suspended" ? (
-                        <DropdownMenuItem className="flex items-center gap-2 text-green-600 cursor-pointer">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Reactivate Community
-                        </DropdownMenuItem>
-                      ) : null}
-                      <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
-                        <Trash2 className="h-4 w-4" />
-                        Delete Community
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+              <TableRow key={community.id}>
+                <TableCell className="font-medium">{community.name}</TableCell>
+                <TableCell>{community.owner_name || 'Unknown'}</TableCell>
+                <TableCell className="text-right">{community.subscriptions}</TableCell>
+                <TableCell className="text-right">{formatCurrency(community.revenue)}</TableCell>
+                <TableCell className="text-center">{getStatusBadge(community.status)}</TableCell>
               </TableRow>
             ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={5} className="h-24 text-center">
+                <div className="flex flex-col items-center justify-center py-4">
+                  {communities && communities.length === 0 ? (
+                    <>
+                      <XCircle className="h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">No communities found</p>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">No data available</p>
+                    </>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
           )}
         </TableBody>
       </Table>

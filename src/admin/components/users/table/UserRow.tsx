@@ -77,21 +77,21 @@ export const UserRow = ({
       </TableCell>
 
       {/* Status Column */}
-      <TableCell className="text-center">
+      <TableCell>
         <div className="flex justify-center">
           <UserStatusBadge status={user.status} size="sm" />
         </div>
       </TableCell>
 
       {/* Role Column */}
-      <TableCell className="text-center">
+      <TableCell>
         <div className="flex justify-center">
           <UserRoleBadge role={user.role} size="sm" />
         </div>
       </TableCell>
 
       {/* Communities Column */}
-      <TableCell className="text-center">
+      <TableCell>
         <div className="flex justify-center items-center gap-1">
           <Users className="h-4 w-4 text-indigo-500" />
           <span>{user.communities_count}</span>
@@ -99,7 +99,7 @@ export const UserRow = ({
       </TableCell>
 
       {/* Subscriptions Column */}
-      <TableCell className="text-center">
+      <TableCell>
         <div className="flex justify-center items-center gap-1">
           <User className="h-4 w-4 text-indigo-500" />
           <span>{user.subscriptions_count}</span>
@@ -107,7 +107,7 @@ export const UserRow = ({
       </TableCell>
 
       {/* Joined Column */}
-      <TableCell className="text-center">
+      <TableCell>
         <div className="flex justify-center items-center text-xs">
           <Calendar className="mr-1 h-3 w-3" />
           {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
@@ -141,19 +141,36 @@ export const UserRow = ({
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
+          ) : user.status === 'inactive' ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => handleAction(e, () => onActivateUser(user))}
+                title="Activate User"
+                className="h-8 w-8"
+              >
+                <UserCheck className="h-4 w-4 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => handleAction(e, () => onSuspendUser(user))}
+                title="Suspend User"
+                className="h-8 w-8"
+              >
+                <Ban className="h-4 w-4 text-red-600" />
+              </Button>
+            </>
           ) : (
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleAction(e, () => user.status === 'inactive' ? onActivateUser(user) : onSuspendUser(user))}
-              title={user.status === 'inactive' ? "Activate User" : "Suspend User"}
+              onClick={(e) => handleAction(e, () => onSuspendUser(user))}
+              title="Suspend User"
               className="h-8 w-8"
             >
-              {user.status === 'inactive' ? (
-                <UserCheck className="h-4 w-4 text-green-600" />
-              ) : (
-                <Ban className="h-4 w-4 text-red-600" />
-              )}
+              <Ban className="h-4 w-4 text-red-600" />
             </Button>
           )}
           
@@ -191,10 +208,16 @@ export const UserRow = ({
                   <span className="text-green-600">Unsuspend User</span>
                 </DropdownMenuItem>
               ) : user.status === 'inactive' ? (
-                <DropdownMenuItem onClick={() => onActivateUser(user)}>
-                  <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-                  <span className="text-green-600">Activate User</span>
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={() => onActivateUser(user)}>
+                    <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                    <span className="text-green-600">Activate User</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onSuspendUser(user)}>
+                    <Ban className="mr-2 h-4 w-4 text-red-500" />
+                    <span className="text-red-600">Suspend User</span>
+                  </DropdownMenuItem>
+                </>
               ) : (
                 <DropdownMenuItem onClick={() => onSuspendUser(user)}>
                   <Ban className="mr-2 h-4 w-4 text-red-500" />

@@ -44,7 +44,10 @@ export const UserActions = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onEditUser(user)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditUser(user);
+          }}
           title="Edit User"
           className="h-8 w-8 hover:bg-accent/50"
         >
@@ -55,7 +58,10 @@ export const UserActions = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onUnsuspendUser(user)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUnsuspendUser(user);
+            }}
             title="Unsuspend User"
             className="h-8 w-8 hover:bg-accent/50"
           >
@@ -66,7 +72,10 @@ export const UserActions = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onActivateUser(user)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onActivateUser(user);
+              }}
               title="Activate User"
               className="h-8 w-8 hover:bg-accent/50"
             >
@@ -75,7 +84,10 @@ export const UserActions = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onSuspendUser(user)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSuspendUser(user);
+              }}
               title="Suspend User"
               className="h-8 w-8 hover:bg-accent/50"
             >
@@ -86,7 +98,10 @@ export const UserActions = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onSuspendUser(user)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSuspendUser(user);
+            }}
             title="Suspend User"
             className="h-8 w-8 hover:bg-accent/50"
           >
@@ -99,6 +114,9 @@ export const UserActions = ({
           size="icon"
           title="Manage Permissions"
           className="h-8 w-8 hover:bg-accent/50"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
         </Button>
@@ -109,40 +127,60 @@ export const UserActions = ({
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 hover:bg-accent/50"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
             >
               <span className="sr-only">More options</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEditUser(user)}>
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+              onEditUser(user);
+            }}>
               <Edit className="mr-2 h-4 w-4" />
               Edit User
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.status === 'suspended' ? (
-              <DropdownMenuItem onClick={() => onUnsuspendUser(user)}>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                onUnsuspendUser(user);
+              }}>
                 <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                 <span className="text-green-600">Unsuspend User</span>
               </DropdownMenuItem>
             ) : user.status === 'inactive' ? (
               <>
-                <DropdownMenuItem onClick={() => onActivateUser(user)}>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  onActivateUser(user);
+                }}>
                   <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                   <span className="text-green-600">Activate User</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onSuspendUser(user)}>
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  onSuspendUser(user);
+                }}>
                   <Ban className="mr-2 h-4 w-4 text-red-500" />
                   <span className="text-red-600">Suspend User</span>
                 </DropdownMenuItem>
               </>
             ) : (
-              <DropdownMenuItem onClick={() => onSuspendUser(user)}>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                onSuspendUser(user);
+              }}>
                 <Ban className="mr-2 h-4 w-4 text-red-500" />
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => {
+              e.stopPropagation();
+            }}>
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

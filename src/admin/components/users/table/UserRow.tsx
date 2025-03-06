@@ -1,7 +1,7 @@
 
 import React from "react";
 import { TableRow } from "@/components/ui/table";
-import { Users, User } from "lucide-react";
+import { Globe, User } from "lucide-react";
 import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
 import { UserCell } from "./row-components/UserCell";
 import { StatusCell } from "./row-components/StatusCell";
@@ -32,7 +32,7 @@ export const UserRow = ({
       <RoleCell role={user.role} />
       <CountCell 
         count={user.communities_count} 
-        icon={<Users className="h-4 w-4 text-indigo-500" />} 
+        icon={<Globe className="h-4 w-4 text-indigo-500" />} 
       />
       <CountCell 
         count={user.subscriptions_count} 

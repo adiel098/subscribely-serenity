@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   TableCell, 
@@ -43,14 +42,14 @@ export const UserRow = ({
   onSuspendUser, 
   onActivateUser 
 }: UserRowProps) => {
-  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+  const handleAction = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
     e.stopPropagation();
     action();
   };
 
   return (
-    <TableRow key={user.id} className="hover:bg-muted/30" onClick={(e) => e.preventDefault()}>
+    <TableRow className="hover:bg-muted/30">
       <TableCell className="font-medium">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 border border-primary/10">
@@ -101,13 +100,14 @@ export const UserRow = ({
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center justify-end gap-2 z-10 relative">
+        <div className="flex items-center justify-end gap-2 relative" style={{ zIndex: 5 }}>
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => handleButtonClick(e, () => onEditUser(user))}
+            onClick={(e) => handleAction(e, () => onEditUser(user))}
             title="Edit User"
-            className="h-8 w-8 pointer-events-auto z-20"
+            className="h-8 w-8 relative"
+            style={{ zIndex: 10 }}
           >
             <Edit className="h-4 w-4 text-indigo-600" />
           </Button>
@@ -116,9 +116,10 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleButtonClick(e, () => onActivateUser(user))}
+              onClick={(e) => handleAction(e, () => onActivateUser(user))}
               title="Activate User"
-              className="h-8 w-8 pointer-events-auto z-20"
+              className="h-8 w-8 relative"
+              style={{ zIndex: 10 }}
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -126,9 +127,10 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleButtonClick(e, () => onSuspendUser(user))}
+              onClick={(e) => handleAction(e, () => onSuspendUser(user))}
               title="Suspend User"
-              className="h-8 w-8 pointer-events-auto z-20"
+              className="h-8 w-8 relative"
+              style={{ zIndex: 10 }}
             >
               <Ban className="h-4 w-4 text-red-600" />
             </Button>
@@ -138,8 +140,9 @@ export const UserRow = ({
             variant="ghost"
             size="icon"
             title="Manage Permissions"
-            className="h-8 w-8 pointer-events-auto z-20"
-            onClick={(e) => e.stopPropagation()}
+            className="h-8 w-8 relative"
+            style={{ zIndex: 10 }}
+            onClick={(e) => handleAction(e, () => {})}
           >
             <ShieldAlert className="h-4 w-4 text-amber-600" />
           </Button>
@@ -149,7 +152,8 @@ export const UserRow = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 pointer-events-auto z-20"
+                className="h-8 w-8 relative"
+                style={{ zIndex: 10 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="sr-only">More options</span>

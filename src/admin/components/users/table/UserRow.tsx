@@ -87,7 +87,7 @@ export const UserRow = ({
       <TableCell>
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar className="mr-1 h-3 w-3" />
-          {user.created_at ? formatDate(user.created_at) : 'Unknown'}
+          {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB') : 'Unknown'}
         </div>
       </TableCell>
       <TableCell className="text-right">

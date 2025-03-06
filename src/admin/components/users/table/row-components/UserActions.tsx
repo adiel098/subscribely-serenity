@@ -75,66 +75,75 @@ export const UserActions = ({
       <div className="flex items-center justify-end gap-2">
         <div className="flex items-center space-x-1">
           {/* Edit action */}
-          <div 
+          <button 
             onClick={handleEditClick}
             className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
             title="Edit User"
+            type="button"
           >
             <Edit className="h-4 w-4 text-indigo-600" />
-          </div>
+          </button>
           
           {/* Status action - conditional based on user status */}
           {user.status === 'suspended' ? (
-            <div 
+            <button 
               onClick={handleUnsuspendClick}
               className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
               title="Unsuspend User"
+              type="button"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
-            </div>
+            </button>
           ) : user.status === 'inactive' ? (
             <>
-              <div 
+              <button 
                 onClick={handleActivateClick}
                 className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
                 title="Activate User"
+                type="button"
               >
                 <UserCheck className="h-4 w-4 text-green-600" />
-              </div>
-              <div 
+              </button>
+              <button 
                 onClick={handleSuspendClick}
                 className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
                 title="Suspend User"
+                type="button"
               >
                 <Ban className="h-4 w-4 text-red-600" />
-              </div>
+              </button>
             </>
           ) : (
-            <div 
+            <button 
               onClick={handleSuspendClick}
               className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
               title="Suspend User"
+              type="button"
             >
               <Ban className="h-4 w-4 text-red-600" />
-            </div>
+            </button>
           )}
           
           {/* Permissions action */}
-          <div 
+          <button 
             onClick={handlePermissionsClick}
             className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
             title="Manage Permissions"
+            type="button"
           >
             <Key className="h-4 w-4 text-amber-600" />
-          </div>
+          </button>
           
           {/* Dropdown menu for additional actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors">
+              <button 
+                type="button" 
+                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+              >
                 <span className="sr-only">More options</span>
                 <MoreHorizontal className="h-4 w-4" />
-              </div>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">

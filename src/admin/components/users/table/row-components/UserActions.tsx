@@ -33,15 +33,20 @@ export const UserActions = ({
   onActivateUser,
   onUnsuspendUser
 }: UserActionsProps) => {
+  const handleStopPropagation = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
-    <TableCell>
+    <TableCell onClick={handleStopPropagation}>
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => onEditUser(user)}
           title="Edit User"
-          className="h-8 w-8"
+          className="h-8 w-8 hover:bg-accent/50"
         >
           <Edit className="h-4 w-4 text-indigo-600" />
         </Button>
@@ -52,7 +57,7 @@ export const UserActions = ({
             size="icon"
             onClick={() => onUnsuspendUser(user)}
             title="Unsuspend User"
-            className="h-8 w-8"
+            className="h-8 w-8 hover:bg-accent/50"
           >
             <UserCheck className="h-4 w-4 text-green-600" />
           </Button>
@@ -63,7 +68,7 @@ export const UserActions = ({
               size="icon"
               onClick={() => onActivateUser(user)}
               title="Activate User"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-accent/50"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -72,7 +77,7 @@ export const UserActions = ({
               size="icon"
               onClick={() => onSuspendUser(user)}
               title="Suspend User"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-accent/50"
             >
               <Ban className="h-4 w-4 text-red-600" />
             </Button>
@@ -83,7 +88,7 @@ export const UserActions = ({
             size="icon"
             onClick={() => onSuspendUser(user)}
             title="Suspend User"
-            className="h-8 w-8"
+            className="h-8 w-8 hover:bg-accent/50"
           >
             <Ban className="h-4 w-4 text-red-600" />
           </Button>
@@ -93,8 +98,7 @@ export const UserActions = ({
           variant="ghost"
           size="icon"
           title="Manage Permissions"
-          className="h-8 w-8"
-          onClick={() => {}}
+          className="h-8 w-8 hover:bg-accent/50"
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
         </Button>
@@ -104,7 +108,7 @@ export const UserActions = ({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-accent/50"
             >
               <span className="sr-only">More options</span>
               <MoreHorizontal className="h-4 w-4" />
@@ -138,7 +142,7 @@ export const UserActions = ({
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={() => {}}>
+            <DropdownMenuItem>
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

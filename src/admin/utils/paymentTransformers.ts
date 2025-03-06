@@ -25,9 +25,10 @@ export interface RawCommunityPayment {
   first_name: string;
   last_name: string;
   telegram_username: string;
+  telegram_user_id: string;
   community: {
     name: string;
-  }[];
+  };
 }
 
 export interface PaymentItem {
@@ -81,10 +82,11 @@ export const transformCommunityPayments = (
 ): PaymentItem[] => {
   return (communityData || []).map(item => ({
     id: item.id,
-    user: `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Unknown',
+    // Display Telegram ID as primary user identifier
+    user: item.telegram_user_id || 'Unknown ID',
     email: item.telegram_username || 'No username',
     amount: formatCurrency(item.amount), 
-    community: item.community?.[0]?.name || 'Unknown Community',
+    community: item.community?.name || 'Unknown Community',
     date: formatDate(item.created_at),
     method: item.payment_method || '',
     status: item.status || '',

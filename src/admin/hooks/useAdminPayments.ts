@@ -86,6 +86,7 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
       first_name,
       last_name,
       telegram_username,
+      telegram_user_id,
       community:communities(name)
     `)
     .order('created_at', { ascending: false });
@@ -117,6 +118,7 @@ export const useAdminPayments = (): AdminPaymentsResult => {
         ]);
         
         console.log("Platform payments with profile data:", platformData);
+        console.log("Community payments data:", communityData);
         
         // Transform the raw data into standardized format
         const transformedPlatformData = transformPlatformPayments(platformData);

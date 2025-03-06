@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { PaymentItem } from "@/admin/hooks/useAdminPayments";
 import { StatusBadge } from "./StatusBadge";
 import { PaymentMethodIcon } from "./PaymentMethodIcon";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface PaymentTableProps {
   payments: PaymentItem[];
@@ -19,6 +21,12 @@ interface PaymentTableProps {
 }
 
 export const PaymentTable = ({ payments, isFiltered, type }: PaymentTableProps) => {
+  const handleCopyId = (id: string) => {
+    navigator.clipboard.writeText(id)
+      .then(() => toast.success("Payment ID copied to clipboard"))
+      .catch(() => toast.error("Failed to copy ID"));
+  };
+
   return (
     <div className="rounded-md border border-indigo-100">
       <Table>
@@ -48,7 +56,20 @@ export const PaymentTable = ({ payments, isFiltered, type }: PaymentTableProps) 
           ) : (
             payments.map((payment) => (
               <TableRow key={payment.id} className="hover:bg-indigo-50/30">
-                <TableCell className="font-medium">{payment.id.substring(0, 8)}...</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    <span>{payment.id.substring(0, 8)}...</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleCopyId(payment.id)}
+                      title="Copy full ID"
+                    >
+                      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </div>
+                </TableCell>
                 <TableCell>
                   <div>
                     <p className="font-medium">{payment.user}</p>

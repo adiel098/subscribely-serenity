@@ -25,6 +25,7 @@ export interface AdminPaymentsResult {
  * Fetches platform payments from the database
  */
 const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
+  // First, fetch all platform payments with owner_id
   const { data, error } = await supabase
     .from('platform_payments')
     .select(`
@@ -34,38 +35,40 @@ const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
       payment_method,
       payment_status,
       plan_id,
-      owner_id,
-      profiles!platform_payments_owner_id_fkey(full_name, email)
+      owner_id
     `)
     .order('created_at', { ascending: false });
     
   if (error) throw error;
   
-  // For each payment, fetch the plan name
-  const paymentsWithPlanData = await Promise.all(
+  // Now for each payment, get the owner profile information and plan name in parallel
+  const paymentsWithFullData = await Promise.all(
     (data || []).map(async (payment) => {
-      const { data: planData, error: planError } = await supabase
-        .from('platform_plans')
-        .select('name')
-        .eq('id', payment.plan_id)
-        .single();
-        
-      if (planError) {
-        console.error("Error fetching plan data:", planError);
-        return {
-          ...payment,
-          plan_name: 'Unknown Plan'
-        };
-      }
+      // Fetch plan name
+      const [planResult, profileResult] = await Promise.all([
+        supabase
+          .from('platform_plans')
+          .select('name')
+          .eq('id', payment.plan_id)
+          .single(),
+          
+        supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', payment.owner_id)
+          .single()
+      ]);
       
+      // Return the payment with additional data
       return {
         ...payment,
-        plan_name: planData?.name || 'Unknown Plan'
+        plan_name: planResult.data?.name || 'Unknown Plan',
+        profiles: profileResult.error ? [] : [profileResult.data]
       };
     })
   );
   
-  return paymentsWithPlanData || [];
+  return paymentsWithFullData || [];
 };
 
 /**
@@ -112,6 +115,8 @@ export const useAdminPayments = (): AdminPaymentsResult => {
           fetchPlatformPayments(),
           fetchCommunityPayments()
         ]);
+        
+        console.log("Platform payments with profile data:", platformData);
         
         // Transform the raw data into standardized format
         const transformedPlatformData = transformPlatformPayments(platformData);

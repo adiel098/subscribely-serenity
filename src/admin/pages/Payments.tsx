@@ -1,4 +1,3 @@
-
 import { 
   Card, 
   CardContent, 
@@ -23,7 +22,7 @@ import { PaymentTable } from "@/admin/components/payments/PaymentTable";
 export default function Payments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentType, setPaymentType] = useState<"platform" | "community">("platform");
-  const { platformPayments, communityPayments, isLoading, refetch } = useAdminPayments();
+  const { platformPayments, communityPayments, isLoading, refetch, error } = useAdminPayments();
 
   const filteredPlatformPayments = platformPayments.filter(payment => {
     const searchTerm = searchQuery.toLowerCase();
@@ -90,6 +89,14 @@ export default function Payments() {
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mr-2" />
         <p className="text-lg">Loading payment data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64 text-red-500">
+        <p className="text-lg">Error loading payment data. Please try again later.</p>
       </div>
     );
   }

@@ -1,13 +1,13 @@
 
 import React from "react";
 import { TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { 
   MoreHorizontal, 
   Edit, 
   ShieldAlert, 
   Ban,
-  UserCheck
+  UserCheck,
+  Key
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,119 +73,108 @@ export const UserActions = ({
   return (
     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-end gap-2">
-        {/* Edit button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleEditClick}
-          title="Edit User"
-          className="cursor-pointer hover:bg-accent"
-        >
-          <Edit className="h-4 w-4 text-indigo-600" />
-        </Button>
-        
-        {/* Conditional rendering based on user status */}
-        {user.status === 'suspended' ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleUnsuspendClick}
-            title="Unsuspend User"
-            className="cursor-pointer hover:bg-accent"
+        {/* Action icons row */}
+        <div className="flex items-center space-x-1">
+          {/* Edit action */}
+          <div 
+            onClick={handleEditClick}
+            className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+            title="Edit User"
           >
-            <UserCheck className="h-4 w-4 text-green-600" />
-          </Button>
-        ) : user.status === 'inactive' ? (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleActivateClick}
-              title="Activate User"
-              className="cursor-pointer hover:bg-accent"
+            <Edit className="h-4 w-4 text-indigo-600 group-hover:text-indigo-800" />
+          </div>
+          
+          {/* Status action - conditional based on user status */}
+          {user.status === 'suspended' ? (
+            <div 
+              onClick={handleUnsuspendClick}
+              className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+              title="Unsuspend User"
             >
-              <UserCheck className="h-4 w-4 text-green-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+              <UserCheck className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+            </div>
+          ) : user.status === 'inactive' ? (
+            <>
+              <div 
+                onClick={handleActivateClick}
+                className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+                title="Activate User"
+              >
+                <UserCheck className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+              </div>
+              <div 
+                onClick={handleSuspendClick}
+                className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+                title="Suspend User"
+              >
+                <Ban className="h-4 w-4 text-red-600 group-hover:text-red-800" />
+              </div>
+            </>
+          ) : (
+            <div 
               onClick={handleSuspendClick}
+              className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
               title="Suspend User"
-              className="cursor-pointer hover:bg-accent"
             >
-              <Ban className="h-4 w-4 text-red-600" />
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSuspendClick}
-            title="Suspend User"
-            className="cursor-pointer hover:bg-accent"
+              <Ban className="h-4 w-4 text-red-600 group-hover:text-red-800" />
+            </div>
+          )}
+          
+          {/* Permissions action */}
+          <div 
+            onClick={handlePermissionsClick}
+            className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+            title="Manage Permissions"
           >
-            <Ban className="h-4 w-4 text-red-600" />
-          </Button>
-        )}
-        
-        {/* Permissions button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Manage Permissions"
-          onClick={handlePermissionsClick}
-          className="cursor-pointer hover:bg-accent"
-        >
-          <ShieldAlert className="h-4 w-4 text-amber-600" />
-        </Button>
-        
-        {/* Dropdown menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={(e) => e.stopPropagation()}
-              className="cursor-pointer hover:bg-accent"
-            >
-              <span className="sr-only">More options</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit User
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {user.status === 'suspended' ? (
-              <DropdownMenuItem onClick={handleUnsuspendClick} className="cursor-pointer">
-                <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-                <span className="text-green-600">Unsuspend User</span>
+            <Key className="h-4 w-4 text-amber-600 group-hover:text-amber-800" />
+          </div>
+          
+          {/* Dropdown menu for additional actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div 
+                className="p-2 rounded-md hover:bg-muted cursor-pointer group"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="sr-only">More options</span>
+                <MoreHorizontal className="h-4 w-4 group-hover:text-gray-800" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit User
               </DropdownMenuItem>
-            ) : user.status === 'inactive' ? (
-              <>
-                <DropdownMenuItem onClick={handleActivateClick} className="cursor-pointer">
+              <DropdownMenuSeparator />
+              {user.status === 'suspended' ? (
+                <DropdownMenuItem onClick={handleUnsuspendClick} className="cursor-pointer">
                   <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-                  <span className="text-green-600">Activate User</span>
+                  <span className="text-green-600">Unsuspend User</span>
                 </DropdownMenuItem>
+              ) : user.status === 'inactive' ? (
+                <>
+                  <DropdownMenuItem onClick={handleActivateClick} className="cursor-pointer">
+                    <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                    <span className="text-green-600">Activate User</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSuspendClick} className="cursor-pointer">
+                    <Ban className="mr-2 h-4 w-4 text-red-500" />
+                    <span className="text-red-600">Suspend User</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
                 <DropdownMenuItem onClick={handleSuspendClick} className="cursor-pointer">
                   <Ban className="mr-2 h-4 w-4 text-red-500" />
                   <span className="text-red-600">Suspend User</span>
                 </DropdownMenuItem>
-              </>
-            ) : (
-              <DropdownMenuItem onClick={handleSuspendClick} className="cursor-pointer">
-                <Ban className="mr-2 h-4 w-4 text-red-500" />
-                <span className="text-red-600">Suspend User</span>
+              )}
+              <DropdownMenuItem onClick={handlePermissionsClick} className="cursor-pointer">
+                <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
+                Permissions
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={handlePermissionsClick} className="cursor-pointer">
-              <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
-              Permissions
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </TableCell>
   );

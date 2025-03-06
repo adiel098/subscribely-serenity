@@ -33,19 +33,13 @@ export const UserActions = ({
   onActivateUser,
   onUnsuspendUser
 }: UserActionsProps) => {
-  const handleAction = (e: React.MouseEvent, action: () => void) => {
-    e.preventDefault();
-    e.stopPropagation();
-    action();
-  };
-
   return (
     <TableCell>
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => handleAction(e, () => onEditUser(user))}
+          onClick={() => onEditUser(user)}
           title="Edit User"
           className="h-8 w-8"
         >
@@ -56,7 +50,7 @@ export const UserActions = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => handleAction(e, () => onUnsuspendUser(user))}
+            onClick={() => onUnsuspendUser(user)}
             title="Unsuspend User"
             className="h-8 w-8"
           >
@@ -67,7 +61,7 @@ export const UserActions = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleAction(e, () => onActivateUser(user))}
+              onClick={() => onActivateUser(user)}
               title="Activate User"
               className="h-8 w-8"
             >
@@ -76,7 +70,7 @@ export const UserActions = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleAction(e, () => onSuspendUser(user))}
+              onClick={() => onSuspendUser(user)}
               title="Suspend User"
               className="h-8 w-8"
             >
@@ -87,7 +81,7 @@ export const UserActions = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => handleAction(e, () => onSuspendUser(user))}
+            onClick={() => onSuspendUser(user)}
             title="Suspend User"
             className="h-8 w-8"
           >
@@ -100,7 +94,7 @@ export const UserActions = ({
           size="icon"
           title="Manage Permissions"
           className="h-8 w-8"
-          onClick={(e) => handleAction(e, () => {})}
+          onClick={() => {}}
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
         </Button>
@@ -111,13 +105,12 @@ export const UserActions = ({
               variant="ghost" 
               size="icon" 
               className="h-8 w-8"
-              onClick={(e) => e.stopPropagation()}
             >
               <span className="sr-only">More options</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEditUser(user)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit User
@@ -145,7 +138,7 @@ export const UserActions = ({
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {}}>
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

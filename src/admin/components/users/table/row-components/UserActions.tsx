@@ -34,49 +34,62 @@ export const UserActions = ({
   onUnsuspendUser
 }: UserActionsProps) => {
   
-  // Add explicit handlers with event prevention to ensure clicks work
+  // Handler for edit button click
   const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     onEditUser(user);
   };
   
+  // Handler for suspend button click
   const handleSuspendClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     onSuspendUser(user);
   };
   
+  // Handler for activate button click
   const handleActivateClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     onActivateUser(user);
   };
   
+  // Handler for unsuspend button click
   const handleUnsuspendClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     onUnsuspendUser(user);
+  };
+
+  // General handler to stop propagation for all button clicks
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
   
   return (
-    <TableCell className="text-right">
+    <TableCell className="text-right" onClick={handleButtonClick}>
       <div className="flex items-center justify-end gap-2">
+        {/* Edit button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={handleEditClick}
           title="Edit User"
+          className="cursor-pointer"
         >
           <Edit className="h-4 w-4 text-indigo-600" />
         </Button>
         
+        {/* Conditional rendering based on user status */}
         {user.status === 'suspended' ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={handleUnsuspendClick}
             title="Unsuspend User"
+            className="cursor-pointer"
           >
             <UserCheck className="h-4 w-4 text-green-600" />
           </Button>
@@ -87,6 +100,7 @@ export const UserActions = ({
               size="icon"
               onClick={handleActivateClick}
               title="Activate User"
+              className="cursor-pointer"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -95,6 +109,7 @@ export const UserActions = ({
               size="icon"
               onClick={handleSuspendClick}
               title="Suspend User"
+              className="cursor-pointer"
             >
               <Ban className="h-4 w-4 text-red-600" />
             </Button>
@@ -105,31 +120,37 @@ export const UserActions = ({
             size="icon"
             onClick={handleSuspendClick}
             title="Suspend User"
+            className="cursor-pointer"
           >
             <Ban className="h-4 w-4 text-red-600" />
           </Button>
         )}
         
+        {/* Permissions button */}
         <Button
           variant="ghost"
           size="icon"
           title="Manage Permissions"
+          onClick={handleButtonClick}
+          className="cursor-pointer"
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
         </Button>
         
+        {/* Dropdown menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={(e) => e.stopPropagation()}
+              onClick={handleButtonClick}
+              className="cursor-pointer"
             >
               <span className="sr-only">More options</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent align="end" onClick={handleButtonClick}>
             <DropdownMenuItem onClick={handleEditClick}>
               <Edit className="mr-2 h-4 w-4" />
               Edit User
@@ -157,7 +178,7 @@ export const UserActions = ({
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleButtonClick}>
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

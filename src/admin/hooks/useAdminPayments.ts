@@ -33,13 +33,39 @@ const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
       created_at,
       payment_method,
       payment_status,
-      owner:profiles(full_name, email),
-      plan:platform_plans(name)
+      plan_id,
+      owner_id,
+      profiles!platform_payments_owner_id_fkey(full_name, email)
     `)
     .order('created_at', { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  
+  // For each payment, fetch the plan name
+  const paymentsWithPlanData = await Promise.all(
+    (data || []).map(async (payment) => {
+      const { data: planData, error: planError } = await supabase
+        .from('platform_plans')
+        .select('name')
+        .eq('id', payment.plan_id)
+        .single();
+        
+      if (planError) {
+        console.error("Error fetching plan data:", planError);
+        return {
+          ...payment,
+          plan_name: 'Unknown Plan'
+        };
+      }
+      
+      return {
+        ...payment,
+        plan_name: planData?.name || 'Unknown Plan'
+      };
+    })
+  );
+  
+  return paymentsWithPlanData || [];
 };
 
 /**

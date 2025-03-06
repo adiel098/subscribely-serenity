@@ -7,12 +7,12 @@ export interface RawPlatformPayment {
   created_at: string;
   payment_method: string;
   payment_status: string;
-  owner: {
+  plan_id: string;
+  owner_id: string;
+  plan_name?: string;
+  profiles?: {
     full_name: string;
     email: string;
-  }[];
-  plan: {
-    name: string;
   }[];
 }
 
@@ -62,10 +62,10 @@ export const transformPlatformPayments = (
 ): PaymentItem[] => {
   return (platformData || []).map(item => ({
     id: item.id,
-    user: item.owner?.[0]?.full_name || 'Unknown',
-    email: item.owner?.[0]?.email || 'No email',
+    user: item.profiles?.[0]?.full_name || 'Unknown',
+    email: item.profiles?.[0]?.email || 'No email',
     amount: item.amount,
-    community: item.plan?.[0]?.name || 'Platform Payment',
+    community: item.plan_name || 'Platform Payment',
     date: formatDate(item.created_at),
     method: item.payment_method || '',
     status: item.payment_status || '',

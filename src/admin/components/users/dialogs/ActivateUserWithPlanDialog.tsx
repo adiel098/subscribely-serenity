@@ -15,12 +15,13 @@ import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface ActivateUserWithPlanDialogProps {
   user: AdminUser | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (planId: string, duration: string) => void;
+  onConfirm: (planId: string, duration: string, customDays?: number) => void;
   plans: { id: string; name: string }[];
   isLoading?: boolean;
 }
@@ -35,6 +36,8 @@ export const ActivateUserWithPlanDialog = ({
 }: ActivateUserWithPlanDialogProps) => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [selectedDuration, setSelectedDuration] = useState<string>("monthly");
+  const [customDays, setCustomDays] = useState<number>(30);
+  const [showCustomDaysInput, setShowCustomDaysInput] = useState<boolean>(false);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -46,11 +49,22 @@ export const ActivateUserWithPlanDialog = ({
         setSelectedPlanId("");
       }
       setSelectedDuration("monthly");
+      setCustomDays(30);
+      setShowCustomDaysInput(false);
     }
   }, [isOpen, plans]);
 
+  useEffect(() => {
+    // When duration changes, update whether to show custom days input
+    setShowCustomDaysInput(selectedDuration === "custom");
+  }, [selectedDuration]);
+
   const handleConfirm = () => {
-    onConfirm(selectedPlanId, selectedDuration);
+    if (selectedDuration === "custom") {
+      onConfirm(selectedPlanId, selectedDuration, customDays);
+    } else {
+      onConfirm(selectedPlanId, selectedDuration);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -58,6 +72,8 @@ export const ActivateUserWithPlanDialog = ({
       // Reset form when dialog closes
       setSelectedPlanId("");
       setSelectedDuration("monthly");
+      setCustomDays(30);
+      setShowCustomDaysInput(false);
     }
     onOpenChange(open);
   };
@@ -68,6 +84,7 @@ export const ActivateUserWithPlanDialog = ({
       case 'quarterly': return 'Quarterly (3 months)';
       case 'half-yearly': return 'Half-yearly (6 months)';
       case 'yearly': return 'Yearly (12 months)';
+      case 'custom': return 'Custom period';
       default: return duration;
     }
   };
@@ -138,9 +155,24 @@ export const ActivateUserWithPlanDialog = ({
                 <SelectItem value="quarterly">{getDurationLabel('quarterly')}</SelectItem>
                 <SelectItem value="half-yearly">{getDurationLabel('half-yearly')}</SelectItem>
                 <SelectItem value="yearly">{getDurationLabel('yearly')}</SelectItem>
+                <SelectItem value="custom">{getDurationLabel('custom')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {showCustomDaysInput && (
+            <div className="space-y-2">
+              <Label htmlFor="customDays">Custom Period (days)</Label>
+              <Input
+                id="customDays"
+                type="number"
+                min="1"
+                value={customDays}
+                onChange={(e) => setCustomDays(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          )}
         </div>
 
         <AlertDialogFooter>
@@ -148,7 +180,7 @@ export const ActivateUserWithPlanDialog = ({
           <AlertDialogAction 
             onClick={handleConfirm} 
             className="bg-green-600 hover:bg-green-700"
-            disabled={isLoading || !selectedPlanId}
+            disabled={isLoading || !selectedPlanId || (selectedDuration === 'custom' && (!customDays || customDays < 1))}
           >
             {isLoading ? (
               <>

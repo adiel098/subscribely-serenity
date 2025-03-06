@@ -11,24 +11,40 @@ export const useAdminUserStatus = (onSuccess?: () => void) => {
     setIsUpdating(true);
     
     try {
-      // Since we don't have direct access to auth.admin API from the client,
-      // we'll update a field in the profiles table instead
+      // Update the profiles table
       let updates = {};
       
       if (status === 'suspended') {
-        updates = { is_suspended: true };
+        updates = { is_suspended: true, status: 'suspended' };
       } else if (status === 'active') {
-        updates = { is_suspended: false, last_login: new Date().toISOString() };
+        updates = { is_suspended: false, status: 'active', last_login: new Date().toISOString() };
       } else if (status === 'inactive') {
-        updates = { is_suspended: false, last_login: null };
+        updates = { is_suspended: false, status: 'inactive', last_login: null };
       }
       
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', userId);
         
-      if (error) throw error;
+      if (profileError) throw profileError;
+      
+      // If status is inactive, also update any platform subscriptions to inactive
+      if (status === 'inactive') {
+        const { error: subscriptionError } = await supabase
+          .from('platform_subscriptions')
+          .update({ 
+            status: 'inactive',
+            auto_renew: false 
+          })
+          .eq('owner_id', userId)
+          .eq('status', 'active');
+          
+        if (subscriptionError) {
+          console.error("Error updating subscriptions:", subscriptionError);
+          // Don't throw here, we'll continue even if this fails
+        }
+      }
       
       // Log the status change
       await supabase.from('system_logs').insert({

@@ -113,7 +113,7 @@ export const useEditUserDialog = (
     }
   };
 
-  const handleActivateWithPlan = async (planId: string, duration: string) => {
+  const handleActivateWithPlan = async (planId: string, duration: string, customDays?: number) => {
     if (!user) return;
     
     setIsUpdating(true);
@@ -133,7 +133,7 @@ export const useEditUserDialog = (
       }
       
       // Then, create a subscription for the user
-      const subscriptionEndDate = calculateEndDate(duration);
+      const subscriptionEndDate = calculateEndDate(duration, customDays);
       
       const { error } = await supabase
         .from('platform_subscriptions')
@@ -167,7 +167,7 @@ export const useEditUserDialog = (
     }
   };
 
-  const calculateEndDate = (duration: string): Date => {
+  const calculateEndDate = (duration: string, customDays?: number): Date => {
     const today = new Date();
     
     switch (duration) {
@@ -179,6 +179,8 @@ export const useEditUserDialog = (
         return new Date(today.setMonth(today.getMonth() + 6));
       case 'yearly':
         return new Date(today.setFullYear(today.getFullYear() + 1));
+      case 'custom':
+        return new Date(today.setDate(today.getDate() + (customDays || 30)));
       default:
         return new Date(today.setMonth(today.getMonth() + 1));
     }

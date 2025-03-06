@@ -75,7 +75,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
     setActivateDialogOpen(false);
   };
 
-  const confirmActivateWithPlan = async (planId: string, duration: string) => {
+  const confirmActivateWithPlan = async (planId: string, duration: string, customDays?: number) => {
     if (!selectedUser) return;
     
     setIsProcessing(true);
@@ -89,7 +89,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
       }
       
       // Then, create a subscription for the user
-      const subscriptionEndDate = calculateEndDate(duration);
+      const subscriptionEndDate = calculateEndDate(duration, customDays);
       
       const { error } = await supabase
         .from('platform_subscriptions')
@@ -121,7 +121,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
     }
   };
 
-  const calculateEndDate = (duration: string): Date => {
+  const calculateEndDate = (duration: string, customDays?: number): Date => {
     const today = new Date();
     
     switch (duration) {
@@ -133,6 +133,8 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
         return new Date(today.setMonth(today.getMonth() + 6));
       case 'yearly':
         return new Date(today.setFullYear(today.getFullYear() + 1));
+      case 'custom':
+        return new Date(today.setDate(today.getDate() + (customDays || 30)));
       default:
         return new Date(today.setMonth(today.getMonth() + 1));
     }

@@ -25,19 +25,11 @@ export const UserRow = ({
   onActivateUser,
   onUnsuspendUser
 }: UserRowProps) => {
-  // Prevent row click from affecting button clicks
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Only prevent default for the row itself, not for its children
-    if (e.currentTarget === e.target) {
-      e.preventDefault();
-    }
-  };
-
+  // This component no longer needs to handle row clicks
+  // as all interaction is through the action buttons
+  
   return (
-    <TableRow 
-      className="hover:bg-muted/30" 
-      onClick={handleRowClick}
-    >
+    <TableRow className="hover:bg-muted/30">
       {/* User Column */}
       <UserCell user={user} />
 

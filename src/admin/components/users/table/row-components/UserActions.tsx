@@ -62,14 +62,8 @@ export const UserActions = ({
     onUnsuspendUser(user);
   };
 
-  // General handler to stop propagation for all button clicks
-  const handleButtonClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  
   return (
-    <TableCell className="text-right" onClick={handleButtonClick}>
+    <TableCell className="text-right">
       <div className="flex items-center justify-end gap-2">
         {/* Edit button */}
         <Button
@@ -77,7 +71,7 @@ export const UserActions = ({
           size="icon"
           onClick={handleEditClick}
           title="Edit User"
-          className="cursor-pointer"
+          className="cursor-pointer hover:bg-accent"
         >
           <Edit className="h-4 w-4 text-indigo-600" />
         </Button>
@@ -89,7 +83,7 @@ export const UserActions = ({
             size="icon"
             onClick={handleUnsuspendClick}
             title="Unsuspend User"
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent"
           >
             <UserCheck className="h-4 w-4 text-green-600" />
           </Button>
@@ -100,7 +94,7 @@ export const UserActions = ({
               size="icon"
               onClick={handleActivateClick}
               title="Activate User"
-              className="cursor-pointer"
+              className="cursor-pointer hover:bg-accent"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -109,7 +103,7 @@ export const UserActions = ({
               size="icon"
               onClick={handleSuspendClick}
               title="Suspend User"
-              className="cursor-pointer"
+              className="cursor-pointer hover:bg-accent"
             >
               <Ban className="h-4 w-4 text-red-600" />
             </Button>
@@ -120,7 +114,7 @@ export const UserActions = ({
             size="icon"
             onClick={handleSuspendClick}
             title="Suspend User"
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent"
           >
             <Ban className="h-4 w-4 text-red-600" />
           </Button>
@@ -131,8 +125,8 @@ export const UserActions = ({
           variant="ghost"
           size="icon"
           title="Manage Permissions"
-          onClick={handleButtonClick}
-          className="cursor-pointer"
+          onClick={(e) => e.stopPropagation()} // Just prevent propagation for now
+          className="cursor-pointer hover:bg-accent"
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
         </Button>
@@ -143,42 +137,42 @@ export const UserActions = ({
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={handleButtonClick}
-              className="cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+              className="cursor-pointer hover:bg-accent"
             >
               <span className="sr-only">More options</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onClick={handleButtonClick}>
-            <DropdownMenuItem onClick={handleEditClick}>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">
               <Edit className="mr-2 h-4 w-4" />
               Edit User
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {user.status === 'suspended' ? (
-              <DropdownMenuItem onClick={handleUnsuspendClick}>
+              <DropdownMenuItem onClick={handleUnsuspendClick} className="cursor-pointer">
                 <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                 <span className="text-green-600">Unsuspend User</span>
               </DropdownMenuItem>
             ) : user.status === 'inactive' ? (
               <>
-                <DropdownMenuItem onClick={handleActivateClick}>
+                <DropdownMenuItem onClick={handleActivateClick} className="cursor-pointer">
                   <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                   <span className="text-green-600">Activate User</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSuspendClick}>
+                <DropdownMenuItem onClick={handleSuspendClick} className="cursor-pointer">
                   <Ban className="mr-2 h-4 w-4 text-red-500" />
                   <span className="text-red-600">Suspend User</span>
                 </DropdownMenuItem>
               </>
             ) : (
-              <DropdownMenuItem onClick={handleSuspendClick}>
+              <DropdownMenuItem onClick={handleSuspendClick} className="cursor-pointer">
                 <Ban className="mr-2 h-4 w-4 text-red-500" />
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={handleButtonClick}>
+            <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="cursor-pointer">
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

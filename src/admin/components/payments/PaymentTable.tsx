@@ -8,7 +8,6 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
 import { PaymentItem } from "@/admin/hooks/useAdminPayments";
 import { StatusBadge } from "./StatusBadge";
 import { PaymentMethodIcon } from "./PaymentMethodIcon";
@@ -59,7 +58,7 @@ export const PaymentTable = ({ payments, isFiltered, type }: PaymentTableProps) 
                   </div>
                 </TableCell>
                 <TableCell className="font-medium text-green-600">
-                  {formatCurrency(Number(payment.amount))}
+                  {payment.amount}
                 </TableCell>
                 <TableCell>{payment.community}</TableCell>
                 <TableCell>{payment.date}</TableCell>

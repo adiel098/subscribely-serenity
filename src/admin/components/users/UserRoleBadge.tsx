@@ -56,9 +56,9 @@ export const UserRoleBadge = ({ role, size = 'default' }: UserRoleBadgeProps) =>
     <Badge 
       variant={variant} 
       className={`
-        flex items-center 
+        flex items-center whitespace-nowrap min-w-[90px] justify-center
         ${className} 
-        ${size === 'sm' ? 'text-xs py-0 px-2 h-5' : ''}
+        ${size === 'sm' ? 'text-xs py-0 px-2 h-5 min-w-[90px]' : 'min-w-[120px]'}
       `}
     >
       {icon}

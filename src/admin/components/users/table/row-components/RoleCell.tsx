@@ -10,7 +10,7 @@ interface RoleCellProps {
 
 export const RoleCell = ({ role }: RoleCellProps) => {
   return (
-    <TableCell>
+    <TableCell className="min-w-[160px]">
       <div className="flex justify-center">
         <UserRoleBadge role={role} size="sm" />
       </div>

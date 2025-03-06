@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   TableCell, 
@@ -34,13 +35,15 @@ interface UserRowProps {
   onEditUser: (user: AdminUser) => void;
   onSuspendUser: (user: AdminUser) => void;
   onActivateUser: (user: AdminUser) => void;
+  onUnsuspendUser: (user: AdminUser) => void;
 }
 
 export const UserRow = ({ 
   user, 
   onEditUser, 
   onSuspendUser, 
-  onActivateUser 
+  onActivateUser,
+  onUnsuspendUser
 }: UserRowProps) => {
   const handleAction = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
@@ -116,8 +119,8 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleAction(e, () => onActivateUser(user))}
-              title="Activate User"
+              onClick={(e) => handleAction(e, () => onUnsuspendUser(user))}
+              title="Unsuspend User"
               className="h-8 w-8 relative"
               style={{ zIndex: 10 }}
             >
@@ -127,12 +130,16 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={(e) => handleAction(e, () => onSuspendUser(user))}
-              title="Suspend User"
+              onClick={(e) => handleAction(e, () => user.status === 'inactive' ? onActivateUser(user) : onSuspendUser(user))}
+              title={user.status === 'inactive' ? "Activate User" : "Suspend User"}
               className="h-8 w-8 relative"
               style={{ zIndex: 10 }}
             >
-              <Ban className="h-4 w-4 text-red-600" />
+              {user.status === 'inactive' ? (
+                <UserCheck className="h-4 w-4 text-green-600" />
+              ) : (
+                <Ban className="h-4 w-4 text-red-600" />
+              )}
             </Button>
           )}
           
@@ -167,6 +174,11 @@ export const UserRow = ({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {user.status === 'suspended' ? (
+                <DropdownMenuItem onClick={() => onUnsuspendUser(user)}>
+                  <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                  <span className="text-green-600">Unsuspend User</span>
+                </DropdownMenuItem>
+              ) : user.status === 'inactive' ? (
                 <DropdownMenuItem onClick={() => onActivateUser(user)}>
                   <UserCheck className="mr-2 h-4 w-4 text-green-500" />
                   <span className="text-green-600">Activate User</span>

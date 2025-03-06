@@ -16,19 +16,23 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
     selectedUser,
     isEditDialogOpen,
     suspendDialogOpen,
+    unsuspendDialogOpen,
     activateDialogOpen,
     activateWithPlanDialogOpen,
     platformPlans,
     isProcessing,
     setIsEditDialogOpen,
     setSuspendDialogOpen,
+    setUnsuspendDialogOpen,
     setActivateDialogOpen,
     setActivateWithPlanDialogOpen,
     fetchPlatformPlans,
     handleEditUser,
     handleSuspendUser,
+    handleUnsuspendUser,
     handleActivateUser,
     confirmSuspend,
+    confirmUnsuspend,
     confirmActivate,
     confirmActivateWithPlan
   } = useUserActions(onUpdateStatus);
@@ -44,6 +48,7 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
         users={users}
         onEditUser={handleEditUser}
         onSuspendUser={handleSuspendUser}
+        onUnsuspendUser={handleUnsuspendUser}
         onActivateUser={handleActivateUser}
       />
 
@@ -51,6 +56,7 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
         selectedUser={selectedUser}
         isEditDialogOpen={isEditDialogOpen}
         suspendDialogOpen={suspendDialogOpen}
+        unsuspendDialogOpen={unsuspendDialogOpen}
         activateDialogOpen={activateDialogOpen}
         activateWithPlanDialogOpen={activateWithPlanDialogOpen}
         isProcessing={isProcessing}
@@ -59,10 +65,12 @@ export const UsersTable = ({ users, onUpdateStatus, onUpdateRole }: UsersTablePr
         onUpdateStatus={onUpdateStatus}
         onUpdateRole={onUpdateRole}
         onSuspendConfirm={confirmSuspend}
+        onUnsuspendConfirm={confirmUnsuspend}
         onActivateConfirm={confirmActivate}
         onActivateWithPlanConfirm={confirmActivateWithPlan}
         onOpenChangeActivate={setActivateDialogOpen}
         onOpenChangeSuspend={setSuspendDialogOpen}
+        onOpenChangeUnsuspend={setUnsuspendDialogOpen}
         onOpenChangeActivateWithPlan={setActivateWithPlanDialogOpen}
       />
     </>

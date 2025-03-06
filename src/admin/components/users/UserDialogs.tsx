@@ -4,6 +4,7 @@ import { EditUserDialog } from "./EditUserDialog";
 import { SuspendUserDialog } from "./dialogs/SuspendUserDialog";
 import { ActivateUserDialog } from "./dialogs/ActivateUserDialog";
 import { ActivateUserWithPlanDialog } from "./dialogs/ActivateUserWithPlanDialog";
+import { UnsuspendUserDialog } from "./dialogs/UnsuspendUserDialog";
 
 interface UserDialogsProps {
   selectedUser: AdminUser | null;
@@ -11,6 +12,7 @@ interface UserDialogsProps {
   suspendDialogOpen: boolean;
   activateDialogOpen: boolean;
   activateWithPlanDialogOpen: boolean;
+  unsuspendDialogOpen: boolean;
   isProcessing: boolean;
   platformPlans: { id: string; name: string }[];
   onCloseEditDialog: () => void;
@@ -18,9 +20,11 @@ interface UserDialogsProps {
   onUpdateRole: (userId: string, role: AdminUserRole) => Promise<boolean>;
   onSuspendConfirm: () => void;
   onActivateConfirm: () => void;
+  onUnsuspendConfirm: () => void;
   onActivateWithPlanConfirm: (planId: string, duration: string) => void;
   onOpenChangeActivate: (open: boolean) => void;
   onOpenChangeSuspend: (open: boolean) => void;
+  onOpenChangeUnsuspend: (open: boolean) => void;
   onOpenChangeActivateWithPlan: (open: boolean) => void;
 }
 
@@ -30,6 +34,7 @@ export const UserDialogs = ({
   suspendDialogOpen,
   activateDialogOpen,
   activateWithPlanDialogOpen,
+  unsuspendDialogOpen,
   isProcessing,
   platformPlans,
   onCloseEditDialog,
@@ -37,9 +42,11 @@ export const UserDialogs = ({
   onUpdateRole,
   onSuspendConfirm,
   onActivateConfirm,
+  onUnsuspendConfirm,
   onActivateWithPlanConfirm,
   onOpenChangeActivate,
   onOpenChangeSuspend,
+  onOpenChangeUnsuspend,
   onOpenChangeActivateWithPlan
 }: UserDialogsProps) => {
   return (
@@ -59,6 +66,13 @@ export const UserDialogs = ({
         isOpen={suspendDialogOpen}
         onOpenChange={onOpenChangeSuspend}
         onConfirm={onSuspendConfirm}
+      />
+
+      <UnsuspendUserDialog 
+        user={selectedUser}
+        isOpen={unsuspendDialogOpen}
+        onOpenChange={onOpenChangeUnsuspend}
+        onConfirm={onUnsuspendConfirm}
       />
 
       <ActivateUserDialog

@@ -1,38 +1,47 @@
 
-import { Table, TableBody } from "@/components/ui/table";
-import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
-import { TableHeader } from "./table/TableHeader";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserRow } from "./table/UserRow";
+import { TableHeader as UsersTableHeader } from "./table/TableHeader";
 import { EmptyState } from "./table/EmptyState";
+import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
 
 interface UserTableContentProps {
   users: AdminUser[];
   onEditUser: (user: AdminUser) => void;
   onSuspendUser: (user: AdminUser) => void;
   onActivateUser: (user: AdminUser) => void;
+  onUnsuspendUser: (user: AdminUser) => void;
 }
 
-export const UserTableContent = ({
+export const UserTableContent = ({ 
   users,
   onEditUser,
   onSuspendUser,
-  onActivateUser
+  onActivateUser,
+  onUnsuspendUser
 }: UserTableContentProps) => {
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md">
       <Table>
-        <TableHeader />
+        <TableHeader>
+          <TableRow>
+            <UsersTableHeader />
+          </TableRow>
+        </TableHeader>
         <TableBody>
           {users.length === 0 ? (
-            <EmptyState />
+            <TableRow>
+              <EmptyState colSpan={7} />
+            </TableRow>
           ) : (
             users.map((user) => (
-              <UserRow 
+              <UserRow
                 key={user.id}
                 user={user}
                 onEditUser={onEditUser}
                 onSuspendUser={onSuspendUser}
                 onActivateUser={onActivateUser}
+                onUnsuspendUser={onUnsuspendUser}
               />
             ))
           )}

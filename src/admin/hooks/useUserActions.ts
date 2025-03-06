@@ -8,6 +8,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [unsuspendDialogOpen, setUnsuspendDialogOpen] = useState(false);
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
   const [activateWithPlanDialogOpen, setActivateWithPlanDialogOpen] = useState(false);
   const [platformPlans, setPlatformPlans] = useState<{ id: string; name: string }[]>([]);
@@ -49,6 +50,11 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
     setSuspendDialogOpen(true);
   };
 
+  const handleUnsuspendUser = (user: AdminUser) => {
+    setSelectedUser(user);
+    setUnsuspendDialogOpen(true);
+  };
+
   const handleActivateUser = (user: AdminUser) => {
     setSelectedUser(user);
     
@@ -66,6 +72,13 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
       await onUpdateStatus(selectedUser.id, 'suspended');
     }
     setSuspendDialogOpen(false);
+  };
+
+  const confirmUnsuspend = async () => {
+    if (selectedUser) {
+      await onUpdateStatus(selectedUser.id, 'active');
+    }
+    setUnsuspendDialogOpen(false);
   };
 
   const confirmActivate = async () => {
@@ -144,19 +157,23 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
     selectedUser,
     isEditDialogOpen,
     suspendDialogOpen,
+    unsuspendDialogOpen,
     activateDialogOpen,
     activateWithPlanDialogOpen,
     platformPlans,
     isProcessing,
     setIsEditDialogOpen,
     setSuspendDialogOpen,
+    setUnsuspendDialogOpen,
     setActivateDialogOpen,
     setActivateWithPlanDialogOpen,
     fetchPlatformPlans,
     handleEditUser,
     handleSuspendUser,
+    handleUnsuspendUser,
     handleActivateUser,
     confirmSuspend,
+    confirmUnsuspend,
     confirmActivate,
     confirmActivateWithPlan
   };

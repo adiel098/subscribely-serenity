@@ -21,7 +21,7 @@ export interface RawCommunityPayment {
   amount: number;
   created_at: string;
   payment_method: string;
-  status: string;
+  status: string; // This field is important for payment status display
   first_name: string;
   last_name: string;
   telegram_username: string;
@@ -79,21 +79,26 @@ export const transformPlatformPayments = (
 
 /**
  * Transforms raw community payment data into a standardized PaymentItem format
- * Includes community ID and name for display and further operations
+ * Ensures status is properly mapped to the PaymentItem format
  */
 export const transformCommunityPayments = (
   communityData: RawCommunityPayment[]
 ): PaymentItem[] => {
-  return (communityData || []).map(item => ({
-    id: item.id,
-    user: `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.telegram_user_id || 'Unknown User',
-    email: item.telegram_username || 'No username',
-    amount: formatCurrency(item.amount),
-    community: item.community?.name || 'Unknown Community',
-    communityId: item.community_id,
-    date: formatDate(item.created_at),
-    method: item.payment_method || '',
-    status: item.status || '',
-    raw_data: item
-  }));
+  return (communityData || []).map(item => {
+    // Log the status for debugging
+    console.log(`Payment ID: ${item.id}, Status: ${item.status}`);
+    
+    return {
+      id: item.id,
+      user: `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.telegram_user_id || 'Unknown User',
+      email: item.telegram_username || 'No username',
+      amount: formatCurrency(item.amount),
+      community: item.community?.name || 'Unknown Community',
+      communityId: item.community_id,
+      date: formatDate(item.created_at),
+      method: item.payment_method || '',
+      status: item.status || '', // Make sure the status is properly mapped
+      raw_data: item
+    };
+  });
 };

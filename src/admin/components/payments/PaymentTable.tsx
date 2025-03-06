@@ -27,6 +27,9 @@ export const PaymentTable = ({ payments, isFiltered, type }: PaymentTableProps) 
       .catch(() => toast.error("Failed to copy ID"));
   };
 
+  // Debug the payment status values
+  console.log("Payment records with status:", payments.map(p => ({id: p.id, status: p.status})));
+
   return (
     <div className="rounded-md border border-indigo-100">
       <Table>

@@ -73,7 +73,7 @@ const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
 
 /**
  * Fetches community payments from the database with complete community data
- * Using explicit join to ensure we get the correct community names
+ * Ensures status field is properly queried and included
  */
 const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
   try {
@@ -102,6 +102,11 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
     if (!data || data.length === 0) {
       return [];
     }
+
+    // Log the payment status values for debugging
+    data.forEach(payment => {
+      console.log(`Payment ID: ${payment.id}, Raw Status: ${payment.status}`);
+    });
 
     // Now fetch community details for each payment
     const paymentsWithCommunityData = await Promise.all(

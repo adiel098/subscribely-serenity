@@ -26,7 +26,7 @@ export const UserRow = ({
   onUnsuspendUser
 }: UserRowProps) => {
   return (
-    <TableRow className="hover:bg-muted/30">
+    <TableRow className="hover:bg-muted/30" onClick={(e) => e.stopPropagation()}>
       {/* User Column */}
       <UserCell user={user} />
 

@@ -26,8 +26,8 @@ import {
 } from "lucide-react";
 import { UserStatusBadge } from "../UserStatusBadge";
 import { UserRoleBadge } from "../UserRoleBadge";
-import { formatDistanceToNow } from "date-fns";
 import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
+import { formatDate } from "@/group_owners/utils/dateUtils";
 
 interface UserRowProps {
   user: AdminUser;
@@ -86,9 +86,7 @@ export const UserRow = ({
       <TableCell>
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar className="mr-1 h-3 w-3" />
-          {user.created_at
-            ? formatDistanceToNow(new Date(user.created_at), { addSuffix: true })
-            : 'Unknown'}
+          {user.created_at ? formatDate(user.created_at) : 'Unknown'}
         </div>
       </TableCell>
       <TableCell className="text-right">

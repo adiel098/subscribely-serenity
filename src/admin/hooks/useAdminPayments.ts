@@ -92,7 +92,24 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
     .order('created_at', { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  
+  // Transform the data to match the expected format
+  const formattedData: RawCommunityPayment[] = (data || []).map(item => ({
+    id: item.id,
+    amount: item.amount,
+    created_at: item.created_at,
+    payment_method: item.payment_method,
+    status: item.status,
+    first_name: item.first_name,
+    last_name: item.last_name,
+    telegram_username: item.telegram_username,
+    telegram_user_id: item.telegram_user_id,
+    community: {
+      name: item.community?.name || 'Unknown Community'
+    }
+  }));
+  
+  return formattedData;
 };
 
 /**

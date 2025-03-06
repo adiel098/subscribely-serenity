@@ -53,11 +53,28 @@ export const useAdminUsersFetch = () => {
         
       if (communitiesError) throw communitiesError;
       
+      // Get platform subscriptions data to determine if a user has an active platform plan
+      const { data: platformSubscriptions, error: platformSubscriptionsError } = await supabase
+        .from('platform_subscriptions')
+        .select('owner_id, status, subscription_end_date')
+        .eq('status', 'active');
+        
+      if (platformSubscriptionsError) {
+        console.error("Error fetching platform subscriptions:", platformSubscriptionsError);
+        throw platformSubscriptionsError;
+      }
+      
       // Process the data to create user objects
       const processedUsers: AdminUser[] = profiles.map(profile => {
         const adminData = adminUsersData?.find(a => a.user_id === profile.id);
         const adminRole = adminData?.role || null;
         const userCommunities = communities?.filter(c => c.owner_id === profile.id) || [];
+        
+        // Check if user has an active platform subscription
+        const userSubscription = platformSubscriptions?.find(s => s.owner_id === profile.id);
+        const hasActiveSubscription = userSubscription && 
+          userSubscription.status === 'active' && 
+          (!userSubscription.subscription_end_date || new Date(userSubscription.subscription_end_date) > new Date());
         
         // Set role based on admin status or community ownership
         let role: AdminUserRole = 'user';
@@ -69,10 +86,12 @@ export const useAdminUsersFetch = () => {
           role = 'community_owner';
         }
         
-        // Determine user status based on is_suspended flag and last_login
+        // Determine user status based on is_suspended flag, active platform subscription, and last_login
         let status: 'active' | 'inactive' | 'suspended' = 'inactive';
         if (profile.is_suspended) {
           status = 'suspended';
+        } else if (hasActiveSubscription) {
+          status = 'active';
         } else if (profile.last_login) {
           status = 'active';
         }
@@ -87,7 +106,7 @@ export const useAdminUsersFetch = () => {
           status: status,
           avatar_url: profile.avatar_url || null,
           communities_count: userCommunities.length,
-          subscriptions_count: 0, // We'll need to calculate this from another table if needed
+          subscriptions_count: hasActiveSubscription ? 1 : 0, // Set to 1 if user has active platform subscription
           created_at: profile.created_at || '',
           last_login: profile.last_login || null
         };

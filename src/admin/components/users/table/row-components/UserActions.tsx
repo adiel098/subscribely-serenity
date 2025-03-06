@@ -61,9 +61,17 @@ export const UserActions = ({
     e.stopPropagation();
     onUnsuspendUser(user);
   };
+  
+  // Handler for permissions button click (placeholder for now)
+  const handlePermissionsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Permissions functionality will be implemented later
+    console.log("Manage permissions for user:", user.id);
+  };
 
   return (
-    <TableCell className="text-right">
+    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-end gap-2">
         {/* Edit button */}
         <Button
@@ -125,7 +133,7 @@ export const UserActions = ({
           variant="ghost"
           size="icon"
           title="Manage Permissions"
-          onClick={(e) => e.stopPropagation()} // Just prevent propagation for now
+          onClick={handlePermissionsClick}
           className="cursor-pointer hover:bg-accent"
         >
           <ShieldAlert className="h-4 w-4 text-amber-600" />
@@ -172,7 +180,7 @@ export const UserActions = ({
                 <span className="text-red-600">Suspend User</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="cursor-pointer">
+            <DropdownMenuItem onClick={handlePermissionsClick} className="cursor-pointer">
               <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
               Permissions
             </DropdownMenuItem>

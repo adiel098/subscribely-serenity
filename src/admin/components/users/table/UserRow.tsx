@@ -25,9 +25,6 @@ export const UserRow = ({
   onActivateUser,
   onUnsuspendUser
 }: UserRowProps) => {
-  // This component no longer needs to handle row clicks
-  // as all interaction is through the action buttons
-  
   return (
     <TableRow className="hover:bg-muted/30">
       {/* User Column */}

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
@@ -62,6 +61,30 @@ serve(async (req) => {
       throw new Error('Invalid JSON in request body');
     }
     
+    // Check if user is suspended before processing any requests
+    if (body.message?.from?.id) {
+      const telegramUserId = body.message.from.id.toString();
+      
+      // Check user suspension status
+      const { data: userProfile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('is_suspended')
+        .eq('id', telegramUserId)
+        .single();
+      
+      if (profileError) {
+        console.error("[WEBHOOK] ❌ Error checking user suspension status:", profileError);
+      } else if (userProfile?.is_suspended) {
+        console.log("[WEBHOOK] 🚫 Suspended user attempted action:", telegramUserId);
+        return new Response(JSON.stringify({ 
+          ok: true,
+          message: "User is suspended" 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Handle member removal
     if (body.path === '/remove-member') {
       console.log('[WEBHOOK] 🔄 Handling member removal request:', JSON.stringify(body, null, 2));

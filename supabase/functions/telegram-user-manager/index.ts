@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -139,10 +138,21 @@ async function createOrUpdateMember(memberData) {
   
   const { telegram_id, community_id, subscription_plan_id, status, payment_id, username } = memberData;
   
-  // Validate required fields
-  if (!telegram_id || !community_id || !subscription_plan_id) {
-    console.error(`[telegram-user-manager] Missing required member data: telegram_id=${telegram_id}, community_id=${community_id}, subscription_plan_id=${subscription_plan_id}`);
-    return { success: false, error: "Missing required data" };
+  // First check if user is suspended
+  const { data: userProfile, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('is_suspended')
+    .eq('id', telegram_id)
+    .single();
+    
+  if (profileError) {
+    console.error(`[telegram-user-manager] Error checking user suspension status:`, profileError);
+    return { success: false, error: "Error checking user status" };
+  }
+  
+  if (userProfile?.is_suspended) {
+    console.log(`[telegram-user-manager] Suspended user ${telegram_id} attempted to join/update membership`);
+    return { success: false, error: "User is suspended" };
   }
 
   try {

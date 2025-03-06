@@ -23,6 +23,7 @@ import {
   Ban,
   UserCheck,
   Shield,
+  User,
 } from "lucide-react";
 import { UserStatusBadge } from "../UserStatusBadge";
 import { UserRoleBadge } from "../UserRoleBadge";
@@ -72,14 +73,14 @@ export const UserRow = ({
         <UserRoleBadge role={user.role} size="sm" />
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" title="Communities owned by this user">
           <Users className="h-4 w-4 text-indigo-500" />
           <span>{user.communities_count}</span>
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <Shield className="h-4 w-4 text-indigo-500" />
+        <div className="flex items-center gap-1" title="Total active subscribers in all communities">
+          <User className="h-4 w-4 text-indigo-500" />
           <span>{user.subscriptions_count}</span>
         </div>
       </TableCell>

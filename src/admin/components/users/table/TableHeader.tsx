@@ -11,7 +11,7 @@ export const TableHeader = () => {
       <TableRow className="bg-muted/50">
         <TableHead className="w-[250px]">User</TableHead>
         <TableHead className="w-[100px]">Status</TableHead>
-        <TableHead className="w-[150px]">Role</TableHead>
+        <TableHead className="w-[180px]">Role</TableHead>
         <TableHead>Communities</TableHead>
         <TableHead>Subscriptions</TableHead>
         <TableHead>Joined</TableHead>

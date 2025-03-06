@@ -14,6 +14,7 @@ import { Loader2, UserCheck } from "lucide-react";
 import { AdminUser } from "@/admin/hooks/types/adminUsers.types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface ActivateUserWithPlanDialogProps {
   user: AdminUser | null;
@@ -39,13 +40,43 @@ export const ActivateUserWithPlanDialog = ({
     onConfirm(selectedPlanId, selectedDuration);
   };
 
+  // Reset form when dialog opens
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form when dialog closes
+      setSelectedPlanId("");
+      setSelectedDuration("monthly");
+    }
+    onOpenChange(open);
+  };
+
+  const getDurationLabel = (duration: string): string => {
+    switch (duration) {
+      case 'monthly': return 'Monthly (1 month)';
+      case 'quarterly': return 'Quarterly (3 months)';
+      case 'half-yearly': return 'Half-yearly (6 months)';
+      case 'yearly': return 'Yearly (12 months)';
+      default: return duration;
+    }
+  };
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Activate User Account</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-green-600" />
+            Activate User Account
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Activate {user?.full_name || user?.email} and assign a subscription plan.
+            {user && (
+              <div className="mt-2">
+                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                  {user.email}
+                </Badge>
+              </div>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -76,13 +107,15 @@ export const ActivateUserWithPlanDialog = ({
               onValueChange={setSelectedDuration}
             >
               <SelectTrigger id="duration" className="w-full">
-                <SelectValue placeholder="Select duration" />
+                <SelectValue placeholder="Select duration">
+                  {getDurationLabel(selectedDuration)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly (3 months)</SelectItem>
-                <SelectItem value="half-yearly">Half-yearly (6 months)</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="monthly">{getDurationLabel('monthly')}</SelectItem>
+                <SelectItem value="quarterly">{getDurationLabel('quarterly')}</SelectItem>
+                <SelectItem value="half-yearly">{getDurationLabel('half-yearly')}</SelectItem>
+                <SelectItem value="yearly">{getDurationLabel('yearly')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

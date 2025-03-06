@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,11 +36,23 @@ export const ActivateUserWithPlanDialog = ({
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [selectedDuration, setSelectedDuration] = useState<string>("monthly");
 
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      // Set default values if plans are available
+      if (plans.length > 0) {
+        setSelectedPlanId(plans[0].id);
+      } else {
+        setSelectedPlanId("");
+      }
+      setSelectedDuration("monthly");
+    }
+  }, [isOpen, plans]);
+
   const handleConfirm = () => {
     onConfirm(selectedPlanId, selectedDuration);
   };
 
-  // Reset form when dialog opens
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       // Reset form when dialog closes
@@ -66,16 +78,20 @@ export const ActivateUserWithPlanDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-green-600" />
-            Activate User Account
+            Activate User Account with Subscription
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Activate {user?.full_name || user?.email} and assign a subscription plan.
-            {user && (
-              <div className="mt-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-                  {user.email}
-                </Badge>
-              </div>
+            {user ? (
+              <>
+                Activate {user.full_name || user.email} and assign a subscription plan.
+                <div className="mt-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                    {user.email}
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              "Activate user and assign a subscription plan."
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -91,11 +107,17 @@ export const ActivateUserWithPlanDialog = ({
                 <SelectValue placeholder="Select a plan" />
               </SelectTrigger>
               <SelectContent>
-                {plans.map(plan => (
-                  <SelectItem key={plan.id} value={plan.id}>
-                    {plan.name}
+                {plans.length > 0 ? (
+                  plans.map(plan => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No plans available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -107,7 +129,7 @@ export const ActivateUserWithPlanDialog = ({
               onValueChange={setSelectedDuration}
             >
               <SelectTrigger id="duration" className="w-full">
-                <SelectValue placeholder="Select duration">
+                <SelectValue>
                   {getDurationLabel(selectedDuration)}
                 </SelectValue>
               </SelectTrigger>

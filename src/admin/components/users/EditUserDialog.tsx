@@ -97,16 +97,25 @@ export const EditUserDialog = ({
     }
   }, [isOpen]);
   
-  // Watch for status changes
+  // Watch for status changes and handle form submission
   const watchedStatus = form.watch('status');
   
+  // This function will be called when the form is submitted
   const onSubmit = async (data: FormValues) => {
     if (!user) return;
     
     // If status is changing from inactive/suspended to active, open the plan dialog
-    if (data.status === 'active' && 
-        (user.status === 'inactive' || user.status === 'suspended') && 
-        platformPlans.length > 0) {
+    const isChangingToActive = data.status === 'active' && 
+                              (user.status === 'inactive' || user.status === 'suspended');
+    
+    console.log("Status changing:", {
+      originalStatus: user.status,
+      newStatus: data.status,
+      isChangingToActive,
+      hasPlatformPlans: platformPlans.length > 0
+    });
+    
+    if (isChangingToActive && platformPlans.length > 0) {
       setActivatePlanDialogOpen(true);
       return;
     }
@@ -126,9 +135,19 @@ export const EditUserDialog = ({
         if (!roleUpdated) throw new Error("Failed to update user role");
       }
       
+      toast({
+        title: "User updated",
+        description: "User information has been updated successfully"
+      });
+      
       onClose();
     } catch (error) {
       console.error("Failed to update user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update user information"
+      });
     } finally {
       setIsUpdating(false);
     }

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminUser } from "./types/adminUsers.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -14,6 +14,11 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
+  // Fetch platform plans when component mounts
+  useEffect(() => {
+    fetchPlatformPlans();
+  }, []);
+
   const fetchPlatformPlans = async () => {
     try {
       const { data, error } = await supabase
@@ -23,6 +28,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
       
       if (error) throw error;
       setPlatformPlans(data || []);
+      console.log("Fetched platform plans:", data);
     } catch (error) {
       console.error("Error fetching platform plans:", error);
       toast({
@@ -47,7 +53,7 @@ export const useUserActions = (onUpdateStatus: (userId: string, status: 'active'
     setSelectedUser(user);
     
     // If we have platform plans, show the plan selection dialog
-    if (platformPlans.length > 0) {
+    if (platformPlans && platformPlans.length > 0) {
       setActivateWithPlanDialogOpen(true);
     } else {
       // Fall back to the simple activation dialog if no plans exist

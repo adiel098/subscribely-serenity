@@ -25,38 +25,20 @@ export const UserRow = ({
   onActivateUser,
   onUnsuspendUser
 }: UserRowProps) => {
-  
-  const handleRowClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-  
   return (
-    <TableRow className="hover:bg-muted/30" onClick={handleRowClick}>
-      {/* User Column */}
+    <TableRow className="hover:bg-muted/30">
       <UserCell user={user} />
-
-      {/* Status Column */}
       <StatusCell status={user.status} />
-
-      {/* Role Column */}
       <RoleCell role={user.role} />
-
-      {/* Communities Column */}
       <CountCell 
         count={user.communities_count} 
         icon={<Users className="h-4 w-4 text-indigo-500" />} 
       />
-
-      {/* Subscriptions Column */}
       <CountCell 
         count={user.subscriptions_count} 
         icon={<User className="h-4 w-4 text-indigo-500" />} 
       />
-
-      {/* Joined Column */}
       <JoinedCell createdAt={user.created_at} />
-
-      {/* Actions Column */}
       <UserActions 
         user={user}
         onEditUser={onEditUser}

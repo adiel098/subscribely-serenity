@@ -41,7 +41,7 @@ export const UserActions = ({
     onEditUser(user);
   };
   
-  // Handler for suspend button click
+  // Handler for suspend button click  
   const handleSuspendClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -61,7 +61,7 @@ export const UserActions = ({
     e.stopPropagation();
     onUnsuspendUser(user);
   };
-  
+
   // Handler for permissions button click (placeholder for now)
   const handlePermissionsClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -71,76 +71,72 @@ export const UserActions = ({
   };
 
   return (
-    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+    <TableCell className="text-right">
       <div className="flex items-center justify-end gap-2">
-        {/* Action buttons row */}
         <div className="flex items-center space-x-1">
           {/* Edit action */}
           <div 
             onClick={handleEditClick}
-            className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+            className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
             title="Edit User"
           >
-            <Edit className="h-4 w-4 text-indigo-600 group-hover:text-indigo-800" />
+            <Edit className="h-4 w-4 text-indigo-600" />
           </div>
           
           {/* Status action - conditional based on user status */}
           {user.status === 'suspended' ? (
             <div 
               onClick={handleUnsuspendClick}
-              className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
               title="Unsuspend User"
             >
-              <UserCheck className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+              <UserCheck className="h-4 w-4 text-green-600" />
             </div>
           ) : user.status === 'inactive' ? (
             <>
               <div 
                 onClick={handleActivateClick}
-                className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
                 title="Activate User"
               >
-                <UserCheck className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+                <UserCheck className="h-4 w-4 text-green-600" />
               </div>
               <div 
                 onClick={handleSuspendClick}
-                className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+                className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
                 title="Suspend User"
               >
-                <Ban className="h-4 w-4 text-red-600 group-hover:text-red-800" />
+                <Ban className="h-4 w-4 text-red-600" />
               </div>
             </>
           ) : (
             <div 
               onClick={handleSuspendClick}
-              className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
               title="Suspend User"
             >
-              <Ban className="h-4 w-4 text-red-600 group-hover:text-red-800" />
+              <Ban className="h-4 w-4 text-red-600" />
             </div>
           )}
           
           {/* Permissions action */}
           <div 
             onClick={handlePermissionsClick}
-            className="p-2 rounded-md hover:bg-muted cursor-pointer group" 
+            className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors" 
             title="Manage Permissions"
           >
-            <Key className="h-4 w-4 text-amber-600 group-hover:text-amber-800" />
+            <Key className="h-4 w-4 text-amber-600" />
           </div>
           
           {/* Dropdown menu for additional actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div 
-                className="p-2 rounded-md hover:bg-muted cursor-pointer group"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="inline-flex items-center justify-center p-2 rounded-md hover:bg-muted cursor-pointer transition-colors">
                 <span className="sr-only">More options</span>
-                <MoreHorizontal className="h-4 w-4 group-hover:text-gray-800" />
+                <MoreHorizontal className="h-4 w-4" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit User

@@ -25,45 +25,20 @@ export const UserRow = ({
   onActivateUser,
   onUnsuspendUser
 }: UserRowProps) => {
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Only handle row clicks if they're directly on the row, not on buttons
-    if ((e.target as HTMLElement).closest('button, [role="button"]')) {
-      return;
-    }
-    
-    // Row click behavior (if needed) can be added here
-  };
-
   return (
-    <TableRow 
-      className="hover:bg-muted/30 cursor-default"
-      onClick={handleRowClick}
-    >
-      {/* User Column */}
+    <TableRow className="hover:bg-muted/30">
       <UserCell user={user} />
-
-      {/* Status Column */}
       <StatusCell status={user.status} />
-
-      {/* Role Column */}
       <RoleCell role={user.role} />
-
-      {/* Communities Column */}
       <CountCell 
         count={user.communities_count} 
         icon={<Users className="h-4 w-4 text-indigo-500" />} 
       />
-
-      {/* Subscriptions Column */}
       <CountCell 
         count={user.subscriptions_count} 
         icon={<User className="h-4 w-4 text-indigo-500" />} 
       />
-
-      {/* Joined Column */}
       <JoinedCell createdAt={user.created_at} />
-
-      {/* Actions Column */}
       <UserActions 
         user={user}
         onEditUser={onEditUser}

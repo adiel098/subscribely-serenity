@@ -72,40 +72,83 @@ const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
 };
 
 /**
- * Fetches community payments from the database with properly joined community data
+ * Fetches community payments from the database with complete community data
+ * Using explicit join to ensure we get the correct community names
  */
 const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
-  // Query subscription_payments with direct join to communities table
-  const { data, error } = await supabase
-    .from('subscription_payments')
-    .select(`
-      id,
-      amount,
-      created_at,
-      payment_method,
-      status,
-      first_name,
-      last_name,
-      telegram_username,
-      telegram_user_id,
-      community_id,
-      communities!subscription_payments_community_id_fkey(id, name)
-    `)
-    .order('created_at', { ascending: false });
-    
-  if (error) {
-    console.error("Error fetching community payments:", error);
-    throw error;
-  }
-
-  // Map the data to include community name from the join
-  return (data || []).map(item => ({
-    ...item,
-    community: {
-      id: item.community_id,
-      name: item.communities?.[0]?.name || 'Unknown Community'
+  try {
+    // First fetch all subscription payments
+    const { data, error } = await supabase
+      .from('subscription_payments')
+      .select(`
+        id,
+        amount,
+        created_at,
+        payment_method,
+        status,
+        first_name,
+        last_name,
+        telegram_username,
+        telegram_user_id,
+        community_id
+      `)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error("Error fetching subscription payments:", error);
+      throw error;
     }
-  }));
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Now fetch community details for each payment
+    const paymentsWithCommunityData = await Promise.all(
+      data.map(async (payment) => {
+        if (!payment.community_id) {
+          return {
+            ...payment,
+            community: {
+              id: '',
+              name: 'Unknown Community'
+            }
+          };
+        }
+        
+        // Get community details
+        const { data: communityData, error: communityError } = await supabase
+          .from('communities')
+          .select('id, name')
+          .eq('id', payment.community_id)
+          .single();
+          
+        if (communityError) {
+          console.error(`Error fetching community for ID ${payment.community_id}:`, communityError);
+          return {
+            ...payment,
+            community: {
+              id: payment.community_id,
+              name: 'Unknown Community'
+            }
+          };
+        }
+        
+        return {
+          ...payment,
+          community: {
+            id: communityData.id,
+            name: communityData.name
+          }
+        };
+      })
+    );
+    
+    return paymentsWithCommunityData;
+  } catch (err) {
+    console.error("Error in fetchCommunityPayments:", err);
+    throw err;
+  }
 };
 
 /**

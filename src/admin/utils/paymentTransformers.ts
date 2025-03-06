@@ -39,7 +39,7 @@ export interface PaymentItem {
   email: string;
   amount: number | string;
   community: string;
-  communityId?: string; // Added to store the community ID
+  communityId?: string; // Store the community ID for tooltip or further operations
   date: string;
   method: string;
   status: string;
@@ -79,14 +79,14 @@ export const transformPlatformPayments = (
 
 /**
  * Transforms raw community payment data into a standardized PaymentItem format
- * Now includes community ID for potential further operations
+ * Includes community ID and name for display and further operations
  */
 export const transformCommunityPayments = (
   communityData: RawCommunityPayment[]
 ): PaymentItem[] => {
   return (communityData || []).map(item => ({
     id: item.id,
-    user: item.telegram_user_id || 'Unknown ID',
+    user: `${item.first_name || ''} ${item.last_name || ''}`.trim() || item.telegram_user_id || 'Unknown User',
     email: item.telegram_username || 'No username',
     amount: formatCurrency(item.amount),
     community: item.community?.name || 'Unknown Community',

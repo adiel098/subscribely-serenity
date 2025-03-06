@@ -43,6 +43,11 @@ export const UserRow = ({
   onSuspendUser, 
   onActivateUser 
 }: UserRowProps) => {
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation(); // Prevent event from bubbling up to the row
+    action();
+  };
+
   return (
     <TableRow key={user.id} className="hover:bg-muted/30">
       <TableCell className="font-medium">
@@ -99,9 +104,9 @@ export const UserRow = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onEditUser(user)}
+            onClick={(e) => handleButtonClick(e, () => onEditUser(user))}
             title="Edit User"
-            className="h-8 w-8"
+            className="h-8 w-8 pointer-events-auto"
           >
             <Edit className="h-4 w-4 text-indigo-600" />
           </Button>
@@ -110,9 +115,9 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onActivateUser(user)}
+              onClick={(e) => handleButtonClick(e, () => onActivateUser(user))}
               title="Activate User"
-              className="h-8 w-8"
+              className="h-8 w-8 pointer-events-auto"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -120,9 +125,9 @@ export const UserRow = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onSuspendUser(user)}
+              onClick={(e) => handleButtonClick(e, () => onSuspendUser(user))}
               title="Suspend User"
-              className="h-8 w-8"
+              className="h-8 w-8 pointer-events-auto"
             >
               <Ban className="h-4 w-4 text-red-600" />
             </Button>
@@ -132,19 +137,24 @@ export const UserRow = ({
             variant="ghost"
             size="icon"
             title="Manage Permissions"
-            className="h-8 w-8"
+            className="h-8 w-8 pointer-events-auto"
           >
             <ShieldAlert className="h-4 w-4 text-amber-600" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <span className="sr-only">More options</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => onEditUser(user)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit User

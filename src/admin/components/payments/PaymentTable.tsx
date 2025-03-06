@@ -81,7 +81,17 @@ export const PaymentTable = ({ payments, isFiltered, type }: PaymentTableProps) 
                 <TableCell className="font-medium text-green-600">
                   {payment.amount}
                 </TableCell>
-                <TableCell>{payment.community}</TableCell>
+                <TableCell>
+                  {/* Display community name with optional ID tooltip */}
+                  <div className="group relative">
+                    <span>{payment.community}</span>
+                    {payment.communityId && (
+                      <span className="absolute -top-8 left-0 scale-0 rounded bg-gray-800 p-2 text-xs text-white group-hover:scale-100 transition-all">
+                        ID: {payment.communityId.substring(0, 8)}...
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>{payment.date}</TableCell>
                 <TableCell className="flex items-center gap-1">
                   <PaymentMethodIcon method={payment.method} />

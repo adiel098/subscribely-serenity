@@ -1,3 +1,4 @@
+
 import { formatCurrency } from "@/lib/utils";
 
 export interface RawPlatformPayment {
@@ -25,7 +26,9 @@ export interface RawCommunityPayment {
   last_name: string;
   telegram_username: string;
   telegram_user_id: string;
+  community_id: string;
   community: {
+    id: string;
     name: string;
   };
 }
@@ -36,6 +39,7 @@ export interface PaymentItem {
   email: string;
   amount: number | string;
   community: string;
+  communityId?: string; // Added to store the community ID
   date: string;
   method: string;
   status: string;
@@ -75,6 +79,7 @@ export const transformPlatformPayments = (
 
 /**
  * Transforms raw community payment data into a standardized PaymentItem format
+ * Now includes community ID for potential further operations
  */
 export const transformCommunityPayments = (
   communityData: RawCommunityPayment[]
@@ -85,6 +90,7 @@ export const transformCommunityPayments = (
     email: item.telegram_username || 'No username',
     amount: formatCurrency(item.amount),
     community: item.community?.name || 'Unknown Community',
+    communityId: item.community_id,
     date: formatDate(item.created_at),
     method: item.payment_method || '',
     status: item.status || '',

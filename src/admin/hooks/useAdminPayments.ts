@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,9 +72,10 @@ const fetchPlatformPayments = async (): Promise<RawPlatformPayment[]> => {
 };
 
 /**
- * Fetches community payments from the database
+ * Fetches community payments from the database with properly joined community data
  */
 const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
+  // Query subscription_payments with direct join to communities table
   const { data, error } = await supabase
     .from('subscription_payments')
     .select(`
@@ -86,16 +88,22 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
       last_name,
       telegram_username,
       telegram_user_id,
-      community:communities(name)
+      community_id,
+      communities!subscription_payments_community_id_fkey(id, name)
     `)
     .order('created_at', { ascending: false });
     
-  if (error) throw error;
+  if (error) {
+    console.error("Error fetching community payments:", error);
+    throw error;
+  }
 
+  // Map the data to include community name from the join
   return (data || []).map(item => ({
     ...item,
     community: {
-      name: item.community?.[0]?.name || 'Unknown Community'
+      id: item.community_id,
+      name: item.communities?.[0]?.name || 'Unknown Community'
     }
   }));
 };

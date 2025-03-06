@@ -1,4 +1,3 @@
-
 import { formatCurrency } from "@/lib/utils";
 
 export interface RawPlatformPayment {
@@ -82,10 +81,9 @@ export const transformCommunityPayments = (
 ): PaymentItem[] => {
   return (communityData || []).map(item => ({
     id: item.id,
-    // Display Telegram ID as primary user identifier
     user: item.telegram_user_id || 'Unknown ID',
     email: item.telegram_username || 'No username',
-    amount: formatCurrency(item.amount), 
+    amount: formatCurrency(item.amount),
     community: item.community?.name || 'Unknown Community',
     date: formatDate(item.created_at),
     method: item.payment_method || '',

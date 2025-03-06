@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,26 +91,13 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
     .order('created_at', { ascending: false });
     
   if (error) throw error;
-  
-  // Transform the data to match the expected format
-  const formattedData: RawCommunityPayment[] = (data || []).map(item => ({
-    id: item.id,
-    amount: item.amount,
-    created_at: item.created_at,
-    payment_method: item.payment_method,
-    status: item.status,
-    first_name: item.first_name,
-    last_name: item.last_name,
-    telegram_username: item.telegram_username,
-    telegram_user_id: item.telegram_user_id,
+
+  return (data || []).map(item => ({
+    ...item,
     community: {
-      // Fix here - instead of item.community?.name which is incorrect
-      // because community is an array from the join query
       name: item.community?.[0]?.name || 'Unknown Community'
     }
   }));
-  
-  return formattedData;
 };
 
 /**

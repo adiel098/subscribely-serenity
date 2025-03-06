@@ -25,8 +25,13 @@ export const UserRow = ({
   onActivateUser,
   onUnsuspendUser
 }: UserRowProps) => {
+  
+  const handleRowClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   return (
-    <TableRow className="hover:bg-muted/30" onClick={(e) => e.stopPropagation()}>
+    <TableRow className="hover:bg-muted/30" onClick={handleRowClick}>
       {/* User Column */}
       <UserCell user={user} />
 

@@ -73,7 +73,7 @@ export const UserActions = ({
   return (
     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-end gap-2">
-        {/* Action icons row */}
+        {/* Action buttons row */}
         <div className="flex items-center space-x-1">
           {/* Edit action */}
           <div 

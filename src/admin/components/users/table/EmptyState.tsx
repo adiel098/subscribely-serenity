@@ -1,10 +1,14 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
 
-export const EmptyState = () => {
+interface EmptyStateProps {
+  colSpan?: number;
+}
+
+export const EmptyState = ({ colSpan = 7 }: EmptyStateProps) => {
   return (
     <TableRow>
-      <TableCell colSpan={7} className="h-24 text-center">
+      <TableCell colSpan={colSpan} className="h-24 text-center">
         No users found
       </TableCell>
     </TableRow>

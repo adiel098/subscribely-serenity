@@ -87,40 +87,87 @@ export const UserRow = ({
       <TableCell>
         <div className="flex items-center text-xs text-muted-foreground">
           <Calendar className="mr-1 h-3 w-3" />
-          {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB') : 'Unknown'}
+          {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          }) : 'Unknown'}
         </div>
       </TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+      <TableCell>
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onEditUser(user)}
+            title="Edit User"
+            className="h-8 w-8"
+          >
+            <Edit className="h-4 w-4 text-indigo-600" />
+          </Button>
+          
+          {user.status === 'suspended' ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onActivateUser(user)}
+              title="Activate User"
+              className="h-8 w-8"
+            >
+              <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEditUser(user)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit User
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {user.status === 'suspended' ? (
-              <DropdownMenuItem onClick={() => onActivateUser(user)}>
-                <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-                <span className="text-green-600">Activate User</span>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onSuspendUser(user)}
+              title="Suspend User"
+              className="h-8 w-8"
+            >
+              <Ban className="h-4 w-4 text-red-600" />
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Manage Permissions"
+            className="h-8 w-8"
+          >
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <span className="sr-only">More options</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEditUser(user)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit User
               </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={() => onSuspendUser(user)}>
-                <Ban className="mr-2 h-4 w-4 text-red-500" />
-                <span className="text-red-600">Suspend User</span>
+              <DropdownMenuSeparator />
+              {user.status === 'suspended' ? (
+                <DropdownMenuItem onClick={() => onActivateUser(user)}>
+                  <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                  <span className="text-green-600">Activate User</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => onSuspendUser(user)}>
+                  <Ban className="mr-2 h-4 w-4 text-red-500" />
+                  <span className="text-red-600">Suspend User</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem>
+                <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
+                Permissions
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem>
-              <ShieldAlert className="mr-2 h-4 w-4 text-indigo-500" />
-              Permissions
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </TableCell>
     </TableRow>
   );

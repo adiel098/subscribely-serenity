@@ -15,7 +15,7 @@ export const TableHeader = () => {
         <TableHead>Communities</TableHead>
         <TableHead>Subscriptions</TableHead>
         <TableHead>Joined</TableHead>
-        <TableHead className="text-right">Actions</TableHead>
+        <TableHead className="text-right w-[180px]">Actions</TableHead>
       </TableRow>
     </UITableHeader>
   );

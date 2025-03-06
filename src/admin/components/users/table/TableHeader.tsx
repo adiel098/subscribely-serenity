@@ -7,16 +7,14 @@ import {
 
 export const TableHeader = () => {
   return (
-    <UITableHeader>
-      <TableRow className="bg-muted/50">
-        <TableHead className="w-[250px]">User</TableHead>
-        <TableHead className="w-[100px]">Status</TableHead>
-        <TableHead className="w-[180px]">Role</TableHead>
-        <TableHead>Communities</TableHead>
-        <TableHead>Subscriptions</TableHead>
-        <TableHead>Joined</TableHead>
-        <TableHead className="text-right w-[200px]">Actions</TableHead>
-      </TableRow>
-    </UITableHeader>
+    <>
+      <TableHead className="w-[250px] text-left">User</TableHead>
+      <TableHead className="w-[110px] text-center">Status</TableHead>
+      <TableHead className="w-[140px] text-center">Role</TableHead>
+      <TableHead className="text-center">Communities</TableHead>
+      <TableHead className="text-center">Subscriptions</TableHead>
+      <TableHead className="text-center">Joined</TableHead>
+      <TableHead className="text-right w-[150px]">Actions</TableHead>
+    </>
   );
 };

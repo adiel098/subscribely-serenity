@@ -53,7 +53,8 @@ export const UserRow = ({
 
   return (
     <TableRow className="hover:bg-muted/30">
-      <TableCell className="font-medium">
+      {/* User Column */}
+      <TableCell>
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8 border border-primary/10">
             {user.avatar_url ? (
@@ -74,26 +75,40 @@ export const UserRow = ({
           </div>
         </div>
       </TableCell>
-      <TableCell>
-        <UserStatusBadge status={user.status} size="sm" />
+
+      {/* Status Column */}
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <UserStatusBadge status={user.status} size="sm" />
+        </div>
       </TableCell>
-      <TableCell>
-        <UserRoleBadge role={user.role} size="sm" />
+
+      {/* Role Column */}
+      <TableCell className="text-center">
+        <div className="flex justify-center">
+          <UserRoleBadge role={user.role} size="sm" />
+        </div>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1" title="Communities owned by this user">
+
+      {/* Communities Column */}
+      <TableCell className="text-center">
+        <div className="flex justify-center items-center gap-1">
           <Users className="h-4 w-4 text-indigo-500" />
           <span>{user.communities_count}</span>
         </div>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1" title="Total active subscribers in all communities">
+
+      {/* Subscriptions Column */}
+      <TableCell className="text-center">
+        <div className="flex justify-center items-center gap-1">
           <User className="h-4 w-4 text-indigo-500" />
           <span>{user.subscriptions_count}</span>
         </div>
       </TableCell>
-      <TableCell>
-        <div className="flex items-center text-xs text-muted-foreground">
+
+      {/* Joined Column */}
+      <TableCell className="text-center">
+        <div className="flex justify-center items-center text-xs">
           <Calendar className="mr-1 h-3 w-3" />
           {user.created_at ? new Date(user.created_at).toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -102,15 +117,16 @@ export const UserRow = ({
           }) : 'Unknown'}
         </div>
       </TableCell>
+
+      {/* Actions Column */}
       <TableCell>
-        <div className="flex items-center justify-end gap-2 relative" style={{ zIndex: 5 }}>
+        <div className="flex items-center justify-end gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => handleAction(e, () => onEditUser(user))}
             title="Edit User"
-            className="h-8 w-8 relative"
-            style={{ zIndex: 10 }}
+            className="h-8 w-8"
           >
             <Edit className="h-4 w-4 text-indigo-600" />
           </Button>
@@ -121,8 +137,7 @@ export const UserRow = ({
               size="icon"
               onClick={(e) => handleAction(e, () => onUnsuspendUser(user))}
               title="Unsuspend User"
-              className="h-8 w-8 relative"
-              style={{ zIndex: 10 }}
+              className="h-8 w-8"
             >
               <UserCheck className="h-4 w-4 text-green-600" />
             </Button>
@@ -132,8 +147,7 @@ export const UserRow = ({
               size="icon"
               onClick={(e) => handleAction(e, () => user.status === 'inactive' ? onActivateUser(user) : onSuspendUser(user))}
               title={user.status === 'inactive' ? "Activate User" : "Suspend User"}
-              className="h-8 w-8 relative"
-              style={{ zIndex: 10 }}
+              className="h-8 w-8"
             >
               {user.status === 'inactive' ? (
                 <UserCheck className="h-4 w-4 text-green-600" />
@@ -147,8 +161,7 @@ export const UserRow = ({
             variant="ghost"
             size="icon"
             title="Manage Permissions"
-            className="h-8 w-8 relative"
-            style={{ zIndex: 10 }}
+            className="h-8 w-8"
             onClick={(e) => handleAction(e, () => {})}
           >
             <ShieldAlert className="h-4 w-4 text-amber-600" />
@@ -159,8 +172,7 @@ export const UserRow = ({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 relative"
-                style={{ zIndex: 10 }}
+                className="h-8 w-8"
                 onClick={(e) => e.stopPropagation()}
               >
                 <span className="sr-only">More options</span>

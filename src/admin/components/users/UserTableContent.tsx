@@ -24,7 +24,7 @@ export const UserTableContent = ({
     <div className="border rounded-md">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/50">
             <UsersTableHeader />
           </TableRow>
         </TableHeader>

@@ -105,7 +105,9 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
     telegram_username: item.telegram_username,
     telegram_user_id: item.telegram_user_id,
     community: {
-      name: item.community?.name || 'Unknown Community'
+      // Fix here - instead of item.community?.name which is incorrect
+      // because community is an array from the join query
+      name: item.community?.[0]?.name || 'Unknown Community'
     }
   }));
   

@@ -34,10 +34,13 @@ export const useSubscriberManagement = (communityId: string) => {
   };
 
   const handleRemoveSubscriber = async (subscriber: Subscriber) => {
-    if (!subscriber?.id) return;
+    if (!subscriber?.id) {
+      console.error("Invalid subscriber provided to handleRemoveSubscriber");
+      throw new Error("Invalid subscriber data");
+    }
     
     try {
-      console.log("Removing subscriber:", subscriber.id);
+      console.log("Removing subscriber:", subscriber.id, "from community:", subscriber.community_id);
       
       // Update the database to set subscription status to "removed" and is_active to false
       const { error } = await supabase

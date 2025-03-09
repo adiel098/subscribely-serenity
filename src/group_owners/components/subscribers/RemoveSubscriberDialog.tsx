@@ -29,25 +29,46 @@ export const RemoveSubscriberDialog = ({
 }: RemoveSubscriberDialogProps) => {
   if (!subscriber) return null;
 
-  // Prevent event propagation to stop the dialog from interfering with the page
+  // Handler for confirm button with better event handling
   const handleConfirmClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (subscriber) {
+    
+    if (subscriber && !isProcessing) {
       onConfirm(subscriber);
     }
   };
 
-  // Handle dialog cancel more safely
-  const handleCancel = () => {
+  // Safe cancel handler
+  const handleCancel = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!isProcessing) {
       onOpenChange(false);
     }
   };
 
+  // Safe dialog change handler
+  const safeDialogChange = (value: boolean) => {
+    if (!isProcessing || !value) {
+      onOpenChange(value);
+    }
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+    <AlertDialog open={open} onOpenChange={safeDialogChange}>
+      <AlertDialogContent 
+        onClick={(e) => e.stopPropagation()}
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+          if (!isProcessing) {
+            e.stopPropagation();
+          }
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
           <AlertDialogDescription>
@@ -61,11 +82,17 @@ export const RemoveSubscriberDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isProcessing} onClick={handleCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel 
+            disabled={isProcessing} 
+            onClick={handleCancel}
+            className="z-10"
+          >
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmClick}
             disabled={isProcessing}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 z-10"
           >
             {isProcessing ? (
               <>

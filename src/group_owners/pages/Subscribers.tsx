@@ -41,24 +41,36 @@ const Subscribers = () => {
     uniquePlans
   } = useSubscriberFilters(subscribers);
 
-  // Clear dialogs state when component unmounts
+  // Clean up state when component unmounts
   useEffect(() => {
     return () => {
       setRemoveDialogOpen(false);
       setEditDialogOpen(false);
-      setSubscriberToRemove(null);
-      setSelectedSubscriber(null);
+      setIsRemoving(false);
+      
+      // Use setTimeout to ensure state cleanup happens after rendering
+      setTimeout(() => {
+        setSubscriberToRemove(null);
+        setSelectedSubscriber(null);
+      }, 500);
     };
   }, []);
 
-  // Use useCallback to prevent recreation of this function on each render
+  // Handle remove click with proper event isolation
   const onRemoveClick = useCallback((subscriber: Subscriber) => {
-    setSubscriberToRemove(subscriber);
-    setRemoveDialogOpen(true);
+    // Clear any existing state first
+    setSubscriberToRemove(null);
+    
+    // Use setTimeout to ensure state is updated after current execution
+    setTimeout(() => {
+      setSubscriberToRemove(subscriber);
+      setRemoveDialogOpen(true);
+    }, 50);
   }, []);
 
+  // Handle confirmation with proper error handling
   const onConfirmRemove = useCallback(async (subscriber: Subscriber) => {
-    if (!subscriber) return;
+    if (!subscriber || isRemoving) return;
     
     setIsRemoving(true);
     try {
@@ -67,6 +79,9 @@ const Subscribers = () => {
         title: "Success",
         description: "Subscriber removed successfully"
       });
+      
+      // Use refetch to update the table data
+      await refetch();
     } catch (error) {
       console.error("Error removing subscriber:", error);
       toast({
@@ -75,22 +90,35 @@ const Subscribers = () => {
         variant: "destructive"
       });
     } finally {
+      // Clean up state safely with delays to prevent UI glitches
       setIsRemoving(false);
       setRemoveDialogOpen(false);
-      // Use a delay before clearing the subscriber to prevent UI glitches
-      setTimeout(() => setSubscriberToRemove(null), 300);
+      
+      // Use a delay to ensure dialog is fully closed before clearing state
+      setTimeout(() => {
+        setSubscriberToRemove(null);
+      }, 500);
     }
-  }, [handleRemoveSubscriber, toast]);
+  }, [handleRemoveSubscriber, toast, refetch, isRemoving]);
 
-  // Use useCallback for the dialog state handler
+  // Safe handler for dialog state changes
   const handleRemoveDialogChange = useCallback((open: boolean) => {
-    setRemoveDialogOpen(open);
-    if (!open) {
-      // Clear the selected subscriber when dialog closes, with a delay
-      setTimeout(() => setSubscriberToRemove(null), 300);
+    if (isRemoving && open === false) {
+      // If removing is in progress, don't allow closing
+      return;
     }
-  }, []);
+    
+    setRemoveDialogOpen(open);
+    
+    if (!open) {
+      // Use longer delay to ensure dialog animation completes
+      setTimeout(() => {
+        setSubscriberToRemove(null);
+      }, 500);
+    }
+  }, [isRemoving]);
 
+  // Handle export functionality
   const handleExport = () => {
     const exportData = filteredSubscribers.map(sub => ({
       Username: sub.telegram_username || 'No username',

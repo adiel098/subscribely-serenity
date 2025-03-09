@@ -1,12 +1,13 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
-import { TelegramMessenger } from "../telegramMessenger.ts";
 import { SubscriptionMember, BotSettings } from "../types.ts";
-import { logNotification } from "../databaseLogger.ts";
 import { formatLegacyReminderMessage } from "./messageFormatter.ts";
+import { logSuccessfulNotification } from "./notificationLogger.ts";
+import { sendTelegramMessage } from "../telegramMessenger.ts";
 
 /**
- * Send the legacy reminder notification (for backwards compatibility)
+ * Send legacy reminder to user
+ * This is kept for backward compatibility
  */
 export async function sendLegacyReminder(
   supabase: ReturnType<typeof createClient>,
@@ -17,37 +18,30 @@ export async function sendLegacyReminder(
   result: any,
   daysUntilExpiration: number
 ): Promise<void> {
-  console.log(`Sending legacy reminder to ${member.telegram_user_id}, ${daysUntilExpiration} days before expiration`);
-  result.action = "legacy_reminder";
-  result.details = `Sent legacy reminder (${daysUntilExpiration} days before expiration)`;
-
-  const message = formatLegacyReminderMessage(botSettings);
-
-  // Only send if days match the original reminder setting
   try {
-    const messageSent = await TelegramMessenger.sendTextMessage(
+    // Format and send the message
+    const message = formatLegacyReminderMessage(botSettings);
+    
+    // Send the message with the renew button if available
+    await sendTelegramMessage(
       botToken,
       member.telegram_user_id,
       message,
+      null, // Legacy reminders don't have images
       inlineKeyboard
     );
 
-    if (messageSent) {
-      // Log the notification only if message was sent successfully
-      await logNotification(
-        supabase,
-        member.community_id,
-        member.id,
-        "reminder"
-      );
-      
-      console.log(`✅ Legacy reminder message sent successfully to user ${member.telegram_user_id}`);
-    } else {
-      console.error(`❌ Failed to send legacy reminder message to user ${member.telegram_user_id}`);
-      result.details = "Failed to send legacy reminder";
-    }
+    // Log the successful notification
+    await logSuccessfulNotification(supabase, member, "subscription_reminder");
+
+    // Update the result object
+    result.action = "reminder_sent";
+    result.details = `Subscription reminder sent (${daysUntilExpiration} days until expiration)`;
+    
+    console.log(`Legacy reminder sent to user ${member.telegram_user_id}`);
   } catch (error) {
-    console.error(`❌ Error sending legacy reminder message to user ${member.telegram_user_id}:`, error);
-    result.details = "Failed to send legacy reminder: " + error.message;
+    console.error(`Error sending legacy reminder to user ${member.telegram_user_id}:`, error);
+    result.action = "error";
+    result.details = `Error sending legacy reminder: ${error.message}`;
   }
 }

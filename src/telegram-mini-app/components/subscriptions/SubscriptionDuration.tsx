@@ -27,32 +27,29 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ sele
         endDate.setFullYear(endDate.getFullYear() + 1);
         break;
       case "lifetime":
-        return "לצמיתות";
+        return "Lifetime";
       default:
         endDate.setMonth(endDate.getMonth() + 1); // Default to monthly
     }
     
-    return endDate.toLocaleDateString("he-IL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    // Format date as MM/DD/YYYY
+    return `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear()}`;
   };
 
   const getDurationText = (plan: Plan) => {
     switch (plan.interval) {
       case "monthly":
-        return "חודש אחד";
+        return "one month";
       case "quarterly":
-        return "שלושה חודשים";
+        return "three months";
       case "half-yearly":
-        return "שישה חודשים";
+        return "six months";
       case "yearly":
-        return "שנה אחת";
+        return "one year";
       case "lifetime":
-        return "לצמיתות";
+        return "lifetime";
       default:
-        return "חודש אחד";
+        return "one month";
     }
   };
 
@@ -67,14 +64,14 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ sele
         <div className="flex items-center gap-2 text-primary">
           <CalendarClock className="h-5 w-5" />
           <div>
-            <h3 className="font-medium text-sm">פרטי המנוי</h3>
+            <h3 className="font-medium text-sm">Subscription Details</h3>
             <p className="text-xs text-gray-600">
-              המנוי יהיה תקף למשך {getDurationText(selectedPlan)}
+              Your subscription will be valid for {getDurationText(selectedPlan)}
             </p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-500">תאריך סיום:</p>
+          <p className="text-xs text-gray-500">End Date:</p>
           <p className="text-sm font-semibold text-primary">{getEndDate(selectedPlan)}</p>
         </div>
       </div>

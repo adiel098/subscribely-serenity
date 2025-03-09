@@ -1,7 +1,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember, BotSettings } from "../types.ts";
-import { sendFirstReminder, sendSecondReminder, sendLegacyReminder } from "../notification/reminderService.ts";
+import { 
+  sendFirstReminder, 
+  sendSecondReminder, 
+  sendLegacyReminder 
+} from "../notification/reminderService.ts";
 
 /**
  * Send reminder notifications based on subscription status

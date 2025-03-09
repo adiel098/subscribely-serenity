@@ -27,29 +27,33 @@ export const TelegramPaymentOption = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Define image paths for each payment method with the new images
+  // Define image paths for each payment method with the new uploaded images
   const getImagePath = () => {
     switch (method) {
       case 'paypal':
-        return "/lovable-uploads/e2437786-159b-4386-85b6-b4ebec9fae19.png";
+        return "/lovable-uploads/1c14e367-8c74-4444-a692-e038a608ead2.png";
       case 'stripe':
-        return "/lovable-uploads/d055380d-245c-4dbf-987d-882c5637c43e.png";
+        return "/lovable-uploads/a668025a-d54c-42e4-947f-a7afcbcba732.png";
       case 'crypto':
-        return "/lovable-uploads/178720f1-1cf7-4ea6-83c4-6d544f2c5aba.png";
+        return "/lovable-uploads/00dfb1e4-1cfc-4004-a311-baa4d7576c25.png";
       default:
         return "";
     }
   };
 
-  // Log when component renders
+  // Log when component renders and when image path changes
   useEffect(() => {
-    console.log(`Payment option ${method} rendered, selected: ${isSelected}, image path: ${getImagePath()}`);
+    console.log(`[TelegramPaymentOption] Rendering ${method} option, selected: ${isSelected}`);
+    console.log(`[TelegramPaymentOption] Image path for ${method}: ${getImagePath()}`);
+    
+    // Reset image error state when method changes
+    setImageError(false);
   }, [method, isSelected]);
 
   const handleClick = async () => {
     if (disabled) return;
     
-    console.log(`Selecting payment method: ${method}`);
+    console.log(`[TelegramPaymentOption] Selecting payment method: ${method}`);
     setIsProcessing(true);
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, demoDelay));
@@ -84,7 +88,7 @@ export const TelegramPaymentOption = ({
   };
 
   const handleImageError = () => {
-    console.error(`Error loading image for ${method} payment method: ${getImagePath()}`);
+    console.error(`[TelegramPaymentOption] Error loading image for ${method} payment method: ${getImagePath()}`);
     setImageError(true);
   };
 
@@ -113,6 +117,7 @@ export const TelegramPaymentOption = ({
                   alt={`${title} payment method`} 
                   className="max-h-full max-w-full object-contain"
                   onError={handleImageError} 
+                  onLoad={() => console.log(`[TelegramPaymentOption] ${method} image loaded successfully`)}
                 />
               ) : (
                 <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">

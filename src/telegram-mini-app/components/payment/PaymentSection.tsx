@@ -41,6 +41,11 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   
   if (!selectedPlan) return null;
   
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log(`[PaymentSection] Payment method selected: ${method}`);
+    onPaymentMethodSelect(method);
+  };
+  
   return (
     <motion.div 
       id="payment-methods" 
@@ -52,10 +57,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
       <PaymentMethods
         selectedPlan={selectedPlan}
         selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={(method) => {
-          console.log(`[PaymentSection] Payment method selected: ${method}`);
-          onPaymentMethodSelect(method);
-        }}
+        onPaymentMethodSelect={handlePaymentMethodSelect}
         onCompletePurchase={onCompletePurchase}
         communityInviteLink={communityInviteLink}
         showSuccess={showSuccess}

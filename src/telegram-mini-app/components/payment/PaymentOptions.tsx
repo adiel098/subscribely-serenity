@@ -44,6 +44,11 @@ export const PaymentOptions = ({
     show: { opacity: 1, y: 0 }
   };
 
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log(`[PaymentOptions] Payment method selected: ${method}`);
+    onPaymentMethodSelect(method);
+  };
+
   return (
     <div className="space-y-8">
       <motion.div
@@ -57,10 +62,7 @@ export const PaymentOptions = ({
             method="paypal"
             title="PayPal"
             isSelected={selectedPaymentMethod === 'paypal'}
-            onSelect={() => {
-              console.log("[PaymentOptions] PayPal payment method selected");
-              onPaymentMethodSelect('paypal');
-            }}
+            onSelect={() => handlePaymentMethodSelect('paypal')}
           />
         </motion.div>
         
@@ -69,10 +71,7 @@ export const PaymentOptions = ({
             method="stripe"
             title="Stripe"
             isSelected={selectedPaymentMethod === 'stripe'}
-            onSelect={() => {
-              console.log("[PaymentOptions] Stripe payment method selected");
-              onPaymentMethodSelect('stripe');
-            }}
+            onSelect={() => handlePaymentMethodSelect('stripe')}
           />
         </motion.div>
         
@@ -81,10 +80,7 @@ export const PaymentOptions = ({
             method="crypto"
             title="Crypto"
             isSelected={selectedPaymentMethod === 'crypto'}
-            onSelect={() => {
-              console.log("[PaymentOptions] Crypto payment method selected");
-              onPaymentMethodSelect('crypto');
-            }}
+            onSelect={() => handlePaymentMethodSelect('crypto')}
           />
         </motion.div>
       </motion.div>

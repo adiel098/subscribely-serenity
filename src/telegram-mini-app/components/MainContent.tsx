@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { CommunityHeader } from "./CommunityHeader";
 import { ContentTabs } from "./tabs/ContentTabs";
 import { PaymentSection } from "./payment/PaymentSection";
@@ -28,10 +28,10 @@ export const MainContent = ({
   handleSelectCommunity,
   subscriptionsLoading
 }) => {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   
   // Enhanced logging for debugging
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("[MainContent] Component rendered with state:");
     console.log("[MainContent] Selected payment method:", selectedPaymentMethod);
     console.log("[MainContent] Selected plan:", selectedPlan);

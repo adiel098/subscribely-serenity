@@ -1,72 +1,100 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Function to fetch data needed for the start command
+interface StartCommandDataResult {
+  success: boolean;
+  community?: any;
+  botSettings?: any;
+  error?: string;
+}
+
+/**
+ * Fetch data needed for processing the start command
+ */
 export async function fetchStartCommandData(
   supabase: ReturnType<typeof createClient>,
   communityId: string
-) {
+): Promise<StartCommandDataResult> {
   try {
-    console.log('[DataSources] 🔍 Fetching data for communityId:', communityId);
+    console.log(`[DATA-SOURCES] 🔍 Fetching data for community ID: ${communityId}`);
     
-    // Get community data
-    const { data: community, error: communityError } = await supabase
-      .from('communities')
-      .select('*')
-      .eq('id', communityId)
-      .single();
+    // Fetch community data and bot settings in parallel
+    const [communityResult, botSettingsResult] = await Promise.all([
+      supabase
+        .from('communities')
+        .select('*')
+        .eq('id', communityId)
+        .single(),
       
-    if (communityError) {
-      console.error('[DataSources] ❌ Error fetching community:', communityError);
-      return { 
-        success: false, 
-        error: `Failed to fetch community: ${communityError.message}` 
+      supabase
+        .from('telegram_bot_settings')
+        .select('*')
+        .eq('community_id', communityId)
+        .single()
+    ]);
+    
+    // Handle errors in fetching community
+    if (communityResult.error) {
+      console.error('[DATA-SOURCES] ❌ Error fetching community:', communityResult.error);
+      return {
+        success: false,
+        error: `Community not found: ${communityResult.error.message}`
       };
     }
     
-    if (!community) {
-      console.error('[DataSources] ❌ Community not found:', communityId);
-      return { 
-        success: false, 
-        error: 'Community not found' 
+    // Handle errors in fetching bot settings
+    if (botSettingsResult.error) {
+      console.error('[DATA-SOURCES] ❌ Error fetching bot settings:', botSettingsResult.error);
+      return {
+        success: false,
+        error: `Bot settings not found: ${botSettingsResult.error.message}`
       };
     }
     
-    console.log('[DataSources] ✅ Community found:', { 
-      name: community.name, 
-      id: community.id 
-    });
-    
-    // Get bot settings
-    const { data: botSettings, error: settingsError } = await supabase
-      .from('telegram_bot_settings')
-      .select('*')
-      .eq('community_id', communityId)
-      .single();
-      
-    if (settingsError) {
-      console.error('[DataSources] ❌ Error fetching bot settings:', settingsError);
-      return { 
-        success: false, 
-        error: `Failed to fetch bot settings: ${settingsError.message}` 
-      };
-    }
-
-    console.log('[DataSources] ✅ Bot settings retrieved:', { 
-      hasWelcomeMessage: !!botSettings.welcome_message,
-      hasWelcomeImage: !!botSettings.welcome_image
-    });
+    console.log('[DATA-SOURCES] ✅ Successfully fetched community and bot settings');
     
     return {
       success: true,
-      community,
-      botSettings
+      community: communityResult.data,
+      botSettings: botSettingsResult.data
     };
   } catch (error) {
-    console.error('[DataSources] ❌ Error in fetchStartCommandData:', error);
-    return { 
-      success: false, 
-      error: `General error: ${error instanceof Error ? error.message : String(error)}` 
+    console.error('[DATA-SOURCES] ❌ Exception in fetchStartCommandData:', error);
+    return {
+      success: false,
+      error: `Error fetching data: ${error.message || 'Unknown error'}`
     };
+  }
+}
+
+/**
+ * Fetch community and subscription plans
+ */
+export async function fetchCommunityWithPlans(
+  supabase: ReturnType<typeof createClient>,
+  communityId: string
+): Promise<any> {
+  try {
+    console.log(`[DATA-SOURCES] 🔍 Fetching community with plans for ID: ${communityId}`);
+    
+    const { data, error } = await supabase
+      .from('communities')
+      .select(`
+        *,
+        subscription_plans:subscription_plans(*)
+      `)
+      .eq('id', communityId)
+      .single();
+    
+    if (error) {
+      console.error('[DATA-SOURCES] ❌ Error fetching community with plans:', error);
+      throw error;
+    }
+    
+    console.log('[DATA-SOURCES] ✅ Successfully fetched community with plans');
+    return data;
+  } catch (error) {
+    console.error('[DATA-SOURCES] ❌ Exception in fetchCommunityWithPlans:', error);
+    throw error;
   }
 }

@@ -20,9 +20,9 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     
-    // Print truncated keys to logs for debugging (without revealing full keys)
-    console.log(`📌 Supabase URL: ${supabaseUrl ? "Provided ✅" : "Not provided ❌"}`);
-    console.log(`📌 Supabase Anon Key: ${supabaseAnonKey ? "Provided ✅" : "Not provided ❌"}`);
+    // Print sanitized keys to logs for debugging (without revealing full keys)
+    console.log(`📌 Supabase URL present: ${supabaseUrl ? "Yes ✅" : "No ❌"}`);
+    console.log(`📌 Supabase Anon Key present: ${supabaseAnonKey ? "Yes ✅" : "No ❌"}`);
     
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error("❌ CRITICAL: Missing Supabase configuration");
@@ -30,13 +30,11 @@ serve(async (req: Request) => {
     }
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("✅ Supabase client initialized successfully");
     
     // Get bot token from environment variable
     const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
-    console.log(`📌 Bot Token: ${botToken ? 
-      `Provided (${botToken.substring(0, 3)}...${botToken.substring(botToken.length - 3)}) ✅` : 
-      "Not provided ❌"
-    }`);
+    console.log(`📌 Bot Token present: ${botToken ? "Yes ✅" : "No ❌"}`);
     
     if (!botToken) {
       console.error("❌ CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set");
@@ -49,11 +47,18 @@ serve(async (req: Request) => {
           stack_trace: 'N/A',
           context: { webhook_url: req.url }
         });
+        console.log("✅ Missing token error logged to database");
       } catch (logError) {
         console.error("❌ Failed to log missing token error:", logError);
       }
       
       throw new Error("Bot token not configured");
+    }
+
+    // Token is present, obscure most of it in logs for security
+    if (botToken.length > 10) {
+      const maskedToken = `${botToken.substring(0, 4)}...${botToken.substring(botToken.length - 4)}`;
+      console.log(`🔑 Using bot token: ${maskedToken}`);
     }
 
     // Route the webhook request
@@ -69,7 +74,8 @@ serve(async (req: Request) => {
       stack: error.stack || 'No stack trace',
       name: error.name || 'Error',
       url: req.url,
-      method: req.method
+      method: req.method,
+      timestamp: new Date().toISOString()
     };
     
     // Try to initialize a minimal Supabase client to log the error

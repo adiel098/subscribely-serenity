@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +62,7 @@ export const useSubscriberManagement = (communityId: string) => {
       
       console.log(`Using telegram_chat_id: ${community.telegram_chat_id} instead of community_id: ${subscriber.community_id}`);
       
-      // 1. Remove member from Telegram chat
+      // 1. Remove member from Telegram chat through the edge function
       const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
         body: { 
           path: '/remove-member',
@@ -77,7 +78,7 @@ export const useSubscriberManagement = (communityId: string) => {
 
       console.log('Successfully removed user from Telegram channel');
 
-      // 2. Invalidate any invite links for this user
+      // 2. Explicitly invalidate any invite links for this user
       console.log('Invalidating invite links...');
       
       const { error: inviteError } = await supabase

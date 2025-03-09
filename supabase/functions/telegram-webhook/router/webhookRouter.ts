@@ -78,18 +78,50 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
           botToken
         );
 
-        // If requested, also invalidate invite links for this user
-        if (success && body.invalidate_invite_links) {
+        // Always invalidate invite links for this user when removing
+        if (success) {
           try {
-            await supabaseClient
+            // First get the community ID for logging
+            const { data: community } = await supabaseClient
+              .from('communities')
+              .select('id')
+              .eq('telegram_chat_id', body.chat_id)
+              .single();
+              
+            const communityId = community?.id;
+            
+            // Then invalidate invite links
+            const { data: invalidated, error: invalidateError } = await supabaseClient
               .from('subscription_payments')
               .update({ invite_link: null })
               .eq('telegram_user_id', body.user_id)
-              .eq('community_id', body.chat_id);
+              .eq('community_id', communityId);
             
-            console.log(`[ROUTER] 🔗 Invite links invalidated for user ${body.user_id}`);
+            if (invalidateError) {
+              console.error('[ROUTER] ❌ Error invalidating invite links:', invalidateError);
+              // Continue despite error as the main operation succeeded
+            } else {
+              console.log(`[ROUTER] 🔗 Successfully invalidated invite links for user ${body.user_id}`);
+            }
+            
+            // Log the removal in the activity log
+            await supabaseClient
+              .from('subscription_activity_logs')
+              .insert({
+                telegram_user_id: body.user_id,
+                community_id: communityId,
+                activity_type: 'member_removed',
+                details: 'User removed from channel by admin'
+              })
+              .then(({ error }) => {
+                if (error) {
+                  console.error('[ROUTER] ❌ Error logging removal activity:', error);
+                } else {
+                  console.log('[ROUTER] 📝 Removal logged to activity log');
+                }
+              });
           } catch (error) {
-            console.error('[ROUTER] ❌ Error invalidating invite links:', error);
+            console.error('[ROUTER] ❌ Error in invite link invalidation process:', error);
             // Continue despite error as the main operation succeeded
           }
         }

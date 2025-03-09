@@ -30,7 +30,8 @@ serve(async (req) => {
       .select(`
         *,
         community:communities(
-          telegram_chat_id
+          telegram_chat_id,
+          id
         )
       `)
       .eq('id', memberId)
@@ -50,6 +51,13 @@ serve(async (req) => {
       throw new Error('Bot settings not found');
     }
 
+    console.log('Removing member:', {
+      memberId,
+      telegramUserId: member.telegram_user_id,
+      communityId: member.community.id,
+      telegramChatId: member.community.telegram_chat_id
+    });
+
     // Kick member from channel
     const kickResponse = await fetch(
       `https://api.telegram.org/bot${settings.bot_token}/banChatMember`,
@@ -62,6 +70,7 @@ serve(async (req) => {
           chat_id: member.community.telegram_chat_id,
           user_id: member.telegram_user_id,
           until_date: Math.floor(Date.now() / 1000) + 32, // Minimal ban time (32 seconds)
+          revoke_messages: false // Don't delete user's messages
         }),
       }
     );
@@ -73,6 +82,19 @@ serve(async (req) => {
       throw new Error(`Failed to kick member: ${kickResult.description}`);
     }
 
+    // Invalidate invite links to prevent rejoining
+    console.log('Invalidating invite links...');
+    const { error: inviteError } = await supabase
+      .from('subscription_payments')
+      .update({ invite_link: null })
+      .eq('telegram_user_id', member.telegram_user_id)
+      .eq('community_id', member.community.id);
+
+    if (inviteError) {
+      console.log('Error invalidating invite links:', inviteError);
+      // Continue despite error as the main operation succeeded
+    }
+
     // Update member status in database
     const { error: updateError } = await supabase
       .from('telegram_chat_members')
@@ -80,13 +102,26 @@ serve(async (req) => {
         is_active: false,
         subscription_status: false,
         subscription_end_date: new Date().toISOString(),
-        subscription_plan_id: null,
       })
       .eq('id', memberId);
 
     if (updateError) {
       throw updateError;
     }
+
+    // Log removal in activity logs
+    await supabase
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: member.telegram_user_id,
+        community_id: member.community.id,
+        activity_type: 'member_removed',
+        details: 'Member manually removed from community via kick-member function'
+      })
+      .catch(error => {
+        console.error('Error logging removal activity:', error);
+        // Continue despite error as the main operation succeeded
+      });
 
     return new Response(
       JSON.stringify({ success: true }),

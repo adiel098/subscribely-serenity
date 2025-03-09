@@ -51,7 +51,7 @@ export async function createInviteLink(
       throw new Error(result.description);
     }
 
-    // שמירת הלינק בקהילה
+    // Save the link in the community
     if (result.result?.invite_link) {
       await supabase
         .from('communities')
@@ -63,5 +63,33 @@ export async function createInviteLink(
   } catch (error) {
     console.error('[Invite] Error creating invite link:', error);
     throw error;
+  }
+}
+
+// Function to invalidate an invite link
+export async function invalidateInviteLink(
+  supabase: ReturnType<typeof createClient>,
+  telegramUserId: string,
+  communityId: string
+) {
+  try {
+    console.log(`[Invite] Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
+    
+    const { data, error } = await supabase
+      .from('subscription_payments')
+      .update({ invite_link: null })
+      .eq('telegram_user_id', telegramUserId)
+      .eq('community_id', communityId);
+      
+    if (error) {
+      console.error('[Invite] Error invalidating invite links:', error);
+      throw error;
+    }
+    
+    console.log('[Invite] Successfully invalidated invite links');
+    return true;
+  } catch (error) {
+    console.error('[Invite] Error in invalidateInviteLink:', error);
+    return false;
   }
 }

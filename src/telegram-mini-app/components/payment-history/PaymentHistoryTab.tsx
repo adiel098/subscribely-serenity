@@ -1,12 +1,12 @@
+
 import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Receipt, ExternalLink, ChevronDown, ChevronUp, RefreshCw, AlertCircle, Bug } from "lucide-react";
+import { Loader2, Receipt, ExternalLink, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/telegram-mini-app/utils/formatUtils";
 import { format } from "date-fns";
-import { PaymentDiagnostics } from "./PaymentDiagnostics";
 
 interface PaymentHistoryTabProps {
   telegramUserId: string | undefined;
@@ -15,7 +15,6 @@ interface PaymentHistoryTabProps {
 export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUserId }) => {
   const { payments, isLoading, error, refetch } = usePaymentHistory(telegramUserId);
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   console.log("[PaymentHistoryTab] Rendering with:", {
     telegramUserId,
@@ -89,12 +88,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
     return "Unknown Plan";
   };
 
-  // Handle refreshing with additional debugging
-  const handleRefresh = () => {
-    console.log("[PaymentHistoryTab] Manual refresh requested");
-    refetch();
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-40">
@@ -107,33 +100,16 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
   if (error) {
     return (
       <div className="text-center py-8">
-        {showDiagnostics && (
-          <PaymentDiagnostics 
-            telegramUserId={telegramUserId} 
-            onClose={() => setShowDiagnostics(false)} 
-          />
-        )}
-        
         <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-3" />
         <p className="text-red-500 mb-2 font-medium">Failed to load payment history</p>
         <p className="text-gray-500 text-sm mb-4">Error: {error}</p>
         <p className="text-gray-500 text-sm mb-4">
           User ID: {telegramUserId || "Not available"}
         </p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          <Button onClick={() => refetch()} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
-          </Button>
-          <Button 
-            onClick={() => setShowDiagnostics(!showDiagnostics)} 
-            variant="outline" 
-            size="sm"
-          >
-            <Bug className="h-4 w-4 mr-2" />
-            {showDiagnostics ? "Hide Diagnostics" : "Run Diagnostics"}
-          </Button>
-        </div>
+        <Button onClick={() => refetch()} variant="outline" size="sm">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -141,61 +117,19 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
   if (!payments || payments.length === 0) {
     return (
       <div className="text-center py-12">
-        {showDiagnostics && (
-          <PaymentDiagnostics 
-            telegramUserId={telegramUserId} 
-            onClose={() => setShowDiagnostics(false)} 
-          />
-        )}
-        
         <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium">No Payment History</h3>
         <p className="text-muted-foreground mt-2 mb-4">
           You haven't made any payments yet.
         </p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          <Button onClick={() => refetch()} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button 
-            onClick={() => setShowDiagnostics(!showDiagnostics)} 
-            variant="outline" 
-            size="sm"
-          >
-            <Bug className="h-4 w-4 mr-2" />
-            {showDiagnostics ? "Hide Diagnostics" : "Run Diagnostics"}
-          </Button>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {showDiagnostics && (
-        <PaymentDiagnostics 
-          telegramUserId={telegramUserId} 
-          onClose={() => setShowDiagnostics(false)} 
-        />
-      )}
-      
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6">
         <h3 className="text-lg font-semibold">Payment History</h3>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => setShowDiagnostics(!showDiagnostics)} 
-            variant="ghost" 
-            size="sm"
-          >
-            <Bug className="h-4 w-4 mr-1" />
-            {showDiagnostics ? "Hide" : "Debug"}
-          </Button>
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
       </div>
       
       <ScrollArea className="h-[400px] pr-3">

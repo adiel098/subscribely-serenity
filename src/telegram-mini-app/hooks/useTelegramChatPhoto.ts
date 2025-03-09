@@ -29,7 +29,7 @@ export const useTelegramChatPhoto = ({
     
     // If we don't have a chat ID, we can't fetch a photo
     if (!telegramChatId) {
-      console.log("[useTelegramChatPhoto] No Telegram chat ID provided");
+      console.log("[useTelegramChatPhoto] No Telegram chat ID provided, cannot fetch photo");
       return;
     }
 
@@ -38,15 +38,20 @@ export const useTelegramChatPhoto = ({
         setLoading(true);
         setError(null);
         
-        console.log(`[useTelegramChatPhoto] Fetching photo for chat ${telegramChatId}`);
+        console.log(`[useTelegramChatPhoto] Starting fetch for chat ${telegramChatId}, community ${communityId || 'Not provided'}`);
+
+        const requestPayload = { 
+          communityId, 
+          telegramChatId 
+        };
+        console.log("[useTelegramChatPhoto] Request payload:", JSON.stringify(requestPayload, null, 2));
 
         const { data, error } = await supabase.functions.invoke("get-telegram-chat-photo", {
-          body: { 
-            communityId, 
-            telegramChatId 
-          }
+          body: requestPayload
         });
 
+        console.log("[useTelegramChatPhoto] Edge function response:", JSON.stringify(data, null, 2));
+        
         if (error) {
           console.error("[useTelegramChatPhoto] Error from edge function:", error);
           setError(error.message || "Failed to fetch photo from Telegram");
@@ -63,6 +68,10 @@ export const useTelegramChatPhoto = ({
           setPhotoUrl(data.photoUrl);
         } else {
           console.log("[useTelegramChatPhoto] No photo available for this chat");
+          // If we have chat data but no photo, log what we did receive
+          if (data?.chatData) {
+            console.log("[useTelegramChatPhoto] Chat data received:", JSON.stringify(data.chatData, null, 2));
+          }
         }
       } catch (err) {
         console.error("[useTelegramChatPhoto] Unexpected error:", err);

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
@@ -12,11 +12,17 @@ interface CommunityHeaderProps {
 }
 
 export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
-  const { photoUrl, loading } = useTelegramChatPhoto({
+  console.log("[CommunityHeader] Rendering with community:", JSON.stringify(community, null, 2));
+  
+  const { photoUrl, loading, error } = useTelegramChatPhoto({
     communityId: community.id,
     telegramChatId: community.telegram_chat_id,
     existingPhotoUrl: community.telegram_photo_url
   });
+
+  useEffect(() => {
+    console.log("[CommunityHeader] Photo details - URL:", photoUrl, "Loading:", loading, "Error:", error);
+  }, [photoUrl, loading, error]);
 
   return (
     <div className="text-center space-y-6 animate-fade-in">
@@ -29,6 +35,11 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
               src={photoUrl}
               alt={community.name}
               className="object-cover"
+              onError={(e) => {
+                console.error("[CommunityHeader] Error loading image:", e);
+                // Reset the src to force a fallback to the AvatarFallback
+                (e.target as HTMLImageElement).src = "";
+              }}
             />
           ) : (
             <AvatarFallback className="bg-primary/10">

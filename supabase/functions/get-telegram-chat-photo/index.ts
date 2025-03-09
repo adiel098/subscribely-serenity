@@ -8,8 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("🚀 get-telegram-chat-photo function started");
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("👌 Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -20,17 +23,24 @@ serve(async (req) => {
     
     const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
     if (!botToken) {
-      console.error("TELEGRAM_BOT_TOKEN not found in environment variables");
+      console.error("❌ TELEGRAM_BOT_TOKEN not found in environment variables");
       return new Response(
         JSON.stringify({ error: "Bot token not configured" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
+    console.log("✅ Environment variables loaded successfully");
 
-    const { communityId, telegramChatId } = await req.json();
+    // Parse request body
+    const body = await req.json();
+    console.log("📦 Request body:", JSON.stringify(body));
+    
+    const { communityId, telegramChatId } = body;
+    console.log(`🆔 Community ID: ${communityId || 'Not provided'}`);
+    console.log(`🆔 Telegram Chat ID: ${telegramChatId || 'Not provided'}`);
     
     if (!telegramChatId) {
-      console.error("Missing telegramChatId parameter");
+      console.error("❌ Missing telegramChatId parameter");
       return new Response(
         JSON.stringify({ error: "Missing chat ID parameter" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -40,7 +50,10 @@ serve(async (req) => {
     console.log(`🔍 Fetching photo for Telegram chat ID: ${telegramChatId}`);
     
     // Call Telegram API to get chat information
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
+    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/getChat`;
+    console.log(`📲 Calling Telegram API at: ${telegramApiUrl.replace(botToken, 'REDACTED')}`);
+    
+    const telegramResponse = await fetch(telegramApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,29 +63,39 @@ serve(async (req) => {
       })
     });
 
+    console.log(`🔄 Telegram API response status: ${telegramResponse.status}`);
     const telegramData = await telegramResponse.json();
     
+    console.log(`📋 Telegram API full response:`, JSON.stringify(telegramData, null, 2));
+    
     if (!telegramData.ok) {
-      console.error(`Error fetching chat data: ${telegramData.description}`);
+      console.error(`❌ Error fetching chat data: ${telegramData.description}`);
+      console.error(`❌ Error code: ${telegramData.error_code}`);
       return new Response(
         JSON.stringify({ error: telegramData.description }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    console.log("📋 Telegram API response:", JSON.stringify(telegramData));
+    console.log("✅ Successfully received chat data from Telegram");
     
     let photoUrl = null;
     
     // Check if chat has a photo
     if (telegramData.result.photo) {
+      console.log("🖼️ Chat has a photo available");
       // Get the largest available photo
       const fileId = telegramData.result.photo.big_file_id || 
                      telegramData.result.photo.small_file_id;
       
+      console.log(`🆔 Photo file ID: ${fileId || 'Not available'}`);
+      
       if (fileId) {
         // Get file path from Telegram
-        const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
+        console.log(`🔍 Getting file path for file ID: ${fileId}`);
+        const fileApiUrl = `https://api.telegram.org/bot${botToken}/getFile`;
+        
+        const fileResponse = await fetch(fileApiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -82,39 +105,50 @@ serve(async (req) => {
           })
         });
         
+        console.log(`🔄 File API response status: ${fileResponse.status}`);
         const fileData = await fileResponse.json();
+        console.log(`📋 File API response:`, JSON.stringify(fileData, null, 2));
         
         if (fileData.ok && fileData.result.file_path) {
           // Construct the direct photo URL
           photoUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-          console.log(`✅ Successfully got photo URL: ${photoUrl}`);
+          console.log(`✅ Successfully got photo URL: ${photoUrl.replace(botToken, 'REDACTED')}`);
           
           // Update the community record with the photo URL if communityId is provided
           if (communityId) {
+            console.log(`🔄 Updating community ${communityId} with photo URL`);
             const { error: updateError } = await supabase
               .from('communities')
               .update({ telegram_photo_url: photoUrl })
               .eq('id', communityId);
               
             if (updateError) {
-              console.error(`Error updating community record: ${updateError.message}`);
+              console.error(`❌ Error updating community record: ${updateError.message}`, updateError);
             } else {
-              console.log(`✅ Updated community ${communityId} with photo URL`);
+              console.log(`✅ Successfully updated community ${communityId} with photo URL`);
             }
+          } else {
+            console.log(`ℹ️ No communityId provided, skipping database update`);
           }
         } else {
-          console.error("Failed to get file path:", fileData);
+          console.error("❌ Failed to get file path:", fileData);
         }
+      } else {
+        console.log("⚠️ No file ID found in chat photo object");
       }
+    } else {
+      console.log("ℹ️ Chat does not have a photo");
     }
 
+    console.log(`📤 Returning response with photoUrl: ${photoUrl ? 'Present' : 'Not available'}`);
     return new Response(
       JSON.stringify({ photoUrl, chatData: telegramData.result }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Error in get-telegram-chat-photo function:", error);
+    console.error("❌ Error in get-telegram-chat-photo function:", error);
+    console.error("❌ Error stack:", error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }

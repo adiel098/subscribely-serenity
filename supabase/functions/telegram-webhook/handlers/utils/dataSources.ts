@@ -18,20 +18,12 @@ export async function fetchStartCommandData(
   try {
     console.log(`[DATA-SOURCES] 🔍 Fetching data for community ID: ${communityId}`);
     
-    // Fetch community data and bot settings in parallel
-    const [communityResult, botSettingsResult] = await Promise.all([
-      supabase
-        .from('communities')
-        .select('*')
-        .eq('id', communityId)
-        .single(),
-      
-      supabase
-        .from('telegram_bot_settings')
-        .select('*')
-        .eq('community_id', communityId)
-        .single()
-    ]);
+    // Fetch community data first
+    const communityResult = await supabase
+      .from('communities')
+      .select('*')
+      .eq('id', communityId)
+      .single();
     
     // Handle errors in fetching community
     if (communityResult.error) {
@@ -42,12 +34,50 @@ export async function fetchStartCommandData(
       };
     }
     
-    // Handle errors in fetching bot settings
-    if (botSettingsResult.error) {
-      console.error('[DATA-SOURCES] ❌ Error fetching bot settings:', botSettingsResult.error);
+    // Now fetch bot settings, but handle the case when they don't exist
+    const botSettingsResult = await supabase
+      .from('telegram_bot_settings')
+      .select('*')
+      .eq('community_id', communityId)
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle missing bot settings
+    
+    // If bot settings don't exist, we'll automatically create default settings
+    if (botSettingsResult.error || !botSettingsResult.data) {
+      console.log('[DATA-SOURCES] ⚠️ Bot settings not found, creating default settings');
+      
+      // Create default bot settings
+      const defaultBotSettings = {
+        community_id: communityId,
+        welcome_message: `Welcome to ${communityResult.data.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`,
+        auto_welcome_message: true,
+        auto_remove_expired: false,
+        language: 'en',
+        bot_signature: '🤖 MembershipBot'
+      };
+      
+      const createResult = await supabase
+        .from('telegram_bot_settings')
+        .insert(defaultBotSettings)
+        .select()
+        .single();
+        
+      if (createResult.error) {
+        console.error('[DATA-SOURCES] ❌ Error creating default bot settings:', createResult.error);
+        // Continue with community data only
+        return {
+          success: true,
+          community: communityResult.data,
+          botSettings: defaultBotSettings,
+          error: 'Using default bot settings (failed to save)'
+        };
+      }
+      
+      console.log('[DATA-SOURCES] ✅ Default bot settings created successfully');
+      
       return {
-        success: false,
-        error: `Bot settings not found: ${botSettingsResult.error.message}`
+        success: true,
+        community: communityResult.data,
+        botSettings: createResult.data
       };
     }
     

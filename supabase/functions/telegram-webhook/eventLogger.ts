@@ -45,15 +45,47 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
         processedData._logged_at = new Date().toISOString();
       } catch (jsonError) {
         console.error('[EVENT-LOGGER] ❌ Error processing JSON data:', jsonError);
-        // If JSON processing fails, use the original data
+        // If JSON processing fails, use a simple object with error info
         processedData = { 
           original_data_error: 'Could not process original data',
-          error_message: jsonError.message
+          error_message: jsonError.message,
+          timestamp: new Date().toISOString()
         };
       }
     }
     
-    // Check if the table exists before inserting
+    // Make sure the table exists before trying to log
+    // First check if table exists
+    try {
+      const { data: tableExists, error: tableCheckError } = await supabase
+        .from('telegram_webhook_logs')
+        .select('id')
+        .limit(1);
+        
+      if (tableCheckError) {
+        console.warn('[EVENT-LOGGER] ⚠️ Error checking if telegram_webhook_logs table exists, trying to create it');
+        
+        // Try to create the table
+        const createTableSQL = `
+          CREATE TABLE IF NOT EXISTS telegram_webhook_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            event_type TEXT,
+            raw_data JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+          )
+        `;
+        
+        await supabase.rpc('create_table_if_not_exists', { 
+          table_name: 'telegram_webhook_logs',
+          create_sql: createTableSQL 
+        });
+      }
+    } catch (tableError) {
+      console.error('[EVENT-LOGGER] ❌ Error checking/creating telegram_webhook_logs table:', tableError);
+      // Continue and try to insert anyway
+    }
+    
+    // Try to insert the log
     try {
       const { error } = await supabase
         .from('telegram_webhook_logs')
@@ -72,7 +104,7 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
       console.log('[EVENT-LOGGER] ✅ Event logged successfully');
     } catch (dbError) {
       console.error('[EVENT-LOGGER] ❌ Database error in logTelegramEvent:', dbError);
-      // Try to log the error itself
+      // Try to log the error itself to a different table
       try {
         await supabase.from('telegram_errors').insert({
           error_type: 'event_logging_error',
@@ -130,6 +162,40 @@ export async function logUserAction(
     
     // Ensure details is not null or undefined
     const safeDetails = details || {};
+    
+    // Check if user_actions table exists
+    try {
+      const { data: tableExists, error: tableCheckError } = await supabase
+        .from('user_actions')
+        .select('id')
+        .limit(1);
+        
+      if (tableCheckError) {
+        console.warn('[EVENT-LOGGER] ⚠️ user_actions table may not exist, will try subscription_activity_logs instead');
+        
+        // Try to use subscription_activity_logs table as fallback
+        const { error: fallbackError } = await supabase
+          .from('subscription_activity_logs')
+          .insert([
+            {
+              telegram_user_id: telegramUserId,
+              activity_type: action,
+              details: JSON.stringify(safeDetails)
+            }
+          ]);
+          
+        if (fallbackError) {
+          console.error('[EVENT-LOGGER] ❌ Error logging to fallback table:', fallbackError);
+        } else {
+          console.log('[EVENT-LOGGER] ✅ User action logged to fallback table successfully');
+        }
+        
+        return;
+      }
+    } catch (tableError) {
+      console.error('[EVENT-LOGGER] ❌ Error checking user_actions table:', tableError);
+      // Continue and try to insert anyway
+    }
     
     const { error } = await supabase
       .from('user_actions')

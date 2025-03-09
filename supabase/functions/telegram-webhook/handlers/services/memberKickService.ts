@@ -72,8 +72,8 @@ export async function kickMemberService(
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: false,
-          subscription_end_date: new Date().toISOString()
+          subscription_status: false
+          // No longer updating subscription_end_date as requested
         })
         .eq('id', member.id);
         

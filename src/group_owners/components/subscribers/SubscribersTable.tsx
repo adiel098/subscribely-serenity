@@ -55,6 +55,37 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
     }
   };
 
+  const getStatusBadge = (subscriber: Subscriber) => {
+    if (!subscriber.is_active) {
+      return (
+        <Badge variant="destructive" className="text-xs py-0.5">
+          <span className="flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Removed
+          </span>
+        </Badge>
+      );
+    } else if (subscriber.subscription_status) {
+      return (
+        <Badge variant="success" className="text-xs py-0.5">
+          <span className="flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Active
+          </span>
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="warning" className="text-xs py-0.5">
+          <span className="flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Inactive
+          </span>
+        </Badge>
+      );
+    }
+  };
+
   return (
     <>
       <div className="border rounded-lg bg-white shadow-sm overflow-auto max-h-[calc(100vh-220px)]">
@@ -107,19 +138,7 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                     )}
                   </TableCell>
                   <TableCell className="py-2">
-                    <Badge variant={subscriber.subscription_status ? "success" : "destructive"} className="text-xs py-0.5">
-                      {subscriber.subscription_status ? (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <XCircle className="h-3 w-3" />
-                          Inactive
-                        </span>
-                      )}
-                    </Badge>
+                    {getStatusBadge(subscriber)}
                   </TableCell>
                   <TableCell className="py-2">
                     <div className="space-y-1">

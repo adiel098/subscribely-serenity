@@ -99,8 +99,8 @@ export const useSubscriberManagement = (communityId: string) => {
         .from('telegram_chat_members')
         .update({
           subscription_status: false,
-          is_active: false,
-          subscription_end_date: new Date().toISOString()
+          is_active: false
+          // No longer updating subscription_end_date as requested
         })
         .eq('id', subscriber.id)
         .select();

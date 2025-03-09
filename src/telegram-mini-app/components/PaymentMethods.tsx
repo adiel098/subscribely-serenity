@@ -101,7 +101,9 @@ export const PaymentMethods = ({
 
   return (
     <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
-      <PaymentHeader />
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl mb-6">
+        <PaymentHeader />
+      </div>
       
       <PaymentOptions
         selectedPaymentMethod={selectedPaymentMethod}
@@ -113,11 +115,13 @@ export const PaymentMethods = ({
       />
 
       {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
-        <PaymentButton
-          price={selectedPlan.price}
-          isProcessing={isLoading}
-          onClick={handlePayment}
-        />
+        <div className="mt-8">
+          <PaymentButton
+            price={selectedPlan.price}
+            isProcessing={isLoading}
+            onClick={handlePayment}
+          />
+        </div>
       )}
     </div>
   );

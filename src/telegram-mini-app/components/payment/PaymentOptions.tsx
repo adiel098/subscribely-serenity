@@ -38,9 +38,9 @@ export const PaymentOptions = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <motion.div
-        className="grid grid-cols-3 gap-4"
+        className="grid grid-cols-3 gap-4 px-2"
         variants={container}
         initial="hidden"
         animate="show"
@@ -56,19 +56,19 @@ export const PaymentOptions = ({
         
         <motion.div variants={item} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <TelegramPaymentOption
-            method="card"
-            title="Credit Card"
-            isSelected={selectedPaymentMethod === 'card'}
-            onSelect={() => onPaymentMethodSelect('card')}
+            method="stripe"
+            title="Stripe"
+            isSelected={selectedPaymentMethod === 'stripe'}
+            onSelect={() => onPaymentMethodSelect('stripe')}
           />
         </motion.div>
         
         <motion.div variants={item} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <TelegramPaymentOption
-            method="stripe"
-            title="Stripe"
-            isSelected={selectedPaymentMethod === 'stripe'}
-            onSelect={() => onPaymentMethodSelect('stripe')}
+            method="crypto"
+            title="Crypto"
+            isSelected={selectedPaymentMethod === 'crypto'}
+            onSelect={() => onPaymentMethodSelect('crypto')}
           />
         </motion.div>
       </motion.div>
@@ -78,7 +78,7 @@ export const PaymentOptions = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mt-6"
+          className="mt-8"
         >
           <StripePaymentForm
             communityId={communityId}

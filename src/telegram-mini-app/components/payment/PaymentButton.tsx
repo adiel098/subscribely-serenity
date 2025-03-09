@@ -1,9 +1,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, CreditCard, Loader2, ArrowRight } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { toast } from "@/components/ui/use-toast";
+import { Loader2, CreditCard } from "lucide-react";
 
 interface PaymentButtonProps {
   price: number;
@@ -11,59 +11,36 @@ interface PaymentButtonProps {
   onClick: () => void;
 }
 
-export const PaymentButton = ({ price, isProcessing, onClick }: PaymentButtonProps) => {
-  const handlePaymentClick = () => {
-    // Show toast when payment is initiated
-    if (!isProcessing) {
-      toast({
-        title: "Processing payment",
-        description: "Please wait while we process your payment...",
-        duration: 3000,
-      });
-      onClick();
-    }
-  };
-  
+export const PaymentButton: React.FC<PaymentButtonProps> = ({
+  price,
+  isProcessing,
+  onClick
+}) => {
   return (
-    <div className="flex flex-col items-center space-y-4 animate-fade-in">
-      <motion.div 
-        className="w-full"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.4 }}
+      className="flex justify-center"
+    >
+      <Button 
+        onClick={onClick} 
+        disabled={isProcessing} 
+        size="lg"
+        className="w-full max-w-md bg-gradient-to-r from-blue-600 to-indigo-600 py-6 text-lg font-medium shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
       >
-        <Button 
-          size="lg" 
-          className="px-8 py-6 text-lg font-semibold gap-2 w-full max-w-sm transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 border-none"
-          onClick={handlePaymentClick}
-          disabled={isProcessing}
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Processing payment...
-            </>
-          ) : (
-            <>
-              <CreditCard className="h-5 w-5" />
-              💳 Pay ${price} 
-              <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-            </>
-          )}
-        </Button>
-      </motion.div>
-      <motion.p 
-        className="text-sm text-muted-foreground pb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        {isProcessing ? 
-          '⏳ Please wait while we process your payment...' : 
-          '🔒 Secure payment - Click the button above to complete payment'}
-      </motion.p>
-    </div>
+        {isProcessing ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <CreditCard className="mr-2 h-5 w-5" />
+            Pay {formatCurrency(price)}
+          </>
+        )}
+      </Button>
+    </motion.div>
   );
 };

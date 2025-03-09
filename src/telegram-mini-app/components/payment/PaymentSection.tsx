@@ -42,7 +42,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   return (
     <motion.div 
       id="payment-methods" 
-      className="scroll-mt-4"
+      className="scroll-mt-4 mt-6 mb-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

@@ -121,9 +121,16 @@ export async function createOrUpdateMember(memberData: CreateMemberParams): Prom
   }
 
   try {
+    // Log the Telegram ID type for debugging
+    console.log("🔍 createOrUpdateMember: Telegram ID type:", typeof memberData.telegram_id);
+    console.log("🔍 createOrUpdateMember: Telegram ID value:", memberData.telegram_id);
+    
+    // Ensure the Telegram ID is a string
+    const telegramId = String(memberData.telegram_id).trim();
+    
     const payload = {
       action: "create_or_update_member", 
-      telegram_id: memberData.telegram_id,
+      telegram_id: telegramId,
       community_id: memberData.community_id,
       subscription_plan_id: memberData.subscription_plan_id,
       status: memberData.status || 'active',

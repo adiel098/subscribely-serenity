@@ -148,24 +148,30 @@ async function createOrUpdateMember(memberData) {
     subscription_end_date
   } = memberData;
   
-  // First check if user is suspended
-  const { data: userProfile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('is_suspended')
-    .eq('id', telegram_id)
-    .single();
-    
-  if (profileError) {
-    console.error(`[telegram-user-manager] Error checking user suspension status:`, profileError);
-    return { success: false, error: "Error checking user status" };
-  }
-  
-  if (userProfile?.is_suspended) {
-    console.log(`[telegram-user-manager] Suspended user ${telegram_id} attempted to join/update membership`);
-    return { success: false, error: "User is suspended" };
-  }
-
+  // First check if user is suspended - IMPORTANT: We need to check if this is a Telegram ID, not a UUID
+  // Instead of checking the profiles table directly with a Telegram ID (which is not a UUID),
+  // we'll check the telegram_mini_app_users table which stores Telegram IDs as strings
   try {
+    console.log(`[telegram-user-manager] Checking if user ${telegram_id} is suspended`);
+    
+    // Look up the user in telegram_mini_app_users first
+    const { data: telegramUser, error: telegramUserError } = await supabaseAdmin
+      .from('telegram_mini_app_users')
+      .select('telegram_id, is_suspended')
+      .eq('telegram_id', telegram_id)
+      .maybeSingle();
+      
+    if (telegramUserError) {
+      console.error(`[telegram-user-manager] Error checking telegram_mini_app_users:`, telegramUserError);
+      // Continue despite error, assume user is not suspended
+      console.log(`[telegram-user-manager] Proceeding with assumption that user is not suspended`);
+    } else if (telegramUser?.is_suspended) {
+      console.log(`[telegram-user-manager] Suspended user ${telegram_id} attempted to join/update membership`);
+      return { success: false, error: "User is suspended" };
+    } else {
+      console.log(`[telegram-user-manager] User ${telegram_id} is not suspended or not found in telegram_mini_app_users`);
+    }
+
     // Use provided dates if available, otherwise calculate them
     let startDate = subscription_start_date ? new Date(subscription_start_date) : new Date();
     let endDate = subscription_end_date ? new Date(subscription_end_date) : null;

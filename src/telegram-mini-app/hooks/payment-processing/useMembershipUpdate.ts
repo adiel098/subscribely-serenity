@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { createOrUpdateMember } from "@/telegram-mini-app/services/memberService";
+import { formatTelegramId } from "@/telegram-mini-app/utils/telegram/idValidation";
 
 interface MembershipUpdateParams {
   telegramUserId: string;
@@ -33,6 +34,16 @@ export const useMembershipUpdate = () => {
     });
 
     try {
+      // Ensure the Telegram ID is properly formatted
+      const formattedTelegramId = formatTelegramId(telegramUserId);
+      
+      if (!formattedTelegramId) {
+        console.error('[useMembershipUpdate] Invalid Telegram ID format:', telegramUserId);
+        return false;
+      }
+      
+      console.log('[useMembershipUpdate] Using formatted Telegram ID:', formattedTelegramId);
+
       // Calculate subscription dates based on the plan details if provided
       let subscriptionStartDate = new Date();
       let subscriptionEndDate: Date | null = null;
@@ -66,7 +77,7 @@ export const useMembershipUpdate = () => {
 
       // Immediately create/update member record in telegram_chat_members with all subscription details
       const membershipResult = await createOrUpdateMember({
-        telegram_id: telegramUserId,
+        telegram_id: formattedTelegramId,
         community_id: communityId,
         subscription_plan_id: planId,
         status: 'active',
@@ -87,7 +98,7 @@ export const useMembershipUpdate = () => {
       const { error: logError } = await supabase
         .from('subscription_activity_logs')
         .insert({
-          telegram_user_id: telegramUserId,
+          telegram_user_id: formattedTelegramId,
           community_id: communityId,
           activity_type: 'subscription_created',
           details: `Plan: ${planId}, Payment: ${paymentId || 'N/A'}`

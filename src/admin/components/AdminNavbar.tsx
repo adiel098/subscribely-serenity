@@ -27,10 +27,16 @@ export function AdminNavbar() {
   
   const handleSignOut = async () => {
     try {
+      console.log("AdminNavbar: Initiating logout process");
+      // Clear browser session storage before calling the signOut function
+      sessionStorage.clear();
       await signOut();
       console.log("User logged out from AdminNavbar");
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Error signing out from AdminNavbar:", error);
+      // Even if there's an error, make sure we clear the local storage
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
     }
   };
   

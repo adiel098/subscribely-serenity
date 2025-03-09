@@ -21,8 +21,9 @@ export const handleSignOut = async ({
   try {
     setLoading(true);
     
-    // Clear cached session first before attempting to sign out
-    sessionStorage.removeItem('cached_user_session');
+    // Clear all session storage first (not just the cached_user_session)
+    sessionStorage.clear();
+    localStorage.removeItem('supabase.auth.token');
     
     // Clear user state before the API call
     setUser(null);
@@ -50,7 +51,8 @@ export const handleSignOut = async ({
     
     // Even if there's an error, we still want to try to clean up the session
     setUser(null);
-    sessionStorage.removeItem('cached_user_session');
+    sessionStorage.clear();
+    localStorage.removeItem('supabase.auth.token');
     
     // Force navigation to auth page
     if (currentPath !== '/auth') {

@@ -9,6 +9,8 @@ export interface CreateMemberParams {
   status?: 'active' | 'inactive' | 'pending';
   payment_id?: string;
   username?: string;
+  subscription_start_date?: string;  // Added parameter
+  subscription_end_date?: string;    // Added parameter
 }
 
 export interface Subscription {
@@ -126,7 +128,9 @@ export async function createOrUpdateMember(memberData: CreateMemberParams): Prom
       subscription_plan_id: memberData.subscription_plan_id,
       status: memberData.status || 'active',
       payment_id: memberData.payment_id,
-      username: memberData.username
+      username: memberData.username,
+      subscription_start_date: memberData.subscription_start_date, // Pass the provided start date
+      subscription_end_date: memberData.subscription_end_date // Pass the provided end date
     };
     console.log("📤 Sending to edge function:", payload);
     

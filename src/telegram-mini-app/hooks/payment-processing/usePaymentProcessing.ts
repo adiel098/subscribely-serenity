@@ -5,6 +5,7 @@ import { useInviteLink } from "./useInviteLink";
 import { useMembershipUpdate } from "./useMembershipUpdate";
 import { usePaymentRecord } from "./usePaymentRecord";
 import { validatePaymentParams, logPaymentAction } from "./utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UsePaymentProcessingOptions {
   communityId: string;
@@ -89,6 +90,21 @@ export const usePaymentProcessing = ({
       const linkToUse = currentInviteLink || inviteLink;
       console.log(`[usePaymentProcessing] Using invite link: ${linkToUse}`);
       
+      // Fetch plan details for subscription dates calculation
+      console.log('[usePaymentProcessing] Fetching plan details for subscription dates calculation');
+      const { data: planDetails, error: planError } = await supabase
+        .from('subscription_plans')
+        .select('interval, price')
+        .eq('id', planId)
+        .single();
+        
+      if (planError) {
+        console.warn('[usePaymentProcessing] Error fetching plan details:', planError);
+        // Continue without plan details
+      } else {
+        console.log('[usePaymentProcessing] Retrieved plan details:', planDetails);
+      }
+      
       // Record the payment
       console.log('[usePaymentProcessing] Recording payment with params:', {
         telegramUserId: telegramUserId!,
@@ -115,15 +131,16 @@ export const usePaymentProcessing = ({
         throw new Error(paymentError || "Failed to record payment");
       }
 
-      console.log(`[usePaymentProcessing] Payment recorded successfully. Updating membership status.`);
+      console.log(`[usePaymentProcessing] Payment recorded successfully. Updating membership status IMMEDIATELY after payment.`);
 
-      // Update membership status - THIS WILL NOW IMMEDIATELY CREATE A MEMBER RECORD
+      // Update membership status - THIS WILL IMMEDIATELY CREATE A MEMBER RECORD WITH SUBSCRIPTION DETAILS
       console.log('[usePaymentProcessing] Updating membership with params:', {
         telegramUserId: telegramUserId!,
         communityId,
         planId,
         paymentId,
-        username: telegramUsername
+        username: telegramUsername,
+        planDetails
       });
       
       const membershipUpdated = await updateMembershipStatus({
@@ -131,7 +148,8 @@ export const usePaymentProcessing = ({
         communityId,
         planId,
         paymentId,
-        username: telegramUsername
+        username: telegramUsername,
+        planDetails
       });
 
       if (!membershipUpdated) {
@@ -139,7 +157,7 @@ export const usePaymentProcessing = ({
         throw new Error("Failed to update membership status");
       }
 
-      console.log(`[usePaymentProcessing] Membership updated successfully.`);
+      console.log(`[usePaymentProcessing] Membership updated successfully with subscription details.`);
 
       // Final check for invite link - if still not available, try once more
       if (!linkToUse) {

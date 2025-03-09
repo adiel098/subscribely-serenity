@@ -137,7 +137,16 @@ async function cancelSubscription(subscriptionId) {
 async function createOrUpdateMember(memberData) {
   console.log(`[telegram-user-manager] Creating or updating member with data:`, JSON.stringify(memberData, null, 2));
   
-  const { telegram_id, community_id, subscription_plan_id, status, payment_id, username } = memberData;
+  const { 
+    telegram_id, 
+    community_id, 
+    subscription_plan_id, 
+    status, 
+    payment_id, 
+    username,
+    subscription_start_date,
+    subscription_end_date
+  } = memberData;
   
   // First check if user is suspended
   const { data: userProfile, error: profileError } = await supabaseAdmin
@@ -157,48 +166,53 @@ async function createOrUpdateMember(memberData) {
   }
 
   try {
-    // Get plan details to calculate subscription end date
-    console.log(`[telegram-user-manager] Getting plan details for ID: ${subscription_plan_id}`);
-    const { data: planData, error: planError } = await supabaseAdmin
-      .from("subscription_plans")
-      .select("interval, price")
-      .eq("id", subscription_plan_id)
-      .single();
+    // Use provided dates if available, otherwise calculate them
+    let startDate = subscription_start_date ? new Date(subscription_start_date) : new Date();
+    let endDate = subscription_end_date ? new Date(subscription_end_date) : null;
+    
+    // If we don't have an end date, calculate it based on plan
+    if (!endDate && subscription_plan_id) {
+      console.log(`[telegram-user-manager] Getting plan details for ID: ${subscription_plan_id}`);
+      const { data: planData, error: planError } = await supabaseAdmin
+        .from("subscription_plans")
+        .select("interval, price")
+        .eq("id", subscription_plan_id)
+        .single();
 
-    if (planError) {
-      console.error(`[telegram-user-manager] Error fetching plan details:`, planError);
-      return { success: false, error: planError.message };
+      if (planError) {
+        console.error(`[telegram-user-manager] Error fetching plan details:`, planError);
+        return { success: false, error: planError.message };
+      }
+
+      console.log(`[telegram-user-manager] Retrieved plan details:`, JSON.stringify(planData, null, 2));
+
+      // Calculate subscription end date based on plan interval
+      endDate = new Date(startDate);
+
+      // Add duration based on interval
+      if (planData.interval === "monthly") {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else if (planData.interval === "yearly") {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      } else if (planData.interval === "half-yearly") {
+        // Add 6 months for half-yearly subscriptions
+        endDate.setMonth(endDate.getMonth() + 6);
+        console.log(`[telegram-user-manager] Calculated half-yearly subscription end date: ${endDate.toISOString()}`);
+      } else if (planData.interval === "quarterly") {
+        // Add 3 months for quarterly subscriptions
+        endDate.setMonth(endDate.getMonth() + 3);
+        console.log(`[telegram-user-manager] Calculated quarterly subscription end date: ${endDate.toISOString()}`);
+      } else if (planData.interval === "weekly") {
+        endDate.setDate(endDate.getDate() + 7);
+      } else if (planData.interval === "daily") {
+        endDate.setDate(endDate.getDate() + 1);
+      } else if (planData.interval === "one_time") {
+        // For one-time payments, set a default 1-year validity
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
     }
 
-    console.log(`[telegram-user-manager] Retrieved plan details:`, JSON.stringify(planData, null, 2));
-
-    // Calculate subscription end date based on plan interval
-    const startDate = new Date();
-    let endDate = new Date(startDate);
-
-    // Add duration based on interval
-    if (planData.interval === "monthly") {
-      endDate.setMonth(endDate.getMonth() + 1);
-    } else if (planData.interval === "yearly") {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    } else if (planData.interval === "half-yearly") {
-      // Add 6 months for half-yearly subscriptions
-      endDate.setMonth(endDate.getMonth() + 6);
-      console.log(`[telegram-user-manager] Calculated half-yearly subscription end date: ${endDate.toISOString()}`);
-    } else if (planData.interval === "quarterly") {
-      // Add 3 months for quarterly subscriptions
-      endDate.setMonth(endDate.getMonth() + 3);
-      console.log(`[telegram-user-manager] Calculated quarterly subscription end date: ${endDate.toISOString()}`);
-    } else if (planData.interval === "weekly") {
-      endDate.setDate(endDate.getDate() + 7);
-    } else if (planData.interval === "daily") {
-      endDate.setDate(endDate.getDate() + 1);
-    } else if (planData.interval === "one_time") {
-      // For one-time payments, set a default 1-year validity
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    }
-
-    console.log(`[telegram-user-manager] Calculated subscription: startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+    console.log(`[telegram-user-manager] Using subscription: startDate=${startDate.toISOString()}, endDate=${endDate?.toISOString() || 'Not set'}`);
 
     // Check if member already exists
     console.log(`[telegram-user-manager] Checking if member exists: telegramId=${telegram_id}, communityId=${community_id}`);
@@ -225,7 +239,7 @@ async function createOrUpdateMember(memberData) {
         .update({
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
-          subscription_end_date: endDate.toISOString(),
+          subscription_end_date: endDate ? endDate.toISOString() : null,
           subscription_status: true,
           is_active: true,
           telegram_username: username
@@ -250,7 +264,7 @@ async function createOrUpdateMember(memberData) {
           community_id,
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
-          subscription_end_date: endDate.toISOString(),
+          subscription_end_date: endDate ? endDate.toISOString() : null,
           subscription_status: true,
           is_active: true,
           telegram_username: username

@@ -21,6 +21,8 @@ interface PaymentMethodsProps {
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
+  firstName?: string;  // Add first name prop
+  lastName?: string;   // Add last name prop
 }
 
 export const PaymentMethods = ({
@@ -31,7 +33,9 @@ export const PaymentMethods = ({
   communityInviteLink,
   showSuccess,
   telegramUserId,
-  telegramUsername
+  telegramUsername,
+  firstName,
+  lastName
 }: PaymentMethodsProps) => {
   const stripeConfig = useStripeConfig(selectedPlan);
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
@@ -51,7 +55,9 @@ export const PaymentMethods = ({
     console.log('[PaymentMethods] Selected plan price:', selectedPlan.price);
     console.log('[PaymentMethods] Telegram user ID:', telegramUserId);
     console.log('[PaymentMethods] Telegram username:', telegramUsername);
-  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername]);
+    console.log('[PaymentMethods] First name:', firstName);
+    console.log('[PaymentMethods] Last name:', lastName);
+  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName]);
 
   // Show error toast if payment processing fails
   useEffect(() => {
@@ -72,6 +78,8 @@ export const PaymentMethods = ({
       console.log('[PaymentMethods] Plan price:', selectedPlan.price);
       console.log('[PaymentMethods] Community invite link:', communityInviteLink);
       console.log('[PaymentMethods] Telegram username:', telegramUsername);
+      console.log('[PaymentMethods] First name:', firstName);
+      console.log('[PaymentMethods] Last name:', lastName);
       processPayment(selectedPaymentMethod);
     } else {
       toast({

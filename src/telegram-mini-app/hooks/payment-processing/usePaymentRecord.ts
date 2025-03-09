@@ -10,6 +10,8 @@ interface RecordPaymentParams {
   paymentMethod: string;
   inviteLink: string | null;
   username?: string;
+  firstName?: string;  // Add first name
+  lastName?: string;   // Add last name
 }
 
 /**
@@ -20,7 +22,17 @@ export const usePaymentRecord = () => {
    * Record payment information in the database
    */
   const recordPayment = async (params: RecordPaymentParams) => {
-    const { telegramUserId, communityId, planId, planPrice, paymentMethod, inviteLink, username } = params;
+    const { 
+      telegramUserId, 
+      communityId, 
+      planId, 
+      planPrice, 
+      paymentMethod, 
+      inviteLink, 
+      username,
+      firstName,
+      lastName
+    } = params;
     
     logPaymentAction('Recording payment with params', params);
     console.log('[usePaymentRecord] Recording payment with params:', JSON.stringify(params, null, 2));
@@ -35,6 +47,8 @@ export const usePaymentRecord = () => {
       console.log(`- paymentMethod: ${paymentMethod}, type: ${typeof paymentMethod}`);
       console.log(`- inviteLink: ${inviteLink}, type: ${typeof inviteLink}`);
       console.log(`- username: ${username}, type: ${typeof username}`);
+      console.log(`- firstName: ${firstName}, type: ${typeof firstName}`);
+      console.log(`- lastName: ${lastName}, type: ${typeof lastName}`);
       
       // Use the provided plan price directly
       const price = planPrice;
@@ -86,7 +100,9 @@ export const usePaymentRecord = () => {
         amount: price,
         status: 'successful',
         invite_link: inviteLink,
-        telegram_username: username
+        telegram_username: username,
+        first_name: firstName || '', // Include first name
+        last_name: lastName || ''     // Include last name
       };
       
       console.log('[usePaymentRecord] Inserting payment record with data:', JSON.stringify(paymentData, null, 2));

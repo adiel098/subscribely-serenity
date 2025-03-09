@@ -128,14 +128,18 @@ serve(async (req) => {
           userData = telegramUser;
 
           // Check if user exists in the database
-          const { data: existingUser } = await supabase
+          const { data: existingUser, error: userError } = await supabase
             .from("telegram_mini_app_users")
             .select("*")
             .eq("telegram_id", telegramUser.id)
             .single();
+            
+          console.log("Existing user data from DB:", existingUser);
+          console.log("User error:", userError);
 
           if (!existingUser) {
             // Create new user record
+            console.log("Creating new user record for:", telegramUser.id);
             await supabase.from("telegram_mini_app_users").insert([
               {
                 telegram_id: telegramUser.id,
@@ -148,6 +152,7 @@ serve(async (req) => {
             ]);
           } else {
             // Update existing user with latest session info
+            console.log("Updating existing user:", telegramUser.id);
             await supabase
               .from("telegram_mini_app_users")
               .update({
@@ -161,7 +166,10 @@ serve(async (req) => {
               
             // Include email in userData if available
             if (existingUser.email) {
+              console.log("Found email in DB, adding to userData:", existingUser.email);
               userData.email = existingUser.email;
+            } else {
+              console.log("No email found for user in database");
             }
           }
         }
@@ -170,6 +178,8 @@ serve(async (req) => {
         // Don't fail the request, just log the error and continue
       }
     }
+    
+    console.log("Final userData being returned:", userData);
 
     return new Response(
       JSON.stringify({

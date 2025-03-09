@@ -30,6 +30,12 @@ export const MainContent = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
   
+  // Log telegramUser data for debugging
+  React.useEffect(() => {
+    console.log("MainContent - telegramUser:", telegramUser);
+    console.log("MainContent - telegramUser.email:", telegramUser.email);
+  }, [telegramUser]);
+  
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
       <div className="flex flex-col gap-6">

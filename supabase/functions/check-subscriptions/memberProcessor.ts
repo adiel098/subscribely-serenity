@@ -1,6 +1,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
-import { SubscriptionMember, BotSettings, handleExpiredSubscription, sendReminderNotifications } from "./utils/subscriptionManager.ts";
+import { 
+  SubscriptionMember, 
+  BotSettings, 
+  handleExpiredSubscription, 
+  sendReminderNotifications 
+} from "./utils/subscriptionManager.ts";
 
 /**
  * Process a member's subscription status and send appropriate notifications

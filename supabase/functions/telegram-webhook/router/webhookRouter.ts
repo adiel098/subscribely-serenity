@@ -2,11 +2,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleChatJoinRequest } from '../handlers/joinRequestHandler.ts';
 import { kickMember } from '../handlers/kickMemberHandler.ts';
-import { handleChatMemberUpdate, handleMyChatMember } from '../membershipHandler.ts';
+import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
+import { handleMyChatMember } from '../handlers/botStatusHandler.ts';
 import { handleStartCommand } from '../handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from '../handlers/verificationHandler.ts';
 import { handleChannelVerification } from '../handlers/channelVerificationHandler.ts';
 import { corsHeaders } from '../cors.ts';
+import { updateMemberActivity } from '../handlers/utils/activityUtils.ts';
 
 export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnType<typeof createClient>, botToken: string) {
   console.log("[ROUTER] 🔄 Routing Telegram webhook request");
@@ -122,6 +124,11 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
     }
 
     console.log('[ROUTER] 🗨️ Processing message:', JSON.stringify(message, null, 2));
+
+    // Update user activity if we have a user ID
+    if (message.from?.id) {
+      await updateMemberActivity(supabaseClient, message.from.id.toString());
+    }
 
     let handled = false;
 

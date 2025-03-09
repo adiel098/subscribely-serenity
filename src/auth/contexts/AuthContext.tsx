@@ -154,8 +154,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [navigate, location.pathname]);
 
-  // This is the key change - properly implementing the signOut function to use the handleSignOut utility
+  // Improved signOut function that handles errors better
   const signOut = async () => {
+    console.log('🔄 AuthContext: signOut function called');
+    
+    // Immediately clear the session storage and set user to null
+    // This ensures the UI updates immediately regardless of API response
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    setUser(null);
+    
+    // Then proceed with the full logout process
     await handleSignOut({
       setLoading,
       setUser,

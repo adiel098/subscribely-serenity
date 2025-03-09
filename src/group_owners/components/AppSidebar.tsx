@@ -49,6 +49,15 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
   
+  const handleLogout = async () => {
+    try {
+      console.log('AppSidebar: Initiating logout process');
+      await signOut();
+    } catch (error) {
+      console.error('AppSidebar: Error during logout:', error);
+    }
+  };
+  
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
@@ -103,7 +112,11 @@ export function AppSidebar() {
               <HelpCircle className="h-4 w-4" />
               Help & Support
             </Button>
-            <Button variant="outline" className="w-full border-red-100 bg-gradient-to-r from-red-50/70 to-rose-50/70 hover:from-red-100/90 hover:to-rose-100/90 text-red-600 hover:text-red-700 hover:border-red-200 gap-2" onClick={signOut}>
+            <Button 
+              variant="outline" 
+              className="w-full border-red-100 bg-gradient-to-r from-red-50/70 to-rose-50/70 hover:from-red-100/90 hover:to-rose-100/90 text-red-600 hover:text-red-700 hover:border-red-200 gap-2" 
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>

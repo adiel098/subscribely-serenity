@@ -27,6 +27,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   // Enhanced logging for debugging
   useEffect(() => {
+    console.log('[PaymentSection] Rendering with props:');
     console.log('[PaymentSection] Selected payment method:', selectedPaymentMethod);
     console.log('[PaymentSection] Community invite link:', communityInviteLink);
     console.log('[PaymentSection] Selected plan:', selectedPlan);

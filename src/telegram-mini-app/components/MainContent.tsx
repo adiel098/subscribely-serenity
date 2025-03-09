@@ -30,20 +30,23 @@ export const MainContent = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
   
-  // Log telegramUser data for debugging
+  // Enhanced logging for debugging
   React.useEffect(() => {
-    console.log("MainContent - telegramUser:", telegramUser);
-    if (telegramUser && telegramUser.email) {
-      console.log("MainContent - telegramUser.email:", telegramUser.email);
-    }
+    console.log("[MainContent] Component rendered with state:");
+    console.log("[MainContent] Selected payment method:", selectedPaymentMethod);
+    console.log("[MainContent] Selected plan:", selectedPlan);
+    console.log("[MainContent] Show payment methods:", showPaymentMethods);
+    console.log("[MainContent] Show success:", showSuccess);
     
-    // Also log payment method selection
-    console.log("MainContent - selectedPaymentMethod:", selectedPaymentMethod);
-  }, [telegramUser, selectedPaymentMethod]);
+    if (telegramUser) {
+      console.log("[MainContent] Telegram user ID:", telegramUser.id);
+      console.log("[MainContent] Telegram username:", telegramUser.username);
+    }
+  }, [telegramUser, selectedPaymentMethod, selectedPlan, showPaymentMethods, showSuccess]);
 
   // Handle payment method selection
   const handlePaymentMethodSelect = (method) => {
-    console.log(`MainContent - Setting payment method to: ${method}`);
+    console.log(`[MainContent] Setting payment method to: ${method}`);
     setSelectedPaymentMethod(method);
   };
   

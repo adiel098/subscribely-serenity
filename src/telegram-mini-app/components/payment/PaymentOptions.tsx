@@ -23,8 +23,10 @@ export const PaymentOptions = ({
 }: PaymentOptionsProps) => {
   // Enhanced logging for debugging
   useEffect(() => {
-    console.log("PaymentOptions render with selectedMethod:", selectedPaymentMethod);
-  }, [selectedPaymentMethod]);
+    console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
+    console.log("[PaymentOptions] Community ID:", communityId);
+    console.log("[PaymentOptions] Price:", price);
+  }, [selectedPaymentMethod, communityId, price]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -56,7 +58,7 @@ export const PaymentOptions = ({
             title="PayPal"
             isSelected={selectedPaymentMethod === 'paypal'}
             onSelect={() => {
-              console.log("PayPal payment method selected");
+              console.log("[PaymentOptions] PayPal payment method selected");
               onPaymentMethodSelect('paypal');
             }}
           />
@@ -68,7 +70,7 @@ export const PaymentOptions = ({
             title="Stripe"
             isSelected={selectedPaymentMethod === 'stripe'}
             onSelect={() => {
-              console.log("Stripe payment method selected");
+              console.log("[PaymentOptions] Stripe payment method selected");
               onPaymentMethodSelect('stripe');
             }}
           />
@@ -80,7 +82,7 @@ export const PaymentOptions = ({
             title="Crypto"
             isSelected={selectedPaymentMethod === 'crypto'}
             onSelect={() => {
-              console.log("Crypto payment method selected");
+              console.log("[PaymentOptions] Crypto payment method selected");
               onPaymentMethodSelect('crypto');
             }}
           />

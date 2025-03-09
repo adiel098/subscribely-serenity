@@ -27,15 +27,15 @@ export const TelegramPaymentOption = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  // Define image paths for each payment method
+  // Define image paths for each payment method with the new images
   const getImagePath = () => {
     switch (method) {
       case 'paypal':
-        return "/lovable-uploads/d7aa5d26-7f8d-42f8-bdc1-7c9b5567f6c1.png";
+        return "/lovable-uploads/e2437786-159b-4386-85b6-b4ebec9fae19.png";
       case 'stripe':
         return "/lovable-uploads/d055380d-245c-4dbf-987d-882c5637c43e.png";
       case 'crypto':
-        return "/lovable-uploads/85400a62-ed37-43d2-9d9b-54d8adaf1347.png";
+        return "/lovable-uploads/178720f1-1cf7-4ea6-83c4-6d544f2c5aba.png";
       default:
         return "";
     }
@@ -84,7 +84,7 @@ export const TelegramPaymentOption = ({
   };
 
   const handleImageError = () => {
-    console.error(`Error loading image for ${method} payment method`);
+    console.error(`Error loading image for ${method} payment method: ${getImagePath()}`);
     setImageError(true);
   };
 

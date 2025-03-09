@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useInviteLink } from "./useInviteLink";
@@ -116,7 +117,7 @@ export const usePaymentProcessing = ({
 
       console.log(`[usePaymentProcessing] Payment recorded successfully. Updating membership status.`);
 
-      // Update membership status
+      // Update membership status - THIS WILL NOW IMMEDIATELY CREATE A MEMBER RECORD
       console.log('[usePaymentProcessing] Updating membership with params:', {
         telegramUserId: telegramUserId!,
         communityId,

@@ -33,8 +33,19 @@ export const MainContent = ({
   // Log telegramUser data for debugging
   React.useEffect(() => {
     console.log("MainContent - telegramUser:", telegramUser);
-    console.log("MainContent - telegramUser.email:", telegramUser.email);
-  }, [telegramUser]);
+    if (telegramUser && telegramUser.email) {
+      console.log("MainContent - telegramUser.email:", telegramUser.email);
+    }
+    
+    // Also log payment method selection
+    console.log("MainContent - selectedPaymentMethod:", selectedPaymentMethod);
+  }, [telegramUser, selectedPaymentMethod]);
+
+  // Handle payment method selection
+  const handlePaymentMethodSelect = (method) => {
+    console.log(`MainContent - Setting payment method to: ${method}`);
+    setSelectedPaymentMethod(method);
+  };
   
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
@@ -69,7 +80,7 @@ export const MainContent = ({
           <PaymentSection
             selectedPlan={selectedPlan}
             selectedPaymentMethod={selectedPaymentMethod}
-            onPaymentMethodSelect={setSelectedPaymentMethod}
+            onPaymentMethodSelect={handlePaymentMethodSelect}
             onCompletePurchase={handleCompletePurchase}
             communityInviteLink={community.telegram_invite_link}
             showSuccess={showSuccess}

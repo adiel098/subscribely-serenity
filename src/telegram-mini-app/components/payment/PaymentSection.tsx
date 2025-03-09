@@ -51,7 +51,10 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
       <PaymentMethods
         selectedPlan={selectedPlan}
         selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={onPaymentMethodSelect}
+        onPaymentMethodSelect={(method) => {
+          console.log(`[PaymentSection] Payment method selected: ${method}`);
+          onPaymentMethodSelect(method);
+        }}
         onCompletePurchase={onCompletePurchase}
         communityInviteLink={communityInviteLink}
         showSuccess={showSuccess}

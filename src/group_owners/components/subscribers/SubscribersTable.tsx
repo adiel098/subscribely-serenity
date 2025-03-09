@@ -43,12 +43,21 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
           </span>
         </Badge>
       );
-    } else if (subscriber.subscription_status) {
+    } else if (subscriber.subscription_status === "active") {
       return (
         <Badge variant="success" className="text-xs py-0.5">
           <span className="flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
             Active
+          </span>
+        </Badge>
+      );
+    } else if (subscriber.subscription_status === "removed") {
+      return (
+        <Badge variant="destructive" className="text-xs py-0.5">
+          <span className="flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Removed
           </span>
         </Badge>
       );

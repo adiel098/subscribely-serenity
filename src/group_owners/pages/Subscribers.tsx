@@ -75,7 +75,7 @@ const Subscribers = () => {
       'Plan Name': sub.plan?.name || 'No plan',
       'Plan Price': sub.plan ? `$${sub.plan.price}` : '-',
       'Plan Interval': sub.plan?.interval || '-',
-      Status: sub.subscription_status ? 'Active' : 'Inactive',
+      Status: sub.subscription_status,
       'Start Date': sub.subscription_start_date ? new Date(sub.subscription_start_date).toLocaleDateString() : '-',
       'End Date': sub.subscription_end_date ? new Date(sub.subscription_end_date).toLocaleDateString() : '-',
       'Joined At': new Date(sub.joined_at).toLocaleDateString(),

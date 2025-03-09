@@ -1,85 +1,53 @@
 
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, RefreshCw, Users, CheckCircle } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Loader2, Download, UserCheck, UserX, ChevronDown } from "lucide-react";
 
 interface SubscribersHeaderProps {
-  onUpdateStatus: () => void;
+  onUpdateStatus: (status: string) => void;
   onExport: () => void;
   isUpdating: boolean;
 }
 
-export const SubscribersHeader = ({ 
-  onUpdateStatus, 
-  onExport, 
-  isUpdating 
-}: SubscribersHeaderProps) => {
+export const SubscribersHeader = ({ onUpdateStatus, onExport, isUpdating }: SubscribersHeaderProps) => {
   return (
-    <div className="space-y-4">
-      <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center justify-between"
-      >
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-md">
-            <Users className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-              Subscribers
-              <span className="ml-2 text-sm bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-normal">
-                Management
-              </span>
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Monitor subscription status and manage community members effectively
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onUpdateStatus}
-              disabled={isUpdating}
-              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm"
-            >
-              {isUpdating ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Update Status
-                </>
-              )}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Subscribers</h2>
+        <p className="text-muted-foreground">
+          View and manage your community subscribers
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-1">
+              <ChevronDown className="h-4 w-4" />
+              Bulk Actions
             </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExport}
-              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export Data
-            </Button>
-          </motion.div>
-        </div>
-      </motion.div>
-      <div className="h-1 w-24 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"></div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onUpdateStatus("active")}>
+              <UserCheck className="mr-2 h-4 w-4" />
+              Set All Active
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onUpdateStatus("inactive")}>
+              <UserX className="mr-2 h-4 w-4" />
+              Set All Inactive
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="outline" onClick={onExport}>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
+        {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+      </div>
     </div>
   );
 };

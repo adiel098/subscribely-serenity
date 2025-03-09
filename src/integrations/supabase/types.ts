@@ -830,7 +830,7 @@ export type Database = {
           subscription_end_date: string | null
           subscription_plan_id: string | null
           subscription_start_date: string | null
-          subscription_status: boolean | null
+          subscription_status: string | null
           telegram_user_id: string
           telegram_username: string | null
           total_messages: number | null
@@ -847,7 +847,7 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_plan_id?: string | null
           subscription_start_date?: string | null
-          subscription_status?: boolean | null
+          subscription_status?: string | null
           telegram_user_id: string
           telegram_username?: string | null
           total_messages?: number | null
@@ -864,7 +864,7 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_plan_id?: string | null
           subscription_start_date?: string | null
-          subscription_status?: boolean | null
+          subscription_status?: string | null
           telegram_user_id?: string
           telegram_username?: string | null
           total_messages?: number | null

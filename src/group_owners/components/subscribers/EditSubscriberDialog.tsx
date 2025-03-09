@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [username, setUsername] = useState(subscriber.telegram_username || "");
-  const [subscriptionStatus, setSubscriptionStatus] = useState(subscriber.subscription_status);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(subscriber.subscription_status || "inactive");
   const [startDate, setStartDate] = useState(
     subscriber.subscription_start_date ? 
     new Date(subscriber.subscription_start_date).toISOString().slice(0, 16) : 
@@ -43,14 +43,14 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         subscription_end_date: endDate
       });
 
-      // If subscription is being deactivated, make sure we have proper dates
+      // If subscription is being deactivated or removed, make sure we have proper dates
       const currentDate = new Date().toISOString();
       const updateData = {
         telegram_username: username,
         subscription_status: subscriptionStatus,
-        is_active: subscriptionStatus, // Update active status based on subscription status
-        subscription_start_date: subscriptionStatus ? (startDate || currentDate) : null,
-        subscription_end_date: subscriptionStatus ? (endDate || null) : currentDate
+        is_active: subscriptionStatus === "active", // Update active status based on subscription status
+        subscription_start_date: subscriptionStatus === "active" ? (startDate || currentDate) : null,
+        subscription_end_date: subscriptionStatus === "active" ? (endDate || null) : currentDate
       };
 
       const { error: updateError } = await supabase
@@ -63,9 +63,9 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         throw updateError;
       }
 
-      // If subscription is cancelled, we need to remove the user from the Telegram channel
-      if (!subscriptionStatus && subscriber.subscription_status) {
-        console.log('Subscription cancelled, removing member from channel...');
+      // If subscription is cancelled or removed, we need to remove the user from the Telegram channel
+      if (subscriptionStatus === "removed" || (subscriptionStatus === "inactive" && subscriber.subscription_status === "active")) {
+        console.log('Subscription cancelled/removed, removing member from channel...');
         
         // Get the actual Telegram chat ID from the community
         const { data: community, error: communityError } = await supabase
@@ -95,11 +95,16 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         }
       }
 
+      let successMessage = "Subscriber updated successfully";
+      if (subscriptionStatus === "removed") {
+        successMessage = "Subscription cancelled and member removed from channel";
+      } else if (subscriptionStatus === "inactive" && subscriber.subscription_status === "active") {
+        successMessage = "Subscription deactivated and member removed from channel";
+      }
+
       toast({
         title: "Success",
-        description: subscriptionStatus ? 
-          "Subscriber updated successfully" : 
-          "Subscription cancelled and member removed from channel",
+        description: successMessage,
       });
       
       onSuccess();
@@ -135,13 +140,21 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
               placeholder="Telegram username"
             />
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="space-y-2">
             <Label htmlFor="subscription-status">Subscription Status</Label>
-            <Switch
-              id="subscription-status"
-              checked={subscriptionStatus}
-              onCheckedChange={setSubscriptionStatus}
-            />
+            <Select
+              value={subscriptionStatus}
+              onValueChange={setSubscriptionStatus}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="removed">Removed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="start-date">Start Date</Label>
@@ -150,6 +163,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
               type="datetime-local"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              disabled={subscriptionStatus !== "active"}
             />
           </div>
           <div className="space-y-2">
@@ -159,6 +173,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
               type="datetime-local"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              disabled={subscriptionStatus !== "active"}
             />
           </div>
         </div>
@@ -169,15 +184,15 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
           <Button 
             onClick={handleSave} 
             disabled={isLoading}
-            variant={!subscriptionStatus ? "destructive" : "default"}
+            variant={subscriptionStatus === "removed" ? "destructive" : "default"}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {!subscriptionStatus ? "Cancelling..." : "Saving..."}
+                {subscriptionStatus === "removed" ? "Removing..." : "Saving..."}
               </>
             ) : (
-              !subscriptionStatus ? "Cancel Subscription" : "Save Changes"
+              subscriptionStatus === "removed" ? "Remove Subscriber" : "Save Changes"
             )}
           </Button>
         </div>

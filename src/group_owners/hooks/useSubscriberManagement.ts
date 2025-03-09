@@ -12,11 +12,14 @@ export const useSubscriberManagement = (communityId: string) => {
     
     setIsUpdating(true);
     try {
+      // Determine is_active based on the new status
+      const isActive = newStatus === "active";
+      
       const { error } = await supabase
         .from("telegram_chat_members")
         .update({ 
           subscription_status: newStatus,
-          is_active: newStatus === "active"
+          is_active: isActive
         })
         .eq("community_id", communityId);
 

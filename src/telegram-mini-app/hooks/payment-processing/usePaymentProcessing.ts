@@ -110,8 +110,8 @@ export const usePaymentProcessing = ({
         paymentMethod,
         inviteLink: communityInviteLink || null,
         username,
-        firstName,  // Pass first name
-        lastName    // Pass last name
+        firstName,
+        lastName
       });
       
       console.log('[usePaymentProcessing] Payment result:', result);

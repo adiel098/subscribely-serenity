@@ -10,7 +10,10 @@ export interface TelegramMiniAppUser {
   email?: string | null;
   created_at?: string | null;
   last_active?: string | null;
+  is_suspended?: boolean | null;
 }
+
+export type SubscriptionStatus = 'active' | 'expired' | 'removed' | 'inactive';
 
 export interface Database {
   public: {
@@ -42,6 +45,21 @@ export interface Database {
           community_id: string;
           created_at?: string | null;
           updated_at?: string | null;
+          is_active: boolean;
+        };
+      };
+      telegram_chat_members: {
+        Row: {
+          id: string;
+          telegram_user_id: string;
+          telegram_username: string | null;
+          community_id: string;
+          joined_at: string;
+          last_active: string | null;
+          subscription_status: SubscriptionStatus;
+          is_active: boolean;
+          subscription_start_date: string | null;
+          subscription_end_date: string | null;
         };
       };
     };

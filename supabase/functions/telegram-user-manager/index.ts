@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -70,6 +71,7 @@ async function getUserSubscriptions(telegramId) {
         subscription_start_date,
         subscription_end_date,
         subscription_status,
+        is_active,
         total_messages,
         community_id,
         community:communities!telegram_chat_members_community_id_fkey(
@@ -141,6 +143,7 @@ async function createOrUpdateMember(memberData) {
     community_id, 
     subscription_plan_id, 
     status, 
+    is_active,
     payment_id, 
     username,
     subscription_start_date,
@@ -233,6 +236,19 @@ async function createOrUpdateMember(memberData) {
       return { success: false, error: memberError.message };
     }
 
+    // Determine is_active based on the provided status
+    // It should be true for 'active' and false for other statuses
+    const isActiveMember = is_active !== undefined ? is_active : (status === 'active');
+    
+    // Standardize subscription_status value
+    let subscriptionStatus = status || 'active';
+    
+    // Validate that status is one of the allowed values
+    if (!['active', 'inactive', 'expired', 'removed'].includes(subscriptionStatus)) {
+      console.warn(`[telegram-user-manager] Invalid status value "${subscriptionStatus}", defaulting to "active"`);
+      subscriptionStatus = 'active';
+    }
+
     let result;
     
     if (existingMember) {
@@ -245,8 +261,8 @@ async function createOrUpdateMember(memberData) {
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
           subscription_end_date: endDate ? endDate.toISOString() : null,
-          subscription_status: "active",
-          is_active: true,
+          subscription_status: subscriptionStatus,
+          is_active: isActiveMember,
           telegram_username: username
         })
         .eq("id", existingMember.id)
@@ -270,8 +286,8 @@ async function createOrUpdateMember(memberData) {
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
           subscription_end_date: endDate ? endDate.toISOString() : null,
-          subscription_status: "active",
-          is_active: true,
+          subscription_status: subscriptionStatus,
+          is_active: isActiveMember,
           telegram_username: username
         })
         .select();
@@ -291,7 +307,7 @@ async function createOrUpdateMember(memberData) {
       telegram_id,
       community_id,
       existingMember ? 'subscription_renewed' : 'subscription_created',
-      `Plan: ${subscription_plan_id}, Payment: ${payment_id || 'N/A'}`
+      `Status: ${subscriptionStatus}, Is Active: ${isActiveMember}, Plan: ${subscription_plan_id}, Payment: ${payment_id || 'N/A'}`
     );
 
     return result;

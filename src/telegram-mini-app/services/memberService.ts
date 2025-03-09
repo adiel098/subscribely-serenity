@@ -6,11 +6,11 @@ export interface CreateMemberParams {
   telegram_id: string;
   community_id: string;
   subscription_plan_id: string;
-  status?: 'active' | 'inactive' | 'pending';
+  status?: 'active' | 'inactive' | 'expired' | 'removed';
   payment_id?: string;
   username?: string;
-  subscription_start_date?: string;  // Added parameter
-  subscription_end_date?: string;    // Added parameter
+  subscription_start_date?: string;
+  subscription_end_date?: string;
 }
 
 export interface Subscription {
@@ -21,7 +21,8 @@ export interface Subscription {
   last_active: string | null;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
-  subscription_status: boolean;
+  subscription_status: 'active' | 'inactive' | 'expired' | 'removed';
+  is_active: boolean;
   total_messages: number | null;
   community_id: string;
   expiry_date?: string | null;  // For backward compatibility
@@ -128,16 +129,20 @@ export async function createOrUpdateMember(memberData: CreateMemberParams): Prom
     // Ensure the Telegram ID is a string
     const telegramId = String(memberData.telegram_id).trim();
     
+    // Determine is_active status based on the status parameter
+    const isActive = memberData.status === 'active';
+    
     const payload = {
       action: "create_or_update_member", 
       telegram_id: telegramId,
       community_id: memberData.community_id,
       subscription_plan_id: memberData.subscription_plan_id,
       status: memberData.status || 'active',
+      is_active: isActive,
       payment_id: memberData.payment_id,
       username: memberData.username,
-      subscription_start_date: memberData.subscription_start_date, // Pass the provided start date
-      subscription_end_date: memberData.subscription_end_date // Pass the provided end date
+      subscription_start_date: memberData.subscription_start_date,
+      subscription_end_date: memberData.subscription_end_date
     };
     console.log("📤 Sending to edge function:", payload);
     

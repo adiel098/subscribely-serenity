@@ -45,6 +45,7 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
         telegram_username: username,
         community_id: community.id,
         is_active: true,
+        subscription_status: 'active' // Use the standardized status value
       });
         
       if (!memberResult.success) {
@@ -70,13 +71,13 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
     else if (status === 'left' || status === 'kicked') {
       console.log(`[MEMBER-UPDATE] ❌ User ${userId} removed from chat ${chatId}`);
       
-      // Update member status in database
+      // Update member status in database with standardized values
       const memberResult = await createOrUpdateMember(supabase, {
         telegram_user_id: userId,
         telegram_username: username,
         community_id: community.id,
         is_active: false,
-        subscription_status: "removed"  // Changed from false to "removed"
+        subscription_status: "removed"  // Using the standardized status value
       });
         
       if (!memberResult.success) {

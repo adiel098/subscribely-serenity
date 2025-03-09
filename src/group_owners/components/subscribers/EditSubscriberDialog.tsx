@@ -45,12 +45,16 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
 
       // If subscription is being deactivated or removed, make sure we have proper dates
       const currentDate = new Date().toISOString();
+      
+      // Determine is_active value based on subscription_status
+      const isActive = subscriptionStatus === "active";
+      
       const updateData = {
         telegram_username: username,
         subscription_status: subscriptionStatus,
-        is_active: subscriptionStatus === "active", // Update active status based on subscription status
-        subscription_start_date: subscriptionStatus === "active" ? (startDate || currentDate) : null,
-        subscription_end_date: subscriptionStatus === "active" ? (endDate || null) : currentDate
+        is_active: isActive, // Updated to follow the standardized rule
+        subscription_start_date: isActive ? (startDate || currentDate) : null,
+        subscription_end_date: subscriptionStatus === "expired" ? currentDate : (endDate || null)
       };
 
       const { error: updateError } = await supabase
@@ -100,6 +104,8 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         successMessage = "Subscription cancelled and member removed from channel";
       } else if (subscriptionStatus === "inactive" && subscriber.subscription_status === "active") {
         successMessage = "Subscription deactivated and member removed from channel";
+      } else if (subscriptionStatus === "expired") {
+        successMessage = "Subscription marked as expired";
       }
 
       toast({
@@ -152,6 +158,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
                 <SelectItem value="removed">Removed</SelectItem>
               </SelectContent>
             </Select>

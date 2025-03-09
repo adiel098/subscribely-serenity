@@ -10,8 +10,8 @@ interface RecordPaymentParams {
   paymentMethod: string;
   inviteLink: string | null;
   username?: string;
-  firstName?: string;  // Add first name
-  lastName?: string;   // Add last name
+  firstName?: string;
+  lastName?: string;
 }
 
 /**
@@ -101,8 +101,8 @@ export const usePaymentRecord = () => {
         status: 'successful',
         invite_link: inviteLink,
         telegram_username: username,
-        first_name: firstName || '', // Include first name
-        last_name: lastName || ''     // Include last name
+        first_name: firstName || '', 
+        last_name: lastName || ''
       };
       
       console.log('[usePaymentRecord] Inserting payment record with data:', JSON.stringify(paymentData, null, 2));
@@ -122,6 +122,90 @@ export const usePaymentRecord = () => {
       }
 
       console.log('[usePaymentRecord] Payment recorded successfully:', JSON.stringify(data, null, 2));
+
+      // After successful payment, update the member record or create one if it doesn't exist
+      // First, check if member exists
+      const { data: existingMember, error: memberError } = await supabase
+        .from('telegram_chat_members')
+        .select('id')
+        .eq('telegram_user_id', telegramUserId)
+        .eq('community_id', communityId)
+        .maybeSingle();
+
+      if (memberError) {
+        console.warn('[usePaymentRecord] Error checking for existing member:', memberError);
+      }
+
+      // Prepare start and end dates for subscription
+      const startDate = new Date().toISOString();
+      let endDate = new Date();
+      
+      // Get plan details for duration calculation
+      const { data: planData } = await supabase
+        .from('subscription_plans')
+        .select('interval')
+        .eq('id', planId)
+        .maybeSingle();
+        
+      // Calculate end date based on plan interval
+      if (planData?.interval) {
+        const interval = planData.interval;
+        
+        if (interval === 'monthly') {
+          endDate.setMonth(endDate.getMonth() + 1);
+        } else if (interval === 'yearly') {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+        } else if (interval === 'quarterly') {
+          endDate.setMonth(endDate.getMonth() + 3);
+        } else if (interval === 'half-yearly') {
+          endDate.setMonth(endDate.getMonth() + 6);
+        } else if (interval === 'one_time') {
+          endDate.setFullYear(endDate.getFullYear() + 1); // Default 1 year for one-time
+        }
+      } else {
+        // Default to 30 days if no interval found
+        endDate.setDate(endDate.getDate() + 30);
+      }
+      
+      // Prepare member data with standardized status values
+      const memberData = {
+        telegram_user_id: telegramUserId,
+        telegram_username: username,
+        community_id: communityId,
+        subscription_plan_id: planId,
+        subscription_start_date: startDate,
+        subscription_end_date: endDate.toISOString(),
+        subscription_status: 'active' as const,
+        is_active: true
+      };
+      
+      // Create or update the member record
+      if (existingMember?.id) {
+        console.log('[usePaymentRecord] Updating existing member with ID:', existingMember.id);
+        
+        const { error: updateError } = await supabase
+          .from('telegram_chat_members')
+          .update(memberData)
+          .eq('id', existingMember.id);
+          
+        if (updateError) {
+          console.error('[usePaymentRecord] Error updating member:', updateError);
+        } else {
+          console.log('[usePaymentRecord] Member updated successfully');
+        }
+      } else {
+        console.log('[usePaymentRecord] Creating new member record');
+        
+        const { error: insertError } = await supabase
+          .from('telegram_chat_members')
+          .insert(memberData);
+          
+        if (insertError) {
+          console.error('[usePaymentRecord] Error creating member:', insertError);
+        } else {
+          console.log('[usePaymentRecord] Member created successfully');
+        }
+      }
 
       // Log payment activity
       await logSubscriptionActivity(

@@ -51,13 +51,11 @@ export const CommunitySelector = () => {
     const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
     navigator.clipboard.writeText(miniAppUrl);
     
-    // Using proper variant and styling approach
     toast({
       title: "✨ Link Copied Successfully! ✨",
       description: `Your Mini App link for "${selectedCommunity?.name || 'your community'}" is ready to share! 🚀`,
       className: "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-800 shadow-md",
       duration: 5000,
-      // Removed invalid variant: "success" that was causing the error
     });
   };
 
@@ -76,6 +74,7 @@ export const CommunitySelector = () => {
             setSelectedCommunityId={setSelectedCommunityId}
           />
 
+          {/* The banner now manages its own visibility based on subscription status */}
           <PlatformSubscriptionBanner />
 
           <MiniAppLinkButton onClick={copyMiniAppLink} />

@@ -76,7 +76,7 @@ export async function handleChatMemberUpdate(supabase: ReturnType<typeof createC
         telegram_username: username,
         community_id: community.id,
         is_active: false,
-        subscription_status: false
+        subscription_status: "removed"  // Changed from false to "removed"
       });
         
       if (!memberResult.success) {

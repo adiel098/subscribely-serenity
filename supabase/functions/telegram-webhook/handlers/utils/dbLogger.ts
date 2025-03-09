@@ -52,7 +52,7 @@ export async function createOrUpdateMember(
     telegram_user_id: string;
     telegram_username?: string | null;
     community_id: string;
-    subscription_status?: boolean;
+    subscription_status?: string;
     subscription_plan_id?: string | null;
     subscription_start_date?: string | null;
     subscription_end_date?: string | null;

@@ -104,6 +104,22 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
               console.log(`[ROUTER] 🔗 Successfully invalidated invite links for user ${body.user_id}`);
             }
             
+            // Update the member record to set subscription_status to "removed"
+            const { error: memberUpdateError } = await supabaseClient
+              .from('telegram_chat_members')
+              .update({
+                subscription_status: "removed",
+                is_active: false
+              })
+              .eq('telegram_user_id', body.user_id)
+              .eq('community_id', communityId);
+              
+            if (memberUpdateError) {
+              console.error('[ROUTER] ❌ Error updating member status:', memberUpdateError);
+            } else {
+              console.log(`[ROUTER] ✅ Successfully set subscription_status to "removed" for user ${body.user_id}`);
+            }
+            
             // Log the removal in the activity log
             await supabaseClient
               .from('subscription_activity_logs')

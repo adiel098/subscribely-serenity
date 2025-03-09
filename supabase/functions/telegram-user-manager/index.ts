@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -115,7 +114,7 @@ async function cancelSubscription(subscriptionId) {
     const { data, error } = await supabaseAdmin
       .from("telegram_chat_members")
       .update({
-        subscription_status: false,
+        subscription_status: "removed",
         is_active: false,
       })
       .eq("id", subscriptionId)
@@ -246,7 +245,7 @@ async function createOrUpdateMember(memberData) {
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
           subscription_end_date: endDate ? endDate.toISOString() : null,
-          subscription_status: true,
+          subscription_status: "active",
           is_active: true,
           telegram_username: username
         })
@@ -271,7 +270,7 @@ async function createOrUpdateMember(memberData) {
           subscription_plan_id,
           subscription_start_date: startDate.toISOString(),
           subscription_end_date: endDate ? endDate.toISOString() : null,
-          subscription_status: true,
+          subscription_status: "active",
           is_active: true,
           telegram_username: username
         })

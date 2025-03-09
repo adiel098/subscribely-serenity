@@ -12,7 +12,7 @@ import {
  */
 export async function processMember(
   supabase: ReturnType<typeof createClient>, 
-  member: SubscriptionMember, 
+  memberData: any, 
   botSettings: BotSettings
 ): Promise<{ 
   memberId: string;
@@ -20,6 +20,19 @@ export async function processMember(
   action: string;
   details: string;
 }> {
+  // Normalize member data structure to ensure we have an 'id' field
+  const member: SubscriptionMember = {
+    id: memberData.member_id || memberData.id, // Use member_id if available, fallback to id
+    community_id: memberData.community_id,
+    telegram_user_id: memberData.telegram_user_id,
+    subscription_end_date: memberData.subscription_end_date,
+    is_active: memberData.is_active,
+    subscription_status: memberData.subscription_status,
+    member_id: memberData.member_id // Keep original member_id if present
+  };
+
+  console.log("Normalized member data:", JSON.stringify(member, null, 2));
+
   // Initialize result object
   const result = {
     memberId: member.id,

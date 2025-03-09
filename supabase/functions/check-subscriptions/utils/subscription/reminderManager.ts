@@ -19,12 +19,23 @@ export async function sendReminderNotifications(
   daysUntilExpiration: number,
   result: any
 ): Promise<void> {
-  if (!member || !member.id || !member.telegram_user_id || !member.community_id) {
-    console.error("Invalid member data:", member);
+  // Validate member data
+  if (!member || !member.telegram_user_id || !member.community_id) {
+    console.error("Invalid member data in sendReminderNotifications:", JSON.stringify(member, null, 2));
     result.action = "error";
     result.details = "Invalid member data";
     return;
   }
+
+  const memberId = member.id || member.member_id;
+  if (!memberId) {
+    console.error("Missing member ID in sendReminderNotifications:", JSON.stringify(member, null, 2));
+    result.action = "error";
+    result.details = "Missing member ID";
+    return;
+  }
+
+  console.log(`Processing reminder for member ${memberId} (${member.telegram_user_id}), ${daysUntilExpiration} days until expiration`);
 
   // First check for recent notification of ANY type to prevent spamming
   if (await hasRecentNotification(supabase, member)) {
@@ -45,8 +56,13 @@ export async function sendReminderNotifications(
 
   const { botToken, inlineKeyboard } = telegramConfig;
 
+  // Debug info
+  console.log(`First reminder days: ${botSettings.first_reminder_days}, Second reminder days: ${botSettings.second_reminder_days}, Legacy reminder days: ${botSettings.subscription_reminder_days}`);
+  console.log(`Current days until expiration: ${daysUntilExpiration}`);
+
   // First Reminder
   if (daysUntilExpiration === botSettings.first_reminder_days) {
+    console.log(`Sending first reminder (${daysUntilExpiration} days until expiration)`);
     await sendFirstReminder(
       supabase,
       member,
@@ -59,6 +75,7 @@ export async function sendReminderNotifications(
   }
   // Second Reminder
   else if (daysUntilExpiration === botSettings.second_reminder_days) {
+    console.log(`Sending second reminder (${daysUntilExpiration} days until expiration)`);
     await sendSecondReminder(
       supabase,
       member,
@@ -71,6 +88,7 @@ export async function sendReminderNotifications(
   }
   // Legacy reminder (for backward compatibility)
   else if (daysUntilExpiration === botSettings.subscription_reminder_days) {
+    console.log(`Sending legacy reminder (${daysUntilExpiration} days until expiration)`);
     await sendLegacyReminder(
       supabase,
       member,
@@ -80,6 +98,10 @@ export async function sendReminderNotifications(
       result,
       daysUntilExpiration
     );
+  } else {
+    console.log(`No reminder needed for ${daysUntilExpiration} days until expiration`);
+    result.action = "no_reminder_needed";
+    result.details = `No reminder configured for ${daysUntilExpiration} days until expiration`;
   }
 }
 
@@ -90,8 +112,14 @@ async function hasRecentNotification(
   supabase: ReturnType<typeof createClient>,
   member: SubscriptionMember
 ): Promise<boolean> {
-  if (!member || !member.id) {
-    console.error("Invalid member data in hasRecentNotification:", member);
+  if (!member) {
+    console.error("Invalid member data in hasRecentNotification");
+    return false;
+  }
+  
+  const memberId = member.id || member.member_id;
+  if (!memberId) {
+    console.error("Missing member ID in hasRecentNotification:", JSON.stringify(member, null, 2));
     return false;
   }
 
@@ -99,10 +127,12 @@ async function hasRecentNotification(
   const endOfDay = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
   
   try {
+    console.log(`Checking for recent notifications for member ${memberId} between ${startOfDay} and ${endOfDay}`);
+    
     const { data: recentNotifications, error } = await supabase
       .from("subscription_notifications")
       .select("*")
-      .eq("member_id", member.id)
+      .eq("member_id", memberId)
       .gte("sent_at", startOfDay)
       .lt("sent_at", endOfDay);
     
@@ -111,7 +141,10 @@ async function hasRecentNotification(
       return false;
     }
     
-    return !!(recentNotifications && recentNotifications.length > 0);
+    const hasNotifications = !!(recentNotifications && recentNotifications.length > 0);
+    console.log(`Member ${memberId} has ${hasNotifications ? recentNotifications.length : 'no'} recent notifications`);
+    
+    return hasNotifications;
   } catch (error) {
     console.error("Exception checking recent notifications:", error);
     return false;
@@ -126,6 +159,8 @@ async function getNotificationConfig(
   communityId: string
 ): Promise<{ botToken: string; inlineKeyboard: any } | null> {
   try {
+    console.log(`Fetching notification configuration for community ${communityId}`);
+    
     const [tokenResult, communityResult] = await Promise.all([
       supabase.from("telegram_global_settings").select("bot_token").single(),
       supabase.from("communities").select("id, miniapp_url, name").eq("id", communityId).single()

@@ -1,6 +1,7 @@
 
 export interface SubscriptionMember {
   id: string;
+  member_id?: string; // Added to support the format from get_members_to_check_v2
   community_id: string;
   telegram_user_id: string;
   subscription_end_date: string | null;

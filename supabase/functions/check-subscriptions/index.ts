@@ -34,6 +34,8 @@ serve(async (req) => {
     const logs = [];
     for (const member of membersToCheck || []) {
       try {
+        console.log("Processing member:", JSON.stringify(member, null, 2));
+        
         // Get bot settings for this community
         const { data: botSettings, error: settingsError } = await supabase
           .from("telegram_bot_settings")
@@ -42,7 +44,13 @@ serve(async (req) => {
           .single();
 
         if (settingsError) {
-          console.error("Error getting bot settings:", settingsError);
+          console.error(`Error getting bot settings for community ${member.community_id}:`, settingsError);
+          logs.push({
+            memberId: member.member_id,
+            telegramUserId: member.telegram_user_id,
+            action: "error",
+            details: `Failed to get bot settings: ${settingsError.message}`
+          });
           continue;
         }
 
@@ -55,6 +63,12 @@ serve(async (req) => {
           `Error processing member ${member.telegram_user_id}:`,
           memberProcessError
         );
+        logs.push({
+          memberId: member.member_id || "unknown",
+          telegramUserId: member.telegram_user_id || "unknown",
+          action: "error",
+          details: `Processing error: ${memberProcessError.message}`
+        });
       }
     }
 
@@ -76,6 +90,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         error: error.message,
+        stack: error.stack,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

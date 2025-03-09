@@ -18,14 +18,22 @@ export async function sendFirstReminder(
   daysUntilExpiration: number
 ): Promise<void> {
   try {
+    // Validate member data
     if (!member || !member.telegram_user_id) {
+      console.error("Invalid member data:", JSON.stringify(member, null, 2));
       throw new Error("Invalid member data");
+    }
+
+    const memberId = member.id || member.member_id;
+    if (!memberId) {
+      console.error("Missing member ID:", JSON.stringify(member, null, 2));
+      throw new Error("Missing member ID");
     }
 
     // Format the message
     const message = formatFirstReminderMessage(botSettings);
     
-    console.log(`Sending first reminder to user ${member.telegram_user_id}`);
+    console.log(`Sending first reminder to user ${member.telegram_user_id} with member ID ${memberId}`);
     
     if (inlineKeyboard) {
       console.log("Including Renew Now button with message");

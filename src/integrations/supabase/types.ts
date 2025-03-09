@@ -1079,6 +1079,17 @@ export type Database = {
           subscription_status: boolean
         }[]
       }
+      get_members_to_check_v2: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          member_id: string
+          community_id: string
+          telegram_user_id: string
+          subscription_end_date: string
+          is_active: boolean
+          subscription_status: string
+        }[]
+      }
       handle_telegram_webhook: {
         Args: Record<PropertyKey, never>
         Returns: undefined

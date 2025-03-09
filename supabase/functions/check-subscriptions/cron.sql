@@ -1,5 +1,4 @@
 
-
 -- First, make sure the required extensions are enabled
 create extension if not exists pg_cron;
 create extension if not exists pg_net;

@@ -47,7 +47,7 @@ serve(async (req) => {
 
     // Use RPC to call the PostgreSQL function
     const { data: membersToCheck, error: memberError } = await supabase.rpc(
-      "get_members_to_check_v2" // Using a new function version with fixed comparisons
+      "get_members_to_check_v2" // Using the new function version with proper string comparisons
     );
 
     if (memberError) {

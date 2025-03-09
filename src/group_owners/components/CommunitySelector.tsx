@@ -51,13 +51,13 @@ export const CommunitySelector = () => {
     const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
     navigator.clipboard.writeText(miniAppUrl);
     
-    // Enhanced styled toast notification with engaging emojis and clear message
+    // Using proper variant and styling approach
     toast({
       title: "✨ Link Copied Successfully! ✨",
       description: `Your Mini App link for "${selectedCommunity?.name || 'your community'}" is ready to share! 🚀`,
-      className: "fancy-toast bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900",
+      className: "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-800 shadow-md",
       duration: 5000,
-      variant: "success",
+      // Removed invalid variant: "success" that was causing the error
     });
   };
 

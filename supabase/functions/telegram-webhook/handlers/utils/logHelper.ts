@@ -32,3 +32,37 @@ export async function logUserInteraction(
     return false;
   }
 }
+
+/**
+ * Logs join request events to database with detailed information
+ */
+export async function logJoinRequestEvent(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  userId: string,
+  username: string | undefined,
+  action: 'approved' | 'rejected' | 'received',
+  reason: string,
+  rawData: any
+) {
+  try {
+    console.log(`[LogHelper] Recording join request ${action} for user ${userId} in chat ${chatId}`);
+    
+    await supabase
+      .from('telegram_events')
+      .insert({
+        event_type: `join_request_${action}`,
+        user_id: userId,
+        username: username,
+        chat_id: chatId,
+        message_text: reason,
+        raw_data: rawData
+      });
+      
+    console.log(`[LogHelper] Successfully logged join request ${action} event`);
+    return true;
+  } catch (error) {
+    console.error('[LogHelper] Error logging join request event:', error);
+    return false;
+  }
+}

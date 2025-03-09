@@ -1,7 +1,6 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
-import { kickMember } from '../handlers/kickMemberHandler.ts';
+import { kickMemberService } from '../handlers/services/memberKickService.ts';
 import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
 import { handleMyChatMember } from '../handlers/botStatusHandler.ts';
 import { handleStartCommand } from '../handlers/startCommandHandler.ts';
@@ -71,7 +70,7 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
         }
         
         console.log(`[ROUTER] 👤 Removing user ${body.user_id} from chat ${body.chat_id}`);
-        const success = await kickMember(
+        const success = await kickMemberService(
           supabaseClient,
           body.chat_id,
           body.user_id,

@@ -7,7 +7,7 @@ import { useCommunityContext } from "@/contexts/CommunityContext";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { CommunityDropdown } from "./community-selector/CommunityDropdown";
 import { PlatformSubscriptionBanner } from "./community-selector/PlatformSubscriptionBanner";
@@ -50,9 +50,13 @@ export const CommunitySelector = () => {
 
     const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
     navigator.clipboard.writeText(miniAppUrl);
+    
+    // Enhanced toast notification with emojis and styling
     toast({
-      title: "Link Copied! 🎉",
-      description: "The Mini App link has been copied to your clipboard",
+      title: "✨ Link Copied Successfully! ✨",
+      description: "Your Mini App link is now on your clipboard. Share it with your audience! 🚀",
+      className: "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900",
+      duration: 5000,
     });
   };
 

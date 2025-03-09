@@ -61,7 +61,7 @@ export const usePaymentRecord = () => {
         // Verify the plan exists and log its details
         const { data: planDetails, error: planCheckError } = await supabase
           .from('subscription_plans')
-          .select('id, name, price')
+          .select('id, name, price, interval')
           .eq('id', planId)
           .single();
         
@@ -74,19 +74,6 @@ export const usePaymentRecord = () => {
             planExists: true,
             planDetails,
             planError: planCheckError
-          });
-          
-          // Check for other payments using this plan to confirm it's properly linked
-          const { data: planPayments, error: planPaymentsError } = await supabase
-            .from('subscription_payments')
-            .select('id, created_at, status')
-            .eq('plan_id', planId)
-            .limit(5);
-            
-          console.log(`[usePaymentRecord] Plan association check:`, {
-            associatedPayments: planPayments,
-            paymentCount: planPayments?.length || 0,
-            planPaymentsError
           });
         }
       }
@@ -123,19 +110,6 @@ export const usePaymentRecord = () => {
 
       console.log('[usePaymentRecord] Payment recorded successfully:', JSON.stringify(data, null, 2));
 
-      // After successful payment, update the member record or create one if it doesn't exist
-      // First, check if member exists
-      const { data: existingMember, error: memberError } = await supabase
-        .from('telegram_chat_members')
-        .select('id')
-        .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId)
-        .maybeSingle();
-
-      if (memberError) {
-        console.warn('[usePaymentRecord] Error checking for existing member:', memberError);
-      }
-
       // Prepare start and end dates for subscription
       const startDate = new Date().toISOString();
       let endDate = new Date();
@@ -167,7 +141,7 @@ export const usePaymentRecord = () => {
         endDate.setDate(endDate.getDate() + 30);
       }
       
-      // Prepare member data with standardized status values
+      // Immediately create or update the member record with standardized status values
       const memberData = {
         telegram_user_id: telegramUserId,
         telegram_username: username,
@@ -176,8 +150,23 @@ export const usePaymentRecord = () => {
         subscription_start_date: startDate,
         subscription_end_date: endDate.toISOString(),
         subscription_status: 'active' as const,
-        is_active: true
+        is_active: true,
+        joined_at: new Date().toISOString()
       };
+      
+      console.log('[usePaymentRecord] Creating/updating member record with data:', JSON.stringify(memberData, null, 2));
+      
+      // Check if member already exists
+      const { data: existingMember, error: memberError } = await supabase
+        .from('telegram_chat_members')
+        .select('id')
+        .eq('telegram_user_id', telegramUserId)
+        .eq('community_id', communityId)
+        .maybeSingle();
+
+      if (memberError) {
+        console.warn('[usePaymentRecord] Error checking for existing member:', memberError);
+      }
       
       // Create or update the member record
       if (existingMember?.id) {

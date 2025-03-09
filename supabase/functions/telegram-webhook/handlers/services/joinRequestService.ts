@@ -42,7 +42,8 @@ export class JoinRequestService {
 
     // If member exists, check if subscription is active
     if (memberData) {
-      const isActive = memberData.subscription_status && 
+      // Check if subscription is active based on standardized status value
+      const isActive = memberData.subscription_status === 'active' && 
                       memberData.subscription_end_date && 
                       new Date(memberData.subscription_end_date) > new Date();
       
@@ -152,12 +153,12 @@ export class JoinRequestService {
       subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
     }
     
-    // Create the member record
+    // Create the member record with standardized status values
     return await createOrUpdateMember(this.supabase, {
       telegram_user_id: userId,
       telegram_username: username,
       community_id: communityId,
-      subscription_status: true,
+      subscription_status: 'active',
       subscription_plan_id: paymentData.plan_id,
       subscription_start_date: subscriptionStartDate.toISOString(),
       subscription_end_date: subscriptionEndDate.toISOString(),

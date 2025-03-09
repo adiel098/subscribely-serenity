@@ -80,7 +80,7 @@ export const CommunitySelector = () => {
           <MiniAppLinkButton onClick={copyMiniAppLink} />
         </div>
 
-        <HeaderActions onNewCommunityClick={() => navigate("/platform-select")} />
+        <HeaderActions onNewCommunityClick={() => navigate("/connect/telegram")} />
       </motion.div>
 
       <AlertMessage 

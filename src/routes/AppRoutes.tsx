@@ -23,7 +23,6 @@ import Subscriptions from "@/group_owners/pages/Subscriptions";
 import Messages from "@/group_owners/pages/Messages";
 import Analytics from "@/group_owners/pages/Analytics";
 import BotSettings from "@/group_owners/pages/BotSettings";
-import PlatformSelect from "@/group_owners/pages/PlatformSelect";
 import PlatformPlans from "@/group_owners/pages/PlatformPlans";
 import PlatformPayment from "@/group_owners/pages/PlatformPayment";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
@@ -90,11 +89,6 @@ const AppRoutes = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
-      <Route path="/platform-select" element={
-        <ProtectedRoute>
-          <PlatformSelect />
-        </ProtectedRoute>
-      } />
       <Route path="/platform-plans" element={
         <ProtectedRoute>
           <PlatformPlans />
@@ -105,7 +99,7 @@ const AppRoutes = () => {
           <PlatformPayment />
         </ProtectedRoute>
       } />
-      <Route path="/telegram-connect" element={
+      <Route path="/connect/telegram" element={
         <ProtectedRoute>
           <TelegramConnect />
         </ProtectedRoute>
@@ -118,7 +112,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
 
-      {/* Admin Routes - Fixed the route path here */}
+      {/* Admin Routes */}
       <Route element={<AdminProtectedRoute />}>
         <Route path="/admin" element={<AdminLayout dashboard={<Dashboard />} />} />
         <Route path="/admin/dashboard" element={<AdminLayout dashboard={<Dashboard />} />} />

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Package, Copy, CheckCircle, ArrowRight, Edit, Link } from "lucide-react";
+import { CreditCard, Package, Copy, CheckCircle, ArrowRight, Edit, Link, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -126,24 +126,21 @@ export const CommunityRequirementsBanner = () => {
           </div>
         </motion.div>
       ) : (
-        // Requirements state - show what needs to be configured
+        // Requirements state - show what needs to be configured with new red-themed styling
         <motion.div
           key="requirements"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg px-3 py-2 shadow-sm"
+          className="flex items-center gap-3 bg-white/90 border border-red-300 rounded-lg px-3 py-2 shadow-sm"
         >
-          <div className="text-sm text-amber-800">
-            <span className="font-medium">Setup required 🔔</span>
-            <span className="mx-1">•</span>
-            <span>{!hasPlans && !hasActivePaymentMethods 
-              ? "Add subscription plans & payment methods"
-              : !hasPlans 
-                ? "Add subscription plans" 
-                : "Add payment methods"}
-            </span>
+          <div className="flex-shrink-0 text-red-500">
+            <AlertTriangle className="h-4 w-4" />
+          </div>
+          
+          <div className="text-sm text-red-600 font-medium">
+            <span>Setup required to onboard members</span>
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
@@ -153,10 +150,10 @@ export const CommunityRequirementsBanner = () => {
                   onClick={navigateToSubscriptions} 
                   variant="ghost" 
                   size="sm" 
-                  className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white gap-1 h-7 px-3 shadow-sm"
+                  className="bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white gap-1 h-7 px-3 shadow-sm"
                 >
                   <Package className="h-3.5 w-3.5" />
-                  Subscription Plans
+                  Plans
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </motion.div>
@@ -171,7 +168,7 @@ export const CommunityRequirementsBanner = () => {
                   className="bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white gap-1 h-7 px-3 shadow-sm"
                 >
                   <CreditCard className="h-3.5 w-3.5" />
-                  Payment Methods
+                  Payments
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </motion.div>

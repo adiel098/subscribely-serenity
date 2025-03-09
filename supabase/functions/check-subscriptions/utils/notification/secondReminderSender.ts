@@ -18,6 +18,10 @@ export async function sendSecondReminder(
   daysUntilExpiration: number
 ): Promise<void> {
   try {
+    if (!member || !member.telegram_user_id) {
+      throw new Error("Invalid member data");
+    }
+
     // Format the message
     const message = formatSecondReminderMessage(botSettings);
     
@@ -27,7 +31,19 @@ export async function sendSecondReminder(
       console.log("Including Renew Now button with message");
       console.log("Button data:", JSON.stringify(inlineKeyboard));
     } else {
-      console.log("No Renew Now button available - this should not happen as we now create a default one");
+      console.log("No Renew Now button available - creating default one");
+      
+      // Create a default inline keyboard if none is provided
+      inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "Renew Now! 🔄",
+              url: "https://t.me/membifybot"
+            }
+          ]
+        ]
+      };
     }
     
     // Send the message with the renew button if available
@@ -52,7 +68,7 @@ export async function sendSecondReminder(
     
     console.log(`Second reminder sent to user ${member.telegram_user_id}`);
   } catch (error) {
-    console.error(`Error sending second reminder to user ${member.telegram_user_id}:`, error);
+    console.error(`Error sending second reminder to user ${member?.telegram_user_id || 'unknown'}:`, error);
     result.action = "error";
     result.details = `Error sending second reminder: ${error.message}`;
   }

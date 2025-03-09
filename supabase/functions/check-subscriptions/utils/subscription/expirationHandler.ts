@@ -4,6 +4,8 @@ import { TelegramMessenger } from "../telegramMessenger.ts";
 import { logNotification } from "../databaseLogger.ts";
 import { SubscriptionMember, BotSettings } from "../types.ts";
 
+const DEFAULT_MINI_APP_URL = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
+
 /**
  * Handles expired subscription members
  */
@@ -13,64 +15,122 @@ export async function handleExpiredSubscription(
   botSettings: BotSettings,
   result: any
 ): Promise<void> {
+  if (!member || !member.id || !member.telegram_user_id || !member.community_id) {
+    console.error("Invalid member data:", member);
+    result.action = "error";
+    result.details = "Invalid member data";
+    return;
+  }
+
   result.action = "expiration";
   result.details = "Subscription expired";
 
   // Update member status in database
-  await supabase
-    .from("telegram_chat_members")
-    .update({
-      subscription_status: 'expired',
-    })
-    .eq("id", member.id);
+  try {
+    const { error: updateError } = await supabase
+      .from("telegram_chat_members")
+      .update({
+        subscription_status: 'expired',
+      })
+      .eq("id", member.id);
+      
+    if (updateError) {
+      console.error(`Error updating member status: ${updateError.message}`);
+      result.details += `, failed to update status: ${updateError.message}`;
+    }
+  } catch (error) {
+    console.error(`Error updating member status: ${error.message}`);
+    result.details += `, failed to update status: ${error.message}`;
+  }
 
   // Log the expiration in activity logs
-  await supabase.from("subscription_activity_logs").insert({
-    community_id: member.community_id,
-    telegram_user_id: member.telegram_user_id,
-    activity_type: "subscription_expired",
-    details: "Subscription expired automatically",
-  });
+  try {
+    const { error: logError } = await supabase
+      .from("subscription_activity_logs")
+      .insert({
+        community_id: member.community_id,
+        telegram_user_id: member.telegram_user_id,
+        activity_type: "subscription_expired",
+        details: "Subscription expired automatically",
+      });
+      
+    if (logError) {
+      console.error(`Error logging expiration: ${logError.message}`);
+      result.details += `, failed to log activity: ${logError.message}`;
+    }
+  } catch (error) {
+    console.error(`Error logging expiration: ${error.message}`);
+    result.details += `, failed to log activity: ${error.message}`;
+  }
 
   // Send expiration notification to member
   if (botSettings.expired_subscription_message) {
     try {
       // Get global bot token
-      const { data: settings } = await supabase
+      const { data: settings, error: tokenError } = await supabase
         .from("telegram_global_settings")
         .select("bot_token")
         .single();
 
-      if (!settings?.bot_token) {
-        throw new Error('Bot token not found');
+      if (tokenError || !settings?.bot_token) {
+        throw new Error(tokenError ? tokenError.message : 'Bot token not found');
       }
 
       // Get community data for mini app URL
-      const { data: community } = await supabase
+      const { data: community, error: communityError } = await supabase
         .from("communities")
-        .select("miniapp_url")
+        .select("miniapp_url, name")
         .eq("id", member.community_id)
         .single();
 
-      // Create inline keyboard if mini app URL is available
-      let inlineKeyboard = null;
-      if (community?.miniapp_url) {
-        inlineKeyboard = {
-          inline_keyboard: [
-            [
-              {
-                text: "Renew Now!",
-                web_app: {
-                  url: `${community.miniapp_url}?start=${member.community_id}`
-                }
-              }
-            ]
-          ]
-        };
+      if (communityError) {
+        console.warn(`Warning fetching community: ${communityError.message}`);
       }
+
+      // Use the community miniapp_url or fall back to the default URL
+      let miniAppUrl = community?.miniapp_url;
+      
+      if (!miniAppUrl) {
+        console.warn(`No miniapp_url found for community ${member.community_id}, using default URL`);
+        
+        // Update the community with the default miniapp_url
+        try {
+          const { error: updateError } = await supabase
+            .from("communities")
+            .update({ miniapp_url: DEFAULT_MINI_APP_URL })
+            .eq("id", member.community_id);
+          
+          if (updateError) {
+            console.error("Error updating community miniapp_url:", updateError);
+          } else {
+            console.log(`Updated community ${member.community_id} with default miniapp_url`);
+          }
+        } catch (updateError) {
+          console.error("Error updating community miniapp_url:", updateError);
+        }
+        
+        miniAppUrl = DEFAULT_MINI_APP_URL;
+      }
+
+      // Create inline keyboard with the renewed URL
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "Renew Now! 🔄",
+              web_app: {
+                url: `${miniAppUrl}?start=${member.community_id}`
+              }
+            }
+          ]
+        ]
+      };
 
       const message = botSettings.expired_subscription_message + 
         (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : '');
+
+      console.log(`Sending expiration message to user ${member.telegram_user_id} for community ${community?.name || member.community_id}`);
+      console.log(`Using miniAppUrl: ${miniAppUrl}`);
 
       // Send message directly via Telegram API
       const messageSent = await TelegramMessenger.sendTextMessage(
@@ -82,14 +142,18 @@ export async function handleExpiredSubscription(
 
       if (messageSent) {
         // Log the notification only if message was sent successfully
-        await logNotification(
-          supabase,
-          member.community_id,
-          member.id,
-          "expiration"
-        );
-        
-        console.log(`✅ Expiration message sent successfully to user ${member.telegram_user_id}`);
+        try {
+          await logNotification(
+            supabase,
+            member.community_id,
+            member.id,
+            "expiration"
+          );
+          
+          console.log(`✅ Expiration message sent successfully to user ${member.telegram_user_id}`);
+        } catch (error) {
+          console.error(`❌ Error logging notification: ${error.message}`);
+        }
       } else {
         console.error(`❌ Failed to send expiration message to user ${member.telegram_user_id}`);
         result.details += ", failed to send notification";
@@ -115,15 +179,34 @@ async function removeMemberFromChat(
   result: any
 ): Promise<void> {
   try {
+    if (!member || !member.telegram_user_id || !member.community_id) {
+      console.error("Invalid member data for removal:", member);
+      result.details += ", failed to remove from chat: invalid member data";
+      return;
+    }
+
     // Get bot token to make direct API call
-    const { data: settings } = await supabase
+    const { data: settings, error: tokenError } = await supabase
       .from("telegram_global_settings")
       .select("bot_token")
       .single();
 
-    if (!settings?.bot_token) {
-      throw new Error('Bot token not found');
+    if (tokenError || !settings?.bot_token) {
+      throw new Error(tokenError ? tokenError.message : 'Bot token not found');
     }
+
+    // Get Telegram chat ID for community
+    const { data: community, error: communityError } = await supabase
+      .from("communities")
+      .select("telegram_chat_id, name")
+      .eq("id", member.community_id)
+      .single();
+      
+    if (communityError || !community?.telegram_chat_id) {
+      throw new Error(communityError ? communityError.message : 'Telegram chat ID not found');
+    }
+
+    console.log(`Removing user ${member.telegram_user_id} from chat ${community.telegram_chat_id} (${community.name || member.community_id})`);
 
     // Make direct API call to kick chat member
     const response = await fetch(
@@ -132,12 +215,18 @@ async function removeMemberFromChat(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chat_id: member.community_id,
+          chat_id: community.telegram_chat_id,
           user_id: member.telegram_user_id,
           revoke_messages: false,
         }),
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`HTTP error ${response.status}: ${errorText}`);
+      throw new Error(`HTTP error ${response.status}: ${errorText}`);
+    }
 
     const kickResult = await response.json();
     if (!kickResult.ok) {
@@ -145,13 +234,36 @@ async function removeMemberFromChat(
       throw new Error(kickResult.description || "Failed to remove from chat");
     }
 
-    await supabase.from("telegram_chat_members").update({
-      is_active: false,
-    }).eq("id", member.id);
+    // Update member status in database
+    const { error: updateError } = await supabase
+      .from("telegram_chat_members")
+      .update({
+        is_active: false,
+      })
+      .eq("id", member.id);
+      
+    if (updateError) {
+      console.error("Error updating member status after removal:", updateError);
+      result.details += ", removed from chat but failed to update status";
+    } else {
+      result.details += ", removed from chat";
+    }
 
-    result.details += ", removed from chat";
+    // Log the removal in activity log
+    const { error: logError } = await supabase
+      .from("subscription_activity_logs")
+      .insert({
+        community_id: member.community_id,
+        telegram_user_id: member.telegram_user_id,
+        activity_type: "member_removed",
+        details: "Member removed automatically due to expired subscription"
+      });
+      
+    if (logError) {
+      console.error("Error logging member removal:", logError);
+    }
   } catch (error) {
     console.error("Error removing member from chat:", error);
-    result.details += ", failed to remove from chat";
+    result.details += ", failed to remove from chat: " + error.message;
   }
 }

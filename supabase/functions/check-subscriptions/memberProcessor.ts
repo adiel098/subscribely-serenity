@@ -68,20 +68,48 @@ export async function processMember(
   const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
   
-  const { data: recentNotifications, error: notificationError } = await supabase
-    .from('subscription_notifications')
-    .select('notification_type')
-    .eq('member_id', member.id)
-    .gte('sent_at', todayStart.toISOString())
-    .lte('sent_at', todayEnd.toISOString());
+  // Instead of checking for any notification today, specifically check for first_reminder or second_reminder
+  // This allows both types to be sent on different days
+  const specificNotificationType = daysUntilExpiration === botSettings.first_reminder_days 
+    ? "first_reminder" 
+    : daysUntilExpiration === botSettings.second_reminder_days 
+    ? "second_reminder" 
+    : null;
   
-  if (notificationError) {
-    console.error(`Error checking recent notifications: ${notificationError.message}`);
-  } else if (recentNotifications && recentNotifications.length > 0) {
-    result.action = "skip";
-    result.details = `Already sent notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
-    console.log(`Member ${member.telegram_user_id} already received notification today - skipping`);
-    return result;
+  if (specificNotificationType) {
+    const { data: specificRecentNotifications, error: notificationError } = await supabase
+      .from('subscription_notifications')
+      .select('notification_type')
+      .eq('member_id', member.id)
+      .eq('notification_type', specificNotificationType)
+      .gte('sent_at', todayStart.toISOString())
+      .lte('sent_at', todayEnd.toISOString());
+    
+    if (notificationError) {
+      console.error(`Error checking specific notifications: ${notificationError.message}`);
+    } else if (specificRecentNotifications && specificRecentNotifications.length > 0) {
+      result.action = "skip";
+      result.details = `Already sent ${specificNotificationType} notification today`;
+      console.log(`Member ${member.telegram_user_id} already received ${specificNotificationType} notification today - skipping`);
+      return result;
+    }
+  } else {
+    // For any other operation (like expiration), check for any notification today
+    const { data: recentNotifications, error: notificationError } = await supabase
+      .from('subscription_notifications')
+      .select('notification_type')
+      .eq('member_id', member.id)
+      .gte('sent_at', todayStart.toISOString())
+      .lte('sent_at', todayEnd.toISOString());
+    
+    if (notificationError) {
+      console.error(`Error checking recent notifications: ${notificationError.message}`);
+    } else if (recentNotifications && recentNotifications.length > 0) {
+      result.action = "skip";
+      result.details = `Already sent notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
+      console.log(`Member ${member.telegram_user_id} already received notification today - skipping`);
+      return result;
+    }
   }
 
   // Log for debugging

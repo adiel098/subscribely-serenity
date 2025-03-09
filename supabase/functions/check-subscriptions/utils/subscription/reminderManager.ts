@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember, BotSettings } from "../types.ts";
 import { 
@@ -37,13 +36,9 @@ export async function sendReminderNotifications(
 
   console.log(`Processing reminder for member ${memberId} (${member.telegram_user_id}), ${daysUntilExpiration} days until expiration`);
 
-  // First check for recent notification of ANY type to prevent spamming
-  if (await hasRecentNotification(supabase, member)) {
-    console.log(`User ${member.telegram_user_id} already received a notification today, skipping all reminders`);
-    result.action = "skip";
-    result.details = "User already received a notification today";
-    return;
-  }
+  // Check if this specific reminder type has been sent recently
+  // We'll check this in the memberProcessor.ts now to allow different reminder types
+  // to be sent when appropriate
 
   // Get bot token and community data once for all reminder types
   const telegramConfig = await getNotificationConfig(supabase, member.community_id);

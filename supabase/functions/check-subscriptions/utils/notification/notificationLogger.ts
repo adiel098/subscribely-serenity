@@ -17,22 +17,14 @@ export async function logSuccessfulNotification(
       throw new Error("Missing member ID");
     }
 
-    // Convert notification type to match allowed values in the database
-    // Map the reminder types to valid constraint values
-    let validNotificationType = notificationType;
-    if (["first_reminder", "second_reminder"].includes(notificationType)) {
-      validNotificationType = "reminder";
-    }
-
-    // Log the notification to the subscription_notifications table
-    // Using 'success' instead of 'sent' for status as it appears 'sent' is not in the allowed values
+    // Log the notification with the exact notification type (no conversion)
     const { error } = await supabase
       .from("subscription_notifications")
       .insert({
         member_id: memberId,
         community_id: member.community_id,
-        notification_type: validNotificationType,
-        status: "success" // Changed from 'sent' to 'success'
+        notification_type: notificationType, // Keep original notification type
+        status: "success"
       });
 
     if (error) {

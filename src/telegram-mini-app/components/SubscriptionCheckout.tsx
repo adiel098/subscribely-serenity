@@ -19,7 +19,7 @@ export const SubscriptionCheckout: React.FC<SubscriptionCheckoutProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const telegramUser = useTelegramUser();
+  const { user: telegramUser } = useTelegramUser();
 
   useEffect(() => {
     console.log("SubscriptionCheckout - Selected plan:", selectedPlan);
@@ -53,8 +53,8 @@ export const SubscriptionCheckout: React.FC<SubscriptionCheckoutProps> = ({
         showSuccess={showSuccess}
         telegramUserId={telegramUser?.id}
         telegramUsername={telegramUser?.username}
-        firstName={telegramUser?.firstName}
-        lastName={telegramUser?.lastName}
+        firstName={telegramUser?.first_name}
+        lastName={telegramUser?.last_name}
       />
     </div>
   );

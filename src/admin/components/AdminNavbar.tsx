@@ -25,6 +25,15 @@ export function AdminNavbar() {
     return user.email.charAt(0).toUpperCase();
   };
   
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      console.log("User logged out from AdminNavbar");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+  
   return (
     <header className="fixed top-0 left-0 right-0 h-16 border-b bg-white/90 backdrop-blur-md z-50 flex items-center justify-between px-6 shadow-sm">
       <div className="flex items-center gap-4">
@@ -83,7 +92,7 @@ export function AdminNavbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="flex items-center text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50" 
-              onClick={signOut}
+              onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>

@@ -154,8 +154,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [navigate, location.pathname]);
 
+  // This is the key change - properly implementing the signOut function to use the handleSignOut utility
   const signOut = async () => {
-    // The correct way to call handleSignOut with only the required arguments
     await handleSignOut({
       setLoading,
       setUser,

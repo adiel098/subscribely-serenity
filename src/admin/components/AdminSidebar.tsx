@@ -60,6 +60,15 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      console.log("User logged out from AdminSidebar");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <Sidebar className="fixed left-4 top-20 h-[calc(100vh-6rem)] w-[250px] rounded-xl border border-indigo-100 shadow-lg bg-white/90 backdrop-blur-md">
       <SidebarContent className="p-0">
@@ -103,7 +112,7 @@ export function AdminSidebar() {
           <Button 
             variant="destructive" 
             className="w-full bg-red-500 hover:bg-red-600 text-white gap-2 transition-colors duration-200 shadow-sm"
-            onClick={signOut}
+            onClick={handleSignOut}
           >
             <LogOut className="h-5 w-5 mr-2" />
             Sign Out

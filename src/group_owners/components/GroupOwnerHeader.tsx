@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +32,15 @@ export function GroupOwnerHeader() {
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
+  };
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      console.log("User logged out from GroupOwnerHeader");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
   
   return (
@@ -114,7 +124,7 @@ export function GroupOwnerHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="flex items-center text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 py-2" 
-              onClick={signOut}
+              onClick={handleSignOut}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sign Out</span>

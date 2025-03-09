@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -142,6 +141,36 @@ serve(async (req) => {
           associatedPayments: planPayments,
           paymentCount: planPayments ? planPayments.length : 0,
           planPaymentsError: planPaymentsError ? planPaymentsError.message : null
+        };
+        break;
+
+      case "check_table_constraints":
+        if (!table_name) {
+          throw new Error("table_name is required");
+        }
+        
+        // Get the table constraints
+        const { data: constraints, error: constraintsError } = await supabase
+          .rpc('get_table_constraints', { table_name });
+          
+        // Also get the table structure
+        const { data: tableInfo, error: tableError } = await supabase
+          .rpc('get_table_info', { table_name });
+          
+        // Get a sample of the data
+        const { data: sampleData, error: sampleError } = await supabase
+          .from(table_name)
+          .select('*')
+          .limit(3);
+          
+        result = {
+          tableExists: !tableError,
+          columns: tableInfo,
+          constraints: constraints,
+          tableError: tableError ? tableError.message : null,
+          constraintsError: constraintsError ? constraintsError.message : null,
+          sampleData,
+          sampleError: sampleError ? sampleError.message : null
         };
         break;
 

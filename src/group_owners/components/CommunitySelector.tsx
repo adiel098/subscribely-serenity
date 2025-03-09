@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { CommunityDropdown } from "./community-selector/CommunityDropdown";
 import { PlatformSubscriptionBanner } from "./community-selector/PlatformSubscriptionBanner";
@@ -18,7 +18,6 @@ export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
   const navigate = useNavigate();
   const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
-  const { toast } = useToast();
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 

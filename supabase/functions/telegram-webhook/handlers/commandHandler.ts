@@ -40,7 +40,7 @@ export async function handleStartCommand(
         reply_markup: {
           inline_keyboard: [[
             {
-              text: "Join Community 🚀",
+              text: "הצטרף לקהילה 🚀",
               web_app: { url: `${miniAppUrl}?start=${communityId}` }
             }
           ]]

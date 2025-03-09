@@ -23,11 +23,11 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({ isSubmitting }) => {
         {isSubmitting ? (
           <div className="flex items-center">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
+            מעבד...
           </div>
         ) : (
           <div className="flex items-center">
-            Continue ✨
+            המשך ✨
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
         )}

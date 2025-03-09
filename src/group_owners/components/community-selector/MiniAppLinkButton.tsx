@@ -19,7 +19,7 @@ export const MiniAppLinkButton = ({ onClick }: MiniAppLinkButtonProps) => {
         className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8 font-medium"
       >
         <Sparkles className="h-3.5 w-3.5" />
-        Copy Mini App Link
+        העתק קישור למיני אפ
       </Button>
     </motion.div>
   );

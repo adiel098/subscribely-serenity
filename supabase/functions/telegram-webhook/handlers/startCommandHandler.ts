@@ -94,7 +94,7 @@ export async function handleStartCommand(
         inline_keyboard: [
           [
             {
-              text: "Subscribe Now! 💳",
+              text: "הצטרף לקהילה 🚀",
               web_app: {
                 url: `${miniAppUrl}?start=${community.id}`
               }

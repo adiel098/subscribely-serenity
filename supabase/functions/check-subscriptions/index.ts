@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
@@ -434,46 +435,53 @@ async function sendTelegramMessage(
       return false;
     }
 
-    let result;
+    let response;
 
-    // Send message with or without image
-    if (imageData) {
-      // Directly use telegramClient functions to ensure proper delivery
-      result = await supabase.functions.invoke("telegram-webhook", {
-        body: {
-          path: "/direct-message",
-          action: "send_photo",
-          bot_token: globalSettings.bot_token,
-          chat_id: userId,
-          photo: imageData,
-          caption: formattedMessage,
-          button_text: buttonText,
-          button_url: community.miniapp_url,
-        },
-      });
-    } else {
-      result = await supabase.functions.invoke("telegram-webhook", {
-        body: {
-          path: "/direct-message",
-          action: "send_message",
-          bot_token: globalSettings.bot_token,
-          chat_id: userId,
-          text: formattedMessage,
-          button_text: buttonText,
-          button_url: community.miniapp_url,
-        },
-      });
-    }
-
-    // Check if the message was sent successfully
-    if (result.error) {
-      console.error("Error response from telegram-webhook function:", result.error);
-      return false;
-    }
-    
-    // Check if the result data indicates success
-    if (!result.data?.success) {
-      console.error("Telegram webhook returned failure:", result.data);
+    try {
+      // Send message with or without image
+      if (imageData) {
+        // Directly use the direct-message endpoint
+        response = await supabase.functions.invoke("telegram-webhook", {
+          body: {
+            path: "/direct-message",
+            action: "send_photo",
+            bot_token: globalSettings.bot_token,
+            chat_id: userId,
+            photo: imageData,
+            caption: formattedMessage,
+            button_text: buttonText,
+            button_url: community.miniapp_url,
+          },
+        });
+      } else {
+        response = await supabase.functions.invoke("telegram-webhook", {
+          body: {
+            path: "/direct-message",
+            action: "send_message",
+            bot_token: globalSettings.bot_token,
+            chat_id: userId,
+            text: formattedMessage,
+            button_text: buttonText,
+            button_url: community.miniapp_url,
+          },
+        });
+      }
+      
+      console.log("Telegram webhook response:", JSON.stringify(response));
+      
+      // Check if the function call was successful
+      if (response.error) {
+        console.error("Error response from telegram-webhook function:", response.error);
+        return false;
+      }
+      
+      // Check if the Telegram API call was successful
+      if (!response.data?.success) {
+        console.error("Telegram webhook returned failure:", response.data);
+        return false;
+      }
+    } catch (error) {
+      console.error("Exception when calling telegram-webhook function:", error);
       return false;
     }
 

@@ -51,12 +51,13 @@ export const CommunitySelector = () => {
     const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
     navigator.clipboard.writeText(miniAppUrl);
     
-    // Enhanced toast notification with emojis and styling
+    // Enhanced styled toast notification with engaging emojis and clear message
     toast({
       title: "✨ Link Copied Successfully! ✨",
-      description: "Your Mini App link is now on your clipboard. Share it with your audience! 🚀",
-      className: "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900",
+      description: `Your Mini App link for "${selectedCommunity?.name || 'your community'}" is ready to share! 🚀`,
+      className: "fancy-toast bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-900",
       duration: 5000,
+      variant: "success",
     });
   };
 

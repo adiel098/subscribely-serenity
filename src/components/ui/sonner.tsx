@@ -25,6 +25,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           info: "!bg-gradient-to-r from-blue-50 to-indigo-50 !border-blue-200 !text-blue-800",
           warning: "!bg-gradient-to-r from-amber-50 to-yellow-50 !border-amber-200 !text-amber-800",
           error: "!bg-gradient-to-r from-red-50 to-rose-50 !border-red-200 !text-red-800",
+          // Fancy custom toast
+          fancy: "!border-2 !shadow-xl !rounded-lg !bg-gradient-to-br !from-indigo-100 !to-purple-100 !border-indigo-300 !p-4",
         },
       }}
       {...props}

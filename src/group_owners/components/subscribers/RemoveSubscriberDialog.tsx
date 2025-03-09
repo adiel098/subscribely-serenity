@@ -9,7 +9,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 import { Loader2, UserX } from "lucide-react";
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,7 +91,7 @@ export const useSubscriberManagement = (communityId: string) => {
         // Continue despite error, as the primary goal is to remove the user
       }
 
-      // 3. Update the database record to mark as "removed" instead of just inactive
+      // 3. Update the database record to mark as inactive
       console.log('Updating subscription status in database...');
       
       const { data: updateData, error: updateError } = await supabase
@@ -100,7 +99,6 @@ export const useSubscriberManagement = (communityId: string) => {
         .update({
           subscription_status: false,
           is_active: false,
-          status: 'removed', // New status to indicate user was explicitly removed
           subscription_end_date: new Date().toISOString()
         })
         .eq('id', subscriber.id)

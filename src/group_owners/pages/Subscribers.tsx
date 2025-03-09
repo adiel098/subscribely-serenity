@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -8,11 +9,16 @@ import { SubscriberFilters } from "../components/subscribers/SubscriberFilters";
 import { useSubscriberManagement } from "../hooks/useSubscriberManagement";
 import { useSubscriberFilters } from "../hooks/useSubscriberFilters";
 import { Loader2 } from "lucide-react";
+import { RemoveSubscriberDialog } from "../components/subscribers/RemoveSubscriberDialog";
+import { Subscriber } from "../hooks/useSubscribers";
 
 const Subscribers = () => {
   const { selectedCommunityId } = useCommunityContext();
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [subscriberToRemove, setSubscriberToRemove] = useState<Subscriber | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -34,6 +40,22 @@ const Subscribers = () => {
     filteredSubscribers,
     uniquePlans
   } = useSubscriberFilters(subscribers);
+
+  const onRemoveClick = (subscriber: Subscriber) => {
+    setSubscriberToRemove(subscriber);
+    setRemoveDialogOpen(true);
+  };
+
+  const onConfirmRemove = async (subscriber: Subscriber) => {
+    setIsRemoving(true);
+    try {
+      await handleRemoveSubscriber(subscriber);
+    } finally {
+      setIsRemoving(false);
+      setRemoveDialogOpen(false);
+      setSubscriberToRemove(null);
+    }
+  };
 
   const handleExport = () => {
     const exportData = filteredSubscribers.map(sub => ({
@@ -107,7 +129,7 @@ const Subscribers = () => {
           setSelectedSubscriber(subscriber);
           setEditDialogOpen(true);
         }}
-        onRemove={handleRemoveSubscriber}
+        onRemove={onRemoveClick}
       />
 
       {selectedSubscriber && (
@@ -118,6 +140,14 @@ const Subscribers = () => {
           onSuccess={refetch}
         />
       )}
+
+      <RemoveSubscriberDialog
+        subscriber={subscriberToRemove}
+        open={removeDialogOpen}
+        onOpenChange={setRemoveDialogOpen}
+        onConfirm={onConfirmRemove}
+        isProcessing={isRemoving}
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
@@ -154,23 +155,23 @@ serve(async (req) => {
           .rpc('get_table_constraints', { table_name });
           
         // Also get the table structure
-        const { data: tableInfo, error: tableError } = await supabase
+        const { data: tableInfo2, error: tableError2 } = await supabase
           .rpc('get_table_info', { table_name });
           
         // Get a sample of the data
-        const { data: sampleData, error: sampleError } = await supabase
+        const { data: sampleData2, error: sampleError2 } = await supabase
           .from(table_name)
           .select('*')
           .limit(3);
           
         result = {
-          tableExists: !tableError,
-          columns: tableInfo,
+          tableExists: !tableError2,
+          columns: tableInfo2,
           constraints: constraints,
-          tableError: tableError ? tableError.message : null,
+          tableError: tableError2 ? tableError2.message : null,
           constraintsError: constraintsError ? constraintsError.message : null,
-          sampleData,
-          sampleError: sampleError ? sampleError.message : null
+          sampleData: sampleData2,
+          sampleError: sampleError2 ? sampleError2.message : null
         };
         break;
 

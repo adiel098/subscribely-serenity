@@ -26,8 +26,9 @@ export async function sendLegacyReminder(
     
     if (inlineKeyboard) {
       console.log("Including Renew Now button with message");
+      console.log("Button data:", JSON.stringify(inlineKeyboard));
     } else {
-      console.log("No Renew Now button available (missing miniapp_url)");
+      console.log("No Renew Now button available - this should not happen as we now create a default one");
     }
     
     // Send the message with the renew button if available

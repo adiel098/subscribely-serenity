@@ -1,3 +1,4 @@
+
 /**
  * Telegram messaging utility for sending messages with or without images
  */
@@ -13,6 +14,14 @@ export async function sendTelegramMessage(
   inlineKeyboard: any = null
 ): Promise<boolean> {
   try {
+    // Debug the parameters
+    console.log(`sendTelegramMessage parameters:
+      - chatId: ${chatId}
+      - message length: ${message.length}
+      - photoUrl: ${photoUrl ? 'Provided' : 'Not provided'}
+      - inlineKeyboard: ${inlineKeyboard ? JSON.stringify(inlineKeyboard) : 'Not provided'}
+    `);
+
     // If photo URL is provided, send as photo with caption
     if (photoUrl) {
       console.log(`Sending photo message to ${chatId}`);
@@ -50,7 +59,12 @@ export async function sendTextMessage(
     // Add inline keyboard if provided
     if (inlineKeyboard) {
       payload.reply_markup = inlineKeyboard;
+      console.log("Adding inline keyboard to text message:", JSON.stringify(inlineKeyboard));
+    } else {
+      console.log("No inline keyboard provided for text message");
     }
+
+    console.log("Text message payload:", JSON.stringify(payload));
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -135,6 +149,9 @@ export async function sendPhotoMessage(
       // Add inline keyboard if provided
       if (inlineKeyboard) {
         formData.append('reply_markup', JSON.stringify(inlineKeyboard));
+        console.log("Adding inline keyboard to photo message:", JSON.stringify(inlineKeyboard));
+      } else {
+        console.log("No inline keyboard provided for photo message");
       }
       
       // Send the request with FormData
@@ -170,7 +187,12 @@ export async function sendPhotoMessage(
       // Add inline keyboard if provided
       if (inlineKeyboard) {
         payload.reply_markup = inlineKeyboard;
+        console.log("Adding inline keyboard to photo message:", JSON.stringify(inlineKeyboard));
+      } else {
+        console.log("No inline keyboard provided for photo message");
       }
+      
+      console.log("Photo message payload:", JSON.stringify(payload));
       
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/sendPhoto`,

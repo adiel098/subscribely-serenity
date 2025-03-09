@@ -111,27 +111,29 @@ async function getNotificationConfig(
     }
 
     const botToken = tokenResult.data.bot_token;
-    const miniAppUrl = communityResult.data?.miniapp_url;
-
-    // Create inline keyboard if mini app URL is available
-    let inlineKeyboard = null;
-    if (miniAppUrl) {
-      console.log(`Creating renew button with miniAppUrl: ${miniAppUrl}`);
-      inlineKeyboard = {
-        inline_keyboard: [
-          [
-            {
-              text: "Renew Now!",
-              web_app: {
-                url: `${miniAppUrl}?start=${communityId}`
-              }
-            }
-          ]
-        ]
-      };
-    } else {
-      console.warn(`No miniapp_url found for community ${communityId}, button will not be shown`);
+    
+    // Use the community miniapp_url or fall back to the hardcoded URL
+    let miniAppUrl = communityResult.data?.miniapp_url;
+    if (!miniAppUrl) {
+      console.warn(`No miniapp_url found for community ${communityId}, using hardcoded URL`);
+      miniAppUrl = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
     }
+    
+    console.log(`Creating renew button with miniAppUrl: ${miniAppUrl}`);
+    
+    // Always create inline keyboard with the available URL
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "Renew Now!",
+            web_app: {
+              url: `${miniAppUrl}?start=${communityId}`
+            }
+          }
+        ]
+      ]
+    };
 
     return { botToken, inlineKeyboard };
   } catch (error) {

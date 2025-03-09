@@ -29,13 +29,13 @@ export const usePaymentProcessing = ({
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   
   const { recordPayment } = usePaymentRecord();
-  const telegramUser = useTelegramUser();
+  const { user: telegramUser } = useTelegramUser();
   
   // Get user information either from props or from the Telegram Web App
   const userId = telegramUserId || telegramUser?.id;
   const username = telegramUsername || telegramUser?.username;
-  const firstName = telegramUser?.firstName;
-  const lastName = telegramUser?.lastName;
+  const firstName = telegramUser?.first_name;
+  const lastName = telegramUser?.last_name;
   
   const processPayment = async (paymentMethod: string) => {
     console.log('[usePaymentProcessing] Processing payment...');

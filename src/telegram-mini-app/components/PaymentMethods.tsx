@@ -21,8 +21,8 @@ interface PaymentMethodsProps {
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
-  firstName?: string;  // Add first name prop
-  lastName?: string;   // Add last name prop
+  firstName?: string;  
+  lastName?: string;   
 }
 
 export const PaymentMethods = ({

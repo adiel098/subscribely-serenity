@@ -30,8 +30,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
   const { toast } = useToast();
   
   // Telegram user data
-  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
-    useTelegramUser(communityId, telegramUserId);
+  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = useTelegramUser(communityId, telegramUserId);
   
   // Community data
   const { community, loading: communityLoading, error: communityError } = 

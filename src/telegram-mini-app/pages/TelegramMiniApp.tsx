@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
-import AppContent from "@/telegram-mini-app/components/AppContent"; // Fixed import statement
+import AppContent from "@/telegram-mini-app/components/AppContent"; 
 import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 
 const TelegramMiniApp = () => {
@@ -101,7 +101,7 @@ const TelegramMiniApp = () => {
   console.log('📌 Effective startParam:', effectiveStartParam);
 
   // Fetch data using hooks
-  const { loading: communityLoading, community } = useCommunityData(effectiveStartParam);
+  const { community, loading: communityLoading } = useCommunityData(effectiveStartParam || "");
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
     useTelegramUser(effectiveStartParam || "", telegramUserId);
 

@@ -4,12 +4,14 @@
 interface TelegramWebApp {
   initDataUnsafe: {
     user?: {
-      id?: number;
+      id: number;
       first_name?: string;
       last_name?: string;
       username?: string;
-      photo_url?: string; // Added photo_url property to match the actual API
+      photo_url?: string;
     };
+    query_id?: string;
+    start_param?: string;
   };
   initData?: string;
   BackButton?: {

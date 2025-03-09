@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from './services/loggingService.ts';
 
 /**
  * Log Telegram webhook events with improved error handling
@@ -8,22 +9,24 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
  * @param data Event data to log
  */
 export async function logTelegramEvent(supabase: ReturnType<typeof createClient>, eventType: string, data: any) {
+  const logger = createLogger(supabase, 'EVENT-LOGGER');
+  
   try {
     if (!supabase) {
-      console.error('[EVENT-LOGGER] ❌ Missing Supabase client');
+      await logger.error('Missing Supabase client');
       return;
     }
 
     if (!eventType) {
-      console.error('[EVENT-LOGGER] ❌ Missing event type');
+      await logger.error('Missing event type');
       return;
     }
 
-    console.log(`[EVENT-LOGGER] 📝 Logging event type: ${eventType}`);
+    await logger.info(`Logging event type: ${eventType}`);
     
     // Handle null or undefined data
     if (data === null || data === undefined) {
-      console.warn('[EVENT-LOGGER] ⚠️ Event data is null or undefined, logging empty object instead');
+      await logger.warn('Event data is null or undefined, logging empty object instead');
       data = {}; // Use empty object instead of null
     }
     
@@ -44,7 +47,7 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
         // Add timestamp to the log
         processedData._logged_at = new Date().toISOString();
       } catch (jsonError) {
-        console.error('[EVENT-LOGGER] ❌ Error processing JSON data:', jsonError);
+        await logger.error('Error processing JSON data:', jsonError);
         // If JSON processing fails, use a simple object with error info
         processedData = { 
           original_data_error: 'Could not process original data',
@@ -68,21 +71,15 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
       if (error) {
         // Check if it's an RLS error
         if (error.code === '42501' || error.message?.includes('row-level security')) {
-          console.warn('[EVENT-LOGGER] ⚠️ RLS policy prevented logging event. This is expected in some contexts.');
+          await logger.warn('RLS policy prevented logging event. This is expected in some contexts.');
         } else {
-          console.error('[EVENT-LOGGER] ❌ Error logging event:', error);
+          await logger.error('Error logging event:', error);
         }
       } else {
-        console.log('[EVENT-LOGGER] ✅ Event logged successfully');
+        await logger.success('Event logged successfully');
       }
     } catch (dbError) {
-      console.error('[EVENT-LOGGER] ❌ Database error in logTelegramEvent:', dbError);
-      // Try to log the error itself without failing if RLS prevents it
-      try {
-        console.error('[EVENT-LOGGER] 📋 Error details:', dbError.message);
-      } catch (secondaryError) {
-        console.error('[EVENT-LOGGER] ❌ Failed to log error details:', secondaryError);
-      }
+      await logger.error('Database error in logTelegramEvent:', dbError);
     }
   } catch (error) {
     console.error('[EVENT-LOGGER] ❌ Error in logTelegramEvent:', error);
@@ -98,23 +95,25 @@ export async function logUserAction(
   action: string,
   details: any
 ) {
+  const logger = createLogger(supabase, 'USER-ACTION');
+  
   try {
     if (!supabase) {
-      console.error('[EVENT-LOGGER] ❌ Missing Supabase client');
+      await logger.error('Missing Supabase client');
       return;
     }
 
     if (!telegramUserId) {
-      console.error('[EVENT-LOGGER] ❌ Missing telegramUserId');
+      await logger.error('Missing telegramUserId');
       return;
     }
 
     if (!action) {
-      console.error('[EVENT-LOGGER] ❌ Missing action');
+      await logger.error('Missing action');
       return;
     }
 
-    console.log(`[EVENT-LOGGER] 📊 Logging user action: ${action} for user ${telegramUserId}`);
+    await logger.info(`Logging user action: ${action} for user ${telegramUserId}`);
     
     // Ensure details is not null or undefined
     const safeDetails = details || {};
@@ -134,17 +133,17 @@ export async function logUserAction(
       if (error) {
         // Check if it's an RLS error
         if (error.code === '42501' || error.message?.includes('row-level security')) {
-          console.warn('[EVENT-LOGGER] ⚠️ RLS policy prevented logging user action. This is expected in some contexts.');
+          await logger.warn('RLS policy prevented logging user action. This is expected in some contexts.');
         } else {
-          console.error('[EVENT-LOGGER] ❌ Error logging user action:', error);
+          await logger.error('Error logging user action:', error);
         }
       } else {
-        console.log('[EVENT-LOGGER] ✅ User action logged successfully');
+        await logger.success('User action logged successfully');
       }
     } catch (error) {
-      console.error('[EVENT-LOGGER] ❌ Error logging to activity logs:', error);
+      await logger.error('Error logging to activity logs:', error);
     }
   } catch (error) {
-    console.error('[EVENT-LOGGER] ❌ Error in logUserAction:', error);
+    await logger.error('Error in logUserAction:', error);
   }
 }

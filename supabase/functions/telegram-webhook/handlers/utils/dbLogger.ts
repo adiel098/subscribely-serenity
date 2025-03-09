@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from '../../services/loggingService.ts';
 
 /**
  * Create or update a member record in the database
@@ -8,8 +9,10 @@ export async function createOrUpdateMember(
   supabase: ReturnType<typeof createClient>, 
   memberData: any
 ): Promise<any> {
+  const logger = createLogger(supabase, 'DB-LOGGER');
+  
   try {
-    console.log('[DB-LOGGER] 📝 Creating or updating member record:', memberData);
+    await logger.info('Creating or updating member record:', memberData);
     
     // Check if the member already exists
     const { data: existingMember, error: lookupError } = await supabase
@@ -20,7 +23,7 @@ export async function createOrUpdateMember(
       .maybeSingle();
     
     if (lookupError) {
-      console.error('[DB-LOGGER] ❌ Error looking up existing member:', lookupError);
+      await logger.error('Error looking up existing member:', lookupError);
       throw lookupError;
     }
     
@@ -28,7 +31,7 @@ export async function createOrUpdateMember(
     
     if (existingMember) {
       // Member exists, update record
-      console.log('[DB-LOGGER] 🔄 Updating existing member record');
+      await logger.info('Updating existing member record');
       
       // Get only the fields we want to update
       const updateData = { ...memberData };
@@ -42,21 +45,21 @@ export async function createOrUpdateMember(
         .eq('community_id', memberData.community_id);
     } else {
       // Member doesn't exist, create new record
-      console.log('[DB-LOGGER] ➕ Creating new member record');
+      await logger.info('Creating new member record');
       result = await supabase
         .from('telegram_chat_members')
         .insert(memberData);
     }
     
     if (result.error) {
-      console.error('[DB-LOGGER] ❌ Error creating/updating member:', result.error);
+      await logger.error('Error creating/updating member:', result.error);
       throw result.error;
     }
     
-    console.log('[DB-LOGGER] ✅ Member record created/updated successfully');
+    await logger.success('Member record created/updated successfully');
     return { success: true, data: result.data };
   } catch (error) {
-    console.error('[DB-LOGGER] ❌ Exception in createOrUpdateMember:', error);
+    await logger.error('Exception in createOrUpdateMember:', error);
     return { success: false, error };
   }
 }
@@ -71,8 +74,10 @@ export async function logMembershipEvent(
   eventType: string,
   details: any
 ): Promise<void> {
+  const logger = createLogger(supabase, 'DB-LOGGER');
+  
   try {
-    console.log(`[DB-LOGGER] 📝 Logging membership event: ${eventType} for user ${telegramUserId}`);
+    await logger.info(`Logging membership event: ${eventType} for user ${telegramUserId}`);
     
     const { error } = await supabase
       .from('telegram_membership_logs')
@@ -84,11 +89,11 @@ export async function logMembershipEvent(
       });
     
     if (error) {
-      console.error('[DB-LOGGER] ❌ Error logging membership event:', error);
+      await logger.error('Error logging membership event:', error);
     } else {
-      console.log('[DB-LOGGER] ✅ Membership event logged successfully');
+      await logger.success('Membership event logged successfully');
     }
   } catch (error) {
-    console.error('[DB-LOGGER] ❌ Error in logMembershipEvent:', error);
+    await logger.error('Error in logMembershipEvent:', error);
   }
 }

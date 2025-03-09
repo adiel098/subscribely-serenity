@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from '../../services/loggingService.ts';
 
 interface StartCommandDataResult {
   success: boolean;
@@ -15,8 +16,10 @@ export async function fetchStartCommandData(
   supabase: ReturnType<typeof createClient>,
   communityId: string
 ): Promise<StartCommandDataResult> {
+  const logger = createLogger(supabase, 'DATA-SOURCES');
+  
   try {
-    console.log(`[DATA-SOURCES] 🔍 Fetching data for community ID: ${communityId}`);
+    await logger.info(`Fetching data for community ID: ${communityId}`);
     
     // Fetch community data first
     const communityResult = await supabase
@@ -27,7 +30,7 @@ export async function fetchStartCommandData(
     
     // Handle errors in fetching community
     if (communityResult.error) {
-      console.error('[DATA-SOURCES] ❌ Error fetching community:', communityResult.error);
+      await logger.error('Error fetching community:', communityResult.error);
       return {
         success: false,
         error: `Community not found: ${communityResult.error.message}`
@@ -44,7 +47,7 @@ export async function fetchStartCommandData(
     // If bot settings don't exist, we'll use a default settings object but won't try to save it
     // This avoids RLS issues when creating new records
     if (botSettingsResult.error || !botSettingsResult.data) {
-      console.log('[DATA-SOURCES] ⚠️ Bot settings not found, using default settings');
+      await logger.warn('Bot settings not found, using default settings');
       
       // Create default bot settings object (but don't insert to database)
       const defaultBotSettings = {
@@ -57,7 +60,7 @@ export async function fetchStartCommandData(
       };
       
       // Log that we're using default settings
-      console.log('[DATA-SOURCES] ℹ️ Using default bot settings without database insertion');
+      await logger.info('Using default bot settings without database insertion');
       
       // Return success with community data and default settings
       return {
@@ -67,7 +70,7 @@ export async function fetchStartCommandData(
       };
     }
     
-    console.log('[DATA-SOURCES] ✅ Successfully fetched community and bot settings');
+    await logger.success('Successfully fetched community and bot settings');
     
     return {
       success: true,
@@ -75,7 +78,7 @@ export async function fetchStartCommandData(
       botSettings: botSettingsResult.data
     };
   } catch (error) {
-    console.error('[DATA-SOURCES] ❌ Exception in fetchStartCommandData:', error);
+    await logger.error('Exception in fetchStartCommandData:', error);
     return {
       success: false,
       error: `Error fetching data: ${error.message || 'Unknown error'}`
@@ -90,8 +93,10 @@ export async function fetchCommunityWithPlans(
   supabase: ReturnType<typeof createClient>,
   communityId: string
 ): Promise<any> {
+  const logger = createLogger(supabase, 'DATA-SOURCES');
+  
   try {
-    console.log(`[DATA-SOURCES] 🔍 Fetching community with plans for ID: ${communityId}`);
+    await logger.info(`Fetching community with plans for ID: ${communityId}`);
     
     const { data, error } = await supabase
       .from('communities')
@@ -103,14 +108,14 @@ export async function fetchCommunityWithPlans(
       .single();
     
     if (error) {
-      console.error('[DATA-SOURCES] ❌ Error fetching community with plans:', error);
+      await logger.error('Error fetching community with plans:', error);
       throw error;
     }
     
-    console.log('[DATA-SOURCES] ✅ Successfully fetched community with plans');
+    await logger.success('Successfully fetched community with plans');
     return data;
   } catch (error) {
-    console.error('[DATA-SOURCES] ❌ Exception in fetchCommunityWithPlans:', error);
+    await logger.error('Exception in fetchCommunityWithPlans:', error);
     throw error;
   }
 }

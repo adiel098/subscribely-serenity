@@ -36,19 +36,8 @@ export const PlanCard = ({ plan, onEdit, onDelete }: Props) => {
     }
   };
 
-  const getBgColor = () => {
-    if (!plan.is_active) return "bg-gray-50";
-    
-    switch(plan.name.toLowerCase()) {
-      case 'basic': return "bg-gradient-to-br from-white to-blue-50";
-      case 'professional': return "bg-gradient-to-br from-white to-indigo-50";
-      case 'enterprise': return "bg-gradient-to-br from-white to-purple-50";
-      default: return "bg-gradient-to-br from-white to-gray-50";
-    }
-  };
-
   return (
-    <Card className={`overflow-hidden border-2 transition-all duration-200 hover:border-indigo-200 hover:shadow-md group ${getBgColor()}`}>
+    <Card className="overflow-hidden border-2 transition-all duration-200 hover:border-indigo-200 hover:shadow-md group bg-gradient-to-br from-white to-indigo-50">
       <div className="p-6 relative">
         <div className="absolute top-2 right-2 flex gap-2 transition-all duration-200">
           <TooltipProvider>

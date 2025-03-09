@@ -1,9 +1,11 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from './handlers/verificationHandler.ts';
 import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
 import { handleChatMemberUpdate } from './handlers/chatMemberHandler.ts';
+import { handleChatJoinRequest } from './handlers/joinRequestHandler.ts';
 import { kickMember } from './handlers/kickMemberHandler.ts';
 import { corsHeaders } from './cors.ts';
 
@@ -83,6 +85,12 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+    }
+
+    // Handle chat join requests
+    if (body.chat_join_request) {
+      console.log("[WEBHOOK] 🔄 Handling chat join request:", JSON.stringify(body.chat_join_request, null, 2));
+      return await handleChatJoinRequest(supabaseClient, body);
     }
 
     // Handle member removal

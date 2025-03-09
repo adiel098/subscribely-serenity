@@ -119,14 +119,14 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
-      // Check for existing connection
+      // Check for existing connection - Using explicit foreign key reference
       const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .select(`
           verified_at,
           chat_id,
           community_id,
-          communities:communities (
+          communities!telegram_bot_settings_community_id_fkey (
             name,
             telegram_chat_id,
             owner_id

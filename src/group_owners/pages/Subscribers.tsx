@@ -50,6 +50,17 @@ const Subscribers = () => {
     setIsRemoving(true);
     try {
       await handleRemoveSubscriber(subscriber);
+      toast({
+        title: "Success",
+        description: "Subscriber removed successfully"
+      });
+    } catch (error) {
+      console.error("Error removing subscriber:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove subscriber",
+        variant: "destructive"
+      });
     } finally {
       setIsRemoving(false);
       setRemoveDialogOpen(false);

@@ -1,5 +1,13 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
+import { Router } from "https://deno.land/x/oak@v11.1.0/router.ts";
+import { Application, Context } from "https://deno.land/x/oak@v11.1.0/mod.ts";
+import { corsHeaders } from "./cors.ts";
+import { setupWebhookConfig } from "./config/webhookConfig.ts";
+import { sendTelegramMessage, sendTelegramPhotoMessage } from "./telegramClient.ts";
 
-// Add this new route to handle direct messages (don't remove existing routes)
+const router = new Router();
+
 router.post("/direct-message", async (req) => {
   try {
     const { action, bot_token, chat_id, text, photo, caption, button_text, button_url } = await req.json();
@@ -73,5 +81,4 @@ router.post("/direct-message", async (req) => {
   }
 });
 
-// Make sure to import these from telegramClient.ts at the top of the file
-// import { sendTelegramMessage, sendTelegramPhotoMessage } from "./telegramClient.ts";
+// ... keep existing code

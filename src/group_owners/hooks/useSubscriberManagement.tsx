@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,10 +47,25 @@ export const useSubscriberManagement = (communityId: string) => {
       // First, attempt to remove the user from the Telegram channel
       console.log('Attempting to remove user from Telegram channel...');
       
+      // Important fix: Ensure we're sending the correct chat_id format
+      // The community_id is the UUID in our database, but Telegram needs the actual chat_id
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('telegram_chat_id')
+        .eq('id', subscriber.community_id)
+        .single();
+        
+      if (communityError || !community?.telegram_chat_id) {
+        console.error('Error getting telegram_chat_id:', communityError);
+        throw new Error('Could not retrieve Telegram chat ID');
+      }
+      
+      console.log(`Using telegram_chat_id: ${community.telegram_chat_id} instead of community_id: ${subscriber.community_id}`);
+      
       const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
         body: { 
           path: '/remove-member',
-          chat_id: subscriber.community_id,
+          chat_id: community.telegram_chat_id, // Use the actual Telegram chat ID
           user_id: subscriber.telegram_user_id
         }
       });
@@ -61,7 +77,7 @@ export const useSubscriberManagement = (communityId: string) => {
 
       console.log('Successfully removed user from Telegram channel');
 
-      // Then update the database record - now we keep the subscription_plan_id
+      // Then update the database record
       console.log('Updating subscription status in database...');
       
       const { data: updateData, error: updateError } = await supabase
@@ -70,7 +86,6 @@ export const useSubscriberManagement = (communityId: string) => {
           subscription_status: false,
           is_active: false,
           subscription_end_date: new Date().toISOString()
-          // We no longer reset subscription_plan_id to null
         })
         .eq('id', subscriber.id)
         .select();

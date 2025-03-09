@@ -43,14 +43,14 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         subscription_end_date: endDate
       });
 
-      // אם המנוי מופעל מחדש, נוודא שיש תאריך התחלה
+      // If subscription is being deactivated, make sure we have proper dates
       const currentDate = new Date().toISOString();
       const updateData = {
         telegram_username: username,
         subscription_status: subscriptionStatus,
-        is_active: subscriptionStatus, // עדכון הסטטוס הפעיל בהתאם לסטטוס המנוי
+        is_active: subscriptionStatus, // Update active status based on subscription status
         subscription_start_date: subscriptionStatus ? (startDate || currentDate) : null,
-        subscription_end_date: subscriptionStatus ? (endDate || null) : null
+        subscription_end_date: subscriptionStatus ? (endDate || null) : currentDate
       };
 
       const { error: updateError } = await supabase
@@ -63,14 +63,28 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         throw updateError;
       }
 
-      // אם המנוי בוטל, מסירים את המשתמש מהערוץ
+      // If subscription is cancelled, we need to remove the user from the Telegram channel
       if (!subscriptionStatus && subscriber.subscription_status) {
         console.log('Subscription cancelled, removing member from channel...');
+        
+        // Get the actual Telegram chat ID from the community
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('telegram_chat_id')
+          .eq('id', subscriber.community_id)
+          .single();
+          
+        if (communityError || !community?.telegram_chat_id) {
+          console.error('Error getting telegram_chat_id:', communityError);
+          throw new Error('Could not retrieve Telegram chat ID');
+        }
+        
+        console.log(`Using telegram_chat_id: ${community.telegram_chat_id}`);
         
         const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
           body: { 
             path: '/remove-member',
-            chat_id: subscriber.community_id,
+            chat_id: community.telegram_chat_id, // Use the actual Telegram chat ID
             user_id: subscriber.telegram_user_id 
           }
         });
@@ -171,4 +185,3 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
     </Dialog>
   );
 };
-

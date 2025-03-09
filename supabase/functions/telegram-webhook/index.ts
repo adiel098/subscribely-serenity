@@ -89,6 +89,18 @@ serve(async (req) => {
     if (body.path === '/remove-member') {
       console.log('[WEBHOOK] 🔄 Handling member removal request:', JSON.stringify(body, null, 2));
       try {
+        // Validate that we have the required parameters
+        if (!body.chat_id || !body.user_id) {
+          console.error('[WEBHOOK] ❌ Missing required parameters for member removal:', body);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Missing required parameters: chat_id and user_id are required' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+        
         console.log(`[WEBHOOK] 👤 Removing user ${body.user_id} from chat ${body.chat_id}`);
         const success = await kickMember(
           supabaseClient,
@@ -103,7 +115,13 @@ serve(async (req) => {
         });
       } catch (error) {
         console.error('[WEBHOOK] ❌ Error removing member:', error);
-        throw error;
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: error.message || 'An unknown error occurred' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        });
       }
     }
 

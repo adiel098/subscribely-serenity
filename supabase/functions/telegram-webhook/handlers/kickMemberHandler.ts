@@ -9,14 +9,26 @@ export async function kickMember(
 ) {
   try {
     console.log('[Kick] Attempting to kick user:', { chatId, userId });
+    
+    // Validate inputs
+    if (!chatId || !userId || !botToken) {
+      console.error('[Kick] Missing required parameters:', { 
+        hasChatId: !!chatId, 
+        hasUserId: !!userId, 
+        hasBotToken: !!botToken 
+      });
+      return false;
+    }
 
-    // קודם מסירים את המשתמש מהקבוצה
-    const kickResponse = await fetch(`https://api.telegram.org/bot${botToken}/kickChatMember`, {
+    // First try to kick the member using banChatMember with a short ban time
+    // This is the recommended approach for kicking members
+    const kickResponse = await fetch(`https://api.telegram.org/bot${botToken}/banChatMember`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        user_id: userId
+        user_id: userId,
+        until_date: Math.floor(Date.now() / 1000) + 40 // 40 seconds ban (minimum allowed by Telegram)
       })
     });
 
@@ -24,11 +36,31 @@ export async function kickMember(
     console.log('[Kick] Kick result:', kickResult);
 
     if (!kickResult.ok) {
-      console.error('[Kick] Failed to kick member:', kickResult.description);
-      return false;
+      // If banChatMember failed, try the deprecated kickChatMember method as fallback
+      console.warn('[Kick] banChatMember failed, trying kickChatMember as fallback');
+      
+      const fallbackKickResponse = await fetch(`https://api.telegram.org/bot${botToken}/kickChatMember`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId
+        })
+      });
+      
+      const fallbackResult = await fallbackKickResponse.json();
+      console.log('[Kick] Fallback kick result:', fallbackResult);
+      
+      if (!fallbackResult.ok) {
+        console.error('[Kick] Both kick methods failed:', fallbackResult.description);
+        return false;
+      }
     }
 
-    // מיד אחרי זה מסירים את ה-ban כדי שהמשתמש יוכל להצטרף שוב בעתיד
+    // After a short delay, unban the user to allow them to rejoin in the future
+    // Wait 2 seconds before unbanning
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     const unbanResponse = await fetch(`https://api.telegram.org/bot${botToken}/unbanChatMember`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,22 +74,33 @@ export async function kickMember(
     const unbanResult = await unbanResponse.json();
     console.log('[Kick] Unban result:', unbanResult);
 
-    // עדכון הסטטוס במסד הנתונים
+    // Update the database status
     const { error: dbError } = await supabase
       .from('telegram_chat_members')
       .update({
         is_active: false,
-        subscription_status: false
+        subscription_status: false,
+        subscription_end_date: new Date().toISOString()
       })
       .eq('telegram_user_id', userId)
       .eq('community_id', chatId);
 
     if (dbError) {
       console.error('[Kick] Error updating database:', dbError);
-      return false;
+      // Don't return false here, we successfully kicked the user
     }
 
-    return kickResult.ok;
+    // Log the action
+    await supabase
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: userId,
+        community_id: chatId,
+        activity_type: 'member_kicked',
+        details: 'Member removed from channel due to subscription cancellation'
+      });
+
+    return true;
   } catch (error) {
     console.error('[Kick] Error:', error);
     return false;

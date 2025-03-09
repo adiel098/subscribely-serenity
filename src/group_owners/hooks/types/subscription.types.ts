@@ -21,3 +21,22 @@ export interface CreateSubscriptionPlanData {
   features?: string[];
 }
 
+export interface PlatformSubscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: 'active' | 'canceled' | 'expired';
+  created_at: string;
+  expires_at: string | null;
+  subscription_data?: Record<string, any>;
+}
+
+export interface PaymentMethod {
+  id: string;
+  provider: 'stripe' | 'paypal' | 'crypto' | 'telegram';
+  is_active: boolean;
+  config: Record<string, any>;
+  community_id: string;
+  created_at: string;
+  updated_at: string | null;
+}

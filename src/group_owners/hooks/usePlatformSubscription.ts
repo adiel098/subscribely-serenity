@@ -1,55 +1,44 @@
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 export const usePlatformSubscription = () => {
-  const [hasPlatformPlan, setHasPlatformPlan] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const checkPlatformSubscription = async () => {
-      try {
-        setIsLoading(true);
-        
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) {
-          console.log('No authenticated user found');
-          setHasPlatformPlan(false);
-          return;
-        }
-        
-        console.log('Checking platform subscription for user:', session.session.user.id);
-        
-        const { data, error } = await supabase
-          .from('platform_subscriptions')
-          .select('*')
-          .eq('owner_id', session.session.user.id)
-          .eq('status', 'active')
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error fetching subscription:', error);
-          setHasPlatformPlan(false);
-          return;
-        }
-        
-        if (data) {
-          console.log('Active platform subscription found', data);
-          setHasPlatformPlan(true);
-        } else {
-          console.log('No active platform subscription found');
-          setHasPlatformPlan(false);
-        }
-      } catch (err) {
-        console.error('Error checking platform subscription:', err);
-        setHasPlatformPlan(false);
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['platform-subscription', user?.id],
+    queryFn: async () => {
+      if (!user?.id) {
+        return { hasPlatformPlan: false };
       }
-    };
-    
-    checkPlatformSubscription();
-  }, []);
+      
+      // Query platform_subscriptions to check if user has an active subscription
+      const { data, error } = await supabase
+        .from('platform_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking platform subscription:', error);
+        throw error;
+      }
+      
+      return { 
+        hasPlatformPlan: !!data,
+        subscription: data || null 
+      };
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  return { hasPlatformPlan, isLoading };
+  return {
+    hasPlatformPlan: data?.hasPlatformPlan || false,
+    subscription: data?.subscription || null,
+    isLoading,
+    error
+  };
 };

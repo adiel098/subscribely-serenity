@@ -4,8 +4,6 @@ import { Bell, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
@@ -14,6 +12,7 @@ import { PlatformSubscriptionBanner } from "./community-selector/PlatformSubscri
 import { MiniAppLinkButton } from "./community-selector/MiniAppLinkButton";
 import { HeaderActions } from "./community-selector/HeaderActions";
 import { AlertMessage } from "./community-selector/AlertMessage";
+import { CommunityRequirementsBanner } from "./community-selector/CommunityRequirementsBanner";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -22,42 +21,6 @@ export const CommunitySelector = () => {
   const { toast } = useToast();
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-
-  const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
-  const { plans } = useSubscriptionPlans(selectedCommunityId || "");
-
-  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
-  const hasPlan = plans?.length > 0;
-
-  const copyMiniAppLink = () => {
-    if (!selectedCommunityId) {
-      setAlertMessage("Please select a community first to copy the link 🎯");
-      setShowAlert(true);
-      return;
-    }
-
-    if (!plans?.length) {
-      setAlertMessage("You haven't set up any subscription plans yet. Add at least one plan to share the link! 📦");
-      setShowAlert(true);
-      return;
-    }
-
-    if (!paymentMethods?.some(pm => pm.is_active)) {
-      setAlertMessage("You haven't set up any active payment methods. Enable at least one payment method to share the link! 💳");
-      setShowAlert(true);
-      return;
-    }
-
-    const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
-    navigator.clipboard.writeText(miniAppUrl);
-    
-    toast({
-      title: "✨ Link Copied Successfully! ✨",
-      description: `Your Mini App link for "${selectedCommunity?.name || 'your community'}" is ready to share! 🚀`,
-      className: "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 text-indigo-800 shadow-md",
-      duration: 5000,
-    });
-  };
 
   return (
     <>
@@ -74,10 +37,11 @@ export const CommunitySelector = () => {
             setSelectedCommunityId={setSelectedCommunityId}
           />
 
-          {/* The banner now manages its own visibility based on subscription status */}
+          {/* The platform subscription banner manages its own visibility */}
           <PlatformSubscriptionBanner />
-
-          <MiniAppLinkButton onClick={copyMiniAppLink} />
+          
+          {/* New community requirements banner that replaces the MiniAppLinkButton */}
+          <CommunityRequirementsBanner />
         </div>
 
         <HeaderActions onNewCommunityClick={() => navigate("/connect/telegram")} />

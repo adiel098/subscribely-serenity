@@ -27,6 +27,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   // Enhanced logging for debugging
   useEffect(() => {
+    console.log('[PaymentSection] Selected payment method:', selectedPaymentMethod);
     console.log('[PaymentSection] Community invite link:', communityInviteLink);
     console.log('[PaymentSection] Selected plan:', selectedPlan);
     if (selectedPlan) {
@@ -35,7 +36,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);
     console.log('[PaymentSection] Telegram username:', telegramUsername);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername]);
+  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, selectedPaymentMethod]);
   
   if (!selectedPlan) return null;
   

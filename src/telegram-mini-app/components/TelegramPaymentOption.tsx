@@ -98,6 +98,10 @@ export const TelegramPaymentOption = ({
                 src={getLogoSrc()} 
                 alt={`${title} logo`} 
                 className="max-h-full max-w-full object-contain"
+                onError={(e) => {
+                  console.error(`Failed to load image for ${method}:`, e);
+                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=';
+                }}
               />
             </div>
             <h3 className="font-medium text-gray-900 text-sm mt-2">{title}</h3>

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
 import { motion } from "framer-motion";
@@ -21,6 +21,11 @@ export const PaymentOptions = ({
   price,
   onPaymentSuccess
 }: PaymentOptionsProps) => {
+  // Log for debugging
+  useEffect(() => {
+    console.log("PaymentOptions render with selectedMethod:", selectedPaymentMethod);
+  }, [selectedPaymentMethod]);
+
   const container = {
     hidden: { opacity: 0 },
     show: {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Select,
@@ -20,7 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreateCommunityForm } from "./CreateCommunityForm";
 import { MiniAppLinkButton } from "./MiniAppLinkButton";
 
 interface CommunitySelectorProps {
@@ -59,10 +59,17 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
     
     try {
       await navigator.clipboard.writeText(miniAppLink);
-      toast.success("Link copied to clipboard");
+      toast({
+        title: "Link copied",
+        description: "Link has been copied to clipboard"
+      });
     } catch (error) {
       console.error("Failed to copy link:", error);
-      toast.error("Failed to copy link");
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy link",
+        variant: "destructive"
+      });
     }
   };
 
@@ -94,7 +101,10 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
                 Create a new community to manage subscriptions and members.
               </DialogDescription>
             </DialogHeader>
-            <CreateCommunityForm onCreate={handleCommunityCreated} />
+            {/* We'll replace the form with a simple message */}
+            <div className="py-4">
+              <p>Please use the "Create Community" button in the main interface to create a new community.</p>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

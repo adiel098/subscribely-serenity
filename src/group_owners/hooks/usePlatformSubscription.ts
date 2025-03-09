@@ -13,21 +13,26 @@ export const usePlatformSubscription = () => {
         return { hasPlatformPlan: false };
       }
       
+      console.log('Checking platform subscription for user:', user.id);
+      
       // Query platform_subscriptions to check if user has an active subscription
       const { data, error } = await supabase
         .from('platform_subscriptions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('owner_id', user.id)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error checking platform subscription:', error);
         throw error;
       }
       
+      const hasPlatformPlan = !!data;
+      console.log('Platform subscription check result:', { hasPlatformPlan, subscription: data });
+      
       return { 
-        hasPlatformPlan: !!data,
+        hasPlatformPlan,
         subscription: data || null 
       };
     },

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Package, Copy, CheckCircle, ArrowRight } from "lucide-react";
+import { CreditCard, Package, Copy, CheckCircle, ArrowRight, Edit, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -32,6 +32,10 @@ export const CommunityRequirementsBanner = () => {
 
   const navigateToSubscriptions = () => {
     navigate("/subscriptions");
+  };
+  
+  const navigateToSettings = () => {
+    navigate("/bot-settings");
   };
 
   // Copy mini app link functionality
@@ -84,28 +88,42 @@ export const CommunityRequirementsBanner = () => {
             <span className="text-sm text-emerald-800">Your community is ready! 🎉</span>
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={copyMiniAppLink}
-            className={`flex items-center gap-1.5 ml-2 text-sm px-3 py-1 rounded-md transition-colors ${
-              copySuccess 
-                ? "bg-emerald-200 text-emerald-800" 
-                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-            }`}
-          >
-            {copySuccess ? (
-              <>
-                <CheckCircle className="h-3.5 w-3.5" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                <span>Copy Mini App Link</span>
-              </>
-            )}
-          </motion.button>
+          <div className="flex items-center gap-2 ml-2 bg-white/70 rounded-md px-2 py-1 border border-emerald-100">
+            <Link className="h-3.5 w-3.5 text-emerald-600" />
+            <span className="text-xs text-emerald-700 font-mono truncate max-w-[150px]">
+              t.me/membifybot?start={selectedCommunityId?.substring(0, 8)}...
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-1 ml-1">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={copyMiniAppLink}
+              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors ${
+                copySuccess 
+                  ? "bg-emerald-200 text-emerald-800" 
+                  : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              }`}
+              title="Copy link"
+            >
+              {copySuccess ? (
+                <CheckCircle className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={navigateToSettings}
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              title="Edit settings"
+            >
+              <Edit className="h-3 w-3" />
+            </motion.button>
+          </div>
         </motion.div>
       ) : (
         // Requirements state - show what needs to be configured

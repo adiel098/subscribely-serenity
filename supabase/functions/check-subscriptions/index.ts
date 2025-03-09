@@ -13,7 +13,7 @@ interface SubscriptionMember {
   telegram_user_id: string;
   subscription_end_date: string | null;
   is_active: boolean;
-  subscription_status: string; // Changed from boolean to string
+  subscription_status: string; // Using string type for subscription_status
 }
 
 interface BotSettings {
@@ -45,9 +45,9 @@ serve(async (req) => {
 
     console.log("Starting subscription check process...");
 
-    // Get members to check from our database function
+    // Use RPC to call the PostgreSQL function
     const { data: membersToCheck, error: memberError } = await supabase.rpc(
-      "get_members_to_check"
+      "get_members_to_check_v2" // Using a new function version with fixed comparisons
     );
 
     if (memberError) {
@@ -145,7 +145,6 @@ async function processMember(supabase: any, member: SubscriptionMember, botSetti
   console.log(`Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration`);
 
   // Check if subscription has expired
-  // Changed from boolean comparison to string comparison
   if (daysUntilExpiration <= 0 && member.subscription_status === 'active') {
     // Subscription has expired
     await handleExpiredSubscription(supabase, member, botSettings, result);
@@ -153,7 +152,6 @@ async function processMember(supabase: any, member: SubscriptionMember, botSetti
   }
 
   // Send reminders if subscription is active and expiration is coming soon
-  // Changed from boolean comparison to string comparison
   if (member.subscription_status === 'active') {
     await sendReminderNotifications(supabase, member, botSettings, daysUntilExpiration, result);
   }
@@ -170,11 +168,11 @@ async function handleExpiredSubscription(
   result.action = "expiration";
   result.details = "Subscription expired";
 
-  // Update member status in database - changed from boolean to string
+  // Update member status in database
   await supabase
     .from("telegram_chat_members")
     .update({
-      subscription_status: 'expired', // Changed from false to 'expired'
+      subscription_status: 'expired', // Using the string value
     })
     .eq("id", member.id);
 

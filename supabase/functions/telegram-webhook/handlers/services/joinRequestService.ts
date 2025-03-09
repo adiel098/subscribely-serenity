@@ -1,237 +1,296 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logJoinRequestEvent } from '../utils/logHelper.ts';
-import { createOrUpdateMember } from '../utils/dbLogger.ts';
-import { updateCommunityMemberCount } from '../utils/communityCountUtils.ts';
 import { TelegramApiClient } from '../utils/telegramApiClient.ts';
 
-/**
- * Service for handling join requests
- */
 export class JoinRequestService {
   private supabase: ReturnType<typeof createClient>;
   private telegramApi: TelegramApiClient;
-
+  
   constructor(supabase: ReturnType<typeof createClient>, botToken: string) {
     this.supabase = supabase;
     this.telegramApi = new TelegramApiClient(botToken);
   }
-
+  
   /**
-   * Checks if a user has an active subscription for the given community
-   * @param userId The Telegram user ID
-   * @param username The Telegram username
-   * @param communityId The community ID
-   * @returns Whether the subscription is active and the member data if found
+   * Check if a user has an active subscription for a community
    */
-  async checkSubscription(userId: string, username: string | undefined, communityId: string) {
-    console.log(`[JOIN-SERVICE] 🔍 Looking for existing member record with telegram_user_id: ${userId} and community_id: ${communityId}`);
+  async checkSubscription(userId: string, username: string | undefined, communityId: string): Promise<{
+    hasActiveSub: boolean;
+    memberData: any | null;
+  }> {
+    console.log(`[JOIN-REQUEST-SERVICE] 🔍 Checking subscriptions for user ${userId} in community ${communityId}`);
     
-    const { data: memberData, error: memberError } = await this.supabase
-      .from('telegram_chat_members')
-      .select('id, subscription_status, subscription_end_date')
-      .eq('community_id', communityId)
-      .eq('telegram_user_id', userId)
-      .maybeSingle();
-
-    console.log(`[JOIN-SERVICE] Member query result:`, {
-      memberFound: !!memberData,
-      memberData,
-      memberError
-    });
-
-    // If member exists, check if subscription is active
-    if (memberData) {
-      // Check if subscription is active based on standardized status value
-      const isActive = memberData.subscription_status === 'active' && 
-                      memberData.subscription_end_date && 
-                      new Date(memberData.subscription_end_date) > new Date();
+    try {
+      // Try to find an existing member record
+      const { data: memberData, error: memberError } = await this.supabase
+        .from('telegram_chat_members')
+        .select('*')
+        .eq('telegram_user_id', userId)
+        .eq('community_id', communityId)
+        .maybeSingle();
+        
+      if (memberError) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error checking member subscription:', memberError);
+        throw memberError;
+      }
       
-      console.log(`[JOIN-SERVICE] 🔍 Checking subscription status:`, {
-        status: memberData.subscription_status,
-        endDate: memberData.subscription_end_date,
-        isActive
-      });
+      if (!memberData) {
+        console.log('[JOIN-REQUEST-SERVICE] 🔍 No existing member record found');
+        return { hasActiveSub: false, memberData: null };
+      }
       
-      return { 
-        hasActiveSub: isActive, 
-        memberData 
-      };
+      console.log('[JOIN-REQUEST-SERVICE] ✅ Found member record:', memberData);
+      
+      const isActiveSubscription = memberData.subscription_status === 'active' && memberData.is_active === true;
+      const hasValidEndDate = memberData.subscription_end_date && new Date(memberData.subscription_end_date) > new Date();
+      
+      // Check if user has an active subscription that hasn't expired
+      if (isActiveSubscription && hasValidEndDate) {
+        console.log('[JOIN-REQUEST-SERVICE] ✅ User has an active subscription that is not expired');
+        return { hasActiveSub: true, memberData };
+      }
+      
+      console.log('[JOIN-REQUEST-SERVICE] ❌ User does not have an active subscription or it has expired');
+      return { hasActiveSub: false, memberData };
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error in checkSubscription:', error);
+      return { hasActiveSub: false, memberData: null };
     }
-
-    return { hasActiveSub: false, memberData: null };
   }
-
+  
   /**
-   * Checks if the user has a payment record for the given community
-   * @param userId The Telegram user ID
-   * @param username The Telegram username
-   * @param communityId The community ID
-   * @returns The payment data if found
+   * Find a payment record for a user
    */
-  async findPayment(userId: string, username: string | undefined, communityId: string) {
-    console.log(`[JOIN-SERVICE] 🔍 No member record found, checking for payments for user ${userId}`);
+  async findPayment(userId: string, username: string | undefined, communityId: string): Promise<any> {
+    console.log(`[JOIN-REQUEST-SERVICE] 🔍 Looking for payment records for user ${userId} in community ${communityId}`);
     
-    // Build payment query with all possible user identifiers
-    let paymentQuery = this.supabase
-      .from('subscription_payments')
-      .select('*')
-      .eq('community_id', communityId)
-      .eq('status', 'successful');
-    
-    // Build OR condition for user ID or username
-    const orConditions = [];
-    if (userId) {
-      orConditions.push(`telegram_user_id.eq.${userId}`);
+    try {
+      // Try to find by telegram_user_id
+      const { data: paymentByTelegramId, error: telegramIdError } = await this.supabase
+        .from('subscription_payments')
+        .select('*')
+        .eq('telegram_user_id', userId)
+        .eq('community_id', communityId)
+        .eq('status', 'successful')
+        .order('created_at', { ascending: false })
+        .maybeSingle();
+        
+      if (telegramIdError) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error checking payment by telegram ID:', telegramIdError);
+      } else if (paymentByTelegramId) {
+        console.log('[JOIN-REQUEST-SERVICE] ✅ Found payment by telegram ID:', paymentByTelegramId);
+        return paymentByTelegramId;
+      }
+      
+      // If username exists, try to find by username
+      if (username) {
+        console.log(`[JOIN-REQUEST-SERVICE] 🔍 Looking for payment by username: ${username}`);
+        
+        const { data: paymentByUsername, error: usernameError } = await this.supabase
+          .from('subscription_payments')
+          .select('*')
+          .eq('telegram_username', username)
+          .eq('community_id', communityId)
+          .eq('status', 'successful')
+          .is('telegram_user_id', null) // Only get payments without telegram_user_id
+          .order('created_at', { ascending: false })
+          .maybeSingle();
+          
+        if (usernameError) {
+          console.error('[JOIN-REQUEST-SERVICE] ❌ Error checking payment by username:', usernameError);
+        } else if (paymentByUsername) {
+          console.log('[JOIN-REQUEST-SERVICE] ✅ Found payment by username:', paymentByUsername);
+          return paymentByUsername;
+        }
+      }
+      
+      console.log('[JOIN-REQUEST-SERVICE] ❌ No payment found for user');
+      return null;
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error in findPayment:', error);
+      return null;
     }
-    if (username) {
-      orConditions.push(`telegram_username.eq.${username}`);
-    }
-    
-    if (orConditions.length > 0) {
-      paymentQuery = paymentQuery.or(orConditions.join(','));
-    }
-    
-    // Log the query we're about to run
-    console.log(`[JOIN-SERVICE] 🔍 Running payment query with OR conditions: ${orConditions.join(',')}`);
-    
-    const { data: paymentData, error: paymentError } = await paymentQuery
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    console.log(`[JOIN-SERVICE] Payment query result:`, {
-      paymentsFound: paymentData?.length || 0,
-      paymentData,
-      paymentError
-    });
-
-    return paymentData && paymentData.length > 0 ? paymentData[0] : null;
   }
-
+  
   /**
-   * Creates a member record based on payment data
-   * @param userId The Telegram user ID
-   * @param username The Telegram username
-   * @param communityId The community ID
-   * @param paymentData The payment data
-   * @returns The result of the member creation
+   * Update a payment record with telegram_user_id
    */
-  async createMemberFromPayment(userId: string, username: string | undefined, communityId: string, paymentData: any) {
-    console.log(`[JOIN-SERVICE] 📝 Creating member record for user ${userId} in community ${communityId}`);
-    
-    // Calculate subscription dates
-    const subscriptionStartDate = new Date();
-    let subscriptionEndDate = new Date(subscriptionStartDate);
-    
-    // If we have a plan, try to get its interval to set the end date
-    if (paymentData.plan_id) {
-      console.log(`[JOIN-SERVICE] 🔍 Looking up plan interval for plan ID: ${paymentData.plan_id}`);
-      const { data: plan, error: planError } = await this.supabase
+  async updatePaymentWithUserId(paymentId: string, userId: string): Promise<boolean> {
+    try {
+      console.log(`[JOIN-REQUEST-SERVICE] 🔄 Updating payment ${paymentId} with telegram_user_id ${userId}`);
+      
+      const { error } = await this.supabase
+        .from('subscription_payments')
+        .update({ telegram_user_id: userId })
+        .eq('id', paymentId);
+        
+      if (error) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error updating payment:', error);
+        return false;
+      }
+      
+      console.log('[JOIN-REQUEST-SERVICE] ✅ Payment updated successfully');
+      return true;
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error in updatePaymentWithUserId:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Create a member record from a payment
+   */
+  async createMemberFromPayment(userId: string, username: string | undefined, communityId: string, payment: any): Promise<any> {
+    try {
+      console.log(`[JOIN-REQUEST-SERVICE] ➕ Creating member record from payment for user ${userId}`);
+      
+      // Calculate subscription end date based on plan
+      let subscriptionEndDate = new Date();
+      
+      // Get plan details
+      const { data: planData, error: planError } = await this.supabase
         .from('subscription_plans')
         .select('interval')
-        .eq('id', paymentData.plan_id)
-        .single();
+        .eq('id', payment.plan_id)
+        .maybeSingle();
         
-      if (plan) {
-        console.log(`[JOIN-SERVICE] Setting subscription end date based on interval: ${plan.interval}`);
-        if (plan.interval === 'monthly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-        } else if (plan.interval === 'yearly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
-        } else if (plan.interval === 'half-yearly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 180);
-        } else if (plan.interval === 'quarterly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 90);
+      if (planError) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error getting plan details:', planError);
+      } else if (planData?.interval) {
+        console.log(`[JOIN-REQUEST-SERVICE] 📅 Using plan interval: ${planData.interval}`);
+        
+        const interval = planData.interval;
+        if (interval === 'monthly') {
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+        } else if (interval === 'quarterly') {
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+        } else if (interval === 'half-yearly') {
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
+        } else if (interval === 'yearly') {
+          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
         } else {
-          // Default to 30 days if interval is unknown
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+          // Default to 1 month for unknown intervals
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
         }
       } else {
-        subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+        // Default to 1 month if no plan found
+        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+        console.log('[JOIN-REQUEST-SERVICE] ⚠️ No plan found, defaulting to 1 month subscription');
       }
-    } else {
-      subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+      
+      const memberData = {
+        telegram_user_id: userId,
+        telegram_username: username,
+        community_id: communityId,
+        subscription_plan_id: payment.plan_id,
+        subscription_start_date: new Date().toISOString(),
+        subscription_end_date: subscriptionEndDate.toISOString(),
+        subscription_status: 'active',
+        is_active: true,
+        joined_at: new Date().toISOString()
+      };
+      
+      console.log('[JOIN-REQUEST-SERVICE] 📝 Creating member with data:', memberData);
+      
+      const { data, error } = await this.supabase
+        .from('telegram_chat_members')
+        .insert(memberData)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error creating member:', error);
+        return { success: false, error };
+      }
+      
+      console.log('[JOIN-REQUEST-SERVICE] ✅ Member created successfully');
+      return { success: true, data };
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error in createMemberFromPayment:', error);
+      return { success: false, error };
     }
-    
-    // Create the member record with standardized status values
-    return await createOrUpdateMember(this.supabase, {
-      telegram_user_id: userId,
-      telegram_username: username,
-      community_id: communityId,
-      subscription_status: 'active',
-      subscription_plan_id: paymentData.plan_id,
-      subscription_start_date: subscriptionStartDate.toISOString(),
-      subscription_end_date: subscriptionEndDate.toISOString(),
-      is_active: true
-    });
   }
-
+  
   /**
-   * Updates payment record with user ID if not set
-   * @param paymentId The payment ID
-   * @param userId The Telegram user ID
+   * Approve a join request
    */
-  async updatePaymentWithUserId(paymentId: string, userId: string) {
-    if (!userId) return;
-    
-    console.log(`[JOIN-SERVICE] Updating payment record with telegram_user_id: ${userId}`);
-    await this.supabase
-      .from('subscription_payments')
-      .update({ telegram_user_id: userId })
-      .eq('id', paymentId);
+  async approveJoinRequest(chatId: string, userId: string, username: string | undefined, reason: string): Promise<boolean> {
+    try {
+      console.log(`[JOIN-REQUEST-SERVICE] ✅ Approving join request for user ${userId} to chat ${chatId}`);
+      
+      // Call Telegram API to approve join request
+      await this.telegramApi.approveJoinRequest(chatId, userId);
+      
+      // Log the approval
+      await logJoinRequestEvent(
+        this.supabase,
+        chatId,
+        userId,
+        username,
+        'approved',
+        `Join request approved: ${reason}`,
+        null
+      );
+      
+      console.log(`[JOIN-REQUEST-SERVICE] ✅ Successfully approved join request for user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error approving join request:', error);
+      
+      // Log the error
+      await logJoinRequestEvent(
+        this.supabase,
+        chatId,
+        userId,
+        username,
+        'approval_error',
+        `Error approving join request: ${error.message}`,
+        null
+      );
+      
+      return false;
+    }
   }
-
+  
   /**
-   * Approves a join request
-   * @param chatId The chat ID
-   * @param userId The user ID
-   * @param username The username
-   * @param reason The reason for approval
-   * @returns The result of the approval
+   * Reject a join request
    */
-  async approveJoinRequest(chatId: string, userId: string, username: string | undefined, reason: string) {
-    console.log(`[JOIN-SERVICE] ✅ ${reason} for user ${userId}, approving join request`);
-    const approveResult = await this.telegramApi.approveJoinRequest(chatId, userId);
-    console.log(`[JOIN-SERVICE] ✓ Approve result:`, approveResult);
-    
-    // Log the join request approval
-    await logJoinRequestEvent(
-      this.supabase,
-      chatId,
-      userId,
-      username,
-      'approved',
-      reason,
-      approveResult
-    );
-    
-    return approveResult;
-  }
-
-  /**
-   * Rejects a join request
-   * @param chatId The chat ID
-   * @param userId The user ID
-   * @param username The username
-   * @param reason The reason for rejection
-   * @returns The result of the rejection
-   */
-  async rejectJoinRequest(chatId: string, userId: string, username: string | undefined, reason: string) {
-    console.log(`[JOIN-SERVICE] ❌ ${reason} for user ${userId}, rejecting join request`);
-    const rejectResult = await this.telegramApi.rejectJoinRequest(chatId, userId);
-    console.log(`[JOIN-SERVICE] 🚫 Reject result:`, rejectResult);
-    
-    // Log the join request rejection
-    await logJoinRequestEvent(
-      this.supabase,
-      chatId,
-      userId,
-      username,
-      'rejected',
-      reason,
-      rejectResult
-    );
-    
-    return rejectResult;
+  async rejectJoinRequest(chatId: string, userId: string, username: string | undefined, reason: string): Promise<boolean> {
+    try {
+      console.log(`[JOIN-REQUEST-SERVICE] ❌ Rejecting join request for user ${userId} to chat ${chatId}`);
+      
+      // Call Telegram API to reject join request
+      await this.telegramApi.rejectJoinRequest(chatId, userId);
+      
+      // Log the rejection
+      await logJoinRequestEvent(
+        this.supabase,
+        chatId,
+        userId,
+        username,
+        'rejected',
+        `Join request rejected: ${reason}`,
+        null
+      );
+      
+      console.log(`[JOIN-REQUEST-SERVICE] ✅ Successfully rejected join request for user ${userId}`);
+      return true;
+    } catch (error) {
+      console.error('[JOIN-REQUEST-SERVICE] ❌ Error rejecting join request:', error);
+      
+      // Log the error
+      await logJoinRequestEvent(
+        this.supabase,
+        chatId,
+        userId,
+        username,
+        'rejection_error',
+        `Error rejecting join request: ${error.message}`,
+        null
+      );
+      
+      return false;
+    }
   }
 }

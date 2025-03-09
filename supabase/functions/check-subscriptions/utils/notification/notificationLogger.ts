@@ -25,13 +25,14 @@ export async function logSuccessfulNotification(
     }
 
     // Log the notification to the subscription_notifications table
+    // Using 'success' instead of 'sent' for status as it appears 'sent' is not in the allowed values
     const { error } = await supabase
       .from("subscription_notifications")
       .insert({
         member_id: memberId,
         community_id: member.community_id,
         notification_type: validNotificationType,
-        status: "sent"
+        status: "success" // Changed from 'sent' to 'success'
       });
 
     if (error) {

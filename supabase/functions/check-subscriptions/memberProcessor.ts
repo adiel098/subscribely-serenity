@@ -62,12 +62,18 @@ export async function processMember(
   );
 
   // Check if this member has already received notifications today to prevent duplicates
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+  
   const { data: recentNotifications, error: notificationError } = await supabase
     .from('subscription_notifications')
     .select('notification_type')
     .eq('member_id', member.id)
-    .gte('sent_at', new Date(now.setHours(0, 0, 0, 0)).toISOString())
-    .lte('sent_at', new Date(now.setHours(23, 59, 59, 999)).toISOString());
+    .gte('sent_at', todayStart.toISOString())
+    .lte('sent_at', todayEnd.toISOString());
   
   if (notificationError) {
     console.error(`Error checking recent notifications: ${notificationError.message}`);

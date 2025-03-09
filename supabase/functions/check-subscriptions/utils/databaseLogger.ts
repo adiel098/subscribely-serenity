@@ -25,7 +25,7 @@ export async function logNotification(
       .select('id')
       .eq('member_id', memberId)
       .eq('notification_type', validNotificationType)
-      .eq('status', 'sent')
+      .eq('status', 'success') // Changed from 'sent' to 'success'
       .gte('sent_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
       .limit(1);
     
@@ -40,7 +40,7 @@ export async function logNotification(
       community_id: communityId,
       member_id: memberId,
       notification_type: validNotificationType,
-      status: "sent",
+      status: "success", // Changed from 'sent' to 'success'
     });
     
     if (error) {

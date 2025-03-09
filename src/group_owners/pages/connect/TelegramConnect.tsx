@@ -193,7 +193,7 @@ const TelegramConnect = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl">
         <Button 
           onClick={goBack} 

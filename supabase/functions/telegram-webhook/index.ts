@@ -1,7 +1,8 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { Router } from "https://deno.land/x/oak@v11.1.0/router.ts";
-import { Application, Context } from "https://deno.land/x/oak@v11.1.0/mod.ts";
+import { Application } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 import { corsHeaders } from "./cors.ts";
 import { setupWebhookConfig } from "./config/webhookConfig.ts";
 import { sendTelegramMessage, sendTelegramPhotoMessage } from "./telegramClient.ts";

@@ -12,8 +12,9 @@ export interface Subscriber {
   subscription_start_date: string | null;
   subscription_end_date: string | null;
   subscription_status: boolean;
+  is_active: boolean | null; // Added this property
   total_messages: number | null;
-  community_id: string;  // Added this property
+  community_id: string;
   plan: {
     id: string;
     name: string;

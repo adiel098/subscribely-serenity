@@ -88,9 +88,9 @@ export const CommunityRequirementsBanner = () => {
             <span className="text-sm text-emerald-800">Your community is ready! 🎉</span>
           </div>
           
-          <div className="flex items-center gap-2 ml-2 bg-white/70 rounded-md px-2 py-1 border border-emerald-100">
-            <Link className="h-3.5 w-3.5 text-emerald-600" />
-            <span className="text-xs text-emerald-700 font-mono truncate max-w-[150px]">
+          <div className="flex items-center gap-2 ml-2 bg-white/70 rounded-md px-2 py-1 border border-emerald-100 min-w-[220px] max-w-[280px]">
+            <Link className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+            <span className="text-xs text-emerald-700 font-mono truncate">
               t.me/membifybot?start={selectedCommunityId?.substring(0, 8)}...
             </span>
           </div>

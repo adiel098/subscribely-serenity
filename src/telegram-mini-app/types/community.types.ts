@@ -18,6 +18,7 @@ export interface Community {
   telegram_chat_id: string | null;  // Added this property
   subscription_plans: Plan[];
   member_count: number;
+  custom_link: string | null;
 }
 
 export interface Subscription {

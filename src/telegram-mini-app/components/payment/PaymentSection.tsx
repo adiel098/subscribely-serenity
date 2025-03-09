@@ -1,8 +1,8 @@
-
 import React, { useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
 import { motion } from "framer-motion";
+import { Subscription } from "@/telegram-mini-app/services/memberService";
 
 interface PaymentSectionProps {
   selectedPlan: Plan | null;
@@ -13,6 +13,7 @@ interface PaymentSectionProps {
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
+  activeSubscription?: Subscription | null;
 }
 
 export const PaymentSection: React.FC<PaymentSectionProps> = ({
@@ -23,7 +24,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   communityInviteLink,
   showSuccess,
   telegramUserId,
-  telegramUsername
+  telegramUsername,
+  activeSubscription
 }) => {
   // Enhanced logging for debugging
   useEffect(() => {
@@ -37,7 +39,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);
     console.log('[PaymentSection] Telegram username:', telegramUsername);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, selectedPaymentMethod]);
+    console.log('[PaymentSection] Active subscription:', activeSubscription);
+  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, activeSubscription]);
   
   if (!selectedPlan) return null;
   

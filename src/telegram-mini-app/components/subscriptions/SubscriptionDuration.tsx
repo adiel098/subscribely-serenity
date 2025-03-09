@@ -3,16 +3,31 @@ import React from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { CalendarClock } from "lucide-react";
 import { motion } from "framer-motion";
+import { Subscription } from "@/telegram-mini-app/services/memberService";
+import { getDaysRemaining } from "./utils";
 
 interface SubscriptionDurationProps {
   selectedPlan: Plan;
+  activeSubscription?: Subscription | null;
 }
 
-export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ selectedPlan }) => {
+export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ 
+  selectedPlan,
+  activeSubscription
+}) => {
+  // Calculate how many days would be added from existing subscription
+  const remainingDays = activeSubscription ? getDaysRemaining(activeSubscription) : 0;
+  
   const getEndDate = (plan: Plan) => {
     const startDate = new Date();
     const endDate = new Date(startDate);
     
+    // Add the remaining days from existing subscription
+    if (remainingDays > 0) {
+      endDate.setDate(endDate.getDate() + remainingDays);
+    }
+    
+    // Then add the time from the new plan
     switch (plan.interval) {
       case "monthly":
         endDate.setMonth(endDate.getMonth() + 1);
@@ -37,20 +52,33 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ sele
   };
 
   const getDurationText = (plan: Plan) => {
+    let baseDuration = "";
+    
     switch (plan.interval) {
       case "monthly":
-        return "one month";
+        baseDuration = "one month";
+        break;
       case "quarterly":
-        return "three months";
+        baseDuration = "three months";
+        break;
       case "half-yearly":
-        return "six months";
+        baseDuration = "six months";
+        break;
       case "yearly":
-        return "one year";
+        baseDuration = "one year";
+        break;
       case "lifetime":
         return "lifetime";
       default:
-        return "one month";
+        baseDuration = "one month";
     }
+    
+    // If there are remaining days, mention them
+    if (remainingDays > 0) {
+      return `${baseDuration} + ${remainingDays} remaining days from your current subscription`;
+    }
+    
+    return baseDuration;
   };
 
   return (
@@ -75,6 +103,12 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({ sele
           <p className="text-sm font-semibold text-primary">{getEndDate(selectedPlan)}</p>
         </div>
       </div>
+      
+      {remainingDays > 0 && (
+        <div className="mt-2 pt-2 border-t border-primary/10 text-xs text-gray-600">
+          <p>Your current subscription has {remainingDays} days remaining that will be added to your new subscription period.</p>
+        </div>
+      )}
     </motion.div>
   );
 };

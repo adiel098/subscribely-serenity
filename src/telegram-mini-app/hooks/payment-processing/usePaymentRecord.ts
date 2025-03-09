@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { logPaymentAction, logSubscriptionActivity } from "./utils";
+import { Subscription } from "@/telegram-mini-app/services/memberService";
 
 interface RecordPaymentParams {
   telegramUserId: string;
@@ -12,6 +13,7 @@ interface RecordPaymentParams {
   username?: string;
   firstName?: string;
   lastName?: string;
+  activeSubscription?: Subscription | null;
 }
 
 /**
@@ -31,7 +33,8 @@ export const usePaymentRecord = () => {
       inviteLink, 
       username,
       firstName,
-      lastName
+      lastName,
+      activeSubscription
     } = params;
     
     logPaymentAction('Recording payment with params', params);
@@ -111,8 +114,19 @@ export const usePaymentRecord = () => {
       console.log('[usePaymentRecord] Payment recorded successfully:', JSON.stringify(data, null, 2));
 
       // Prepare start and end dates for subscription
-      const startDate = new Date().toISOString();
+      const startDate = new Date();
       let endDate = new Date();
+      
+      // Add any remaining days from an existing subscription
+      if (activeSubscription && activeSubscription.subscription_end_date) {
+        const currentEndDate = new Date(activeSubscription.subscription_end_date);
+        if (currentEndDate > startDate) {
+          const remainingMs = currentEndDate.getTime() - startDate.getTime();
+          const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+          console.log(`[usePaymentRecord] Adding ${remainingDays} days from existing subscription`);
+          endDate.setDate(endDate.getDate() + remainingDays);
+        }
+      }
       
       // Get plan details for duration calculation
       const { data: planData } = await supabase
@@ -141,13 +155,15 @@ export const usePaymentRecord = () => {
         endDate.setDate(endDate.getDate() + 30);
       }
       
+      console.log(`[usePaymentRecord] Calculated subscription end date: ${endDate.toISOString()}`);
+      
       // Immediately create or update the member record with standardized status values
       const memberData = {
         telegram_user_id: telegramUserId,
         telegram_username: username,
         community_id: communityId,
         subscription_plan_id: planId,
-        subscription_start_date: startDate,
+        subscription_start_date: startDate.toISOString(),
         subscription_end_date: endDate.toISOString(),
         subscription_status: 'active' as const,
         is_active: true,

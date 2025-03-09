@@ -40,6 +40,11 @@ export const MainContent = ({
     (new Date(sub.subscription_end_date || sub.expiry_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000))
   );
   
+  // Find an active subscription for this community
+  const activeSubscription = subscriptions?.find(sub => 
+    isSubscriptionActive(sub) && sub.community_id === community.id
+  );
+  
   // Enhanced logging for debugging
   useEffect(() => {
     console.log("[MainContent] Component rendered with state:");
@@ -97,7 +102,10 @@ export const MainContent = ({
         />
         
         {showPaymentMethods && selectedPlan && !showSuccess && (
-          <SubscriptionDuration selectedPlan={selectedPlan} />
+          <SubscriptionDuration 
+            selectedPlan={selectedPlan} 
+            activeSubscription={activeSubscription}
+          />
         )}
         
         {(showPaymentMethods || showSuccess) && selectedPlan && (
@@ -110,6 +118,7 @@ export const MainContent = ({
             showSuccess={showSuccess}
             telegramUserId={telegramUser.id}
             telegramUsername={telegramUser.username}
+            activeSubscription={activeSubscription}
           />
         )}
         

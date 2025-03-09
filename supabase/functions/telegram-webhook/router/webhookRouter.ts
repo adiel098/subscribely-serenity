@@ -8,7 +8,7 @@ import { handleStartCommand } from '../handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from '../handlers/verificationHandler.ts';
 import { handleChannelVerification } from '../handlers/channelVerificationHandler.ts';
 import { corsHeaders } from '../cors.ts';
-import { updateMemberActivity } from '../handlers/utils/logHelper.ts';
+import { updateMemberActivity } from '../handlers/utils/activityUtils.ts';
 import { logTelegramEvent } from '../eventLogger.ts';
 
 export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnType<typeof createClient>, botToken: string) {

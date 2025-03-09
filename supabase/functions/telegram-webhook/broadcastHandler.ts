@@ -91,7 +91,7 @@ export async function sendBroadcastMessage(
     const inlineKeyboard = includeButton && communityResult.data.miniapp_url ? {
       inline_keyboard: [[
         {
-          text: "הצטרף לקהילה 🚀",
+          text: "Join Community🚀",
           web_app: {
             url: `${communityResult.data.miniapp_url}?start=${communityId}`
           }

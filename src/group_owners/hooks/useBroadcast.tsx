@@ -1,4 +1,3 @@
-
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,7 +35,6 @@ export const useBroadcast = (communityId: string) => {
         communityId
       });
 
-      // Get the community details to ensure we have the correct miniapp_url
       const { data: community, error: communityError } = await supabase
         .from('communities')
         .select('miniapp_url')
@@ -47,10 +45,8 @@ export const useBroadcast = (communityId: string) => {
         console.error('Error fetching community:', communityError);
       }
 
-      // Get the default miniapp URL if not set
       let miniAppUrl = community?.miniapp_url || "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
       
-      // If not set in the database, update it
       if (!community?.miniapp_url) {
         const { error: updateError } = await supabase
           .from('communities')
@@ -64,14 +60,12 @@ export const useBroadcast = (communityId: string) => {
         }
       }
 
-      // Build the query based on filter type
       let query = supabase
         .from('telegram_chat_members')
         .select('*')
         .eq('community_id', communityId)
         .eq('is_active', true);
 
-      // Apply filters based on filterType
       switch (filterType) {
         case 'active':
           query = query.eq('subscription_status', true);
@@ -85,7 +79,6 @@ export const useBroadcast = (communityId: string) => {
             query = query.eq('subscription_plan_id', subscriptionPlanId);
           }
           break;
-        // 'all' case doesn't need additional filters
       }
 
       const { data: activeMembers, error: membersError } = await query;
@@ -101,7 +94,6 @@ export const useBroadcast = (communityId: string) => {
         subscriptionPlanId,
       });
 
-      // If no active members found, return early
       if (!activeMembers || activeMembers.length === 0) {
         return {
           successCount: 0,
@@ -120,7 +112,6 @@ export const useBroadcast = (communityId: string) => {
         throw new Error('Bot token not found');
       }
 
-      // If button is included, add the web_app button with the mini app URL
       let messageOptions: any = {
         parse_mode: 'HTML'
       };
@@ -129,7 +120,7 @@ export const useBroadcast = (communityId: string) => {
         messageOptions.reply_markup = {
           inline_keyboard: [[
             {
-              text: "Join Community 🚀",
+              text: "Join Community🚀",
               web_app: { url: `${miniAppUrl}?start=${communityId}` }
             }
           ]]
@@ -141,7 +132,6 @@ export const useBroadcast = (communityId: string) => {
       let successCount = 0;
       let failureCount = 0;
 
-      // Send messages to filtered members
       for (const member of activeMembers) {
         try {
           if (!member.telegram_user_id) {
@@ -150,32 +140,25 @@ export const useBroadcast = (communityId: string) => {
             continue;
           }
 
-          // If we have an image, send it with caption
           if (image) {
             console.log(`Sending image message to ${member.telegram_username || member.telegram_user_id}`);
             
-            // For direct data URLs, we need to fetch the image first and then send the file
             if (image.startsWith('data:')) {
               try {
-                // Convert data URL to blob
                 const response = await fetch(image);
                 const blob = await response.blob();
                 
-                // Create form data for file upload
                 const formData = new FormData();
                 formData.append('chat_id', member.telegram_user_id);
                 formData.append('caption', message);
                 
-                // Add parse_mode and reply_markup if needed
                 formData.append('parse_mode', 'HTML');
                 if (includeButton) {
                   formData.append('reply_markup', JSON.stringify(messageOptions.reply_markup));
                 }
                 
-                // Append the image as a file
                 formData.append('photo', blob, 'image.jpg');
                 
-                // Send the message with the image as a multipart/form-data request
                 const sendResponse = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendPhoto`, {
                   method: 'POST',
                   body: formData,
@@ -190,7 +173,6 @@ export const useBroadcast = (communityId: string) => {
                   console.error(`Failed to send image message:`, result);
                   failureCount++;
                   
-                  // Try to fall back to a text-only message
                   try {
                     const textResponse = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
                       method: 'POST',
@@ -208,7 +190,7 @@ export const useBroadcast = (communityId: string) => {
                     if (textResult.ok) {
                       console.log(`Fallback text message sent successfully`);
                       successCount++;
-                      failureCount--; // Adjust the failure count
+                      failureCount--;
                     }
                   } catch (fallbackError) {
                     console.error(`Fallback also failed:`, fallbackError);
@@ -218,7 +200,6 @@ export const useBroadcast = (communityId: string) => {
                 console.error("Error processing data URL:", error);
                 failureCount++;
                 
-                // Try to fall back to a text-only message
                 try {
                   const textResponse = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
                     method: 'POST',
@@ -236,14 +217,13 @@ export const useBroadcast = (communityId: string) => {
                   if (textResult.ok) {
                     console.log(`Fallback text message sent successfully`);
                     successCount++;
-                    failureCount--; // Adjust the failure count
+                    failureCount--;
                   }
                 } catch (fallbackError) {
                   console.error(`Fallback also failed:`, fallbackError);
                 }
               }
             } else {
-              // For regular URLs, we can pass the URL directly to Telegram
               const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendPhoto`, {
                 method: 'POST',
                 headers: {
@@ -263,36 +243,11 @@ export const useBroadcast = (communityId: string) => {
               if (result.ok) {
                 successCount++;
               } else {
-                console.error(`Failed to send image message:`, result);
+                console.error(`Failed to send message:`, result);
                 failureCount++;
-                
-                // Try to fall back to a text-only message
-                try {
-                  const textResponse = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      chat_id: member.telegram_user_id,
-                      text: message,
-                      ...messageOptions
-                    }),
-                  });
-                  
-                  const textResult = await textResponse.json();
-                  if (textResult.ok) {
-                    console.log(`Fallback text message sent successfully`);
-                    successCount++;
-                    failureCount--; // Adjust the failure count
-                  }
-                } catch (fallbackError) {
-                  console.error(`Fallback also failed:`, fallbackError);
-                }
               }
             }
           } else {
-            // Standard text message
             console.log(`Sending text message to ${member.telegram_username || member.telegram_user_id}`);
             const response = await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`, {
               method: 'POST',
@@ -317,7 +272,6 @@ export const useBroadcast = (communityId: string) => {
             }
           }
 
-          // Add small delay between messages to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 35));
         } catch (error) {
           console.error(`Error sending message to ${member.telegram_username || member.telegram_user_id}:`, error);

@@ -99,6 +99,7 @@ export type Database = {
       communities: {
         Row: {
           created_at: string
+          custom_link: string | null
           description: string | null
           id: string
           member_count: number | null
@@ -116,6 +117,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_link?: string | null
           description?: string | null
           id?: string
           member_count?: number | null
@@ -133,6 +135,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_link?: string | null
           description?: string | null
           id?: string
           member_count?: number | null

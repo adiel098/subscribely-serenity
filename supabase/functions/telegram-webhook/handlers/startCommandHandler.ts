@@ -49,17 +49,21 @@ export async function handleStartCommand(
     const startParam = parts[1];
     console.log(`[START-COMMAND] 🔍 Processing start parameter: ${startParam}`);
     
-    // Check if it's a community ID
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam)) {
-      console.log(`[START-COMMAND] ✅ Valid community ID format: ${startParam}`);
+    // First, try to find community by custom_link
+    let communityId = startParam;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam);
+    
+    // If it's not a UUID, try to find by custom_link
+    if (!isUUID) {
+      console.log(`[START-COMMAND] 🔍 Param is not a UUID, checking custom_link: ${startParam}`);
+      const { data: communityData, error: linkError } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('custom_link', startParam)
+        .single();
       
-      // Fetch community data 
-      const dataResult = await fetchStartCommandData(supabase, startParam);
-      console.log(`[START-COMMAND] Data fetch result:`, JSON.stringify(dataResult, null, 2));
-      
-      if (!dataResult.success) {
-        console.error(`[START-COMMAND] ❌ Error fetching data: ${dataResult.error}`);
-        
+      if (linkError || !communityData) {
+        console.log(`[START-COMMAND] ❌ No community found with custom_link: ${startParam}`);
         await sendTelegramMessage(
           botToken,
           message.chat.id,
@@ -73,78 +77,87 @@ export async function handleStartCommand(
           message.from.id.toString(),
           message.from.username,
           text,
-          {message, error: dataResult.error}
+          {message, error: linkError?.message || 'No community found with this custom link'}
         );
         
         return true;
       }
       
-      const { community, botSettings } = dataResult;
-      console.log(`[START-COMMAND] 📋 Community found: ${community.name}`);
+      // Update communityId with the actual UUID
+      communityId = communityData.id;
+      console.log(`[START-COMMAND] ✅ Found community with ID: ${communityId} for custom_link: ${startParam}`);
+    }
+    
+    // Fetch community data with the resolved communityId
+    const dataResult = await fetchStartCommandData(supabase, communityId);
+    console.log(`[START-COMMAND] Data fetch result:`, JSON.stringify(dataResult, null, 2));
+    
+    if (!dataResult.success) {
+      console.error(`[START-COMMAND] ❌ Error fetching data: ${dataResult.error}`);
       
-      // Construct welcome message
-      let welcomeMessage = botSettings.welcome_message || 
-        `Welcome to ${community.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`;
-      
-      const miniAppUrl = community.miniapp_url || "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
-      const welcomeImage = botSettings.welcome_image || null;
-      
-      // Add call-to-action button
-      const inlineKeyboard = {
-        inline_keyboard: [
-          [
-            {
-              text: "Join Community🚀",
-              web_app: {
-                url: `${miniAppUrl}?start=${community.id}`
-              }
-            }
-          ]
-        ]
-      };
-      
-      console.log(`[START-COMMAND] 📤 Sending welcome message with image: ${!!welcomeImage}`);
-      console.log(`[START-COMMAND] 🔗 Mini app URL: ${miniAppUrl}?start=${community.id}`);
-      
-      // Send welcome message with photo if available
       await sendTelegramMessage(
         botToken,
         message.chat.id,
-        welcomeMessage,
-        welcomeImage,
-        inlineKeyboard
+        `Sorry, I couldn't find that community. 😕\n\nPlease check the link and try again.`,
+        null  // No photo
       );
       
-      // Log the interaction
       await logUserInteraction(
         supabase,
-        'start_command_community',
+        'start_command_invalid_community',
         message.from.id.toString(),
         message.from.username,
         text,
-        {message, community_id: community.id}
+        {message, error: dataResult.error}
       );
       
       return true;
     }
     
-    // It's not a valid community ID
-    console.log(`[START-COMMAND] ⚠️ Invalid community ID format: ${startParam}`);
+    const { community, botSettings } = dataResult;
+    console.log(`[START-COMMAND] 📋 Community found: ${community.name}`);
     
+    // Construct welcome message
+    let welcomeMessage = botSettings.welcome_message || 
+      `Welcome to ${community.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`;
+    
+    const miniAppUrl = community.miniapp_url || "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
+    const welcomeImage = botSettings.welcome_image || null;
+    
+    // Add call-to-action button
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "Join Community🚀",
+            web_app: {
+              url: `${miniAppUrl}?start=${community.id}`
+            }
+          }
+        ]
+      ]
+    };
+    
+    console.log(`[START-COMMAND] 📤 Sending welcome message with image: ${!!welcomeImage}`);
+    console.log(`[START-COMMAND] 🔗 Mini app URL: ${miniAppUrl}?start=${community.id}`);
+    
+    // Send welcome message with photo if available
     await sendTelegramMessage(
       botToken,
       message.chat.id,
-      `Sorry, that doesn't look like a valid community link. 😕\n\nPlease check the link and try again.`,
-      null  // No photo
+      welcomeMessage,
+      welcomeImage,
+      inlineKeyboard
     );
     
+    // Log the interaction
     await logUserInteraction(
       supabase,
-      'start_command_invalid_format',
+      'start_command_community',
       message.from.id.toString(),
       message.from.username,
       text,
-      message
+      {message, community_id: community.id}
     );
     
     return true;

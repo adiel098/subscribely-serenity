@@ -9,10 +9,31 @@ export async function handleStartCommand(
   botToken: string
 ) {
   try {
-    const communityId = message.text.split(' ')[1];
-    if (!communityId || !message.from) {
-      console.log('Missing community ID or sender info');
+    const communityIdOrLink = message.text.split(' ')[1];
+    if (!communityIdOrLink || !message.from) {
+      console.log('Missing community ID/link or sender info');
       return;
+    }
+
+    // Check if it's a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
+    let communityId = communityIdOrLink;
+
+    // If not a UUID, try to find by custom_link
+    if (!isUUID) {
+      const { data, error } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('custom_link', communityIdOrLink)
+        .single();
+        
+      if (error || !data) {
+        console.log('Community not found with custom link:', communityIdOrLink);
+        return;
+      }
+      
+      communityId = data.id;
+      console.log('Resolved custom link to community ID:', communityId);
     }
 
     const [community, botSettings] = await Promise.all([

@@ -38,23 +38,51 @@ serve(async (req) => {
       );
     }
 
+    // Check if community_id is a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(community_id);
+    let communityQuery;
+    
+    if (isUUID) {
+      // If it's a UUID, search by ID
+      communityQuery = supabase
+        .from('communities')
+        .select(`
+          id, 
+          name, 
+          description, 
+          telegram_photo_url, 
+          telegram_invite_link,
+          telegram_chat_id,
+          member_count,
+          subscription_count,
+          custom_link,
+          subscription_plans(*)
+        `)
+        .eq('id', community_id)
+        .single();
+    } else {
+      // If it's not a UUID, search by custom_link
+      communityQuery = supabase
+        .from('communities')
+        .select(`
+          id, 
+          name, 
+          description, 
+          telegram_photo_url, 
+          telegram_invite_link,
+          telegram_chat_id,
+          member_count,
+          subscription_count,
+          custom_link,
+          subscription_plans(*)
+        `)
+        .eq('custom_link', community_id)
+        .single();
+    }
+
     // Get community data with subscription plans
-    console.log(`🔍 DEBUG: Executing database query for community ID: ${community_id}`);
-    const { data: community, error } = await supabase
-      .from('communities')
-      .select(`
-        id, 
-        name, 
-        description, 
-        telegram_photo_url, 
-        telegram_invite_link,
-        telegram_chat_id,
-        member_count,
-        subscription_count,
-        subscription_plans(*)
-      `)
-      .eq('id', community_id)
-      .single();
+    console.log(`🔍 DEBUG: Executing database query for community ID or link: ${community_id}`);
+    const { data: community, error } = await communityQuery;
 
     if (error) {
       console.error(`❌ Database error fetching community ${community_id}:`, error);
@@ -65,7 +93,7 @@ serve(async (req) => {
     }
 
     if (!community) {
-      console.error(`❌ Community with ID ${community_id} not found`);
+      console.error(`❌ Community with ID or link ${community_id} not found`);
       return new Response(
         JSON.stringify({ error: "Community not found" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
@@ -75,6 +103,7 @@ serve(async (req) => {
     console.log(`✅ Retrieved community from database:`, JSON.stringify(community, null, 2));
     console.log(`🖼️ Photo URL in database: ${community.telegram_photo_url || 'Not set'}`);
     console.log(`📱 Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
+    console.log(`🔗 Custom link: ${community.custom_link || 'Not set'}`);
     
     if (debug) {
       console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);
@@ -97,7 +126,7 @@ serve(async (req) => {
       const { data: paymentMethods, error: pmError } = await supabase
         .from('payment_methods')
         .select('id, provider, is_active')
-        .eq('community_id', community_id);
+        .eq('community_id', community.id);
         
       if (pmError) {
         console.error(`❌ Error fetching payment methods:`, pmError);

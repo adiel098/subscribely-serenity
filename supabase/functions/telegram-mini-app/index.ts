@@ -84,26 +84,56 @@ serve(async (req) => {
       );
     }
 
-    // Fetch community data
-    const { data: community, error: communityError } = await supabase
-      .from("communities")
-      .select(`
-        id,
-        name,
-        description,
-        telegram_photo_url,
-        telegram_invite_link,
-        subscription_plans (
+    // Check if start is a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
+    let communityQuery;
+    
+    if (isUUID) {
+      // If it's a UUID, search by ID
+      communityQuery = supabase
+        .from("communities")
+        .select(`
           id,
           name,
           description,
-          price,
-          interval,
-          features
-        )
-      `)
-      .eq("id", start)
-      .single();
+          telegram_photo_url,
+          telegram_invite_link,
+          subscription_plans (
+            id,
+            name,
+            description,
+            price,
+            interval,
+            features
+          )
+        `)
+        .eq("id", start)
+        .single();
+    } else {
+      // If it's not a UUID, search by custom_link
+      communityQuery = supabase
+        .from("communities")
+        .select(`
+          id,
+          name,
+          description,
+          telegram_photo_url,
+          telegram_invite_link,
+          subscription_plans (
+            id,
+            name,
+            description,
+            price,
+            interval,
+            features
+          )
+        `)
+        .eq("custom_link", start)
+        .single();
+    }
+
+    // Fetch community data
+    const { data: community, error: communityError } = await communityQuery;
 
     if (communityError) {
       console.error("Error fetching community:", communityError);
@@ -147,7 +177,7 @@ serve(async (req) => {
                 last_name: telegramUser.last_name,
                 username: telegramUser.username,
                 photo_url: telegramUser.photo_url,
-                community_id: start,
+                community_id: community.id, // Use resolved community ID
               },
             ]);
           } else {
@@ -160,7 +190,7 @@ serve(async (req) => {
                 last_name: telegramUser.last_name,
                 username: telegramUser.username,
                 photo_url: telegramUser.photo_url,
-                community_id: start,
+                community_id: community.id, // Use resolved community ID
               })
               .eq("telegram_id", telegramUser.id);
               

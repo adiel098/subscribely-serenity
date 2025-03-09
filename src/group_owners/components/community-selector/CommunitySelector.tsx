@@ -1,134 +1,173 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
-import { useCommunityContext } from "@/contexts/CommunityContext";
-import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { supabase } from "@/integrations/supabase/client";
-
-import { CommunityDropdown } from "./CommunityDropdown";
-import { PlatformSubscriptionBanner } from "./PlatformSubscriptionBanner";
-import { MissingPlanBanner } from "./MissingPlanBanner";
+import React, { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCommunities, Community } from "@/group_owners/hooks/useCommunities";
+import { useToast } from "@/components/ui/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Copy } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { CreateCommunityForm } from "./CreateCommunityForm";
 import { MiniAppLinkButton } from "./MiniAppLinkButton";
-import { HeaderActions } from "./HeaderActions";
-import { AlertMessage } from "./AlertMessage";
 
-export const CommunitySelector = () => {
-  const { data: communities } = useCommunities();
-  const navigate = useNavigate();
-  const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
+interface CommunitySelectorProps {
+  onCommunityChange: (community: Community | null) => void;
+}
+
+export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
+  onCommunityChange,
+}) => {
+  const { data: communities, isLoading, refetch } = useCommunities();
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [hasPlatformPlan, setHasPlatformPlan] = useState(true);
 
-  const { data: paymentMethods } = usePaymentMethods(selectedCommunityId);
-  const { plans } = useSubscriptionPlans(selectedCommunityId || "");
-
-  const hasPlan = plans?.length > 0;
-
-  // Check if the user has an active platform subscription
   useEffect(() => {
-    const checkPlatformSubscription = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user?.id) return;
-        
-        const { data, error } = await supabase
-          .from('platform_subscriptions')
-          .select('*')
-          .eq('user_id', session.session.user.id)
-          .eq('is_active', true)
-          .single();
-        
-        if (error || !data) {
-          console.log('No active platform subscription found', error);
-          setHasPlatformPlan(false);
-        } else {
-          console.log('Active platform subscription found', data);
-          setHasPlatformPlan(true);
-        }
-      } catch (err) {
-        console.error('Error checking platform subscription:', err);
-      }
-    };
-    
-    checkPlatformSubscription();
-  }, []);
-
-  const copyMiniAppLink = () => {
-    if (!selectedCommunityId) {
-      setAlertMessage("Please select a community first to copy the link 🎯");
-      setShowAlert(true);
-      return;
+    if (communities && communities.length > 0) {
+      setSelectedCommunity(communities[0]);
+      onCommunityChange(communities[0]);
+    } else {
+      onCommunityChange(null);
     }
+  }, [communities, onCommunityChange]);
 
-    if (!plans?.length) {
-      setAlertMessage("You haven't set up any subscription plans yet. Add at least one plan to share the link! 📦");
-      setShowAlert(true);
-      return;
-    }
-
-    if (!paymentMethods?.some(pm => pm.is_active)) {
-      setAlertMessage("You haven't set up any active payment methods. Enable at least one payment method to share the link! 💳");
-      setShowAlert(true);
-      return;
-    }
-
-    const miniAppUrl = `https://t.me/membifybot?start=${selectedCommunityId}`;
-    navigator.clipboard.writeText(miniAppUrl);
-    toast({
-      title: "Link Copied! 🎉",
-      description: "The Mini App link has been copied to your clipboard",
-    });
+  const handleCommunityChange = (communityId: string) => {
+    const community = communities?.find((c) => c.id === communityId) || null;
+    setSelectedCommunity(community);
+    onCommunityChange(community);
   };
 
-  const navigateToPlans = () => {
-    navigate("/subscriptions");
+  // Copy mini app link to clipboard
+  const handleCopyMiniAppLink = async () => {
+    if (!selectedCommunity) return;
+    
+    const customLink = selectedCommunity.custom_link || selectedCommunity.id;
+    const miniAppLink = `https://t.me/SubscribelyBot?start=${customLink}`;
+    
+    try {
+      await navigator.clipboard.writeText(miniAppLink);
+      toast.success("Link copied to clipboard");
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      toast.error("Failed to copy link");
+    }
+  };
+
+  const handleCommunityCreated = async () => {
+    setOpen(false);
+    await refetch();
   };
 
   return (
-    <>
-      <motion.div 
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm h-[60px]"
-      >
-        <div className="flex items-center gap-4 ml-[230px]">
-          <div className="flex items-center gap-3 bg-white py-1 px-3 rounded-lg border shadow-sm">
-            <Sparkles className="h-4 w-4 text-blue-500" />
-            <CommunityDropdown 
-              communities={communities}
-              selectedCommunityId={selectedCommunityId}
-              setSelectedCommunityId={setSelectedCommunityId}
+    <div className="space-y-6 border-b border-border pb-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
+          <h2 className="text-lg font-semibold">Community</h2>
+          <p className="text-sm text-muted-foreground">
+            Select the community you want to manage
+          </p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Community
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create Community</DialogTitle>
+              <DialogDescription>
+                Create a new community to manage subscriptions and members.
+              </DialogDescription>
+            </DialogHeader>
+            <CreateCommunityForm onCreate={handleCommunityCreated} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      
+      <div className="space-y-6">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:items-center justify-between">
+          <CommunityDropdown
+            communities={communities}
+            selectedCommunity={selectedCommunity}
+            onCommunityChange={handleCommunityChange}
+            isLoading={isLoading}
+          />
+          
+          <div className="mt-2 sm:mt-0 sm:flex-shrink-0">
+            <MiniAppLinkButton 
+              onClick={handleCopyMiniAppLink} 
+              community={selectedCommunity}
             />
           </div>
-
-          {/* Use the PlatformSubscriptionBanner without the prop since we handle it internally now */}
-          <PlatformSubscriptionBanner />
-
-          <MissingPlanBanner 
-            hasPlan={hasPlan} 
-            selectedCommunityId={selectedCommunityId}
-            navigateToPlans={navigateToPlans}
-          />
-
-          <MiniAppLinkButton onClick={copyMiniAppLink} />
         </div>
 
-        <HeaderActions onNewCommunityClick={() => navigate("/platform-select")} />
-      </motion.div>
+        {selectedCommunity && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="community-name">Community Name</Label>
+              <Input
+                type="text"
+                id="community-name"
+                value={selectedCommunity?.name}
+                disabled
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="community-id">Community ID</Label>
+              <Input
+                type="text"
+                id="community-id"
+                value={selectedCommunity?.id}
+                disabled
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-      <AlertMessage 
-        showAlert={showAlert}
-        setShowAlert={setShowAlert}
-        alertMessage={alertMessage}
-      />
-    </>
+interface CommunityDropdownProps {
+  communities: Community[] | undefined;
+  selectedCommunity: Community | null;
+  onCommunityChange: (communityId: string) => void;
+  isLoading: boolean;
+}
+
+const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
+  communities,
+  selectedCommunity,
+  onCommunityChange,
+  isLoading,
+}) => {
+  return (
+    <Select onValueChange={onCommunityChange} disabled={isLoading}>
+      <SelectTrigger className="w-[320px]">
+        <SelectValue placeholder="Select a community" />
+      </SelectTrigger>
+      <SelectContent>
+        {communities?.map((community) => (
+          <SelectItem key={community.id} value={community.id}>
+            {community.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };

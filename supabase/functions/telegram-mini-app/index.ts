@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -84,11 +83,15 @@ serve(async (req) => {
       );
     }
 
+    // 🔄 IMPORTANT: Improved logging for custom links
+    console.log(`🔍 Processing start parameter: "${start}"`);
+    
     // Check if start is a UUID or a custom link
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
     let communityQuery;
     
     if (isUUID) {
+      console.log(`✅ Parameter is a UUID, querying by ID: ${start}`);
       // If it's a UUID, search by ID
       communityQuery = supabase
         .from("communities")
@@ -110,6 +113,7 @@ serve(async (req) => {
         .eq("id", start)
         .single();
     } else {
+      console.log(`🔗 Parameter appears to be a custom link: "${start}"`);
       // If it's not a UUID, search by custom_link
       communityQuery = supabase
         .from("communities")
@@ -136,15 +140,21 @@ serve(async (req) => {
     const { data: community, error: communityError } = await communityQuery;
 
     if (communityError) {
-      console.error("Error fetching community:", communityError);
+      console.error(`❌ Error fetching community with ${isUUID ? 'ID' : 'custom link'} "${start}":`, communityError);
+      console.error("Error details:", communityError.message, communityError.details);
+      
       return new Response(
         JSON.stringify({
           error: "Failed to fetch community data",
           details: communityError.message,
+          param: start,
+          isUUID: isUUID
         }),
         { headers: corsHeaders, status: 500 }
       );
     }
+
+    console.log(`✅ Successfully found community: ${community.name} (ID: ${community.id})`);
 
     // Process Telegram Mini App init data if provided
     let userData = null;

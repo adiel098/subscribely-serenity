@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../../services/loggingService.ts';
 
@@ -14,14 +13,40 @@ interface StartCommandDataResult {
  */
 export async function fetchStartCommandData(
   supabase: ReturnType<typeof createClient>,
-  communityId: string
+  communityIdOrLink: string
 ): Promise<StartCommandDataResult> {
   const logger = createLogger(supabase, 'DATA-SOURCES');
   
   try {
-    await logger.info(`Fetching data for community ID: ${communityId}`);
+    await logger.info(`Fetching data for community ID or link: ${communityIdOrLink}`);
     
-    // Fetch community data first
+    // Check if it's a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
+    let communityId = communityIdOrLink;
+    
+    if (!isUUID) {
+      await logger.info(`Input appears to be a custom link: ${communityIdOrLink}`);
+      
+      // Fetch community by custom_link
+      const { data: communityData, error: linkError } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('custom_link', communityIdOrLink)
+        .single();
+      
+      if (linkError || !communityData) {
+        await logger.error(`Failed to find community with custom link: ${communityIdOrLink}`, linkError);
+        return {
+          success: false,
+          error: `Community not found with custom link: ${communityIdOrLink}`
+        };
+      }
+      
+      communityId = communityData.id;
+      await logger.info(`Custom link ${communityIdOrLink} resolved to community ID: ${communityId}`);
+    }
+    
+    // Now fetch community data by ID
     const communityResult = await supabase
       .from('communities')
       .select('*')

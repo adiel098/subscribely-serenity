@@ -13,7 +13,7 @@ export async function handleStartCommand(
   botToken: string
 ): Promise<boolean> {
   try {
-    console.log('🚀 [START-COMMAND] Starting command handler with message:', JSON.stringify(message, null, 2));
+    console.log('🚀 [START-COMMAND] Processing command with message:', JSON.stringify(message, null, 2));
 
     // Extract the parameter from /start command
     // Format: /start OR /start param1_param2
@@ -55,7 +55,7 @@ export async function handleStartCommand(
     
     // If it's not a UUID, try to find by custom_link
     if (!isUUID) {
-      console.log(`[START-COMMAND] 🔍 Param is not a UUID, checking custom_link: ${startParam}`);
+      console.log(`[START-COMMAND] 🔍 Parameter is not a UUID, checking custom_link: ${startParam}`);
       const { data: communityData, error: linkError } = await supabase
         .from('communities')
         .select('id')

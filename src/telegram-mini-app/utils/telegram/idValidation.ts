@@ -1,6 +1,6 @@
 
 /**
- * Utility functions for validating Telegram IDs
+ * Utility functions for validating Telegram IDs and custom links
  */
 
 /**
@@ -41,4 +41,29 @@ export const formatTelegramId = (id: string | number | undefined | null): string
     console.error('❌ Invalid Telegram ID format:', stringId);
     return null;
   }
+};
+
+/**
+ * Validates a custom link format (alphanumeric, underscores, hyphens)
+ */
+export const isValidCustomLink = (link: string | null | undefined): boolean => {
+  if (!link) return false;
+  
+  // Custom link should only contain alphanumeric characters, underscores, and hyphens
+  const isValid = /^[a-zA-Z0-9_-]+$/.test(link);
+  console.log(`🔗 Custom link validation for "${link}": ${isValid}`);
+  
+  return isValid;
+};
+
+/**
+ * Checks if the value is a UUID
+ */
+export const isUUID = (value: string | null | undefined): boolean => {
+  if (!value) return false;
+  
+  const isValid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+  console.log(`🆔 UUID validation for "${value}": ${isValid}`);
+  
+  return isValid;
 };

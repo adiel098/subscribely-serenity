@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
@@ -27,11 +26,11 @@ serve(async (req) => {
     console.log(`🔍 DEBUG: Full request data:`, JSON.stringify(requestData, null, 2));
 
     if (debug) {
-      console.log(`🔍 DEBUG: Fetching community data for ID: ${community_id}`);
+      console.log(`🔍 DEBUG: Fetching community data for ID or link: ${community_id}`);
     }
 
     if (!community_id) {
-      console.error("❌ Missing community_id parameter");
+      console.error("��� Missing community_id parameter");
       return new Response(
         JSON.stringify({ error: "Missing community_id parameter" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -43,6 +42,7 @@ serve(async (req) => {
     let communityQuery;
     
     if (isUUID) {
+      console.log(`🔍 DEBUG: Parameter is a UUID, searching by ID: ${community_id}`);
       // If it's a UUID, search by ID
       communityQuery = supabase
         .from('communities')
@@ -61,6 +61,7 @@ serve(async (req) => {
         .eq('id', community_id)
         .single();
     } else {
+      console.log(`🔗 DEBUG: Parameter appears to be a custom link: "${community_id}"`);
       // If it's not a UUID, search by custom_link
       communityQuery = supabase
         .from('communities')
@@ -86,16 +87,26 @@ serve(async (req) => {
 
     if (error) {
       console.error(`❌ Database error fetching community ${community_id}:`, error);
+      console.error(`Error details: ${error.message}, ${error.details}`);
       return new Response(
-        JSON.stringify({ error: `Error fetching community: ${error.message}` }),
+        JSON.stringify({ 
+          error: `Error fetching community: ${error.message}`,
+          details: error.details,
+          isUUID: isUUID,
+          param: community_id
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
     if (!community) {
-      console.error(`❌ Community with ID or link ${community_id} not found`);
+      console.error(`❌ Community with ${isUUID ? 'ID' : 'custom link'} "${community_id}" not found`);
       return new Response(
-        JSON.stringify({ error: "Community not found" }),
+        JSON.stringify({ 
+          error: "Community not found",
+          param: community_id,
+          isUUID: isUUID 
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
       );
     }

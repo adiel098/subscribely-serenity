@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
 import { kickMemberService } from '../handlers/services/memberKickService.ts';
@@ -205,6 +204,20 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
     // Route: Start Command - IMPORTANT: Check this first before other content tests
     if (message.text && message.text.startsWith('/start')) {
       console.log("[ROUTER] 🚀 ROUTING TO START COMMAND with params:", message.text);
+      
+      // Parse the start parameter if any
+      const startParams = message.text.split(' ');
+      const startParam = startParams.length > 1 ? startParams[1] : null;
+      
+      if (startParam) {
+        console.log(`[ROUTER] 📎 Start command includes parameter: "${startParam}"`);
+        
+        // Check if it might be a custom link
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam);
+        if (!isUUID) {
+          console.log(`[ROUTER] 🔗 Parameter appears to be a custom link: ${startParam}`);
+        }
+      }
       
       try {
         handled = await handleStartCommand(supabaseClient, message, botToken);

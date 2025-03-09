@@ -33,8 +33,6 @@ export const MainContent = ({
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
       <div className="flex flex-col gap-6">
-        <CommunityHeader community={community} />
-        
         <UserProfileCard 
           name={telegramUser.first_name ? 
             `${telegramUser.first_name} ${telegramUser.last_name || ''}` : 
@@ -44,6 +42,8 @@ export const MainContent = ({
           photoUrl={telegramUser.photo_url}
           email={telegramUser.email}
         />
+        
+        <CommunityHeader community={community} />
         
         <ContentTabs
           activeTab={activeTab}

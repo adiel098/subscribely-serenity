@@ -15,6 +15,7 @@ export interface Community {
   description: string | null;
   telegram_photo_url: string | null;
   telegram_invite_link: string | null;
+  telegram_chat_id: string | null;  // Added this property
   subscription_plans: Plan[];
   member_count: number;
 }

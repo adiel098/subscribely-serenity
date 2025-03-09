@@ -44,6 +44,7 @@ serve(async (req) => {
         description, 
         telegram_photo_url, 
         telegram_invite_link,
+        telegram_chat_id,
         member_count,
         subscription_count,
         subscription_plans(*)
@@ -69,6 +70,7 @@ serve(async (req) => {
 
     if (debug) {
       console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);
+      console.log(`🔍 DEBUG: Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
       
       // Log subscription plans details
       if (community.subscription_plans) {

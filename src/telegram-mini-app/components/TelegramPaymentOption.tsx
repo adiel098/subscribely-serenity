@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,10 +25,24 @@ export const TelegramPaymentOption = ({
   demoDelay = 1500
 }: TelegramPaymentOptionProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    // Reset image states when method changes
+    setImageLoaded(false);
+    setImageError(false);
+  }, [method]);
+
+  // Log image path for debugging
+  useEffect(() => {
+    console.log(`Payment option ${method} using image: ${getLogoSrc()}`);
+  }, [method]);
 
   const handleClick = async () => {
     if (disabled) return;
     
+    console.log(`Selecting payment method: ${method}`);
     setIsProcessing(true);
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, demoDelay));
@@ -39,11 +53,11 @@ export const TelegramPaymentOption = ({
   const getLogoSrc = () => {
     switch (method) {
       case 'paypal':
-        return '/lovable-uploads/c064aaa6-034b-4761-8fe7-1a036566c5da.png';
+        return '/lovable-uploads/c0a686c7-818c-4126-a3c2-6d3f8bf92931.png';
       case 'stripe':
-        return '/lovable-uploads/3286d590-5159-44d9-8ed8-4962d632fa3f.png';
+        return '/lovable-uploads/aebdbf36-f213-4bd7-a63c-ebf516bae3d9.png';
       case 'crypto':
-        return '/lovable-uploads/6cadc0db-d990-4ef3-8e3c-c34ece5bb8f9.png';
+        return '/lovable-uploads/641d0272-8589-423b-b0e4-84acf6ae6065.png';
       default:
         return '';
     }
@@ -75,6 +89,20 @@ export const TelegramPaymentOption = ({
     }
   };
 
+  const handleImageLoad = () => {
+    console.log(`Image for ${method} loaded successfully`);
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error(`Failed to load image for ${method}:`, e);
+    setImageError(true);
+    setImageLoaded(false);
+    // Set fallback image
+    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=';
+  };
+
   return (
     <Card 
       className={cn(
@@ -98,10 +126,8 @@ export const TelegramPaymentOption = ({
                 src={getLogoSrc()} 
                 alt={`${title} logo`} 
                 className="max-h-full max-w-full object-contain"
-                onError={(e) => {
-                  console.error(`Failed to load image for ${method}:`, e);
-                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=';
-                }}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
               />
             </div>
             <h3 className="font-medium text-gray-900 text-sm mt-2">{title}</h3>

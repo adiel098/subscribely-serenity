@@ -50,6 +50,7 @@ export const PaymentMethods = ({
 
   // Log community invite link for debugging
   useEffect(() => {
+    console.log('[PaymentMethods] Payment Method Selected:', selectedPaymentMethod);
     console.log('[PaymentMethods] Community invite link:', communityInviteLink);
     console.log('[PaymentMethods] Selected plan:', selectedPlan);
     console.log('[PaymentMethods] Selected plan price:', selectedPlan.price);
@@ -57,7 +58,7 @@ export const PaymentMethods = ({
     console.log('[PaymentMethods] Telegram username:', telegramUsername);
     console.log('[PaymentMethods] First name:', firstName);
     console.log('[PaymentMethods] Last name:', lastName);
-  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName]);
+  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName, selectedPaymentMethod]);
 
   // Show error toast if payment processing fails
   useEffect(() => {
@@ -90,6 +91,7 @@ export const PaymentMethods = ({
   };
 
   const handlePaymentSuccess = () => {
+    console.log('[PaymentMethods] Payment success callback triggered');
     onCompletePurchase();
   };
 
@@ -107,7 +109,10 @@ export const PaymentMethods = ({
       
       <PaymentOptions
         selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={onPaymentMethodSelect}
+        onPaymentMethodSelect={(method) => {
+          console.log(`[PaymentMethods] Payment method selected: ${method}`);
+          onPaymentMethodSelect(method);
+        }}
         stripeConfig={stripeConfig}
         communityId={selectedPlan.community_id}
         price={selectedPlan.price}

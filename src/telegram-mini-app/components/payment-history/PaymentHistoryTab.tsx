@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,7 +12,7 @@ interface PaymentHistoryTabProps {
 }
 
 export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUserId }) => {
-  const { payments, isLoading, error, refetch } = usePaymentHistory(telegramUserId);
+  const { payments, isLoading, error } = usePaymentHistory(telegramUserId);
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
 
   console.log("[PaymentHistoryTab] Rendering with:", {
@@ -106,10 +105,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
         <p className="text-gray-500 text-sm mb-4">
           User ID: {telegramUserId || "Not available"}
         </p>
-        <Button onClick={() => refetch()} variant="outline" size="sm">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          Try Again
-        </Button>
       </div>
     );
   }

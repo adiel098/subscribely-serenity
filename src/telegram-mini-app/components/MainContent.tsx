@@ -6,6 +6,9 @@ import { PaymentSection } from "./payment/PaymentSection";
 import { UserProfileCard } from "./user-profile/UserProfileCard";
 import { DebugInfo } from "./debug/DebugInfo";
 import { isDevelopment } from "../utils/telegramUtils";
+import { ExpirationWarning } from "./subscriptions/ExpirationWarning";
+import { Subscription } from "../services/memberService";
+import { isSubscriptionActive } from "./subscriptions/utils";
 
 export interface DebugInfoProps {
   telegramUser: any;
@@ -29,6 +32,12 @@ export const MainContent = ({
   subscriptionsLoading
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  
+  // Find the first active subscription that is about to expire
+  const expiringSubscription = subscriptions?.find(sub => 
+    isSubscriptionActive(sub) && 
+    (new Date(sub.subscription_end_date || sub.expiry_date) <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000))
+  );
   
   // Enhanced logging for debugging
   useEffect(() => {
@@ -62,6 +71,13 @@ export const MainContent = ({
           photoUrl={telegramUser.photo_url}
           email={telegramUser.email}
         />
+        
+        {expiringSubscription && (
+          <ExpirationWarning 
+            subscription={expiringSubscription} 
+            onRenew={handleRenewSubscription} 
+          />
+        )}
         
         <CommunityHeader community={community} />
         

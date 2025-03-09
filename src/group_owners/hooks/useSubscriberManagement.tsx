@@ -62,10 +62,11 @@ export const useSubscriberManagement = (communityId: string) => {
       
       console.log(`Using telegram_chat_id: ${community.telegram_chat_id} instead of community_id: ${subscriber.community_id}`);
       
+      // 1. Remove member from Telegram chat
       const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
         body: { 
           path: '/remove-member',
-          chat_id: community.telegram_chat_id, // Use the actual Telegram chat ID
+          chat_id: community.telegram_chat_id,
           user_id: subscriber.telegram_user_id
         }
       });
@@ -77,7 +78,21 @@ export const useSubscriberManagement = (communityId: string) => {
 
       console.log('Successfully removed user from Telegram channel');
 
-      // Then update the database record
+      // 2. Invalidate any invite links for this user
+      console.log('Invalidating invite links...');
+      
+      const { error: inviteError } = await supabase
+        .from('subscription_payments')
+        .update({ invite_link: null })
+        .eq('telegram_user_id', subscriber.telegram_user_id)
+        .eq('community_id', subscriber.community_id);
+        
+      if (inviteError) {
+        console.error('Error invalidating invite links:', inviteError);
+        // Continue despite error, as the primary goal is to remove the user
+      }
+
+      // 3. Update the database record to mark as "removed" instead of just inactive
       console.log('Updating subscription status in database...');
       
       const { data: updateData, error: updateError } = await supabase
@@ -85,6 +100,7 @@ export const useSubscriberManagement = (communityId: string) => {
         .update({
           subscription_status: false,
           is_active: false,
+          status: 'removed', // New status to indicate user was explicitly removed
           subscription_end_date: new Date().toISOString()
         })
         .eq('id', subscriber.id)
@@ -97,11 +113,21 @@ export const useSubscriberManagement = (communityId: string) => {
         throw updateError;
       }
 
-      console.log('Successfully updated subscriber status');
+      // 4. Log the removal event
+      await supabase
+        .from('subscription_activity_logs')
+        .insert({
+          telegram_user_id: subscriber.telegram_user_id,
+          community_id: subscriber.community_id,
+          activity_type: 'member_removed',
+          details: 'Member manually removed from community by admin'
+        });
+
+      console.log('Successfully updated subscriber status and logged removal');
 
       toast({
         title: "Success",
-        description: "Subscriber removed successfully from channel and subscription deactivated",
+        description: "Subscriber removed successfully and prevented from rejoining",
       });
       
       console.log('Refreshing data...');

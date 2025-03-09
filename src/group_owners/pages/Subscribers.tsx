@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -8,7 +7,7 @@ import { SubscribersHeader } from "../components/subscribers/SubscribersHeader";
 import { SubscriberFilters } from "../components/subscribers/SubscriberFilters";
 import { useSubscriberManagement } from "../hooks/useSubscriberManagement";
 import { useSubscriberFilters } from "../hooks/useSubscriberFilters";
-import { Loader2, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const Subscribers = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -61,14 +60,13 @@ const Subscribers = () => {
 
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     
-    // Create a download link and trigger it
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', 'subscribers.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(link.href); // Clean up the URL object
+    URL.revokeObjectURL(link.href);
 
     toast({
       title: "Success",
@@ -125,4 +123,3 @@ const Subscribers = () => {
 };
 
 export default Subscribers;
-

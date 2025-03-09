@@ -176,6 +176,7 @@ export class TelegramMemberManager {
         .update({
           is_active: false,
           subscription_status: false,
+          status: 'removed', // Explicitly mark as removed
           subscription_end_date: new Date().toISOString()
         })
         .eq('telegram_user_id', userId)

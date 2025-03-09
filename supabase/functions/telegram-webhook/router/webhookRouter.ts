@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
 import { kickMemberService } from '../handlers/services/memberKickService.ts';
@@ -76,6 +77,22 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
           body.user_id,
           botToken
         );
+
+        // If requested, also invalidate invite links for this user
+        if (success && body.invalidate_invite_links) {
+          try {
+            await supabaseClient
+              .from('subscription_payments')
+              .update({ invite_link: null })
+              .eq('telegram_user_id', body.user_id)
+              .eq('community_id', body.chat_id);
+            
+            console.log(`[ROUTER] 🔗 Invite links invalidated for user ${body.user_id}`);
+          } catch (error) {
+            console.error('[ROUTER] ❌ Error invalidating invite links:', error);
+            // Continue despite error as the main operation succeeded
+          }
+        }
 
         console.log(`[ROUTER] ${success ? '✅' : '❌'} Member removal ${success ? 'successful' : 'failed'}`);
         return new Response(JSON.stringify({ success }), {

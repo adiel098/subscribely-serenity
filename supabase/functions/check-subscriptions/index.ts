@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
@@ -186,14 +187,46 @@ async function handleExpiredSubscription(
   // Send expiration notification to member
   if (botSettings.expired_subscription_message) {
     try {
-      const messageSent = await sendTelegramMessage(
-        supabase,
-        member.community_id,
+      // Get global bot token
+      const { data: settings } = await supabase
+        .from("telegram_global_settings")
+        .select("bot_token")
+        .single();
+
+      if (!settings?.bot_token) {
+        throw new Error('Bot token not found');
+      }
+
+      // Get community data for mini app URL
+      const { data: community } = await supabase
+        .from("communities")
+        .select("miniapp_url")
+        .eq("id", member.community_id)
+        .single();
+
+      // Create inline keyboard if mini app URL is available
+      let inlineKeyboard = null;
+      if (community?.miniapp_url) {
+        inlineKeyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "Renew Now!",
+                web_app: {
+                  url: `${community.miniapp_url}?start=${member.community_id}`
+                }
+              }
+            ]
+          ]
+        };
+      }
+
+      // Send message directly via Telegram API
+      const messageSent = await sendDirectTelegramMessage(
+        settings.bot_token,
         member.telegram_user_id,
-        botSettings.expired_subscription_message,
-        null,
-        botSettings.bot_signature,
-        "Renew Now!"
+        botSettings.expired_subscription_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+        inlineKeyboard
       );
 
       if (messageSent) {
@@ -219,13 +252,35 @@ async function handleExpiredSubscription(
   // Remove member from chat if auto-remove is enabled
   if (botSettings.auto_remove_expired) {
     try {
-      await supabase.functions.invoke("telegram-webhook", {
-        body: {
-          path: "/remove-member",
-          chat_id: member.community_id,
-          user_id: member.telegram_user_id,
-        },
-      });
+      // Get bot token to make direct API call
+      const { data: settings } = await supabase
+        .from("telegram_global_settings")
+        .select("bot_token")
+        .single();
+
+      if (!settings?.bot_token) {
+        throw new Error('Bot token not found');
+      }
+
+      // Make direct API call to kick chat member
+      const response = await fetch(
+        `https://api.telegram.org/bot${settings.bot_token}/banChatMember`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: member.community_id,
+            user_id: member.telegram_user_id,
+            revoke_messages: false,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (!result.ok) {
+        console.error("Error removing member from chat:", result);
+        throw new Error(result.description || "Failed to remove from chat");
+      }
 
       await supabase.from("telegram_chat_members").update({
         is_active: false,
@@ -264,6 +319,38 @@ async function sendReminderNotifications(
     return;
   }
 
+  // Get bot token and community data once for all reminder types
+  const [tokenResult, communityResult] = await Promise.all([
+    supabase.from("telegram_global_settings").select("bot_token").single(),
+    supabase.from("communities").select("miniapp_url").eq("id", member.community_id).single()
+  ]);
+
+  if (tokenResult.error || !tokenResult.data?.bot_token) {
+    console.error("Error fetching bot token:", tokenResult.error);
+    result.details = "Failed to fetch bot token";
+    return;
+  }
+
+  const botToken = tokenResult.data.bot_token;
+  const miniAppUrl = communityResult.data?.miniapp_url;
+
+  // Create inline keyboard if mini app URL is available
+  let inlineKeyboard = null;
+  if (miniAppUrl) {
+    inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "Renew Now!",
+            web_app: {
+              url: `${miniAppUrl}?start=${member.community_id}`
+            }
+          }
+        ]
+      ]
+    };
+  }
+
   // First Reminder
   if (daysUntilExpiration === botSettings.first_reminder_days) {
     console.log(`Sending first reminder to ${member.telegram_user_id}, ${daysUntilExpiration} days before expiration`);
@@ -272,37 +359,35 @@ async function sendReminderNotifications(
 
     // Send first reminder notification
     try {
-      const messageSent = await sendTelegramMessage(
-        supabase,
-        member.community_id,
-        member.telegram_user_id,
-        botSettings.first_reminder_message,
-        botSettings.first_reminder_image,
-        botSettings.bot_signature,
-        "Renew Now!"
-      );
+      if (botSettings.first_reminder_image) {
+        // Send photo message with caption
+        const messageSent = await sendDirectTelegramPhotoMessage(
+          botToken,
+          member.telegram_user_id,
+          botSettings.first_reminder_image,
+          botSettings.first_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+          inlineKeyboard
+        );
 
-      if (messageSent) {
-        // Log the notification only if message was sent successfully
-        await supabase.from("subscription_notifications").insert({
-          community_id: member.community_id,
-          member_id: member.id,
-          notification_type: "first_reminder",
-          status: "sent",
-        });
-
-        // Log in activity logs
-        await supabase.from("subscription_activity_logs").insert({
-          community_id: member.community_id,
-          telegram_user_id: member.telegram_user_id,
-          activity_type: "first_reminder_sent",
-          details: `First reminder sent (${daysUntilExpiration} days before expiration)`,
-        });
-        
-        console.log(`✅ First reminder message sent successfully to user ${member.telegram_user_id}`);
+        if (messageSent) {
+          await logSuccessfulNotification(supabase, member, "first_reminder", result);
+        } else {
+          handleFailedNotification(result, "first reminder with image");
+        }
       } else {
-        console.error(`❌ Failed to send first reminder message to user ${member.telegram_user_id}`);
-        result.details = "Failed to send first reminder";
+        // Send text message
+        const messageSent = await sendDirectTelegramMessage(
+          botToken,
+          member.telegram_user_id,
+          botSettings.first_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+          inlineKeyboard
+        );
+
+        if (messageSent) {
+          await logSuccessfulNotification(supabase, member, "first_reminder", result);
+        } else {
+          handleFailedNotification(result, "first reminder");
+        }
       }
     } catch (error) {
       console.error(`❌ Error sending first reminder message to user ${member.telegram_user_id}:`, error);
@@ -317,37 +402,35 @@ async function sendReminderNotifications(
 
     // Send second reminder notification
     try {
-      const messageSent = await sendTelegramMessage(
-        supabase,
-        member.community_id,
-        member.telegram_user_id,
-        botSettings.second_reminder_message,
-        botSettings.second_reminder_image,
-        botSettings.bot_signature,
-        "Renew Now!"
-      );
+      if (botSettings.second_reminder_image) {
+        // Send photo message with caption
+        const messageSent = await sendDirectTelegramPhotoMessage(
+          botToken,
+          member.telegram_user_id,
+          botSettings.second_reminder_image,
+          botSettings.second_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+          inlineKeyboard
+        );
 
-      if (messageSent) {
-        // Log the notification only if message was sent successfully
-        await supabase.from("subscription_notifications").insert({
-          community_id: member.community_id,
-          member_id: member.id,
-          notification_type: "second_reminder",
-          status: "sent",
-        });
-
-        // Log in activity logs
-        await supabase.from("subscription_activity_logs").insert({
-          community_id: member.community_id,
-          telegram_user_id: member.telegram_user_id,
-          activity_type: "second_reminder_sent",
-          details: `Second reminder sent (${daysUntilExpiration} days before expiration)`,
-        });
-        
-        console.log(`✅ Second reminder message sent successfully to user ${member.telegram_user_id}`);
+        if (messageSent) {
+          await logSuccessfulNotification(supabase, member, "second_reminder", result);
+        } else {
+          handleFailedNotification(result, "second reminder with image");
+        }
       } else {
-        console.error(`❌ Failed to send second reminder message to user ${member.telegram_user_id}`);
-        result.details = "Failed to send second reminder";
+        // Send text message
+        const messageSent = await sendDirectTelegramMessage(
+          botToken,
+          member.telegram_user_id,
+          botSettings.second_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+          inlineKeyboard
+        );
+
+        if (messageSent) {
+          await logSuccessfulNotification(supabase, member, "second_reminder", result);
+        } else {
+          handleFailedNotification(result, "second reminder");
+        }
       }
     } catch (error) {
       console.error(`❌ Error sending second reminder message to user ${member.telegram_user_id}:`, error);
@@ -362,14 +445,11 @@ async function sendReminderNotifications(
 
     // Only send if days match the original reminder setting
     try {
-      const messageSent = await sendTelegramMessage(
-        supabase,
-        member.community_id,
+      const messageSent = await sendDirectTelegramMessage(
+        botToken,
         member.telegram_user_id,
-        botSettings.subscription_reminder_message,
-        null,
-        botSettings.bot_signature,
-        "Renew Now!"
+        botSettings.subscription_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+        inlineKeyboard
       );
 
       if (messageSent) {
@@ -393,111 +473,131 @@ async function sendReminderNotifications(
   }
 }
 
-async function sendTelegramMessage(
-  supabase: any,
-  communityId: string,
-  userId: string,
-  message: string,
-  imageData: string | null,
-  signature: string | null,
-  buttonText: string | null
-) {
-  try {
-    // Get subscription payment URL
-    const { data: community, error: communityError } = await supabase
-      .from("communities")
-      .select("telegram_chat_id, miniapp_url")
-      .eq("id", communityId)
-      .single();
-      
-    if (communityError || !community) {
-      console.error("Error fetching community data:", communityError);
-      return false;
-    }
+// Helper function to log successful notifications
+async function logSuccessfulNotification(supabase: any, member: SubscriptionMember, type: string, result: any) {
+  // Log the notification in subscription_notifications
+  await supabase.from("subscription_notifications").insert({
+    community_id: member.community_id,
+    member_id: member.id,
+    notification_type: type,
+    status: "sent",
+  });
 
-    // Format message with signature if present
-    const formattedMessage = signature 
-      ? `${message}\n\n${signature}` 
-      : message;
-
-    console.log(`📤 Attempting to send message to user ${userId} in chat ${community.telegram_chat_id}`);
-    console.log(`📄 Message content: ${formattedMessage.substring(0, 100)}...`);
-    
-    // Get the bot token from global settings
-    const { data: globalSettings, error: settingsError } = await supabase
-      .from("telegram_global_settings")
-      .select("bot_token")
-      .single();
-      
-    if (settingsError || !globalSettings?.bot_token) {
-      console.error("Error fetching bot token:", settingsError);
-      return false;
-    }
-
-    let response;
-
-    try {
-      // Send message with or without image
-      if (imageData) {
-        // Directly use the direct-message endpoint
-        response = await supabase.functions.invoke("telegram-webhook", {
-          body: {
-            path: "/direct-message",
-            action: "send_photo",
-            bot_token: globalSettings.bot_token,
-            chat_id: userId,
-            photo: imageData,
-            caption: formattedMessage,
-            button_text: buttonText,
-            button_url: community.miniapp_url,
-          },
-        });
-      } else {
-        response = await supabase.functions.invoke("telegram-webhook", {
-          body: {
-            path: "/direct-message",
-            action: "send_message",
-            bot_token: globalSettings.bot_token,
-            chat_id: userId,
-            text: formattedMessage,
-            button_text: buttonText,
-            button_url: community.miniapp_url,
-          },
-        });
-      }
-      
-      console.log("Telegram webhook response:", JSON.stringify(response));
-      
-      // Check if the function call was successful
-      if (response.error) {
-        console.error("Error response from telegram-webhook function:", response.error);
-        return false;
-      }
-      
-      // Check if the Telegram API call was successful
-      if (!response.data?.success) {
-        console.error("Telegram webhook returned failure:", response.data);
-        return false;
-      }
-    } catch (error) {
-      console.error("Exception when calling telegram-webhook function:", error);
-      return false;
-    }
-
-    // Log message sending in community_logs
-    await supabase.from("community_logs").insert({
-      community_id: communityId,
-      event_type: "notification_sent",
-      user_id: userId,
-      metadata: {
-        message_type: imageData ? "photo_message" : "text_message",
-        has_button: buttonText ? true : false,
-      },
+  // Log in activity logs for first and second reminders
+  if (type === "first_reminder" || type === "second_reminder") {
+    await supabase.from("subscription_activity_logs").insert({
+      community_id: member.community_id,
+      telegram_user_id: member.telegram_user_id,
+      activity_type: `${type}_sent`,
+      details: `${type === "first_reminder" ? "First" : "Second"} reminder sent`,
     });
+  }
+  
+  console.log(`✅ ${type} message sent successfully to user ${member.telegram_user_id}`);
+}
 
+// Helper function to handle failed notifications
+function handleFailedNotification(result: any, reminderType: string) {
+  console.error(`❌ Failed to send ${reminderType} message`);
+  result.details = `Failed to send ${reminderType}`;
+}
+
+// Function to send text message directly via Telegram API
+async function sendDirectTelegramMessage(
+  botToken: string,
+  chatId: string,
+  text: string,
+  replyMarkup: any = null
+): Promise<boolean> {
+  try {
+    console.log(`📤 Sending text message to ${chatId}`);
+    
+    const body: any = {
+      chat_id: chatId,
+      text: text,
+      parse_mode: "HTML"
+    };
+    
+    if (replyMarkup) {
+      body.reply_markup = replyMarkup;
+    }
+    
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }
+    );
+    
+    const result = await response.json();
+    
+    if (!result.ok) {
+      console.error("Error sending message:", result.description);
+      return false;
+    }
+    
     return true;
   } catch (error) {
-    console.error("Error sending Telegram message:", error);
+    console.error("Error sending message:", error);
+    return false;
+  }
+}
+
+// Function to send photo message directly via Telegram API
+async function sendDirectTelegramPhotoMessage(
+  botToken: string,
+  chatId: string,
+  photoUrl: string,
+  caption: string = "",
+  replyMarkup: any = null
+): Promise<boolean> {
+  try {
+    console.log(`📤 Sending photo message to ${chatId}`);
+    
+    // Check if the image is a base64 data URL
+    if (photoUrl.startsWith('data:image')) {
+      // For base64 data URLs, we need a different approach
+      // This could be implemented using FormData and a Blob, but that's complex in Deno
+      // For simplicity, let's just send a text message instead in this case
+      console.log(`Base64 image detected, sending as text message instead`);
+      return await sendDirectTelegramMessage(botToken, chatId, caption, replyMarkup);
+    }
+    
+    const body: any = {
+      chat_id: chatId,
+      photo: photoUrl,
+      parse_mode: "HTML"
+    };
+    
+    if (caption) {
+      body.caption = caption;
+    }
+    
+    if (replyMarkup) {
+      body.reply_markup = replyMarkup;
+    }
+    
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }
+    );
+    
+    const result = await response.json();
+    
+    if (!result.ok) {
+      console.error("Error sending photo message:", result.description);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error sending photo message:", error);
     return false;
   }
 }

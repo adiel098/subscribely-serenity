@@ -11,6 +11,14 @@ export async function logNotification(
   notificationType: string
 ): Promise<void> {
   try {
+    console.log(`Logging notification of type: ${notificationType} for member ${memberId}`);
+    
+    // Validate notificationType to ensure it's one of the valid values
+    if (!["reminder", "expiration"].includes(notificationType)) {
+      console.warn(`Invalid notification type: ${notificationType}, defaulting to "reminder"`);
+      notificationType = "reminder";
+    }
+    
     const { error } = await supabase.from("subscription_notifications").insert({
       community_id: communityId,
       member_id: memberId,

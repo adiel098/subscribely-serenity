@@ -18,17 +18,29 @@ export async function sendSecondReminder(
   daysUntilExpiration: number
 ): Promise<void> {
   try {
-    // Format and send the message
+    // Format the message
     const message = formatSecondReminderMessage(botSettings);
     
+    console.log(`Sending second reminder to user ${member.telegram_user_id}`);
+    
+    if (inlineKeyboard) {
+      console.log("Including Renew Now button with message");
+    } else {
+      console.log("No Renew Now button available (missing miniapp_url)");
+    }
+    
     // Send the message with the renew button if available
-    await sendTelegramMessage(
+    const success = await sendTelegramMessage(
       botToken,
       member.telegram_user_id,
       message,
       botSettings.second_reminder_image,
       inlineKeyboard
     );
+
+    if (!success) {
+      throw new Error("Failed to send telegram message");
+    }
 
     // Log the successful notification
     await logSuccessfulNotification(supabase, member, "second_reminder");

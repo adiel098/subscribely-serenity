@@ -19,17 +19,29 @@ export async function sendLegacyReminder(
   daysUntilExpiration: number
 ): Promise<void> {
   try {
-    // Format and send the message
+    // Format the message
     const message = formatLegacyReminderMessage(botSettings);
     
+    console.log(`Sending legacy reminder to user ${member.telegram_user_id}`);
+    
+    if (inlineKeyboard) {
+      console.log("Including Renew Now button with message");
+    } else {
+      console.log("No Renew Now button available (missing miniapp_url)");
+    }
+    
     // Send the message with the renew button if available
-    await sendTelegramMessage(
+    const success = await sendTelegramMessage(
       botToken,
       member.telegram_user_id,
       message,
       null, // Legacy reminders don't have images
       inlineKeyboard
     );
+
+    if (!success) {
+      throw new Error("Failed to send telegram message");
+    }
 
     // Log the successful notification
     await logSuccessfulNotification(supabase, member, "subscription_reminder");

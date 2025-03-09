@@ -116,6 +116,7 @@ async function getNotificationConfig(
     // Create inline keyboard if mini app URL is available
     let inlineKeyboard = null;
     if (miniAppUrl) {
+      console.log(`Creating renew button with miniAppUrl: ${miniAppUrl}`);
       inlineKeyboard = {
         inline_keyboard: [
           [
@@ -128,6 +129,8 @@ async function getNotificationConfig(
           ]
         ]
       };
+    } else {
+      console.warn(`No miniapp_url found for community ${communityId}, button will not be shown`);
     }
 
     return { botToken, inlineKeyboard };

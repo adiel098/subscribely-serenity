@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
-import { useEffect } from "react";
 
 interface RemoveSubscriberDialogProps {
   subscriber: Subscriber | null;
@@ -30,11 +29,13 @@ export const RemoveSubscriberDialog = ({
 }: RemoveSubscriberDialogProps) => {
   if (!subscriber) return null;
 
-  // Prevent event propagation to stop the dialog from interfering with the page after closing
+  // Prevent event propagation to stop the dialog from interfering with the page
   const handleConfirmClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onConfirm(subscriber);
+    if (subscriber) {
+      onConfirm(subscriber);
+    }
   };
 
   // Handle dialog cancel more safely
@@ -46,7 +47,7 @@ export const RemoveSubscriberDialog = ({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
           <AlertDialogDescription>

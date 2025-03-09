@@ -27,15 +27,18 @@ export const useSubscriberManagement = (communityId: string) => {
       await refetch();
     } catch (error) {
       console.error("Error updating subscribers status:", error);
+      throw error; // Re-throw to allow parent component to handle
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleRemoveSubscriber = async (subscriber: Subscriber) => {
-    if (!subscriber.id) return;
+    if (!subscriber?.id) return;
     
     try {
+      console.log("Removing subscriber:", subscriber.id);
+      
       // Update the database to set subscription status to "removed" and is_active to false
       const { error } = await supabase
         .from("telegram_chat_members")
@@ -45,7 +48,10 @@ export const useSubscriberManagement = (communityId: string) => {
         })
         .eq("id", subscriber.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating subscriber status:", error);
+        throw error;
+      }
       
       // Get the Telegram chat ID from the community
       const { data: community, error: communityError } = await supabase

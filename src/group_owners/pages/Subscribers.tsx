@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { EditSubscriberDialog } from "@/group_owners/components/subscribers/EditSubscriberDialog";
@@ -41,13 +41,23 @@ const Subscribers = () => {
     uniquePlans
   } = useSubscriberFilters(subscribers);
 
+  // Clear dialogs state when component unmounts
+  useEffect(() => {
+    return () => {
+      setRemoveDialogOpen(false);
+      setEditDialogOpen(false);
+      setSubscriberToRemove(null);
+      setSelectedSubscriber(null);
+    };
+  }, []);
+
   // Use useCallback to prevent recreation of this function on each render
   const onRemoveClick = useCallback((subscriber: Subscriber) => {
     setSubscriberToRemove(subscriber);
     setRemoveDialogOpen(true);
   }, []);
 
-  const onConfirmRemove = async (subscriber: Subscriber) => {
+  const onConfirmRemove = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber) return;
     
     setIsRemoving(true);
@@ -67,16 +77,17 @@ const Subscribers = () => {
     } finally {
       setIsRemoving(false);
       setRemoveDialogOpen(false);
-      setSubscriberToRemove(null);
+      // Use a delay before clearing the subscriber to prevent UI glitches
+      setTimeout(() => setSubscriberToRemove(null), 300);
     }
-  };
+  }, [handleRemoveSubscriber, toast]);
 
   // Use useCallback for the dialog state handler
   const handleRemoveDialogChange = useCallback((open: boolean) => {
     setRemoveDialogOpen(open);
     if (!open) {
-      // Clear the selected subscriber when dialog closes
-      setTimeout(() => setSubscriberToRemove(null), 100);
+      // Clear the selected subscriber when dialog closes, with a delay
+      setTimeout(() => setSubscriberToRemove(null), 300);
     }
   }, []);
 

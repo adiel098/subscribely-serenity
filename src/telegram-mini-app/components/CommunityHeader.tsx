@@ -17,7 +17,8 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   const { photoUrl, loading, error } = useTelegramChatPhoto({
     communityId: community.id,
     telegramChatId: community.telegram_chat_id,
-    existingPhotoUrl: community.telegram_photo_url
+    existingPhotoUrl: community.telegram_photo_url,
+    forceFetch: !community.telegram_photo_url // Force fetch if there's no existing photo
   });
 
   useEffect(() => {

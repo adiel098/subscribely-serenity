@@ -1,11 +1,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { fetchAndUpdateCommunityPhoto } from './utils/photoHandler.ts';
 
 /**
  * Handles the 'my_chat_member' updates which occur when the bot's status in a chat changes
  * (added, removed, permissions changed, etc.)
  */
-export async function handleMyChatMember(supabase: ReturnType<typeof createClient>, update: any) {
+export async function handleMyChatMember(supabase: ReturnType<typeof createClient>, update: any, botToken: string) {
   console.log('[BOT-STATUS] 🤖 Handling my_chat_member update:', JSON.stringify(update, null, 2));
   
   try {
@@ -51,12 +52,20 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
         } else {
           console.log('[BOT-STATUS] ✅ Community status updated successfully');
         }
+        
+        // Fetch and update the community photo
+        await fetchAndUpdateCommunityPhoto(
+          supabase,
+          botToken,
+          existingCommunity.id,
+          chatId
+        );
       } else if (['group', 'supergroup', 'channel'].includes(chatType)) {
         console.log('[BOT-STATUS] ➕ Creating new community record');
         
         // Create a new community record
         const chatName = update.chat.title || `Chat ${chatId}`;
-        const { error: createError } = await supabase
+        const { data: newCommunity, error: createError } = await supabase
           .from('communities')
           .insert({
             telegram_chat_id: chatId,
@@ -66,12 +75,24 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
             bot_status: newStatus,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          });
+          })
+          .select() // Add select() to get the created record
+          .single();
         
         if (createError) {
           console.error('[BOT-STATUS] ❌ Error creating community record:', createError);
         } else {
           console.log('[BOT-STATUS] ✅ Community record created successfully');
+          
+          // If community was created successfully, fetch and update the photo
+          if (newCommunity) {
+            await fetchAndUpdateCommunityPhoto(
+              supabase,
+              botToken,
+              newCommunity.id,
+              chatId
+            );
+          }
         }
       }
     }

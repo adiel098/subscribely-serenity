@@ -1,4 +1,3 @@
-
 /**
  * Client for interacting with the Telegram Bot API
  */
@@ -7,6 +6,14 @@ export class TelegramApiClient {
   
   constructor(botToken: string) {
     this.botToken = botToken;
+  }
+  
+  /**
+   * Safely gets the bot token for internal use
+   * This should only be used by trusted internal functions
+   */
+  getBotToken(): string {
+    return this.botToken;
   }
   
   /**

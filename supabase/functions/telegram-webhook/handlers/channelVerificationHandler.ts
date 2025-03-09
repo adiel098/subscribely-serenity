@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { fetchAndUpdateCommunityPhoto } from './utils/photoHandler.ts';
 
 interface TelegramMessage {
   chat: {
@@ -83,6 +84,20 @@ export async function handleChannelVerification(
     }
 
     console.log('[Channel] Created new community:', newCommunity.id);
+
+    // Fetch and update the community photo
+    const photoUrl = await fetchAndUpdateCommunityPhoto(
+      supabase,
+      botToken,
+      newCommunity.id,
+      String(message.chat.id)
+    );
+    
+    if (photoUrl) {
+      console.log('[Channel] Successfully added photo to community:', newCommunity.id);
+    } else {
+      console.log('[Channel] No photo available or failed to fetch photo for community:', newCommunity.id);
+    }
 
     // שליחת הודעת אישור
     try {

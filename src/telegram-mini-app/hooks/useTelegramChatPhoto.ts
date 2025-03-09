@@ -7,12 +7,14 @@ interface UseTelegramChatPhotoProps {
   communityId?: string | null;
   telegramChatId?: string | null;
   existingPhotoUrl?: string | null;
+  forceFetch?: boolean;
 }
 
 export const useTelegramChatPhoto = ({ 
   communityId, 
   telegramChatId,
-  existingPhotoUrl 
+  existingPhotoUrl,
+  forceFetch = false
 }: UseTelegramChatPhotoProps) => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(existingPhotoUrl || null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -23,7 +25,8 @@ export const useTelegramChatPhoto = ({
     console.log("[useTelegramChatPhoto] Starting with params:", { 
       communityId, 
       telegramChatId, 
-      existingPhotoUrl 
+      existingPhotoUrl,
+      forceFetch
     });
     
     // If we don't have a chat ID, we can't fetch a photo
@@ -40,8 +43,8 @@ export const useTelegramChatPhoto = ({
         
         console.log(`[useTelegramChatPhoto] Fetching photo for chat ${telegramChatId}, community ${communityId || 'Not provided'}`);
 
-        // If we already have a photo URL and it's valid, we can use it
-        if (existingPhotoUrl) {
+        // If we already have a photo URL and it's valid and we're not forcing a fetch, we can use it
+        if (existingPhotoUrl && !forceFetch) {
           console.log("[useTelegramChatPhoto] Checking existing photo URL:", existingPhotoUrl);
           try {
             // Test if the existing photo URL is accessible
@@ -103,7 +106,7 @@ export const useTelegramChatPhoto = ({
     };
 
     fetchChatPhoto();
-  }, [telegramChatId, communityId, existingPhotoUrl, toast]);
+  }, [telegramChatId, communityId, existingPhotoUrl, forceFetch, toast]);
 
   return { photoUrl, loading, error };
 };

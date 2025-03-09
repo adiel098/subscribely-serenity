@@ -1,118 +1,49 @@
-
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { handleChannelVerification } from "./handlers/channelVerificationHandler.ts";
+import { handleMyChatMember } from "./handlers/botStatusHandler.ts";
 import { corsHeaders } from "./cors.ts";
-import { routeTelegramWebhook } from "./router/webhookRouter.ts";
 
-// Handle incoming requests
-serve(async (req: Request) => {
-  console.log("🔥🔥🔥 TELEGRAM WEBHOOK FUNCTION STARTED 🔥🔥🔥");
-  console.log(`📊 Request method: ${req.method}, URL: ${req.url}`);
-  
-  // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
-    console.log("🛡️ Handling CORS preflight request");
-    return new Response(null, { headers: corsHeaders });
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    
-    // Print sanitized keys to logs for debugging (without revealing full keys)
-    console.log(`📌 Supabase URL present: ${supabaseUrl ? "Yes ✅" : "No ❌"}`);
-    console.log(`📌 Supabase Anon Key present: ${supabaseAnonKey ? "Yes ✅" : "No ❌"}`);
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("❌ CRITICAL: Missing Supabase configuration");
-      throw new Error("Supabase configuration missing");
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    console.log("✅ Supabase client initialized successfully");
-    
-    // Get bot token from environment variable
-    const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
-    console.log(`📌 Bot Token present: ${botToken ? "Yes ✅" : "No ❌"}`);
-    
-    if (!botToken) {
-      console.error("❌ CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set");
-      
-      // Try to log this error in the database
-      try {
-        await supabase.from('telegram_errors').insert({
-          error_type: 'missing_bot_token',
-          error_message: 'TELEGRAM_BOT_TOKEN environment variable not set',
-          stack_trace: 'N/A',
-          context: { webhook_url: req.url }
-        });
-        console.log("✅ Missing token error logged to database");
-      } catch (logError) {
-        console.error("❌ Failed to log missing token error:", logError);
-      }
-      
-      throw new Error("Bot token not configured");
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Now we want to use this information to decide what type of event we're dealing with
+    const update = await req.json()
+    console.log('Full update object:', JSON.stringify(update, null, 2));
+
+    // New channel verification flow
+    if (update.message && update.message.text && update.message.text.startsWith('MBF_')) {
+      console.log('Detected channel verification message:', update.message.text);
+      await handleChannelVerification(supabase, update.message, botToken);
     }
 
-    // Token is present, obscure most of it in logs for security
-    if (botToken.length > 10) {
-      const maskedToken = `${botToken.substring(0, 4)}...${botToken.substring(botToken.length - 4)}`;
-      console.log(`🔑 Using bot token: ${maskedToken}`);
+    // Handle updates to the bot's status in a chat
+    if (update.my_chat_member) {
+      console.log('Detected my_chat_member update:', JSON.stringify(update.my_chat_member, null, 2));
+      await handleMyChatMember(supabase, update.my_chat_member, botToken);
     }
 
-    // Route the webhook request
-    console.log("🚀 Routing webhook request to handler");
-    return await routeTelegramWebhook(req, supabase, botToken);
+    return new Response(JSON.stringify({ message: 'Processed' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   } catch (error) {
-    console.error("🔥 Critical error in webhook handler:", error);
-    console.error("🔥 Error stack:", error.stack);
-    
-    // Try to create a detailed error object
-    const errorDetails = {
-      message: error.message || 'Unknown error',
-      stack: error.stack || 'No stack trace',
-      name: error.name || 'Error',
-      url: req.url,
-      method: req.method,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Try to initialize a minimal Supabase client to log the error
-    try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-      
-      if (supabaseUrl && supabaseAnonKey) {
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-        
-        await supabase.from('telegram_errors').insert({
-          error_type: 'critical_webhook_error',
-          error_message: error.message,
-          stack_trace: error.stack,
-          context: errorDetails
-        }).then(result => {
-          if (result.error) {
-            console.error("❌ Failed to log critical error to database:", result.error);
-          } else {
-            console.log("✅ Critical error logged to database");
-          }
-        });
-      }
-    } catch (logError) {
-      console.error("❌ Failed to log critical error:", logError);
-    }
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "An unknown error occurred",
-        details: errorDetails
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    console.error('Error processing request:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
 });

@@ -359,35 +359,45 @@ async function sendReminderNotifications(
 
     // Send first reminder notification
     try {
+      let messageSent = false;
+      
       if (botSettings.first_reminder_image) {
+        console.log(`Attempting to send image message with first reminder to ${member.telegram_user_id}`);
+        console.log(`Image URL/data: ${botSettings.first_reminder_image.substring(0, 30)}...`);
+        
         // Send photo message with caption
-        const messageSent = await sendDirectTelegramPhotoMessage(
+        messageSent = await sendDirectTelegramPhotoMessage(
           botToken,
           member.telegram_user_id,
           botSettings.first_reminder_image,
           botSettings.first_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
           inlineKeyboard
         );
-
-        if (messageSent) {
-          await logSuccessfulNotification(supabase, member, "first_reminder", result);
-        } else {
-          handleFailedNotification(result, "first reminder with image");
+        
+        if (!messageSent) {
+          console.log(`Failed to send image message, falling back to text for user ${member.telegram_user_id}`);
+          // If image sending fails, fall back to text message
+          messageSent = await sendDirectTelegramMessage(
+            botToken,
+            member.telegram_user_id,
+            botSettings.first_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+            inlineKeyboard
+          );
         }
       } else {
         // Send text message
-        const messageSent = await sendDirectTelegramMessage(
+        messageSent = await sendDirectTelegramMessage(
           botToken,
           member.telegram_user_id,
           botSettings.first_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
           inlineKeyboard
         );
+      }
 
-        if (messageSent) {
-          await logSuccessfulNotification(supabase, member, "first_reminder", result);
-        } else {
-          handleFailedNotification(result, "first reminder");
-        }
+      if (messageSent) {
+        await logSuccessfulNotification(supabase, member, "first_reminder", result);
+      } else {
+        handleFailedNotification(result, "first reminder");
       }
     } catch (error) {
       console.error(`❌ Error sending first reminder message to user ${member.telegram_user_id}:`, error);
@@ -402,35 +412,45 @@ async function sendReminderNotifications(
 
     // Send second reminder notification
     try {
+      let messageSent = false;
+      
       if (botSettings.second_reminder_image) {
+        console.log(`Attempting to send image message with second reminder to ${member.telegram_user_id}`);
+        console.log(`Image URL/data: ${botSettings.second_reminder_image.substring(0, 30)}...`);
+        
         // Send photo message with caption
-        const messageSent = await sendDirectTelegramPhotoMessage(
+        messageSent = await sendDirectTelegramPhotoMessage(
           botToken,
           member.telegram_user_id,
           botSettings.second_reminder_image,
           botSettings.second_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
           inlineKeyboard
         );
-
-        if (messageSent) {
-          await logSuccessfulNotification(supabase, member, "second_reminder", result);
-        } else {
-          handleFailedNotification(result, "second reminder with image");
+        
+        if (!messageSent) {
+          console.log(`Failed to send image message, falling back to text for user ${member.telegram_user_id}`);
+          // If image sending fails, fall back to text message
+          messageSent = await sendDirectTelegramMessage(
+            botToken,
+            member.telegram_user_id,
+            botSettings.second_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
+            inlineKeyboard
+          );
         }
       } else {
         // Send text message
-        const messageSent = await sendDirectTelegramMessage(
+        messageSent = await sendDirectTelegramMessage(
           botToken,
           member.telegram_user_id,
           botSettings.second_reminder_message + (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : ''),
           inlineKeyboard
         );
+      }
 
-        if (messageSent) {
-          await logSuccessfulNotification(supabase, member, "second_reminder", result);
-        } else {
-          handleFailedNotification(result, "second reminder");
-        }
+      if (messageSent) {
+        await logSuccessfulNotification(supabase, member, "second_reminder", result);
+      } else {
+        handleFailedNotification(result, "second reminder");
       }
     } catch (error) {
       console.error(`❌ Error sending second reminder message to user ${member.telegram_user_id}:`, error);
@@ -558,44 +578,101 @@ async function sendDirectTelegramPhotoMessage(
     
     // Check if the image is a base64 data URL
     if (photoUrl.startsWith('data:image')) {
-      // For base64 data URLs, we need a different approach
-      // This could be implemented using FormData and a Blob, but that's complex in Deno
-      // For simplicity, let's just send a text message instead in this case
-      console.log(`Base64 image detected, sending as text message instead`);
-      return await sendDirectTelegramMessage(botToken, chatId, caption, replyMarkup);
-    }
-    
-    const body: any = {
-      chat_id: chatId,
-      photo: photoUrl,
-      parse_mode: "HTML"
-    };
-    
-    if (caption) {
-      body.caption = caption;
-    }
-    
-    if (replyMarkup) {
-      body.reply_markup = replyMarkup;
-    }
-    
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendPhoto`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+      console.log(`Base64 image detected, processing as form data...`);
+      
+      try {
+        // Extract the Base64 data (remove the data:image/xxx;base64, prefix)
+        const matches = photoUrl.match(/^data:image\/([a-zA-Z+]+);base64,(.+)$/);
+        
+        if (!matches || matches.length !== 3) {
+          throw new Error('Invalid base64 image format');
+        }
+        
+        const imageFormat = matches[1]; // e.g., 'jpeg', 'png'
+        const base64Data = matches[2];
+        
+        // Convert Base64 to binary
+        const binaryData = atob(base64Data);
+        const byteArray = new Uint8Array(binaryData.length);
+        
+        for (let i = 0; i < binaryData.length; i++) {
+          byteArray[i] = binaryData.charCodeAt(i);
+        }
+        
+        // Create form data and blob
+        const form = new FormData();
+        form.append('chat_id', chatId);
+        
+        // Create file from binary data
+        const blob = new Blob([byteArray], { type: `image/${imageFormat}` });
+        form.append('photo', blob, `image.${imageFormat}`);
+        
+        if (caption) {
+          form.append('caption', caption);
+          form.append('parse_mode', 'HTML');
+        }
+        
+        if (replyMarkup) {
+          form.append('reply_markup', JSON.stringify(replyMarkup));
+        }
+        
+        // Send the request
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: 'POST',
+          body: form
+        });
+        
+        const result = await response.json();
+        
+        if (!result.ok) {
+          console.error('Error sending photo message with form data:', result.description);
+          return false;
+        }
+        
+        console.log('Successfully sent base64 image!');
+        return true;
+        
+      } catch (base64Error) {
+        console.error('Error processing base64 image:', base64Error);
+        // Fall back to text message on base64 processing error
+        return await sendDirectTelegramMessage(botToken, chatId, caption, replyMarkup);
       }
-    );
-    
-    const result = await response.json();
-    
-    if (!result.ok) {
-      console.error("Error sending photo message:", result.description);
-      return false;
+    } else {
+      // For regular URL images
+      console.log(`Standard URL image detected, sending directly...`);
+      
+      const body: any = {
+        chat_id: chatId,
+        photo: photoUrl,
+        parse_mode: "HTML"
+      };
+      
+      if (caption) {
+        body.caption = caption;
+      }
+      
+      if (replyMarkup) {
+        body.reply_markup = replyMarkup;
+      }
+      
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendPhoto`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!result.ok) {
+        console.error("Error sending photo message:", result.description);
+        return false;
+      }
+      
+      return true;
     }
-    
-    return true;
   } catch (error) {
     console.error("Error sending photo message:", error);
     return false;

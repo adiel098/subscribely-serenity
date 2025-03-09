@@ -106,8 +106,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('👋 AuthContext: User signed out');
         setUser(null);
         setLoading(false);
-        // Clear cached session
-        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        
+        // Clear all storage on sign out event
+        sessionStorage.clear();
+        localStorage.clear();
         
         // Only redirect to auth page if not already there
         if (location.pathname !== '/auth') {
@@ -154,13 +156,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [navigate, location.pathname]);
 
-  // Improved signOut function that handles errors better
+  // Improved signOut function with immediate storage clearing
   const signOut = async () => {
     console.log('🔄 AuthContext: signOut function called');
     
-    // Immediately clear the session storage and set user to null
+    // Immediately clear all storage and set user to null
     // This ensures the UI updates immediately regardless of API response
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.clear();
+    localStorage.clear();
+    
+    // Immediately set the user to null to update UI
     setUser(null);
     
     // Then proceed with the full logout process

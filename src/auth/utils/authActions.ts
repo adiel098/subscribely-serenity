@@ -21,24 +21,34 @@ export const handleSignOut = async ({
   try {
     setLoading(true);
     
-    // Clear all session storage first (not just the cached_user_session)
-    sessionStorage.clear();
-    localStorage.removeItem('supabase.auth.token');
-    
-    // Clear user state before the API call
+    // Immediately clear user state to update UI
     setUser(null);
     
-    // Attempt to sign out from Supabase
-    const { error } = await supabase.auth.signOut();
+    // Clear all browser storage
+    sessionStorage.clear();
+    localStorage.clear(); // Clear all localStorage, not just the auth token
+    
+    // Clear all cookies related to authentication
+    document.cookie.split(';').forEach(cookie => {
+      const [name] = cookie.trim().split('=');
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
+    
+    console.log("✅ AuthActions: Local storage and cookies cleared");
+    
+    // Then attempt to sign out from Supabase
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
     
     if (error) {
-      console.warn("Supabase signOut returned error, but continuing logout flow:", error);
+      console.warn("⚠️ AuthActions: Supabase signOut returned error:", error);
       // We'll continue the logout flow even if there's an error from Supabase
-      // since we've already cleared the local session
+    } else {
+      console.log("✅ AuthActions: Supabase signOut successful");
     }
     
     // Only redirect to auth page if not already there
     if (currentPath !== '/auth') {
+      console.log("🔄 AuthActions: Redirecting to auth page");
       navigate("/auth", { replace: true });
     }
     
@@ -47,12 +57,12 @@ export const handleSignOut = async ({
       description: "You have been signed out from your account."
     });
   } catch (error) {
-    console.error("Error during sign out process:", error);
+    console.error("❌ AuthActions: Error during sign out process:", error);
     
-    // Even if there's an error, we still want to try to clean up the session
+    // Even if there's an error, ensure we clean up the session
     setUser(null);
     sessionStorage.clear();
-    localStorage.removeItem('supabase.auth.token');
+    localStorage.clear();
     
     // Force navigation to auth page
     if (currentPath !== '/auth') {

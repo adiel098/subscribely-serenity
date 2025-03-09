@@ -1,10 +1,10 @@
-
 import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, TrendingUp, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/ui/use-toast';
 
 const menuItems = [
   {
@@ -48,13 +48,43 @@ const menuItems = [
 export function AppSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleLogout = async () => {
     try {
       console.log('AppSidebar: Initiating logout process');
+      
+      // Clear browser storage before calling signOut
+      sessionStorage.clear();
+      localStorage.clear();
+      
+      // Call the signOut function
       await signOut();
+      
+      console.log("User logged out from AppSidebar");
+      
+      // Redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Successfully signed out",
+        description: "You have been signed out from your account."
+      });
     } catch (error) {
       console.error('AppSidebar: Error during logout:', error);
+      
+      // Even if there's an error, make sure we clear the local storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Sign out completed",
+        description: "You have been signed out, although there were some issues in the process."
+      });
     }
   };
   

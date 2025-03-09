@@ -1,4 +1,3 @@
-
 import { 
   LayoutDashboard, 
   Users, 
@@ -10,7 +9,7 @@ import {
   Sparkles, 
   Shield
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/auth/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const menuItems = [
   {
@@ -59,19 +59,43 @@ const menuItems = [
 export function AdminSidebar() {
   const { signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
     try {
       console.log("AdminSidebar: Initiating logout process");
-      // Clear browser session storage before calling the signOut function
+      
+      // Clear browser storage before calling signOut
       sessionStorage.clear();
+      localStorage.clear();
+      
+      // Call the signOut function
       await signOut();
+      
       console.log("User logged out from AdminSidebar");
+      
+      // Redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Successfully signed out",
+        description: "You have been signed out from the admin panel."
+      });
     } catch (error) {
       console.error("Error signing out from AdminSidebar:", error);
+      
       // Even if there's an error, make sure we clear the local storage
-      localStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
       sessionStorage.clear();
+      
+      // Force redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Sign out completed",
+        description: "You have been signed out, although there were some issues in the process."
+      });
     }
   };
 

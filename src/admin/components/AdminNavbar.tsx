@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/auth/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,10 +14,13 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 
 export function AdminNavbar() {
   const { theme, setTheme } = useTheme();
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Get the first letter of the email for the avatar fallback
   const getInitials = () => {
@@ -28,15 +31,37 @@ export function AdminNavbar() {
   const handleSignOut = async () => {
     try {
       console.log("AdminNavbar: Initiating logout process");
-      // Clear browser session storage before calling the signOut function
+      
+      // Clear browser storage before calling signOut
       sessionStorage.clear();
+      localStorage.clear();
+      
+      // Call the signOut function
       await signOut();
+      
       console.log("User logged out from AdminNavbar");
+      
+      // Redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Successfully signed out",
+        description: "You have been signed out from the admin panel."
+      });
     } catch (error) {
       console.error("Error signing out from AdminNavbar:", error);
+      
       // Even if there's an error, make sure we clear the local storage
-      localStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
       sessionStorage.clear();
+      
+      // Force redirect to auth page
+      navigate('/auth', { replace: true });
+      
+      toast({
+        title: "Sign out completed",
+        description: "You have been signed out, although there were some issues in the process."
+      });
     }
   };
   

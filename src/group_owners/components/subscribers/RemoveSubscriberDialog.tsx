@@ -60,15 +60,7 @@ export const RemoveSubscriberDialog = ({
 
   return (
     <AlertDialog open={open} onOpenChange={safeDialogChange}>
-      <AlertDialogContent 
-        onClick={(e) => e.stopPropagation()}
-        onPointerDownOutside={(e) => {
-          e.preventDefault();
-          if (!isProcessing) {
-            e.stopPropagation();
-          }
-        }}
-      >
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
           <AlertDialogDescription>

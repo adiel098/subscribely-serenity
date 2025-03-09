@@ -23,6 +23,9 @@ serve(async (req) => {
     const requestData = await req.json();
     const { community_id, debug = true } = requestData; // Enable debug by default for now
 
+    console.log(`🔍 DEBUG: Received request with community_id: ${community_id}`);
+    console.log(`🔍 DEBUG: Full request data:`, JSON.stringify(requestData, null, 2));
+
     if (debug) {
       console.log(`🔍 DEBUG: Fetching community data for ID: ${community_id}`);
     }
@@ -36,6 +39,7 @@ serve(async (req) => {
     }
 
     // Get community data with subscription plans
+    console.log(`🔍 DEBUG: Executing database query for community ID: ${community_id}`);
     const { data: community, error } = await supabase
       .from('communities')
       .select(`
@@ -68,6 +72,10 @@ serve(async (req) => {
       );
     }
 
+    console.log(`✅ Retrieved community from database:`, JSON.stringify(community, null, 2));
+    console.log(`🖼️ Photo URL in database: ${community.telegram_photo_url || 'Not set'}`);
+    console.log(`📱 Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
+    
     if (debug) {
       console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);
       console.log(`🔍 DEBUG: Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
@@ -107,6 +115,25 @@ serve(async (req) => {
       community.subscription_plans = [];
     }
 
+    // Extra debugging for photo URL
+    if (community.telegram_photo_url) {
+      console.log(`📸 Community has a photo URL: ${community.telegram_photo_url}`);
+      try {
+        // Test if the photo URL is accessible
+        const photoTestResponse = await fetch(community.telegram_photo_url, { method: 'HEAD' });
+        console.log(`📸 Photo URL check status: ${photoTestResponse.status} ${photoTestResponse.statusText}`);
+        if (!photoTestResponse.ok) {
+          console.error(`❌ Photo URL might be invalid or inaccessible`);
+        }
+      } catch (photoError) {
+        console.error(`❌ Error checking photo URL: ${photoError.message}`);
+      }
+    } else {
+      console.log(`❌ Community does NOT have a photo URL stored in the database`);
+      console.log(`ℹ️ Checking if we should fetch a photo using telegram_chat_id: ${community.telegram_chat_id || 'Not available'}`);
+    }
+
+    console.log(`📤 Returning response with community data`);
     return new Response(
       JSON.stringify({ community }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -114,6 +141,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Uncaught error in telegram-community-data function:", error);
+    console.error("❌ Error stack:", error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }

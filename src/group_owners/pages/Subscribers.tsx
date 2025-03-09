@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { EditSubscriberDialog } from "@/group_owners/components/subscribers/EditSubscriberDialog";
@@ -41,12 +41,15 @@ const Subscribers = () => {
     uniquePlans
   } = useSubscriberFilters(subscribers);
 
-  const onRemoveClick = (subscriber: Subscriber) => {
+  // Use useCallback to prevent recreation of this function on each render
+  const onRemoveClick = useCallback((subscriber: Subscriber) => {
     setSubscriberToRemove(subscriber);
     setRemoveDialogOpen(true);
-  };
+  }, []);
 
   const onConfirmRemove = async (subscriber: Subscriber) => {
+    if (!subscriber) return;
+    
     setIsRemoving(true);
     try {
       await handleRemoveSubscriber(subscriber);
@@ -67,6 +70,15 @@ const Subscribers = () => {
       setSubscriberToRemove(null);
     }
   };
+
+  // Use useCallback for the dialog state handler
+  const handleRemoveDialogChange = useCallback((open: boolean) => {
+    setRemoveDialogOpen(open);
+    if (!open) {
+      // Clear the selected subscriber when dialog closes
+      setTimeout(() => setSubscriberToRemove(null), 100);
+    }
+  }, []);
 
   const handleExport = () => {
     const exportData = filteredSubscribers.map(sub => ({
@@ -155,7 +167,7 @@ const Subscribers = () => {
       <RemoveSubscriberDialog
         subscriber={subscriberToRemove}
         open={removeDialogOpen}
-        onOpenChange={setRemoveDialogOpen}
+        onOpenChange={handleRemoveDialogChange}
         onConfirm={onConfirmRemove}
         isProcessing={isRemoving}
       />

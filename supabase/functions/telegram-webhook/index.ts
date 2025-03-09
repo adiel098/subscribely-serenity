@@ -6,7 +6,8 @@ import { routeTelegramWebhook } from "./router/webhookRouter.ts";
 
 // Handle incoming requests
 serve(async (req: Request) => {
-  console.log("🚀 Telegram webhook function started");
+  console.log("🔥🔥🔥 TELEGRAM WEBHOOK FUNCTION STARTED 🔥🔥🔥");
+  console.log(`📊 Request method: ${req.method}, URL: ${req.url}`);
   
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
@@ -23,6 +24,11 @@ serve(async (req: Request) => {
     console.log(`📌 Supabase URL: ${supabaseUrl ? "Provided ✅" : "Not provided ❌"}`);
     console.log(`📌 Supabase Anon Key: ${supabaseAnonKey ? "Provided ✅" : "Not provided ❌"}`);
     
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("❌ CRITICAL: Missing Supabase configuration");
+      throw new Error("Supabase configuration missing");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Get bot token from environment variable
@@ -33,19 +39,69 @@ serve(async (req: Request) => {
     }`);
     
     if (!botToken) {
-      console.error("❌ TELEGRAM_BOT_TOKEN environment variable not set");
+      console.error("❌ CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set");
+      
+      // Try to log this error in the database
+      try {
+        await supabase.from('telegram_errors').insert({
+          error_type: 'missing_bot_token',
+          error_message: 'TELEGRAM_BOT_TOKEN environment variable not set',
+          stack_trace: 'N/A',
+          context: { webhook_url: req.url }
+        });
+      } catch (logError) {
+        console.error("❌ Failed to log missing token error:", logError);
+      }
+      
       throw new Error("Bot token not configured");
     }
 
     // Route the webhook request
+    console.log("🚀 Routing webhook request to handler");
     return await routeTelegramWebhook(req, supabase, botToken);
   } catch (error) {
     console.error("🔥 Critical error in webhook handler:", error);
+    console.error("🔥 Error stack:", error.stack);
+    
+    // Try to create a detailed error object
+    const errorDetails = {
+      message: error.message || 'Unknown error',
+      stack: error.stack || 'No stack trace',
+      name: error.name || 'Error',
+      url: req.url,
+      method: req.method
+    };
+    
+    // Try to initialize a minimal Supabase client to log the error
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      
+      if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        await supabase.from('telegram_errors').insert({
+          error_type: 'critical_webhook_error',
+          error_message: error.message,
+          stack_trace: error.stack,
+          context: errorDetails
+        }).then(result => {
+          if (result.error) {
+            console.error("❌ Failed to log critical error to database:", result.error);
+          } else {
+            console.log("✅ Critical error logged to database");
+          }
+        });
+      }
+    } catch (logError) {
+      console.error("❌ Failed to log critical error:", logError);
+    }
     
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message || "An unknown error occurred",
+        details: errorDetails
       }),
       {
         status: 500,

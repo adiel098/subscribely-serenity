@@ -60,3 +60,39 @@ export async function updateMemberActivity(
     console.error('[LogHelper] ❌ Error in updateMemberActivity:', error);
   }
 }
+
+/**
+ * Log join request events
+ */
+export async function logJoinRequestEvent(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  userId: string,
+  username: string | undefined,
+  status: string,
+  details: string,
+  rawData: any
+): Promise<void> {
+  try {
+    console.log(`[LogHelper] 📝 Logging join request event for user ${userId} in chat ${chatId} with status ${status}`);
+    
+    const { error } = await supabase
+      .from('telegram_join_requests')
+      .insert({
+        chat_id: chatId,
+        telegram_user_id: userId,
+        username: username,
+        status: status,
+        details: details,
+        raw_data: rawData
+      });
+    
+    if (error) {
+      console.error('[LogHelper] ❌ Error logging join request event:', error);
+    } else {
+      console.log('[LogHelper] ✅ Join request event logged successfully');
+    }
+  } catch (error) {
+    console.error('[LogHelper] ❌ Error in logJoinRequestEvent:', error);
+  }
+}

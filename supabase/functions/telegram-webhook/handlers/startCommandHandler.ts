@@ -2,130 +2,176 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { fetchStartCommandData } from './utils/dataSources.ts';
 import { logUserInteraction } from './utils/logHelper.ts';
-import { 
-  sendTextMessage, 
-  sendPhotoMessage, 
-  verifyBotToken 
-} from './utils/telegramMessageSender.ts';
+import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 
+/**
+ * Handle /start command with optional parameters
+ */
 export async function handleStartCommand(
   supabase: ReturnType<typeof createClient>,
   message: any,
   botToken: string
 ): Promise<boolean> {
   try {
-    console.log('[Start] 🚀 Processing start command:', { 
-      messageText: message.text,
-      hasBotToken: !!botToken,
-      botTokenLength: botToken?.length,
-      from: message.from,
-      chat: message.chat
-    });
+    console.log('🚀 [START-COMMAND] Starting command handler with message:', JSON.stringify(message, null, 2));
+
+    // Extract the parameter from /start command
+    // Format: /start OR /start param1_param2
+    const text = message.text || '';
+    const parts = text.split(' ');
     
-    if (!botToken) {
-      console.error('[Start] ❌ Bot token is missing!');
-      return false;
-    }
-
-    // Extract required data from message
-    const parts = message.text.split(' ');
-    console.log('[Start] 📝 Command parts:', parts);
+    console.log(`[START-COMMAND] 📝 Command parts: ${JSON.stringify(parts)}`);
     
-    const communityId = parts.length > 1 ? parts[1].trim() : null;
-    if (!communityId || !message.from) {
-      console.log('[Start] ❌ Missing required data:', { communityId, from: message.from });
-      return false;
-    }
-
-    console.log('[Start] 🔍 Found community ID in start command:', communityId);
-
-    // Fetch community and bot settings
-    const data = await fetchStartCommandData(supabase, communityId);
-    if (!data.success) {
-      console.error('[Start] ❌ Failed to fetch data:', data.error);
-      return false;
-    }
-    
-    const { community, botSettings } = data;
-    console.log('[Start] ✅ Successfully fetched community and bot settings');
-    console.log('[Start] 📌 Community:', { name: community.name, id: community.id });
-    console.log('[Start] 📌 Bot settings:', { 
-      hasWelcomeMessage: !!botSettings.welcome_message,
-      hasWelcomeImage: !!botSettings.welcome_image 
-    });
-
-    // Verify bot token
-    if (!await verifyBotToken(botToken)) {
-      console.error('[Start] ❌ Bot token verification failed');
-      return false;
-    }
-
-    // Use consistent miniapp URL
-    const miniAppUrl = `https://t.me/membifybot/startapp?startapp=${communityId}`;
-    const welcomeMessage = botSettings.welcome_message || 
-      `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
-
-    console.log('[Start] 📤 Sending welcome message to:', message.from.id);
-    console.log('[Start] 📝 Message content:', welcomeMessage);
-    console.log('[Start] 🖼️ Welcome image:', botSettings.welcome_image ? 'Present' : 'Not present');
-    console.log('[Start] 🔗 Mini app URL:', miniAppUrl);
-
-    let messageSuccess = false;
-
-    // Try to send image with welcome message if available
-    if (botSettings.welcome_image) {
-      console.log('[Start] 🖼️ Welcome image found, sending as photo with caption');
-      messageSuccess = await sendPhotoMessage(
+    // If no parameters, just send a welcome message
+    if (parts.length === 1 || !parts[1]) {
+      console.log('[START-COMMAND] ℹ️ No parameters provided in start command');
+      await sendTelegramMessage(
         botToken,
-        message.from.id,
-        botSettings.welcome_image,
-        welcomeMessage,
-        miniAppUrl,
-        communityId
+        message.chat.id,
+        'Welcome to MembershipBot! 🚀\n\nTo get started, visit our website and connect your community.',
+        null  // No photo
       );
       
-      // If photo sending fails, fall back to text-only message
-      if (!messageSuccess) {
-        console.log('[Start] ❌ Photo sending failed, falling back to text-only message');
-        messageSuccess = await sendTextMessage(
-          botToken, 
-          message.from.id, 
-          welcomeMessage, 
-          miniAppUrl, 
-          communityId
-        );
-      }
-    } else {
-      // No image, send text-only message
-      console.log('[Start] 📝 No welcome image, sending text-only message');
-      messageSuccess = await sendTextMessage(
-        botToken, 
-        message.from.id, 
-        welcomeMessage, 
-        miniAppUrl, 
-        communityId
-      );
-    }
-
-    if (messageSuccess) {
-      // Log user interaction in database
+      // Log the interaction
       await logUserInteraction(
         supabase,
-        'start_command',
-        String(message.from.id),
+        'start_command_basic',
+        message.from.id.toString(),
         message.from.username,
-        message.text,
+        text,
         message
       );
       
-      console.log('[Start] ✅ Start command completed successfully');
       return true;
-    } else {
-      console.error('[Start] ❌ Failed to send welcome message');
-      return false;
     }
+    
+    // Handle parameterized start command
+    const startParam = parts[1];
+    console.log(`[START-COMMAND] 🔍 Processing start parameter: ${startParam}`);
+    
+    // Check if it's a community ID
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam)) {
+      console.log(`[START-COMMAND] ✅ Valid community ID format: ${startParam}`);
+      
+      // Fetch community data 
+      const dataResult = await fetchStartCommandData(supabase, startParam);
+      console.log(`[START-COMMAND] Data fetch result:`, JSON.stringify(dataResult, null, 2));
+      
+      if (!dataResult.success) {
+        console.error(`[START-COMMAND] ❌ Error fetching data: ${dataResult.error}`);
+        
+        await sendTelegramMessage(
+          botToken,
+          message.chat.id,
+          `Sorry, I couldn't find that community. 😕\n\nPlease check the link and try again.`,
+          null  // No photo
+        );
+        
+        await logUserInteraction(
+          supabase,
+          'start_command_invalid_community',
+          message.from.id.toString(),
+          message.from.username,
+          text,
+          {message, error: dataResult.error}
+        );
+        
+        return true;
+      }
+      
+      const { community, botSettings } = dataResult;
+      console.log(`[START-COMMAND] 📋 Community found: ${community.name}`);
+      
+      // Construct welcome message
+      let welcomeMessage = botSettings.welcome_message || 
+        `Welcome to ${community.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`;
+      
+      const miniAppUrl = community.miniapp_url || "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
+      const welcomeImage = botSettings.welcome_image || null;
+      
+      // Add call-to-action button
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "Subscribe Now! 💳",
+              web_app: {
+                url: `${miniAppUrl}?start=${community.id}`
+              }
+            }
+          ]
+        ]
+      };
+      
+      console.log(`[START-COMMAND] 📤 Sending welcome message with image: ${!!welcomeImage}`);
+      console.log(`[START-COMMAND] 🔗 Mini app URL: ${miniAppUrl}?start=${community.id}`);
+      
+      // Send welcome message with photo if available
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        welcomeMessage,
+        welcomeImage,
+        inlineKeyboard
+      );
+      
+      // Log the interaction
+      await logUserInteraction(
+        supabase,
+        'start_command_community',
+        message.from.id.toString(),
+        message.from.username,
+        text,
+        {message, community_id: community.id}
+      );
+      
+      return true;
+    }
+    
+    // It's not a valid community ID
+    console.log(`[START-COMMAND] ⚠️ Invalid community ID format: ${startParam}`);
+    
+    await sendTelegramMessage(
+      botToken,
+      message.chat.id,
+      `Sorry, that doesn't look like a valid community link. 😕\n\nPlease check the link and try again.`,
+      null  // No photo
+    );
+    
+    await logUserInteraction(
+      supabase,
+      'start_command_invalid_format',
+      message.from.id.toString(),
+      message.from.username,
+      text,
+      message
+    );
+    
+    return true;
+    
   } catch (error) {
-    console.error('[Start] ❌ Critical error:', error);
+    console.error('[START-COMMAND] ❌ Error in handleStartCommand:', error);
+    
+    try {
+      // Log the error
+      await supabase.from('telegram_errors').insert({
+        error_type: 'start_command_error',
+        error_message: error.message,
+        stack_trace: error.stack,
+        raw_data: message
+      });
+      
+      // Try to send an error message to the user
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `Sorry, something went wrong processing your request. 😕\n\nPlease try again later.`,
+        null  // No photo
+      );
+    } catch (logError) {
+      console.error('[START-COMMAND] ❌ Error logging the original error:', logError);
+    }
+    
     return false;
   }
 }

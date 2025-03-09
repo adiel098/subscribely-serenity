@@ -9,16 +9,22 @@ import { handleVerificationMessage } from '../handlers/verificationHandler.ts';
 import { handleChannelVerification } from '../handlers/channelVerificationHandler.ts';
 import { corsHeaders } from '../cors.ts';
 import { updateMemberActivity } from '../handlers/utils/activityUtils.ts';
+import { logTelegramEvent } from '../eventLogger.ts';
 
 export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnType<typeof createClient>, botToken: string) {
-  console.log("[ROUTER] 🔄 Routing Telegram webhook request");
+  console.log("[ROUTER] 🚀🚀🚀 Received webhook request");
   
   try {
     let body;
     try {
       body = await req.json();
       console.log("[ROUTER] 📝 Request body parsed successfully");
-      console.log("[ROUTER] 📦 Request body:", JSON.stringify(body, null, 2));
+      // Log truncated version to avoid huge logs
+      const bodyPreview = JSON.stringify(body).substring(0, 500) + (JSON.stringify(body).length > 500 ? '...' : '');
+      console.log("[ROUTER] 📦 Request body preview:", bodyPreview);
+      
+      // Log the full event
+      await logTelegramEvent(supabaseClient, 'webhook_received', body);
     } catch (error) {
       console.error("[ROUTER] ❌ Error parsing request body:", error);
       throw new Error('Invalid JSON in request body');
@@ -197,10 +203,22 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
     let handled = false;
 
     // Route: Start Command - IMPORTANT: Check this first before other content tests
-    if (message.text?.startsWith('/start')) {
-      console.log("[ROUTER] 🚀 Routing to start command handler with params:", message.text);
-      handled = await handleStartCommand(supabaseClient, message, botToken);
-      console.log(`[ROUTER] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
+    if (message.text && message.text.startsWith('/start')) {
+      console.log("[ROUTER] 🚀 ROUTING TO START COMMAND with params:", message.text);
+      
+      try {
+        handled = await handleStartCommand(supabaseClient, message, botToken);
+        console.log(`[ROUTER] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
+      } catch (startError) {
+        console.error('[ROUTER] ❌ Error in start command handler:', startError);
+        await supabaseClient.from('telegram_errors').insert({
+          error_type: 'start_command_handler_error',
+          error_message: startError.message,
+          stack_trace: startError.stack,
+          raw_data: message
+        });
+        handled = false;
+      }
     }
     // Route: Channel Verification
     else if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
@@ -239,6 +257,17 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
     });
   } catch (error) {
     console.error('[ROUTER] ❌ Error processing request:', error);
+    // Try to log the error
+    try {
+      await supabaseClient.from('telegram_errors').insert({
+        error_type: 'webhook_router_error',
+        error_message: error.message,
+        stack_trace: error.stack
+      });
+    } catch (logError) {
+      console.error('[ROUTER] ❌ Failed to log error to database:', logError);
+    }
+    
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

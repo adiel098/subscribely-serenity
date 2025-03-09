@@ -17,4 +17,4 @@ export { sendReminderNotifications } from "./subscription/reminderManager.ts";
 /**
  * Re-export types
  */
-export { SubscriptionMember, BotSettings } from "./types.ts";
+export type { SubscriptionMember, BotSettings } from "./types.ts";

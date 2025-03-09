@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from './handlers/verificationHandler.ts';
 import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
-import { handleChatMemberUpdate } from './handlers/chatMemberHandler.ts';
+import { handleChatMemberUpdate, handleMyChatMember } from './membershipHandler.ts';
 import { handleChatJoinRequest } from './handlers/joinRequestHandler.ts';
 import { kickMember } from './handlers/kickMemberHandler.ts';
 import { corsHeaders } from './cors.ts';
@@ -87,7 +87,7 @@ serve(async (req) => {
       }
     }
 
-    // Handle chat join requests
+    // Handle chat join requests 
     if (body.chat_join_request) {
       console.log("[WEBHOOK] 🔄 Handling chat join request:", JSON.stringify(body.chat_join_request, null, 2));
       return await handleChatJoinRequest(supabaseClient, body);
@@ -136,7 +136,19 @@ serve(async (req) => {
     // Handle chat member updates
     if (body.chat_member) {
       console.log('[WEBHOOK] 👥 Handling chat member update:', JSON.stringify(body.chat_member, null, 2));
-      return await handleChatMemberUpdate(supabaseClient, body.chat_member);
+      await handleChatMemberUpdate(supabaseClient, body.chat_member);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Handle my_chat_member updates (when bot status changes)
+    if (body.my_chat_member) {
+      console.log('[WEBHOOK] 🤖 Handling my chat member update:', JSON.stringify(body.my_chat_member, null, 2));
+      await handleMyChatMember(supabaseClient, body.my_chat_member);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Handle regular messages
@@ -182,7 +194,8 @@ serve(async (req) => {
           handled: handled,
           chat_id: message.chat?.id?.toString(),
           message_text: message.text,
-          username: message.from?.username
+          username: message.from?.username,
+          user_id: message.from?.id?.toString()
         });
       console.log("[WEBHOOK] ✅ Event logged successfully");
     } catch (logError) {

@@ -66,3 +66,37 @@ export async function logJoinRequestEvent(
     return false;
   }
 }
+
+/**
+ * Logs membership status changes
+ */
+export async function logMembershipChange(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  userId: string,
+  username: string | undefined,
+  status: string,
+  details: string,
+  rawData: any
+) {
+  try {
+    console.log(`[LogHelper] Recording membership status change to ${status} for user ${userId} in chat ${chatId}`);
+    
+    await supabase
+      .from('telegram_events')
+      .insert({
+        event_type: `membership_${status}`,
+        user_id: userId,
+        username: username,
+        chat_id: chatId,
+        message_text: details,
+        raw_data: rawData
+      });
+      
+    console.log(`[LogHelper] Successfully logged membership change event`);
+    return true;
+  } catch (error) {
+    console.error('[LogHelper] Error logging membership change:', error);
+    return false;
+  }
+}

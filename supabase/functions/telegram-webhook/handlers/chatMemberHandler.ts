@@ -1,5 +1,6 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logMembershipChange } from './utils/logHelper.ts';
+import { createOrUpdateMember } from './utils/dbLogger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +38,7 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
 
     const telegramUserId = update.new_chat_member.user.id.toString();
     const username = update.new_chat_member.user.username;
+    const status = update.new_chat_member.status;
 
     // If user joins the chat
     if (['member', 'administrator', 'creator'].includes(update.new_chat_member.status)) {
@@ -45,47 +47,89 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
         status: update.new_chat_member.status
       });
 
-      // Find the most recent payment for this user
-      const { data: payment } = await supabase
-        .from('subscription_payments')
-        .select('*')
+      // Check if there's an existing member record
+      const { data: existingMember, error: memberCheckError } = await supabase
+        .from('telegram_chat_members')
+        .select('id, subscription_status, subscription_plan_id, subscription_end_date')
+        .eq('telegram_user_id', telegramUserId)
         .eq('community_id', community.id)
-        .eq('status', 'completed')
-        .is('telegram_user_id', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (payment) {
-        // Update payment with telegram_user_id
-        await supabase
+        .maybeSingle();
+      
+      console.log('Existing member check:', { 
+        found: !!existingMember, 
+        data: existingMember, 
+        error: memberCheckError 
+      });
+      
+      // If we don't have a member record, try to find a payment
+      if (!existingMember) {
+        console.log('No member record found, checking for payments');
+        
+        // Find the most recent payment for this user
+        const { data: payments, error: paymentsError } = await supabase
           .from('subscription_payments')
-          .update({ telegram_user_id: telegramUserId })
-          .eq('id', payment.id);
+          .select('*')
+          .eq('community_id', community.id)
+          .eq('status', 'successful')
+          .or(`telegram_user_id.eq.${telegramUserId},telegram_username.eq.${username || ''}`)
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        // Calculate subscription dates based on the plan
-        const subscriptionStartDate = new Date();
-        const subscriptionEndDate = new Date();
-        if (payment.plan_id) {
-          const { data: plan } = await supabase
-            .from('subscription_plans')
-            .select('interval')
-            .eq('id', payment.plan_id)
-            .single();
+        console.log('Payment search result:', {
+          found: payments?.length > 0,
+          payments,
+          error: paymentsError
+        });
 
-          if (plan) {
-            if (plan.interval === 'monthly') {
-              subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-            } else if (plan.interval === 'yearly') {
-              subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
-            }
+        if (payments?.length > 0) {
+          const payment = payments[0];
+          
+          // Update payment with telegram_user_id if it's not set
+          if (!payment.telegram_user_id) {
+            console.log(`Updating payment ${payment.id} with telegram_user_id ${telegramUserId}`);
+            await supabase
+              .from('subscription_payments')
+              .update({ telegram_user_id: telegramUserId })
+              .eq('id', payment.id);
           }
-        }
 
-        // Create or update member record
-        const { error: memberError } = await supabase
-          .from('telegram_chat_members')
-          .upsert({
+          // Calculate subscription dates based on the plan
+          const subscriptionStartDate = new Date();
+          let subscriptionEndDate = new Date(subscriptionStartDate);
+          
+          if (payment.plan_id) {
+            const { data: plan } = await supabase
+              .from('subscription_plans')
+              .select('interval')
+              .eq('id', payment.plan_id)
+              .single();
+
+            console.log('Found plan for payment:', plan);
+
+            if (plan) {
+              if (plan.interval === 'monthly') {
+                subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+              } else if (plan.interval === 'yearly') {
+                subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
+              } else if (plan.interval === 'half-yearly') {
+                subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
+              } else if (plan.interval === 'quarterly') {
+                subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+              } else {
+                // Default to 30 days
+                subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+              }
+            } else {
+              // Default to 30 days if no plan is found
+              subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+            }
+          } else {
+            // Default to 30 days if no plan ID
+            subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+          }
+
+          // Create member record with subscription info
+          const memberResult = await createOrUpdateMember(supabase, {
             telegram_user_id: telegramUserId,
             telegram_username: username,
             community_id: community.id,
@@ -94,43 +138,78 @@ export const handleChatMemberUpdate = async (supabase: ReturnType<typeof createC
             subscription_plan_id: payment.plan_id,
             subscription_start_date: subscriptionStartDate.toISOString(),
             subscription_end_date: subscriptionEndDate.toISOString(),
-            last_active: new Date().toISOString()
-          }, {
-            onConflict: 'telegram_user_id,community_id'
           });
 
-        if (memberError) {
-          console.error('Error updating member:', memberError);
-          return new Response(JSON.stringify({ error: 'Failed to update member' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500
+          console.log('Member record creation result:', memberResult);
+        } else {
+          // No payment found, just create a basic member record
+          console.log('No payment found, creating basic member record');
+          const memberResult = await createOrUpdateMember(supabase, {
+            telegram_user_id: telegramUserId,
+            telegram_username: username,
+            community_id: community.id,
+            is_active: true,
+            subscription_status: false
           });
+          
+          console.log('Basic member record creation result:', memberResult);
         }
+      } else {
+        // Update existing member record as active
+        console.log('Updating existing member record as active');
+        const memberResult = await createOrUpdateMember(supabase, {
+          telegram_user_id: telegramUserId,
+          telegram_username: username,
+          community_id: community.id,
+          is_active: true,
+          // Keep existing subscription data
+          subscription_status: existingMember.subscription_status,
+          subscription_plan_id: existingMember.subscription_plan_id,
+          subscription_end_date: existingMember.subscription_end_date
+        });
+        
+        console.log('Member record update result:', memberResult);
       }
+      
+      // Log the membership change
+      await logMembershipChange(
+        supabase,
+        update.chat.id.toString(),
+        telegramUserId,
+        username,
+        'added',
+        `User added to group with status: ${status}`,
+        update
+      );
       
       // Update the community member count
       await updateCommunityMemberCount(supabase, community.id);
     }
     // If user leaves chat
-    else if (update.new_chat_member.status === 'left') {
+    else if (update.new_chat_member.status === 'left' || update.new_chat_member.status === 'kicked') {
       console.log('User left chat:', telegramUserId);
 
-      const { error: updateError } = await supabase
-        .from('telegram_chat_members')
-        .update({ 
-          is_active: false,
-          last_active: new Date().toISOString()
-        })
-        .eq('community_id', community.id)
-        .eq('telegram_user_id', telegramUserId);
-
-      if (updateError) {
-        console.error('Error updating member status:', updateError);
-        return new Response(JSON.stringify({ error: 'Failed to update member status' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        });
-      }
+      // Update member record as inactive
+      const memberResult = await createOrUpdateMember(supabase, {
+        telegram_user_id: telegramUserId,
+        telegram_username: username,
+        community_id: community.id,
+        is_active: false,
+        subscription_status: false
+      });
+      
+      console.log('Member record update result (left/kicked):', memberResult);
+      
+      // Log the membership change
+      await logMembershipChange(
+        supabase,
+        update.chat.id.toString(),
+        telegramUserId,
+        username,
+        'removed',
+        `User ${update.new_chat_member.status} from group`,
+        update
+      );
       
       // Update the community member count
       await updateCommunityMemberCount(supabase, community.id);

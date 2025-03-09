@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleChatJoinRequest } from '../handlers/joinRequestHandler.ts';
+import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
 import { kickMember } from '../handlers/kickMemberHandler.ts';
 import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
 import { handleMyChatMember } from '../handlers/botStatusHandler.ts';

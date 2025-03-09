@@ -16,9 +16,6 @@ export const PaymentHeader = () => {
         <CreditCard className="h-3 w-3 mr-1 text-primary" />
         Payment Methods
       </Badge>
-      <h3 className="text-xl font-semibold text-gray-900">
-        Select Payment Method
-      </h3>
       <p className="text-sm text-muted-foreground">
         After payment, you'll receive an invite link to join the community
       </p>

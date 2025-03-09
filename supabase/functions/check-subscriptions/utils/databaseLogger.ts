@@ -13,71 +13,40 @@ export async function logNotification(
   try {
     console.log(`Logging notification of type: ${notificationType} for member ${memberId}`);
     
-    // Validate notificationType to ensure it's one of the valid values
-    if (!["reminder", "expiration"].includes(notificationType)) {
-      console.warn(`Invalid notification type: ${notificationType}, defaulting to "reminder"`);
-      notificationType = "reminder";
+    // Map notification types to valid constraint values
+    let validNotificationType = notificationType;
+    if (["first_reminder", "second_reminder"].includes(notificationType)) {
+      validNotificationType = "reminder";
     }
     
-    // Check the structure of the subscription_notifications table to determine valid status values
-    const { data: tableInfo, error: tableError } = await supabase
+    // Check if the notification has already been sent to prevent duplicates
+    const { data: existingNotifications, error: checkError } = await supabase
       .from('subscription_notifications')
-      .select('*')
+      .select('id')
+      .eq('member_id', memberId)
+      .eq('notification_type', validNotificationType)
+      .eq('status', 'sent')
+      .gte('sent_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
       .limit(1);
     
-    // Default to "sent" status, but verify if it's a valid value
-    // The most common values for status would be: 'sent', 'pending', 'failed', 'delivered'
-    let statusValue = "sent";
-    
-    if (tableError) {
-      console.error(`Error checking table structure: ${tableError.message}`);
-      console.log(`Attempting insert with default status "${statusValue}"`);
+    if (checkError) {
+      console.error(`Error checking existing notifications: ${checkError.message}`);
+    } else if (existingNotifications && existingNotifications.length > 0) {
+      console.log(`Notification of type ${notificationType} already sent to member ${memberId} in the last 24 hours - skipping`);
+      return;
     }
     
     const { error } = await supabase.from("subscription_notifications").insert({
       community_id: communityId,
       member_id: memberId,
-      notification_type: notificationType,
-      status: statusValue,
+      notification_type: validNotificationType,
+      status: "sent",
     });
     
     if (error) {
       console.error(`Error logging notification: ${error.message}`);
-      
-      // If we get a constraint violation error, try with different status values
-      if (error.message.includes('violates check constraint "subscription_notifications_status_check"')) {
-        console.log('Trying with alternative status values...');
-        
-        // Try with "delivered" status
-        const { error: error2 } = await supabase.from("subscription_notifications").insert({
-          community_id: communityId,
-          member_id: memberId,
-          notification_type: notificationType,
-          status: "delivered",
-        });
-        
-        if (error2) {
-          console.error(`Second attempt failed with status "delivered": ${error2.message}`);
-          
-          // Try with "pending" status
-          const { error: error3 } = await supabase.from("subscription_notifications").insert({
-            community_id: communityId,
-            member_id: memberId,
-            notification_type: notificationType,
-            status: "pending",
-          });
-          
-          if (error3) {
-            console.error(`Third attempt failed with status "pending": ${error3.message}`);
-          } else {
-            console.log('Successfully logged notification with status "pending"');
-          }
-        } else {
-          console.log('Successfully logged notification with status "delivered"');
-        }
-      }
     } else {
-      console.log(`Successfully logged notification with status "${statusValue}"`);
+      console.log(`Successfully logged notification with type "${validNotificationType}"`);
     }
   } catch (err) {
     console.error(`Failed to log notification: ${err.message}`);

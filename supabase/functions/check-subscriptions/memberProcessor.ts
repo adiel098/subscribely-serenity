@@ -61,6 +61,23 @@ export async function processMember(
     (subscriptionEndDate.getTime() - now.getTime()) / (1000 * 3600 * 24)
   );
 
+  // Check if this member has already received notifications today to prevent duplicates
+  const { data: recentNotifications, error: notificationError } = await supabase
+    .from('subscription_notifications')
+    .select('notification_type')
+    .eq('member_id', member.id)
+    .gte('sent_at', new Date(now.setHours(0, 0, 0, 0)).toISOString())
+    .lte('sent_at', new Date(now.setHours(23, 59, 59, 999)).toISOString());
+  
+  if (notificationError) {
+    console.error(`Error checking recent notifications: ${notificationError.message}`);
+  } else if (recentNotifications && recentNotifications.length > 0) {
+    result.action = "skip";
+    result.details = `Already sent notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
+    console.log(`Member ${member.telegram_user_id} already received notification today - skipping`);
+    return result;
+  }
+
   // Log for debugging
   console.log(`Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration`);
 

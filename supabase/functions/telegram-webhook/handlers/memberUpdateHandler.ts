@@ -1,7 +1,8 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logMembershipChange } from './utils/logHelper.ts';
-import { createOrUpdateMember } from './utils/dbLogger.ts';
-import { updateCommunityMemberCount } from './utils/communityCountUtils.ts';
+import { logMembershipChange } from '../utils/logHelper.ts';
+import { createOrUpdateMember } from '../utils/dbLogger.ts';
+import { updateCommunityMemberCount } from '../utils/communityCountUtils.ts';
 
 /**
  * Handles chat member status updates

@@ -1,9 +1,11 @@
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 /**
  * Service for kicking members from Telegram chats
  */
 export async function kickMemberService(
-  supabase: any,
+  supabase: ReturnType<typeof createClient>,
   chatId: string,
   userId: string,
   botToken: string
@@ -72,8 +74,7 @@ export async function kickMemberService(
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: false
-          // No longer updating subscription_end_date as requested
+          subscription_status: "removed"
         })
         .eq('id', member.id);
         

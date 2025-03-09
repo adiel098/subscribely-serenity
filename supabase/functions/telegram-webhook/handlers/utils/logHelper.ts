@@ -108,3 +108,37 @@ export async function logPaymentEvent(
     console.error('[LOG-HELPER] ❌ Error in logPaymentEvent:', error);
   }
 }
+
+/**
+ * Log user interaction with the bot
+ */
+export async function logUserInteraction(
+  supabase: ReturnType<typeof createClient>,
+  eventType: string,
+  userId: string,
+  username: string | undefined,
+  details: string,
+  rawData?: any
+): Promise<void> {
+  try {
+    console.log(`[LOG-HELPER] 📝 Logging user interaction: ${eventType} for user ${userId}`);
+    
+    const { error } = await supabase
+      .from('telegram_user_interactions')
+      .insert({
+        telegram_user_id: userId,
+        telegram_username: username,
+        event_type: eventType,
+        details: details,
+        raw_data: rawData
+      });
+    
+    if (error) {
+      console.error('[LOG-HELPER] ❌ Error logging user interaction:', error);
+    } else {
+      console.log('[LOG-HELPER] ✅ User interaction logged successfully');
+    }
+  } catch (error) {
+    console.error('[LOG-HELPER] ❌ Error in logUserInteraction:', error);
+  }
+}

@@ -23,9 +23,6 @@ export const ExpirationWarning: React.FC<ExpirationWarningProps> = ({
   
   const communityName = subscription.community?.name || "Community";
   const timeRemainingText = getTimeRemainingText(subscription);
-  const planPrice = subscription.plan?.price 
-    ? formatCurrency(subscription.plan.price) 
-    : "";
   
   return (
     <div className="mt-2 mb-2 p-2 bg-red-50 border border-red-200 rounded-md text-xs">
@@ -50,11 +47,11 @@ export const ExpirationWarning: React.FC<ExpirationWarningProps> = ({
         </div>
         <Button 
           onClick={() => onRenew(subscription)}
-          className="h-6 text-xs bg-red-600 hover:bg-red-700 text-white py-0 px-2"
+          className="h-5 text-xs bg-red-600 hover:bg-red-700 text-white py-0 px-1.5"
           size="sm"
         >
-          <RefreshCw className="h-3 w-3 mr-1" />
-          Renew {planPrice}
+          <RefreshCw className="h-2.5 w-2.5 mr-0.5" />
+          Renew
         </Button>
       </div>
     </div>

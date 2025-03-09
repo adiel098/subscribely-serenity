@@ -9,6 +9,7 @@ import { isDevelopment } from "../utils/telegramUtils";
 import { ExpirationWarning } from "./subscriptions/ExpirationWarning";
 import { Subscription } from "../services/memberService";
 import { isSubscriptionActive } from "./subscriptions/utils";
+import { SubscriptionDuration } from "./subscriptions/SubscriptionDuration";
 
 export interface DebugInfoProps {
   telegramUser: any;
@@ -94,6 +95,10 @@ export const MainContent = ({
           onSelectCommunity={handleSelectCommunity}
           telegramUserId={telegramUser.id}
         />
+        
+        {showPaymentMethods && selectedPlan && !showSuccess && (
+          <SubscriptionDuration selectedPlan={selectedPlan} />
+        )}
         
         {(showPaymentMethods || showSuccess) && selectedPlan && (
           <PaymentSection

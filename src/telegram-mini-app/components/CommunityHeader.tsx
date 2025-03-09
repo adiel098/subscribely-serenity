@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Crown } from "lucide-react";
+import { Crown, ImageIcon } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
@@ -27,7 +27,12 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   return (
     <div className="text-center space-y-6 animate-fade-in">
       {loading ? (
-        <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+        <div className="relative mx-auto">
+          <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs text-gray-500">Loading...</span>
+          </div>
+        </div>
       ) : (
         <Avatar className="h-24 w-24 mx-auto border-4 border-primary/20">
           {photoUrl ? (
@@ -43,7 +48,14 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             />
           ) : (
             <AvatarFallback className="bg-primary/10">
-              <Crown className="h-12 w-12 text-primary" />
+              {error ? (
+                <div className="flex flex-col items-center justify-center">
+                  <ImageIcon className="h-8 w-8 text-primary mb-1" />
+                  <span className="text-xs text-gray-600">No photo</span>
+                </div>
+              ) : (
+                <Crown className="h-12 w-12 text-primary" />
+              )}
             </AvatarFallback>
           )}
         </Avatar>

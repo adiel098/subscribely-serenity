@@ -35,9 +35,10 @@ serve(async (req) => {
     const body = await req.json();
     console.log("📦 Request body:", JSON.stringify(body));
     
-    const { communityId, telegramChatId } = body;
+    const { communityId, telegramChatId, forceFetch = false } = body;
     console.log(`🆔 Community ID: ${communityId || 'Not provided'}`);
     console.log(`🆔 Telegram Chat ID: ${telegramChatId || 'Not provided'}`);
+    console.log(`🔄 Force fetch: ${forceFetch}`);
     
     if (!telegramChatId) {
       console.error("❌ Missing telegramChatId parameter");
@@ -45,6 +46,40 @@ serve(async (req) => {
         JSON.stringify({ error: "Missing chat ID parameter" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
+    }
+
+    // Check if community already has a photo URL and we're not forcing a fetch
+    let existingPhotoUrl = null;
+    if (communityId && !forceFetch) {
+      console.log("🔍 Checking for existing photo URL in database");
+      const { data: communityData } = await supabase
+        .from('communities')
+        .select('telegram_photo_url')
+        .eq('id', communityId)
+        .single();
+      
+      if (communityData?.telegram_photo_url) {
+        existingPhotoUrl = communityData.telegram_photo_url;
+        console.log(`🖼️ Found existing photo URL: ${existingPhotoUrl}`);
+        
+        // Verify the URL is still accessible
+        try {
+          const urlCheck = await fetch(existingPhotoUrl, { method: 'HEAD' });
+          if (urlCheck.ok) {
+            console.log("✅ Existing photo URL is valid");
+            return new Response(
+              JSON.stringify({ photoUrl: existingPhotoUrl }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          } else {
+            console.log("⚠️ Existing photo URL is no longer valid, will fetch new one");
+          }
+        } catch (error) {
+          console.log(`⚠️ Error checking existing URL: ${error.message}`);
+        }
+      } else {
+        console.log("❌ No existing photo URL found in database");
+      }
     }
 
     console.log(`🔍 Fetching photo for Telegram chat ID: ${telegramChatId}`);

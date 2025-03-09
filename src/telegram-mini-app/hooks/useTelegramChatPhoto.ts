@@ -20,12 +20,11 @@ export const useTelegramChatPhoto = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    // If we already have a photo URL, don't fetch a new one
-    if (existingPhotoUrl) {
-      console.log("[useTelegramChatPhoto] Using existing photo URL:", existingPhotoUrl);
-      setPhotoUrl(existingPhotoUrl);
-      return;
-    }
+    console.log("[useTelegramChatPhoto] Starting with params:", { 
+      communityId, 
+      telegramChatId, 
+      existingPhotoUrl 
+    });
     
     // If we don't have a chat ID, we can't fetch a photo
     if (!telegramChatId) {
@@ -35,14 +34,36 @@ export const useTelegramChatPhoto = ({
 
     const fetchChatPhoto = async () => {
       try {
+        // Always set loading to true to show we're attempting to fetch
         setLoading(true);
         setError(null);
         
-        console.log(`[useTelegramChatPhoto] Starting fetch for chat ${telegramChatId}, community ${communityId || 'Not provided'}`);
+        console.log(`[useTelegramChatPhoto] Fetching photo for chat ${telegramChatId}, community ${communityId || 'Not provided'}`);
 
+        // If we already have a photo URL and it's valid, we can use it
+        if (existingPhotoUrl) {
+          console.log("[useTelegramChatPhoto] Checking existing photo URL:", existingPhotoUrl);
+          try {
+            // Test if the existing photo URL is accessible
+            const photoTest = await fetch(existingPhotoUrl, { method: 'HEAD' });
+            if (photoTest.ok) {
+              console.log("[useTelegramChatPhoto] Existing photo URL is valid, using it");
+              setPhotoUrl(existingPhotoUrl);
+              setLoading(false);
+              return;
+            } else {
+              console.log("[useTelegramChatPhoto] Existing photo URL is invalid, will fetch from Telegram");
+            }
+          } catch (e) {
+            console.log("[useTelegramChatPhoto] Error testing existing photo URL, will fetch from Telegram:", e);
+          }
+        }
+
+        // Always attempt to fetch from Telegram if we reach this point
         const requestPayload = { 
           communityId, 
-          telegramChatId 
+          telegramChatId,
+          forceFetch: true // Add a flag to force fetch even if photo exists in DB
         };
         console.log("[useTelegramChatPhoto] Request payload:", JSON.stringify(requestPayload, null, 2));
 

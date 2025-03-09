@@ -196,17 +196,17 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
 
     let handled = false;
 
+    // Route: Start Command - IMPORTANT: Check this first before other content tests
+    if (message.text?.startsWith('/start')) {
+      console.log("[ROUTER] 🚀 Routing to start command handler with params:", message.text);
+      handled = await handleStartCommand(supabaseClient, message, botToken);
+      console.log(`[ROUTER] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
+    }
     // Route: Channel Verification
-    if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
+    else if (['group', 'supergroup', 'channel'].includes(message.chat?.type) && message.text?.includes('MBF_')) {
       console.log("[ROUTER] 🔄 Routing to channel verification handler");
       handled = await handleChannelVerification(supabaseClient, message, botToken);
       console.log(`[ROUTER] ${handled ? '✅' : '❌'} Channel verification ${handled ? 'handled successfully' : 'not handled'}`);
-    }
-    // Route: Start Command
-    else if (message.text?.startsWith('/start')) {
-      console.log("[ROUTER] 🚀 Routing to start command handler");
-      handled = await handleStartCommand(supabaseClient, message, botToken);
-      console.log(`[ROUTER] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
     }
     // Route: Verification Message
     else if (message.text?.startsWith('MBF_')) {

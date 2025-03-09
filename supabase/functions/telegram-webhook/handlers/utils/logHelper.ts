@@ -2,101 +2,61 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
- * Logs user interaction to database
+ * Log user interaction with the bot
  */
 export async function logUserInteraction(
   supabase: ReturnType<typeof createClient>,
-  eventType: string,
-  userId: string,
+  interactionType: string,
+  telegramUserId: string,
   username: string | undefined,
-  messageText: string,
+  text: string,
   rawData: any
-) {
+): Promise<void> {
   try {
-    console.log(`[LogHelper] Recording ${eventType} interaction for user ${userId}`);
+    console.log(`[LogHelper] 📝 Logging ${interactionType} interaction for user ${telegramUserId}`);
     
-    await supabase
-      .from('telegram_events')
+    const { error } = await supabase
+      .from('telegram_user_interactions')
       .insert({
-        event_type: eventType,
-        user_id: userId,
+        telegram_user_id: telegramUserId,
         username: username,
-        message_text: messageText,
+        interaction_type: interactionType,
+        message_text: text,
         raw_data: rawData
       });
-      
-    console.log(`[LogHelper] Successfully logged ${eventType} event`);
-    return true;
+    
+    if (error) {
+      console.error('[LogHelper] ❌ Error logging user interaction:', error);
+    } else {
+      console.log('[LogHelper] ✅ User interaction logged successfully');
+    }
   } catch (error) {
-    console.error('[LogHelper] Error logging user interaction:', error);
-    return false;
+    console.error('[LogHelper] ❌ Error in logUserInteraction:', error);
   }
 }
 
 /**
- * Logs join request events to database with detailed information
+ * Update member activity timestamp
  */
-export async function logJoinRequestEvent(
+export async function updateMemberActivity(
   supabase: ReturnType<typeof createClient>,
-  chatId: string,
-  userId: string,
-  username: string | undefined,
-  action: 'approved' | 'rejected' | 'received',
-  reason: string,
-  rawData: any
-) {
+  telegramUserId: string
+): Promise<void> {
   try {
-    console.log(`[LogHelper] Recording join request ${action} for user ${userId} in chat ${chatId}`);
+    console.log(`[LogHelper] 🔄 Updating activity timestamp for user ${telegramUserId}`);
     
-    await supabase
-      .from('telegram_events')
-      .insert({
-        event_type: `join_request_${action}`,
-        user_id: userId,
-        username: username,
-        chat_id: chatId,
-        message_text: reason,
-        raw_data: rawData
-      });
-      
-    console.log(`[LogHelper] Successfully logged join request ${action} event`);
-    return true;
-  } catch (error) {
-    console.error('[LogHelper] Error logging join request event:', error);
-    return false;
-  }
-}
-
-/**
- * Logs membership status changes
- */
-export async function logMembershipChange(
-  supabase: ReturnType<typeof createClient>,
-  chatId: string,
-  userId: string,
-  username: string | undefined,
-  status: string,
-  details: string,
-  rawData: any
-) {
-  try {
-    console.log(`[LogHelper] Recording membership status change to ${status} for user ${userId} in chat ${chatId}`);
+    const { error } = await supabase
+      .from('telegram_chat_members')
+      .update({ last_active: new Date().toISOString() })
+      .eq('telegram_user_id', telegramUserId);
     
-    await supabase
-      .from('telegram_events')
-      .insert({
-        event_type: `membership_${status}`,
-        user_id: userId,
-        username: username,
-        chat_id: chatId,
-        message_text: details,
-        raw_data: rawData
-      });
-      
-    console.log(`[LogHelper] Successfully logged membership change event`);
-    return true;
+    if (error) {
+      // This is expected to fail if the user is not a community member yet
+      console.log('[LogHelper] ℹ️ Could not update member activity (probably not a member yet)');
+    } else {
+      console.log('[LogHelper] ✅ Member activity updated successfully');
+    }
   } catch (error) {
-    console.error('[LogHelper] Error logging membership change:', error);
-    return false;
+    console.error('[LogHelper] ❌ Error in updateMemberActivity:', error);
   }
 }

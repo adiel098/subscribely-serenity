@@ -7,7 +7,7 @@ export async function fetchStartCommandData(
   communityId: string
 ) {
   try {
-    console.log('[DataSources] Fetching data for communityId:', communityId);
+    console.log('[DataSources] 🔍 Fetching data for communityId:', communityId);
     
     // Get community data
     const { data: community, error: communityError } = await supabase
@@ -17,7 +17,7 @@ export async function fetchStartCommandData(
       .single();
       
     if (communityError) {
-      console.error('[DataSources] Error fetching community:', communityError);
+      console.error('[DataSources] ❌ Error fetching community:', communityError);
       return { 
         success: false, 
         error: `Failed to fetch community: ${communityError.message}` 
@@ -25,14 +25,14 @@ export async function fetchStartCommandData(
     }
     
     if (!community) {
-      console.error('[DataSources] Community not found:', communityId);
+      console.error('[DataSources] ❌ Community not found:', communityId);
       return { 
         success: false, 
         error: 'Community not found' 
       };
     }
     
-    console.log('[DataSources] Community found:', { 
+    console.log('[DataSources] ✅ Community found:', { 
       name: community.name, 
       id: community.id 
     });
@@ -45,14 +45,14 @@ export async function fetchStartCommandData(
       .single();
       
     if (settingsError) {
-      console.error('[DataSources] Error fetching bot settings:', settingsError);
+      console.error('[DataSources] ❌ Error fetching bot settings:', settingsError);
       return { 
         success: false, 
         error: `Failed to fetch bot settings: ${settingsError.message}` 
       };
     }
 
-    console.log('[DataSources] Bot settings retrieved:', { 
+    console.log('[DataSources] ✅ Bot settings retrieved:', { 
       hasWelcomeMessage: !!botSettings.welcome_message,
       hasWelcomeImage: !!botSettings.welcome_image
     });
@@ -63,7 +63,7 @@ export async function fetchStartCommandData(
       botSettings
     };
   } catch (error) {
-    console.error('[DataSources] Error in fetchStartCommandData:', error);
+    console.error('[DataSources] ❌ Error in fetchStartCommandData:', error);
     return { 
       success: false, 
       error: `General error: ${error instanceof Error ? error.message : String(error)}` 

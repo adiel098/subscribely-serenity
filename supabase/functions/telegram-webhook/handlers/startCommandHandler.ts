@@ -14,51 +14,67 @@ export async function handleStartCommand(
   botToken: string
 ): Promise<boolean> {
   try {
-    console.log('[Start] Processing start command:', { 
-      message,
+    console.log('[Start] 🚀 Processing start command:', { 
+      messageText: message.text,
       hasBotToken: !!botToken,
-      botTokenLength: botToken?.length
+      botTokenLength: botToken?.length,
+      from: message.from,
+      chat: message.chat
     });
     
     if (!botToken) {
-      console.error('[Start] Bot token is missing!');
+      console.error('[Start] ❌ Bot token is missing!');
       return false;
     }
 
     // Extract required data from message
-    const communityId = message.text.split(' ')[1];
+    const parts = message.text.split(' ');
+    console.log('[Start] 📝 Command parts:', parts);
+    
+    const communityId = parts.length > 1 ? parts[1].trim() : null;
     if (!communityId || !message.from) {
-      console.log('[Start] Missing required data:', { communityId, from: message.from });
+      console.log('[Start] ❌ Missing required data:', { communityId, from: message.from });
       return false;
     }
+
+    console.log('[Start] 🔍 Found community ID in start command:', communityId);
 
     // Fetch community and bot settings
     const data = await fetchStartCommandData(supabase, communityId);
     if (!data.success) {
-      console.error('[Start] Failed to fetch data:', data.error);
+      console.error('[Start] ❌ Failed to fetch data:', data.error);
       return false;
     }
     
     const { community, botSettings } = data;
+    console.log('[Start] ✅ Successfully fetched community and bot settings');
+    console.log('[Start] 📌 Community:', { name: community.name, id: community.id });
+    console.log('[Start] 📌 Bot settings:', { 
+      hasWelcomeMessage: !!botSettings.welcome_message,
+      hasWelcomeImage: !!botSettings.welcome_image 
+    });
 
     // Verify bot token
     if (!await verifyBotToken(botToken)) {
+      console.error('[Start] ❌ Bot token verification failed');
       return false;
     }
 
-    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app`;
+    // Use consistent miniapp URL
+    const miniAppUrl = `https://t.me/membifybot/startapp?startapp=${communityId}`;
     const welcomeMessage = botSettings.welcome_message || 
       `ברוכים הבאים ל-${community.name}! 🎉\nלחצו על הכפתור למטה כדי להצטרף:`;
 
-    console.log('[Start] Sending welcome message to:', message.from.id);
-    console.log('[Start] Message content:', welcomeMessage);
-    console.log('[Start] Welcome image:', botSettings.welcome_image ? 'Present' : 'Not present');
+    console.log('[Start] 📤 Sending welcome message to:', message.from.id);
+    console.log('[Start] 📝 Message content:', welcomeMessage);
+    console.log('[Start] 🖼️ Welcome image:', botSettings.welcome_image ? 'Present' : 'Not present');
+    console.log('[Start] 🔗 Mini app URL:', miniAppUrl);
 
     let messageSuccess = false;
 
     // Try to send image with welcome message if available
     if (botSettings.welcome_image) {
-      console.log('[Start] Welcome image found, sending as photo with caption');
+      console.log('[Start] 🖼️ Welcome image found, sending as photo with caption');
       messageSuccess = await sendPhotoMessage(
         botToken,
         message.from.id,
@@ -70,7 +86,7 @@ export async function handleStartCommand(
       
       // If photo sending fails, fall back to text-only message
       if (!messageSuccess) {
-        console.log('[Start] Falling back to text-only message');
+        console.log('[Start] ❌ Photo sending failed, falling back to text-only message');
         messageSuccess = await sendTextMessage(
           botToken, 
           message.from.id, 
@@ -81,7 +97,7 @@ export async function handleStartCommand(
       }
     } else {
       // No image, send text-only message
-      console.log('[Start] No welcome image, sending text-only message');
+      console.log('[Start] 📝 No welcome image, sending text-only message');
       messageSuccess = await sendTextMessage(
         botToken, 
         message.from.id, 
@@ -102,13 +118,14 @@ export async function handleStartCommand(
         message
       );
       
+      console.log('[Start] ✅ Start command completed successfully');
       return true;
     } else {
-      console.error('[Start] Failed to send welcome message');
+      console.error('[Start] ❌ Failed to send welcome message');
       return false;
     }
   } catch (error) {
-    console.error('[Start] Critical error:', error);
+    console.error('[Start] ❌ Critical error:', error);
     return false;
   }
 }

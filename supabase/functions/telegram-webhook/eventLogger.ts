@@ -54,38 +54,7 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
       }
     }
     
-    // Make sure the table exists before trying to log
-    // First check if table exists
-    try {
-      const { data: tableExists, error: tableCheckError } = await supabase
-        .from('telegram_webhook_logs')
-        .select('id')
-        .limit(1);
-        
-      if (tableCheckError) {
-        console.warn('[EVENT-LOGGER] ⚠️ Error checking if telegram_webhook_logs table exists, trying to create it');
-        
-        // Try to create the table
-        const createTableSQL = `
-          CREATE TABLE IF NOT EXISTS telegram_webhook_logs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            event_type TEXT,
-            raw_data JSONB,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-          )
-        `;
-        
-        await supabase.rpc('create_table_if_not_exists', { 
-          table_name: 'telegram_webhook_logs',
-          create_sql: createTableSQL 
-        });
-      }
-    } catch (tableError) {
-      console.error('[EVENT-LOGGER] ❌ Error checking/creating telegram_webhook_logs table:', tableError);
-      // Continue and try to insert anyway
-    }
-    
-    // Try to insert the log
+    // Try to insert the log with better error handling for RLS
     try {
       const { error } = await supabase
         .from('telegram_webhook_logs')
@@ -97,39 +66,26 @@ export async function logTelegramEvent(supabase: ReturnType<typeof createClient>
         ]);
 
       if (error) {
-        console.error('[EVENT-LOGGER] ❌ Error logging event:', error);
-        throw error;
+        // Check if it's an RLS error
+        if (error.code === '42501' || error.message?.includes('row-level security')) {
+          console.warn('[EVENT-LOGGER] ⚠️ RLS policy prevented logging event. This is expected in some contexts.');
+        } else {
+          console.error('[EVENT-LOGGER] ❌ Error logging event:', error);
+        }
+      } else {
+        console.log('[EVENT-LOGGER] ✅ Event logged successfully');
       }
-      
-      console.log('[EVENT-LOGGER] ✅ Event logged successfully');
     } catch (dbError) {
       console.error('[EVENT-LOGGER] ❌ Database error in logTelegramEvent:', dbError);
-      // Try to log the error itself to a different table
+      // Try to log the error itself without failing if RLS prevents it
       try {
-        await supabase.from('telegram_errors').insert({
-          error_type: 'event_logging_error',
-          error_message: dbError.message || 'Unknown database error',
-          stack_trace: dbError.stack,
-          context: { event_type: eventType }
-        });
+        console.error('[EVENT-LOGGER] 📋 Error details:', dbError.message);
       } catch (secondaryError) {
-        console.error('[EVENT-LOGGER] ❌ Failed to log error to database:', secondaryError);
+        console.error('[EVENT-LOGGER] ❌ Failed to log error details:', secondaryError);
       }
     }
   } catch (error) {
     console.error('[EVENT-LOGGER] ❌ Error in logTelegramEvent:', error);
-    // We don't re-throw here to avoid breaking the main function flow
-    // But we do try to log the error in a different table
-    try {
-      await supabase.from('telegram_errors').insert({
-        error_type: 'event_logging_error',
-        error_message: error.message || 'Unknown error',
-        stack_trace: error.stack,
-        context: { event_type: eventType }
-      });
-    } catch (secondaryError) {
-      console.error('[EVENT-LOGGER] ❌ Failed to log error to database:', secondaryError);
-    }
   }
 }
 
@@ -163,54 +119,30 @@ export async function logUserAction(
     // Ensure details is not null or undefined
     const safeDetails = details || {};
     
-    // Check if user_actions table exists
+    // Try fallback tables if the main one has RLS issues
     try {
-      const { data: tableExists, error: tableCheckError } = await supabase
-        .from('user_actions')
-        .select('id')
-        .limit(1);
+      const { error } = await supabase
+        .from('subscription_activity_logs')
+        .insert([
+          {
+            telegram_user_id: telegramUserId,
+            activity_type: action,
+            details: JSON.stringify(safeDetails)
+          }
+        ]);
         
-      if (tableCheckError) {
-        console.warn('[EVENT-LOGGER] ⚠️ user_actions table may not exist, will try subscription_activity_logs instead');
-        
-        // Try to use subscription_activity_logs table as fallback
-        const { error: fallbackError } = await supabase
-          .from('subscription_activity_logs')
-          .insert([
-            {
-              telegram_user_id: telegramUserId,
-              activity_type: action,
-              details: JSON.stringify(safeDetails)
-            }
-          ]);
-          
-        if (fallbackError) {
-          console.error('[EVENT-LOGGER] ❌ Error logging to fallback table:', fallbackError);
+      if (error) {
+        // Check if it's an RLS error
+        if (error.code === '42501' || error.message?.includes('row-level security')) {
+          console.warn('[EVENT-LOGGER] ⚠️ RLS policy prevented logging user action. This is expected in some contexts.');
         } else {
-          console.log('[EVENT-LOGGER] ✅ User action logged to fallback table successfully');
+          console.error('[EVENT-LOGGER] ❌ Error logging user action:', error);
         }
-        
-        return;
+      } else {
+        console.log('[EVENT-LOGGER] ✅ User action logged successfully');
       }
-    } catch (tableError) {
-      console.error('[EVENT-LOGGER] ❌ Error checking user_actions table:', tableError);
-      // Continue and try to insert anyway
-    }
-    
-    const { error } = await supabase
-      .from('user_actions')
-      .insert([
-        {
-          telegram_user_id: telegramUserId,
-          action_type: action,
-          details: safeDetails
-        }
-      ]);
-      
-    if (error) {
-      console.error('[EVENT-LOGGER] ❌ Error logging user action:', error);
-    } else {
-      console.log('[EVENT-LOGGER] ✅ User action logged successfully');
+    } catch (error) {
+      console.error('[EVENT-LOGGER] ❌ Error logging to activity logs:', error);
     }
   } catch (error) {
     console.error('[EVENT-LOGGER] ❌ Error in logUserAction:', error);

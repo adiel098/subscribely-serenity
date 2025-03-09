@@ -41,11 +41,12 @@ export async function fetchStartCommandData(
       .eq('community_id', communityId)
       .maybeSingle(); // Use maybeSingle() instead of single() to handle missing bot settings
     
-    // If bot settings don't exist, we'll automatically create default settings
+    // If bot settings don't exist, we'll use a default settings object but won't try to save it
+    // This avoids RLS issues when creating new records
     if (botSettingsResult.error || !botSettingsResult.data) {
-      console.log('[DATA-SOURCES] ⚠️ Bot settings not found, creating default settings');
+      console.log('[DATA-SOURCES] ⚠️ Bot settings not found, using default settings');
       
-      // Create default bot settings
+      // Create default bot settings object (but don't insert to database)
       const defaultBotSettings = {
         community_id: communityId,
         welcome_message: `Welcome to ${communityResult.data.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`,
@@ -55,29 +56,14 @@ export async function fetchStartCommandData(
         bot_signature: '🤖 MembershipBot'
       };
       
-      const createResult = await supabase
-        .from('telegram_bot_settings')
-        .insert(defaultBotSettings)
-        .select()
-        .single();
-        
-      if (createResult.error) {
-        console.error('[DATA-SOURCES] ❌ Error creating default bot settings:', createResult.error);
-        // Continue with community data only
-        return {
-          success: true,
-          community: communityResult.data,
-          botSettings: defaultBotSettings,
-          error: 'Using default bot settings (failed to save)'
-        };
-      }
+      // Log that we're using default settings
+      console.log('[DATA-SOURCES] ℹ️ Using default bot settings without database insertion');
       
-      console.log('[DATA-SOURCES] ✅ Default bot settings created successfully');
-      
+      // Return success with community data and default settings
       return {
         success: true,
         community: communityResult.data,
-        botSettings: createResult.data
+        botSettings: defaultBotSettings
       };
     }
     

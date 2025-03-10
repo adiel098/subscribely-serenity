@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,11 @@ import { Loader2, Plus, PackagePlus, SparklesIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 const intervalColors = {
-  monthly: "bg-blue-50 text-blue-700",
-  quarterly: "bg-green-50 text-green-700",
-  "half-yearly": "bg-purple-50 text-purple-700",
-  yearly: "bg-orange-50 text-orange-700",
-  "one-time": "bg-gray-50 text-gray-700",
+  monthly: "bg-blue-100 text-blue-700",
+  quarterly: "bg-green-100 text-green-700",
+  "half-yearly": "bg-purple-100 text-purple-700",
+  yearly: "bg-orange-100 text-orange-700",
+  "one-time": "bg-gray-100 text-gray-700",
 };
 
 const intervalLabels = {
@@ -87,7 +88,7 @@ const Subscriptions = () => {
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
   return (
-    <div className="space-y-5 py-5">
+    <div className="space-y-6 py-6">
       <motion.div 
         className="flex justify-between items-center"
         initial={{ opacity: 0, y: -20 }}
@@ -95,8 +96,8 @@ const Subscriptions = () => {
         transition={{ duration: 0.4 }}
       >
         <div>
-          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-            <SparklesIcon className="h-5 w-5 text-indigo-600" />
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <SparklesIcon className="h-6 w-6 text-indigo-600" />
             Subscription Plans
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -109,10 +110,10 @@ const Subscriptions = () => {
         >
           <Button 
             onClick={handleCreatePlan} 
-            className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
+            className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto"
             type="button"
           >
-            <Plus className="h-4 w-4 mr-1.5" />
+            <Plus className="h-5 w-5 mr-2" />
             Create Plan
           </Button>
         </motion.div>
@@ -137,7 +138,7 @@ const Subscriptions = () => {
         </motion.div>
       ) : (
         <motion.div 
-          className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
           variants={containerVariants}
           initial="hidden"
           animate="visible"

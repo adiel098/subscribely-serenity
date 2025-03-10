@@ -41,23 +41,23 @@ export const SubscriptionPlanCard = ({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
+      className="h-full"
     >
-      <Card className="group relative overflow-hidden border hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-white shadow-sm hover:shadow-md h-full">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
+      <Card className="group relative overflow-hidden border hover:border-indigo-300 transition-all duration-300 bg-white shadow-sm hover:shadow-md h-full flex flex-col">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-700"></div>
         
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1.5 z-10">
+        <div className="absolute top-3 right-3 flex gap-1.5 z-10">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
                   variant="outline" 
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-full bg-green-50 border border-green-100 text-green-600 hover:bg-green-100 hover:text-green-700"
+                  size="icon"
+                  className="h-8 w-8 p-0 rounded-full bg-green-50 border border-green-200 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm"
                   onClick={() => onEdit(plan)}
-                  type="button"
                 >
-                  <PencilIcon className="h-3.5 w-3.5" />
+                  <PencilIcon className="h-4 w-4" />
                   <span className="sr-only">Edit plan</span>
                 </Button>
               </TooltipTrigger>
@@ -72,12 +72,11 @@ export const SubscriptionPlanCard = ({
               <TooltipTrigger asChild>
                 <Button 
                   variant="outline" 
-                  size="sm"
-                  className="h-7 w-7 p-0 rounded-full bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 hover:text-red-600"
+                  size="icon"
+                  className="h-8 w-8 p-0 rounded-full bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 hover:text-red-600 shadow-sm"
                   onClick={() => onDelete(plan.id)}
-                  type="button"
                 >
-                  <TrashIcon className="h-3.5 w-3.5" />
+                  <TrashIcon className="h-4 w-4" />
                   <span className="sr-only">Delete plan</span>
                 </Button>
               </TooltipTrigger>
@@ -88,9 +87,9 @@ export const SubscriptionPlanCard = ({
           </TooltipProvider>
         </div>
         
-        <div className="p-4 flex flex-col h-full relative z-0">
-          <div className="mb-1.5">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${intervalColors[plan.interval]}`}>
+        <div className="p-5 flex flex-col h-full relative z-0">
+          <div className="mb-2">
+            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${intervalColors[plan.interval]}`}>
               {intervalLabels[plan.interval]}
             </span>
           </div>
@@ -103,11 +102,11 @@ export const SubscriptionPlanCard = ({
           />
           
           {plan.description && (
-            <p className="text-gray-600 leading-relaxed mt-2 text-xs">{plan.description}</p>
+            <p className="text-gray-600 leading-relaxed mt-3 text-sm">{plan.description}</p>
           )}
           
           {plan.features && plan.features.length > 0 && (
-            <div className="mt-auto pt-3">
+            <div className="mt-auto pt-4">
               <PlanFeatureList features={plan.features} />
             </div>
           )}

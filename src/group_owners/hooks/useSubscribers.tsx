@@ -1,14 +1,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export interface Subscriber {
   id: string;
   telegram_user_id: string;
   telegram_username: string | null;
-  first_name: string | null; // Added first name
-  last_name: string | null;  // Added last name
+  first_name: string | null;
+  last_name: string | null;
   joined_at: string;
   last_active: string | null;
   subscription_start_date: string | null;
@@ -31,7 +31,8 @@ export const useSubscribers = (communityId: string) => {
     queryFn: async () => {
       if (!communityId) return [];
 
-      const { data, error } = await supabase
+      // First, fetch telegram chat members
+      const { data: membersData, error: membersError } = await supabase
         .from('telegram_chat_members')
         .select(`
           *,
@@ -41,39 +42,54 @@ export const useSubscribers = (communityId: string) => {
             name,
             interval,
             price
-          ),
-          user_profile:telegram_mini_app_users(
-            first_name, 
-            last_name
           )
         `)
         .eq('community_id', communityId)
         .order('joined_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching subscribers:', error);
-        throw error;
+      if (membersError) {
+        console.error('Error fetching subscribers:', membersError);
+        throw membersError;
       }
 
-      console.log('Fetched subscribers:', data);
+      // Extract all telegram user IDs to fetch user profiles
+      const telegramUserIds = membersData.map(member => member.telegram_user_id);
       
-      // Process the data to flatten user profile information
-      const processedData = data.map(subscriber => {
-        // Extract first_name and last_name from user_profile if available
-        const first_name = subscriber.user_profile?.[0]?.first_name || null;
-        const last_name = subscriber.user_profile?.[0]?.last_name || null;
+      // Fetch user profiles for these telegram IDs
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('telegram_mini_app_users')
+        .select('telegram_id, first_name, last_name')
+        .in('telegram_id', telegramUserIds);
         
-        // Remove the user_profile array and add first_name and last_name directly
-        const { user_profile, ...rest } = subscriber;
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        // Continue even if profiles fetch fails
+        // We'll just use null values for first_name and last_name
+      }
+      
+      // Create a lookup map for quick access
+      const profileMap = new Map();
+      profilesData?.forEach(profile => {
+        profileMap.set(profile.telegram_id, {
+          first_name: profile.first_name,
+          last_name: profile.last_name
+        });
+      });
+      
+      // Merge the data
+      const subscribersWithProfiles = membersData.map(member => {
+        const profile = profileMap.get(member.telegram_user_id);
         
         return {
-          ...rest,
-          first_name,
-          last_name
+          ...member,
+          first_name: profile?.first_name || null,
+          last_name: profile?.last_name || null
         };
       });
 
-      return processedData as Subscriber[];
+      console.log('Fetched subscribers with profiles:', subscribersWithProfiles);
+      
+      return subscribersWithProfiles as Subscriber[];
     },
     enabled: Boolean(communityId),
   });

@@ -9,7 +9,7 @@ import { UserDataChecker } from "./app-content/UserDataChecker";
 import { ErrorNotifier } from "./app-content/ErrorNotifier";
 import { LoadingIndicator } from "./app-content/LoadingIndicator";
 import { AppContentRouter } from "./app-content/AppContentRouter";
-import { Plan } from "../types/community.types";
+import { Plan, Community } from "../types/community.types";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { CommunityNotFound } from "./CommunityNotFound";
 import { EmailCollectionWrapper } from "./EmailCollectionWrapper";
@@ -27,14 +27,16 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
   const [activeTab, setActiveTab] = useState<string>("subscribe");
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+  const [currentCommunityId, setCurrentCommunityId] = useState<string>(communityId);
   const { toast } = useToast();
   
   // Telegram user data
-  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = useTelegramUser(communityId, telegramUserId);
+  const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = useTelegramUser(currentCommunityId, telegramUserId);
   
   // Community data
   const { community, loading: communityLoading, error: communityError } = 
-    useCommunityData(communityId);
+    useCommunityData(currentCommunityId);
   
   // User subscriptions data
   const { 
@@ -45,13 +47,20 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     renewSubscription 
   } = useUserSubscriptions(telegramUser?.id);
   
+  // Set initial community when data loads
+  useEffect(() => {
+    if (community && !selectedCommunity) {
+      setSelectedCommunity(community);
+    }
+  }, [community, selectedCommunity]);
+  
   // Reset selected plan when community changes
   useEffect(() => {
-    if (community) {
+    if (selectedCommunity) {
       setSelectedPlan(null);
       setShowPaymentMethods(false);
     }
-  }, [community]);
+  }, [selectedCommunity]);
   
   // Methods
   const handlePlanSelect = (plan: Plan) => {
@@ -83,9 +92,30 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     renewSubscription(subscription);
   };
   
-  const handleSelectCommunity = (community: any) => {
+  const handleSelectCommunity = (community: Community) => {
     console.log("Selected community:", community);
-    // Logic to navigate to the selected community will go here
+    
+    // Set the selected community
+    setSelectedCommunity(community);
+    
+    // Update the current community ID if needed to fetch details
+    if (community.id !== currentCommunityId) {
+      setCurrentCommunityId(community.id);
+    }
+    
+    // Switch to subscribe tab
+    setActiveTab("subscribe");
+    
+    // Reset other states
+    setSelectedPlan(null);
+    setShowPaymentMethods(false);
+    setShowSuccess(false);
+    
+    // Show toast notification
+    toast({
+      title: "Community selected",
+      description: `Viewing ${community.name}`,
+    });
   };
 
   const handleRetry = () => {
@@ -124,8 +154,8 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
   }
   
   // No community found
-  if (!community) {
-    return <CommunityNotFound communityId={communityId} />;
+  if (!community && !selectedCommunity) {
+    return <CommunityNotFound communityId={currentCommunityId} />;
   }
 
   // Show email collection form if needed
@@ -140,6 +170,9 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
       />
     );
   }
+
+  // Use selected community or fallback to original community
+  const displayCommunity = selectedCommunity || community;
 
   return (
     <>
@@ -165,7 +198,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
       
       <AppContentRouter
         isCheckingUserData={isCheckingUserData}
-        community={community}
+        community={displayCommunity}
         telegramUser={telegramUser}
         selectedPlan={selectedPlan}
         showPaymentMethods={showPaymentMethods}

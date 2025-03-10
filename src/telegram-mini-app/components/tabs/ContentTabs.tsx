@@ -2,7 +2,7 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, LayoutGrid, Search, Receipt } from "lucide-react";
-import { Plan } from "@/telegram-mini-app/types/community.types";
+import { Plan, Community } from "@/telegram-mini-app/types/community.types";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { SubscriptionPlanSection } from "./SubscriptionPlanSection";
 import { CommunitySearch } from "@/telegram-mini-app/components/CommunitySearch";
@@ -19,7 +19,7 @@ interface ContentTabsProps {
   subscriptions: Subscription[];
   onRefreshSubscriptions: () => void;
   onRenewSubscription: (subscription: Subscription) => void;
-  onSelectCommunity: (community: any) => void;
+  onSelectCommunity: (community: Community) => void;
   telegramUserId?: string;
 }
 
@@ -36,6 +36,16 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   onSelectCommunity,
   telegramUserId
 }) => {
+  
+  // Handler for when a community is selected from search
+  const handleCommunitySelect = (community: Community) => {
+    // Call the parent's onSelectCommunity function
+    onSelectCommunity(community);
+    
+    // Automatically switch to the subscribe tab
+    handleTabChange("subscribe");
+  };
+  
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="grid grid-cols-4 mb-6 bg-primary/5">
@@ -87,7 +97,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       
       <TabsContent value="discover" className="mt-0">
         <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
-          <CommunitySearch onSelectCommunity={onSelectCommunity} />
+          <CommunitySearch onSelectCommunity={handleCommunitySelect} />
         </div>
       </TabsContent>
     </Tabs>

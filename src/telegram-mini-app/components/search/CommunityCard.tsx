@@ -31,55 +31,27 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
     e.stopPropagation(); // Prevent card click event
     
     try {
-      // If we have a custom link, use it, otherwise use the community ID
-      const startParam = custom_link || community.id;
+      console.log("🔍 Selected community:", name);
       
-      // IMPORTANT: In Vite, environment variables MUST be prefixed with VITE_
-      // and accessed through import.meta.env instead of process.env
-      const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'membifybot';
-      
-      // Log available parameters for debugging
-      console.log("🔗 Subscribe button clicked for community:", name);
-      console.log("🔑 Using start parameter:", startParam);
-      console.log("🤖 Bot username:", botUsername);
-      
-      // Check if Telegram WebApp is available
-      if (window.Telegram?.WebApp) {
-        // Direct deep link to the bot with start parameter
-        const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
-        console.log("🔗 Opening Telegram link:", deepLink);
-        
-        if (window.Telegram.WebApp.openTelegramLink) {
-          // Use native Telegram method to open the link
-          window.Telegram.WebApp.HapticFeedback?.impactOccurred('medium');
-          window.Telegram.WebApp.openTelegramLink(deepLink);
-        } else {
-          // Fallback if openTelegramLink is not available
-          console.log("⚠️ openTelegramLink not available, trying alternative method");
-          window.open(deepLink, '_blank');
-        }
-        
-        // Show success toast
-        toast({
-          title: "Opening subscription page",
-          description: `Connecting to ${name} subscription`,
-        });
-      } else {
-        // Handle case where Telegram WebApp is not available (browser environment)
-        console.warn("⚠️ Telegram WebApp not available, using direct link");
-        const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
-        window.open(deepLink, '_blank');
-        
-        toast({
-          title: "Opening in Telegram",
-          description: "Please complete this action in Telegram",
-        });
+      // Provide haptic feedback if available
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
+      
+      // Select this community in the parent component
+      onSelect(community);
+      
+      // Show toast notification
+      toast({
+        title: "Community selected",
+        description: `Viewing subscription options for ${name}`,
+      });
+      
     } catch (error) {
-      console.error("❌ Error opening subscription link:", error);
+      console.error("❌ Error selecting community:", error);
       toast({
         title: "Error",
-        description: "Failed to open the subscription page. Please try again.",
+        description: "Failed to select this community. Please try again.",
         variant: "destructive"
       });
     }
@@ -144,7 +116,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm"
           >
             <UserPlus className="mr-2 h-4 w-4" />
-            Subscribe Now
+            View Subscription Options
           </Button>
         </CardFooter>
       </Card>

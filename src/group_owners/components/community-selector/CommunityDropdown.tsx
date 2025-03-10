@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommunityDropdownProps {
   communities?: Community[];
@@ -58,24 +59,21 @@ export const CommunityDropdown = ({
       
       console.log(`Fetching photos for ${telegramCommunities.length} communities`);
       
-      const response = await fetch('/check-community-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Use Supabase Edge Function to fetch all photos
+      const { data, error } = await supabase.functions.invoke("get-telegram-chat-photo", {
+        body: {
           communities: telegramCommunities.map(c => ({
             id: c.id,
-            telegram_chat_id: c.telegram_chat_id
+            telegramChatId: c.telegram_chat_id
           }))
-        })
+        }
       });
       
-      if (!response.ok) {
-        throw new Error(`Error fetching community photos: ${response.status}`);
+      if (error) {
+        throw new Error(`Error fetching community photos: ${error.message}`);
       }
       
-      const data = await response.json();
-      
-      if (data.results) {
+      if (data?.results) {
         setCommunityPhotos(prev => ({
           ...prev,
           ...data.results
@@ -102,22 +100,19 @@ export const CommunityDropdown = ({
     try {
       setRefreshingCommunityId(communityId);
       
-      const response = await fetch('/check-community-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("get-telegram-chat-photo", {
+        body: {
           communityId,
-          telegramChatId: chatId
-        })
+          telegramChatId: chatId,
+          forceFetch: true
+        }
       });
       
-      if (!response.ok) {
-        throw new Error(`Error refreshing photo: ${response.status}`);
+      if (error) {
+        throw new Error(`Error refreshing photo: ${error.message}`);
       }
       
-      const data = await response.json();
-      
-      if (data.photoUrl) {
+      if (data?.photoUrl) {
         setCommunityPhotos(prev => ({
           ...prev,
           [communityId]: data.photoUrl

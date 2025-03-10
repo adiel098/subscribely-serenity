@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Timer } from "lucide-react";
@@ -40,7 +39,7 @@ export const NextCheckTimer = () => {
 
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-none">
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="flex items-center space-x-4">
           <Timer className="h-8 w-8 text-purple-500" />
           <div>

@@ -95,12 +95,12 @@ const PaymentMethods = () => {
         </CardHeader>
         <CardContent>
           <motion.div 
-            className="grid gap-4 md:grid-cols-3 max-w-3xl mx-auto"
+            className="grid gap-6 md:grid-cols-3 justify-items-center"
             variants={container}
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={item} className="h-full">
+            <motion.div variants={item} className="h-full w-full flex justify-center">
               <PaymentMethodCard
                 title="Stripe"
                 description="Accept credit card payments securely with Stripe 💳"
@@ -114,7 +114,7 @@ const PaymentMethods = () => {
                 communityId={selectedCommunityId || ""}
               />
             </motion.div>
-            <motion.div variants={item} className="h-full">
+            <motion.div variants={item} className="h-full w-full flex justify-center">
               <PaymentMethodCard
                 title="PayPal"
                 description="Accept PayPal payments easily and securely 🔄"
@@ -128,7 +128,7 @@ const PaymentMethods = () => {
                 communityId={selectedCommunityId || ""}
               />
             </motion.div>
-            <motion.div variants={item} className="h-full">
+            <motion.div variants={item} className="h-full w-full flex justify-center">
               <PaymentMethodCard
                 title="Crypto"
                 description="Accept cryptocurrency payments for your groups 🪙"

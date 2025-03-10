@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Package, Copy, CheckCircle, Edit, Link, AlertTriangle } from "lucide-react";
+import { CreditCard, Package, Copy, CheckCircle, Edit, Link, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -20,20 +19,16 @@ export const CommunityRequirementsBanner = () => {
   const [customLink, setCustomLink] = useState<string | null>(null);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
 
-  // Fetch payment methods and subscription plans
   const { data: paymentMethods, isLoading: isLoadingPayments } = usePaymentMethods(selectedCommunityId);
   const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(selectedCommunityId || "");
 
-  // Get current community to access the custom_link
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
 
-  // Check if community has active payment methods and plans
   const hasActivePaymentMethods = paymentMethods?.some(pm => pm.is_active) || false;
   const hasPlans = (plans?.length || 0) > 0;
   const isFullyConfigured = hasActivePaymentMethods && hasPlans;
   const isLoading = isLoadingPayments || isLoadingPlans;
 
-  // Handle navigation to appropriate setup pages
   const navigateToPaymentMethods = () => {
     navigate("/payment-methods");
   };
@@ -46,7 +41,6 @@ export const CommunityRequirementsBanner = () => {
     navigate("/bot-settings");
   };
 
-  // Copy mini app link functionality
   const copyMiniAppLink = () => {
     if (!selectedCommunityId) return;
     
@@ -64,7 +58,6 @@ export const CommunityRequirementsBanner = () => {
           duration: 3000,
         });
         
-        // Reset success state after animation completes
         setTimeout(() => setCopySuccess(false), 2000);
       })
       .catch(err => {
@@ -77,24 +70,20 @@ export const CommunityRequirementsBanner = () => {
       });
   };
 
-  // Handle custom link update
   const handleLinkUpdated = (newLink: string | null) => {
     setCustomLink(newLink);
     refetchCommunities();
   };
 
-  // Open edit dialog
   const openEditDialog = () => {
     setIsEditDialogOpen(true);
   };
 
-  // If loading or no community selected, don't render
   if (isLoading || !selectedCommunityId) return null;
 
   return (
     <AnimatePresence mode="wait">
       {isFullyConfigured ? (
-        // Success state - display the mini app link
         <motion.div
           key="success"
           initial={{ opacity: 0, y: -10 }}
@@ -147,7 +136,6 @@ export const CommunityRequirementsBanner = () => {
             </motion.button>
           </div>
           
-          {/* Edit link dialog */}
           <LinkEditDialog 
             isOpen={isEditDialogOpen}
             onClose={() => setIsEditDialogOpen(false)}
@@ -157,7 +145,6 @@ export const CommunityRequirementsBanner = () => {
           />
         </motion.div>
       ) : (
-        // Requirements state - show what needs to be configured with new red-themed styling
         <motion.div
           key="requirements"
           initial={{ opacity: 0, y: -10 }}

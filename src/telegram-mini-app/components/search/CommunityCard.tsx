@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users, Crown, Star, Sparkles } from "lucide-react";
+import { UserPlus, Crown, Star, Sparkles } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -16,7 +16,7 @@ interface CommunityCardProps {
 }
 
 export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelect }) => {
-  const { name, description, telegram_photo_url, subscription_plans, custom_link, member_count } = community;
+  const { name, description, telegram_photo_url, subscription_plans, custom_link } = community;
   const { toast } = useToast();
   
   // Get the lowest price plan if available
@@ -26,13 +26,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
   
   // Prepare avatar fallback (first letter of community name)
   const avatarFallback = name ? name.charAt(0).toUpperCase() : "C";
-  
-  // Get emoji based on member count
-  const getMembershipEmoji = (count: number) => {
-    if (count > 1000) return <Crown className="h-3 w-3 text-amber-500" />;
-    if (count > 500) return <Star className="h-3 w-3 text-indigo-500" />;
-    return <Users className="h-3 w-3 text-blue-500" />;
-  };
   
   const handleSubscribe = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click event
@@ -44,9 +37,10 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
       // Check if Telegram WebApp and openTelegramLink method are available
       if (window.Telegram?.WebApp?.openTelegramLink) {
         // Construct the mini app URL with the start parameter
-        const miniAppUrl = `https://t.me/YourBotUsername/app?startapp=${startParam}`;
+        const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
+        const miniAppUrl = `https://t.me/${botUsername}?start=${startParam}`;
         
-        console.log("🔗 Opening Telegram mini app:", miniAppUrl);
+        console.log("🔗 Opening Telegram link:", miniAppUrl);
         window.Telegram.WebApp.openTelegramLink(miniAppUrl);
       } else {
         // Alternative approach when openTelegramLink is not available
@@ -54,19 +48,20 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         
         // Try to use window.open as a fallback
         if (typeof window !== 'undefined') {
-          const miniAppUrl = `https://t.me/YourBotUsername/app?startapp=${startParam}`;
+          const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
+          const miniAppUrl = `https://t.me/${botUsername}?start=${startParam}`;
           window.open(miniAppUrl, '_blank');
           console.log("🔗 Attempted to open via window.open:", miniAppUrl);
         } else {
           toast({
-            title: "Cannot open mini app",
+            title: "Cannot open link",
             description: "The Telegram WebApp API is not available",
             variant: "destructive"
           });
         }
       }
     } catch (error) {
-      console.error("❌ Error opening mini app:", error);
+      console.error("❌ Error opening link:", error);
       toast({
         title: "Error",
         description: "Failed to open the community page",
@@ -111,13 +106,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
               <h3 className="font-semibold text-base bg-gradient-to-r from-purple-800 to-indigo-700 bg-clip-text text-transparent">{name}</h3>
               
               <div className="flex items-center space-x-2">
-                {member_count > 0 && (
-                  <Badge variant="outline" className="text-xs font-normal px-2 py-0 h-5 bg-white/80 border-purple-100 flex items-center gap-1">
-                    {getMembershipEmoji(member_count)}
-                    <span>{member_count > 1000 ? `${(member_count / 1000).toFixed(1)}K` : member_count} members</span>
-                  </Badge>
-                )}
-                
                 {lowestPricePlan && (
                   <Badge variant="outline" className="text-xs font-normal px-2 py-0 h-5 bg-gradient-to-r from-indigo-50 to-blue-50 border-blue-100 text-blue-700">
                     From {formatCurrency(lowestPricePlan.price)}/{lowestPricePlan.interval === 'month' ? 'month' : lowestPricePlan.interval}

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Sparkles, Star, Zap, Shield, Award, Check } from "lucide-react";
@@ -28,6 +29,26 @@ export const SubscriptionPlans = ({
       <Award key="award" className="h-4 w-4 text-pink-500 mr-2 flex-shrink-0" />
     ];
     return icons[index % icons.length];
+  };
+
+  // Get interval emoji and label
+  const getIntervalDisplay = (interval: string) => {
+    switch (interval) {
+      case 'monthly':
+        return { emoji: '🔄', label: 'Monthly' };
+      case 'quarterly':
+        return { emoji: '🔷', label: 'Quarterly' };
+      case 'half-yearly':
+        return { emoji: '📆', label: 'Half-Yearly' };
+      case 'yearly':
+        return { emoji: '📅', label: 'Yearly' };
+      case 'lifetime':
+        return { emoji: '♾️', label: 'Lifetime' };
+      case 'one-time':
+        return { emoji: '🎯', label: 'One-Time' };
+      default:
+        return { emoji: '⏱️', label: interval };
+    }
   };
 
   // Check if the user has already subscribed to this plan
@@ -78,6 +99,7 @@ export const SubscriptionPlans = ({
       >
         {plans.map((plan, planIndex) => {
           const isActive = isSubscribedToPlan(plan.id);
+          const intervalDisplay = getIntervalDisplay(plan.interval);
           
           return (
             <motion.div
@@ -101,10 +123,7 @@ export const SubscriptionPlans = ({
                 <div className="space-y-1">
                   <div className="flex gap-1.5">
                     <Badge variant={planIndex === 0 ? "default" : "outline"} className="mb-1 text-xs">
-                      {plan.interval === 'monthly' ? '🔄 Monthly' : 
-                        plan.interval === 'yearly' ? '📅 Yearly' : 
-                        plan.interval === 'lifetime' ? '♾️ Lifetime' : 
-                        plan.interval}
+                      {intervalDisplay.emoji} {intervalDisplay.label}
                     </Badge>
                     {isActive && (
                       <Badge variant="success" className="mb-1 text-xs animate-pulse">
@@ -123,10 +142,9 @@ export const SubscriptionPlans = ({
                       ${plan.price}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {plan.interval === 'monthly' ? 'per month' : 
-                        plan.interval === 'yearly' ? 'per year' : 
-                        plan.interval === 'lifetime' ? 'one-time' : 
-                        plan.interval}
+                      {plan.interval === 'lifetime' || plan.interval === 'one-time' 
+                        ? 'one-time' 
+                        : `per ${plan.interval.replace('ly', '')}`}
                     </p>
                   </div>
                 </div>

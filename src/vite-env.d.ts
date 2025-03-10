@@ -9,6 +9,7 @@ interface TelegramWebApp {
       last_name?: string;
       username?: string;
       photo_url?: string;
+      language_code?: string; // Add language_code property
     };
     query_id?: string;
     start_param?: string;
@@ -29,13 +30,13 @@ interface TelegramWebApp {
   viewportStableHeight?: number;
   isExpanded?: boolean;
   setViewport?: (params?: { height?: number }) => void;
-  expand?: () => Promise<void>;
+  expand?: () => void; // Changed to void instead of Promise<void>
   ready?: () => void;
   enableClosingConfirmation?: () => void;
   disableClosingConfirmation?: () => void;
   onEvent?: (eventType: string, eventHandler: Function) => void;
   offEvent?: (eventType: string, eventHandler: Function) => void;
-  openTelegramLink?: (url: string) => void; // Added this method
+  openTelegramLink?: (url: string) => void;
   MainButton?: {
     text: string;
     isVisible: boolean;
@@ -51,6 +52,7 @@ interface TelegramWebApp {
     onClick: (callback: () => void) => void;
     offClick: (callback: () => void) => void;
   };
+  version?: string; // Add version property
 }
 
 interface Window {

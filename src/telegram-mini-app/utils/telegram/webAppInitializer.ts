@@ -9,7 +9,7 @@
 export const initTelegramWebApp = (): boolean => {
   try {
     if (window.Telegram?.WebApp) {
-      console.log('📱 WebApp is available, version:', window.Telegram.WebApp.version);
+      console.log('📱 WebApp is available, version:', window.Telegram.WebApp.version || 'unknown');
       
       // Log available WebApp methods
       console.log('📱 Available WebApp methods:', Object.keys(window.Telegram.WebApp));

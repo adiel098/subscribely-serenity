@@ -1,6 +1,8 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
 import { kickMemberService } from '../handlers/services/memberKickService.ts';
+import { unblockMemberService } from '../handlers/services/memberUnblockService.ts';
 import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
 import { handleMyChatMember } from '../handlers/botStatusHandler.ts';
 import { handleStartCommand } from '../handlers/startCommandHandler.ts';
@@ -153,6 +155,79 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
         });
       } catch (error) {
         console.error('[ROUTER] ❌ Error removing member:', error);
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: error.message || 'An unknown error occurred' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        });
+      }
+    }
+
+    // Route: Member Unblock
+    if (body.path === '/unblock-member') {
+      console.log('[ROUTER] 🔄 Routing to member unblock handler');
+      try {
+        // Validate that we have the required parameters
+        if (!body.chat_id || !body.user_id) {
+          console.error('[ROUTER] ❌ Missing required parameters for member unblock:', body);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: 'Missing required parameters: chat_id and user_id are required' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400
+          });
+        }
+        
+        console.log(`[ROUTER] 👤 Unblocking user ${body.user_id} from chat ${body.chat_id}`);
+        const success = await unblockMemberService(
+          supabaseClient,
+          body.chat_id,
+          body.user_id,
+          botToken
+        );
+
+        if (success) {
+          try {
+            // Get the community ID for logging
+            const { data: community } = await supabaseClient
+              .from('communities')
+              .select('id')
+              .eq('telegram_chat_id', body.chat_id)
+              .single();
+              
+            const communityId = community?.id;
+            
+            // Log the unblock in the activity log
+            await supabaseClient
+              .from('subscription_activity_logs')
+              .insert({
+                telegram_user_id: body.user_id,
+                community_id: communityId,
+                activity_type: 'member_unblocked',
+                details: 'User unblocked by admin'
+              })
+              .then(({ error }) => {
+                if (error) {
+                  console.error('[ROUTER] ❌ Error logging unblock activity:', error);
+                } else {
+                  console.log('[ROUTER] 📝 Unblock action logged to activity log');
+                }
+              });
+          } catch (error) {
+            console.error('[ROUTER] ❌ Error in activity logging process:', error);
+            // Continue despite error as the main operation succeeded
+          }
+        }
+
+        console.log(`[ROUTER] ${success ? '✅' : '❌'} Member unblock ${success ? 'successful' : 'failed'}`);
+        return new Response(JSON.stringify({ success }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('[ROUTER] ❌ Error unblocking member:', error);
         return new Response(JSON.stringify({ 
           success: false, 
           error: error.message || 'An unknown error occurred' 

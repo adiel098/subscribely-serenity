@@ -10,6 +10,7 @@ import { useSubscriberManagement } from "../hooks/useSubscriberManagement";
 import { useSubscriberFilters } from "../hooks/useSubscriberFilters";
 import { Loader2 } from "lucide-react";
 import { RemoveSubscriberDialog } from "../components/subscribers/RemoveSubscriberDialog";
+import { UnblockSubscriberDialog } from "../components/subscribers/UnblockSubscriberDialog";
 import { Subscriber } from "../hooks/useSubscribers";
 
 const Subscribers = () => {
@@ -17,8 +18,11 @@ const Subscribers = () => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
   const [subscriberToRemove, setSubscriberToRemove] = useState<Subscriber | null>(null);
+  const [subscriberToUnblock, setSubscriberToUnblock] = useState<Subscriber | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isUnblocking, setIsUnblocking] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -27,7 +31,8 @@ const Subscribers = () => {
     isUpdating,
     refetch,
     handleUpdateStatus,
-    handleRemoveSubscriber
+    handleRemoveSubscriber,
+    handleUnblockSubscriber
   } = useSubscriberManagement(selectedCommunityId || "");
 
   const {
@@ -45,12 +50,15 @@ const Subscribers = () => {
   useEffect(() => {
     return () => {
       setRemoveDialogOpen(false);
+      setUnblockDialogOpen(false);
       setEditDialogOpen(false);
       setIsRemoving(false);
+      setIsUnblocking(false);
       
       // Use setTimeout to ensure state cleanup happens after rendering
       setTimeout(() => {
         setSubscriberToRemove(null);
+        setSubscriberToUnblock(null);
         setSelectedSubscriber(null);
       }, 500);
     };
@@ -65,6 +73,18 @@ const Subscribers = () => {
     setTimeout(() => {
       setSubscriberToRemove(subscriber);
       setRemoveDialogOpen(true);
+    }, 50);
+  }, []);
+
+  // Handle unblock click with proper event isolation
+  const onUnblockClick = useCallback((subscriber: Subscriber) => {
+    // Clear any existing state first
+    setSubscriberToUnblock(null);
+    
+    // Use setTimeout to ensure state is updated after current execution
+    setTimeout(() => {
+      setSubscriberToUnblock(subscriber);
+      setUnblockDialogOpen(true);
     }, 50);
   }, []);
 
@@ -101,6 +121,39 @@ const Subscribers = () => {
     }
   }, [handleRemoveSubscriber, toast, refetch, isRemoving]);
 
+  // Handle unblock confirmation
+  const onConfirmUnblock = useCallback(async (subscriber: Subscriber) => {
+    if (!subscriber || isUnblocking) return;
+    
+    setIsUnblocking(true);
+    try {
+      await handleUnblockSubscriber(subscriber);
+      toast({
+        title: "Success",
+        description: "Subscriber unblocked successfully"
+      });
+      
+      // Use refetch to update the table data
+      await refetch();
+    } catch (error) {
+      console.error("Error unblocking subscriber:", error);
+      toast({
+        title: "Error",
+        description: "Failed to unblock subscriber",
+        variant: "destructive"
+      });
+    } finally {
+      // Clean up state safely with delays to prevent UI glitches
+      setIsUnblocking(false);
+      setUnblockDialogOpen(false);
+      
+      // Use a delay to ensure dialog is fully closed before clearing state
+      setTimeout(() => {
+        setSubscriberToUnblock(null);
+      }, 500);
+    }
+  }, [handleUnblockSubscriber, toast, refetch, isUnblocking]);
+
   // Safe handler for dialog state changes
   const handleRemoveDialogChange = useCallback((open: boolean) => {
     if (isRemoving && open === false) {
@@ -117,6 +170,23 @@ const Subscribers = () => {
       }, 500);
     }
   }, [isRemoving]);
+
+  // Safe handler for unblock dialog state changes
+  const handleUnblockDialogChange = useCallback((open: boolean) => {
+    if (isUnblocking && open === false) {
+      // If unblocking is in progress, don't allow closing
+      return;
+    }
+    
+    setUnblockDialogOpen(open);
+    
+    if (!open) {
+      // Use longer delay to ensure dialog animation completes
+      setTimeout(() => {
+        setSubscriberToUnblock(null);
+      }, 500);
+    }
+  }, [isUnblocking]);
 
   // Handle export functionality
   const handleExport = () => {
@@ -192,6 +262,7 @@ const Subscribers = () => {
           setEditDialogOpen(true);
         }}
         onRemove={onRemoveClick}
+        onUnblock={onUnblockClick}
       />
 
       {selectedSubscriber && (
@@ -209,6 +280,14 @@ const Subscribers = () => {
         onOpenChange={handleRemoveDialogChange}
         onConfirm={onConfirmRemove}
         isProcessing={isRemoving}
+      />
+
+      <UnblockSubscriberDialog
+        subscriber={subscriberToUnblock}
+        open={unblockDialogOpen}
+        onOpenChange={handleUnblockDialogChange}
+        onConfirm={onConfirmUnblock}
+        isProcessing={isUnblocking}
       />
     </div>
   );

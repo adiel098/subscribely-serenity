@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   XCircle,
   Pencil,
+  Unlock
 } from "lucide-react";
 import {
   Table,
@@ -30,9 +31,15 @@ interface SubscribersTableProps {
   subscribers: Subscriber[];
   onEdit: (subscriber: Subscriber) => void;
   onRemove: (subscriber: Subscriber) => void;
+  onUnblock: (subscriber: Subscriber) => void;
 }
 
-export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersTableProps) => {
+export const SubscribersTable = ({ 
+  subscribers, 
+  onEdit, 
+  onRemove,
+  onUnblock 
+}: SubscribersTableProps) => {
   const getStatusBadge = (subscriber: Subscriber) => {
     if (!subscriber.is_active) {
       return (
@@ -158,13 +165,25 @@ export const SubscribersTable = ({ subscribers, onEdit, onRemove }: SubscribersT
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onClick={() => onRemove(subscriber)}
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Remove Subscriber
-                      </DropdownMenuItem>
+                      
+                      {/* Show remove or unblock based on current status */}
+                      {subscriber.subscription_status === "removed" ? (
+                        <DropdownMenuItem
+                          className="text-blue-600 focus:text-blue-600"
+                          onClick={() => onUnblock(subscriber)}
+                        >
+                          <Unlock className="mr-2 h-4 w-4" />
+                          Unblock User
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => onRemove(subscriber)}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Remove Subscriber
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

@@ -39,7 +39,7 @@ export const SubscriptionPlans = ({
       case 'quarterly':
         return { emoji: '🔷', label: 'Quarterly' };
       case 'half-yearly':
-        return { emoji: '📆', label: 'Half-Yearly' };
+        return { emoji: '½', label: 'Half-Yearly' };
       case 'yearly':
         return { emoji: '📅', label: 'Yearly' };
       case 'lifetime':

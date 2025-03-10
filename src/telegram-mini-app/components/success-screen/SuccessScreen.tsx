@@ -1,16 +1,44 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useInviteLink } from "./useInviteLink";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, LinkIcon, Copy } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: string | null }) => {
   const { inviteLink, isLoadingLink } = useInviteLink(communityInviteLink);
+  const { toast } = useToast();
   
   console.log("Rendering success screen with invite link:", inviteLink);
   
+  // Copy link to clipboard functionality
+  const copyToClipboard = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink)
+        .then(() => {
+          toast({
+            title: "Link Copied",
+            description: "Invite link copied to clipboard",
+          });
+          
+          // Trigger haptic feedback if available in Telegram Mini App
+          if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+          }
+        })
+        .catch(err => {
+          console.error("Failed to copy text: ", err);
+          toast({
+            title: "Copy Failed",
+            description: "Could not copy link to clipboard",
+            variant: "destructive",
+          });
+        });
+    }
+  };
+
   const handleJoinCommunity = () => {
     if (inviteLink) {
       console.log("Opening invite link:", inviteLink);
@@ -61,6 +89,25 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
               "Join Community"
             )}
           </Button>
+          
+          {inviteLink && (
+            <div className="w-full mt-4">
+              <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="flex items-center space-x-2 overflow-hidden">
+                  <LinkIcon size={16} className="text-gray-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 truncate">{inviteLink}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={copyToClipboard}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <Copy size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
           
           <p className="text-sm text-gray-500">
             If you have any issues, please contact support.

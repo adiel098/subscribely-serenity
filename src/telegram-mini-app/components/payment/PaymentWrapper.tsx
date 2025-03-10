@@ -57,6 +57,8 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
           showSuccess={showSuccess}
           telegramUserId={telegramUser.id}
           telegramUsername={telegramUser.username}
+          firstName={telegramUser.first_name}
+          lastName={telegramUser.last_name}
           activeSubscription={activeSubscription}
         />
       )}

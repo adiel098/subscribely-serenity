@@ -75,6 +75,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
         telegramUsername={telegramUsername}
         firstName={firstName}
         lastName={lastName}
+        activeSubscription={activeSubscription}
       />
     </motion.div>
   );

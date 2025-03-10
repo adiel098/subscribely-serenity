@@ -1,135 +1,94 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from '../../services/loggingService.ts';
 
-/**
- * Service for kicking members from Telegram chats
- */
+// Service to kick (and optionally unban) a user from a group
 export async function kickMemberService(
   supabase: ReturnType<typeof createClient>,
   chatId: string,
   userId: string,
-  botToken: string
+  botToken: string,
+  unbanAfterKick = true
 ): Promise<boolean> {
-  console.log(`[KICK SERVICE] 🚫 Starting kick operation for user ${userId} from chat ${chatId}`);
+  const logger = createLogger(supabase, 'KICK-SERVICE');
   
   try {
-    // Ensure we have valid parameters
-    if (!chatId || !userId || !botToken) {
-      console.error('[KICK SERVICE] ❌ Missing required parameters');
+    await logger.info(`Attempting to kick user ${userId} from chat ${chatId}`);
+    
+    // First kick the user
+    const kickEndpoint = `https://api.telegram.org/bot${botToken}/kickChatMember`;
+    const kickResponse = await fetch(kickEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        user_id: userId,
+      }),
+    });
+    
+    const kickResult = await kickResponse.json();
+    
+    if (!kickResult.ok) {
+      await logger.error(`Failed to kick user: ${kickResult.description}`);
       return false;
     }
     
-    // First, get the community ID from the chat ID (for database operations)
-    const { data: community, error: communityError } = await supabase
+    await logger.success(`Successfully kicked user ${userId} from chat ${chatId}`);
+    
+    // Unban the user if requested - this allows them to rejoin in the future
+    if (unbanAfterKick) {
+      await logger.info(`Now unbanning user ${userId} so they can rejoin in the future`);
+      
+      const unbanEndpoint = `https://api.telegram.org/bot${botToken}/unbanChatMember`;
+      const unbanResponse = await fetch(unbanEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId,
+          only_if_banned: true,
+        }),
+      });
+      
+      const unbanResult = await unbanResponse.json();
+      
+      if (!unbanResult.ok) {
+        await logger.warn(`Failed to unban user: ${unbanResult.description}`);
+        // Don't return false here, as the kick operation was still successful
+      } else {
+        await logger.success(`Successfully unbanned user ${userId}`);
+      }
+    }
+    
+    // Update member status in database
+    const { data: community } = await supabase
       .from('communities')
       .select('id')
       .eq('telegram_chat_id', chatId)
       .single();
       
-    if (communityError) {
-      console.error('[KICK SERVICE] ❌ Error fetching community:', communityError);
-      throw new Error('Failed to fetch community');
-    }
-    
-    const communityId = community?.id;
-    console.log(`[KICK SERVICE] 🏠 Found community ID: ${communityId}`);
-    
-    // Execute the kick via Telegram API
-    const kickResponse = await fetch(`https://api.telegram.org/bot${botToken}/banChatMember`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        user_id: userId,
-        until_date: Math.floor(Date.now() / 1000) + 45, // Ban for minimal time (unban after 45 seconds)
-        revoke_messages: false // Don't delete user's messages
-      }),
-    });
-
-    const kickResult = await kickResponse.json();
-    
-    if (!kickResult.ok) {
-      console.error('[KICK SERVICE] ❌ Telegram API error:', kickResult.description);
-      throw new Error(`Telegram API error: ${kickResult.description}`);
-    }
-    
-    console.log('[KICK SERVICE] ✅ Successfully kicked user from Telegram');
-    
-    // Unban the user after a short delay to allow them to rejoin in the future
-    setTimeout(async () => {
-      try {
-        console.log(`[KICK SERVICE] 🔄 Starting unban process for user ${userId}`);
-        const unbanResponse = await fetch(`https://api.telegram.org/bot${botToken}/unbanChatMember`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            user_id: userId,
-            only_if_banned: true
-          }),
-        });
-
-        const unbanResult = await unbanResponse.json();
-        if (unbanResult.ok) {
-          console.log(`[KICK SERVICE] ✅ Successfully unbanned user ${userId}`);
-        } else {
-          console.error('[KICK SERVICE] ❌ Failed to unban user:', unbanResult.description);
-        }
-      } catch (unbanError) {
-        console.error('[KICK SERVICE] ❌ Error in unban process:', unbanError);
-      }
-    }, 2000); // Wait 2 seconds before unbanning
-    
-    // Update member status in database
-    const { data: member, error: memberError } = await supabase
-      .from('telegram_chat_members')
-      .select('id')
-      .eq('telegram_user_id', userId)
-      .eq('community_id', communityId)
-      .single();
+    if (community) {
+      await logger.info(`Updating member status in database for community ${community.id}`);
       
-    if (memberError) {
-      console.error('[KICK SERVICE] ❌ Error finding member in database:', memberError);
-      // Continue despite error as the kick was successful
-    } else if (member?.id) {
-      // Update the member status to inactive in database
       const { error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: "removed"
+          subscription_status: 'removed'
         })
-        .eq('id', member.id);
+        .eq('telegram_user_id', userId)
+        .eq('community_id', community.id);
         
       if (updateError) {
-        console.error('[KICK SERVICE] ❌ Error updating member status:', updateError);
-        // Continue despite error as the kick was successful
+        await logger.error(`Error updating member status: ${updateError.message}`);
       } else {
-        console.log('[KICK SERVICE] ✅ Successfully updated member status in database');
+        await logger.success('Successfully updated member status in database');
       }
-    }
-    
-    // Make sure to invalidate invite links
-    const { error: invalidateError } = await supabase
-      .from('subscription_payments')
-      .update({ invite_link: null })
-      .eq('telegram_user_id', userId)
-      .eq('community_id', communityId);
-      
-    if (invalidateError) {
-      console.error('[KICK SERVICE] ❌ Error invalidating invite links:', invalidateError);
-      // Continue despite error as the kick was successful
-    } else {
-      console.log('[KICK SERVICE] 🔗 Successfully invalidated invite links');
     }
     
     return true;
   } catch (error) {
-    console.error('[KICK SERVICE] ❌ Error in kick service:', error);
+    await logger.error(`Exception in kickMemberService: ${error.message}`);
     return false;
   }
 }

@@ -8,6 +8,7 @@ import { PaymentHeader } from "./payment/PaymentHeader";
 import { PaymentOptions } from "./payment/PaymentOptions";
 import { PaymentButton } from "./payment/PaymentButton";
 import { toast } from "@/components/ui/use-toast";
+import { Subscription } from "../services/memberService";
 
 // For development, set this to true to bypass real payment processing
 const TEST_MODE = true;
@@ -22,7 +23,8 @@ interface PaymentMethodsProps {
   telegramUserId?: string;
   telegramUsername?: string;
   firstName?: string;  
-  lastName?: string;   
+  lastName?: string;
+  activeSubscription?: Subscription | null;
 }
 
 export const PaymentMethods = ({
@@ -35,7 +37,8 @@ export const PaymentMethods = ({
   telegramUserId,
   telegramUsername,
   firstName,
-  lastName
+  lastName,
+  activeSubscription
 }: PaymentMethodsProps) => {
   const stripeConfig = useStripeConfig(selectedPlan);
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
@@ -47,7 +50,8 @@ export const PaymentMethods = ({
     telegramUsername,
     firstName,
     lastName,
-    onSuccess: onCompletePurchase
+    onSuccess: onCompletePurchase,
+    activeSubscription
   });
 
   // Log community invite link for debugging
@@ -60,7 +64,8 @@ export const PaymentMethods = ({
     console.log('[PaymentMethods] Telegram username:', telegramUsername);
     console.log('[PaymentMethods] First name:', firstName);
     console.log('[PaymentMethods] Last name:', lastName);
-  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName, selectedPaymentMethod]);
+    console.log('[PaymentMethods] Active subscription:', activeSubscription);
+  }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName, selectedPaymentMethod, activeSubscription]);
 
   // Show error toast if payment processing fails
   useEffect(() => {

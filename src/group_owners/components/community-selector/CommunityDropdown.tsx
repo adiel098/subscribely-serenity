@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CommunityDropdownProps {
   communities?: Community[];
@@ -38,7 +37,7 @@ export const CommunityDropdown = ({
     
     setCommunityPhotos(initialPhotos);
     
-    // Fetch/update photos for all communities
+    // Fetch/update photos for all communities when component mounts
     fetchAllCommunityPhotos(communities);
   }, [communities]);
   
@@ -135,6 +134,7 @@ export const CommunityDropdown = ({
     }
   };
 
+  // Function to get the correct photo URL for a community
   const getPhotoUrl = (communityId: string) => {
     return communityPhotos[communityId] || undefined;
   };

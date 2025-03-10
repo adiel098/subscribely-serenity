@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Package, Copy, CheckCircle, ArrowRight, Edit, Link, AlertTriangle } from "lucide-react";
+import { CreditCard, Package, Copy, CheckCircle, Edit, Link, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -144,16 +144,6 @@ export const CommunityRequirementsBanner = () => {
               title="Edit link"
             >
               <Edit className="h-3 w-3" />
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={navigateToSettings}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-              title="Bot settings"
-            >
-              <ArrowRight className="h-3 w-3" />
             </motion.button>
           </div>
           

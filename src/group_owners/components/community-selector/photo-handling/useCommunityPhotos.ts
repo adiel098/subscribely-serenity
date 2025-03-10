@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
@@ -110,7 +109,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       setRefreshingCommunityId(communityId);
       setLastError(null);
       
-      const { data, error } = await invokeSupabaseFunction("get-telegram-chat-photo", {
+      const { data, error } = await invokeSupabaseFunction("check-community-photo", {
         communityId,
         telegramChatId: chatId,
         forceFetch: true

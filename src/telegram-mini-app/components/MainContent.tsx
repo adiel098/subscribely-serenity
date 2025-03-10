@@ -66,8 +66,8 @@ export const MainContent = ({
   };
   
   return (
-    <div className="telegram-mini-app-container mx-auto py-6 max-w-3xl">
-      <div className="flex flex-col gap-6">
+    <div className="telegram-mini-app-container mx-auto py-4 max-w-3xl">
+      <div className="flex flex-col gap-4">
         <UserProfileCard 
           name={telegramUser.first_name ? 
             `${telegramUser.first_name} ${telegramUser.last_name || ''}` : 

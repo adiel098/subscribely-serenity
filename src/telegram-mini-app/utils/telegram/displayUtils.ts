@@ -38,7 +38,7 @@ export const ensureFullScreen = (): void => {
     containers.forEach(container => {
       (container as HTMLElement).style.maxWidth = '100%';
       (container as HTMLElement).style.margin = '0 auto';
-      (container as HTMLElement).style.padding = '0 12px';
+      (container as HTMLElement).style.padding = '0 4px';
     });
     
     // iOS viewport meta
@@ -75,7 +75,7 @@ export const ensureFullScreen = (): void => {
     containers.forEach(container => {
       (container as HTMLElement).style.maxWidth = '100%';
       (container as HTMLElement).style.margin = '0 auto';
-      (container as HTMLElement).style.padding = '0 12px';
+      (container as HTMLElement).style.padding = '0 4px';
     });
   }
   
@@ -106,7 +106,7 @@ export const ensureFullScreen = (): void => {
   // Apply small padding to telegram-mini-app-container
   const miniAppContainers = document.querySelectorAll('.telegram-mini-app-container');
   miniAppContainers.forEach(container => {
-    (container as HTMLElement).style.paddingLeft = '12px';
-    (container as HTMLElement).style.paddingRight = '12px';
+    (container as HTMLElement).style.paddingLeft = '4px';
+    (container as HTMLElement).style.paddingRight = '4px';
   });
 };

@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -49,7 +48,7 @@
   }
   
   .telegram-mini-app-container {
-    @apply w-full max-w-full mx-auto px-3 sm:px-4;
+    @apply w-full max-w-full mx-auto px-1 sm:px-2;
   }
   
   .telegram-mini-app-content {
@@ -92,7 +91,7 @@
 
 /* Fixed community card grid for mini app */
 .community-card-grid {
-  @apply grid grid-cols-1 gap-3 w-full max-w-full px-3 sm:px-4;
+  @apply grid grid-cols-1 gap-3 w-full max-w-full px-1 sm:px-2;
 }
 
 /* Smooth iOS scrolling */

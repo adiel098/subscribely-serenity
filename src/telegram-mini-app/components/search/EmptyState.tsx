@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface EmptyStateProps {
@@ -21,7 +21,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ searchQuery }) => {
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
         <div className="bg-gradient-to-br from-purple-100 to-blue-100 p-5 rounded-full w-24 h-24 mx-auto flex items-center justify-center">
-          <Search className="h-10 w-10 text-primary opacity-70" />
+          {searchQuery ? (
+            <AlertCircle className="h-10 w-10 text-amber-500 opacity-70" />
+          ) : (
+            <Search className="h-10 w-10 text-primary opacity-70" />
+          )}
         </div>
       </motion.div>
       
@@ -31,7 +35,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ searchQuery }) => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        No communities found
+        {searchQuery ? "No communities found" : "Search for communities"}
       </motion.h3>
       
       <motion.p 
@@ -41,9 +45,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ searchQuery }) => {
         transition={{ delay: 0.3 }}
       >
         {searchQuery 
-          ? `No communities matching "${searchQuery}". Try a different search term.` 
+          ? `No communities matching "${searchQuery}" that meet the eligibility criteria.` 
           : "Try searching for communities by name or browse our featured communities."}
       </motion.p>
+      
+      <motion.div
+        className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-md max-w-sm mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <p>Communities must have active subscription plans and payment methods to appear in search results.</p>
+      </motion.div>
     </motion.div>
   );
 };

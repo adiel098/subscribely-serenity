@@ -26,9 +26,14 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
     // Ensure each community has subscription_plans array
     const communities = data?.communities || [];
     
+    // Log metadata information if available
+    if (data?.metadata) {
+      console.log("📊 Search metadata:", data.metadata);
+      console.log(`🔍 Found ${data.metadata.total_found} communities, ${data.metadata.eligible_count} eligible after filtering`);
+    }
+    
     // Detailed logging of received data
     console.log(`📋 Received ${communities.length} communities from API`);
-    console.log("📊 Raw response from API:", JSON.stringify(data));
     
     communities.forEach((community: Community, index: number) => {
       if (!community.subscription_plans) {
@@ -40,17 +45,6 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
         community.subscription_plans = [];
       } else {
         console.log(`✅ Community ${index + 1}: ${community.name} has ${community.subscription_plans.length} subscription plans`);
-        if (community.subscription_plans.length > 0) {
-          console.log(`   💰 Plan names: ${community.subscription_plans.map((p: any) => p.name).join(', ')}`);
-          console.log(`   📝 First plan details:`, JSON.stringify(community.subscription_plans[0]));
-          
-          // Add debug information for plan properties
-          const firstPlan = community.subscription_plans[0];
-          console.log(`   🔍 Plan ID: ${firstPlan.id}`);
-          console.log(`   💲 Plan price: ${firstPlan.price}`);
-          console.log(`   🔄 Plan interval: ${firstPlan.interval}`);
-          console.log(`   ✨ Plan features:`, firstPlan.features || []);
-        }
       }
     });
 

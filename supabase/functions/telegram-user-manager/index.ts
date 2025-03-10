@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -41,6 +40,12 @@ serve(async (req) => {
         console.log(`[telegram-user-manager] Member data:`, JSON.stringify(requestData, null, 2));
         const memberResult = await createOrUpdateMember(requestData);
         return jsonResponse(memberResult);
+        
+      case "search_communities":
+        console.log(`[telegram-user-manager] Starting search_communities`);
+        console.log(`[telegram-user-manager] Search data:`, JSON.stringify(requestData, null, 2));
+        const searchResult = await searchCommunities(requestData);
+        return jsonResponse(searchResult);
 
       default:
         return jsonResponse({ error: "Invalid action" }, 400);
@@ -314,6 +319,152 @@ async function createOrUpdateMember(memberData) {
   } catch (err) {
     console.error(`[telegram-user-manager] Unexpected error in createOrUpdateMember:`, err);
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Search for communities with filtering based on subscription plans, payment methods and owner subscription
+ */
+async function searchCommunities(data) {
+  const { query = "", filter_ready = true, include_plans = true, debug = false } = data;
+  
+  console.log(`[telegram-user-manager] Searching communities with query: "${query}"`);
+  console.log(`[telegram-user-manager] Additional filters: ready=${filter_ready}, include_plans=${include_plans}`);
+  
+  try {
+    // Build the search query with our filters
+    let queryBuilder = supabaseAdmin
+      .from('communities')
+      .select(`
+        id,
+        name,
+        description,
+        telegram_photo_url,
+        telegram_invite_link,
+        telegram_chat_id,
+        member_count,
+        custom_link,
+        owner_id
+      `);
+    
+    // Apply name search filter if provided
+    if (query && query.trim() !== '') {
+      queryBuilder = queryBuilder.ilike('name', `%${query}%`);
+    }
+    
+    const { data: communities, error } = await queryBuilder;
+    
+    if (error) {
+      console.error(`[telegram-user-manager] Database error:`, error);
+      throw new Error(`Failed to search communities: ${error.message}`);
+    }
+    
+    console.log(`[telegram-user-manager] Found ${communities.length} communities before filtering`);
+    
+    // If no additional filtering required, return all found communities
+    if (!filter_ready) {
+      return { communities };
+    }
+    
+    // Get all eligible communities after applying our criteria
+    const eligibleCommunities = await Promise.all(
+      communities.map(async (community) => {
+        // Check #1: Community must have at least one active payment method
+        const { data: paymentMethods, error: paymentError } = await supabaseAdmin
+          .from('payment_methods')
+          .select('id')
+          .eq('community_id', community.id)
+          .eq('is_active', true)
+          .limit(1);
+          
+        if (paymentError) {
+          console.error(`[telegram-user-manager] Error checking payment methods:`, paymentError);
+          return null;
+        }
+        
+        if (!paymentMethods || paymentMethods.length === 0) {
+          if (debug) console.log(`[telegram-user-manager] Community ${community.id} filtered out: no active payment methods`);
+          return null;
+        }
+        
+        // Check #2: Community must have at least one active subscription plan
+        const { data: subscriptionPlans, error: plansError } = await supabaseAdmin
+          .from('subscription_plans')
+          .select('id, name, description, price, interval, features')
+          .eq('community_id', community.id)
+          .eq('is_active', true)
+          .limit(1);
+          
+        if (plansError) {
+          console.error(`[telegram-user-manager] Error checking subscription plans:`, plansError);
+          return null;
+        }
+        
+        if (!subscriptionPlans || subscriptionPlans.length === 0) {
+          if (debug) console.log(`[telegram-user-manager] Community ${community.id} filtered out: no active subscription plans`);
+          return null;
+        }
+        
+        // Check #3: Community owner must have an active platform subscription
+        const { data: ownerSubscription, error: ownerSubError } = await supabaseAdmin
+          .from('platform_subscriptions')
+          .select('id')
+          .eq('owner_id', community.owner_id)
+          .eq('status', 'active')
+          .limit(1);
+          
+        if (ownerSubError) {
+          console.error(`[telegram-user-manager] Error checking owner subscription:`, ownerSubError);
+          return null;
+        }
+        
+        if (!ownerSubscription || ownerSubscription.length === 0) {
+          if (debug) console.log(`[telegram-user-manager] Community ${community.id} filtered out: owner has no active platform subscription`);
+          return null;
+        }
+        
+        // If community passed all checks, it's eligible
+        if (debug) console.log(`[telegram-user-manager] Community ${community.id} passed all filters`);
+        
+        // If we need to include plans, fetch all active plans
+        if (include_plans) {
+          const { data: allPlans, error: allPlansError } = await supabaseAdmin
+            .from('subscription_plans')
+            .select('id, name, description, price, interval, features')
+            .eq('community_id', community.id)
+            .eq('is_active', true);
+            
+          if (!allPlansError && allPlans) {
+            community.subscription_plans = allPlans;
+          } else {
+            console.error(`[telegram-user-manager] Error fetching all plans:`, allPlansError);
+            community.subscription_plans = subscriptionPlans; // Use the single plan we already found
+          }
+        } else {
+          community.subscription_plans = [];
+        }
+        
+        return community;
+      })
+    );
+    
+    // Filter out null values (communities that didn't meet criteria)
+    const filteredCommunities = eligibleCommunities.filter(community => community !== null);
+    
+    console.log(`[telegram-user-manager] Returning ${filteredCommunities.length} eligible communities after filtering`);
+    
+    return { 
+      communities: filteredCommunities,
+      metadata: {
+        total_found: communities.length,
+        eligible_count: filteredCommunities.length,
+        query: query,
+        filters_applied: filter_ready
+      }
+    };
+  } catch (err) {
+    console.error(`[telegram-user-manager] Error in searchCommunities:`, err);
+    throw err;
   }
 }
 

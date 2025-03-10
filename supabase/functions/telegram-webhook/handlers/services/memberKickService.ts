@@ -57,6 +57,33 @@ export async function kickMemberService(
     
     console.log('[KICK SERVICE] ✅ Successfully kicked user from Telegram');
     
+    // Unban the user after a short delay to allow them to rejoin in the future
+    setTimeout(async () => {
+      try {
+        console.log(`[KICK SERVICE] 🔄 Starting unban process for user ${userId}`);
+        const unbanResponse = await fetch(`https://api.telegram.org/bot${botToken}/unbanChatMember`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            user_id: userId,
+            only_if_banned: true
+          }),
+        });
+
+        const unbanResult = await unbanResponse.json();
+        if (unbanResult.ok) {
+          console.log(`[KICK SERVICE] ✅ Successfully unbanned user ${userId}`);
+        } else {
+          console.error('[KICK SERVICE] ❌ Failed to unban user:', unbanResult.description);
+        }
+      } catch (unbanError) {
+        console.error('[KICK SERVICE] ❌ Error in unban process:', unbanError);
+      }
+    }, 2000); // Wait 2 seconds before unbanning
+    
     // Update member status in database
     const { data: member, error: memberError } = await supabase
       .from('telegram_chat_members')

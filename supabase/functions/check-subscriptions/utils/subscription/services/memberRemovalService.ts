@@ -62,6 +62,7 @@ export async function removeMemberFromChat(
             chat_id: community.telegram_chat_id,
             user_id: member.telegram_user_id,
             revoke_messages: false,
+            until_date: Math.floor(Date.now() / 1000) + 40, // Ban for only 40 seconds
           }),
         }
       );
@@ -85,6 +86,41 @@ export async function removeMemberFromChat(
       }
 
       console.log(`✅ MEMBER REMOVAL: User ${member.telegram_user_id} successfully banned from chat ${community.telegram_chat_id}`);
+      
+      // Unban the user after a short delay to allow them to rejoin in the future
+      setTimeout(async () => {
+        try {
+          console.log(`🔄 MEMBER REMOVAL: Starting unban process for user ${member.telegram_user_id}`);
+          const unbanResponse = await fetch(
+            `https://api.telegram.org/bot${settings.bot_token}/unbanChatMember`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: community.telegram_chat_id,
+                user_id: member.telegram_user_id,
+                only_if_banned: true
+              }),
+            }
+          );
+
+          if (!unbanResponse.ok) {
+            const unbanErrorText = await unbanResponse.text();
+            console.error(`❌ MEMBER REMOVAL: HTTP error during unban ${unbanResponse.status}: ${unbanErrorText}`);
+            return;
+          }
+
+          const unbanResult = await unbanResponse.json();
+          
+          if (unbanResult.ok) {
+            console.log(`✅ MEMBER REMOVAL: Successfully unbanned user ${member.telegram_user_id} from chat ${community.telegram_chat_id}`);
+          } else {
+            console.error(`❌ MEMBER REMOVAL: Failed to unban user: ${JSON.stringify(unbanResult, null, 2)}`);
+          }
+        } catch (unbanError) {
+          console.error(`❌ MEMBER REMOVAL: Error in unban process: ${unbanError.message}`);
+        }
+      }, 2000); // Wait 2 seconds after ban before unbanning
     } catch (apiError) {
       console.error(`❌ MEMBER REMOVAL: API call error: ${apiError.message}`, apiError);
       result.details += `, failed to remove from chat: API error - ${apiError.message}`;

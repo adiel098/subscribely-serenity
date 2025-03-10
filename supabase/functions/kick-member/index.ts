@@ -82,6 +82,39 @@ serve(async (req) => {
       throw new Error(`Failed to kick member: ${kickResult.description}`);
     }
 
+    // Unban the user after a short delay so they can rejoin in the future
+    setTimeout(async () => {
+      try {
+        console.log('Unbanning member to allow future rejoins:', member.telegram_user_id);
+        const unbanResponse = await fetch(
+          `https://api.telegram.org/bot${settings.bot_token}/unbanChatMember`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: member.community.telegram_chat_id,
+              user_id: member.telegram_user_id,
+              only_if_banned: true
+            }),
+          }
+        );
+
+        const unbanResult = await unbanResponse.json();
+        console.log('Unban response:', unbanResult);
+        
+        if (unbanResult.ok) {
+          console.log('Successfully unbanned member:', member.telegram_user_id);
+        } else {
+          console.error('Failed to unban member:', unbanResult.description);
+        }
+      } catch (unbanError) {
+        console.error('Error unbanning member:', unbanError);
+        // Continue despite unban error as the kick was successful
+      }
+    }, 2000); // Wait 2 seconds before unbanning
+
     // Invalidate invite links to prevent rejoining
     console.log('Invalidating invite links...');
     const { error: inviteError } = await supabase
@@ -100,7 +133,7 @@ serve(async (req) => {
       .from('telegram_chat_members')
       .update({
         is_active: false,
-        subscription_status: false,
+        subscription_status: "removed",
         subscription_end_date: new Date().toISOString(),
       })
       .eq('id', memberId);

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
@@ -13,6 +14,8 @@ interface PaymentSectionProps {
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
+  firstName?: string;
+  lastName?: string;
   activeSubscription?: Subscription | null;
 }
 
@@ -25,6 +28,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   showSuccess,
   telegramUserId,
   telegramUsername,
+  firstName,
+  lastName,
   activeSubscription
 }) => {
   // Enhanced logging for debugging
@@ -39,8 +44,10 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);
     console.log('[PaymentSection] Telegram username:', telegramUsername);
+    console.log('[PaymentSection] First name:', firstName);
+    console.log('[PaymentSection] Last name:', lastName);
     console.log('[PaymentSection] Active subscription:', activeSubscription);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, activeSubscription]);
+  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, firstName, lastName, activeSubscription]);
   
   if (!selectedPlan) return null;
   
@@ -66,6 +73,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
         showSuccess={showSuccess}
         telegramUserId={telegramUserId}
         telegramUsername={telegramUsername}
+        firstName={firstName}
+        lastName={lastName}
       />
     </motion.div>
   );

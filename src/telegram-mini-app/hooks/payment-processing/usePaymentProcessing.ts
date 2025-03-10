@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usePaymentRecord } from './usePaymentRecord';
 import { useTelegramUser } from '../useTelegramUser';
 import { toast } from '@/components/ui/use-toast';
+import { createOrUpdateMember } from '@/telegram-mini-app/services/memberService';
 
 interface PaymentProcessingProps {
   communityId: string;
@@ -11,6 +12,8 @@ interface PaymentProcessingProps {
   communityInviteLink?: string | null;
   telegramUserId?: string;
   telegramUsername?: string;
+  firstName?: string;
+  lastName?: string;
   onSuccess?: () => void;
 }
 
@@ -21,6 +24,8 @@ export const usePaymentProcessing = ({
   communityInviteLink,
   telegramUserId,
   telegramUsername,
+  firstName,
+  lastName,
   onSuccess
 }: PaymentProcessingProps) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,8 +39,8 @@ export const usePaymentProcessing = ({
   // Get user information either from props or from the Telegram Web App
   const userId = telegramUserId || telegramUser?.id;
   const username = telegramUsername || telegramUser?.username;
-  const firstName = telegramUser?.first_name;
-  const lastName = telegramUser?.last_name;
+  const userFirstName = firstName || telegramUser?.first_name;
+  const userLastName = lastName || telegramUser?.last_name;
   
   const processPayment = async (paymentMethod: string) => {
     console.log('[usePaymentProcessing] Processing payment...');
@@ -46,8 +51,8 @@ export const usePaymentProcessing = ({
     console.log('[usePaymentProcessing] Invite link:', communityInviteLink);
     console.log('[usePaymentProcessing] User ID:', userId);
     console.log('[usePaymentProcessing] Username:', username);
-    console.log('[usePaymentProcessing] First name:', firstName);
-    console.log('[usePaymentProcessing] Last name:', lastName);
+    console.log('[usePaymentProcessing] First name:', userFirstName);
+    console.log('[usePaymentProcessing] Last name:', userLastName);
     
     if (!userId) {
       const errorMsg = 'User ID is required for payment processing.';
@@ -110,8 +115,8 @@ export const usePaymentProcessing = ({
         paymentMethod,
         inviteLink: communityInviteLink || null,
         username,
-        firstName,
-        lastName
+        firstName: userFirstName,
+        lastName: userLastName
       });
       
       console.log('[usePaymentProcessing] Payment result:', result);
@@ -119,6 +124,34 @@ export const usePaymentProcessing = ({
       if (result.success) {
         setIsSuccess(true);
         setInviteLink(result.inviteLink);
+        
+        // Create or update member record immediately after successful payment
+        console.log('[usePaymentProcessing] Creating member record...');
+        
+        try {
+          // Calculate subscription dates
+          const startDate = new Date();
+          let endDate = new Date(startDate);
+          
+          // Add appropriate time based on plan interval (can be improved with plan data)
+          endDate.setMonth(endDate.getMonth() + 1); // Default to 1 month
+
+          await createOrUpdateMember({
+            telegram_id: userId,
+            community_id: communityId,
+            subscription_plan_id: planId,
+            status: 'active',
+            payment_id: result.paymentData?.id,
+            username: username,
+            subscription_start_date: startDate.toISOString(),
+            subscription_end_date: endDate.toISOString()
+          });
+          
+          console.log('[usePaymentProcessing] Member record created successfully');
+        } catch (memberErr) {
+          console.error('[usePaymentProcessing] Error creating member record:', memberErr);
+          // Continue despite this error, as the payment was successful
+        }
         
         if (onSuccess) {
           onSuccess();

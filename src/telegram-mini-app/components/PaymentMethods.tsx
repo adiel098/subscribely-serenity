@@ -45,6 +45,8 @@ export const PaymentMethods = ({
     communityInviteLink,
     telegramUserId,
     telegramUsername,
+    firstName,
+    lastName,
     onSuccess: onCompletePurchase
   });
 

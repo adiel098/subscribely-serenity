@@ -43,7 +43,7 @@ export class JoinRequestService {
       console.log('[JOIN-REQUEST-SERVICE] ✅ Found member record:', memberData);
       
       const isActiveSubscription = memberData.subscription_status === 'active' && memberData.is_active === true;
-      const hasValidEndDate = memberData.subscription_end_date && new Date(memberData.subscription_end_date) > new Date();
+      const hasValidEndDate = !memberData.subscription_end_date || new Date(memberData.subscription_end_date) > new Date();
       
       // Check if user has an active subscription that hasn't expired
       if (isActiveSubscription && hasValidEndDate) {
@@ -102,6 +102,27 @@ export class JoinRequestService {
         } else if (paymentByUsername) {
           console.log('[JOIN-REQUEST-SERVICE] ✅ Found payment by username:', paymentByUsername);
           return paymentByUsername;
+        }
+      }
+      
+      // Try to find for any payment regardless of status
+      console.log('[JOIN-REQUEST-SERVICE] 🔍 Looking for any payment record regardless of status');
+      const { data: anyPayment, error: anyPaymentError } = await this.supabase
+        .from('subscription_payments')
+        .select('*')
+        .eq('telegram_user_id', userId)
+        .eq('community_id', communityId)
+        .order('created_at', { ascending: false })
+        .maybeSingle();
+        
+      if (anyPaymentError) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error checking for any payment:', anyPaymentError);
+      } else if (anyPayment) {
+        console.log('[JOIN-REQUEST-SERVICE] 🟠 Found payment with status:', anyPayment.status);
+        if (anyPayment.status === 'successful') {
+          return anyPayment;
+        } else {
+          console.log('[JOIN-REQUEST-SERVICE] ⚠️ Payment exists but status is not successful:', anyPayment.status);
         }
       }
       
@@ -169,6 +190,9 @@ export class JoinRequestService {
           subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
         } else if (interval === 'yearly') {
           subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+        } else if (interval === 'lifetime') {
+          // Set to a very far future date for lifetime
+          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
         } else {
           // Default to 1 month for unknown intervals
           subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
@@ -193,19 +217,51 @@ export class JoinRequestService {
       
       console.log('[JOIN-REQUEST-SERVICE] 📝 Creating member with data:', memberData);
       
-      const { data, error } = await this.supabase
+      // Check if member already exists and update instead of insert if needed
+      const { data: existingMember, error: existingMemberError } = await this.supabase
         .from('telegram_chat_members')
-        .insert(memberData)
-        .select()
-        .single();
+        .select('id')
+        .eq('telegram_user_id', userId)
+        .eq('community_id', communityId)
+        .maybeSingle();
         
-      if (error) {
-        console.error('[JOIN-REQUEST-SERVICE] ❌ Error creating member:', error);
-        return { success: false, error };
+      if (existingMemberError) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Error checking for existing member:', existingMemberError);
       }
       
-      console.log('[JOIN-REQUEST-SERVICE] ✅ Member created successfully');
-      return { success: true, data };
+      if (existingMember) {
+        console.log('[JOIN-REQUEST-SERVICE] 🔄 Updating existing member record:', existingMember.id);
+        
+        const { data, error } = await this.supabase
+          .from('telegram_chat_members')
+          .update(memberData)
+          .eq('id', existingMember.id)
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('[JOIN-REQUEST-SERVICE] ❌ Error updating member:', error);
+          return { success: false, error };
+        }
+        
+        console.log('[JOIN-REQUEST-SERVICE] ✅ Member updated successfully');
+        return { success: true, data };
+      } else {
+        // Insert new member
+        const { data, error } = await this.supabase
+          .from('telegram_chat_members')
+          .insert(memberData)
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('[JOIN-REQUEST-SERVICE] ❌ Error creating member:', error);
+          return { success: false, error };
+        }
+        
+        console.log('[JOIN-REQUEST-SERVICE] ✅ Member created successfully');
+        return { success: true, data };
+      }
     } catch (error) {
       console.error('[JOIN-REQUEST-SERVICE] ❌ Error in createMemberFromPayment:', error);
       return { success: false, error };
@@ -220,7 +276,24 @@ export class JoinRequestService {
       console.log(`[JOIN-REQUEST-SERVICE] ✅ Approving join request for user ${userId} to chat ${chatId}`);
       
       // Call Telegram API to approve join request
-      await this.telegramApi.approveJoinRequest(chatId, userId);
+      const approveResult = await this.telegramApi.approveJoinRequest(chatId, userId);
+      
+      if (!approveResult.ok) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Telegram API error approving join request:', approveResult.description);
+        
+        // Log the error
+        await logJoinRequestEvent(
+          this.supabase,
+          chatId,
+          userId,
+          username,
+          'approval_error',
+          `Error approving join request: ${approveResult.description}`,
+          null
+        );
+        
+        return false;
+      }
       
       // Log the approval
       await logJoinRequestEvent(
@@ -261,7 +334,24 @@ export class JoinRequestService {
       console.log(`[JOIN-REQUEST-SERVICE] ❌ Rejecting join request for user ${userId} to chat ${chatId}`);
       
       // Call Telegram API to reject join request
-      await this.telegramApi.rejectJoinRequest(chatId, userId);
+      const rejectResult = await this.telegramApi.rejectJoinRequest(chatId, userId);
+      
+      if (!rejectResult.ok) {
+        console.error('[JOIN-REQUEST-SERVICE] ❌ Telegram API error rejecting join request:', rejectResult.description);
+        
+        // Log the error
+        await logJoinRequestEvent(
+          this.supabase,
+          chatId,
+          userId,
+          username,
+          'rejection_error',
+          `Error rejecting join request: ${rejectResult.description}`,
+          null
+        );
+        
+        return false;
+      }
       
       // Log the rejection
       await logJoinRequestEvent(

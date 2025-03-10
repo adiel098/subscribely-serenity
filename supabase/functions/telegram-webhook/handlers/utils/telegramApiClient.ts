@@ -57,20 +57,48 @@ export class TelegramApiClient {
    * Approve a chat join request
    */
   async approveJoinRequest(chatId: string, userId: string): Promise<any> {
-    return this.callApi('approveChatJoinRequest', {
-      chat_id: chatId,
-      user_id: userId
-    });
+    console.log(`[TELEGRAM-API] ✅ Approving join request for user ${userId} in chat ${chatId}`);
+    try {
+      const result = await this.callApi('approveChatJoinRequest', {
+        chat_id: chatId,
+        user_id: userId
+      });
+      
+      if (result.ok) {
+        console.log(`[TELEGRAM-API] ✅ Successfully approved join request for user ${userId}`);
+      } else {
+        console.warn(`[TELEGRAM-API] ⚠️ Failed to approve join request: ${result.description}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`[TELEGRAM-API] ❌ Error approving join request for user ${userId}:`, error);
+      throw error;
+    }
   }
   
   /**
    * Reject a chat join request
    */
   async rejectJoinRequest(chatId: string, userId: string): Promise<any> {
-    return this.callApi('declineChatJoinRequest', {
-      chat_id: chatId,
-      user_id: userId
-    });
+    console.log(`[TELEGRAM-API] ❌ Rejecting join request for user ${userId} in chat ${chatId}`);
+    try {
+      const result = await this.callApi('declineChatJoinRequest', {
+        chat_id: chatId,
+        user_id: userId
+      });
+      
+      if (result.ok) {
+        console.log(`[TELEGRAM-API] ✅ Successfully rejected join request for user ${userId}`);
+      } else {
+        console.warn(`[TELEGRAM-API] ⚠️ Failed to reject join request: ${result.description}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`[TELEGRAM-API] ❌ Error rejecting join request for user ${userId}:`, error);
+      throw error;
+    }
   }
   
   /**

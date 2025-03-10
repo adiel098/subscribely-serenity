@@ -64,7 +64,7 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
     console.log(`[JOIN-REQUEST] 🔍 Finding community for chat ID: ${chatId}`);
     const { data: community, error: communityError } = await supabase
       .from('communities')
-      .select('id')
+      .select('id, name')
       .eq('telegram_chat_id', chatId)
       .single();
 
@@ -78,13 +78,15 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
     }
 
     const communityId = community.id;
-    console.log(`[JOIN-REQUEST] ✅ Found community ID: ${communityId} for chat ID: ${chatId}`);
+    console.log(`[JOIN-REQUEST] ✅ Found community ID: ${communityId} (${community.name}) for chat ID: ${chatId}`);
 
     // Check if user has a subscription
+    console.log(`[JOIN-REQUEST] 🔍 Checking if user ${userId} has an active subscription`);
     const { hasActiveSub, memberData } = await joinRequestService.checkSubscription(userId, username, communityId);
 
     // If they have an active subscription, approve them
     if (memberData && hasActiveSub) {
+      console.log(`[JOIN-REQUEST] ✅ User ${userId} has an active subscription, approving join request`);
       await joinRequestService.approveJoinRequest(chatId, userId, username, 'Active subscription found');
       
       // Update the member record to ensure it's marked as active
@@ -103,17 +105,57 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
       });
     }
     
-    // No subscription record, check if there's a payment
+    // No active subscription record, check if there's a payment
+    console.log(`[JOIN-REQUEST] 💰 No active subscription found, checking for payments for user ${userId}`);
     const payment = await joinRequestService.findPayment(userId, username, communityId);
     
     if (!payment) {
+      console.log(`[JOIN-REQUEST] ❌ No payment found for user ${userId}, rejecting join request`);
       // No payment found, reject
       await joinRequestService.rejectJoinRequest(chatId, userId, username, 'No payment found');
+      
+      // Get Telegram bot settings
+      const { data: botSettings } = await supabase
+        .from('telegram_bot_settings')
+        .select('*')
+        .eq('community_id', communityId)
+        .single();
+        
+      if (botSettings) {
+        console.log(`[JOIN-REQUEST] 📩 Sending payment instruction message to user ${userId}`);
+        // Send a message to the user with payment instructions
+        try {
+          // Import the TelegramApiClient
+          const { TelegramApiClient } = await import('../utils/telegramApiClient.ts');
+          const telegramApi = new TelegramApiClient(botToken);
+          
+          // Get the community miniapp URL
+          const { data: communityData } = await supabase
+            .from('communities')
+            .select('miniapp_url, name')
+            .eq('id', communityId)
+            .single();
+            
+          let paymentMessage = `To join *${communityData?.name || 'this community'}*, you need an active subscription.`;
+          
+          if (communityData?.miniapp_url) {
+            paymentMessage += `\n\nYou can subscribe here: ${communityData.miniapp_url}`;
+          }
+          
+          // Send message using the telegram API
+          await telegramApi.sendMessage(userId, paymentMessage, 'Markdown');
+          console.log(`[JOIN-REQUEST] ✅ Payment instructions sent to user ${userId}`);
+        } catch (msgError) {
+          console.error(`[JOIN-REQUEST] ❌ Error sending payment instructions to user:`, msgError);
+        }
+      }
       
       return new Response(JSON.stringify({ success: true, message: 'Join request rejected - no payment found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    
+    console.log(`[JOIN-REQUEST] ✅ Found payment for user ${userId}, approving join request`);
     
     // Payment found, approve the join request
     await joinRequestService.approveJoinRequest(chatId, userId, username, 'Payment found');
@@ -123,7 +165,9 @@ export async function handleChatJoinRequest(supabase: ReturnType<typeof createCl
     console.log(`[JOIN-REQUEST] Member record creation result:`, memberResult);
     
     // Also update the payment record with the telegram_user_id if it's not set
-    await joinRequestService.updatePaymentWithUserId(payment.id, userId);
+    if (!payment.telegram_user_id && payment.telegram_user_id !== userId) {
+      await joinRequestService.updatePaymentWithUserId(payment.id, userId);
+    }
     
     // Update community member count
     await updateCommunityMemberCount(supabase, communityId);

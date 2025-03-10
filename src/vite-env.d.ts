@@ -35,6 +35,7 @@ interface TelegramWebApp {
   disableClosingConfirmation?: () => void;
   onEvent?: (eventType: string, eventHandler: Function) => void;
   offEvent?: (eventType: string, eventHandler: Function) => void;
+  openTelegramLink?: (url: string) => void; // Added this method
   MainButton?: {
     text: string;
     isVisible: boolean;

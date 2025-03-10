@@ -32,7 +32,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
       // If we have a custom link, use it, otherwise use the community ID
       const startParam = custom_link || community.id;
       
-      // Check if Telegram WebApp is available
+      // Check if Telegram WebApp and openTelegramLink method are available
       if (window.Telegram?.WebApp?.openTelegramLink) {
         // Construct the mini app URL with the start parameter
         const miniAppUrl = `https://t.me/YourBotUsername/app?startapp=${startParam}`;
@@ -40,12 +40,21 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         console.log("🔗 Opening Telegram mini app:", miniAppUrl);
         window.Telegram.WebApp.openTelegramLink(miniAppUrl);
       } else {
-        console.error("❌ Telegram WebApp not available");
-        toast({
-          title: "Cannot open mini app",
-          description: "The Telegram WebApp API is not available",
-          variant: "destructive"
-        });
+        // Alternative approach when openTelegramLink is not available
+        console.error("❌ openTelegramLink method not available");
+        
+        // Try to use window.open as a fallback
+        if (typeof window !== 'undefined') {
+          const miniAppUrl = `https://t.me/YourBotUsername/app?startapp=${startParam}`;
+          window.open(miniAppUrl, '_blank');
+          console.log("🔗 Attempted to open via window.open:", miniAppUrl);
+        } else {
+          toast({
+            title: "Cannot open mini app",
+            description: "The Telegram WebApp API is not available",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error("❌ Error opening mini app:", error);

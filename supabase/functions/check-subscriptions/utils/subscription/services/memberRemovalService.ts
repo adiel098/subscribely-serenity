@@ -39,65 +39,36 @@ export async function removeMemberFromChat(
       return false;
     }
 
-    // Ban member (temporary)
+    // Call the webhook function with the proper reason parameter
     try {
-      const banResponse = await fetch(
-        `https://api.telegram.org/bot${settings.bot_token}/banChatMember`,
+      console.log(`📞 MEMBER REMOVAL: Calling webhook with reason: ${reason}`);
+      
+      const response = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/telegram-webhook`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
+          },
           body: JSON.stringify({
+            path: "/remove-member",
             chat_id: community.telegram_chat_id,
             user_id: member.telegram_user_id,
-            until_date: Math.floor(Date.now() / 1000) + 40
-          }),
+            community_id: member.community_id,
+            reason: reason
+          })
         }
       );
 
-      const banResult = await banResponse.json();
+      const responseData = await response.json();
       
-      if (!banResult.ok) {
-        console.error(`❌ MEMBER REMOVAL: Ban failed:`, banResult);
+      if (!responseData.success) {
+        console.error(`❌ MEMBER REMOVAL: Webhook call failed:`, responseData);
         return false;
       }
-
-      // CRITICAL FIX: Update member status in database using the provided reason parameter
-      // This ensures the 'expired' reason is properly maintained instead of being overwritten
-      console.log(`⚠️ MEMBER REMOVAL: Updating database with status "${reason}"`);
       
-      const { error: updateError } = await supabase
-        .from("telegram_chat_members")
-        .update({
-          is_active: false,
-          subscription_status: reason // Critical: Use the provided reason parameter
-        })
-        .eq("id", member.id);
-
-      if (updateError) {
-        console.error(`❌ MEMBER REMOVAL: Status update error:`, updateError);
-        return false;
-      }
-
-      // Unban after delay
-      setTimeout(async () => {
-        try {
-          await fetch(
-            `https://api.telegram.org/bot${settings.bot_token}/unbanChatMember`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: community.telegram_chat_id,
-                user_id: member.telegram_user_id,
-                only_if_banned: true
-              }),
-            }
-          );
-        } catch (unbanError) {
-          console.error(`❌ MEMBER REMOVAL: Unban error:`, unbanError);
-        }
-      }, 2000);
-
+      console.log(`✅ MEMBER REMOVAL: Successfully removed user with status "${reason}"`);
       return true;
     } catch (error) {
       console.error(`❌ MEMBER REMOVAL: API error:`, error);

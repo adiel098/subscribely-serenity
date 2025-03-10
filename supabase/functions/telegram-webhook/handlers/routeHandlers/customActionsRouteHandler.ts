@@ -33,11 +33,20 @@ export async function handleCustomActionsRoute(
       };
     }
     
+    // Extract reason from body, default to 'removed' if not specified
+    const reason = body.reason && ['removed', 'expired'].includes(body.reason) 
+      ? body.reason
+      : 'removed';
+    
+    console.log(`[CUSTOM-ACTIONS] ℹ️ Member removal reason: ${reason}`);
+    
     const response = await handleMemberRemoval(
       supabase,
       body.chat_id,
       body.user_id,
-      botToken
+      botToken,
+      body.community_id, // Optional community_id
+      reason // Pass the reason 
     );
     
     return { handled: true, response };

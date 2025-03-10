@@ -8,12 +8,13 @@ export async function kickMemberService(
   chatId: string,
   userId: string,
   botToken: string,
-  unbanAfterKick = true
+  unbanAfterKick = true,
+  reason: 'removed' | 'expired' = 'removed' // Add reason parameter with default 'removed'
 ): Promise<boolean> {
   const logger = createLogger(supabase, 'KICK-SERVICE');
   
   try {
-    await logger.info(`Attempting to kick user ${userId} from chat ${chatId}`);
+    await logger.info(`Attempting to kick user ${userId} from chat ${chatId}, reason: ${reason}`);
     
     // First kick the user
     const kickEndpoint = `https://api.telegram.org/bot${botToken}/kickChatMember`;
@@ -68,13 +69,13 @@ export async function kickMemberService(
       .single();
       
     if (community) {
-      await logger.info(`Updating member status in database for community ${community.id}`);
+      await logger.info(`Updating member status in database for community ${community.id} with status: ${reason}`);
       
       const { error: updateError } = await supabase
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: 'removed'
+          subscription_status: reason // Use the provided reason instead of hardcoding 'removed'
         })
         .eq('telegram_user_id', userId)
         .eq('community_id', community.id);
@@ -82,7 +83,7 @@ export async function kickMemberService(
       if (updateError) {
         await logger.error(`Error updating member status: ${updateError.message}`);
       } else {
-        await logger.success('Successfully updated member status in database');
+        await logger.success(`Successfully updated member status in database to ${reason}`);
       }
     }
     

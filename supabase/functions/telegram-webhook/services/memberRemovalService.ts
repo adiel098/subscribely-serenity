@@ -11,15 +11,18 @@ export async function handleMemberRemoval(
   chatId: string, 
   userId: string, 
   botToken: string,
-  communityId?: string
+  communityId?: string,
+  reason: 'removed' | 'expired' = 'removed' // Add reason parameter with default 'removed'
 ): Promise<Response> {
   try {
-    console.log(`[MEMBER-REMOVAL] 👤 Removing user ${userId} from chat ${chatId}`);
+    console.log(`[MEMBER-REMOVAL] 👤 Removing user ${userId} from chat ${chatId}, reason: ${reason}`);
     const success = await kickMemberService(
       supabase,
       chatId,
       userId,
-      botToken
+      botToken,
+      true, // Default unban after kick is true
+      reason // Pass the reason parameter
     );
 
     // Always invalidate invite links for this user when removing
@@ -52,11 +55,11 @@ export async function handleMemberRemoval(
           console.log(`[MEMBER-REMOVAL] 🔗 Successfully invalidated invite links for user ${userId}`);
         }
         
-        // Update the member record to set subscription_status to "removed"
+        // Update the member record to set subscription_status based on the reason
         const { error: memberUpdateError } = await supabase
           .from('telegram_chat_members')
           .update({
-            subscription_status: "removed",
+            subscription_status: reason,
             is_active: false
           })
           .eq('telegram_user_id', userId)
@@ -65,7 +68,7 @@ export async function handleMemberRemoval(
         if (memberUpdateError) {
           console.error('[MEMBER-REMOVAL] ❌ Error updating member status:', memberUpdateError);
         } else {
-          console.log(`[MEMBER-REMOVAL] ✅ Successfully set subscription_status to "removed" for user ${userId}`);
+          console.log(`[MEMBER-REMOVAL] ✅ Successfully set subscription_status to "${reason}" for user ${userId}`);
         }
         
         // Log the removal in the activity log
@@ -74,8 +77,11 @@ export async function handleMemberRemoval(
           .insert({
             telegram_user_id: userId,
             community_id: resolvedCommunityId,
-            activity_type: 'member_removed',
-            details: 'User removed from channel by admin'
+            activity_type: reason === 'expired' ? 'subscription_expired' : 'member_removed',
+            details: reason === 'expired' 
+              ? 'User removed from channel due to subscription expiration' 
+              : 'User removed from channel by admin',
+            status: reason // Add status field to track the reason
           })
           .then(({ error }) => {
             if (error) {

@@ -58,7 +58,7 @@ export class TelegramMemberManager {
       const unbanResult = await this.unbanChatMember(chatId, userId);
       console.log('[Member Manager] Unban result:', unbanResult);
 
-      // CRITICAL FIX: Update the database with the correct reason/status
+      // Update the database with the correct reason/status
       const updateSuccess = await this.updateMemberStatus(userId, chatId, reason);
       
       if (!updateSuccess) {
@@ -174,14 +174,26 @@ export class TelegramMemberManager {
     try {
       console.log(`[Member Manager] Updating member status with reason: ${reason}`);
       
+      // Get community ID from chat ID
+      const { data: community, error: communityError } = await this.supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chatId)
+        .single();
+        
+      if (communityError || !community) {
+        console.error('[Member Manager] Error getting community:', communityError);
+        return false;
+      }
+      
       const { error } = await this.supabase
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: reason // CRITICAL FIX: Use the specific reason passed in
+          subscription_status: reason // Use the specific reason passed in
         })
         .eq('telegram_user_id', userId)
-        .eq('community_id', chatId);
+        .eq('community_id', community.id);
 
       if (error) {
         console.error('[Member Manager] Error updating database:', error);
@@ -200,6 +212,18 @@ export class TelegramMemberManager {
    */
   private async logMemberKick(userId: string, chatId: string, reason: 'expired' | 'removed' = 'removed'): Promise<void> {
     try {
+      // Get community ID from chat ID
+      const { data: community, error: communityError } = await this.supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chatId)
+        .single();
+        
+      if (communityError || !community) {
+        console.error('[Member Manager] Error getting community for logging:', communityError);
+        return;
+      }
+      
       const activityType = reason === 'expired' ? 'subscription_expired' : 'member_kicked';
       const details = reason === 'expired' 
         ? 'Member removed from channel due to subscription expiration'
@@ -209,7 +233,7 @@ export class TelegramMemberManager {
         .from('subscription_activity_logs')
         .insert({
           telegram_user_id: userId,
-          community_id: chatId,
+          community_id: community.id,
           activity_type: activityType,
           details: details,
           status: reason

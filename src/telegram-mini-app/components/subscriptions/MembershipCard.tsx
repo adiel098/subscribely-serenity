@@ -10,7 +10,7 @@ import { Calendar, Clock, ExternalLink, RefreshCw, XCircle, Zap, Users } from "l
 import { Subscription } from "../../services/memberService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate, isSubscriptionActive, getDaysRemaining } from "./utils";
+import { formatDate, isSubscriptionActive, getDaysRemaining, getTimeRemainingText } from "./utils";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface MembershipCardProps {
@@ -28,6 +28,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   const active = isSubscriptionActive(subscription);
   const daysRemaining = getDaysRemaining(subscription);
   const isExpiringSoon = active && daysRemaining <= 3;
+  const timeRemainingText = getTimeRemainingText(subscription);
 
   const handleCommunityLink = () => {
     if (subscription.community.telegram_invite_link) {
@@ -87,7 +88,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
               </div>
               {active && (
                 <div className={`text-xs font-medium whitespace-nowrap ${isExpiringSoon ? "text-red-500" : "text-primary"}`}>
-                  {daysRemaining} days left
+                  {timeRemainingText}
                 </div>
               )}
             </div>

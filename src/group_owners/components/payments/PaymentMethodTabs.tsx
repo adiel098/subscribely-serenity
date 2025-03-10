@@ -109,9 +109,17 @@ export const PaymentMethodTabs = ({ communityId }: PaymentMethodTabsProps) => {
 
   return (
     <Tabs defaultValue="stripe" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="stripe">Stripe</TabsTrigger>
-        <TabsTrigger value="paypal">
+      <TabsList className="grid w-full grid-cols-2 bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-xl shadow-sm">
+        <TabsTrigger 
+          value="stripe" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 rounded-lg"
+        >
+          Stripe
+        </TabsTrigger>
+        <TabsTrigger 
+          value="paypal" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 rounded-lg"
+        >
           <Wallet className="mr-2 h-4 w-4" />
           PayPal
         </TabsTrigger>

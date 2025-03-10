@@ -25,13 +25,43 @@ export function SettingsTabs({
 }: SettingsTabsProps) {
   return (
     <Tabs defaultValue="general" className="space-y-6">
-      <TabsList className="bg-background/90 backdrop-blur-sm border">
-        <TabsTrigger value="general">General</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        <TabsTrigger value="plans">Plans</TabsTrigger>
-        <TabsTrigger value="security">Security</TabsTrigger>
-        <TabsTrigger value="billing">Billing</TabsTrigger>
-        <TabsTrigger value="api">API</TabsTrigger>
+      <TabsList className="bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-xl shadow-sm">
+        <TabsTrigger 
+          value="general" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          General
+        </TabsTrigger>
+        <TabsTrigger 
+          value="notifications" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          Notifications
+        </TabsTrigger>
+        <TabsTrigger 
+          value="plans" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          Plans
+        </TabsTrigger>
+        <TabsTrigger 
+          value="security" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          Security
+        </TabsTrigger>
+        <TabsTrigger 
+          value="billing" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          Billing
+        </TabsTrigger>
+        <TabsTrigger 
+          value="api" 
+          className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+        >
+          API
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="general" className="space-y-6">

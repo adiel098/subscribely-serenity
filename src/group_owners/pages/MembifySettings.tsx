@@ -28,24 +28,39 @@ const MembifySettings = () => {
         </header>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="bg-muted/60">
-            <TabsTrigger value="general" className="flex items-center gap-1.5">
+          <TabsList className="bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-xl shadow-sm">
+            <TabsTrigger 
+              value="general" 
+              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+            >
               <Settings className="h-4 w-4" />
               <span>General</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-1.5">
+            <TabsTrigger 
+              value="notifications" 
+              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+            >
               <Bell className="h-4 w-4" />
               <span>Notifications</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-1.5">
+            <TabsTrigger 
+              value="security" 
+              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+            >
               <Shield className="h-4 w-4" />
               <span>Security</span>
             </TabsTrigger>
-            <TabsTrigger value="plans" className="flex items-center gap-1.5">
+            <TabsTrigger 
+              value="plans" 
+              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+            >
               <Crown className="h-4 w-4" />
               <span>Plans</span>
             </TabsTrigger>
-            <TabsTrigger value="billing" className="flex items-center gap-1.5">
+            <TabsTrigger 
+              value="billing" 
+              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
+            >
               <CreditCard className="h-4 w-4" />
               <span>Billing</span>
             </TabsTrigger>

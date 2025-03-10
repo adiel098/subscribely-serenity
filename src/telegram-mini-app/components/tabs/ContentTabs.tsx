@@ -48,20 +48,32 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-4 mb-6 bg-primary/5">
-        <TabsTrigger value="subscribe" className="flex items-center gap-1.5">
+      <TabsList className="grid grid-cols-4 mb-6 bg-transparent border border-indigo-200 rounded-xl shadow-sm backdrop-blur-sm">
+        <TabsTrigger 
+          value="subscribe" 
+          className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
+        >
           <UserPlus className="h-4 w-4" />
           <span className="hidden sm:inline">Subscribe</span>
         </TabsTrigger>
-        <TabsTrigger value="mySubscriptions" className="flex items-center gap-1.5">
+        <TabsTrigger 
+          value="mySubscriptions" 
+          className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
+        >
           <LayoutGrid className="h-4 w-4" />
           <span className="hidden sm:inline">My Memberships</span>
         </TabsTrigger>
-        <TabsTrigger value="paymentHistory" className="flex items-center gap-1.5">
+        <TabsTrigger 
+          value="paymentHistory" 
+          className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
+        >
           <Receipt className="h-4 w-4" />
           <span className="hidden sm:inline">Payments</span>
         </TabsTrigger>
-        <TabsTrigger value="discover" className="flex items-center gap-1.5">
+        <TabsTrigger 
+          value="discover" 
+          className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
+        >
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline">Discover</span>
         </TabsTrigger>

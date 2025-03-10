@@ -1,30 +1,29 @@
 
-import { Check, PartyPopper } from "lucide-react";
+import React from "react";
+import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const SuccessHeader = () => {
   return (
-    <>
-      <div className="relative">
-        <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center shadow-sm">
-          <Check className="w-10 h-10 text-green-600" />
-        </div>
-        <div className="absolute -top-2 -right-2">
-          <PartyPopper className="w-8 h-8 text-primary" />
-        </div>
-      </div>
+    <div className="space-y-4">
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="mx-auto bg-green-100 p-4 rounded-full w-24 h-24 flex items-center justify-center"
+      >
+        <Check className="h-12 w-12 text-green-600" strokeWidth={3} />
+      </motion.div>
       
-      <h2 className="text-2xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-        Payment Successful! 🎉
-      </h2>
-      
-      <div className="space-y-2 max-w-sm">
-        <p className="text-gray-600">
-          Your payment has been processed successfully. You can now join the community.
-        </p>
-        <p className="text-sm text-gray-500">
-          A confirmation has been sent to your Telegram account.
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Payment Successful!
+        </h1>
+        <p className="text-gray-600 max-w-md mx-auto">
+          Thank you for your purchase. Your subscription has been activated. 
+          You can now join the community using the link below.
         </p>
       </div>
-    </>
+    </div>
   );
 };

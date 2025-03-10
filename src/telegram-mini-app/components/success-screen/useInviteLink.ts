@@ -6,55 +6,74 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
   const [isLoadingLink, setIsLoadingLink] = useState<boolean>(false);
   
-  // Log the invite link for debugging
+  // Generate a new invite link after successful payment
   useEffect(() => {
     console.log('Community invite link in useInviteLink:', initialInviteLink);
-    if (initialInviteLink) {
-      setInviteLink(initialInviteLink);
-    } else {
-      // If no invite link is provided, try to fetch it from recent payments
-      fetchInviteLinkFromRecentPayment();
-    }
+    
+    // Always generate a new invite link regardless of initial link
+    generateNewInviteLink();
+    
   }, [initialInviteLink]);
 
-  // Attempt to fetch invite link from the most recent payment if not provided
-  const fetchInviteLinkFromRecentPayment = async () => {
-    if (inviteLink) return;
-    
+  // Generate a fresh invite link for this member
+  const generateNewInviteLink = async () => {
     setIsLoadingLink(true);
     try {
-      console.log('Attempting to fetch invite link from recent payments...');
+      console.log('Generating new invite link for renewal...');
       
-      // Try to get the most recent payment with an invite link
-      const { data: recentPayment, error } = await supabase
+      // Get community ID from recent payment
+      const { data: recentPayment, error: paymentError } = await supabase
         .from('subscription_payments')
-        .select('invite_link, community_id')
+        .select('community_id')
         .order('created_at', { ascending: false })
         .limit(1);
       
-      if (error) {
-        console.error('Error fetching recent payment:', error);
-      } else if (recentPayment && recentPayment.length > 0 && recentPayment[0].invite_link) {
-        console.log('Found invite link in recent payment:', recentPayment[0].invite_link);
-        setInviteLink(recentPayment[0].invite_link);
-      } else if (recentPayment && recentPayment.length > 0 && recentPayment[0].community_id) {
-        // If we found a payment but no invite link, try to get the invite link from the community
-        console.log('Found community ID in recent payment:', recentPayment[0].community_id);
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .select('telegram_invite_link')
-          .eq('id', recentPayment[0].community_id)
-          .single();
-        
-        if (communityError) {
-          console.error('Error fetching community:', communityError);
-        } else if (community?.telegram_invite_link) {
-          console.log('Found invite link in community:', community.telegram_invite_link);
-          setInviteLink(community.telegram_invite_link);
+      if (paymentError) {
+        console.error('Error fetching recent payment:', paymentError);
+        return;
+      }
+      
+      if (!recentPayment || recentPayment.length === 0 || !recentPayment[0].community_id) {
+        console.error('No recent payment or community ID found');
+        return;
+      }
+      
+      const communityId = recentPayment[0].community_id;
+      console.log(`Found community ID for invite link generation: ${communityId}`);
+      
+      // Call the create-invite-link edge function with forceNew=true
+      const response = await supabase.functions.invoke('create-invite-link', {
+        body: { 
+          communityId: communityId,
+          forceNew: true 
         }
+      });
+      
+      if (response.error) {
+        console.error('Error generating new invite link:', response.error);
+        return;
+      }
+      
+      if (response.data?.inviteLink) {
+        console.log('Generated new invite link:', response.data.inviteLink);
+        setInviteLink(response.data.inviteLink);
+        
+        // Update the most recent payment with the new link
+        const { error: updateError } = await supabase
+          .from('subscription_payments')
+          .update({ invite_link: response.data.inviteLink })
+          .eq('id', recentPayment[0].id);
+          
+        if (updateError) {
+          console.error('Error updating payment with new invite link:', updateError);
+        } else {
+          console.log('Updated payment record with new invite link');
+        }
+      } else {
+        console.error('No invite link received from function');
       }
     } catch (err) {
-      console.error('Error in fetchInviteLinkFromRecentPayment:', err);
+      console.error('Error in generateNewInviteLink:', err);
     } finally {
       setIsLoadingLink(false);
     }

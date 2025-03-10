@@ -51,7 +51,7 @@ export const InviteLinkSection = ({ inviteLink }: InviteLinkSectionProps) => {
           className="w-full py-7 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 border-none transition-all group"
         >
           <div className="flex items-center gap-2">
-            <span>הצטרף לקהילה 🚀</span>
+            <span>Join Community 🚀</span>
             <ExternalLink className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </div>
         </Button>

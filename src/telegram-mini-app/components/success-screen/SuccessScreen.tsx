@@ -15,7 +15,7 @@ export const SuccessScreen = ({ communityInviteLink }: SuccessScreenProps) => {
   const { inviteLink, isLoadingLink } = useInviteLink(communityInviteLink);
   
   return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center animate-fade-up">
+    <div className="flex flex-col items-center justify-center py-12 px-6 md:px-8 space-y-6 text-center animate-fade-up">
       {/* Confetti effect that runs on mount */}
       <ConfettiEffect />
       

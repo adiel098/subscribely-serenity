@@ -5,6 +5,7 @@ import { CheckCircle2, Star, Zap, Shield, Award, Check } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { motion } from "framer-motion";
 import { Subscription } from "../services/memberService";
+import { isSubscriptionActive } from "./subscriptions/utils";
 
 interface SubscriptionPlansProps {
   plans: Plan[];
@@ -51,11 +52,11 @@ export const SubscriptionPlans = ({
     }
   };
 
-  // Check if the user has already subscribed to this plan
+  // Check if the user has already subscribed to this plan and if it's active
   const isSubscribedToPlan = (planId: string) => {
     return userSubscriptions.some(subscription => 
       subscription.plan?.id === planId && 
-      subscription.subscription_status
+      isSubscriptionActive(subscription)
     );
   };
 

@@ -31,7 +31,7 @@ export async function processMember(
     member_id: memberData.member_id // Keep original member_id if present
   };
 
-  console.log("Normalized member data:", JSON.stringify(member, null, 2));
+  console.log("🔍 MEMBER PROCESSOR: Processing member data:", JSON.stringify(member, null, 2));
 
   // Initialize result object
   const result = {
@@ -43,6 +43,7 @@ export async function processMember(
 
   // If not active, do nothing
   if (!member.is_active) {
+    console.log(`⏭️ Skipping inactive member ${member.telegram_user_id}`);
     result.action = "skip";
     result.details = "Member is not active";
     return result;
@@ -50,6 +51,7 @@ export async function processMember(
 
   // If no subscription end date, do nothing
   if (!member.subscription_end_date) {
+    console.log(`⏭️ Skipping member ${member.telegram_user_id} with no subscription end date`);
     result.action = "skip";
     result.details = "No subscription end date";
     return result;
@@ -77,6 +79,7 @@ export async function processMember(
     : null;
   
   if (specificNotificationType) {
+    console.log(`🔔 Checking if ${specificNotificationType} was already sent today to member ${member.telegram_user_id}`);
     const { data: specificRecentNotifications, error: notificationError } = await supabase
       .from('subscription_notifications')
       .select('notification_type')
@@ -86,15 +89,16 @@ export async function processMember(
       .lte('sent_at', todayEnd.toISOString());
     
     if (notificationError) {
-      console.error(`Error checking specific notifications: ${notificationError.message}`);
+      console.error(`❌ Error checking specific notifications: ${notificationError.message}`);
     } else if (specificRecentNotifications && specificRecentNotifications.length > 0) {
       result.action = "skip";
       result.details = `Already sent ${specificNotificationType} notification today`;
-      console.log(`Member ${member.telegram_user_id} already received ${specificNotificationType} notification today - skipping`);
+      console.log(`⏭️ Member ${member.telegram_user_id} already received ${specificNotificationType} notification today - skipping`);
       return result;
     }
   } else {
     // For any other operation (like expiration), check for any notification today
+    console.log(`🔔 Checking if any notification was sent today to member ${member.telegram_user_id}`);
     const { data: recentNotifications, error: notificationError } = await supabase
       .from('subscription_notifications')
       .select('notification_type')
@@ -103,27 +107,30 @@ export async function processMember(
       .lte('sent_at', todayEnd.toISOString());
     
     if (notificationError) {
-      console.error(`Error checking recent notifications: ${notificationError.message}`);
+      console.error(`❌ Error checking recent notifications: ${notificationError.message}`);
     } else if (recentNotifications && recentNotifications.length > 0) {
       result.action = "skip";
       result.details = `Already sent notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
-      console.log(`Member ${member.telegram_user_id} already received notification today - skipping`);
+      console.log(`⏭️ Member ${member.telegram_user_id} already received notification today - skipping`);
       return result;
     }
   }
 
   // Log for debugging
-  console.log(`Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration`);
+  console.log(`📅 Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration (ends: ${subscriptionEndDate.toISOString()})`);
+  console.log(`📊 Current subscription status: ${member.subscription_status}`);
 
   // Check if subscription has expired
   if (daysUntilExpiration <= 0 && member.subscription_status === 'active') {
     // Subscription has expired
+    console.log(`⚠️ EXPIRED: Member ${member.telegram_user_id}'s subscription has expired. Processing expiration...`);
     await handleExpiredSubscription(supabase, member, botSettings, result);
     return result;
   }
 
   // Send reminders if subscription is active and expiration is coming soon
   if (member.subscription_status === 'active') {
+    console.log(`🔔 Checking if reminder should be sent to member ${member.telegram_user_id}`);
     await sendReminderNotifications(supabase, member, botSettings, daysUntilExpiration, result);
   }
 

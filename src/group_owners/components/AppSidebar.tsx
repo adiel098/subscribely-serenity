@@ -1,3 +1,4 @@
+
 import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, TrendingUp, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
@@ -25,7 +26,7 @@ const menuItems = [
   {
     title: "Payment Methods",
     icon: Wallet,
-    path: "/messages"
+    path: "/payment-methods"
   },
   {
     title: "Analytics",

@@ -15,7 +15,7 @@ import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMet
 import { PaymentMethodTabs } from "@/group_owners/components/payments/PaymentMethodTabs";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 
-const Messages = () => {
+const PaymentMethods = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("stripe");
   const { selectedCommunityId } = useCommunityContext();
@@ -104,4 +104,4 @@ const Messages = () => {
   );
 };
 
-export default Messages;
+export default PaymentMethods;

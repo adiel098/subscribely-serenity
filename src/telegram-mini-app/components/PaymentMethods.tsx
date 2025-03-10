@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -18,6 +17,9 @@ interface PaymentMethodsProps {
   selectedPaymentMethod: string | null;
   onPaymentMethodSelect: (method: string) => void;
   onCompletePurchase: () => void;
+  onPaymentStart?: () => void;
+  onPaymentError?: (error: string) => void;
+  isProcessing?: boolean;
   communityInviteLink?: string | null;
   showSuccess: boolean;
   telegramUserId?: string;
@@ -25,6 +27,7 @@ interface PaymentMethodsProps {
   firstName?: string;  
   lastName?: string;
   activeSubscription?: Subscription | null;
+  communityId?: string;
 }
 
 export const PaymentMethods = ({
@@ -32,17 +35,21 @@ export const PaymentMethods = ({
   selectedPaymentMethod,
   onPaymentMethodSelect,
   onCompletePurchase,
+  onPaymentStart,
+  onPaymentError,
+  isProcessing,
   communityInviteLink,
   showSuccess,
   telegramUserId,
   telegramUsername,
   firstName,
   lastName,
-  activeSubscription
+  activeSubscription,
+  communityId
 }: PaymentMethodsProps) => {
   const stripeConfig = useStripeConfig(selectedPlan);
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
-    communityId: selectedPlan.community_id,
+    communityId: communityId || selectedPlan.community_id,
     planId: selectedPlan.id,
     planPrice: selectedPlan.price, 
     communityInviteLink,
@@ -54,7 +61,6 @@ export const PaymentMethods = ({
     activeSubscription
   });
 
-  // Log community invite link for debugging
   useEffect(() => {
     console.log('[PaymentMethods] Payment Method Selected:', selectedPaymentMethod);
     console.log('[PaymentMethods] Community invite link:', communityInviteLink);
@@ -67,7 +73,6 @@ export const PaymentMethods = ({
     console.log('[PaymentMethods] Active subscription:', activeSubscription);
   }, [communityInviteLink, selectedPlan, telegramUserId, telegramUsername, firstName, lastName, selectedPaymentMethod, activeSubscription]);
 
-  // Show error toast if payment processing fails
   useEffect(() => {
     if (error) {
       toast({
@@ -88,7 +93,16 @@ export const PaymentMethods = ({
       console.log('[PaymentMethods] Telegram username:', telegramUsername);
       console.log('[PaymentMethods] First name:', firstName);
       console.log('[PaymentMethods] Last name:', lastName);
-      processPayment(selectedPaymentMethod);
+      
+      if (onPaymentStart) {
+        onPaymentStart();
+      }
+      
+      processPayment(selectedPaymentMethod).catch(err => {
+        if (onPaymentError) {
+          onPaymentError(err.message || 'Payment processing failed');
+        }
+      });
     } else {
       toast({
         title: "Payment Method Required",
@@ -104,7 +118,6 @@ export const PaymentMethods = ({
 
   if (showSuccess) {
     console.log('[PaymentMethods] Showing success screen with invite link:', inviteLink || communityInviteLink);
-    // Send both the original community invite link and the possibly updated one from the payment process
     return <SuccessScreen communityInviteLink={inviteLink || communityInviteLink} />;
   }
 

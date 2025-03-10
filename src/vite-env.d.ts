@@ -53,6 +53,7 @@ interface TelegramWebApp {
     offClick: (callback: () => void) => void;
   };
   version?: string; // Add version property
+  platform?: string; // Add platform property
 }
 
 interface Window {

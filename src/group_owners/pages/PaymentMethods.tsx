@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock } from "lucide-react";
+import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid } from "lucide-react";
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
@@ -57,7 +57,7 @@ const PaymentMethods = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.15
       }
     }
   };
@@ -75,18 +75,20 @@ const PaymentMethods = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <Zap className="h-6 w-6 text-indigo-500" />
           Payment Methods
-          <Sparkles className="h-5 w-5 text-amber-500" />
+          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">💰</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure and manage your community payment methods 💸
+          Configure and manage your payment gateways for community subscriptions 💸
         </p>
       </motion.div>
 
-      <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white">
+      <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Shield className="h-5 w-5 text-indigo-600" />
+            <LayoutGrid className="h-5 w-5 text-indigo-600" />
             Available Payment Gateways
           </CardTitle>
           <CardDescription>
@@ -100,37 +102,40 @@ const PaymentMethods = () => {
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={item}>
+            <motion.div variants={item} className="h-full">
               <PaymentMethodCard
                 title="Stripe"
-                description="Accept credit card payments securely 💳"
+                description="Accept credit card payments securely with Stripe 💳"
                 icon={CreditCard}
                 isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('stripe', active)}
                 isConfigured={isMethodConfigured('stripe')}
                 onConfigure={() => setActiveTab('stripe')}
+                imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png"
               />
             </motion.div>
-            <motion.div variants={item}>
+            <motion.div variants={item} className="h-full">
               <PaymentMethodCard
                 title="PayPal"
-                description="Accept PayPal payments easily 🔄"
+                description="Accept PayPal payments easily and securely 🔄"
                 icon={Wallet}
                 isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('paypal', active)}
                 isConfigured={isMethodConfigured('paypal')}
                 onConfigure={() => setActiveTab('paypal')}
+                imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png"
               />
             </motion.div>
-            <motion.div variants={item}>
+            <motion.div variants={item} className="h-full">
               <PaymentMethodCard
                 title="Crypto"
-                description="Accept cryptocurrency payments 🪙"
+                description="Accept cryptocurrency payments for your groups 🪙"
                 icon={Bitcoin}
                 isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('crypto', active)}
                 isConfigured={isMethodConfigured('crypto')}
                 onConfigure={() => setActiveTab('crypto')}
+                imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
               />
             </motion.div>
           </motion.div>
@@ -150,7 +155,7 @@ const PaymentMethods = () => {
               Payment Method Configuration
             </CardTitle>
             <CardDescription>
-              Configure your payment method settings and API keys
+              Configure your payment method settings and API keys securely 🔐
             </CardDescription>
           </CardHeader>
           <CardContent>

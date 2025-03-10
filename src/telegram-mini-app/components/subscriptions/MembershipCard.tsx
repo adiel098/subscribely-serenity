@@ -60,7 +60,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                     </Badge>
                     {subscription.plan && (
                       <span className="text-xs text-gray-500">
-                        {subscription.plan.name} · ${subscription.plan.price}/{subscription.plan.interval}
+                        {subscription.plan.name}
                       </span>
                     )}
                   </div>

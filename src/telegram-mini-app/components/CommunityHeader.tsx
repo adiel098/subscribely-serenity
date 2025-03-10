@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
@@ -16,6 +16,8 @@ interface CommunityHeaderProps {
 export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   console.log("[CommunityHeader] Rendering with community:", JSON.stringify(community, null, 2));
   const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
   
   const { photoUrl, loading: photoLoading, error: photoError } = useTelegramChatPhoto({
     communityId: community.id,
@@ -40,11 +42,23 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   
   // Check if description is long (more than 150 characters)
   const isLongDescription = displayDescription && displayDescription.length > 150;
-  
-  // Create short and full versions of the description
-  const shortDescription = isLongDescription 
-    ? `${displayDescription.substring(0, 150)}...` 
-    : displayDescription;
+
+  // Check if description overflows the container after rendering
+  useEffect(() => {
+    if (descriptionRef.current && displayDescription) {
+      const element = descriptionRef.current;
+      // Check if the content height is greater than the visible height
+      const isOverflowing = element.scrollHeight > element.clientHeight;
+      setShouldShowReadMore(isOverflowing || isLongDescription);
+      
+      console.log("[CommunityHeader] Description overflow check:", {
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        isOverflowing,
+        shouldShowButton: isOverflowing || isLongDescription
+      });
+    }
+  }, [displayDescription, isLongDescription]);
   
   // Toggle description expansion
   const toggleExpand = () => {
@@ -104,11 +118,14 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
       ) : (
         displayDescription ? (
           <div className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto px-4">
-            <div className={`${isExpanded ? '' : 'line-clamp-3'} relative`}>
+            <div 
+              ref={descriptionRef} 
+              className={`${isExpanded ? '' : 'line-clamp-3'} relative`}
+            >
               <p>{displayDescription}</p>
             </div>
             
-            {isLongDescription && (
+            {shouldShowReadMore && (
               <Button 
                 variant="ghost" 
                 size="sm" 

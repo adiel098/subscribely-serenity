@@ -8,12 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CreditCard, Wallet, Bitcoin } from "lucide-react";
+import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock } from "lucide-react";
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { PaymentMethodTabs } from "@/group_owners/components/payments/PaymentMethodTabs";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { motion } from "framer-motion";
 
 const PaymentMethods = () => {
   const { toast } = useToast();
@@ -50,56 +51,113 @@ const PaymentMethods = () => {
     return method && Object.keys(method.config).length > 0;
   };
 
+  // Animation variants
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="space-y-8 py-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Payment Methods</h1>
-        <p className="text-sm text-muted-foreground">
-          Configure and manage your community payment methods
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          Payment Methods
+          <Sparkles className="h-5 w-5 text-amber-500" />
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Configure and manage your community payment methods 💸
         </p>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <PaymentMethodCard
-          title="Stripe"
-          description="Accept credit card payments"
-          icon={CreditCard}
-          isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
-          onToggle={(active) => handleMethodToggle('stripe', active)}
-          isConfigured={isMethodConfigured('stripe')}
-          onConfigure={() => setActiveTab('stripe')}
-        />
-        <PaymentMethodCard
-          title="PayPal"
-          description="Accept PayPal payments"
-          icon={Wallet}
-          isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
-          onToggle={(active) => handleMethodToggle('paypal', active)}
-          isConfigured={isMethodConfigured('paypal')}
-          onConfigure={() => setActiveTab('paypal')}
-        />
-        <PaymentMethodCard
-          title="Crypto"
-          description="Accept cryptocurrency payments"
-          icon={Bitcoin}
-          isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
-          onToggle={(active) => handleMethodToggle('crypto', active)}
-          isConfigured={isMethodConfigured('crypto')}
-          onConfigure={() => setActiveTab('crypto')}
-        />
-      </div>
-
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Payment Method Configuration</CardTitle>
+      <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Shield className="h-5 w-5 text-indigo-600" />
+            Available Payment Gateways
+          </CardTitle>
           <CardDescription>
-            Configure your payment method settings and API keys
+            Enable and configure payment options for your members
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {selectedCommunityId && <PaymentMethodTabs communityId={selectedCommunityId} />}
+          <motion.div 
+            className="grid gap-6 md:grid-cols-3"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div variants={item}>
+              <PaymentMethodCard
+                title="Stripe"
+                description="Accept credit card payments securely 💳"
+                icon={CreditCard}
+                isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
+                onToggle={(active) => handleMethodToggle('stripe', active)}
+                isConfigured={isMethodConfigured('stripe')}
+                onConfigure={() => setActiveTab('stripe')}
+              />
+            </motion.div>
+            <motion.div variants={item}>
+              <PaymentMethodCard
+                title="PayPal"
+                description="Accept PayPal payments easily 🔄"
+                icon={Wallet}
+                isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
+                onToggle={(active) => handleMethodToggle('paypal', active)}
+                isConfigured={isMethodConfigured('paypal')}
+                onConfigure={() => setActiveTab('paypal')}
+              />
+            </motion.div>
+            <motion.div variants={item}>
+              <PaymentMethodCard
+                title="Crypto"
+                description="Accept cryptocurrency payments 🪙"
+                icon={Bitcoin}
+                isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
+                onToggle={(active) => handleMethodToggle('crypto', active)}
+                isConfigured={isMethodConfigured('crypto')}
+                onConfigure={() => setActiveTab('crypto')}
+              />
+            </motion.div>
+          </motion.div>
         </CardContent>
       </Card>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Card className="mt-8 border-indigo-100 shadow-md overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-700"></div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-indigo-600" />
+              Payment Method Configuration
+            </CardTitle>
+            <CardDescription>
+              Configure your payment method settings and API keys
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selectedCommunityId && <PaymentMethodTabs communityId={selectedCommunityId} activeTab={activeTab} />}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

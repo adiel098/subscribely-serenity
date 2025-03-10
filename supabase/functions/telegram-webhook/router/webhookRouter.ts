@@ -12,6 +12,7 @@ import { handleChannelVerification } from '../handlers/channelVerificationHandle
 import { corsHeaders } from '../cors.ts';
 import { updateMemberActivity } from '../handlers/utils/activityUtils.ts';
 import { logTelegramEvent } from '../eventLogger.ts';
+import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
 
 export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnType<typeof createClient>, botToken: string) {
   console.log("[ROUTER] 🚀🚀🚀 Received webhook request");

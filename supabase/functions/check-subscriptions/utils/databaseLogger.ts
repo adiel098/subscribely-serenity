@@ -11,7 +11,7 @@ export async function logNotification(
   notificationType: string
 ): Promise<void> {
   try {
-    console.log(`Logging notification of type: ${notificationType} for member ${memberId}`);
+    console.log(`💌 Logging notification of type: ${notificationType} for member ${memberId}`);
     
     // Check if the notification has already been sent to prevent duplicates
     const { data: existingNotifications, error: checkError } = await supabase
@@ -24,9 +24,9 @@ export async function logNotification(
       .limit(1);
     
     if (checkError) {
-      console.error(`Error checking existing notifications: ${checkError.message}`);
+      console.error(`❌ Error checking existing notifications: ${checkError.message}`);
     } else if (existingNotifications && existingNotifications.length > 0) {
-      console.log(`Notification of type ${notificationType} already sent to member ${memberId} in the last 24 hours - skipping`);
+      console.log(`ℹ️ Notification of type ${notificationType} already sent to member ${memberId} in the last 24 hours - skipping`);
       return;
     }
     
@@ -38,12 +38,12 @@ export async function logNotification(
     });
     
     if (error) {
-      console.error(`Error logging notification: ${error.message}`);
+      console.error(`❌ Error logging notification: ${error.message}`);
     } else {
-      console.log(`Successfully logged notification with type "${notificationType}"`);
+      console.log(`✅ Successfully logged notification with type "${notificationType}"`);
     }
   } catch (err) {
-    console.error(`Failed to log notification: ${err.message}`);
+    console.error(`❌ Failed to log notification: ${err.message}`);
   }
 }
 
@@ -57,6 +57,8 @@ export async function logSystemEvent(
   metadata: any = {}
 ): Promise<void> {
   try {
+    console.log(`📝 Logging system event: ${eventType} - ${details}`);
+    
     const { error } = await supabase
       .from("system_logs")
       .insert({
@@ -66,9 +68,11 @@ export async function logSystemEvent(
       });
       
     if (error) {
-      console.error(`Error logging system event: ${error.message}`);
+      console.error(`❌ Error logging system event: ${error.message}`);
+    } else {
+      console.log(`✅ Successfully logged system event: ${eventType}`);
     }
   } catch (err) {
-    console.error(`Failed to log system event: ${err.message}`);
+    console.error(`❌ Failed to log system event: ${err.message}`);
   }
 }

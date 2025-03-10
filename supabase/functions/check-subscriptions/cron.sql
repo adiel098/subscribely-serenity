@@ -3,47 +3,13 @@
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- Create an updated version of the get_members_to_check function that uses string comparison
-CREATE OR REPLACE FUNCTION public.get_members_to_check_v2()
-RETURNS TABLE(
-    member_id uuid, 
-    community_id uuid, 
-    telegram_user_id text, 
-    subscription_end_date timestamp with time zone, 
-    is_active boolean, 
-    subscription_status text
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        m.id as member_id,
-        m.community_id,
-        m.telegram_user_id,
-        m.subscription_end_date,
-        m.is_active,
-        m.subscription_status
-    FROM telegram_chat_members m
-    WHERE 
-        (
-            -- Check expired subscriptions
-            (m.subscription_end_date IS NOT NULL
-            AND m.subscription_end_date < (NOW() + INTERVAL '3 days')
-            AND m.subscription_status = 'active')
-        OR
-            -- Include inactive members that might still be in the group
-            (m.is_active = false)
-        )
-    LIMIT 100; -- Limit to prevent overloading the system
-END;
-$$ LANGUAGE plpgsql;
-
 -- Drop existing schedule if it exists
 select cron.unschedule('check-expired-subscriptions');
 
--- Create new schedule
+-- Create new schedule with direct function invocation
 select cron.schedule(
   'check-expired-subscriptions',
-  '*/5 * * * *', -- every 5 minutes to reduce load
+  '* * * * *', -- Run every minute
   $$
   select
     net.http_post(

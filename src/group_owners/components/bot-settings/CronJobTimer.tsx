@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, RefreshCw } from "lucide-react";
+import { Clock, RefreshCw, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 
 export const CronJobTimer = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [lastCheck, setLastCheck] = useState<Date>(new Date());
+  const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [latestRunError, setLatestRunError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [cronStatus, setCronStatus] = useState<string | null>(null);
+  const [processedMembers, setProcessedMembers] = useState<number | null>(null);
   const { toast } = useToast();
 
   const fetchLatestRunStatus = async () => {
@@ -21,9 +23,9 @@ export const CronJobTimer = () => {
       const { data, error } = await supabase
         .from("system_logs")
         .select("*")
-        .or("event_type.eq.subscription_check,event_type.eq.subscription_check_error")
+        .or("event_type.eq.subscription_check,event_type.eq.subscription_check_error,event_type.eq.subscription_check_start")
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(5);
 
       if (error) {
         console.error("Error fetching latest run status:", error);
@@ -31,14 +33,37 @@ export const CronJobTimer = () => {
       }
 
       if (data && data.length > 0) {
-        const latestLog = data[0];
-        setLastCheck(new Date(latestLog.created_at));
+        // Find the latest successful completion log
+        const successLog = data.find(log => log.event_type === "subscription_check");
         
-        if (latestLog.event_type === "subscription_check_error") {
-          setLatestRunError(latestLog.details);
-        } else {
+        if (successLog) {
+          setLastCheck(new Date(successLog.created_at));
+          setProcessedMembers(successLog.metadata?.processedCount || 0);
           setLatestRunError(null);
         }
+        
+        // Check for any errors in recent logs
+        const errorLog = data.find(log => log.event_type === "subscription_check_error");
+        if (errorLog) {
+          setLatestRunError(errorLog.details);
+        }
+      } else {
+        console.log("No subscription check logs found");
+      }
+
+      // Check cron job status
+      const { data: functionResult, error: functionError } = await supabase.rpc(
+        "check_cron_job_status",
+        { job_name: "check-expired-subscriptions" }
+      );
+
+      if (functionError) {
+        console.error("Error checking cron job status:", functionError);
+      } else if (functionResult && functionResult.length > 0) {
+        setCronStatus(functionResult[0].status);
+        console.log("Cron job status:", functionResult[0]);
+      } else {
+        setCronStatus("not_found");
       }
     } catch (err) {
       console.error("Failed to fetch run status:", err);
@@ -50,6 +75,12 @@ export const CronJobTimer = () => {
   const triggerManualCheck = async () => {
     try {
       setIsLoading(true);
+      toast({
+        title: "Triggering subscription check...",
+        description: "Please wait while we process the request.",
+        variant: "default"
+      });
+      
       const { error } = await supabase.functions.invoke("check-subscriptions", {
         body: {}
       });
@@ -65,7 +96,7 @@ export const CronJobTimer = () => {
 
       toast({
         title: "Subscription check triggered",
-        description: "The check has been manually triggered and will run shortly.",
+        description: "The check has been manually triggered.",
         variant: "default"
       });
 
@@ -115,7 +146,15 @@ export const CronJobTimer = () => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    return () => clearInterval(timer);
+    // Check status every minute
+    const statusChecker = setInterval(() => {
+      fetchLatestRunStatus();
+    }, 60000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(statusChecker);
+    };
   }, [timeLeft]);
 
   const minutes = Math.floor(timeLeft / 60);
@@ -149,20 +188,43 @@ export const CronJobTimer = () => {
         <CardDescription className="text-purple-700 font-medium">
           Next check in: {minutes}:{seconds.toString().padStart(2, '0')}
         </CardDescription>
-        <CardDescription className="text-purple-600 text-xs">
-          Last check: {lastCheck.toLocaleTimeString()}
-        </CardDescription>
+        {lastCheck && (
+          <CardDescription className="text-purple-600 text-xs">
+            Last check: {lastCheck.toLocaleTimeString()}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-purple-700">
-          Automatically manages subscriptions by checking member status, removing expired members, and sending renewal notifications every minute.
-        </p>
-        {latestRunError && (
-          <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs">
-            <p className="font-semibold">Last run error:</p>
-            <p>{latestRunError}</p>
-          </div>
-        )}
+        <div className="space-y-2">
+          <p className="text-sm text-purple-700">
+            Automatically manages subscriptions by checking member status, removing expired members, and sending renewal notifications.
+          </p>
+          
+          {cronStatus && (
+            <div className={cn(
+              "text-xs font-medium p-1.5 rounded-sm",
+              cronStatus === "active" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+            )}>
+              Cron job status: {cronStatus}
+            </div>
+          )}
+          
+          {processedMembers !== null && (
+            <div className="text-xs text-purple-700">
+              Last run processed: {processedMembers} members
+            </div>
+          )}
+          
+          {latestRunError && (
+            <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs">
+              <div className="flex items-center gap-1 font-semibold">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Last run error:</span>
+              </div>
+              <p className="mt-1">{latestRunError}</p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

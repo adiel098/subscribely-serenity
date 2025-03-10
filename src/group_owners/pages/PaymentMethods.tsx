@@ -12,13 +12,11 @@ import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid } 
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
-import { PaymentMethodTabs } from "@/group_owners/components/payments/PaymentMethodTabs";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { motion } from "framer-motion";
 
 const PaymentMethods = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("stripe");
   const { selectedCommunityId } = useCommunityContext();
   const { data: paymentMethods, refetch } = usePaymentMethods(selectedCommunityId);
 
@@ -110,8 +108,10 @@ const PaymentMethods = () => {
                 isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('stripe', active)}
                 isConfigured={isMethodConfigured('stripe')}
-                onConfigure={() => setActiveTab('stripe')}
+                onConfigure={() => {}}
                 imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png"
+                provider="stripe"
+                communityId={selectedCommunityId || ""}
               />
             </motion.div>
             <motion.div variants={item} className="h-full">
@@ -122,8 +122,10 @@ const PaymentMethods = () => {
                 isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('paypal', active)}
                 isConfigured={isMethodConfigured('paypal')}
-                onConfigure={() => setActiveTab('paypal')}
+                onConfigure={() => {}}
                 imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png"
+                provider="paypal"
+                communityId={selectedCommunityId || ""}
               />
             </motion.div>
             <motion.div variants={item} className="h-full">
@@ -134,8 +136,10 @@ const PaymentMethods = () => {
                 isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
                 onToggle={(active) => handleMethodToggle('crypto', active)}
                 isConfigured={isMethodConfigured('crypto')}
-                onConfigure={() => setActiveTab('crypto')}
+                onConfigure={() => {}}
                 imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
+                provider="crypto"
+                communityId={selectedCommunityId || ""}
               />
             </motion.div>
           </motion.div>
@@ -146,22 +150,16 @@ const PaymentMethods = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex justify-center items-center p-10"
       >
-        <Card className="mt-8 border-indigo-100 shadow-md overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-700"></div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-indigo-600" />
-              Payment Method Configuration
-            </CardTitle>
-            <CardDescription>
-              Configure your payment method settings and API keys securely 🔐
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {selectedCommunityId && <PaymentMethodTabs communityId={selectedCommunityId} activeTab={activeTab} />}
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center text-center max-w-lg">
+          <Shield className="h-16 w-16 text-indigo-200 mb-4" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Payment Settings Simplified</h3>
+          <p className="text-gray-500 text-sm">
+            We've made payment configuration easier! Click on any payment method card above
+            and use the "Configure" button to set up your payment gateway securely. 🔒
+          </p>
+        </div>
       </motion.div>
     </div>
   );

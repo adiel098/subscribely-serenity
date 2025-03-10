@@ -90,10 +90,10 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
       transition={{ duration: 0.3 }}
       className="my-4"
     >
-      <Card className="border border-indigo-200 bg-indigo-50/50 shadow-sm overflow-hidden">
+      <Card className="border border-indigo-100 bg-white shadow-sm overflow-hidden">
         <div className="p-4 relative">
-          {/* Header with background color and icon */}
-          <div className="flex items-center justify-between mb-1">
+          {/* Header with icon */}
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               <span className="text-indigo-600 bg-indigo-100 p-2 rounded-full">
                 <Calendar className="h-5 w-5" />
@@ -105,9 +105,10 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
               </div>
             </div>
             
-            <div className="text-right">
-              <p className="text-xs text-indigo-600 font-medium">End Date:</p>
-              <p className="text-sm font-bold text-indigo-700">{getEndDate(selectedPlan)}</p>
+            {/* End date with special background */}
+            <div className="text-right bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm">
+              <p className="text-xs font-medium text-indigo-100">End Date:</p>
+              <p className="text-sm font-bold">{getEndDate(selectedPlan)}</p>
             </div>
           </div>
           

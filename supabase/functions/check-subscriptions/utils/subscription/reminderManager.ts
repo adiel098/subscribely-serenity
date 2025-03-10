@@ -1,11 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember, BotSettings } from "../types.ts";
-import { 
-  sendFirstReminder, 
-  sendSecondReminder, 
-  sendLegacyReminder 
-} from "../notification/reminderService.ts";
 
 const DEFAULT_MINI_APP_URL = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
 
@@ -36,10 +31,6 @@ export async function sendReminderNotifications(
   }
 
   console.log(`Processing reminder for member ${memberId} (${member.telegram_user_id}), ${daysUntilExpiration} days until expiration`);
-
-  // Check if this specific reminder type has been sent recently
-  // We'll check this in the memberProcessor.ts now to allow different reminder types
-  // to be sent when appropriate
 
   // Get bot token and community data once for all reminder types
   const telegramConfig = await getNotificationConfig(supabase, member.community_id);
@@ -98,52 +89,6 @@ export async function sendReminderNotifications(
     console.log(`No reminder needed for ${daysUntilExpiration} days until expiration`);
     result.action = "no_reminder_needed";
     result.details = `No reminder configured for ${daysUntilExpiration} days until expiration`;
-  }
-}
-
-/**
- * Check if user has received any notifications today
- */
-async function hasRecentNotification(
-  supabase: ReturnType<typeof createClient>,
-  member: SubscriptionMember
-): Promise<boolean> {
-  if (!member) {
-    console.error("Invalid member data in hasRecentNotification");
-    return false;
-  }
-  
-  const memberId = member.id || member.member_id;
-  if (!memberId) {
-    console.error("Missing member ID in hasRecentNotification:", JSON.stringify(member, null, 2));
-    return false;
-  }
-
-  const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-  const endOfDay = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
-  
-  try {
-    console.log(`Checking for recent notifications for member ${memberId} between ${startOfDay} and ${endOfDay}`);
-    
-    const { data: recentNotifications, error } = await supabase
-      .from("subscription_notifications")
-      .select("*")
-      .eq("member_id", memberId)
-      .gte("sent_at", startOfDay)
-      .lt("sent_at", endOfDay);
-    
-    if (error) {
-      console.error("Error checking recent notifications:", error);
-      return false;
-    }
-    
-    const hasNotifications = !!(recentNotifications && recentNotifications.length > 0);
-    console.log(`Member ${memberId} has ${hasNotifications ? recentNotifications.length : 'no'} recent notifications`);
-    
-    return hasNotifications;
-  } catch (error) {
-    console.error("Exception checking recent notifications:", error);
-    return false;
   }
 }
 

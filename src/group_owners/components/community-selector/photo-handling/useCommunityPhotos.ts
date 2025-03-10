@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
+import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
 
 type CommunityPhotoMap = Record<string, string>;
 
@@ -53,16 +54,15 @@ export const useCommunityPhotos = (communities?: Community[]) => {
         telegramChatId: c.telegram_chat_id
       }));
       
-      // Use check-community-photo edge function for batch processing
-      const { data, error } = await supabase.functions.invoke("check-community-photo", {
-        body: {
-          communities: communitiesData
-        }
+      // Use the utility function for better logging and error handling
+      const { data, error } = await invokeSupabaseFunction("check-community-photo", {
+        communities: communitiesData
       });
       
       if (error) {
         console.error("Error fetching community photos:", error);
         setLastError(`Failed to fetch photos: ${error.message}`);
+        toast.error("Failed to load community photos");
         return;
       }
       
@@ -73,12 +73,21 @@ export const useCommunityPhotos = (communities?: Community[]) => {
           ...prev,
           ...data.results
         }));
+        
+        // Show success toast only if we got at least some photos
+        if (Object.keys(data.results).length > 0) {
+          toast.success(`Loaded ${Object.keys(data.results).length} community photos`);
+        }
       } else {
         console.log("No photo results returned");
+        if (telegramCommunities.length > 0) {
+          toast.info("No community photos available");
+        }
       }
     } catch (error) {
       console.error("Failed to fetch community photos:", error);
       setLastError(error instanceof Error ? error.message : "Unknown error");
+      toast.error("Failed to load community photos");
     } finally {
       setIsUpdatingAllPhotos(false);
     }
@@ -101,12 +110,10 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       setRefreshingCommunityId(communityId);
       setLastError(null);
       
-      const { data, error } = await supabase.functions.invoke("get-telegram-chat-photo", {
-        body: {
-          communityId,
-          telegramChatId: chatId,
-          forceFetch: true
-        }
+      const { data, error } = await invokeSupabaseFunction("get-telegram-chat-photo", {
+        communityId,
+        telegramChatId: chatId,
+        forceFetch: true
       });
       
       if (error) {

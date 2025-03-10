@@ -43,3 +43,9 @@ verify_jwt = false
 
 [functions.telegram-image-proxy]
 verify_jwt = false
+
+[functions.check-community-photo]
+verify_jwt = false
+
+[functions.get-telegram-chat-photo]
+verify_jwt = false

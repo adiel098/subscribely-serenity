@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSubscribers, Subscriber } from "./useSubscribers";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,21 +100,7 @@ export const useSubscriberManagement = (communityId: string) => {
     try {
       console.log("Unblocking subscriber:", subscriber.id, "from community:", subscriber.community_id);
       
-      // Update the database to set subscription status to "inactive"
-      const { error } = await supabase
-        .from("telegram_chat_members")
-        .update({ 
-          subscription_status: "inactive",
-          is_active: true 
-        })
-        .eq("id", subscriber.id);
-
-      if (error) {
-        console.error("Error updating subscriber status:", error);
-        throw error;
-      }
-      
-      // Get the Telegram chat ID from the community
+      // Get the Telegram chat ID from the community first
       const { data: community, error: communityError } = await supabase
         .from('communities')
         .select('telegram_chat_id')
@@ -137,6 +124,20 @@ export const useSubscriberManagement = (communityId: string) => {
       if (unblockError) {
         console.error('Error unblocking member from channel:', unblockError);
         throw new Error('Failed to unblock member from channel');
+      }
+      
+      // Update the database to set subscription status to "inactive" only after successful unblock
+      const { error } = await supabase
+        .from("telegram_chat_members")
+        .update({ 
+          subscription_status: "inactive",
+          is_active: true 
+        })
+        .eq("id", subscriber.id);
+
+      if (error) {
+        console.error("Error updating subscriber status:", error);
+        throw error;
       }
       
       // Log the action to activity logs

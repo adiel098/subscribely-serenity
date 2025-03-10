@@ -1,3 +1,4 @@
+
 /**
  * Client for interacting with the Telegram Bot API
  */
@@ -42,7 +43,7 @@ export class TelegramApiClient {
       
       if (!result.ok) {
         console.error(`[TELEGRAM-API] ❌ API error: ${result.description}`);
-        throw new Error(`API error: ${result.description}`);
+        return result; // Return the error response so we can handle it
       }
       
       return result;
@@ -86,13 +87,33 @@ export class TelegramApiClient {
   
   /**
    * Unban a user from a chat
+   * 
+   * @param chatId The chat ID
+   * @param userId The user ID to unban
+   * @param onlyIfBanned Whether to only unban the user if they're currently banned
+   * @returns The API response
    */
-  async unbanChatMember(chatId: string, userId: string, onlyIfBanned: boolean = false): Promise<any> {
-    return this.callApi('unbanChatMember', {
-      chat_id: chatId,
-      user_id: userId,
-      only_if_banned: onlyIfBanned
-    });
+  async unbanChatMember(chatId: string, userId: string, onlyIfBanned: boolean = true): Promise<any> {
+    console.log(`[TELEGRAM-API] 🔓 Unbanning user ${userId} from chat ${chatId}, onlyIfBanned: ${onlyIfBanned}`);
+    
+    try {
+      const result = await this.callApi('unbanChatMember', {
+        chat_id: chatId,
+        user_id: userId,
+        only_if_banned: onlyIfBanned
+      });
+      
+      if (result.ok) {
+        console.log(`[TELEGRAM-API] ✅ User ${userId} successfully unbanned from chat ${chatId}`);
+      } else {
+        console.log(`[TELEGRAM-API] ⚠️ Unban response for user ${userId}: ${result.description}`);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error(`[TELEGRAM-API] ❌ Error unbanning user ${userId} from chat ${chatId}:`, error);
+      throw error;
+    }
   }
   
   /**

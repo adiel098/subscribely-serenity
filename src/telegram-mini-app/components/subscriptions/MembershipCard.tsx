@@ -86,7 +86,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 </div>
               </div>
               {active && (
-                <div className={`text-[10px] scale-90 whitespace-nowrap font-medium ${isExpiringSoon ? "text-red-500" : "text-primary"}`}>
+                <div className={`text-xs font-medium whitespace-nowrap ${isExpiringSoon ? "text-red-500" : "text-primary"}`}>
                   {daysRemaining} days left
                 </div>
               )}

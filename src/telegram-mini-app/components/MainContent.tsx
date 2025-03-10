@@ -57,7 +57,7 @@ export const MainContent = ({
         console.log("[MainContent] Setting plan for renewal:", subscription.plan);
         
         // Find the corresponding full plan object from the community's plans
-        const fullPlan = community.subscription_plans.find(p => p.id === subscription.plan.id) || 
+        const fullPlan = community.subscription_plans?.find(p => p.id === subscription.plan.id) || 
                         (subscription.community.subscription_plans?.find(p => p.id === subscription.plan.id));
         
         if (fullPlan) {
@@ -93,15 +93,15 @@ export const MainContent = ({
         <ContentTabs
           activeTab={activeTab}
           handleTabChange={handleTabChange}
-          communitySubscriptionPlans={community.subscription_plans}
+          communitySubscriptionPlans={community.subscription_plans || []}
           selectedPlan={selectedPlan}
           onPlanSelect={handlePlanSelect}
           showPaymentMethods={showPaymentMethods}
-          subscriptions={subscriptions}
+          subscriptions={subscriptions || []}
           onRefreshSubscriptions={() => {}}
           onRenewSubscription={handleRenew}
           onSelectCommunity={handleSelectCommunity}
-          telegramUserId={telegramUser.id}
+          telegramUserId={telegramUser?.id}
         />
         
         <PaymentWrapper

@@ -151,9 +151,9 @@ const PaymentMethods = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex justify-start items-start p-6 text-left"
+        className="flex justify-center items-center p-6 text-center"
       >
-        <div className="flex flex-col items-start text-left max-w-md">
+        <div className="flex flex-col items-center text-center max-w-md">
           <Shield className="h-12 w-12 text-indigo-200 mb-3" />
           <h3 className="text-lg font-medium text-gray-700 mb-2">Payment Settings Simplified</h3>
           <p className="text-gray-500 text-sm">

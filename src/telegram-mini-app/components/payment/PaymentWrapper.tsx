@@ -4,6 +4,7 @@ import { PaymentSection } from "./PaymentSection";
 import { SubscriptionDuration } from "../subscriptions/SubscriptionDuration";
 import { Subscription } from "../../services/memberService";
 import { Plan } from "../../types/community.types";
+import { toast } from "sonner";
 
 interface PaymentWrapperProps {
   selectedPlan: Plan | null;
@@ -27,6 +28,7 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
   onCompletePurchase
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   // Don't render anything if no plan selected
   if (!selectedPlan) return null;
@@ -34,6 +36,24 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
   const handlePaymentMethodSelect = (method) => {
     console.log(`[PaymentWrapper] Setting payment method to: ${method}`);
     setSelectedPaymentMethod(method);
+  };
+
+  const handlePaymentComplete = () => {
+    console.log('[PaymentWrapper] Payment completed successfully');
+    toast.success('Payment processed successfully! Your subscription is now active.');
+    setIsProcessing(false);
+    onCompletePurchase();
+  };
+
+  const handlePaymentStart = () => {
+    console.log('[PaymentWrapper] Payment process starting');
+    setIsProcessing(true);
+  };
+
+  const handlePaymentError = (errorMessage) => {
+    console.error('[PaymentWrapper] Payment error:', errorMessage);
+    toast.error(`Payment failed: ${errorMessage}`);
+    setIsProcessing(false);
   };
 
   // Log Telegram user data for debugging
@@ -55,7 +75,10 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
           selectedPlan={selectedPlan}
           selectedPaymentMethod={selectedPaymentMethod}
           onPaymentMethodSelect={handlePaymentMethodSelect}
-          onCompletePurchase={onCompletePurchase}
+          onCompletePurchase={handlePaymentComplete}
+          onPaymentStart={handlePaymentStart}
+          onPaymentError={handlePaymentError}
+          isProcessing={isProcessing}
           communityInviteLink={communityInviteLink}
           showSuccess={showSuccess}
           telegramUserId={telegramUser.id}
@@ -63,6 +86,7 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
           firstName={telegramUser.first_name}
           lastName={telegramUser.last_name}
           activeSubscription={activeSubscription}
+          communityId={communityId}
         />
       )}
     </>

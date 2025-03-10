@@ -10,7 +10,11 @@ interface PaymentSectionProps {
   selectedPaymentMethod: string | null;
   onPaymentMethodSelect: (method: string) => void;
   onCompletePurchase: () => void;
+  onPaymentStart?: () => void;
+  onPaymentError?: (error: string) => void;
+  isProcessing?: boolean;
   communityInviteLink: string | null;
+  communityId: string;
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
@@ -24,7 +28,11 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   selectedPaymentMethod,
   onPaymentMethodSelect,
   onCompletePurchase,
+  onPaymentStart,
+  onPaymentError,
+  isProcessing = false,
   communityInviteLink,
+  communityId,
   showSuccess,
   telegramUserId,
   telegramUsername,
@@ -37,6 +45,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Rendering with props:');
     console.log('[PaymentSection] Selected payment method:', selectedPaymentMethod);
     console.log('[PaymentSection] Community invite link:', communityInviteLink);
+    console.log('[PaymentSection] Community ID:', communityId);
     console.log('[PaymentSection] Selected plan:', selectedPlan);
     if (selectedPlan) {
       console.log('[PaymentSection] Selected plan price:', selectedPlan.price);
@@ -47,7 +56,8 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] First name:', firstName);
     console.log('[PaymentSection] Last name:', lastName);
     console.log('[PaymentSection] Active subscription:', activeSubscription);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, firstName, lastName, activeSubscription]);
+    console.log('[PaymentSection] Processing state:', isProcessing);
+  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, firstName, lastName, activeSubscription, isProcessing, communityId]);
   
   if (!selectedPlan) return null;
   
@@ -69,7 +79,11 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
         selectedPaymentMethod={selectedPaymentMethod}
         onPaymentMethodSelect={handlePaymentMethodSelect}
         onCompletePurchase={onCompletePurchase}
+        onPaymentStart={onPaymentStart}
+        onPaymentError={onPaymentError}
+        isProcessing={isProcessing}
         communityInviteLink={communityInviteLink}
+        communityId={communityId}
         showSuccess={showSuccess}
         telegramUserId={telegramUserId}
         telegramUsername={telegramUsername}

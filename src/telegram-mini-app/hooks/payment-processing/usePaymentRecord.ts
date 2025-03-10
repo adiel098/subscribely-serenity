@@ -7,7 +7,7 @@ interface RecordPaymentParams {
   telegramUserId: string;
   communityId: string;
   planId: string;
-  planPrice: number;
+  amount: number; // Changed from planPrice to amount for clarity
   paymentMethod: string;
   inviteLink: string | null;
   username?: string;
@@ -28,7 +28,7 @@ export const usePaymentRecord = () => {
       telegramUserId, 
       communityId, 
       planId, 
-      planPrice, 
+      amount, 
       paymentMethod, 
       inviteLink, 
       username,
@@ -46,15 +46,15 @@ export const usePaymentRecord = () => {
       console.log(`- telegramUserId: ${telegramUserId}, type: ${typeof telegramUserId}`);
       console.log(`- communityId: ${communityId}, type: ${typeof communityId}`);
       console.log(`- planId: ${planId}, type: ${typeof planId}`);
-      console.log(`- planPrice: ${planPrice}, type: ${typeof planPrice}`);
+      console.log(`- amount: ${amount}, type: ${typeof amount}`);
       console.log(`- paymentMethod: ${paymentMethod}, type: ${typeof paymentMethod}`);
       console.log(`- inviteLink: ${inviteLink}, type: ${typeof inviteLink}`);
       console.log(`- username: ${username}, type: ${typeof username}`);
       console.log(`- firstName: ${firstName}, type: ${typeof firstName}`);
       console.log(`- lastName: ${lastName}, type: ${typeof lastName}`);
       
-      // Use the provided plan price directly
-      const price = planPrice;
+      // Use the provided amount directly
+      const price = amount;
       console.log(`[usePaymentRecord] Using provided price: ${price} for plan ${planId}`);
       
       // Verify planId is valid and exists in the database
@@ -113,115 +113,6 @@ export const usePaymentRecord = () => {
 
       console.log('[usePaymentRecord] Payment recorded successfully:', JSON.stringify(data, null, 2));
 
-      // Prepare start and end dates for subscription
-      const startDate = new Date();
-      let endDate = new Date();
-      
-      // Add any remaining days from an existing subscription
-      if (activeSubscription && activeSubscription.subscription_end_date) {
-        const currentEndDate = new Date(activeSubscription.subscription_end_date);
-        if (currentEndDate > startDate) {
-          const remainingMs = currentEndDate.getTime() - startDate.getTime();
-          const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
-          console.log(`[usePaymentRecord] Adding ${remainingDays} days from existing subscription`);
-          endDate.setDate(endDate.getDate() + remainingDays);
-        }
-      }
-      
-      // Get plan details for duration calculation
-      const { data: planData } = await supabase
-        .from('subscription_plans')
-        .select('interval')
-        .eq('id', planId)
-        .maybeSingle();
-        
-      // Calculate end date based on plan interval
-      if (planData?.interval) {
-        const interval = planData.interval;
-        
-        if (interval === 'monthly') {
-          endDate.setMonth(endDate.getMonth() + 1);
-        } else if (interval === 'yearly') {
-          endDate.setFullYear(endDate.getFullYear() + 1);
-        } else if (interval === 'quarterly') {
-          endDate.setMonth(endDate.getMonth() + 3);
-        } else if (interval === 'half-yearly') {
-          endDate.setMonth(endDate.getMonth() + 6);
-        } else if (interval === 'one_time') {
-          endDate.setFullYear(endDate.getFullYear() + 1); // Default 1 year for one-time
-        }
-      } else {
-        // Default to 30 days if no interval found
-        endDate.setDate(endDate.getDate() + 30);
-      }
-      
-      console.log(`[usePaymentRecord] Calculated subscription end date: ${endDate.toISOString()}`);
-      
-      // Create member data object
-      const memberData = {
-        telegram_user_id: telegramUserId,
-        telegram_username: username || null,
-        community_id: communityId,
-        subscription_plan_id: planId,
-        subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString(),
-        subscription_status: 'active',
-        is_active: true,
-        joined_at: new Date().toISOString(),
-        first_name: firstName || null,
-        last_name: lastName || null
-      };
-      
-      console.log('[usePaymentRecord] Creating/updating member record with data:', JSON.stringify(memberData, null, 2));
-      
-      // Check if member already exists
-      const { data: existingMember, error: memberError } = await supabase
-        .from('telegram_chat_members')
-        .select('id')
-        .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId)
-        .maybeSingle();
-
-      if (memberError) {
-        console.warn('[usePaymentRecord] Error checking for existing member:', memberError);
-      }
-      
-      let memberId;
-      
-      // Create or update the member record
-      if (existingMember?.id) {
-        console.log('[usePaymentRecord] Updating existing member with ID:', existingMember.id);
-        
-        const { data: updatedMember, error: updateError } = await supabase
-          .from('telegram_chat_members')
-          .update(memberData)
-          .eq('id', existingMember.id)
-          .select('id')
-          .single();
-          
-        if (updateError) {
-          console.error('[usePaymentRecord] Error updating member:', updateError);
-        } else {
-          console.log('[usePaymentRecord] Member updated successfully');
-          memberId = updatedMember.id;
-        }
-      } else {
-        console.log('[usePaymentRecord] Creating new member record');
-        
-        const { data: newMember, error: insertError } = await supabase
-          .from('telegram_chat_members')
-          .insert(memberData)
-          .select('id')
-          .single();
-          
-        if (insertError) {
-          console.error('[usePaymentRecord] Error creating member:', insertError);
-        } else {
-          console.log('[usePaymentRecord] Member created successfully');
-          memberId = newMember.id;
-        }
-      }
-
       // Log payment activity
       await logSubscriptionActivity(
         telegramUserId,
@@ -230,22 +121,13 @@ export const usePaymentRecord = () => {
         `Method: ${paymentMethod}, Amount: ${price}, Plan ID: ${planId}`
       );
 
-      // Log membership activity
-      await logSubscriptionActivity(
-        telegramUserId,
-        communityId,
-        'member_added',
-        `Member added after payment. Plan: ${planId}, Payment ID: ${data?.id}`
-      );
-
       logPaymentAction('Payment recorded successfully', data);
       
       // Return the recorded payment data, including any updated invite link
       return { 
         success: true, 
         paymentData: data,
-        inviteLink: data?.invite_link || inviteLink,
-        memberId
+        inviteLink: data?.invite_link || inviteLink
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error recording payment";

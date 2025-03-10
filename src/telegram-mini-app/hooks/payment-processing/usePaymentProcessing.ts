@@ -3,6 +3,8 @@ import { useState } from "react";
 import { usePaymentRecord } from "./usePaymentRecord";
 import { useInviteLink } from "./useInviteLink";
 import { Subscription } from "../../services/memberService";
+import { createOrUpdateMember } from "../../services/memberService";
+import { toast } from "sonner";
 
 interface PaymentProcessingParams {
   communityId: string;
@@ -14,6 +16,8 @@ interface PaymentProcessingParams {
   firstName?: string;
   lastName?: string;
   onSuccess?: () => void;
+  onError?: (error: string) => void;
+  onStart?: () => void;
   activeSubscription?: Subscription | null;
 }
 
@@ -27,6 +31,8 @@ export const usePaymentProcessing = ({
   firstName,
   lastName,
   onSuccess,
+  onError,
+  onStart,
   activeSubscription
 }: PaymentProcessingParams) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +69,11 @@ export const usePaymentProcessing = ({
       setIsLoading(true);
       setError(null);
       
+      // Notify that payment processing has started
+      if (onStart) {
+        onStart();
+      }
+      
       // Get an invite link if we don't have one yet or generate a new one
       let finalInviteLink = communityInviteLink;
       
@@ -83,7 +94,7 @@ export const usePaymentProcessing = ({
         telegramUserId,
         communityId,
         planId,
-        planPrice,
+        amount: planPrice,
         paymentMethod,
         inviteLink: finalInviteLink,
         username: telegramUsername,
@@ -93,10 +104,38 @@ export const usePaymentProcessing = ({
       });
       
       if (!success || paymentError) {
-        throw new Error(paymentError || "Failed to record payment");
+        const errorMsg = paymentError || "Failed to record payment";
+        throw new Error(errorMsg);
       }
       
       console.log("[usePaymentProcessing] Payment recorded successfully:", paymentData);
+      
+      // 1. IMMEDIATE MEMBER CREATION: Create or update the member record right after payment
+      // Calculate start and end dates for subscription
+      const startDate = new Date();
+      let endDate = new Date(startDate);
+      
+      // Add time based on plan interval (we'll fetch this in createOrUpdateMember)
+      // The member will be created with active status
+      
+      const memberResult = await createOrUpdateMember({
+        telegram_id: telegramUserId,
+        community_id: communityId,
+        subscription_plan_id: planId,
+        status: 'active',
+        payment_id: paymentData?.id,
+        username: telegramUsername,
+        subscription_start_date: startDate.toISOString(),
+        // Let the service set the end date based on the plan interval
+      });
+      
+      if (!memberResult) {
+        console.error("[usePaymentProcessing] Failed to create/update member record");
+        toast.error("Payment processed but membership record creation failed");
+        // Continue anyway as payment was successful
+      } else {
+        console.log("[usePaymentProcessing] Member record created/updated successfully");
+      }
       
       // Use the invite link from the payment record if available
       if (paymentInviteLink) {
@@ -120,6 +159,12 @@ export const usePaymentProcessing = ({
       console.error("[usePaymentProcessing] Error processing payment:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
       setError(errorMessage);
+      
+      // Call the error callback if provided
+      if (onError) {
+        onError(errorMessage);
+      }
+      
       return false;
     } finally {
       setIsLoading(false);

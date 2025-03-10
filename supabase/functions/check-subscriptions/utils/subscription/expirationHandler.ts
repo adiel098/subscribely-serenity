@@ -40,8 +40,7 @@ export async function handleExpiredSubscription(
     if (botSettings.auto_remove_expired) {
       console.log(`🚫 EXPIRATION HANDLER: Auto-remove is enabled - Removing user ${member.telegram_user_id}`);
       
-      // CRITICAL FIX: Always explicitly pass 'expired' as the reason for proper status tracking
-      // This ensures the removal process doesn't override our status
+      // CRITICAL FIX: Always explicitly pass 'expired' as the reason
       const removalResult = await removeMemberFromChat(supabase, member, result, 'expired');
       
       if (removalResult) {

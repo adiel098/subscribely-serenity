@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSubscribers, Subscriber } from "./useSubscribers";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,45 +41,17 @@ export const useSubscriberManagement = (communityId: string) => {
     try {
       console.log("Removing subscriber:", subscriber.id, "from community:", subscriber.community_id);
       
-      // Update the database to set subscription status to "removed"
-      const { error } = await supabase
-        .from("telegram_chat_members")
-        .update({ 
-          subscription_status: "removed",
-          is_active: false 
-        })
-        .eq("id", subscriber.id);
-
-      if (error) {
-        console.error("Error updating subscriber status:", error);
-        throw error;
-      }
-      
-      // Get the Telegram chat ID from the community
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('telegram_chat_id')
-        .eq('id', subscriber.community_id)
-        .single();
-        
-      if (communityError || !community?.telegram_chat_id) {
-        console.error('Error getting telegram_chat_id:', communityError);
-        throw new Error('Could not retrieve Telegram chat ID');
-      }
-      
-      // Remove member from Telegram chat with explicit 'removed' reason
-      const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
+      // Call the kick-member function directly with explicit "removed" reason
+      const { error: kickError } = await supabase.functions.invoke('kick-member', {
         body: { 
-          path: '/remove-member',
-          chat_id: community.telegram_chat_id,
-          user_id: subscriber.telegram_user_id,
+          memberId: subscriber.id,
           reason: 'removed' // Explicitly specify manual removal
         }
       });
 
       if (kickError) {
-        console.error('Error removing member from channel:', kickError);
-        throw new Error('Failed to remove member from channel');
+        console.error('Error removing subscriber:', kickError);
+        throw new Error('Failed to remove subscriber from channel');
       }
       
       await refetch();
@@ -170,3 +141,4 @@ export const useSubscriberManagement = (communityId: string) => {
     handleUnblockSubscriber
   };
 };
+

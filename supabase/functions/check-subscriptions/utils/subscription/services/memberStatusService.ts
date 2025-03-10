@@ -17,7 +17,7 @@ export async function updateMemberStatusToExpired(
       .from("telegram_chat_members")
       .update({
         subscription_status: 'expired',
-        is_active: true // Keep active until removal is confirmed
+        is_active: false // Update is_active to false since an expired subscription should be considered inactive
       })
       .eq("id", member.id);
       

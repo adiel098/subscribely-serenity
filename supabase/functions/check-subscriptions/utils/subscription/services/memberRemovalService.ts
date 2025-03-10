@@ -39,12 +39,12 @@ export async function removeMemberFromChat(
       return false;
     }
 
-    // Call the webhook function with the proper reason parameter
+    // Call the dedicated kick-member function with the explicit reason parameter
     try {
-      console.log(`📞 MEMBER REMOVAL: Calling webhook with reason: ${reason}`);
+      console.log(`📞 MEMBER REMOVAL: Calling kick-member function with reason: ${reason}`);
       
       const response = await fetch(
-        `${Deno.env.get("SUPABASE_URL")}/functions/v1/telegram-webhook`,
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/kick-member`,
         {
           method: "POST",
           headers: {
@@ -52,11 +52,8 @@ export async function removeMemberFromChat(
             "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
           },
           body: JSON.stringify({
-            path: "/remove-member",
-            chat_id: community.telegram_chat_id,
-            user_id: member.telegram_user_id,
-            community_id: member.community_id,
-            reason: reason
+            memberId: member.id,
+            reason: reason // Explicitly pass the reason
           })
         }
       );
@@ -64,11 +61,11 @@ export async function removeMemberFromChat(
       const responseData = await response.json();
       
       if (!responseData.success) {
-        console.error(`❌ MEMBER REMOVAL: Webhook call failed:`, responseData);
+        console.error(`❌ MEMBER REMOVAL: kick-member call failed:`, responseData);
         return false;
       }
       
-      console.log(`✅ MEMBER REMOVAL: Successfully removed user with status "${reason}"`);
+      console.log(`✅ MEMBER REMOVAL: Successfully removed user with status "${responseData.reason}"`);
       return true;
     } catch (error) {
       console.error(`❌ MEMBER REMOVAL: API error:`, error);

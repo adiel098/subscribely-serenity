@@ -52,7 +52,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
       const updateData = {
         telegram_username: username,
         subscription_status: subscriptionStatus,
-        is_active: isActive, // Updated to follow the standardized rule
+        is_active: isActive, // Update based on status
         subscription_start_date: isActive ? (startDate || currentDate) : null,
         subscription_end_date: subscriptionStatus === "expired" ? currentDate : (endDate || null)
       };
@@ -67,29 +67,15 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         throw updateError;
       }
 
-      // If subscription is cancelled or removed, we need to remove the user from the Telegram channel
+      // If subscription is cancelled or removed, use the kick-member function with appropriate reason
       if (subscriptionStatus === "removed" || (subscriptionStatus === "inactive" && subscriber.subscription_status === "active")) {
         console.log('Subscription cancelled/removed, removing member from channel...');
         
-        // Get the actual Telegram chat ID from the community
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .select('telegram_chat_id')
-          .eq('id', subscriber.community_id)
-          .single();
-          
-        if (communityError || !community?.telegram_chat_id) {
-          console.error('Error getting telegram_chat_id:', communityError);
-          throw new Error('Could not retrieve Telegram chat ID');
-        }
-        
-        console.log(`Using telegram_chat_id: ${community.telegram_chat_id}`);
-        
-        const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
+        // Use the kick-member function
+        const { error: kickError } = await supabase.functions.invoke('kick-member', {
           body: { 
-            path: '/remove-member',
-            chat_id: community.telegram_chat_id, // Use the actual Telegram chat ID
-            user_id: subscriber.telegram_user_id 
+            memberId: subscriber.id,
+            reason: subscriptionStatus // Pass the exact status (removed or inactive)
           }
         });
 
@@ -99,13 +85,31 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
         }
       }
 
+      // Handle the expired status specifically
+      if (subscriptionStatus === "expired" && subscriber.subscription_status !== "expired") {
+        console.log('Marking subscription as expired...');
+        
+        // Use the kick-member function with expired reason
+        const { error: kickError } = await supabase.functions.invoke('kick-member', {
+          body: { 
+            memberId: subscriber.id,
+            reason: 'expired'
+          }
+        });
+
+        if (kickError) {
+          console.error('Error processing expired member:', kickError);
+          throw new Error('Failed to process expired member');
+        }
+      }
+
       let successMessage = "Subscriber updated successfully";
       if (subscriptionStatus === "removed") {
         successMessage = "Subscription cancelled and member removed from channel";
       } else if (subscriptionStatus === "inactive" && subscriber.subscription_status === "active") {
         successMessage = "Subscription deactivated and member removed from channel";
       } else if (subscriptionStatus === "expired") {
-        successMessage = "Subscription marked as expired";
+        successMessage = "Subscription marked as expired and member removed from channel";
       }
 
       toast({

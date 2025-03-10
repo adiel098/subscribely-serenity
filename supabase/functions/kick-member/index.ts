@@ -25,11 +25,11 @@ serve(async (req) => {
     }
 
     // Validate reason is valid
-    if (reason !== 'removed' && reason !== 'expired') {
+    if (reason !== 'removed' && reason !== 'expired' && reason !== 'inactive') {
       console.warn(`Invalid reason "${reason}" provided, defaulting to "removed"`);
     }
 
-    const validReason = ['removed', 'expired'].includes(reason) ? reason : 'removed';
+    const validReason = ['removed', 'expired', 'inactive'].includes(reason) ? reason : 'removed';
     console.log(`Processing kick with reason: ${validReason}`);
 
     // Get member and community info
@@ -160,7 +160,7 @@ serve(async (req) => {
         activity_type: validReason === 'expired' ? 'subscription_expired' : 'member_removed',
         details: validReason === 'expired'
           ? 'Member expired and removed from community'
-          : 'Member manually removed from community via kick-member function',
+          : 'Member manually removed from community',
         status: validReason
       })
       .catch(error => {

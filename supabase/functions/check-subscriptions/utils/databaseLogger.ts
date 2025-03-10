@@ -14,7 +14,6 @@ export async function logNotification(
     console.log(`Logging notification of type: ${notificationType} for member ${memberId}`);
     
     // Check if the notification has already been sent to prevent duplicates
-    // Now checking for the exact notification type instead of a mapped type
     const { data: existingNotifications, error: checkError } = await supabase
       .from('subscription_notifications')
       .select('id')
@@ -34,7 +33,7 @@ export async function logNotification(
     const { error } = await supabase.from("subscription_notifications").insert({
       community_id: communityId,
       member_id: memberId,
-      notification_type: notificationType, // Use exact notification type
+      notification_type: notificationType,
       status: "success",
     });
     
@@ -45,5 +44,31 @@ export async function logNotification(
     }
   } catch (err) {
     console.error(`Failed to log notification: ${err.message}`);
+  }
+}
+
+/**
+ * Log a system event for subscription management
+ */
+export async function logSystemEvent(
+  supabase: ReturnType<typeof createClient>,
+  eventType: string,
+  details: string,
+  metadata: any = {}
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("system_logs")
+      .insert({
+        event_type: eventType,
+        details: details,
+        metadata: metadata
+      });
+      
+    if (error) {
+      console.error(`Error logging system event: ${error.message}`);
+    }
+  } catch (err) {
+    console.error(`Failed to log system event: ${err.message}`);
   }
 }

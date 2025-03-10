@@ -72,11 +72,25 @@ serve(async (req) => {
       }
     }
 
+    // Update the database with a status log
+    try {
+      await supabase
+        .from("system_logs")
+        .insert({
+          event_type: "subscription_check",
+          details: `Processed ${membersToCheck?.length || 0} members`,
+          metadata: { logs }
+        });
+    } catch (logError) {
+      console.error("Failed to log subscription check:", logError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         message: `Processed ${membersToCheck?.length || 0} members`,
         logs,
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -86,11 +100,29 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in check-subscriptions function:", error);
 
+    // Log the error to the database
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      await supabase
+        .from("system_logs")
+        .insert({
+          event_type: "subscription_check_error",
+          details: error.message,
+          metadata: { stack: error.stack }
+        });
+    } catch (logError) {
+      console.error("Failed to log error:", logError);
+    }
+
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
         stack: error.stack,
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

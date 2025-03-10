@@ -32,7 +32,8 @@ BEGIN
         OR
             -- Include inactive members that might still be in the group
             (m.is_active = false)
-        );
+        )
+    LIMIT 100; -- Limit to prevent overloading the system
 END;
 $$ LANGUAGE plpgsql;
 
@@ -42,7 +43,7 @@ select cron.unschedule('check-expired-subscriptions');
 -- Create new schedule
 select cron.schedule(
   'check-expired-subscriptions',
-  '* * * * *', -- every minute
+  '*/5 * * * *', -- every 5 minutes to reduce load
   $$
   select
     net.http_post(
@@ -52,3 +53,28 @@ select cron.schedule(
     ) as request_id;
   $$
 );
+
+-- Create a function to check the schedule status
+CREATE OR REPLACE FUNCTION public.check_cron_job_status(job_name text)
+RETURNS TABLE(
+    jobid integer,
+    schedule text,
+    last_run timestamp with time zone,
+    next_run timestamp with time zone,
+    status text
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        j.jobid,
+        j.schedule,
+        j.last_run,
+        j.next_run,
+        CASE 
+            WHEN j.active THEN 'active'
+            ELSE 'inactive'
+        END as status
+    FROM cron.job j
+    WHERE j.jobname = job_name;
+END;
+$$ LANGUAGE plpgsql;

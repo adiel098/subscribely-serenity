@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,6 @@ const Subscriptions = () => {
     setDeleteDialogOpen(true);
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -89,7 +87,7 @@ const Subscriptions = () => {
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-5 py-5">
       <motion.div 
         className="flex justify-between items-center"
         initial={{ opacity: 0, y: -20 }}
@@ -97,7 +95,7 @@ const Subscriptions = () => {
         transition={{ duration: 0.4 }}
       >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-indigo-600" />
             Subscription Plans
           </h1>
@@ -111,10 +109,10 @@ const Subscriptions = () => {
         >
           <Button 
             onClick={handleCreatePlan} 
-            className="bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all duration-300"
+            className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300"
             type="button"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-1.5" />
             Create Plan
           </Button>
         </motion.div>
@@ -125,21 +123,21 @@ const Subscriptions = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-indigo-200 rounded-lg bg-indigo-50/50"
+          className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-indigo-200 rounded-lg bg-indigo-50/50"
         >
-          <PackagePlus className="h-12 w-12 text-indigo-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No subscription plans yet</h3>
-          <p className="text-gray-500 text-center mb-6 max-w-md">
+          <PackagePlus className="h-10 w-10 text-indigo-400 mb-3" />
+          <h3 className="text-base font-medium text-gray-900 mb-2">No subscription plans yet</h3>
+          <p className="text-gray-500 text-center mb-4 max-w-md text-sm">
             Create your first subscription plan to start offering premium access to your community.
           </p>
           <Button onClick={handleCreatePlan} className="bg-indigo-600 hover:bg-indigo-700 shadow-md" type="button">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-1.5" />
             Create Your First Plan
           </Button>
         </motion.div>
       ) : (
         <motion.div 
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"

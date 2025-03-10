@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon, StarIcon } from "lucide-react";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -42,26 +42,22 @@ export const SubscriptionPlanCard = ({
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="group relative overflow-hidden border-2 hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-gradient-to-br from-white to-indigo-50/30 shadow-sm hover:shadow-md">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
+      <Card className="group relative overflow-hidden border hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-white shadow-sm hover:shadow-md h-full">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
         
-        {/* Decorative background elements */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-100/30 rounded-full blur-xl pointer-events-none"></div>
-        
-        {/* Action Buttons - Enhanced styling */}
-        <div className="absolute top-3 right-3 flex gap-2 z-10">
+        {/* Action Buttons */}
+        <div className="absolute top-2 right-2 flex gap-1.5 z-10">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
                   size="sm"
-                  className="h-8 w-8 rounded-full bg-green-50 border border-green-100 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm"
+                  className="h-7 w-7 p-0 rounded-full bg-green-50 border border-green-100 text-green-600 hover:bg-green-100 hover:text-green-700"
                   onClick={() => onEdit(plan)}
                   type="button"
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <PencilIcon className="h-3.5 w-3.5" />
                   <span className="sr-only">Edit plan</span>
                 </Button>
               </TooltipTrigger>
@@ -75,13 +71,13 @@ export const SubscriptionPlanCard = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
                   size="sm"
-                  className="h-8 w-8 rounded-full bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 hover:text-red-600 shadow-sm"
+                  className="h-7 w-7 p-0 rounded-full bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 hover:text-red-600"
                   onClick={() => onDelete(plan.id)}
                   type="button"
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <TrashIcon className="h-3.5 w-3.5" />
                   <span className="sr-only">Delete plan</span>
                 </Button>
               </TooltipTrigger>
@@ -92,9 +88,9 @@ export const SubscriptionPlanCard = ({
           </TooltipProvider>
         </div>
         
-        <div className="p-5 flex flex-col flex-grow relative z-10">
-          <div className="mb-2">
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${intervalColors[plan.interval]}`}>
+        <div className="p-4 flex flex-col h-full relative z-0">
+          <div className="mb-1.5">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${intervalColors[plan.interval]}`}>
               {intervalLabels[plan.interval]}
             </span>
           </div>
@@ -107,11 +103,13 @@ export const SubscriptionPlanCard = ({
           />
           
           {plan.description && (
-            <p className="text-gray-600 leading-relaxed mt-3 text-sm">{plan.description}</p>
+            <p className="text-gray-600 leading-relaxed mt-2 text-xs">{plan.description}</p>
           )}
           
           {plan.features && plan.features.length > 0 && (
-            <PlanFeatureList features={plan.features} />
+            <div className="mt-auto pt-3">
+              <PlanFeatureList features={plan.features} />
+            </div>
           )}
         </div>
       </Card>

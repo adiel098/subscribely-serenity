@@ -5,6 +5,7 @@ import { Crown, ImageIcon } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
+import { useTelegramChannelInfo } from "@/telegram-mini-app/hooks/useTelegramChannelInfo";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CommunityHeaderProps {
@@ -13,23 +14,31 @@ interface CommunityHeaderProps {
 
 export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   console.log("[CommunityHeader] Rendering with community:", JSON.stringify(community, null, 2));
-  console.log("[CommunityHeader] Description value:", community.description);
-  console.log("[CommunityHeader] Description type:", typeof community.description);
   
-  const { photoUrl, loading, error } = useTelegramChatPhoto({
+  const { photoUrl, loading: photoLoading, error: photoError } = useTelegramChatPhoto({
     communityId: community.id,
     telegramChatId: community.telegram_chat_id,
     existingPhotoUrl: community.telegram_photo_url,
     forceFetch: !community.telegram_photo_url // Force fetch if there's no existing photo
   });
 
+  const { description, loading: descriptionLoading, error: descriptionError } = useTelegramChannelInfo({
+    communityId: community.id,
+    telegramChatId: community.telegram_chat_id,
+    autoUpdate: true
+  });
+
   useEffect(() => {
-    console.log("[CommunityHeader] Photo details - URL:", photoUrl, "Loading:", loading, "Error:", error);
-  }, [photoUrl, loading, error]);
+    console.log("[CommunityHeader] Photo details - URL:", photoUrl, "Loading:", photoLoading, "Error:", photoError);
+    console.log("[CommunityHeader] Description details - Value:", description, "Loading:", descriptionLoading, "Error:", descriptionError);
+  }, [photoUrl, photoLoading, photoError, description, descriptionLoading, descriptionError]);
+
+  // Use the telegram description if available, otherwise fall back to the community description
+  const displayDescription = description || community.description;
 
   return (
     <div className="text-center space-y-6 animate-fade-in">
-      {loading ? (
+      {photoLoading ? (
         <div className="relative mx-auto">
           <Skeleton className="h-24 w-24 rounded-full mx-auto" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -51,7 +60,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             />
           ) : (
             <AvatarFallback className="bg-primary/10">
-              {error ? (
+              {photoError ? (
                 <div className="flex flex-col items-center justify-center">
                   <ImageIcon className="h-8 w-8 text-primary mb-1" />
                   <span className="text-xs text-gray-600">No photo</span>
@@ -66,17 +75,29 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
       <h1 className="text-4xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
         {community.name}
       </h1>
-      {community.description && (
-        <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
-          {community.description}
-        </p>
+      
+      {descriptionLoading ? (
+        <div className="mx-auto max-w-xl">
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4 mx-auto" />
+        </div>
+      ) : (
+        displayDescription ? (
+          <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
+            {displayDescription}
+          </p>
+        ) : (
+          <p className="text-gray-400 italic text-lg max-w-xl mx-auto">
+            This community doesn't have a description yet.
+          </p>
+        )
       )}
       
       {/* Debug info for description (will only show in development) */}
-      {!community.description && (
+      {import.meta.env.DEV && !displayDescription && (
         <div className="text-red-500 text-xs">
-          <p>Debug: Description missing. Value: "{JSON.stringify(community.description)}"</p>
-          <p>Type: {typeof community.description}</p>
+          <p>Debug: Description missing. Value: "{JSON.stringify(displayDescription)}"</p>
+          <p>Type: {typeof displayDescription}</p>
         </div>
       )}
     </div>

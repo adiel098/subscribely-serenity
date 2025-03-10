@@ -22,7 +22,8 @@ export const useCommunityData = (communityId: string | null) => {
         
         const payload = { 
           community_id: communityId,
-          debug: true
+          debug: true,
+          fetch_telegram_data: true // Add this flag to fetch Telegram data for the community
         };
         console.log('📤 useCommunityData: Request payload:', JSON.stringify(payload, null, 2));
         

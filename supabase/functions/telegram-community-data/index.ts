@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const requestData = await req.json();
-    const { community_id, debug = true } = requestData; // Enable debug by default for now
+    const { community_id, debug = true, fetch_telegram_data = false } = requestData; // Add fetch_telegram_data flag
 
     console.log(`🔍 DEBUG: Received request with community_id: ${community_id}`);
     console.log(`🔍 DEBUG: Full request data:`, JSON.stringify(requestData, null, 2));
@@ -117,6 +117,60 @@ serve(async (req) => {
     console.log(`📱 Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
     console.log(`🔗 Custom link: ${community.custom_link || 'Not set'}`);
     console.log(`📝 Community description: "${community.description || 'NOT SET'}" (type: ${typeof community.description})`);
+    
+    // Fetch Telegram channel info if requested and chat_id is available
+    if (fetch_telegram_data && community.telegram_chat_id) {
+      try {
+        console.log(`🔍 DEBUG: Fetching Telegram channel info for chat ID: ${community.telegram_chat_id}`);
+        
+        const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
+        if (!botToken) {
+          console.error("❌ TELEGRAM_BOT_TOKEN is not set in environment variables");
+        } else {
+          // Call the Telegram getChat API
+          const telegramApiUrl = `https://api.telegram.org/bot${botToken}/getChat`;
+          const telegramResponse = await fetch(telegramApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ chat_id: community.telegram_chat_id })
+          });
+          
+          const telegramData = await telegramResponse.json();
+          console.log("📥 Telegram API response:", JSON.stringify(telegramData, null, 2));
+          
+          if (telegramData.ok) {
+            const chatInfo = telegramData.result;
+            const telegramDescription = chatInfo.description;
+            
+            console.log(`📝 Channel description from Telegram: "${telegramDescription || 'NOT SET'}"`);
+            
+            // If the description from Telegram is different from the one in the database, update it
+            if (telegramDescription && telegramDescription !== community.description) {
+              console.log(`✏️ Updating description for community ${community.id} in database`);
+              
+              const { data: updateData, error: updateError } = await supabase
+                .from('communities')
+                .update({ description: telegramDescription })
+                .eq('id', community.id);
+              
+              if (updateError) {
+                console.error(`❌ Error updating community description: ${updateError.message}`);
+              } else {
+                console.log(`✅ Successfully updated community description`);
+                // Update the description in the response
+                community.description = telegramDescription;
+              }
+            }
+          } else {
+            console.error(`❌ Telegram API error: ${telegramData.description}`);
+          }
+        }
+      } catch (telegramError) {
+        console.error("❌ Error fetching Telegram channel info:", telegramError);
+      }
+    }
     
     if (debug) {
       console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);

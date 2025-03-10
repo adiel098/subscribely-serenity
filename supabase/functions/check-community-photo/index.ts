@@ -31,77 +31,49 @@ serve(async (req) => {
 
     // Parse request body
     const body = await req.json();
-    const { communityId, telegramChatId } = body;
     
-    if (!communityId || !telegramChatId) {
+    // Check if we're processing a single community or multiple communities
+    if (body.communities && Array.isArray(body.communities)) {
+      console.log(`📋 Checking photos for ${body.communities.length} communities`);
+      
+      const results = {};
+      
+      for (const community of body.communities) {
+        if (!community.id || !community.telegram_chat_id) {
+          console.log(`⚠️ Skipping community with missing data: ${JSON.stringify(community)}`);
+          continue;
+        }
+        
+        const photoUrl = await fetchCommunityPhoto(supabase, botToken, community.id, community.telegram_chat_id);
+        if (photoUrl) {
+          results[community.id] = photoUrl;
+        }
+      }
+      
       return new Response(
-        JSON.stringify({ error: "Missing required parameters" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        JSON.stringify({ results }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // Original single community processing
+      const { communityId, telegramChatId } = body;
+      
+      if (!communityId || !telegramChatId) {
+        return new Response(
+          JSON.stringify({ error: "Missing required parameters" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+
+      console.log(`📋 Checking photo for community ${communityId}, chat ${telegramChatId}`);
+      
+      const photoUrl = await fetchCommunityPhoto(supabase, botToken, communityId, telegramChatId);
+      
+      return new Response(
+        JSON.stringify({ photoUrl }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    console.log(`📋 Checking photo for community ${communityId}, chat ${telegramChatId}`);
-
-    // Check if community already has a photo URL in the database
-    const { data: communityData } = await supabase
-      .from('communities')
-      .select('telegram_photo_url')
-      .eq('id', communityId)
-      .single();
-    
-    let photoUrl = communityData?.telegram_photo_url || null;
-    
-    // If no photo URL exists or if it's not accessible, fetch a new one
-    if (!photoUrl) {
-      console.log("🔄 No existing photo URL found, fetching from Telegram");
-      
-      // Call Telegram API to get chat information
-      const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: telegramChatId })
-      });
-      
-      const telegramData = await telegramResponse.json();
-      
-      if (telegramData.ok && telegramData.result.photo) {
-        const fileId = telegramData.result.photo.big_file_id || 
-                       telegramData.result.photo.small_file_id;
-        
-        if (fileId) {
-          // Get file path from Telegram
-          const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_id: fileId })
-          });
-          
-          const fileData = await fileResponse.json();
-          
-          if (fileData.ok && fileData.result.file_path) {
-            // Construct the direct photo URL
-            photoUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-            
-            // Update the community record with the new photo URL
-            await supabase
-              .from('communities')
-              .update({ telegram_photo_url: photoUrl })
-              .eq('id', communityId);
-              
-            console.log(`✅ Updated photo URL for community ${communityId}`);
-          }
-        }
-      } else {
-        console.log("ℹ️ Chat does not have a photo");
-      }
-    } else {
-      console.log(`✅ Using existing photo URL for community ${communityId}`);
-    }
-
-    return new Response(
-      JSON.stringify({ photoUrl }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (error) {
     console.error("❌ Error in check-community-photo function:", error);
     
@@ -111,3 +83,63 @@ serve(async (req) => {
     );
   }
 });
+
+async function fetchCommunityPhoto(supabase, botToken, communityId, telegramChatId) {
+  // Check if community already has a photo URL in the database
+  const { data: communityData } = await supabase
+    .from('communities')
+    .select('telegram_photo_url')
+    .eq('id', communityId)
+    .single();
+  
+  let photoUrl = communityData?.telegram_photo_url || null;
+  
+  // If no photo URL exists or if it's not accessible, fetch a new one
+  if (!photoUrl) {
+    console.log(`🔄 No existing photo URL found for community ${communityId}, fetching from Telegram`);
+    
+    // Call Telegram API to get chat information
+    const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: telegramChatId })
+    });
+    
+    const telegramData = await telegramResponse.json();
+    
+    if (telegramData.ok && telegramData.result.photo) {
+      const fileId = telegramData.result.photo.big_file_id || 
+                     telegramData.result.photo.small_file_id;
+      
+      if (fileId) {
+        // Get file path from Telegram
+        const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_id: fileId })
+        });
+        
+        const fileData = await fileResponse.json();
+        
+        if (fileData.ok && fileData.result.file_path) {
+          // Construct the direct photo URL
+          photoUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+          
+          // Update the community record with the new photo URL
+          await supabase
+            .from('communities')
+            .update({ telegram_photo_url: photoUrl })
+            .eq('id', communityId);
+            
+          console.log(`✅ Updated photo URL for community ${communityId}`);
+        }
+      }
+    } else {
+      console.log(`ℹ️ Chat ${telegramChatId} does not have a photo`);
+    }
+  } else {
+    console.log(`✅ Using existing photo URL for community ${communityId}`);
+  }
+  
+  return photoUrl;
+}

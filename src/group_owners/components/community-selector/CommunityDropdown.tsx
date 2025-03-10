@@ -4,9 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { Community } from "../../hooks/useCommunities";
 import { useState, useEffect } from "react";
-import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommunityDropdownProps {
   communities?: Community[];
@@ -20,32 +21,14 @@ export const CommunityDropdown = ({
   setSelectedCommunityId 
 }: CommunityDropdownProps) => {
   const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
-  const [refreshPhotoId, setRefreshPhotoId] = useState<string | null>(null);
+  const [refreshingCommunityId, setRefreshingCommunityId] = useState<string | null>(null);
   const [communityPhotos, setCommunityPhotos] = useState<Record<string, string>>({});
+  const [isUpdatingAllPhotos, setIsUpdatingAllPhotos] = useState(false);
   
-  // This hook handles the selected community photo refresh
-  const { photoUrl, loading } = useTelegramChatPhoto({
-    communityId: refreshPhotoId || selectedCommunityId,
-    telegramChatId: selectedCommunity?.telegram_chat_id,
-    existingPhotoUrl: selectedCommunity?.telegram_photo_url,
-    forceFetch: refreshPhotoId === selectedCommunityId
-  });
-  
-  // Update the photo map when the selected community photo is refreshed
+  // Initialize with existing photo URLs
   useEffect(() => {
-    if (photoUrl && selectedCommunityId) {
-      setCommunityPhotos(prev => ({
-        ...prev,
-        [selectedCommunityId]: photoUrl
-      }));
-    }
-  }, [photoUrl, selectedCommunityId]);
-
-  // Pre-load all community photos when communities change
-  useEffect(() => {
-    if (!communities) return;
+    if (!communities?.length) return;
     
-    // Initialize with existing photo URLs
     const initialPhotos: Record<string, string> = {};
     communities.forEach(community => {
       if (community.id && community.telegram_photo_url) {
@@ -55,49 +38,105 @@ export const CommunityDropdown = ({
     
     setCommunityPhotos(initialPhotos);
     
-    // Fetch fresh photos for all communities asynchronously
-    const fetchAllPhotos = async () => {
-      for (const community of communities) {
-        if (!community.id || !community.telegram_chat_id) continue;
-        
-        try {
-          const response = await fetch('/check-community-photo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              communityId: community.id,
-              telegramChatId: community.telegram_chat_id
-            })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.photoUrl) {
-              setCommunityPhotos(prev => ({
-                ...prev,
-                [community.id]: data.photoUrl
-              }));
-            }
-          }
-        } catch (error) {
-          console.error(`Failed to fetch photo for community ${community.id}:`, error);
-        }
-      }
-    };
-    
-    // Start fetching all photos in the background
-    fetchAllPhotos();
+    // Fetch/update photos for all communities
+    fetchAllCommunityPhotos(communities);
   }, [communities]);
   
-  const handleRefreshPhoto = (e: React.MouseEvent) => {
+  // Function to fetch photos for all communities
+  const fetchAllCommunityPhotos = async (communitiesList: Community[]) => {
+    if (!communitiesList?.length) return;
+    
+    try {
+      setIsUpdatingAllPhotos(true);
+      
+      // Filter communities with Telegram chat IDs
+      const telegramCommunities = communitiesList.filter(c => c.id && c.telegram_chat_id);
+      
+      if (telegramCommunities.length === 0) {
+        console.log("No communities with Telegram chat IDs found");
+        return;
+      }
+      
+      console.log(`Fetching photos for ${telegramCommunities.length} communities`);
+      
+      const response = await fetch('/check-community-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communities: telegramCommunities.map(c => ({
+            id: c.id,
+            telegram_chat_id: c.telegram_chat_id
+          }))
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching community photos: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.results) {
+        setCommunityPhotos(prev => ({
+          ...prev,
+          ...data.results
+        }));
+        console.log("Updated photos for all communities", data.results);
+      }
+    } catch (error) {
+      console.error("Failed to fetch community photos:", error);
+      toast.error("Failed to update community photos");
+    } finally {
+      setIsUpdatingAllPhotos(false);
+    }
+  };
+  
+  // Function to refresh a single community photo
+  const handleRefreshPhoto = async (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.stopPropagation();
-    if (selectedCommunityId) {
-      setRefreshPhotoId(selectedCommunityId);
+    
+    if (!communityId || !chatId) {
+      toast.error("Cannot refresh photo: missing community info");
+      return;
+    }
+    
+    try {
+      setRefreshingCommunityId(communityId);
+      
+      const response = await fetch('/check-community-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          communityId,
+          telegramChatId: chatId
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error refreshing photo: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.photoUrl) {
+        setCommunityPhotos(prev => ({
+          ...prev,
+          [communityId]: data.photoUrl
+        }));
+        toast.success("Community photo updated");
+      } else {
+        toast.info("No photo available for this community");
+      }
+    } catch (error) {
+      console.error("Failed to refresh community photo:", error);
+      toast.error("Failed to update community photo");
+    } finally {
+      setRefreshingCommunityId(null);
     }
   };
 
-  const getPhotoUrl = (communityId: string, defaultUrl?: string | null) => {
-    return communityPhotos[communityId] || defaultUrl || undefined;
+  const getPhotoUrl = (communityId: string) => {
+    return communityPhotos[communityId] || undefined;
   };
 
   return (
@@ -112,7 +151,7 @@ export const CommunityDropdown = ({
                   <>
                     <div className="relative">
                       <Avatar className="h-5 w-5">
-                        <AvatarImage src={photoUrl || getPhotoUrl(selectedCommunity.id, selectedCommunity.telegram_photo_url)} />
+                        <AvatarImage src={getPhotoUrl(selectedCommunity.id)} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
                           {selectedCommunity.name?.charAt(0)}
                         </AvatarFallback>
@@ -124,9 +163,10 @@ export const CommunityDropdown = ({
                               size="icon" 
                               variant="ghost" 
                               className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gray-100 hover:bg-blue-100 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={handleRefreshPhoto}
+                              onClick={(e) => handleRefreshPhoto(e, selectedCommunity.id, selectedCommunity.telegram_chat_id)}
+                              disabled={refreshingCommunityId === selectedCommunity.id}
                             >
-                              <RefreshCw className={`h-2 w-2 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+                              <RefreshCw className={`h-2 w-2 text-gray-500 ${refreshingCommunityId === selectedCommunity.id ? 'animate-spin' : ''}`} />
                               <span className="sr-only">Refresh photo</span>
                             </Button>
                           </TooltipTrigger>
@@ -147,13 +187,24 @@ export const CommunityDropdown = ({
             <SelectContent>
               {communities?.map(community => (
                 <SelectItem key={community.id} value={community.id || "community-fallback"}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={getPhotoUrl(community.id, community.telegram_photo_url)} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
-                        {community.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                  <div className="flex items-center gap-2 relative group">
+                    <div className="relative">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={getPhotoUrl(community.id)} />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
+                          {community.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gray-100 hover:bg-blue-100 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => handleRefreshPhoto(e, community.id, community.telegram_chat_id)}
+                        disabled={refreshingCommunityId === community.id}
+                      >
+                        <RefreshCw className={`h-2 w-2 text-gray-500 ${refreshingCommunityId === community.id ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
                     <span className="text-sm truncate">{community.name}</span>
                   </div>
                 </SelectItem>

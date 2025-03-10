@@ -24,7 +24,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       // Get community ID from recent payment
       const { data: recentPayment, error: paymentError } = await supabase
         .from('subscription_payments')
-        .select('community_id')
+        .select('id, community_id')
         .order('created_at', { ascending: false })
         .limit(1);
       
@@ -39,6 +39,8 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       }
       
       const communityId = recentPayment[0].community_id;
+      const paymentId = recentPayment[0].id;
+      
       console.log(`Found community ID for invite link generation: ${communityId}`);
       
       // Call the create-invite-link edge function with forceNew=true
@@ -62,7 +64,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         const { error: updateError } = await supabase
           .from('subscription_payments')
           .update({ invite_link: response.data.inviteLink })
-          .eq('id', recentPayment[0].id);
+          .eq('id', paymentId);
           
         if (updateError) {
           console.error('Error updating payment with new invite link:', updateError);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -5,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SparklesIcon, CheckIcon, PlusIcon } from "lucide-react";
+import { SparklesIcon, Zap } from "lucide-react";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
+import { PlanFeatureList } from "./PlanFeatureList";
+import { motion } from "framer-motion";
 
 interface Props {
   isOpen: boolean;
@@ -71,13 +74,13 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50">
+      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50 border-primary/10 shadow-lg">
         <DialogHeader className="space-y-3 pb-6">
           <DialogTitle className="text-2xl flex items-center gap-2">
             <SparklesIcon className="h-6 w-6 text-primary animate-pulse" />
             Edit Subscription Plan
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-base">
             Modify the subscription plan details and features.
           </DialogDescription>
         </DialogHeader>
@@ -85,42 +88,45 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
         <div className="grid gap-6 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
           <div className="grid gap-2">
-            <Label htmlFor="edit-name" className="text-base">Plan Name</Label>
+            <Label htmlFor="edit-name" className="text-base font-medium">Plan Name</Label>
             <Input 
               id="edit-name" 
               value={planData.name}
               onChange={e => setPlanData({ ...planData, name: e.target.value })}
-              className="text-lg"
+              className="text-lg border-gray-200 focus:border-primary/50 shadow-sm"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="edit-description" className="text-base">Description</Label>
+            <Label htmlFor="edit-description" className="text-base font-medium">Description</Label>
             <Textarea 
               id="edit-description" 
               value={planData.description}
               onChange={e => setPlanData({ ...planData, description: e.target.value })}
-              className="min-h-[100px] text-base"
+              className="min-h-[100px] text-base border-gray-200 focus:border-primary/50 shadow-sm"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="edit-price" className="text-base">Price</Label>
-              <Input 
-                id="edit-price" 
-                type="number" 
-                value={planData.price}
-                onChange={e => setPlanData({ ...planData, price: e.target.value })}
-                className="text-lg"
-              />
+              <Label htmlFor="edit-price" className="text-base font-medium">Price</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</div>
+                <Input 
+                  id="edit-price" 
+                  type="number" 
+                  value={planData.price}
+                  onChange={e => setPlanData({ ...planData, price: e.target.value })}
+                  className="text-lg pl-8 border-gray-200 focus:border-primary/50 shadow-sm"
+                />
+              </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="edit-interval" className="text-base">Billing Interval</Label>
+              <Label htmlFor="edit-interval" className="text-base font-medium">Billing Interval</Label>
               <Select 
                 value={planData.interval}
                 onValueChange={(value: any) => setPlanData({ ...planData, interval: value })}
               >
-                <SelectTrigger id="edit-interval">
+                <SelectTrigger id="edit-interval" className="border-gray-200 focus:border-primary/50 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -135,38 +141,28 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
           </div>
           
           <div className="grid gap-4">
-            <Label className="text-base">Features</Label>
+            <Label className="text-base font-medium">Features</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Add a feature..."
                 value={newFeature}
                 onChange={e => setNewFeature(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && handleAddFeature()}
+                className="border-gray-200 focus:border-primary/50 shadow-sm"
               />
-              <Button onClick={handleAddFeature}>Add</Button>
+              <Button 
+                onClick={handleAddFeature}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <span className="mr-1">+</span> Add
+              </Button>
             </div>
-            <ul className="space-y-2">
-              {planData.features.map((feature, index) => (
-                <li 
-                  key={index} 
-                  className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-center gap-2">
-                    <CheckIcon className="h-5 w-5 text-green-500" />
-                    <span className="text-gray-700">{feature}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveFeature(index)}
-                    className="hover:bg-red-50 hover:text-red-500"
-                  >
-                    <PlusIcon className="h-4 w-4 rotate-45" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
+            
+            <PlanFeatureList 
+              features={planData.features} 
+              onRemoveFeature={handleRemoveFeature}
+              isEditable={true}
+            />
           </div>
         </div>
         
@@ -174,14 +170,19 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleUpdatePlan}
-            className="gap-2 bg-gradient-to-r from-primary to-primary/90"
-            disabled={!planData.name || !planData.price || updatePlan.isPending}
+          <motion.div
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
           >
-            <SparklesIcon className="h-4 w-4" />
-            {updatePlan.isPending ? "Updating..." : "Update Plan"}
-          </Button>
+            <Button 
+              onClick={handleUpdatePlan}
+              className="gap-2 bg-gradient-to-r from-primary to-primary/90 shadow-md"
+              disabled={!planData.name || !planData.price || updatePlan.isPending}
+            >
+              <Zap className="h-4 w-4" />
+              {updatePlan.isPending ? "Updating..." : "Update Plan"}
+            </Button>
+          </motion.div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

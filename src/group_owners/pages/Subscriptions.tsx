@@ -8,14 +8,15 @@ import { DeletePlanDialog } from "@/group_owners/components/subscriptions/Delete
 import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { Loader2, Plus, PackagePlus } from "lucide-react";
+import { Loader2, Plus, PackagePlus, SparklesIcon } from "lucide-react";
+import { motion } from "framer-motion";
 
 const intervalColors = {
-  monthly: "bg-blue-100 text-blue-700",
-  quarterly: "bg-green-100 text-green-700",
-  "half-yearly": "bg-purple-100 text-purple-700",
-  yearly: "bg-orange-100 text-orange-700",
-  "one-time": "bg-gray-100 text-gray-700",
+  monthly: "bg-blue-50 text-blue-700",
+  quarterly: "bg-green-50 text-green-700",
+  "half-yearly": "bg-purple-50 text-purple-700",
+  yearly: "bg-orange-50 text-orange-700",
+  "one-time": "bg-gray-50 text-gray-700",
 };
 
 const intervalLabels = {
@@ -53,6 +54,22 @@ const Subscriptions = () => {
     setDeleteDialogOpen(true);
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -73,48 +90,71 @@ const Subscriptions = () => {
 
   return (
     <div className="space-y-8 py-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        className="flex justify-between items-center"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <SparklesIcon className="h-5 w-5 text-primary" />
             Subscription Plans
           </h1>
           <p className="text-sm text-muted-foreground">
             Manage your community subscription plans
           </p>
         </div>
-        <div>
-          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90">
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button 
+            onClick={handleCreatePlan} 
+            className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Plan
           </Button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {plans.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50"
+        >
           <PackagePlus className="h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No subscription plans yet</h3>
           <p className="text-gray-500 text-center mb-6 max-w-md">
             Create your first subscription plan to start offering premium access to your community.
           </p>
-          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90">
+          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90 shadow-md">
             <Plus className="h-4 w-4 mr-2" />
             Create Your First Plan
           </Button>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <motion.div 
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {plans?.map((plan) => (
-            <SubscriptionPlanCard
-              key={plan.id}
-              plan={plan}
-              onEdit={() => handleEditPlan(plan.id)}
-              onDelete={handleDeletePlan}
-              intervalColors={intervalColors}
-              intervalLabels={intervalLabels}
-            />
+            <motion.div key={plan.id} variants={itemVariants}>
+              <SubscriptionPlanCard
+                plan={plan}
+                onEdit={() => handleEditPlan(plan.id)}
+                onDelete={handleDeletePlan}
+                intervalColors={intervalColors}
+                intervalLabels={intervalLabels}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <CreatePlanDialog

@@ -126,23 +126,25 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         
         <CardContent className="pb-2">
           {descriptionText ? (
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              {isExpanded ? descriptionText : shortDescription}
-              
-              {isLongDescription && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={toggleExpand}
-                  className="px-2 py-0 h-6 ml-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                >
-                  {isExpanded ? (
-                    <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
-                  ) : (
-                    <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
-                  )}
-                </Button>
-              )}
+            <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-lg p-2 border border-indigo-100/30">
+              <div className="text-xs text-indigo-700/80 italic font-medium">
+                {isExpanded ? descriptionText : shortDescription}
+                
+                {isLongDescription && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={toggleExpand}
+                    className="px-2 py-0 h-5 ml-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 text-xs"
+                  >
+                    {isExpanded ? (
+                      <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
+                    ) : (
+                      <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           ) : null}
         </CardContent>

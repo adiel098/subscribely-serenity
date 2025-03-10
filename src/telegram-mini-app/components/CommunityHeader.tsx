@@ -117,28 +117,30 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
         </div>
       ) : (
         displayDescription ? (
-          <div className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto px-4">
-            <div 
-              ref={descriptionRef} 
-              className={`${isExpanded ? '' : 'line-clamp-3'} relative`}
-            >
-              <p>{displayDescription}</p>
-            </div>
-            
-            {shouldShowReadMore && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={toggleExpand}
-                className="mt-1 px-3 py-1 h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70"
+          <div className="mx-auto max-w-xl px-4">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
+              <div 
+                ref={descriptionRef} 
+                className={`${isExpanded ? '' : 'line-clamp-3'} relative text-sm text-indigo-700/90 leading-relaxed font-medium`}
               >
-                {isExpanded ? (
-                  <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
-                ) : (
-                  <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
-                )}
-              </Button>
-            )}
+                <p className="italic">{displayDescription}</p>
+              </div>
+              
+              {shouldShowReadMore && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleExpand}
+                  className="mt-1 px-3 py-1 h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-xs font-medium"
+                >
+                  {isExpanded ? (
+                    <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
+                  ) : (
+                    <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         ) : null  // Don't show anything if there's no description
       )}

@@ -65,6 +65,8 @@ export const useCommunityPhotos = (communities?: Community[]) => {
         return;
       }
       
+      console.log("Full response from check-community-photo:", data);
+      
       // Update photo URLs if we received results
       if (data?.results && Object.keys(data.results).length > 0) {
         console.log("Received photo results:", data.results);
@@ -79,7 +81,15 @@ export const useCommunityPhotos = (communities?: Community[]) => {
         }
       } else {
         console.log("No photo results returned");
-        if (telegramCommunities.length > 0) {
+        if (data?.message) {
+          console.log("Response message:", data.message);
+        }
+        if (data?.errors && data.errors.length > 0) {
+          console.error("Errors returned:", data.errors);
+          setLastError(`Errors loading photos: ${data.errors[0].error}`);
+        }
+        
+        if (telegramCommunities.length > 0 && !data?.errors) {
           toast.info("No community photos available");
         }
       }
@@ -109,6 +119,8 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       setRefreshingCommunityId(communityId);
       setLastError(null);
       
+      console.log(`Refreshing photo for community ${communityId} with chat ID ${chatId}`);
+      
       const { data, error } = await invokeSupabaseFunction("check-community-photo", {
         communityId,
         telegramChatId: chatId,
@@ -116,8 +128,11 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       });
       
       if (error) {
+        console.error("Error refreshing photo:", error);
         throw new Error(`Error refreshing photo: ${error.message}`);
       }
+      
+      console.log("Photo refresh response:", data);
       
       if (data?.photoUrl) {
         setCommunityPhotos(prev => ({
@@ -126,6 +141,9 @@ export const useCommunityPhotos = (communities?: Community[]) => {
         }));
         toast.success("Community photo updated");
       } else {
+        if (data?.error) {
+          throw new Error(data.error);
+        }
         toast.info("No photo available for this community");
       }
     } catch (error) {

@@ -1,212 +1,240 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Import shared CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  console.log("🔍 check-community-photo function started");
-  
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    // Setup Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials');
+      throw new Error('Missing Supabase credentials');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
-    if (!botToken) {
-      console.error("❌ TELEGRAM_BOT_TOKEN not found in environment variables");
-      return new Response(
-        JSON.stringify({ error: "Bot token not configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
+    // Get the bot token
+    const { data: settings, error: settingsError } = await supabase
+      .from('telegram_global_settings')
+      .select('bot_token')
+      .single();
+      
+    if (settingsError || !settings?.bot_token) {
+      console.error('Failed to retrieve bot token:', settingsError);
+      throw new Error('Bot token not found');
     }
-
-    // Parse request body
-    const body = await req.json();
-    console.log("📦 Request body:", JSON.stringify(body));
     
-    // Check if we're processing a single community or multiple communities
-    if (body.communities && Array.isArray(body.communities)) {
-      console.log(`📋 Checking photos for ${body.communities.length} communities`);
-      
-      const results: Record<string, string> = {};
-      
-      // Process communities in smaller batches to avoid timeouts
-      const batchSize = 5;
-      const communities = body.communities;
-      
-      for (let i = 0; i < communities.length; i += batchSize) {
-        const batch = communities.slice(i, i + batchSize);
-        console.log(`⏱️ Processing batch ${i/batchSize + 1} with ${batch.length} communities`);
-        
-        await Promise.all(
-          batch.map(async (community: any) => {
-            if (!community.id || !community.telegramChatId) {
-              console.log(`⚠️ Skipping community with missing data: ${JSON.stringify(community)}`);
-              return;
-            }
-            
-            try {
-              const photoUrl = await fetchCommunityPhoto(supabase, botToken, community.id, community.telegramChatId);
-              
-              // Only add to results if photoUrl is not null
-              if (photoUrl) {
-                results[community.id] = photoUrl;
-                console.log(`✅ Got photo for community ${community.id}: ${photoUrl.substring(0, 30)}...`);
-              } else {
-                console.log(`⚠️ No photo found for community ${community.id}`);
-              }
-            } catch (err) {
-              console.error(`❌ Error processing community ${community.id}:`, err);
-              // Continue with other communities even if one fails
-            }
-          })
-        );
-      }
-      
-      console.log(`✅ Completed photo check for ${Object.keys(results).length} communities`);
+    const botToken = settings.bot_token.trim();
+    console.log('Bot token retrieved (length):', botToken.length);
+    
+    // Validate that we got a non-empty bot token
+    if (!botToken) {
+      console.error('Empty bot token retrieved from settings');
+      throw new Error('Empty bot token');
+    }
+    
+    // Parse request
+    const requestData = await req.json();
+    console.log('Request data:', JSON.stringify(requestData));
+    
+    // Handle bulk photo fetch
+    if (requestData.communities && Array.isArray(requestData.communities)) {
+      return await handleBulkPhotoFetch(requestData.communities, botToken, supabase);
+    }
+    
+    // Handle single community photo fetch
+    const communityId = requestData.communityId;
+    const telegramChatId = requestData.telegramChatId;
+    const forceFetch = requestData.forceFetch || false;
+    
+    if (!communityId || !telegramChatId) {
+      console.error('Missing required parameters:', { communityId, telegramChatId });
       return new Response(
-        JSON.stringify({ results }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } else {
-      // Original single community processing
-      const { communityId, telegramChatId, forceFetch = false } = body;
-      
-      if (!communityId || !telegramChatId) {
-        return new Response(
-          JSON.stringify({ error: "Missing required parameters" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
-      }
-
-      console.log(`📋 Checking photo for community ${communityId}, chat ${telegramChatId}`);
-      
-      const photoUrl = await fetchCommunityPhoto(supabase, botToken, communityId, telegramChatId, forceFetch);
-      
-      return new Response(
-        JSON.stringify({ photoUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Missing required parameters' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
-  } catch (error) {
-    console.error("❌ Error in check-community-photo function:", error);
+    
+    // Fetch photo for a single community
+    const photoUrl = await fetchCommunityPhoto(telegramChatId, botToken, communityId, supabase, forceFetch);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      JSON.stringify({ photoUrl }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
 
-async function fetchCommunityPhoto(
-  supabase: any, 
-  botToken: string, 
-  communityId: string, 
-  telegramChatId: string, 
-  forceFetch: boolean = false
-) {
-  console.log(`🔍 Fetching photo for community ID ${communityId}, chat ID ${telegramChatId}, forceFetch: ${forceFetch}`);
+// Function to handle bulk photo fetching
+async function handleBulkPhotoFetch(communities, botToken, supabase) {
+  console.log(`Processing batch of ${communities.length} communities`);
   
+  const results = {};
+  const errors = [];
+  let successCount = 0;
+  
+  for (const community of communities) {
+    try {
+      if (!community.id || !community.telegramChatId) {
+        console.warn('Skipping community with missing data:', community);
+        continue;
+      }
+      
+      const photoUrl = await fetchCommunityPhoto(
+        community.telegramChatId, 
+        botToken, 
+        community.id, 
+        supabase, 
+        false
+      );
+      
+      if (photoUrl) {
+        results[community.id] = photoUrl;
+        successCount++;
+      }
+    } catch (err) {
+      console.error(`Error fetching photo for community ${community.id}:`, err);
+      errors.push({ communityId: community.id, error: err.message });
+    }
+  }
+  
+  console.log(`Fetched ${successCount} photos successfully, ${errors.length} errors`);
+  
+  return new Response(
+    JSON.stringify({ 
+      results, 
+      errors: errors.length ? errors : undefined,
+      message: `Fetched ${successCount} of ${communities.length} community photos` 
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Fetch and process community photo
+async function fetchCommunityPhoto(chatId, botToken, communityId, supabase, forceFetch = false) {
   try {
-    // Check if community already has a photo URL in the database (if not forcing a fetch)
-    let photoUrl = null;
+    console.log(`Fetching photo for chat ${chatId}, force=${forceFetch}`);
+    
+    // Check if we have a cached photo URL and are not forcing a refresh
     if (!forceFetch) {
-      const { data: communityData, error: dbError } = await supabase
+      const { data: community, error: communityError } = await supabase
         .from('communities')
-        .select('telegram_photo_url')
+        .select('telegram_photo_url, updated_at')
         .eq('id', communityId)
         .single();
       
-      if (dbError) {
-        console.error(`❌ Database error when checking existing photo: ${dbError.message}`);
-      } else {
-        photoUrl = communityData?.telegram_photo_url || null;
-        console.log(`🔍 Existing photo URL: ${photoUrl ? "Found" : "Not found"}`);
+      if (communityError) {
+        console.error('Error fetching community data:', communityError);
+      } else if (community?.telegram_photo_url) {
+        const photoAge = new Date() - new Date(community.updated_at);
+        const photoAgeHours = photoAge / (1000 * 60 * 60);
+        
+        // If photo is less than 24 hours old, use cached version
+        if (photoAgeHours < 24) {
+          console.log(`Using cached photo URL, age: ${photoAgeHours.toFixed(2)} hours`);
+          return community.telegram_photo_url;
+        }
       }
-    } else {
-      console.log(`🔄 Force fetch enabled, bypassing database check`);
     }
     
-    // If no photo URL exists or if it's not accessible or we're forcing a fetch, fetch a new one
-    if (forceFetch || !photoUrl) {
-      console.log(`🔄 Fetching new photo from Telegram for chat ${telegramChatId}`);
-      
-      // Call Telegram API to get chat information
-      const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: telegramChatId })
-      });
-      
-      if (!telegramResponse.ok) {
-        const errorText = await telegramResponse.text();
-        console.error(`❌ Telegram API error (${telegramResponse.status}): ${errorText}`);
-        return null;
-      }
-      
-      const telegramData = await telegramResponse.json();
-      console.log(`📋 Telegram getChat response:`, JSON.stringify(telegramData));
-      
-      if (telegramData.ok && telegramData.result.photo) {
-        const fileId = telegramData.result.photo.big_file_id || 
-                      telegramData.result.photo.small_file_id;
-        
-        if (fileId) {
-          console.log(`🆔 Found photo file ID: ${fileId}`);
-          
-          // Get file path from Telegram
-          const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file_id: fileId })
-          });
-          
-          if (!fileResponse.ok) {
-            const fileErrorText = await fileResponse.text();
-            console.error(`❌ Telegram file API error (${fileResponse.status}): ${fileErrorText}`);
-            return null;
-          }
-          
-          const fileData = await fileResponse.json();
-          console.log(`📋 Telegram getFile response:`, JSON.stringify(fileData));
-          
-          if (fileData.ok && fileData.result.file_path) {
-            // Construct the direct photo URL
-            photoUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-            console.log(`✅ Generated photo URL: ${photoUrl.substring(0, 30)}...`);
-            
-            // Update the community record with the new photo URL
-            const { error: updateError } = await supabase
-              .from('communities')
-              .update({ telegram_photo_url: photoUrl })
-              .eq('id', communityId);
-              
-            if (updateError) {
-              console.error(`❌ Error updating community record: ${updateError.message}`);
-            } else {
-              console.log(`✅ Updated photo URL in database for community ${communityId}`);
-            }
-          } else {
-            console.error(`❌ Invalid file data response:`, JSON.stringify(fileData));
-          }
-        } else {
-          console.error(`❌ No file ID found in chat photo`);
-        }
-      } else {
-        console.log(`ℹ️ Chat ${telegramChatId} does not have a photo or returned invalid data`);
-      }
+    // Make sure chat ID is properly formatted
+    const formattedChatId = chatId.toString().trim();
+    console.log(`Requesting photo from Telegram API for chat: ${formattedChatId}`);
+    
+    // Fetch chat photo from Telegram
+    const apiUrl = `https://api.telegram.org/bot${botToken}/getChat`;
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: formattedChatId })
+    });
+    
+    // Log detailed response information for debugging
+    console.log(`Telegram API response status: ${response.status}`);
+    const responseText = await response.text();
+    console.log(`Telegram API response body: ${responseText}`);
+    
+    // Parse the response
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse Telegram API response:', e);
+      throw new Error(`Invalid response from Telegram API: ${responseText.substring(0, 100)}`);
+    }
+    
+    // Check for API errors
+    if (!data.ok) {
+      console.error('Telegram API error:', data.description || 'Unknown error');
+      throw new Error(`Telegram API error: ${data.description || 'Unknown error'}`);
+    }
+    
+    // Check if chat has a photo
+    if (!data.result?.photo) {
+      console.log('No photo available for this chat');
+      return null;
+    }
+    
+    // Get photo file ID
+    const photoFileId = data.result.photo.big_file_id || data.result.photo.small_file_id;
+    if (!photoFileId) {
+      console.log('No photo file ID available');
+      return null;
+    }
+    
+    // Get file path for the photo
+    const filePathResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_id: photoFileId })
+    });
+    
+    const filePathData = await filePathResponse.json();
+    console.log('File path response:', JSON.stringify(filePathData));
+    
+    if (!filePathData.ok || !filePathData.result?.file_path) {
+      console.error('Failed to get file path:', filePathData);
+      throw new Error('Failed to get photo file path');
+    }
+    
+    // Construct photo URL
+    const photoUrl = `https://api.telegram.org/file/bot${botToken}/${filePathData.result.file_path}`;
+    console.log('Photo URL generated:', photoUrl.substring(0, 60) + '...');
+    
+    // Update the community with the new photo URL
+    const { error: updateError } = await supabase
+      .from('communities')
+      .update({ telegram_photo_url: photoUrl })
+      .eq('id', communityId);
+    
+    if (updateError) {
+      console.error('Failed to update community with photo URL:', updateError);
     } else {
-      console.log(`✅ Using existing photo URL for community ${communityId}`);
+      console.log('Successfully updated community with new photo URL');
     }
     
     return photoUrl;
   } catch (error) {
-    console.error(`❌ Error fetching photo for community ${communityId}:`, error);
-    return null;
+    console.error(`Error fetching photo for chat ${chatId}:`, error);
+    throw error;
   }
 }

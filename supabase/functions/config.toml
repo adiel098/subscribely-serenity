@@ -1,10 +1,51 @@
 
-# A string used as the project reference
 project_id = "trkiniaqliiwdkrvvuky"
 
-[global.env]
-# Global environment variables to be applied across all functions
-DATABASE_URL = "DATABASE_URL"
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[realtime]
+enabled = true
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.check-subscriptions]
+verify_jwt = false
+
+[functions.database-diagnostics]
+verify_jwt = false
+
+[functions.create-stripe-payment-intent]
+verify_jwt = false
+
+[functions.update-community-counts]
+verify_jwt = false
+
+[functions.telegram-image-proxy]
+verify_jwt = false
+
+[functions.check-community-photo]
+verify_jwt = false
 
 [functions.create-invite-link]
 verify_jwt = false
@@ -21,5 +62,5 @@ verify_jwt = false
 [functions.telegram-mini-app]
 verify_jwt = false
 
-[functions.telegram-webhook]
-verify_jwt = false
+[global.env]
+DATABASE_URL = "DATABASE_URL"

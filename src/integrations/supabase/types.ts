@@ -882,13 +882,6 @@ export type Database = {
             referencedColumns: ["community_id"]
           },
           {
-            foreignKeyName: "fk_telegram_chat_members_community"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "telegram_chat_members_community_id_fkey"
             columns: ["community_id"]
             isOneToOne: false

@@ -2,7 +2,6 @@
 import React, { useEffect } from "react";
 import { CommunityHeader } from "./CommunityHeader";
 import { ContentTabs } from "./tabs/ContentTabs";
-import { UserProfile } from "./user-profile/UserProfile";
 import { PaymentWrapper } from "./payment/PaymentWrapper";
 import { DebugWrapper } from "./debug/DebugWrapper";
 import { isSubscriptionActive } from "./subscriptions/utils";
@@ -82,11 +81,7 @@ export const MainContent = ({
   return (
     <div className="telegram-mini-app-container mx-auto py-4 max-w-3xl">
       <div className="flex flex-col gap-4">
-        <UserProfile
-          telegramUser={telegramUser}
-          subscriptions={subscriptions}
-          onRenew={handleRenew}
-        />
+        {/* UserProfile component removed */}
         
         <CommunityHeader community={community} />
         

@@ -1,7 +1,5 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
-import { TelegramMessenger } from "../../telegramMessenger.ts";
-import { logNotification } from "../../databaseLogger.ts";
 import { SubscriptionMember, BotSettings } from "../../types.ts";
 
 const DEFAULT_MINI_APP_URL = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
@@ -15,112 +13,136 @@ export async function sendExpirationNotification(
   botSettings: BotSettings,
   result: any
 ): Promise<boolean> {
-  if (!botSettings.expired_subscription_message) {
-    console.log(`⚠️ No expiration message configured for community ${member.community_id}`);
+  try {
+    console.log(`🔔 Sending expiration notification to user ${member.telegram_user_id}`);
+
+    // Get bot token and community data for notification
+    const telegramConfig = await getExpirationNotificationConfig(supabase, member.community_id);
+    if (!telegramConfig) {
+      console.error(`❌ Failed to get notification config for community ${member.community_id}`);
+      result.details += ", failed to get notification config";
+      return false;
+    }
+
+    const { botToken, inlineKeyboard } = telegramConfig;
+
+    // Send the expiration message with renewal button
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: member.telegram_user_id,
+          text: botSettings.expired_subscription_message || "Your subscription has expired.",
+          parse_mode: "Markdown",
+          reply_markup: inlineKeyboard
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ HTTP error ${response.status}: ${errorText}`);
+      result.details += `, failed to send notification: ${errorText}`;
+      return false;
+    }
+
+    const responseData = await response.json();
+    
+    if (!responseData.ok) {
+      console.error(`❌ Error sending expiration notification: ${responseData.description}`);
+      result.details += `, failed to send notification: ${responseData.description}`;
+      return false;
+    }
+
+    // Log the notification in the database
+    await logExpirationNotification(supabase, member, result);
+
+    console.log(`✅ Successfully sent expiration notification to user ${member.telegram_user_id}`);
+    result.details += ", expiration notification sent";
+    return true;
+  } catch (error) {
+    console.error(`❌ Error in sendExpirationNotification: ${error.message}`);
+    result.details += `, failed to send notification: ${error.message}`;
     return false;
   }
-  
+}
+
+/**
+ * Get notification configuration for expiration messages
+ */
+async function getExpirationNotificationConfig(
+  supabase: ReturnType<typeof createClient>,
+  communityId: string
+): Promise<{ botToken: string; inlineKeyboard: any } | null> {
   try {
-    console.log(`💌 Preparing to send expiration notification to user ${member.telegram_user_id}`);
+    console.log(`📝 Fetching notification config for community ${communityId}`);
     
-    // Get global bot token
-    const { data: settings, error: tokenError } = await supabase
-      .from("telegram_global_settings")
-      .select("bot_token")
-      .single();
+    const [tokenResult, communityResult] = await Promise.all([
+      supabase.from("telegram_global_settings").select("bot_token").single(),
+      supabase.from("communities").select("id, miniapp_url").eq("id", communityId).single()
+    ]);
 
-    if (tokenError || !settings?.bot_token) {
-      throw new Error(tokenError ? tokenError.message : 'Bot token not found');
+    if (tokenResult.error || !tokenResult.data?.bot_token) {
+      console.error(`❌ Error fetching bot token: ${tokenResult.error?.message}`);
+      return null;
     }
 
-    // Get community data for mini app URL
-    const { data: community, error: communityError } = await supabase
-      .from("communities")
-      .select("miniapp_url, name, telegram_photo_url")
-      .eq("id", member.community_id)
-      .single();
-
-    if (communityError) {
-      console.warn(`⚠️ Warning fetching community: ${communityError.message}`);
-    }
-
-    // Use the community miniapp_url or fall back to the default URL
-    let miniAppUrl = community?.miniapp_url;
+    const botToken = tokenResult.data.bot_token;
     
-    if (!miniAppUrl) {
-      console.warn(`⚠️ No miniapp_url found for community ${member.community_id}, using default URL`);
-      
-      // Update the community with the default miniapp_url
-      try {
-        const { error: updateError } = await supabase
-          .from("communities")
-          .update({ miniapp_url: DEFAULT_MINI_APP_URL })
-          .eq("id", member.community_id);
-        
-        if (updateError) {
-          console.error("❌ Error updating community miniapp_url:", updateError);
-        } else {
-          console.log(`✅ Updated community ${member.community_id} with default miniapp_url`);
-        }
-      } catch (updateError) {
-        console.error("❌ Error updating community miniapp_url:", updateError);
-      }
-      
-      miniAppUrl = DEFAULT_MINI_APP_URL;
-    }
-
-    // Create inline keyboard with the renewed URL
+    // Use community miniapp URL or default URL
+    let miniAppUrl = communityResult.data?.miniapp_url || DEFAULT_MINI_APP_URL;
+    
+    // Create renewal button for message
     const inlineKeyboard = {
       inline_keyboard: [
         [
           {
-            text: "Renew Now! 🔄",
+            text: "Renew Subscription 🔄",
             web_app: {
-              url: `${miniAppUrl}?start=${member.community_id}`
+              url: `${miniAppUrl}?start=${communityId}`
             }
           }
         ]
       ]
     };
 
-    const message = botSettings.expired_subscription_message + 
-      (botSettings.bot_signature ? `\n\n${botSettings.bot_signature}` : '');
+    return { botToken, inlineKeyboard };
+  } catch (error) {
+    console.error(`❌ Error in getExpirationNotificationConfig: ${error.message}`);
+    return null;
+  }
+}
 
-    console.log(`📱 Sending expiration message to user ${member.telegram_user_id} for community ${community?.name || member.community_id}`);
-    console.log(`🔗 Using miniAppUrl: ${miniAppUrl}`);
-
-    // Send message directly via Telegram API
-    const messageSent = await TelegramMessenger.sendTextMessage(
-      settings.bot_token,
-      member.telegram_user_id,
-      message,
-      inlineKeyboard
-    );
-
-    if (messageSent) {
-      // Log the notification only if message was sent successfully
-      try {
-        await logNotification(
-          supabase,
-          member.community_id,
-          member.id,
-          "expiration"
-        );
-        
-        console.log(`✅ Expiration message sent successfully to user ${member.telegram_user_id}`);
-        return true;
-      } catch (error) {
-        console.error(`❌ Error logging notification: ${error.message}`);
-        return false;
-      }
+/**
+ * Log expiration notification in the database
+ */
+async function logExpirationNotification(
+  supabase: ReturnType<typeof createClient>,
+  member: SubscriptionMember,
+  result: any
+): Promise<void> {
+  try {
+    console.log(`📝 Logging expiration notification for user ${member.telegram_user_id}`);
+    
+    const { error } = await supabase
+      .from("subscription_notifications")
+      .insert({
+        community_id: member.community_id,
+        member_id: member.id,
+        notification_type: "expiration",
+        status: "success"
+      });
+      
+    if (error) {
+      console.error(`❌ Error logging expiration notification: ${error.message}`);
+      result.details += `, failed to log notification: ${error.message}`;
     } else {
-      console.error(`❌ Failed to send expiration message to user ${member.telegram_user_id}`);
-      result.details += ", failed to send notification";
-      return false;
+      console.log(`✅ Successfully logged expiration notification`);
     }
   } catch (error) {
-    console.error(`❌ Error sending expiration message to user ${member.telegram_user_id}:`, error);
-    result.details += ", failed to send notification: " + error.message;
-    return false;
+    console.error(`❌ Error in logExpirationNotification: ${error.message}`);
+    result.details += `, failed to log notification: ${error.message}`;
   }
 }

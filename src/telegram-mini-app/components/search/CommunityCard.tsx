@@ -115,8 +115,8 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
             onClick={handleSubscribe}
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm"
           >
-            <UserPlus className="mr-2 h-4 w-4" />
-            View Subscription Options
+            <Star className="mr-2 h-4 w-4" />
+            Subscribe Now ✨
           </Button>
         </CardFooter>
       </Card>

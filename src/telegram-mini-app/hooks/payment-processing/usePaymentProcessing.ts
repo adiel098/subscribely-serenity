@@ -35,7 +35,7 @@ export const usePaymentProcessing = ({
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   
   const { recordPayment } = usePaymentRecord();
-  const { generateInviteLink } = useInviteLink();
+  const { fetchOrCreateInviteLink } = useInviteLink(communityInviteLink);
 
   // Reset processing state
   const resetState = () => {
@@ -68,7 +68,7 @@ export const usePaymentProcessing = ({
       
       if (!communityInviteLink) {
         console.log("[usePaymentProcessing] No invite link provided, generating a new one");
-        const generatedLink = await generateInviteLink(communityId);
+        const generatedLink = await fetchOrCreateInviteLink(communityId);
         
         if (generatedLink) {
           finalInviteLink = generatedLink;

@@ -24,6 +24,15 @@ export const ExpirationWarning: React.FC<ExpirationWarningProps> = ({
   const communityName = subscription.community?.name || "Community";
   const timeRemainingText = getTimeRemainingText(subscription);
   
+  const handleRenew = () => {
+    console.log("[ExpirationWarning] Renewing subscription:", subscription.id);
+    if (subscription.plan) {
+      onRenew(subscription);
+    } else {
+      console.error("[ExpirationWarning] Cannot renew: No plan found in subscription");
+    }
+  };
+  
   return (
     <div className="mt-2 mb-2 p-2 bg-red-50 border border-red-200 rounded-md text-xs">
       <div className="flex items-center justify-between">
@@ -46,7 +55,7 @@ export const ExpirationWarning: React.FC<ExpirationWarningProps> = ({
           <span className="text-red-600 font-medium text-xs">{timeRemainingText}</span>
         </div>
         <Button 
-          onClick={() => onRenew(subscription)}
+          onClick={handleRenew}
           className="h-5 text-xs bg-red-600 hover:bg-red-700 text-white py-0 px-1.5"
           size="sm"
         >

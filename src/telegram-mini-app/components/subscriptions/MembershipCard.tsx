@@ -35,6 +35,15 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
     }
   };
 
+  const handleRenew = () => {
+    console.log("[MembershipCard] Renewing subscription:", subscription.id);
+    if (subscription.plan) {
+      onRenew(subscription);
+    } else {
+      console.error("[MembershipCard] Cannot renew: No plan found in subscription");
+    }
+  };
+
   return (
     <>
       <Accordion type="single" collapsible className="w-full">
@@ -128,7 +137,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                   variant="outline" 
                   size="sm" 
                   className="flex-1 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border border-green-100"
-                  onClick={() => onRenew(subscription)}
+                  onClick={handleRenew}
                 >
                   <RefreshCw className="h-4 w-4 mr-1.5" />
                   Renew 🔄

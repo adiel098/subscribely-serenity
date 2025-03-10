@@ -25,6 +25,7 @@ export async function handleUpdate(
       await handleMyChatMember(supabase, update.my_chat_member);
     }
     
+    return true;
   } catch (error) {
     await logger.error(`Error processing update: ${error.message}`);
     return false;

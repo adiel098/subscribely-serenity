@@ -146,7 +146,8 @@ export const useSubscriberManagement = (communityId: string) => {
           telegram_user_id: subscriber.telegram_user_id,
           community_id: subscriber.community_id,
           activity_type: 'member_unblocked',
-          details: 'User was unblocked by admin'
+          details: 'User was unblocked by admin',
+          status: 'inactive' // Use the new status column
         });
       
       await refetch();

@@ -75,9 +75,6 @@ export async function unblockMemberService(
       return false;
     }
     
-    // Create an invite link for the user?
-    // We could include this functionality if needed
-    
     return true;
   } catch (error) {
     await logger.error(`Exception in unblockMemberService: ${error.message}`);

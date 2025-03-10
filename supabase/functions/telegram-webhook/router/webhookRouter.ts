@@ -1,9 +1,10 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { logMembershipChange } from '../handlers/utils/logHelper.ts';
+import { createOrUpdateMember } from '../handlers/utils/dbLogger.ts';
+import { updateCommunityMemberCount } from '../utils/communityCountUtils.ts';
 import { handleChatJoinRequest } from '../handlers/services/joinRequestHandler.ts';
 import { kickMemberService } from '../handlers/services/memberKickService.ts';
 import { unblockMemberService } from '../handlers/services/memberUnblockService.ts';
-import { handleChatMemberUpdate } from '../handlers/memberUpdateHandler.ts';
 import { handleMyChatMember } from '../handlers/botStatusHandler.ts';
 import { handleStartCommand } from '../handlers/startCommandHandler.ts';
 import { handleVerificationMessage } from '../handlers/verificationHandler.ts';

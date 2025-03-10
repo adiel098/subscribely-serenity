@@ -482,6 +482,7 @@ export type Database = {
           created_at: string | null
           details: string | null
           id: string
+          status: string | null
           telegram_user_id: string
         }
         Insert: {
@@ -490,6 +491,7 @@ export type Database = {
           created_at?: string | null
           details?: string | null
           id?: string
+          status?: string | null
           telegram_user_id: string
         }
         Update: {
@@ -498,6 +500,7 @@ export type Database = {
           created_at?: string | null
           details?: string | null
           id?: string
+          status?: string | null
           telegram_user_id?: string
         }
         Relationships: [

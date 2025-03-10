@@ -66,11 +66,12 @@ const PaymentMethods = () => {
   };
 
   return (
-    <div className="space-y-6 py-6 animate-fade-in max-w-5xl mx-auto">
+    <div className="space-y-6 py-6 animate-fade-in">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="text-left"
       >
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
           <Zap className="h-6 w-6 text-indigo-500" />
@@ -95,12 +96,12 @@ const PaymentMethods = () => {
         </CardHeader>
         <CardContent>
           <motion.div 
-            className="grid gap-6 md:grid-cols-3 justify-items-center"
+            className="grid gap-6 md:grid-cols-3"
             variants={container}
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={item} className="h-full w-full flex justify-center">
+            <motion.div variants={item} className="h-full w-full">
               <PaymentMethodCard
                 title="Stripe"
                 description="Accept credit card payments securely with Stripe 💳"
@@ -114,7 +115,7 @@ const PaymentMethods = () => {
                 communityId={selectedCommunityId || ""}
               />
             </motion.div>
-            <motion.div variants={item} className="h-full w-full flex justify-center">
+            <motion.div variants={item} className="h-full w-full">
               <PaymentMethodCard
                 title="PayPal"
                 description="Accept PayPal payments easily and securely 🔄"
@@ -128,7 +129,7 @@ const PaymentMethods = () => {
                 communityId={selectedCommunityId || ""}
               />
             </motion.div>
-            <motion.div variants={item} className="h-full w-full flex justify-center">
+            <motion.div variants={item} className="h-full w-full">
               <PaymentMethodCard
                 title="Crypto"
                 description="Accept cryptocurrency payments for your groups 🪙"
@@ -150,9 +151,9 @@ const PaymentMethods = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex justify-center items-center p-6"
+        className="flex justify-start items-start p-6 text-left"
       >
-        <div className="flex flex-col items-center text-center max-w-md">
+        <div className="flex flex-col items-start text-left max-w-md">
           <Shield className="h-12 w-12 text-indigo-200 mb-3" />
           <h3 className="text-lg font-medium text-gray-700 mb-2">Payment Settings Simplified</h3>
           <p className="text-gray-500 text-sm">

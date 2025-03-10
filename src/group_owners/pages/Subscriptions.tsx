@@ -44,8 +44,8 @@ const Subscriptions = () => {
     setCreateDialogOpen(true);
   };
 
-  const handleEditPlan = (planId: string) => {
-    setSelectedPlanId(planId);
+  const handleEditPlan = (plan: any) => {
+    setSelectedPlanId(plan.id);
     setEditDialogOpen(true);
   };
 
@@ -89,7 +89,7 @@ const Subscriptions = () => {
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
   return (
-    <div className="space-y-8 py-6">
+    <div className="space-y-6 py-6">
       <motion.div 
         className="flex justify-between items-center"
         initial={{ opacity: 0, y: -20 }}
@@ -112,6 +112,7 @@ const Subscriptions = () => {
           <Button 
             onClick={handleCreatePlan} 
             className="bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all duration-300"
+            type="button"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Plan
@@ -131,14 +132,14 @@ const Subscriptions = () => {
           <p className="text-gray-500 text-center mb-6 max-w-md">
             Create your first subscription plan to start offering premium access to your community.
           </p>
-          <Button onClick={handleCreatePlan} className="bg-indigo-600 hover:bg-indigo-700 shadow-md">
+          <Button onClick={handleCreatePlan} className="bg-indigo-600 hover:bg-indigo-700 shadow-md" type="button">
             <Plus className="h-4 w-4 mr-2" />
             Create Your First Plan
           </Button>
         </motion.div>
       ) : (
         <motion.div 
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -147,7 +148,7 @@ const Subscriptions = () => {
             <motion.div key={plan.id} variants={itemVariants}>
               <SubscriptionPlanCard
                 plan={plan}
-                onEdit={() => handleEditPlan(plan.id)}
+                onEdit={handleEditPlan}
                 onDelete={handleDeletePlan}
                 intervalColors={intervalColors}
                 intervalLabels={intervalLabels}

@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, PencilIcon, TrashIcon, StarIcon, Sparkles } from "lucide-react";
+import { PencilIcon, TrashIcon, StarIcon } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -42,7 +42,7 @@ export const SubscriptionPlanCard = ({
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="group relative overflow-hidden border-2 hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-gradient-to-br from-white to-indigo-50/30 h-full flex flex-col shadow-sm hover:shadow-md">
+      <Card className="group relative overflow-hidden border-2 hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-gradient-to-br from-white to-indigo-50/30 shadow-sm hover:shadow-md">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
         
         {/* Decorative background elements */}
@@ -59,6 +59,7 @@ export const SubscriptionPlanCard = ({
                   size="sm"
                   className="h-8 w-8 rounded-full bg-green-50 border border-green-100 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm"
                   onClick={() => onEdit(plan)}
+                  type="button"
                 >
                   <PencilIcon className="h-4 w-4" />
                   <span className="sr-only">Edit plan</span>
@@ -78,6 +79,7 @@ export const SubscriptionPlanCard = ({
                   size="sm"
                   className="h-8 w-8 rounded-full bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 hover:text-red-600 shadow-sm"
                   onClick={() => onDelete(plan.id)}
+                  type="button"
                 >
                   <TrashIcon className="h-4 w-4" />
                   <span className="sr-only">Delete plan</span>
@@ -90,7 +92,7 @@ export const SubscriptionPlanCard = ({
           </TooltipProvider>
         </div>
         
-        <div className="p-8 flex flex-col flex-grow relative z-10">
+        <div className="p-5 flex flex-col flex-grow relative z-10">
           <div className="mb-2">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${intervalColors[plan.interval]}`}>
               {intervalLabels[plan.interval]}
@@ -105,7 +107,7 @@ export const SubscriptionPlanCard = ({
           />
           
           {plan.description && (
-            <p className="text-gray-600 leading-relaxed mt-4 text-sm">{plan.description}</p>
+            <p className="text-gray-600 leading-relaxed mt-3 text-sm">{plan.description}</p>
           )}
           
           {plan.features && plan.features.length > 0 && (

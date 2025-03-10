@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember } from "../../types.ts";
 
@@ -129,14 +130,14 @@ export async function removeMemberFromChat(
       return false;
     }
 
-    // Update member status in database - now with reason-specific status
+    // Update member status in database - now preserving the reason
     try {
       console.log(`📝 MEMBER REMOVAL: Updating member status in database to ${reason} - Member ID: ${member.id}`);
       const { error: updateError } = await supabase
         .from("telegram_chat_members")
         .update({
           is_active: false,
-          subscription_status: reason // Set status based on removal reason
+          subscription_status: reason // This ensures we set the correct status based on the reason
         })
         .eq("id", member.id);
         

@@ -133,14 +133,15 @@ export async function processMember(
     }
   }
 
-  // FIX: Check if subscription has expired - now properly checking and handling expired subscriptions
-  // We specifically check for subscriptions that are expired BUT still marked as active
-  if (msUntilExpiration <= 0 && member.subscription_status === 'active') {
+  // Check if subscription has expired - now properly checking and handling expired subscriptions
+  // We check for subscriptions that are expired REGARDLESS of current status to ensure consistency
+  if (msUntilExpiration <= 0) {
     // Subscription has expired
     console.log(`⚠️ EXPIRED: Member ${member.telegram_user_id}'s subscription has expired. Processing expiration...`);
     console.log(`   Expiration details: ${hoursUntilExpiration} hours overdue, status: ${member.subscription_status}`);
     console.log(`   Auto-remove expired setting: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
     
+    // Important: Always pass 'expired' as the reason
     await handleExpiredSubscription(supabase, member, botSettings, result);
     console.log(`🔄 MEMBER PROCESSOR: After handleExpiredSubscription - Result action: ${result.action}, details: ${result.details}`);
     return result;

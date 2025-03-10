@@ -33,6 +33,7 @@ export async function handleExpiredSubscription(
     result.details = "Subscription expired";
 
     // Step 1: Update member status in database - IMPORTANT: Do this first
+    // Always set the status to 'expired' for expired subscriptions
     const statusUpdated = await updateMemberStatusToExpired(supabase, member, result);
     console.log(`EXPIRATION HANDLER: Status update result: ${statusUpdated ? "Success ✅" : "Failed ❌"}`);
 
@@ -47,9 +48,16 @@ export async function handleExpiredSubscription(
     // Step 4: Remove member from chat if auto-remove is enabled
     if (botSettings.auto_remove_expired) {
       console.log(`🚫 EXPIRATION HANDLER: Auto-remove is ENABLED - Attempting to remove user ${member.telegram_user_id} from chat`);
-      const removalResult = await removeMemberFromChat(supabase, member, result, 'expired'); // Pass 'expired' as reason
+      // Explicitly pass 'expired' as the reason for removal
+      const removalResult = await removeMemberFromChat(supabase, member, result, 'expired'); 
       console.log(`🔄 EXPIRATION HANDLER: Member removal result: ${removalResult ? "Success ✅" : "Failed ❌"}`);
       console.log(`🔄 EXPIRATION HANDLER: After removal process - Result details: ${result.details}`);
+
+      // Check if the user was actually removed (banned) but not unbanned
+      if (removalResult) {
+        console.log(`🔄 EXPIRATION HANDLER: Verifying unban status for user ${member.telegram_user_id}`);
+        // This is handled within the removeMemberFromChat function with the setTimeout for unban
+      }
     } else {
       console.log(`ℹ️ EXPIRATION HANDLER: Auto-remove is DISABLED - User ${member.telegram_user_id} will remain in chat`);
     }

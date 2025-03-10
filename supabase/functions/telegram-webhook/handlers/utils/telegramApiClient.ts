@@ -135,6 +135,17 @@ export class TelegramApiClient {
         console.log(`[TELEGRAM-API] ✅ User ${userId} successfully unbanned from chat ${chatId}`);
       } else {
         console.log(`[TELEGRAM-API] ⚠️ Unban response for user ${userId}: ${result.description}`);
+        
+        // Check if the user is not a member of the chat (common error)
+        if (result.description && (
+            result.description.includes("not found") || 
+            result.description.includes("USER_NOT_PARTICIPANT") || 
+            result.description.includes("user is not a member")
+        )) {
+          console.log(`[TELEGRAM-API] ℹ️ User ${userId} is not a member of chat ${chatId}, treating as successful unban`);
+          // Return a "success" response since the user is not banned in the chat
+          return { ok: true, result: true, description: "User is not a member of the chat, no unban needed" };
+        }
       }
       
       return result;

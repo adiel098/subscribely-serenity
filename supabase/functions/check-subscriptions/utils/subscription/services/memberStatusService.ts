@@ -17,7 +17,7 @@ export async function updateMemberStatusToExpired(
     const { error: updateError } = await supabase
       .from("telegram_chat_members")
       .update({
-        subscription_status: 'expired',
+        subscription_status: 'expired', // Always set to 'expired' for consistency
       })
       .eq("id", member.id);
       
@@ -70,6 +70,7 @@ export async function logExpirationActivity(
         telegram_user_id: member.telegram_user_id,
         activity_type: "subscription_expired",
         details: "Subscription expired automatically",
+        status: "expired" // Add status field for consistency
       });
       
     if (logError) {

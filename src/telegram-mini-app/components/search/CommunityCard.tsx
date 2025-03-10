@@ -114,13 +114,13 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
                 {member_count > 0 && (
                   <Badge variant="outline" className="text-xs font-normal px-2 py-0 h-5 bg-white/80 border-purple-100 flex items-center gap-1">
                     {getMembershipEmoji(member_count)}
-                    <span>{member_count > 1000 ? `${(member_count / 1000).toFixed(1)}K` : member_count} חברים</span>
+                    <span>{member_count > 1000 ? `${(member_count / 1000).toFixed(1)}K` : member_count} members</span>
                   </Badge>
                 )}
                 
                 {lowestPricePlan && (
                   <Badge variant="outline" className="text-xs font-normal px-2 py-0 h-5 bg-gradient-to-r from-indigo-50 to-blue-50 border-blue-100 text-blue-700">
-                    החל מ-{formatCurrency(lowestPricePlan.price)}/{lowestPricePlan.interval === 'month' ? 'חודש' : lowestPricePlan.interval}
+                    From {formatCurrency(lowestPricePlan.price)}/{lowestPricePlan.interval === 'month' ? 'month' : lowestPricePlan.interval}
                   </Badge>
                 )}
               </div>
@@ -130,7 +130,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         
         <CardContent className="pb-2">
           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-            {description || "הצטרף לקהילה זו כדי לקבל גישה לתוכן בלעדי ולהתחבר עם חברים. ✨"}
+            {description || "Join this community to access exclusive content and connect with members. ✨"}
           </p>
         </CardContent>
         
@@ -141,7 +141,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm"
           >
             <UserPlus className="mr-2 h-4 w-4" />
-            הצטרף עכשיו 🚀
+            Join Now 🚀
           </Button>
         </CardFooter>
       </Card>

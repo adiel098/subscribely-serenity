@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Crown, Star, Sparkles } from "lucide-react";
+import { UserPlus, Crown, Star, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -18,6 +18,7 @@ interface CommunityCardProps {
 export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelect }) => {
   const { name, description, telegram_photo_url, subscription_plans, custom_link } = community;
   const { toast } = useToast();
+  const [isExpanded, setIsExpanded] = useState(false);
   
   // Get the lowest price plan if available
   const lowestPricePlan = subscription_plans && subscription_plans.length > 0
@@ -59,6 +60,24 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
   
   // Default description text if none is available
   const defaultDescription = "Join this community to access exclusive content and connect with members. ✨";
+  const descriptionText = description || defaultDescription;
+  
+  // Check if description is long (more than 100 characters)
+  const isLongDescription = descriptionText.length > 100;
+  
+  // Create short and full versions of the description
+  const shortDescription = isLongDescription ? `${descriptionText.substring(0, 100)}...` : descriptionText;
+  
+  // Toggle description expansion
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    setIsExpanded(!isExpanded);
+    
+    // Add haptic feedback
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+  };
   
   return (
     <motion.div
@@ -107,9 +126,24 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         </CardHeader>
         
         <CardContent className="pb-2">
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-            {description || defaultDescription}
-          </p>
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            {isExpanded ? descriptionText : shortDescription}
+            
+            {isLongDescription && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleExpand}
+                className="px-2 py-0 h-6 ml-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+              >
+                {isExpanded ? (
+                  <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
+                ) : (
+                  <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
+                )}
+              </Button>
+            )}
+          </div>
         </CardContent>
         
         <CardFooter className="pt-2 flex justify-between items-center">

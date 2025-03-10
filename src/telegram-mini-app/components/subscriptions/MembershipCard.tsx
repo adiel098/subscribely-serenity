@@ -27,6 +27,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
   const active = isSubscriptionActive(subscription);
   const daysRemaining = getDaysRemaining(subscription);
+  const isExpiringSoon = active && daysRemaining <= 3;
 
   const handleCommunityLink = () => {
     if (subscription.community.telegram_invite_link) {
@@ -37,7 +38,16 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   return (
     <>
       <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value={subscription.id} className={`border rounded-lg overflow-hidden mb-3 ${active ? "border-primary/20" : "border-gray-200"}`}>
+        <AccordionItem 
+          value={subscription.id} 
+          className={`border rounded-lg overflow-hidden mb-3 ${
+            isExpiringSoon 
+              ? "border-red-300 bg-red-50/30" 
+              : active 
+                ? "border-primary/20" 
+                : "border-gray-200"
+          }`}
+        >
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <div className="flex items-start justify-between w-full text-left">
               <div className="flex items-center gap-3">
@@ -67,7 +77,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 </div>
               </div>
               {active && (
-                <div className="text-sm font-medium text-primary">
+                <div className={`text-sm font-medium ${isExpiringSoon ? "text-red-500" : "text-primary"}`}>
                   {daysRemaining} days left
                 </div>
               )}
@@ -76,12 +86,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           
           <AccordionContent className="px-4 pb-4">
             <div className="text-sm space-y-4">
-              {/* Community Description */}
-              {subscription.community.description && (
-                <div className="text-gray-600 pb-2 pt-1 text-sm italic border-l-2 border-gray-200 pl-2">
-                  "{subscription.community.description}"
-                </div>
-              )}
+              {/* Description has been removed as requested */}
               
               <div className="flex justify-between text-muted-foreground">
                 <div className="flex items-center gap-1.5">

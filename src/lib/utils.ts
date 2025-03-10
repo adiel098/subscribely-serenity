@@ -1,19 +1,27 @@
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
- * Formats a number as a currency string in USD
+ * Formats a number as currency
+ * @param amount The amount to format
+ * @param currency The currency code (default: USD)
+ * @param locale The locale to use for formatting (default: en-US)
+ * @returns Formatted currency string
  */
-export const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(
+  amount: number, 
+  currency: string = 'USD', 
+  locale: string = 'en-US'
+): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}

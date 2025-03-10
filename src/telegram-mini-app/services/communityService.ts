@@ -1,6 +1,7 @@
 
 import { logServiceAction, invokeSupabaseFunction } from "./utils/serviceUtils";
 import { Community } from "../types/community.types";
+import { toast } from "@/hooks/use-toast";
 
 export async function searchCommunities(query: string = ""): Promise<Community[]> {
   logServiceAction("🔍 searchCommunities", { query });
@@ -20,6 +21,11 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
 
     if (error) {
       console.error("❌ Error searching communities:", error);
+      toast({
+        title: "Search Error",
+        description: "Could not retrieve communities. Please try again later.",
+        variant: "destructive"
+      });
       throw new Error(error.message);
     }
 

@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, RefreshCw } from "lucide-react";
 import { Community } from "../../hooks/useCommunities";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,7 +21,9 @@ export const CommunityDropdown = ({
 }: CommunityDropdownProps) => {
   const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
   const [refreshPhotoId, setRefreshPhotoId] = useState<string | null>(null);
+  const [communityPhotos, setCommunityPhotos] = useState<Record<string, string>>({});
   
+  // This hook handles the selected community photo refresh
   const { photoUrl, loading } = useTelegramChatPhoto({
     communityId: refreshPhotoId || selectedCommunityId,
     telegramChatId: selectedCommunity?.telegram_chat_id,
@@ -29,11 +31,73 @@ export const CommunityDropdown = ({
     forceFetch: refreshPhotoId === selectedCommunityId
   });
   
+  // Update the photo map when the selected community photo is refreshed
+  useEffect(() => {
+    if (photoUrl && selectedCommunityId) {
+      setCommunityPhotos(prev => ({
+        ...prev,
+        [selectedCommunityId]: photoUrl
+      }));
+    }
+  }, [photoUrl, selectedCommunityId]);
+
+  // Pre-load all community photos when communities change
+  useEffect(() => {
+    if (!communities) return;
+    
+    // Initialize with existing photo URLs
+    const initialPhotos: Record<string, string> = {};
+    communities.forEach(community => {
+      if (community.id && community.telegram_photo_url) {
+        initialPhotos[community.id] = community.telegram_photo_url;
+      }
+    });
+    
+    setCommunityPhotos(initialPhotos);
+    
+    // Fetch fresh photos for all communities asynchronously
+    const fetchAllPhotos = async () => {
+      for (const community of communities) {
+        if (!community.id || !community.telegram_chat_id) continue;
+        
+        try {
+          const response = await fetch('/check-community-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              communityId: community.id,
+              telegramChatId: community.telegram_chat_id
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.photoUrl) {
+              setCommunityPhotos(prev => ({
+                ...prev,
+                [community.id]: data.photoUrl
+              }));
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to fetch photo for community ${community.id}:`, error);
+        }
+      }
+    };
+    
+    // Start fetching all photos in the background
+    fetchAllPhotos();
+  }, [communities]);
+  
   const handleRefreshPhoto = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (selectedCommunityId) {
       setRefreshPhotoId(selectedCommunityId);
     }
+  };
+
+  const getPhotoUrl = (communityId: string, defaultUrl?: string | null) => {
+    return communityPhotos[communityId] || defaultUrl || undefined;
   };
 
   return (
@@ -48,7 +112,7 @@ export const CommunityDropdown = ({
                   <>
                     <div className="relative">
                       <Avatar className="h-5 w-5">
-                        <AvatarImage src={photoUrl || selectedCommunity.telegram_photo_url || undefined} />
+                        <AvatarImage src={photoUrl || getPhotoUrl(selectedCommunity.id, selectedCommunity.telegram_photo_url)} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
                           {selectedCommunity.name?.charAt(0)}
                         </AvatarFallback>
@@ -85,7 +149,7 @@ export const CommunityDropdown = ({
                 <SelectItem key={community.id} value={community.id || "community-fallback"}>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-5 w-5">
-                      <AvatarImage src={community.telegram_photo_url || undefined} />
+                      <AvatarImage src={getPhotoUrl(community.id, community.telegram_photo_url)} />
                       <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
                         {community.name?.charAt(0)}
                       </AvatarFallback>

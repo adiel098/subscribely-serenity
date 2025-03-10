@@ -4,6 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { routeTelegramWebhook } from "./router/webhookRouter.ts";
 import { corsHeaders } from "./cors.ts";
 import { createLogger } from "./services/loggingService.ts";
+import { handlePaymentCallback } from "./handlers/paymentCallbackHandler.ts";
+import { handleUpdate } from "./handlers/updateHandler.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests

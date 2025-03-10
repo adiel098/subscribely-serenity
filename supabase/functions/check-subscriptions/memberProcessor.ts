@@ -67,8 +67,14 @@ export async function processMember(
   // Check if subscription has expired
   if (msUntilExpiration <= 0) {
     console.log(`⚠️ EXPIRED: Processing expiration for member ${member.telegram_user_id}`);
-    // Pass the result by reference so it can be updated
+    
+    // CRITICAL FIX: Pass the result by reference so it can be updated throughout the process
+    // This ensures we can track status changes and debug issues
     await handleExpiredSubscription(supabase, member, botSettings, result);
+    
+    // Debug log the final result for expired members
+    console.log(`🔍 MEMBER PROCESSOR: Final result for expired member:`, result);
+    
     return result;
   }
 

@@ -58,7 +58,7 @@ export class TelegramMemberManager {
       const unbanResult = await this.unbanChatMember(chatId, userId);
       console.log('[Member Manager] Unban result:', unbanResult);
 
-      // Update the database status - preserve the reason!
+      // CRITICAL FIX: Update the database with the correct reason/status
       const updateSuccess = await this.updateMemberStatus(userId, chatId, reason);
       
       if (!updateSuccess) {
@@ -178,7 +178,7 @@ export class TelegramMemberManager {
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: reason // Use the reason as the status - important fix!
+          subscription_status: reason // CRITICAL FIX: Use the specific reason passed in
         })
         .eq('telegram_user_id', userId)
         .eq('community_id', chatId);

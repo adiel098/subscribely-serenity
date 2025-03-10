@@ -61,15 +61,15 @@ export async function removeMemberFromChat(
         return false;
       }
 
-      // IMPORTANT FIX: Update member status in database with the CORRECT reason
-      // This ensures 'expired' reason is properly preserved
+      // CRITICAL FIX: Update member status in database using the provided reason parameter
+      // This ensures the 'expired' reason is properly maintained instead of being overwritten
       console.log(`⚠️ MEMBER REMOVAL: Updating database with status "${reason}"`);
       
       const { error: updateError } = await supabase
         .from("telegram_chat_members")
         .update({
           is_active: false,
-          subscription_status: reason // Important: Use the provided reason
+          subscription_status: reason // Critical: Use the provided reason parameter
         })
         .eq("id", member.id);
 

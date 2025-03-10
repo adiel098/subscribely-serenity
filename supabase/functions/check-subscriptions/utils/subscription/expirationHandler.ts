@@ -17,7 +17,7 @@ export async function handleExpiredSubscription(
   result: any
 ): Promise<void> {
   if (!member || !member.id || !member.telegram_user_id || !member.community_id) {
-    console.error("Invalid member data:", member);
+    console.error("❌ Invalid member data:", member);
     result.action = "error";
     result.details = "Invalid member data";
     return;
@@ -28,30 +28,37 @@ export async function handleExpiredSubscription(
   console.log(`📋 EXPIRATION HANDLER: Full bot settings: ${JSON.stringify(botSettings, null, 2)}`);
   console.log(`⚙️ EXPIRATION HANDLER: Auto remove expired: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
 
-  result.action = "expiration";
-  result.details = "Subscription expired";
+  try {
+    result.action = "expiration";
+    result.details = "Subscription expired";
 
-  // Step 1: Update member status in database
-  const statusUpdated = await updateMemberStatusToExpired(supabase, member, result);
-  console.log(`EXPIRATION HANDLER: Status update result: ${statusUpdated ? "Success ✅" : "Failed ❌"}`);
+    // Step 1: Update member status in database - IMPORTANT: Do this first
+    const statusUpdated = await updateMemberStatusToExpired(supabase, member, result);
+    console.log(`EXPIRATION HANDLER: Status update result: ${statusUpdated ? "Success ✅" : "Failed ❌"}`);
 
-  // Step 2: Log the expiration in activity logs
-  const activityLogged = await logExpirationActivity(supabase, member, result);
-  console.log(`EXPIRATION HANDLER: Activity logging result: ${activityLogged ? "Success ✅" : "Failed ❌"}`);
+    // Step 2: Log the expiration in activity logs
+    const activityLogged = await logExpirationActivity(supabase, member, result);
+    console.log(`EXPIRATION HANDLER: Activity logging result: ${activityLogged ? "Success ✅" : "Failed ❌"}`);
 
-  // Step 3: Send expiration notification to member
-  const notificationSent = await sendExpirationNotification(supabase, member, botSettings, result);
-  console.log(`EXPIRATION HANDLER: Notification result: ${notificationSent ? "Success ✅" : "Failed ❌"}`);
+    // Step 3: Send expiration notification to member
+    const notificationSent = await sendExpirationNotification(supabase, member, botSettings, result);
+    console.log(`EXPIRATION HANDLER: Notification result: ${notificationSent ? "Success ✅" : "Failed ❌"}`);
 
-  // Step 4: Remove member from chat if auto-remove is enabled
-  if (botSettings.auto_remove_expired) {
-    console.log(`🚫 EXPIRATION HANDLER: Auto-remove is ENABLED - Attempting to remove user ${member.telegram_user_id} from chat`);
-    await removeMemberFromChat(supabase, member, result);
-    console.log(`🔄 EXPIRATION HANDLER: After removal process - Result details: ${result.details}`);
-  } else {
-    console.log(`ℹ️ EXPIRATION HANDLER: Auto-remove is DISABLED - User ${member.telegram_user_id} will remain in chat`);
+    // Step 4: Remove member from chat if auto-remove is enabled
+    if (botSettings.auto_remove_expired) {
+      console.log(`🚫 EXPIRATION HANDLER: Auto-remove is ENABLED - Attempting to remove user ${member.telegram_user_id} from chat`);
+      const removalResult = await removeMemberFromChat(supabase, member, result);
+      console.log(`🔄 EXPIRATION HANDLER: Member removal result: ${removalResult ? "Success ✅" : "Failed ❌"}`);
+      console.log(`🔄 EXPIRATION HANDLER: After removal process - Result details: ${result.details}`);
+    } else {
+      console.log(`ℹ️ EXPIRATION HANDLER: Auto-remove is DISABLED - User ${member.telegram_user_id} will remain in chat`);
+    }
+    
+    console.log(`🏁 EXPIRATION HANDLER: Completed handling expired subscription for user ${member.telegram_user_id}`);
+    console.log(`📋 EXPIRATION HANDLER: Final result object: ${JSON.stringify(result, null, 2)}`);
+  } catch (error) {
+    console.error(`❌ EXPIRATION HANDLER: Unexpected error: ${error.message}`, error);
+    result.action = "error";
+    result.details = `Error handling expired subscription: ${error.message}`;
   }
-  
-  console.log(`🏁 EXPIRATION HANDLER: Completed handling expired subscription for user ${member.telegram_user_id}`);
-  console.log(`📋 EXPIRATION HANDLER: Final result object: ${JSON.stringify(result, null, 2)}`);
 }

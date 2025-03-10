@@ -11,7 +11,8 @@ export async function updateMemberStatusToExpired(
   result: any
 ): Promise<boolean> {
   try {
-    console.log(`📝 Updating member status to 'expired' for user ${member.telegram_user_id}`);
+    console.log(`📝 STATUS SERVICE: Updating member status to 'expired' for user ${member.telegram_user_id}`);
+    console.log(`📝 STATUS SERVICE: Member ID: ${member.id}, Current status: ${member.subscription_status}`);
     
     const { error: updateError } = await supabase
       .from("telegram_chat_members")
@@ -21,15 +22,31 @@ export async function updateMemberStatusToExpired(
       .eq("id", member.id);
       
     if (updateError) {
-      console.error(`❌ Error updating member status: ${updateError.message}`);
+      console.error(`❌ STATUS SERVICE: Error updating member status: ${updateError.message}`);
+      console.error(`❌ STATUS SERVICE: SQL error details: ${JSON.stringify(updateError)}`);
       result.details += `, failed to update status: ${updateError.message}`;
       return false;
     } else {
-      console.log(`✅ Successfully updated member status to 'expired'`);
+      console.log(`✅ STATUS SERVICE: Successfully updated member status to 'expired'`);
+      
+      // Verify the update was applied correctly
+      const { data: verifyData, error: verifyError } = await supabase
+        .from("telegram_chat_members")
+        .select("subscription_status")
+        .eq("id", member.id)
+        .single();
+        
+      if (verifyError) {
+        console.error(`❌ STATUS SERVICE: Error verifying status update: ${verifyError.message}`);
+      } else {
+        console.log(`✅ STATUS SERVICE: Verified status is now: ${verifyData?.subscription_status}`);
+      }
+      
       return true;
     }
   } catch (error) {
-    console.error(`❌ Error updating member status: ${error.message}`);
+    console.error(`❌ STATUS SERVICE: Error updating member status: ${error.message}`);
+    console.error(`❌ STATUS SERVICE: Error stack: ${error.stack}`);
     result.details += `, failed to update status: ${error.message}`;
     return false;
   }
@@ -44,7 +61,7 @@ export async function logExpirationActivity(
   result: any
 ): Promise<boolean> {
   try {
-    console.log(`📊 Logging expiration in activity logs for user ${member.telegram_user_id}`);
+    console.log(`📊 ACTIVITY LOG: Logging expiration in activity logs for user ${member.telegram_user_id}`);
     
     const { error: logError } = await supabase
       .from("subscription_activity_logs")
@@ -56,15 +73,15 @@ export async function logExpirationActivity(
       });
       
     if (logError) {
-      console.error(`❌ Error logging expiration: ${logError.message}`);
+      console.error(`❌ ACTIVITY LOG: Error logging expiration: ${logError.message}`);
       result.details += `, failed to log activity: ${logError.message}`;
       return false;
     } else {
-      console.log(`✅ Successfully logged expiration in activity logs`);
+      console.log(`✅ ACTIVITY LOG: Successfully logged expiration in activity logs`);
       return true;
     }
   } catch (error) {
-    console.error(`❌ Error logging expiration: ${error.message}`);
+    console.error(`❌ ACTIVITY LOG: Error logging expiration: ${error.message}`);
     result.details += `, failed to log activity: ${error.message}`;
     return false;
   }

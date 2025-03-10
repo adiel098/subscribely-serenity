@@ -63,7 +63,7 @@ export async function processMember(
   // Calculate exact milliseconds difference
   const msUntilExpiration = subscriptionEndDate.getTime() - now.getTime();
   
-  // Convert to days and use Math.floor for more accurate day count (was Math.ceil)
+  // Convert to days and use Math.floor for more accurate day count
   const daysUntilExpiration = Math.floor(msUntilExpiration / (1000 * 3600 * 24));
   
   // Hours for more detailed logging
@@ -78,6 +78,7 @@ export async function processMember(
   console.log(`   Hours until expiration: ${hoursUntilExpiration} hours`);
   console.log(`   Current subscription status: ${member.subscription_status}`);
   console.log(`   Has expired? ${msUntilExpiration <= 0 ? 'YES ⚠️' : 'NO ✅'}`);
+  console.log(`   Bot auto_remove_expired setting: ${botSettings.auto_remove_expired ? 'ENABLED ✅' : 'DISABLED ❌'}`);
 
   // Check if this member has already received notifications today to prevent duplicates
   const todayStart = new Date(now);
@@ -124,20 +125,24 @@ export async function processMember(
     
     if (notificationError) {
       console.error(`❌ MEMBER PROCESSOR: Error checking recent notifications: ${notificationError.message}`);
-    } else if (recentNotifications && recentNotifications.length > 0) {
+    } else if (recentNotifications && recentNotifications.length > 0 && recentNotifications.some(n => n.notification_type === 'expiration')) {
       result.action = "skip";
-      result.details = `Already sent notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
-      console.log(`⏭️ MEMBER PROCESSOR: Member ${member.telegram_user_id} already received notification today - skipping`);
+      result.details = `Already sent expiration notification today: ${recentNotifications.map(n => n.notification_type).join(', ')}`;
+      console.log(`⏭️ MEMBER PROCESSOR: Member ${member.telegram_user_id} already received expiration notification today - skipping`);
       return result;
     }
   }
 
-  // Check if subscription has expired - now comparing timestamps directly instead of days
+  // FIX: Check if subscription has expired - now properly checking and handling expired subscriptions
+  // We specifically check for subscriptions that are expired BUT still marked as active
   if (msUntilExpiration <= 0 && member.subscription_status === 'active') {
     // Subscription has expired
     console.log(`⚠️ EXPIRED: Member ${member.telegram_user_id}'s subscription has expired. Processing expiration...`);
     console.log(`   Expiration details: ${hoursUntilExpiration} hours overdue, status: ${member.subscription_status}`);
+    console.log(`   Auto-remove expired setting: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
+    
     await handleExpiredSubscription(supabase, member, botSettings, result);
+    console.log(`🔄 MEMBER PROCESSOR: After handleExpiredSubscription - Result action: ${result.action}, details: ${result.details}`);
     return result;
   }
 

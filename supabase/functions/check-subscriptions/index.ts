@@ -47,6 +47,7 @@ serve(async (req) => {
       queryParams = { community_id_param: community_id };
     }
 
+    console.log(`📊 Fetching members to check with params:`, JSON.stringify(queryParams));
     const { data: membersToCheck, error: memberError } = await supabase.rpc(
       "get_members_to_check_v2",
       queryParams
@@ -86,11 +87,15 @@ serve(async (req) => {
             continue;
           }
 
+          console.log(`📋 BOT SETTINGS for ${member.community_id}:`, JSON.stringify(botSettings, null, 2));
+          console.log(`⚙️ auto_remove_expired setting is: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
+
           // Process this member
           const result = await processMember(supabase, member, botSettings);
           logs.push(result);
           processedCount++;
           
+          console.log(`✅ Processed member ${member.telegram_user_id} with result: ${result.action} - ${result.details}`);
         } catch (memberProcessError) {
           console.error(
             `❌ Error processing member ${member.telegram_user_id}:`,

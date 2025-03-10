@@ -72,7 +72,7 @@ const Subscriptions = () => {
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
 
   return (
-    <div className="container max-w-6xl py-6 space-y-8">
+    <div className="space-y-8 py-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">

@@ -51,7 +51,7 @@ const PaymentMethods = () => {
   };
 
   return (
-    <div className="container max-w-6xl py-6 space-y-8 animate-fade-in">
+    <div className="space-y-8 py-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Payment Methods</h1>
         <p className="text-sm text-muted-foreground">

@@ -86,6 +86,8 @@ export const SubscribersTable = ({
         <TableHeader>
           <TableRow className="bg-muted/50">
             <TableHead className="font-medium text-xs">User</TableHead>
+            <TableHead className="font-medium text-xs">First Name</TableHead>
+            <TableHead className="font-medium text-xs">Last Name</TableHead>
             <TableHead className="font-medium text-xs">Telegram ID</TableHead>
             <TableHead className="font-medium text-xs">Subscription Plan</TableHead>
             <TableHead className="font-medium text-xs">Status</TableHead>
@@ -116,6 +118,12 @@ export const SubscribersTable = ({
                       )}
                     </span>
                   </div>
+                </TableCell>
+                <TableCell className="text-xs py-2">
+                  {subscriber.first_name || "-"}
+                </TableCell>
+                <TableCell className="text-xs py-2">
+                  {subscriber.last_name || "-"}
                 </TableCell>
                 <TableCell className="font-mono text-xs py-2">{subscriber.telegram_user_id}</TableCell>
                 <TableCell className="py-2">
@@ -191,7 +199,7 @@ export const SubscribersTable = ({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center">
+              <TableCell colSpan={9} className="h-32 text-center">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
                   <Users className="h-10 w-10 mb-2 opacity-50" />
                   <p className="text-sm">No subscribers found</p>

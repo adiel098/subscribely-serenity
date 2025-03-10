@@ -7,6 +7,8 @@ export interface Subscriber {
   id: string;
   telegram_user_id: string;
   telegram_username: string | null;
+  first_name: string | null; // Added first name
+  last_name: string | null;  // Added last name
   joined_at: string;
   last_active: string | null;
   subscription_start_date: string | null;
@@ -39,6 +41,10 @@ export const useSubscribers = (communityId: string) => {
             name,
             interval,
             price
+          ),
+          user_profile:telegram_mini_app_users(
+            first_name, 
+            last_name
           )
         `)
         .eq('community_id', communityId)
@@ -50,7 +56,24 @@ export const useSubscribers = (communityId: string) => {
       }
 
       console.log('Fetched subscribers:', data);
-      return data as Subscriber[];
+      
+      // Process the data to flatten user profile information
+      const processedData = data.map(subscriber => {
+        // Extract first_name and last_name from user_profile if available
+        const first_name = subscriber.user_profile?.[0]?.first_name || null;
+        const last_name = subscriber.user_profile?.[0]?.last_name || null;
+        
+        // Remove the user_profile array and add first_name and last_name directly
+        const { user_profile, ...rest } = subscriber;
+        
+        return {
+          ...rest,
+          first_name,
+          last_name
+        };
+      });
+
+      return processedData as Subscriber[];
     },
     enabled: Boolean(communityId),
   });

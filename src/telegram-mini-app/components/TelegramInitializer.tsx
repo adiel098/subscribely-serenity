@@ -15,144 +15,114 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
   const [isDevelopmentMode, setIsDevelopmentMode] = useState(false);
 
   useEffect(() => {
+    // Initialize Telegram WebApp
+    const initializeApp = () => {
+      try {
+        console.log('🚀 Initializing Telegram WebApp...');
+        
+        // Check if we're in development mode
+        const devEnvironment = isDevelopment();
+        setIsDevelopmentMode(devEnvironment);
+        console.log('🧪 Development mode:', devEnvironment);
+        
+        // Apply fullscreen immediately
+        applyFullScreen();
+        
+        // Initialize the WebApp
+        const initialized = initTelegramWebApp();
+        setTelegramInitialized(initialized);
+        console.log('📱 Telegram WebApp initialized:', initialized);
+        
+        // Ensure WebApp is ready
+        if (initialized && window.Telegram?.WebApp?.ready) {
+          console.log('🚀 Marking WebApp as ready');
+          window.Telegram.WebApp.ready();
+        }
+        
+        // Schedule additional fullscreen attempts to ensure it works
+        setTimeout(applyFullScreen, 100);
+        setTimeout(applyFullScreen, 500);
+        
+        // Inform parent component about initialization state
+        onInitialized(initialized, devEnvironment);
+        
+        return initialized;
+      } catch (e) {
+        console.error('💥 Error initializing Telegram WebApp:', e);
+        setTelegramInitialized(false);
+        onInitialized(false, isDevelopment());
+        return false;
+      }
+    };
+    
     // Apply aggressive fullscreen strategy
     const applyFullScreen = () => {
-      // Force fullscreen with multiple strategies
-      if (window.Telegram?.WebApp?.expand) {
-        console.log('📱 Forcing WebApp expansion (Promise-based)');
-        window.Telegram.WebApp.expand().then(() => {
-          console.log('📱 WebApp expansion successful');
-        }).catch(err => {
-          console.error('📱 WebApp expansion error:', err);
-        });
-      }
-      
-      // Apply CSS fullscreen fixes
-      document.documentElement.style.height = '100%';
-      document.documentElement.style.width = '100%';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.height = '100%';
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'auto';
-      document.body.style.margin = '0';
-      document.body.style.padding = '0';
-      
-      // Add classes to body for proper telegram mini app styling
-      document.body.classList.add('telegram-mini-app');
-      
-      // Platform-specific fixes
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      
-      if (isIOS) {
-        // iOS specific viewport fixes
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100vw';
-        document.body.style.height = '100vh';
-        document.body.classList.add('ios-scroll');
+      try {
+        console.log('📱 Applying fullscreen fixes');
         
-        // Add iOS viewport meta
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        if (viewportMeta) {
-          viewportMeta.setAttribute('content', 
-            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height');
+        // Force fullscreen with multiple strategies
+        if (window.Telegram?.WebApp?.expand) {
+          console.log('📱 Expanding WebApp');
+          window.Telegram.WebApp.expand();
         }
-      }
-      
-      if (isAndroid) {
-        // Android specific fixes
-        document.documentElement.style.position = 'absolute';
-        document.documentElement.style.top = '0';
-        document.documentElement.style.left = '0';
-        document.documentElement.style.right = '0';
-        document.documentElement.style.bottom = '0';
-      }
-      
-      // Fix any containers to full width
-      const containers = document.querySelectorAll('.container');
-      containers.forEach(container => {
-        (container as HTMLElement).style.maxWidth = '100%';
-        (container as HTMLElement).style.paddingLeft = '0';
-        (container as HTMLElement).style.paddingRight = '0';
-        (container as HTMLElement).style.margin = '0';
-      });
-      
-      // Apply viewport settings if available
-      if (window.Telegram?.WebApp?.setViewport) {
-        try {
-          window.Telegram.WebApp.setViewport();
-        } catch (e) {
-          console.error('📱 Error setting viewport:', e);
+        
+        // Call our utility function which applies various fixes
+        ensureFullScreen();
+        
+        // Apply basic CSS fullscreen fixes
+        document.documentElement.style.height = '100%';
+        document.documentElement.style.width = '100%';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.height = '100%';
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'auto';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        
+        // Add classes to body for proper telegram mini app styling
+        document.body.classList.add('telegram-mini-app');
+        
+        // Platform-specific fixes
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        if (isIOS) {
+          // iOS specific viewport fixes
+          document.body.classList.add('ios-scroll');
         }
+        
+        // Fix any containers to full width
+        const containers = document.querySelectorAll('.container');
+        containers.forEach(container => {
+          (container as HTMLElement).style.maxWidth = '100%';
+          (container as HTMLElement).style.margin = '0 auto';
+        });
+      } catch (e) {
+        console.error('💥 Error applying fullscreen:', e);
       }
-      
-      ensureFullScreen();
     };
     
-    // Apply immediately
-    applyFullScreen();
-    
-    // Initialize Telegram WebApp
-    const initialized = initTelegramWebApp();
-    setTelegramInitialized(initialized);
-    console.log('📱 Telegram WebApp initialized:', initialized);
-    
-    // Debug available Telegram WebApp properties
-    if (window.Telegram?.WebApp) {
-      console.log('📱 Available WebApp methods:', Object.keys(window.Telegram.WebApp));
-      console.log('📱 WebApp viewport height:', window.Telegram.WebApp.viewportHeight);
-      console.log('📱 WebApp isExpanded:', window.Telegram.WebApp.isExpanded);
-    }
-    
-    // Check if we're in development mode
-    const devEnvironment = isDevelopment();
-    setIsDevelopmentMode(devEnvironment);
-    
-    // Reapply fullscreen on timers
-    const fullScreenTimeouts = [100, 300, 500, 1000, 2000].map(delay => 
-      setTimeout(applyFullScreen, delay)
-    );
+    // Initialize immediately
+    initializeApp();
     
     // Handle orientation and resize events
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('📱 App became visible, reapplying fullscreen');
-        applyFullScreen();
-      }
-    };
-    
     const handleResize = () => {
-      console.log('📏 Window resize detected, ensuring fullscreen');
+      console.log('📏 Window resize detected');
       applyFullScreen();
     };
     
     const handleOrientationChange = () => {
       console.log('📱 Orientation change detected');
-      // Multiple calls to catch viewport adjustments
       applyFullScreen();
-      setTimeout(applyFullScreen, 100);
-      setTimeout(applyFullScreen, 300);
     };
     
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleOrientationChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Mark app as ready
-    if (window.Telegram?.WebApp?.ready) {
-      console.log('🚀 Marking WebApp as ready');
-      window.Telegram.WebApp.ready();
-    }
-    
-    // Inform parent component about initialization state
-    onInitialized(initialized, devEnvironment);
     
     // Cleanup
     return () => {
-      fullScreenTimeouts.forEach(clearTimeout);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [onInitialized]);
 

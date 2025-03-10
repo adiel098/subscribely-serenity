@@ -34,37 +34,47 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
       // If we have a custom link, use it, otherwise use the community ID
       const startParam = custom_link || community.id;
       
-      // Check if Telegram WebApp and openTelegramLink method are available
-      if (window.Telegram?.WebApp?.openTelegramLink) {
-        // Construct the mini app URL with the start parameter
-        const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
-        const miniAppUrl = `https://t.me/${botUsername}?start=${startParam}`;
+      // Ensure we have a bot username from environment or use a fallback
+      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 
+                         process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 
+                         'TelegramBotUsername';
+      
+      // Log available objects and parameters for debugging
+      console.log("📱 Telegram WebApp available:", !!window.Telegram?.WebApp);
+      console.log("🔑 Start parameter:", startParam);
+      console.log("🤖 Bot username:", botUsername);
+      
+      // Check if Telegram WebApp is available
+      if (window.Telegram?.WebApp) {
+        // Direct deep link to the bot with start parameter
+        const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
+        console.log("🔗 Opening Telegram link:", deepLink);
         
-        console.log("🔗 Opening Telegram link:", miniAppUrl);
-        window.Telegram.WebApp.openTelegramLink(miniAppUrl);
-      } else {
-        // Alternative approach when openTelegramLink is not available
-        console.error("❌ openTelegramLink method not available");
-        
-        // Try to use window.open as a fallback
-        if (typeof window !== 'undefined') {
-          const botUsername = process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 'YourBotUsername';
-          const miniAppUrl = `https://t.me/${botUsername}?start=${startParam}`;
-          window.open(miniAppUrl, '_blank');
-          console.log("🔗 Attempted to open via window.open:", miniAppUrl);
+        if (window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(deepLink);
         } else {
-          toast({
-            title: "Cannot open link",
-            description: "The Telegram WebApp API is not available",
-            variant: "destructive"
-          });
+          // Fallback if openTelegramLink is not available
+          console.log("⚠️ openTelegramLink not available, trying alternative method");
+          
+          // Try to use window.open as a fallback
+          window.open(deepLink, '_blank');
         }
+      } else {
+        // Handle case where Telegram WebApp is not available (browser environment)
+        console.warn("⚠️ Telegram WebApp not available, using direct link");
+        const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
+        window.open(deepLink, '_blank');
+        
+        toast({
+          title: "Opening in Telegram",
+          description: "Please complete this action in Telegram",
+        });
       }
     } catch (error) {
       console.error("❌ Error opening link:", error);
       toast({
         title: "Error",
-        description: "Failed to open the community page",
+        description: "Failed to open the community page. Please try again.",
         variant: "destructive"
       });
     }
@@ -129,7 +139,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm"
           >
             <UserPlus className="mr-2 h-4 w-4" />
-            Join Now 🚀
+            Join Community
           </Button>
         </CardFooter>
       </Card>

@@ -9,10 +9,20 @@
 export const initTelegramWebApp = (): boolean => {
   try {
     if (window.Telegram?.WebApp) {
-      console.log('📱 WebApp is already initialized');
+      console.log('📱 WebApp is available, version:', window.Telegram.WebApp.version);
+      
+      // Log available WebApp methods
+      console.log('📱 Available WebApp methods:', Object.keys(window.Telegram.WebApp));
       
       // Force expand to full screen with multiple attempts
       forceExpandToFullScreen();
+      
+      // Check if we have initData
+      if (window.Telegram.WebApp.initData) {
+        console.log('📱 WebApp has initData:', window.Telegram.WebApp.initData.substring(0, 50) + '...');
+      } else {
+        console.warn('⚠️ WebApp initData is empty');
+      }
       
       // Set the correct viewport
       if (window.Telegram.WebApp.setViewport) {
@@ -32,7 +42,42 @@ export const initTelegramWebApp = (): boolean => {
       
       return true;
     } else {
-      console.log('❌ WebApp object is not available');
+      console.warn('❌ WebApp object is not available');
+      
+      // When running in browser development mode
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('🧪 Running in development mode, creating mock WebApp object');
+        
+        // Create mock WebApp object for development
+        window.Telegram = {
+          WebApp: {
+            ready: () => console.log('Mock WebApp.ready() called'),
+            expand: () => console.log('Mock WebApp.expand() called'),
+            isExpanded: true,
+            viewportHeight: window.innerHeight,
+            viewportStableHeight: window.innerHeight,
+            version: '6.0',
+            platform: 'web',
+            initData: '',
+            initDataUnsafe: {
+              user: {
+                id: 123456789,
+                first_name: 'Test',
+                last_name: 'User',
+                username: 'testuser',
+                language_code: 'en'
+              }
+            },
+            openTelegramLink: (url) => {
+              console.log('Mock WebApp.openTelegramLink() called with:', url);
+              window.open(url, '_blank');
+            }
+          }
+        };
+        
+        return true;
+      }
+      
       return false;
     }
   } catch (error) {
@@ -45,25 +90,31 @@ export const initTelegramWebApp = (): boolean => {
  * Force the WebApp to expand with multiple attempts to ensure it works
  */
 export const forceExpandToFullScreen = () => {
-  if (!window.Telegram?.WebApp?.expand) return;
-  
-  // Immediate expand (async Promise-based version)
-  console.log('📏 Forcing full screen expansion (first attempt)');
-  window.Telegram.WebApp.expand().then(() => {
-    console.log('📱 Initial expansion successful');
-  }).catch(err => {
-    console.error('📱 Initial expansion error:', err);
-  });
-  
-  // Schedule multiple expand attempts with increasing delays
-  [50, 100, 300, 500, 1000].forEach(delay => {
-    setTimeout(() => {
-      if (window.Telegram?.WebApp?.expand) {
-        console.log(`📏 Re-expanding WebApp after ${delay}ms`);
-        window.Telegram.WebApp.expand().catch(err => {
-          console.error(`📱 Expansion error after ${delay}ms:`, err);
-        });
-      }
-    }, delay);
-  });
+  try {
+    if (!window.Telegram?.WebApp?.expand) {
+      console.warn('⚠️ WebApp.expand is not available');
+      return;
+    }
+    
+    // Check if already expanded
+    if (window.Telegram.WebApp.isExpanded) {
+      console.log('📱 WebApp is already expanded');
+    } else {
+      // Immediate expand
+      console.log('📏 Forcing full screen expansion (first attempt)');
+      window.Telegram.WebApp.expand();
+      
+      // Schedule multiple expand attempts with increasing delays
+      [50, 100, 300, 500, 1000].forEach(delay => {
+        setTimeout(() => {
+          if (window.Telegram?.WebApp?.expand && !window.Telegram.WebApp.isExpanded) {
+            console.log(`📏 Re-expanding WebApp after ${delay}ms`);
+            window.Telegram.WebApp.expand();
+          }
+        }, delay);
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error expanding WebApp:', error);
+  }
 };

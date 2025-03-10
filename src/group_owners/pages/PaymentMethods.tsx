@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -95,7 +96,7 @@ const PaymentMethods = () => {
         </CardHeader>
         <CardContent>
           <motion.div 
-            className="grid gap-6 md:grid-cols-3 max-w-3xl mx-auto"
+            className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto"
             variants={container}
             initial="hidden"
             animate="show"

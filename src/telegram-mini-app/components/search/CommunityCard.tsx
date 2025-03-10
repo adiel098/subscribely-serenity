@@ -34,11 +34,9 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
       // If we have a custom link, use it, otherwise use the community ID
       const startParam = custom_link || community.id;
       
-      // Get bot username from environment variables
-      const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 
-                          process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 
-                          process.env.REACT_APP_TELEGRAM_BOT_USERNAME || 
-                          'TelegramBotUsername';
+      // IMPORTANT: In Vite, environment variables MUST be prefixed with VITE_
+      // and accessed through import.meta.env instead of process.env
+      const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'membifybot';
       
       // Log available parameters for debugging
       console.log("🔗 Subscribe button clicked for community:", name);

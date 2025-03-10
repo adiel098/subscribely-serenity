@@ -4,3 +4,4 @@ export { initTelegramWebApp } from "./telegram/webAppInitializer";
 export { ensureFullScreen } from "./telegram/displayUtils";
 export { isDevelopment } from "./telegram/environmentUtils";
 export { isValidTelegramId } from "./telegram/idValidation";
+export { getBotUsername } from "./telegram/botUsernameUtil";

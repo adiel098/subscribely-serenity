@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -90,7 +89,7 @@ const PaymentMethods = () => {
             <LayoutGrid className="h-5 w-5 text-indigo-600" />
             Available Payment Gateways
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             Enable and configure payment options for your members
           </CardDescription>
         </CardHeader>

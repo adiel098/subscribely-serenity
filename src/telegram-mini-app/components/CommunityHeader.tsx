@@ -104,7 +104,9 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
       ) : (
         displayDescription ? (
           <div className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto px-4">
-            <p>{isExpanded ? displayDescription : shortDescription}</p>
+            <div className={`${isExpanded ? '' : 'line-clamp-3'} relative`}>
+              <p>{displayDescription}</p>
+            </div>
             
             {isLongDescription && (
               <Button 

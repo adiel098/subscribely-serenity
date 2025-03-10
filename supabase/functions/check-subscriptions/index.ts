@@ -12,7 +12,18 @@ serve(async (req) => {
   }
 
   try {
-    console.log("🔄 Starting subscription check process...");
+    // Parse request body for community-specific check
+    let community_id = null;
+    if (req.method === "POST") {
+      try {
+        const requestData = await req.json();
+        community_id = requestData.community_id || null;
+      } catch (parseError) {
+        console.log("No community ID provided in request, will check all communities");
+      }
+    }
+
+    console.log(`🔄 Starting subscription check process${community_id ? ` for community: ${community_id}` : ''}`);
     
     // Create a Supabase client with the service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -23,13 +34,22 @@ serve(async (req) => {
     await logSystemEvent(
       supabase,
       "subscription_check_start", 
-      "Starting scheduled subscription check",
-      { timestamp: new Date().toISOString() }
+      `Starting ${community_id ? 'targeted' : 'scheduled'} subscription check`,
+      { 
+        community_id,
+        timestamp: new Date().toISOString()
+      }
     );
 
     // Use RPC to call the PostgreSQL function
+    let queryParams = {};
+    if (community_id) {
+      queryParams = { community_id_param: community_id };
+    }
+
     const { data: membersToCheck, error: memberError } = await supabase.rpc(
-      "get_members_to_check_v2" // Using the function that returns text for subscription_status
+      "get_members_to_check_v2",
+      queryParams
     );
 
     if (memberError) {
@@ -85,7 +105,7 @@ serve(async (req) => {
         }
       }
     } else {
-      console.log("ℹ️ No members to process at this time");
+      console.log(`ℹ️ No members to process${community_id ? ` for community ${community_id}` : ''} at this time`);
     }
 
     // Update the database with a status log
@@ -94,6 +114,7 @@ serve(async (req) => {
       "subscription_check",
       `Processed ${processedCount} of ${membersToCheck?.length || 0} members`,
       { 
+        community_id,
         logs,
         processedCount,
         totalMembers: membersToCheck?.length || 0,

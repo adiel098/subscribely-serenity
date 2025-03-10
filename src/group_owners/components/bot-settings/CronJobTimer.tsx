@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 export const CronJobTimer = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -15,6 +16,7 @@ export const CronJobTimer = () => {
   const [cronStatus, setCronStatus] = useState<string | null>(null);
   const [processedMembers, setProcessedMembers] = useState<number | null>(null);
   const { toast } = useToast();
+  const { selectedCommunityId } = useCommunityContext();
 
   const fetchLatestRunStatus = async () => {
     try {
@@ -77,12 +79,16 @@ export const CronJobTimer = () => {
       setIsLoading(true);
       toast({
         title: "Triggering subscription check...",
-        description: "Please wait while we process the request.",
+        description: selectedCommunityId 
+          ? `Checking subscriptions for this community.` 
+          : "Checking all subscriptions.",
         variant: "default"
       });
       
+      const payload = selectedCommunityId ? { community_id: selectedCommunityId } : {};
+      
       const { error } = await supabase.functions.invoke("check-subscriptions", {
-        body: {}
+        body: payload
       });
 
       if (error) {
@@ -96,7 +102,9 @@ export const CronJobTimer = () => {
 
       toast({
         title: "Subscription check triggered",
-        description: "The check has been manually triggered.",
+        description: selectedCommunityId 
+          ? "The check has been manually triggered for this community." 
+          : "The check has been manually triggered for all communities.",
         variant: "default"
       });
 
@@ -182,7 +190,7 @@ export const CronJobTimer = () => {
               "h-4 w-4 mr-1",
               isLoading && "animate-spin"
             )} />
-            Run Now
+            {selectedCommunityId ? "Check This Community" : "Check All"}
           </Button>
         </div>
         <CardDescription className="text-purple-700 font-medium">

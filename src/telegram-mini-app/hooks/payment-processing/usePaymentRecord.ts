@@ -157,17 +157,19 @@ export const usePaymentRecord = () => {
       
       console.log(`[usePaymentRecord] Calculated subscription end date: ${endDate.toISOString()}`);
       
-      // Immediately create or update the member record with standardized status values
+      // Create member data object
       const memberData = {
         telegram_user_id: telegramUserId,
-        telegram_username: username,
+        telegram_username: username || null,
         community_id: communityId,
         subscription_plan_id: planId,
         subscription_start_date: startDate.toISOString(),
         subscription_end_date: endDate.toISOString(),
-        subscription_status: 'active' as const,
+        subscription_status: 'active',
         is_active: true,
-        joined_at: new Date().toISOString()
+        joined_at: new Date().toISOString(),
+        first_name: firstName || null,
+        last_name: lastName || null
       };
       
       console.log('[usePaymentRecord] Creating/updating member record with data:', JSON.stringify(memberData, null, 2));
@@ -184,31 +186,39 @@ export const usePaymentRecord = () => {
         console.warn('[usePaymentRecord] Error checking for existing member:', memberError);
       }
       
+      let memberId;
+      
       // Create or update the member record
       if (existingMember?.id) {
         console.log('[usePaymentRecord] Updating existing member with ID:', existingMember.id);
         
-        const { error: updateError } = await supabase
+        const { data: updatedMember, error: updateError } = await supabase
           .from('telegram_chat_members')
           .update(memberData)
-          .eq('id', existingMember.id);
+          .eq('id', existingMember.id)
+          .select('id')
+          .single();
           
         if (updateError) {
           console.error('[usePaymentRecord] Error updating member:', updateError);
         } else {
           console.log('[usePaymentRecord] Member updated successfully');
+          memberId = updatedMember.id;
         }
       } else {
         console.log('[usePaymentRecord] Creating new member record');
         
-        const { error: insertError } = await supabase
+        const { data: newMember, error: insertError } = await supabase
           .from('telegram_chat_members')
-          .insert(memberData);
+          .insert(memberData)
+          .select('id')
+          .single();
           
         if (insertError) {
           console.error('[usePaymentRecord] Error creating member:', insertError);
         } else {
           console.log('[usePaymentRecord] Member created successfully');
+          memberId = newMember.id;
         }
       }
 
@@ -220,13 +230,22 @@ export const usePaymentRecord = () => {
         `Method: ${paymentMethod}, Amount: ${price}, Plan ID: ${planId}`
       );
 
+      // Log membership activity
+      await logSubscriptionActivity(
+        telegramUserId,
+        communityId,
+        'member_added',
+        `Member added after payment. Plan: ${planId}, Payment ID: ${data?.id}`
+      );
+
       logPaymentAction('Payment recorded successfully', data);
       
       // Return the recorded payment data, including any updated invite link
       return { 
         success: true, 
         paymentData: data,
-        inviteLink: data?.invite_link || inviteLink 
+        inviteLink: data?.invite_link || inviteLink,
+        memberId
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error recording payment";

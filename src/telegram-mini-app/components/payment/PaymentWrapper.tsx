@@ -36,6 +36,9 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
     setSelectedPaymentMethod(method);
   };
 
+  // Log Telegram user data for debugging
+  console.log('[PaymentWrapper] Telegram user data:', telegramUser);
+
   return (
     <>
       {showPaymentMethods && selectedPlan && !showSuccess && (

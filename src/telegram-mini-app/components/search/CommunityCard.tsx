@@ -58,9 +58,8 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
     }
   };
   
-  // Default description text if none is available
-  const defaultDescription = "Join this community to access exclusive content and connect with members. ✨";
-  const descriptionText = description || defaultDescription;
+  // Don't use default description text anymore - only show if description exists
+  const descriptionText = description || "";
   
   // Check if description is long (more than 100 characters)
   const isLongDescription = descriptionText.length > 100;
@@ -126,24 +125,26 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         </CardHeader>
         
         <CardContent className="pb-2">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            {isExpanded ? descriptionText : shortDescription}
-            
-            {isLongDescription && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={toggleExpand}
-                className="px-2 py-0 h-6 ml-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-              >
-                {isExpanded ? (
-                  <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
-                ) : (
-                  <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
-                )}
-              </Button>
-            )}
-          </div>
+          {descriptionText ? (
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              {isExpanded ? descriptionText : shortDescription}
+              
+              {isLongDescription && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleExpand}
+                  className="px-2 py-0 h-6 ml-1 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                >
+                  {isExpanded ? (
+                    <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
+                  ) : (
+                    <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
+                  )}
+                </Button>
+              )}
+            </div>
+          ) : null}
         </CardContent>
         
         <CardFooter className="pt-2 flex justify-between items-center">

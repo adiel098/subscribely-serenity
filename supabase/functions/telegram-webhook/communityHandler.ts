@@ -1,8 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createLogger } from './services/loggingService.ts';
 
 export async function findCommunityById(supabase: ReturnType<typeof createClient>, communityId: string) {
+  const logger = createLogger(supabase, 'COMMUNITY-HANDLER');
+  
   try {
-    console.log(`[COMMUNITY-HANDLER] 🔍 Looking up community by ID: ${communityId}`);
+    await logger.info(`🔍 Looking up community by ID: ${communityId}`);
+    
     const { data: community, error } = await supabase
       .from('communities')
       .select('*')
@@ -10,21 +14,24 @@ export async function findCommunityById(supabase: ReturnType<typeof createClient
       .single();
 
     if (error) {
-      console.error('[COMMUNITY-HANDLER] ❌ Error fetching community by ID:', error);
+      await logger.error(`❌ Error fetching community by ID: ${communityId}`, error);
       throw error;
     }
 
-    console.log(`[COMMUNITY-HANDLER] ✅ Found community by ID: ${community?.name || 'Unknown'}`);
+    await logger.success(`✅ Found community by ID: ${community?.name || 'Unknown'}`);
     return community;
   } catch (error) {
-    console.error('[COMMUNITY-HANDLER] ❌ Error in findCommunityById:', error);
+    await logger.error(`❌ Error in findCommunityById for ID: ${communityId}`, error);
     throw error;
   }
 }
 
 export async function findCommunityByCustomLink(supabase: ReturnType<typeof createClient>, customLink: string) {
+  const logger = createLogger(supabase, 'COMMUNITY-HANDLER');
+  
   try {
-    console.log(`[COMMUNITY-HANDLER] 🔍 Looking up community by custom link: ${customLink}`);
+    await logger.info(`🔍 Looking up community by custom link: ${customLink}`);
+    
     const { data: community, error } = await supabase
       .from('communities')
       .select('*')
@@ -32,34 +39,42 @@ export async function findCommunityByCustomLink(supabase: ReturnType<typeof crea
       .single();
 
     if (error) {
-      console.error('[COMMUNITY-HANDLER] ❌ Error fetching community by custom link:', error);
+      await logger.error(`❌ Error fetching community by custom link: ${customLink}`, error);
       return null;
     }
 
     if (community) {
-      console.log(`[COMMUNITY-HANDLER] ✅ Found community by custom link: ${community.name}, ID: ${community.id}`);
+      await logger.success(`✅ Found community by custom link: ${customLink}, ID: ${community.id}, Name: ${community.name}`);
     } else {
-      console.log(`[COMMUNITY-HANDLER] ⚠️ No community found with custom link: ${customLink}`);
+      await logger.warn(`⚠️ No community found with custom link: ${customLink}`);
     }
     
     return community;
   } catch (error) {
-    console.error('[COMMUNITY-HANDLER] ❌ Error in findCommunityByCustomLink:', error);
+    await logger.error(`❌ Error in findCommunityByCustomLink for link: ${customLink}`, error);
     return null;
   }
 }
 
 export async function findCommunityByIdOrLink(supabase: ReturnType<typeof createClient>, idOrLink: string) {
+  const logger = createLogger(supabase, 'COMMUNITY-HANDLER');
+  
   // Check if it's a UUID first
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
   
-  console.log(`[COMMUNITY-HANDLER] 🔍 Checking if ${idOrLink} is UUID: ${isUUID}`);
+  await logger.info(`🔍 Checking if '${idOrLink}' is UUID: ${isUUID}`);
   
   if (isUUID) {
     return findCommunityById(supabase, idOrLink);
   }
   
   // Otherwise, try to find by custom link
-  console.log(`[COMMUNITY-HANDLER] 🔍 Looking up as custom link: ${idOrLink}`);
-  return findCommunityByCustomLink(supabase, idOrLink);
+  await logger.info(`🔍 Looking up as custom link: ${idOrLink}`);
+  const community = await findCommunityByCustomLink(supabase, idOrLink);
+  
+  if (!community) {
+    await logger.warn(`⚠️ No community found for ID or link: ${idOrLink}`);
+  }
+  
+  return community;
 }

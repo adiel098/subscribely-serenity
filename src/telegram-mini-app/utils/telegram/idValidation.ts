@@ -67,3 +67,19 @@ export const isUUID = (value: string | null | undefined): boolean => {
   
   return isValid;
 };
+
+/**
+ * Normalize a custom link by removing spaces and converting to lowercase
+ */
+export const normalizeCustomLink = (link: string | null | undefined): string | null => {
+  if (!link) return null;
+  
+  // Remove spaces and convert to lowercase
+  const normalized = link.trim().toLowerCase();
+  
+  if (isValidCustomLink(normalized)) {
+    return normalized;
+  }
+  
+  return null;
+};

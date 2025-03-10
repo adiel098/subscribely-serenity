@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { logTelegramEvent } from '../eventLogger.ts';
 import { handleStartCommand } from './commandHandler.ts';
@@ -9,13 +8,14 @@ export async function handleNewMessage(supabase: ReturnType<typeof createClient>
     
     const message = update.message;
     if (message?.text?.startsWith('/start')) {
+      console.log('📨 Detected /start command, forwarding to handler');
       await handleStartCommand(supabase, message, context.BOT_TOKEN);
       return;
     }
     
     await logTelegramEvent(supabase, 'new_message', update);
   } catch (error) {
-    console.error('Error in handleNewMessage:', error);
+    console.error('❌ Error in handleNewMessage:', error);
     throw error;
   }
 }

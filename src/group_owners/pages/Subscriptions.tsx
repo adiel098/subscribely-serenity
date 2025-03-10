@@ -73,7 +73,7 @@ const Subscriptions = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -98,7 +98,7 @@ const Subscriptions = () => {
       >
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <SparklesIcon className="h-5 w-5 text-primary" />
+            <SparklesIcon className="h-5 w-5 text-indigo-600" />
             Subscription Plans
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -111,7 +111,7 @@ const Subscriptions = () => {
         >
           <Button 
             onClick={handleCreatePlan} 
-            className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-300"
+            className="bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all duration-300"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create Plan
@@ -124,14 +124,14 @@ const Subscriptions = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50"
+          className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-indigo-200 rounded-lg bg-indigo-50/50"
         >
-          <PackagePlus className="h-12 w-12 text-gray-400 mb-4" />
+          <PackagePlus className="h-12 w-12 text-indigo-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No subscription plans yet</h3>
           <p className="text-gray-500 text-center mb-6 max-w-md">
             Create your first subscription plan to start offering premium access to your community.
           </p>
-          <Button onClick={handleCreatePlan} className="bg-primary hover:bg-primary/90 shadow-md">
+          <Button onClick={handleCreatePlan} className="bg-indigo-600 hover:bg-indigo-700 shadow-md">
             <Plus className="h-4 w-4 mr-2" />
             Create Your First Plan
           </Button>

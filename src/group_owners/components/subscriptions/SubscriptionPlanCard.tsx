@@ -42,12 +42,12 @@ export const SubscriptionPlanCard = ({
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`group relative overflow-hidden border-2 hover:border-primary/40 transition-all duration-300 animate-fade-in bg-gradient-to-br h-full flex flex-col ${intervalColors[plan.interval]}`}>
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/50 to-primary"></div>
+      <Card className="group relative overflow-hidden border-2 hover:border-indigo-300 transition-all duration-300 animate-fade-in bg-gradient-to-br from-white to-indigo-50/30 h-full flex flex-col shadow-sm hover:shadow-md">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
         
         {/* Decorative background elements */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-xl pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-indigo-100/30 rounded-full blur-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-100/30 rounded-full blur-xl pointer-events-none"></div>
         
         {/* Action Buttons - Enhanced styling */}
         <div className="absolute top-3 right-3 flex gap-2 z-10">
@@ -91,6 +91,12 @@ export const SubscriptionPlanCard = ({
         </div>
         
         <div className="p-8 flex flex-col flex-grow relative z-10">
+          <div className="mb-2">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${intervalColors[plan.interval]}`}>
+              {intervalLabels[plan.interval]}
+            </span>
+          </div>
+          
           <PlanCardHeader 
             name={plan.name}
             price={plan.price}

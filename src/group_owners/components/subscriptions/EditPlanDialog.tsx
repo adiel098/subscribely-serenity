@@ -74,10 +74,10 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-gray-50 border-primary/10 shadow-lg">
+      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-indigo-50/30 border-indigo-100 shadow-lg">
         <DialogHeader className="space-y-3 pb-6">
           <DialogTitle className="text-2xl flex items-center gap-2">
-            <SparklesIcon className="h-6 w-6 text-primary animate-pulse" />
+            <SparklesIcon className="h-6 w-6 text-indigo-600 animate-pulse" />
             Edit Subscription Plan
           </DialogTitle>
           <DialogDescription className="text-base">
@@ -93,7 +93,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
               id="edit-name" 
               value={planData.name}
               onChange={e => setPlanData({ ...planData, name: e.target.value })}
-              className="text-lg border-gray-200 focus:border-primary/50 shadow-sm"
+              className="text-lg border-indigo-100 focus:border-indigo-300 shadow-sm"
             />
           </div>
           <div className="grid gap-2">
@@ -102,7 +102,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
               id="edit-description" 
               value={planData.description}
               onChange={e => setPlanData({ ...planData, description: e.target.value })}
-              className="min-h-[100px] text-base border-gray-200 focus:border-primary/50 shadow-sm"
+              className="min-h-[100px] text-base border-indigo-100 focus:border-indigo-300 shadow-sm"
             />
           </div>
           
@@ -116,7 +116,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
                   type="number" 
                   value={planData.price}
                   onChange={e => setPlanData({ ...planData, price: e.target.value })}
-                  className="text-lg pl-8 border-gray-200 focus:border-primary/50 shadow-sm"
+                  className="text-lg pl-8 border-indigo-100 focus:border-indigo-300 shadow-sm"
                 />
               </div>
             </div>
@@ -126,7 +126,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
                 value={planData.interval}
                 onValueChange={(value: any) => setPlanData({ ...planData, interval: value })}
               >
-                <SelectTrigger id="edit-interval" className="border-gray-200 focus:border-primary/50 shadow-sm">
+                <SelectTrigger id="edit-interval" className="border-indigo-100 focus:border-indigo-300 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -148,11 +148,11 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
                 value={newFeature}
                 onChange={e => setNewFeature(e.target.value)}
                 onKeyPress={e => e.key === "Enter" && handleAddFeature()}
-                className="border-gray-200 focus:border-primary/50 shadow-sm"
+                className="border-indigo-100 focus:border-indigo-300 shadow-sm"
               />
               <Button 
                 onClick={handleAddFeature}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 <span className="mr-1">+</span> Add
               </Button>
@@ -176,7 +176,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
           >
             <Button 
               onClick={handleUpdatePlan}
-              className="gap-2 bg-gradient-to-r from-primary to-primary/90 shadow-md"
+              className="gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md"
               disabled={!planData.name || !planData.price || updatePlan.isPending}
             >
               <Zap className="h-4 w-4" />

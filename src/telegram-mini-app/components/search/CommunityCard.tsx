@@ -57,6 +57,9 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
     }
   };
   
+  // Default description text if none is available
+  const defaultDescription = "Join this community to access exclusive content and connect with members. ✨";
+  
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -105,7 +108,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
         
         <CardContent className="pb-2">
           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-            {description || "Join this community to access exclusive content and connect with members. ✨"}
+            {description || defaultDescription}
           </p>
         </CardContent>
         

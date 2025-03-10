@@ -76,6 +76,13 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           
           <AccordionContent className="px-4 pb-4">
             <div className="text-sm space-y-4">
+              {/* Community Description */}
+              {subscription.community.description && (
+                <div className="text-gray-600 pb-2 pt-1 text-sm italic border-l-2 border-gray-200 pl-2">
+                  "{subscription.community.description}"
+                </div>
+              )}
+              
               <div className="flex justify-between text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />

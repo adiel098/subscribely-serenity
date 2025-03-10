@@ -7,6 +7,7 @@ import { SearchBar } from "./search/SearchBar";
 import { CommunityCard } from "./search/CommunityCard";
 import { LoadingState } from "./search/LoadingState";
 import { EmptyState } from "./search/EmptyState";
+import { useCommunitiesWithDescriptions } from "../hooks/useCommunitiesWithDescriptions";
 
 interface CommunitySearchProps {
   onSelectCommunity: (community: Community) => void;
@@ -14,9 +15,15 @@ interface CommunitySearchProps {
 
 export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommunity }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [rawCommunities, setRawCommunities] = useState<Community[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  
+  // Use our custom hook to enhance communities with descriptions
+  const { communities, loading: isLoadingDescriptions } = useCommunitiesWithDescriptions(rawCommunities);
+  
+  // Combine the loading states
+  const isLoading = isSearching || isLoadingDescriptions;
 
   // Debounce search input
   useEffect(() => {
@@ -30,14 +37,14 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   // Search communities when debounced query changes
   useEffect(() => {
     const fetchCommunities = async () => {
-      setIsLoading(true);
+      setIsSearching(true);
       try {
         const results = await searchCommunities(debouncedQuery);
-        setCommunities(results);
+        setRawCommunities(results);
       } catch (error) {
         console.error("Error searching communities:", error);
       } finally {
-        setIsLoading(false);
+        setIsSearching(false);
       }
     };
 

@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { 
   SubscriptionMember, 
@@ -66,6 +67,7 @@ export async function processMember(
   // Check if subscription has expired
   if (msUntilExpiration <= 0) {
     console.log(`⚠️ EXPIRED: Processing expiration for member ${member.telegram_user_id}`);
+    // Pass the result by reference so it can be updated
     await handleExpiredSubscription(supabase, member, botSettings, result);
     return result;
   }

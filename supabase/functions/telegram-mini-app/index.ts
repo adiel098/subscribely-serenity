@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
@@ -101,6 +102,7 @@ serve(async (req) => {
           description,
           telegram_photo_url,
           telegram_invite_link,
+          telegram_chat_id,
           subscription_plans (
             id,
             name,
@@ -123,6 +125,7 @@ serve(async (req) => {
           description,
           telegram_photo_url,
           telegram_invite_link,
+          telegram_chat_id,
           subscription_plans (
             id,
             name,
@@ -155,6 +158,10 @@ serve(async (req) => {
     }
 
     console.log(`✅ Successfully found community: ${community.name} (ID: ${community.id})`);
+    
+    // Log community description to check if it exists
+    console.log(`📝 Community description: "${community.description || 'NOT SET'}"`);
+    console.log(`📊 Full community data:`, JSON.stringify(community, null, 2));
 
     // Process Telegram Mini App init data if provided
     let userData = null;
@@ -220,6 +227,7 @@ serve(async (req) => {
     }
     
     console.log("Final userData being returned:", userData);
+    console.log("Final community data being returned:", JSON.stringify(community, null, 2));
 
     return new Response(
       JSON.stringify({

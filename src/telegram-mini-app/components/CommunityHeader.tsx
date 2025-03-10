@@ -13,6 +13,8 @@ interface CommunityHeaderProps {
 
 export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   console.log("[CommunityHeader] Rendering with community:", JSON.stringify(community, null, 2));
+  console.log("[CommunityHeader] Description value:", community.description);
+  console.log("[CommunityHeader] Description type:", typeof community.description);
   
   const { photoUrl, loading, error } = useTelegramChatPhoto({
     communityId: community.id,
@@ -68,6 +70,14 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
         <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
           {community.description}
         </p>
+      )}
+      
+      {/* Debug info for description (will only show in development) */}
+      {!community.description && (
+        <div className="text-red-500 text-xs">
+          <p>Debug: Description missing. Value: "{JSON.stringify(community.description)}"</p>
+          <p>Type: {typeof community.description}</p>
+        </div>
       )}
     </div>
   );

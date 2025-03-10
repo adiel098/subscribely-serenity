@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
@@ -30,7 +31,7 @@ serve(async (req) => {
     }
 
     if (!community_id) {
-      console.error("��� Missing community_id parameter");
+      console.error("❌ Missing community_id parameter");
       return new Response(
         JSON.stringify({ error: "Missing community_id parameter" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -115,6 +116,7 @@ serve(async (req) => {
     console.log(`🖼️ Photo URL in database: ${community.telegram_photo_url || 'Not set'}`);
     console.log(`📱 Telegram chat ID: ${community.telegram_chat_id || 'Not set'}`);
     console.log(`🔗 Custom link: ${community.custom_link || 'Not set'}`);
+    console.log(`📝 Community description: "${community.description || 'NOT SET'}" (type: ${typeof community.description})`);
     
     if (debug) {
       console.log(`🔍 DEBUG: Found community: ${community.name} (ID: ${community.id})`);
@@ -174,6 +176,8 @@ serve(async (req) => {
     }
 
     console.log(`📤 Returning response with community data`);
+    console.log(`📤 Final community data returned:`, JSON.stringify(community, null, 2));
+    
     return new Response(
       JSON.stringify({ community }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

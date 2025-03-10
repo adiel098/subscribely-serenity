@@ -43,6 +43,8 @@ export const useCommunityData = (communityId: string | null) => {
           const communityData = response.data.community;
           
           console.log('📊 useCommunityData: Community data before processing:', JSON.stringify(communityData, null, 2));
+          console.log('📝 useCommunityData: Description from API:', communityData.description);
+          console.log('📝 useCommunityData: Description type:', typeof communityData.description);
           
           if (!communityData.subscription_plans) {
             console.warn('⚠️ useCommunityData: subscription_plans is missing - adding empty array');

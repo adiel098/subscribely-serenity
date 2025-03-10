@@ -18,6 +18,8 @@ export async function removeMemberFromChat(
     }
 
     console.log(`🚫 MEMBER REMOVAL: Starting removal process for user ${member.telegram_user_id} from community ${member.community_id}`);
+    console.log(`📋 MEMBER REMOVAL: Full member data: ${JSON.stringify(member, null, 2)}`);
+    console.log(`📋 MEMBER REMOVAL: Current result object: ${JSON.stringify(result, null, 2)}`);
 
     // Get bot token to make direct API call
     const { data: settings, error: tokenError } = await supabase
@@ -26,9 +28,10 @@ export async function removeMemberFromChat(
       .single();
 
     if (tokenError || !settings?.bot_token) {
-      console.error(`❌ Failed to get bot token: ${tokenError ? tokenError.message : 'Bot token not found'}`);
+      console.error(`❌ MEMBER REMOVAL: Failed to get bot token: ${tokenError ? tokenError.message : 'Bot token not found'}`);
       throw new Error(tokenError ? tokenError.message : 'Bot token not found');
     }
+    console.log(`✅ MEMBER REMOVAL: Successfully retrieved bot token`);
 
     // Get Telegram chat ID for community
     const { data: community, error: communityError } = await supabase
@@ -38,14 +41,15 @@ export async function removeMemberFromChat(
       .single();
       
     if (communityError || !community?.telegram_chat_id) {
-      console.error(`❌ Failed to get chat ID: ${communityError ? communityError.message : 'Telegram chat ID not found'}`);
+      console.error(`❌ MEMBER REMOVAL: Failed to get chat ID: ${communityError ? communityError.message : 'Telegram chat ID not found'}`);
       throw new Error(communityError ? communityError.message : 'Telegram chat ID not found');
     }
+    console.log(`✅ MEMBER REMOVAL: Retrieved community data - Chat ID: ${community.telegram_chat_id}, Name: ${community.name || 'Unknown'}`);
 
-    console.log(`🔄 Removing user ${member.telegram_user_id} from chat ${community.telegram_chat_id} (${community.name || member.community_id})`);
+    console.log(`🔄 MEMBER REMOVAL: Removing user ${member.telegram_user_id} from chat ${community.telegram_chat_id} (${community.name || member.community_id})`);
 
     // Make direct API call to kick chat member
-    console.log(`📤 Sending API request to ban user ${member.telegram_user_id} from chat ${community.telegram_chat_id}`);
+    console.log(`📤 MEMBER REMOVAL: Sending API request to ban user ${member.telegram_user_id} from chat ${community.telegram_chat_id}`);
     const response = await fetch(
       `https://api.telegram.org/bot${settings.bot_token}/banChatMember`,
       {
@@ -59,41 +63,45 @@ export async function removeMemberFromChat(
       }
     );
 
+    console.log(`📥 MEMBER REMOVAL: Received response status: ${response.status}`);
+    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ HTTP error ${response.status}: ${errorText}`);
+      console.error(`❌ MEMBER REMOVAL: HTTP error ${response.status}: ${errorText}`);
       throw new Error(`HTTP error ${response.status}: ${errorText}`);
     }
 
     const kickResult = await response.json();
-    console.log(`📥 Ban API response: ${JSON.stringify(kickResult, null, 2)}`);
+    console.log(`📥 MEMBER REMOVAL: Ban API complete response: ${JSON.stringify(kickResult, null, 2)}`);
     
     if (!kickResult.ok) {
-      console.error("❌ Error removing member from chat:", kickResult);
+      console.error(`❌ MEMBER REMOVAL: Error removing member from chat: ${JSON.stringify(kickResult, null, 2)}`);
       throw new Error(kickResult.description || "Failed to remove from chat");
     }
 
-    console.log(`✅ User ${member.telegram_user_id} successfully banned from chat ${community.telegram_chat_id}`);
+    console.log(`✅ MEMBER REMOVAL: User ${member.telegram_user_id} successfully banned from chat ${community.telegram_chat_id}`);
 
     // Update member status in database
-    console.log(`📝 Updating member status in database to inactive`);
+    console.log(`📝 MEMBER REMOVAL: Updating member status in database to inactive - Member ID: ${member.id}`);
     const { error: updateError } = await supabase
       .from("telegram_chat_members")
       .update({
         is_active: false,
+        subscription_status: "expired" // Ensure status matches what was set in expirationHandler
       })
       .eq("id", member.id);
       
     if (updateError) {
-      console.error("❌ Error updating member status after removal:", updateError);
+      console.error(`❌ MEMBER REMOVAL: Error updating member status after removal: ${updateError.message}`);
+      console.error(`❌ MEMBER REMOVAL: Update query details - Table: telegram_chat_members, ID: ${member.id}`);
       result.details += ", removed from chat but failed to update status";
     } else {
-      console.log(`✅ Successfully updated member status to inactive in database`);
-      result.details += ", removed from chat";
+      console.log(`✅ MEMBER REMOVAL: Successfully updated member status to inactive in database`);
+      result.details += ", removed from chat and database updated";
     }
 
     // Log the removal in activity log
-    console.log(`📊 Logging member removal in activity logs`);
+    console.log(`📊 MEMBER REMOVAL: Logging member removal in activity logs`);
     const { error: logError } = await supabase
       .from("subscription_activity_logs")
       .insert({
@@ -104,12 +112,15 @@ export async function removeMemberFromChat(
       });
       
     if (logError) {
-      console.error("❌ Error logging member removal:", logError);
+      console.error(`❌ MEMBER REMOVAL: Error logging member removal: ${logError.message}`);
     } else {
-      console.log(`✅ Successfully logged member removal in activity logs`);
+      console.log(`✅ MEMBER REMOVAL: Successfully logged member removal in activity logs`);
     }
+    
+    console.log(`🏁 MEMBER REMOVAL: Completed removal process for user ${member.telegram_user_id}`);
   } catch (error) {
-    console.error("❌ Error removing member from chat:", error);
+    console.error(`❌ MEMBER REMOVAL: Error removing member from chat: ${error.message}`);
+    console.error(`❌ MEMBER REMOVAL: Error stack: ${error.stack}`);
     result.details += ", failed to remove from chat: " + error.message;
   }
 }

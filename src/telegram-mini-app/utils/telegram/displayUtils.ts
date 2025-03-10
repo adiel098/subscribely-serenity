@@ -37,8 +37,8 @@ export const ensureFullScreen = (): void => {
     const containers = document.querySelectorAll('.container');
     containers.forEach(container => {
       (container as HTMLElement).style.maxWidth = '100%';
-      (container as HTMLElement).style.padding = '0';
-      (container as HTMLElement).style.margin = '0';
+      (container as HTMLElement).style.margin = '0 auto';
+      (container as HTMLElement).style.padding = '0 12px';
     });
     
     // iOS viewport meta
@@ -70,12 +70,12 @@ export const ensureFullScreen = (): void => {
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     
-    // Remove any padding or margin on container elements
+    // Add appropriate padding to container elements
     const containers = document.querySelectorAll('.container');
     containers.forEach(container => {
       (container as HTMLElement).style.maxWidth = '100%';
-      (container as HTMLElement).style.padding = '0';
-      (container as HTMLElement).style.margin = '0';
+      (container as HTMLElement).style.margin = '0 auto';
+      (container as HTMLElement).style.padding = '0 12px';
     });
   }
   
@@ -86,8 +86,7 @@ export const ensureFullScreen = (): void => {
     appContainer.style.width = '100%';
     appContainer.style.overflow = 'auto';
     appContainer.style.position = 'relative';
-    appContainer.style.padding = '0';
-    appContainer.style.margin = '0';
+    appContainer.style.margin = '0 auto';
     appContainer.style.maxWidth = '100%';
   }
   
@@ -103,4 +102,11 @@ export const ensureFullScreen = (): void => {
   document.body.style.height = '100%';
   document.body.style.margin = '0';
   document.body.style.padding = '0';
+  
+  // Apply small padding to telegram-mini-app-container
+  const miniAppContainers = document.querySelectorAll('.telegram-mini-app-container');
+  miniAppContainers.forEach(container => {
+    (container as HTMLElement).style.paddingLeft = '12px';
+    (container as HTMLElement).style.paddingRight = '12px';
+  });
 };

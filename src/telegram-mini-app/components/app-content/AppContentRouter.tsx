@@ -35,20 +35,22 @@ export const AppContentRouter = ({
   }
   
   return (
-    <MainContent
-      community={community}
-      telegramUser={telegramUser}
-      selectedPlan={selectedPlan}
-      showPaymentMethods={showPaymentMethods}
-      showSuccess={showSuccess}
-      subscriptions={subscriptions}
-      activeTab={activeTab}
-      handleTabChange={handleTabChange}
-      handlePlanSelect={handlePlanSelect}
-      handleCompletePurchase={handleCompletePurchase}
-      handleRenewSubscription={handleRenewSubscription}
-      handleSelectCommunity={handleSelectCommunity}
-      subscriptionsLoading={subscriptionsLoading}
-    />
+    <div className="telegram-mini-app-container">
+      <MainContent
+        community={community}
+        telegramUser={telegramUser}
+        selectedPlan={selectedPlan}
+        showPaymentMethods={showPaymentMethods}
+        showSuccess={showSuccess}
+        subscriptions={subscriptions}
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        handlePlanSelect={handlePlanSelect}
+        handleCompletePurchase={handleCompletePurchase}
+        handleRenewSubscription={handleRenewSubscription}
+        handleSelectCommunity={handleSelectCommunity}
+        subscriptionsLoading={subscriptionsLoading}
+      />
+    </div>
   );
 };

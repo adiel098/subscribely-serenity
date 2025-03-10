@@ -79,7 +79,7 @@ export async function handleExpiredSubscription(
       // Get community data for mini app URL
       const { data: community, error: communityError } = await supabase
         .from("communities")
-        .select("miniapp_url, name")
+        .select("miniapp_url, name, telegram_photo_url")
         .eq("id", member.community_id)
         .single();
 

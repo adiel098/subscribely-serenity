@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember, BotSettings } from "../types.ts";
 import { 
@@ -158,7 +159,7 @@ async function getNotificationConfig(
     
     const [tokenResult, communityResult] = await Promise.all([
       supabase.from("telegram_global_settings").select("bot_token").single(),
-      supabase.from("communities").select("id, miniapp_url, name").eq("id", communityId).single()
+      supabase.from("communities").select("id, miniapp_url, name, telegram_photo_url").eq("id", communityId).single()
     ]);
 
     if (tokenResult.error || !tokenResult.data?.bot_token) {

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export const CronJobTimer = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
+  const [latestRunError, setLatestRunError] = useState<string | null>(null);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -21,6 +22,7 @@ export const CronJobTimer = () => {
       // If we've reached a new minute, update the last check time
       if (timeLeft === 0) {
         setLastCheck(new Date());
+        // Here we could also fetch the latest cron job status if needed
       }
       
       return newTimeLeft;
@@ -61,6 +63,12 @@ export const CronJobTimer = () => {
         <p className="text-sm text-purple-700">
           Automatically manages subscriptions by checking member status, removing expired members, and sending renewal notifications every minute.
         </p>
+        {latestRunError && (
+          <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-xs">
+            <p className="font-semibold">Last run error:</p>
+            <p>{latestRunError}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

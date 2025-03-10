@@ -73,9 +73,13 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setSelectedPlan(null);
-    setShowPaymentMethods(false);
-    setShowSuccess(false);
+    
+    // Only reset these values when NOT specifically handling renewals
+    if (value !== "subscribe") {
+      setSelectedPlan(null);
+      setShowPaymentMethods(false);
+      setShowSuccess(false);
+    }
   };
   
   const handleCompletePurchase = () => {
@@ -84,11 +88,12 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   };
   
   const handleRenewSubscription = (subscription: any) => {
+    console.log("[useAppContent] Processing renewal for subscription:", subscription);
     renewSubscription(subscription);
   };
   
   const handleSelectCommunity = (community: Community) => {
-    console.log("Selected community:", community);
+    console.log("[useAppContent] Selected community:", community);
     
     // Set the selected community
     setSelectedCommunity(community);

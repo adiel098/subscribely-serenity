@@ -48,26 +48,26 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
     }
 
     try {
-      toast({
-        title: "Processing",
-        description: "Initiating subscription renewal...",
-      });
+      console.log(`[useUserSubscriptions] Renewing subscription for plan:`, subscription.plan);
       
-      console.log(`[useUserSubscriptions] Renewing subscription`, subscription);
-      // Implementation would go here - for now we're just adding the function signature
-      // to fix the TypeScript error
+      // The actual renewal process is handled in the parent component
+      // This function serves as a logging point and could be expanded 
+      // with actual API calls in the future if needed
       
       toast({
-        title: "Success",
-        description: "Subscription renewal initiated.",
+        title: "Preparing Renewal",
+        description: "Setting up subscription renewal...",
       });
+      
+      return subscription;
     } catch (err) {
-      console.error("Error renewing subscription:", err);
+      console.error("Error in renewal preparation:", err);
       toast({
         title: "Error",
-        description: "Failed to renew your subscription. Please try again.",
+        description: "There was a problem preparing your renewal. Please try again.",
         variant: "destructive",
       });
+      return null;
     }
   };
 

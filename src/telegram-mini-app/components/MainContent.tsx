@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { CommunityHeader } from "./CommunityHeader";
 import { ContentTabs } from "./tabs/ContentTabs";
@@ -60,7 +61,16 @@ export const MainContent = ({
         console.error("[MainContent] Cannot renew: No plan found in subscription");
       }
       
+      // Switch to subscribe tab and scroll to payment methods section
       handleTabChange("subscribe");
+      
+      // Wait for tab change and DOM update, then scroll to payment section
+      setTimeout(() => {
+        const paymentSection = document.getElementById('payment-methods');
+        if (paymentSection) {
+          paymentSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
     }
     
     handleRenewSubscription(subscription);

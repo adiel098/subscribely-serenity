@@ -137,7 +137,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border border-green-100"
+                  className="flex-1 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border border-green-100 animate-pulse"
                   onClick={handleRenew}
                 >
                   <RefreshCw className="h-4 w-4 mr-1.5" />

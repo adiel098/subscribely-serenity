@@ -28,6 +28,11 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
     setCancelDialogOpen(true);
   };
 
+  const handleRenewClick = (subscription: Subscription) => {
+    console.log("[UserSubscriptions] Renewing subscription:", subscription.id);
+    onRenew(subscription);
+  };
+
   if (subscriptions.length === 0) {
     return <EmptySubscriptionsState />;
   }
@@ -42,7 +47,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
       <SubscriptionsList 
         subscriptions={subscriptions} 
         onCancelClick={handleCancelClick} 
-        onRenew={onRenew} 
+        onRenew={handleRenewClick} 
       />
       
       <CancelSubscriptionDialog

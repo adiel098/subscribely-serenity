@@ -1,10 +1,12 @@
 
 import React from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
-import { CalendarClock } from "lucide-react";
+import { Calendar, Sparkle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { getDaysRemaining } from "./utils";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface SubscriptionDurationProps {
   selectedPlan: Plan;
@@ -83,32 +85,50 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
 
   return (
     <motion.div
-      className="mt-4 mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      className="my-4"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-primary">
-          <CalendarClock className="h-5 w-5" />
-          <div>
-            <h3 className="font-medium text-sm">Subscription Details</h3>
-            <p className="text-xs text-gray-600">
-              Your subscription will be valid for {getDurationText(selectedPlan)}
-            </p>
+      <Card className="border border-indigo-200 bg-indigo-50/50 shadow-sm overflow-hidden">
+        <div className="p-4 relative">
+          {/* Header with background color and icon */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-indigo-600 bg-indigo-100 p-2 rounded-full">
+                <Calendar className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="font-semibold text-indigo-700 flex items-center">
+                  Subscription Details <Sparkle className="h-3.5 w-3.5 ml-1 text-indigo-500" />
+                </h3>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <p className="text-xs text-indigo-600 font-medium">End Date:</p>
+              <p className="text-sm font-bold text-indigo-700">{getEndDate(selectedPlan)}</p>
+            </div>
           </div>
+          
+          {/* Subscription details */}
+          <p className="text-sm text-indigo-700 mt-1">
+            Your subscription will be valid for <span className="font-medium">{getDurationText(selectedPlan)}</span>
+          </p>
+          
+          {/* Remaining days badge */}
+          {remainingDays > 0 && (
+            <div className="mt-3">
+              <Badge variant="outline" className="bg-indigo-100/80 text-indigo-700 border-indigo-200 py-1 px-2">
+                +{remainingDays} days
+              </Badge>
+              <span className="ml-2 text-xs text-indigo-600">
+                from your current subscription will be added
+              </span>
+            </div>
+          )}
         </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">End Date:</p>
-          <p className="text-sm font-semibold text-primary">{getEndDate(selectedPlan)}</p>
-        </div>
-      </div>
-      
-      {remainingDays > 0 && (
-        <div className="mt-2 pt-2 border-t border-primary/10 text-xs text-gray-600">
-          <p>Your current subscription has {remainingDays} days remaining that will be added to your new subscription period.</p>
-        </div>
-      )}
+      </Card>
     </motion.div>
   );
 };

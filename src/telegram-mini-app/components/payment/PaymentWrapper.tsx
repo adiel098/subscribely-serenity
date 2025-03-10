@@ -28,7 +28,7 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
 }) => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState(null);
 
-  // Don't render anything if no plan selected or payment methods shouldn't be shown
+  // Don't render anything if no plan selected
   if (!selectedPlan) return null;
 
   const handlePaymentMethodSelect = (method) => {
@@ -39,10 +39,12 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
   return (
     <>
       {showPaymentMethods && selectedPlan && !showSuccess && (
-        <SubscriptionDuration 
-          selectedPlan={selectedPlan} 
-          activeSubscription={activeSubscription}
-        />
+        <div id="payment-methods">
+          <SubscriptionDuration 
+            selectedPlan={selectedPlan} 
+            activeSubscription={activeSubscription}
+          />
+        </div>
       )}
       
       {(showPaymentMethods || showSuccess) && selectedPlan && (

@@ -4,7 +4,6 @@ import { useAnalytics } from "@/group_owners/hooks/useAnalytics";
 import { useBotStats } from "@/group_owners/hooks/useBotStats";
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { format } from "date-fns";
-import { NextCheckTimer } from "@/group_owners/components/analytics/NextCheckTimer";
 import { StatsGrid } from "@/group_owners/components/analytics/StatsGrid";
 import { ActivityChart } from "@/group_owners/components/analytics/ActivityChart";
 import { ActivityLog } from "@/group_owners/components/analytics/ActivityLog";
@@ -49,7 +48,6 @@ const Analytics = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Analytics</h1>
-      <NextCheckTimer />
       <StatsGrid 
         totalRevenue={stats.totalRevenue}
         activeSubscribers={stats.activeSubscribers}

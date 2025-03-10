@@ -1,12 +1,13 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Crown, ImageIcon } from "lucide-react";
+import { Crown, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
 import { useTelegramChannelInfo } from "@/telegram-mini-app/hooks/useTelegramChannelInfo";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface CommunityHeaderProps {
   community: Community;
@@ -14,6 +15,7 @@ interface CommunityHeaderProps {
 
 export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   console.log("[CommunityHeader] Rendering with community:", JSON.stringify(community, null, 2));
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const { photoUrl, loading: photoLoading, error: photoError } = useTelegramChatPhoto({
     communityId: community.id,
@@ -35,6 +37,24 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
 
   // Use the telegram description if available, otherwise fall back to the community description
   const displayDescription = description || community.description;
+  
+  // Check if description is long (more than 150 characters)
+  const isLongDescription = displayDescription && displayDescription.length > 150;
+  
+  // Create short and full versions of the description
+  const shortDescription = isLongDescription 
+    ? `${displayDescription.substring(0, 150)}...` 
+    : displayDescription;
+  
+  // Toggle description expansion
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+    
+    // Add haptic feedback
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+  };
 
   return (
     <div className="text-center space-y-6 animate-fade-in">
@@ -72,7 +92,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
           )}
         </Avatar>
       )}
-      <h1 className="text-4xl font-bold text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+      <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 px-4">
         {community.name}
       </h1>
       
@@ -83,22 +103,25 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
         </div>
       ) : (
         displayDescription ? (
-          <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
-            {displayDescription}
-          </p>
-        ) : (
-          <p className="text-gray-400 italic text-lg max-w-xl mx-auto">
-            This community doesn't have a description yet.
-          </p>
-        )
-      )}
-      
-      {/* Debug info for description (will only show in development) */}
-      {import.meta.env.DEV && !displayDescription && (
-        <div className="text-red-500 text-xs">
-          <p>Debug: Description missing. Value: "{JSON.stringify(displayDescription)}"</p>
-          <p>Type: {typeof displayDescription}</p>
-        </div>
+          <div className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto px-4">
+            <p>{isExpanded ? displayDescription : shortDescription}</p>
+            
+            {isLongDescription && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleExpand}
+                className="mt-1 px-3 py-1 h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70"
+              >
+                {isExpanded ? (
+                  <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>
+                ) : (
+                  <>Read more <ChevronRight className="ml-1 h-3 w-3" /></>
+                )}
+              </Button>
+            )}
+          </div>
+        ) : null  // Don't show anything if there's no description
       )}
     </div>
   );

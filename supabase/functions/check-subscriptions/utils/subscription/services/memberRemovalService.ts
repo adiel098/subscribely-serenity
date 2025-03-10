@@ -1,15 +1,16 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { SubscriptionMember } from "../../types.ts";
 
 /**
  * Removes a member from the chat
+ * @param reason - The reason for removal ('expired' or 'removed')
  * @returns boolean indicating success or failure
  */
 export async function removeMemberFromChat(
   supabase: ReturnType<typeof createClient>,
   member: SubscriptionMember,
-  result: any
+  result: any,
+  reason: 'expired' | 'removed' = 'expired'
 ): Promise<boolean> {
   try {
     if (!member || !member.telegram_user_id || !member.community_id) {
@@ -19,6 +20,7 @@ export async function removeMemberFromChat(
     }
 
     console.log(`🚫 MEMBER REMOVAL: Starting removal process for user ${member.telegram_user_id} from community ${member.community_id}`);
+    console.log(`📋 MEMBER REMOVAL: Removal reason: ${reason}`);
     console.log(`📋 MEMBER REMOVAL: Full member data: ${JSON.stringify(member, null, 2)}`);
 
     // Get bot token to make direct API call
@@ -127,14 +129,14 @@ export async function removeMemberFromChat(
       return false;
     }
 
-    // Update member status in database
+    // Update member status in database - now with reason-specific status
     try {
-      console.log(`📝 MEMBER REMOVAL: Updating member status in database to inactive - Member ID: ${member.id}`);
+      console.log(`📝 MEMBER REMOVAL: Updating member status in database to ${reason} - Member ID: ${member.id}`);
       const { error: updateError } = await supabase
         .from("telegram_chat_members")
         .update({
           is_active: false,
-          subscription_status: "expired" // Ensure status matches what was set in expirationHandler
+          subscription_status: reason // Set status based on removal reason
         })
         .eq("id", member.id);
         
@@ -142,18 +144,16 @@ export async function removeMemberFromChat(
         console.error(`❌ MEMBER REMOVAL: Error updating member status after removal: ${updateError.message}`);
         console.error(`❌ MEMBER REMOVAL: Update query details - Table: telegram_chat_members, ID: ${member.id}`);
         result.details += ", removed from chat but failed to update status";
-        // Continue despite error as the kick was successful
       } else {
-        console.log(`✅ MEMBER REMOVAL: Successfully updated member status to inactive in database`);
+        console.log(`✅ MEMBER REMOVAL: Successfully updated member status to ${reason} in database`);
         result.details += ", removed from chat and database updated";
       }
     } catch (dbError) {
       console.error(`❌ MEMBER REMOVAL: Database error: ${dbError.message}`, dbError);
       result.details += ", removed from chat but database update failed";
-      // Continue despite error as the kick was successful
     }
 
-    // Log the removal in activity log
+    // Log the removal in activity log with specific reason
     try {
       console.log(`📊 MEMBER REMOVAL: Logging member removal in activity logs`);
       const { error: logError } = await supabase
@@ -161,19 +161,19 @@ export async function removeMemberFromChat(
         .insert({
           community_id: member.community_id,
           telegram_user_id: member.telegram_user_id,
-          activity_type: "member_removed",
-          details: "Member removed automatically due to expired subscription"
+          activity_type: reason === 'expired' ? 'subscription_expired' : 'member_removed',
+          details: reason === 'expired' 
+            ? "Member removed automatically due to expired subscription"
+            : "Member removed manually by community administrator"
         });
         
       if (logError) {
         console.error(`❌ MEMBER REMOVAL: Error logging member removal: ${logError.message}`);
-        // Continue despite error as the main operations were successful
       } else {
         console.log(`✅ MEMBER REMOVAL: Successfully logged member removal in activity logs`);
       }
     } catch (logError) {
       console.error(`❌ MEMBER REMOVAL: Logging error: ${logError.message}`, logError);
-      // Continue despite error as the main operations were successful
     }
     
     console.log(`🏁 MEMBER REMOVAL: Completed removal process for user ${member.telegram_user_id}`);

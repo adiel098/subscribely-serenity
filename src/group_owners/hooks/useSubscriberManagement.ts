@@ -42,7 +42,7 @@ export const useSubscriberManagement = (communityId: string) => {
     try {
       console.log("Removing subscriber:", subscriber.id, "from community:", subscriber.community_id);
       
-      // Update the database to set subscription status to "removed" and is_active to false
+      // Update the database to set subscription status to "removed"
       const { error } = await supabase
         .from("telegram_chat_members")
         .update({ 
@@ -68,12 +68,13 @@ export const useSubscriberManagement = (communityId: string) => {
         throw new Error('Could not retrieve Telegram chat ID');
       }
       
-      // Remove member from Telegram chat
+      // Remove member from Telegram chat with 'removed' reason
       const { error: kickError } = await supabase.functions.invoke('telegram-webhook', {
         body: { 
           path: '/remove-member',
           chat_id: community.telegram_chat_id,
-          user_id: subscriber.telegram_user_id 
+          user_id: subscriber.telegram_user_id,
+          reason: 'removed' // Specify manual removal
         }
       });
 

@@ -47,7 +47,7 @@ export async function handleExpiredSubscription(
     // Step 4: Remove member from chat if auto-remove is enabled
     if (botSettings.auto_remove_expired) {
       console.log(`🚫 EXPIRATION HANDLER: Auto-remove is ENABLED - Attempting to remove user ${member.telegram_user_id} from chat`);
-      const removalResult = await removeMemberFromChat(supabase, member, result);
+      const removalResult = await removeMemberFromChat(supabase, member, result, 'expired'); // Pass 'expired' as reason
       console.log(`🔄 EXPIRATION HANDLER: Member removal result: ${removalResult ? "Success ✅" : "Failed ❌"}`);
       console.log(`🔄 EXPIRATION HANDLER: After removal process - Result details: ${result.details}`);
     } else {

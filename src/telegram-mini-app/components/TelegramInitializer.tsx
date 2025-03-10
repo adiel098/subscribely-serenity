@@ -33,9 +33,12 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
       document.documentElement.style.overflow = 'hidden';
       document.body.style.height = '100%';
       document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = 'auto';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
+      
+      // Add classes to body for proper telegram mini app styling
+      document.body.classList.add('telegram-mini-app');
       
       // Platform-specific fixes
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -46,6 +49,7 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
         document.body.style.position = 'fixed';
         document.body.style.width = '100vw';
         document.body.style.height = '100vh';
+        document.body.classList.add('ios-scroll');
         
         // Add iOS viewport meta
         const viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -63,6 +67,15 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
         document.documentElement.style.right = '0';
         document.documentElement.style.bottom = '0';
       }
+      
+      // Fix any containers to full width
+      const containers = document.querySelectorAll('.container');
+      containers.forEach(container => {
+        (container as HTMLElement).style.maxWidth = '100%';
+        (container as HTMLElement).style.paddingLeft = '0';
+        (container as HTMLElement).style.paddingRight = '0';
+        (container as HTMLElement).style.margin = '0';
+      });
       
       // Apply viewport settings if available
       if (window.Telegram?.WebApp?.setViewport) {
@@ -146,7 +159,7 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
   // Development mode banner
   if (isDevelopmentMode) {
     return (
-      <Alert variant={window.Telegram?.WebApp ? "default" : "destructive"} className="mb-4 mx-4 mt-4">
+      <Alert variant={window.Telegram?.WebApp ? "default" : "destructive"} className="mb-4 mx-0 mt-4">
         {window.Telegram?.WebApp ? (
           <Info className="h-4 w-4" />
         ) : (

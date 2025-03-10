@@ -26,9 +26,20 @@ export const ensureFullScreen = (): void => {
     document.body.style.height = '100vh';
     document.body.style.width = '100vw';
     document.body.style.position = 'fixed';
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'auto';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    
+    // Add class for iOS scrolling
+    document.body.classList.add('ios-scroll');
+    
+    // Remove any padding or margin on container elements
+    const containers = document.querySelectorAll('.container');
+    containers.forEach(container => {
+      (container as HTMLElement).style.maxWidth = '100%';
+      (container as HTMLElement).style.padding = '0';
+      (container as HTMLElement).style.margin = '0';
+    });
     
     // iOS viewport meta
     const viewportMeta = document.querySelector('meta[name="viewport"]');
@@ -55,9 +66,17 @@ export const ensureFullScreen = (): void => {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.height = '100%';
     document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'auto';
     document.body.style.margin = '0';
     document.body.style.padding = '0';
+    
+    // Remove any padding or margin on container elements
+    const containers = document.querySelectorAll('.container');
+    containers.forEach(container => {
+      (container as HTMLElement).style.maxWidth = '100%';
+      (container as HTMLElement).style.padding = '0';
+      (container as HTMLElement).style.margin = '0';
+    });
   }
   
   // Apply general full screen styles to root app container
@@ -67,13 +86,19 @@ export const ensureFullScreen = (): void => {
     appContainer.style.width = '100%';
     appContainer.style.overflow = 'auto';
     appContainer.style.position = 'relative';
+    appContainer.style.padding = '0';
+    appContainer.style.margin = '0';
+    appContainer.style.maxWidth = '100%';
   }
+  
+  // Add the telegram-mini-app class to body for specific styling
+  document.body.classList.add('telegram-mini-app');
   
   // Apply general full screen styles
   document.documentElement.style.overflow = 'hidden';
   document.documentElement.style.width = '100%';
   document.documentElement.style.height = '100%';
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'auto';
   document.body.style.width = '100%';
   document.body.style.height = '100%';
   document.body.style.margin = '0';

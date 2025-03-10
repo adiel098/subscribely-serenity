@@ -79,9 +79,10 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
     <motion.div
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
+      className="w-full"
     >
       <Card 
-        className="overflow-hidden border-purple-100 hover:border-purple-200 bg-gradient-to-tr from-white to-purple-50 dark:from-gray-900 dark:to-gray-800 shadow-sm hover:shadow-md transition-all cursor-pointer" 
+        className="overflow-hidden border-purple-100 hover:border-purple-200 bg-gradient-to-tr from-white to-purple-50 dark:from-gray-900 dark:to-gray-800 shadow-sm hover:shadow-md transition-all cursor-pointer w-full" 
         onClick={() => onSelect(community)}
       >
         <CardHeader className="pb-2 relative">

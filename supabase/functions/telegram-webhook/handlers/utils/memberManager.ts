@@ -19,11 +19,12 @@ export class TelegramMemberManager {
    * 
    * @param chatId The chat ID
    * @param userId The user ID to kick
+   * @param reason The reason for kicking ('expired' or 'removed')
    * @returns True if successful, false otherwise
    */
-  async kickChatMember(chatId: string, userId: string): Promise<boolean> {
+  async kickChatMember(chatId: string, userId: string, reason: 'expired' | 'removed' = 'removed'): Promise<boolean> {
     try {
-      console.log('[Member Manager] Attempting to kick user:', { chatId, userId });
+      console.log('[Member Manager] Attempting to kick user:', { chatId, userId, reason });
       
       // Validate inputs
       if (!chatId || !userId || !this.botToken) {
@@ -57,16 +58,16 @@ export class TelegramMemberManager {
       const unbanResult = await this.unbanChatMember(chatId, userId);
       console.log('[Member Manager] Unban result:', unbanResult);
 
-      // Update the database status
-      const updateSuccess = await this.updateMemberStatus(userId, chatId);
+      // Update the database status - preserve the reason!
+      const updateSuccess = await this.updateMemberStatus(userId, chatId, reason);
       
       if (!updateSuccess) {
         console.warn('[Member Manager] Database update failed, but user was kicked');
         // Continue despite db error since the kick was successful
       }
 
-      // Log the action
-      await this.logMemberKick(userId, chatId);
+      // Log the action with the correct reason
+      await this.logMemberKick(userId, chatId, reason);
 
       return true;
     } catch (error) {
@@ -169,15 +170,15 @@ export class TelegramMemberManager {
   /**
    * Update the member status in the database
    */
-  private async updateMemberStatus(userId: string, chatId: string): Promise<boolean> {
+  private async updateMemberStatus(userId: string, chatId: string, reason: 'expired' | 'removed' = 'removed'): Promise<boolean> {
     try {
+      console.log(`[Member Manager] Updating member status with reason: ${reason}`);
+      
       const { error } = await this.supabase
         .from('telegram_chat_members')
         .update({
           is_active: false,
-          subscription_status: false,
-          status: 'removed' // Explicitly mark as removed
-          // No longer updating subscription_end_date as requested
+          subscription_status: reason // Use the reason as the status - important fix!
         })
         .eq('telegram_user_id', userId)
         .eq('community_id', chatId);
@@ -197,18 +198,24 @@ export class TelegramMemberManager {
   /**
    * Log the member kick to the activity logs
    */
-  private async logMemberKick(userId: string, chatId: string): Promise<void> {
+  private async logMemberKick(userId: string, chatId: string, reason: 'expired' | 'removed' = 'removed'): Promise<void> {
     try {
+      const activityType = reason === 'expired' ? 'subscription_expired' : 'member_kicked';
+      const details = reason === 'expired' 
+        ? 'Member removed from channel due to subscription expiration'
+        : 'Member removed from channel due to subscription cancellation';
+        
       await this.supabase
         .from('subscription_activity_logs')
         .insert({
           telegram_user_id: userId,
           community_id: chatId,
-          activity_type: 'member_kicked',
-          details: 'Member removed from channel due to subscription cancellation'
+          activity_type: activityType,
+          details: details,
+          status: reason
         });
       
-      console.log('[Member Manager] Successfully logged kick action');
+      console.log(`[Member Manager] Successfully logged kick action with reason: ${reason}`);
     } catch (error) {
       console.error('[Member Manager] Error logging kick action:', error);
       // Non-critical error, don't throw

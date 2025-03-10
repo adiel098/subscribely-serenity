@@ -63,6 +63,13 @@ export async function processMember(
     (subscriptionEndDate.getTime() - now.getTime()) / (1000 * 3600 * 24)
   );
 
+  // Enhanced logging for expiration checking
+  console.log(`📅 Member ${member.telegram_user_id} subscription expiration info:`);
+  console.log(`   Current time: ${now.toISOString()}`);
+  console.log(`   Subscription end date: ${subscriptionEndDate.toISOString()}`);
+  console.log(`   Days until expiration: ${daysUntilExpiration}`);
+  console.log(`   Current subscription status: ${member.subscription_status}`);
+
   // Check if this member has already received notifications today to prevent duplicates
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
@@ -116,14 +123,11 @@ export async function processMember(
     }
   }
 
-  // Log for debugging
-  console.log(`📅 Member ${member.telegram_user_id} has ${daysUntilExpiration} days until expiration (ends: ${subscriptionEndDate.toISOString()})`);
-  console.log(`📊 Current subscription status: ${member.subscription_status}`);
-
   // Check if subscription has expired
   if (daysUntilExpiration <= 0 && member.subscription_status === 'active') {
     // Subscription has expired
     console.log(`⚠️ EXPIRED: Member ${member.telegram_user_id}'s subscription has expired. Processing expiration...`);
+    console.log(`   Expiration details: ${daysUntilExpiration} days overdue, status: ${member.subscription_status}`);
     await handleExpiredSubscription(supabase, member, botSettings, result);
     return result;
   }

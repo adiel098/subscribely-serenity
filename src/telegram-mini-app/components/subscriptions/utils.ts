@@ -17,12 +17,18 @@ export function formatDate(date: string | null | undefined): string {
 }
 
 export function isSubscriptionActive(subscription: Subscription): boolean {
-  if (subscription.subscription_status !== "active") return false;
+  if (subscription.subscription_status !== "active") {
+    return false;
+  }
   
   const endDate = subscription.subscription_end_date || subscription.expiry_date;
-  if (!endDate) return false;
+  if (!endDate) {
+    return false;
+  }
   
-  return new Date(endDate) > new Date();
+  const now = new Date();
+  const expiryDate = new Date(endDate);
+  return expiryDate > now;
 }
 
 export function getDaysRemaining(subscription: Subscription): number {
@@ -33,11 +39,14 @@ export function getDaysRemaining(subscription: Subscription): number {
   const expiryDate = new Date(endDate);
   const msRemaining = expiryDate.getTime() - now.getTime();
   
-  // Use Math.floor to ensure we don't round up to 1 when less than a day remains
   return Math.max(0, Math.floor(msRemaining / (1000 * 60 * 60 * 24)));
 }
 
 export function getTimeRemainingText(subscription: Subscription): string {
+  if (subscription.subscription_status !== "active") {
+    return "Expired";
+  }
+  
   const endDate = subscription.subscription_end_date || subscription.expiry_date;
   if (!endDate) return "Expired";
   
@@ -45,12 +54,10 @@ export function getTimeRemainingText(subscription: Subscription): string {
   const expiryDate = new Date(endDate);
   const msRemaining = expiryDate.getTime() - now.getTime();
   
-  // If already expired
   if (msRemaining <= 0) {
     return "Expired";
   }
   
-  // If less than 24 hours remaining, show hours and minutes
   if (msRemaining < 24 * 60 * 60 * 1000) {
     const hoursRemaining = Math.floor(msRemaining / (1000 * 60 * 60));
     const minutesRemaining = Math.floor((msRemaining % (1000 * 60 * 60)) / (1000 * 60));
@@ -62,7 +69,6 @@ export function getTimeRemainingText(subscription: Subscription): string {
     }
   }
   
-  // Otherwise, show days
   const daysRemaining = Math.floor(msRemaining / (1000 * 60 * 60 * 24));
   return `${daysRemaining} days left`;
 }

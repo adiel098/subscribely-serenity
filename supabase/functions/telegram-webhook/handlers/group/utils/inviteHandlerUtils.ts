@@ -36,8 +36,8 @@ export async function handleGroupJoinRequest(
       `✅ Thanks for your interest in ${group.name}!\n\n` +
       `Click the button below to access the subscription options and join the group.`;
     
-    // Create mini app URL with the correct format for web_app buttons
-    const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app?group=${group.id}`;
+    // Update: Create mini app URL with the correct domain and format for web_app buttons
+    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?group=${group.id}`;
     
     await logger.info(`🔗 Created mini app URL: ${miniAppUrl}`);
     

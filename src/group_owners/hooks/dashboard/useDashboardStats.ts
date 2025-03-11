@@ -182,6 +182,9 @@ export const useDashboardStats = (communityId: string) => {
     ownerInfo,
     
     // Loading state
-    isLoading
+    isLoading,
+    
+    // Add empty communities array to match group stats structure
+    communities: []
   };
 };

@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FilterTypeSelectorProps {
   value: 'all' | 'active' | 'expired' | 'plan';

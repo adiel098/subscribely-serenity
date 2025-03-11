@@ -1,9 +1,25 @@
 
 import { useState, useMemo } from "react";
-import { subDays, format, isAfter } from "date-fns";
+import { subDays, format, isAfter, differenceInDays } from "date-fns";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
+
+export interface PaymentStatistics {
+  completed: number;
+  pending: number;
+  failed: number;
+}
+
+export interface TrialUsersData {
+  count: number;
+  conversion: number;
+}
+
+export interface MiniAppData {
+  count: number;
+  nonSubscribers: number;
+}
 
 export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: any[] | undefined) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
@@ -52,6 +68,71 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
 
   const inactiveSubscribers = useMemo(() => {
     return filteredSubscribers.filter(sub => sub.subscription_status !== "active" || !sub.is_active);
+  }, [filteredSubscribers]);
+
+  // Calculate users in trial period
+  const trialUsers = useMemo((): TrialUsersData => {
+    const trialSubs = filteredSubscribers.filter(sub => 
+      sub.is_trial === true && 
+      sub.trial_end_date && 
+      isAfter(new Date(sub.trial_end_date), new Date())
+    );
+    
+    // Calculate conversion rate based on historic data
+    const expiredTrials = filteredSubscribers.filter(sub => 
+      sub.is_trial === true && 
+      sub.trial_end_date && 
+      !isAfter(new Date(sub.trial_end_date), new Date())
+    );
+    
+    const convertedTrials = expiredTrials.filter(sub => 
+      sub.subscription_status === "active"
+    );
+    
+    const conversionRate = expiredTrials.length > 0 
+      ? (convertedTrials.length / expiredTrials.length) * 100 
+      : 0;
+    
+    return {
+      count: trialSubs.length,
+      conversion: Math.round(conversionRate)
+    };
+  }, [filteredSubscribers]);
+
+  // Mini app usage data
+  const miniAppUsers = useMemo((): MiniAppData => {
+    // This is a simulated count as we don't have direct access to mini app data
+    // In a real implementation, this would fetch from a dedicated table
+    const miniAppAccessCount = filteredSubscribers.filter(sub => 
+      sub.metadata && sub.metadata.mini_app_accessed === true
+    ).length;
+    
+    const nonSubscribers = filteredSubscribers.filter(sub => 
+      sub.metadata && 
+      sub.metadata.mini_app_accessed === true && 
+      sub.subscription_status !== "active"
+    ).length;
+    
+    return {
+      count: miniAppAccessCount,
+      nonSubscribers: nonSubscribers
+    };
+  }, [filteredSubscribers]);
+
+  // Payment statistics
+  const paymentStats = useMemo((): PaymentStatistics => {
+    // This is simplified - in a real implementation, we would fetch from payment records
+    return {
+      completed: filteredSubscribers.filter(sub => 
+        sub.payment_status === "completed" || sub.payment_status === "successful"
+      ).length,
+      pending: filteredSubscribers.filter(sub => 
+        sub.payment_status === "pending" || sub.payment_status === "processing"
+      ).length,
+      failed: filteredSubscribers.filter(sub => 
+        sub.payment_status === "failed" || sub.payment_status === "error"
+      ).length
+    };
   }, [filteredSubscribers]);
 
   const totalRevenue = useMemo(() => {
@@ -135,7 +216,7 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     );
   }, [filteredSubscribers]);
 
-  // Calculate insights
+  // Calculate average subscription duration
   const averageSubscriptionDuration = useMemo(() => {
     if (!filteredSubscribers.length) return 0;
     
@@ -227,6 +308,9 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     mostPopularPlanPrice: mostPopularPlan.price,
     mostActiveDay,
     renewalRate,
+    trialUsers,
+    miniAppUsers,
+    paymentStats,
     insights: {
       averageSubscriptionDuration,
       mostPopularPlan: mostPopularPlan.name,

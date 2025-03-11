@@ -12,6 +12,8 @@ import { DashboardCharts } from '@/group_owners/components/dashboard/DashboardCh
 import { AnalyticsOverview } from '@/group_owners/components/dashboard/AnalyticsOverview';
 import { useDashboardData } from '@/group_owners/hooks/useDashboardData';
 import { useSubscriptionPlans } from '@/group_owners/hooks/useSubscriptionPlans';
+import { PaymentStatus } from '@/group_owners/components/dashboard/PaymentStatus';
+import { TrialUsersStats } from '@/group_owners/components/dashboard/TrialUsersStats';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -33,7 +35,10 @@ const Dashboard = () => {
     memberGrowthData,
     revenueData,
     dailyStats,
-    insights
+    insights,
+    trialUsers,
+    miniAppUsers,
+    paymentStats
   } = useDashboardData(subscribers, plans);
 
   const addNewCommunity = () => {
@@ -69,8 +74,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl mb-6">
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
           <p className="text-gray-600">
@@ -84,29 +89,52 @@ const Dashboard = () => {
         />
       </div>
 
-      <DashboardStats
-        totalSubscribers={activeSubscribers.length + inactiveSubscribers.length}
-        activeSubscribers={activeSubscribers.length}
-        inactiveSubscribers={inactiveSubscribers.length}
-        totalRevenue={totalRevenue}
-        avgRevenuePerSubscriber={avgRevenuePerSubscriber}
-        conversionRate={conversionRate}
-        timeRange={timeRangeLabel}
-      />
+      <div className="space-y-1">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Subscriber Statistics</h3>
+        <DashboardStats
+          totalSubscribers={activeSubscribers.length + inactiveSubscribers.length}
+          activeSubscribers={activeSubscribers.length}
+          inactiveSubscribers={inactiveSubscribers.length}
+          totalRevenue={totalRevenue}
+          avgRevenuePerSubscriber={avgRevenuePerSubscriber}
+          conversionRate={conversionRate}
+          timeRange={timeRangeLabel}
+        />
+      </div>
 
-      <DashboardCharts
-        memberGrowthData={memberGrowthData}
-        revenueData={revenueData}
-        dailyStats={dailyStats}
-      />
+      <div className="space-y-1">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Trial Users & Mini App</h3>
+        <TrialUsersStats 
+          trialUsers={trialUsers}
+          miniAppUsers={miniAppUsers}
+          averageSubscriptionDuration={insights.averageSubscriptionDuration}
+        />
+      </div>
 
-      <AnalyticsOverview
-        averageSubscriptionDuration={insights.averageSubscriptionDuration}
-        mostPopularPlan={insights.mostPopularPlan}
-        mostPopularPlanPrice={insights.mostPopularPlanPrice}
-        mostActiveDay={insights.mostActiveDay}
-        renewalRate={insights.renewalRate}
-      />
+      <div className="space-y-1">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Payment Tracking</h3>
+        <PaymentStatus paymentStats={paymentStats} />
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Performance Charts</h3>
+        <DashboardCharts
+          memberGrowthData={memberGrowthData}
+          revenueData={revenueData}
+          dailyStats={dailyStats}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Subscription Insights</h3>
+        <AnalyticsOverview
+          averageSubscriptionDuration={insights.averageSubscriptionDuration}
+          mostPopularPlan={insights.mostPopularPlan}
+          mostPopularPlanPrice={insights.mostPopularPlanPrice}
+          mostActiveDay={insights.mostActiveDay}
+          renewalRate={insights.renewalRate}
+        />
+      </div>
     </div>
   );
 };

@@ -3,19 +3,22 @@ import { useFetchSubscriptionPlans } from "./subscription/useFetchSubscriptionPl
 import { useCreateSubscriptionPlan } from "./subscription/useCreateSubscriptionPlan";
 import { useUpdateSubscriptionPlan } from "./subscription/useUpdateSubscriptionPlan";
 import { useDeleteSubscriptionPlan } from "./subscription/useDeleteSubscriptionPlan";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
-export const useSubscriptionPlans = (communityId: string) => {
-  console.log('useSubscriptionPlans hook initialized with communityId:', communityId);
+export const useSubscriptionPlans = (entityId: string) => {
+  console.log('useSubscriptionPlans hook initialized with entityId:', entityId);
+  
+  const { isGroupSelected } = useCommunityContext();
   
   const { 
     data: plans, 
     isLoading, 
     refetch 
-  } = useFetchSubscriptionPlans(communityId);
+  } = useFetchSubscriptionPlans(entityId, isGroupSelected);
   
-  const createPlan = useCreateSubscriptionPlan(communityId);
-  const updatePlan = useUpdateSubscriptionPlan(communityId);
-  const deletePlan = useDeleteSubscriptionPlan(communityId);
+  const createPlan = useCreateSubscriptionPlan(entityId, isGroupSelected);
+  const updatePlan = useUpdateSubscriptionPlan(entityId, isGroupSelected);
+  const deletePlan = useDeleteSubscriptionPlan(entityId);
 
   return {
     plans,

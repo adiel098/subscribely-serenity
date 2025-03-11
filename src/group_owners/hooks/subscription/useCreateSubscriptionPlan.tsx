@@ -1,63 +1,45 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { CreateSubscriptionPlanData } from "../types/subscription.types";
 
-export const useCreateSubscriptionPlan = (communityId: string) => {
+interface CreatePlanParams {
+  community_id?: string;
+  group_id?: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: string;
+  features: string[];
+}
+
+export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: async (newPlan: CreateSubscriptionPlanData) => {
-      console.log('Attempting to create new plan with data:', newPlan);
-      
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        throw new Error('Authentication required');
-      }
-      
-      // Check if community exists first
-      const { data: communityCheck, error: communityError } = await supabase
-        .from('communities')
-        .select('id, owner_id')
-        .eq('id', newPlan.community_id)
-        .single();
-        
-      if (communityError) {
-        console.error('Error checking community:', communityError);
-        throw new Error('Failed to verify community access');
-      }
-      
-      console.log('Community check result:', communityCheck);
-      
+    mutationFn: async (planData: CreatePlanParams) => {
       const { data, error } = await supabase
         .from('subscription_plans')
         .insert({
-          community_id: newPlan.community_id,
-          name: newPlan.name,
-          description: newPlan.description || null,
-          price: newPlan.price,
-          interval: newPlan.interval,
-          features: newPlan.features || [],
-          is_active: true
+          ...(isGroup 
+            ? { group_id: entityId } 
+            : { community_id: entityId }),
+          name: planData.name,
+          description: planData.description,
+          price: planData.price,
+          interval: planData.interval,
+          features: planData.features
         })
         .select()
         .single();
-
-      if (error) {
-        console.error('Error creating plan:', error);
-        throw error;
-      }
-      
-      console.log('Successfully created plan:', data);
+        
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscription-plans', communityId] });
-      toast.success('Subscription plan created successfully ✨');
-    },
-    onError: (error: any) => {
-      console.error('Mutation error:', error);
-      toast.error(`Error creating subscription plan: ${error.message}`);
+      // Invalidate the query to refetch the updated list
+      queryClient.invalidateQueries({ 
+        queryKey: [isGroup ? 'group-subscription-plans' : 'subscription-plans', entityId] 
+      });
     }
   });
 };

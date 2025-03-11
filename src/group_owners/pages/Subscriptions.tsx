@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -35,8 +36,11 @@ const Subscriptions = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { selectedCommunityId } = useCommunityContext();
-  const { plans, isLoading } = useSubscriptionPlans(selectedCommunityId || "");
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
+  
+  // Use the appropriate ID based on whether we're in a community or group context
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const { plans, isLoading } = useSubscriptionPlans(entityId || "");
 
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -95,7 +99,7 @@ const Subscriptions = () => {
             Subscription Plans
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage your community subscription plans
+            Manage your {isGroupSelected ? "group" : "community"} subscription plans
           </p>
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -133,7 +137,11 @@ const Subscriptions = () => {
         </motion.div>
       )}
 
-      <CreatePlanDialog isOpen={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreatePlanDialog 
+        isOpen={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen} 
+        isGroupMode={isGroupSelected}
+      />
 
       {selectedPlan && (
         <EditPlanDialog 
@@ -147,6 +155,7 @@ const Subscriptions = () => {
             interval: selectedPlan.interval,
             features: selectedPlan.features
           }} 
+          isGroupMode={isGroupSelected}
         />
       )}
       

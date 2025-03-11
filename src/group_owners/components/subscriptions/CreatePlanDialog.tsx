@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusIcon, SparklesIcon, CheckIcon, Zap } from "lucide-react";
+import { PlusIcon, SparklesIcon, Zap } from "lucide-react";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { PlanFeatureList } from "./PlanFeatureList";
@@ -15,11 +15,13 @@ import { motion } from "framer-motion";
 interface Props {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  isGroupMode?: boolean;
 }
 
-export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
-  const { selectedCommunityId } = useCommunityContext();
-  const { createPlan } = useSubscriptionPlans(selectedCommunityId || "");
+export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: Props) => {
+  const { selectedCommunityId, selectedGroupId } = useCommunityContext();
+  const entityId = isGroupMode ? selectedGroupId : selectedCommunityId;
+  const { createPlan } = useSubscriptionPlans(entityId || "");
 
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -49,11 +51,13 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
   };
 
   const handleCreatePlan = async () => {
-    if (!selectedCommunityId) return;
+    if (!entityId) return;
     
     try {
       await createPlan.mutateAsync({
-        community_id: selectedCommunityId,
+        ...(isGroupMode 
+          ? { group_id: entityId } 
+          : { community_id: entityId }),
         name: newPlan.name,
         description: newPlan.description,
         price: Number(newPlan.price),
@@ -83,7 +87,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
             Create New Subscription Plan
           </DialogTitle>
           <DialogDescription className="text-base">
-            Design a new subscription plan to offer exclusive benefits to your community members.
+            Design a new subscription plan to offer exclusive benefits to your {isGroupMode ? "group" : "community"} members.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 relative">
@@ -182,7 +186,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
             <Button 
               onClick={handleCreatePlan} 
               className="gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md"
-              disabled={!newPlan.name || !newPlan.price || createPlan.isPending || !selectedCommunityId}
+              disabled={!newPlan.name || !newPlan.price || createPlan.isPending || !entityId}
             >
               <Zap className="h-4 w-4" />
               {createPlan.isPending ? "Creating..." : "Create Plan"}

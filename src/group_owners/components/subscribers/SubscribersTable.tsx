@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -107,13 +106,6 @@ export const SubscribersTable = ({
                 >
                   <TableCell className="py-3">
                     <div className="flex items-center space-x-3">
-                      <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium border">
-                        {subscriber.telegram_username ? (
-                          subscriber.telegram_username.substring(0, 1).toUpperCase()
-                        ) : (
-                          <User className="h-4 w-4" />
-                        )}
-                      </div>
                       <div>
                         <p className="text-sm font-medium text-gray-800">
                           {subscriber.telegram_username ? (
@@ -226,7 +218,6 @@ export const SubscribersTable = ({
                             Edit Subscriber
                           </DropdownMenuItem>
                           
-                          {/* Show remove or unblock based on current status */}
                           {subscriber.subscription_status === "removed" ? (
                             <DropdownMenuItem
                               className="text-blue-600 focus:text-blue-600 cursor-pointer"

@@ -1,9 +1,10 @@
 
 import { useState, useMemo } from "react";
 import { subDays } from "date-fns";
+import { TimeRange } from "./types";
 
 export const useTimeRange = () => {
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "all">("30d");
+  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
 
   const timeRangeStartDate = useMemo(() => {
     const now = new Date();

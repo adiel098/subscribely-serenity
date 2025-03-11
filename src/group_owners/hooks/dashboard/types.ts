@@ -12,8 +12,10 @@ export interface DashboardSubscriber extends Subscriber {
   };
 }
 
+export type TimeRange = "7d" | "30d" | "90d" | "all";
+
 export interface TimeRangeData {
-  timeRange: "7d" | "30d" | "90d" | "all";
+  timeRange: TimeRange;
   timeRangeLabel: string;
   timeRangeStartDate: Date;
 }

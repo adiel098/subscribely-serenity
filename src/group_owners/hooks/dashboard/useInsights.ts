@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { DashboardSubscriber, Insights } from "./types";
 
 export const useInsights = (

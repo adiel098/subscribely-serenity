@@ -49,8 +49,6 @@ export const useSubscribers = (communityId: string) => {
         is_active,
         subscription_start_date,
         subscription_end_date,
-        first_name,
-        last_name,
         is_trial,
         trial_end_date,
         payment_status,
@@ -62,6 +60,35 @@ export const useSubscribers = (communityId: string) => {
     if (membersError) {
       console.error("Error fetching subscribers:", membersError);
       return [];
+    }
+
+    // Create a map to store user details
+    const userDetails: Record<string, { first_name: string | null, last_name: string | null }> = {};
+    
+    // Fetch user details from telegram_mini_app_users for all telegram_user_ids
+    if (members.length > 0) {
+      const telegramIds = members.map(member => member.telegram_user_id);
+      
+      const { data: users, error: usersError } = await supabase
+        .from("telegram_mini_app_users")
+        .select(`
+          telegram_id,
+          first_name,
+          last_name
+        `)
+        .in("telegram_id", telegramIds);
+        
+      if (usersError) {
+        console.error("Error fetching user details:", usersError);
+      } else if (users) {
+        // Create a map of user details by telegram_id
+        users.forEach(user => {
+          userDetails[user.telegram_id] = {
+            first_name: user.first_name,
+            last_name: user.last_name
+          };
+        });
+      }
     }
 
     // Get all plan IDs to fetch plan data separately
@@ -94,9 +121,12 @@ export const useSubscribers = (communityId: string) => {
       }
     }
 
-    // Map the members with their plans
+    // Map the members with their plans and user details
     return members.map(member => ({
       ...member,
+      // Add first_name and last_name from the user details map or use null if not found
+      first_name: userDetails[member.telegram_user_id]?.first_name || null,
+      last_name: userDetails[member.telegram_user_id]?.last_name || null,
       plan: member.subscription_plan_id ? plansData[member.subscription_plan_id] : null
     }));
   };

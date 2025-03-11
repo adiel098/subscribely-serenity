@@ -8,15 +8,19 @@ import { useCommunities } from "@/group_owners/hooks/useCommunities";
 
 export const useCommunityRequirements = () => {
   const navigate = useNavigate();
-  const { selectedCommunityId } = useCommunityContext();
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
 
-  // Use the new hook that brings both community-specific and default payment methods
-  const { data: paymentMethods, isLoading: isLoadingPayments } = useAvailablePaymentMethods(selectedCommunityId);
-  const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(selectedCommunityId || "");
+  // Use the new hook that brings both entity-specific and default payment methods
+  const { data: paymentMethods, isLoading: isLoadingPayments } = useAvailablePaymentMethods(entityId, isGroupSelected);
+  const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(entityId || "");
 
-  const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
+  const selectedEntity = isGroupSelected 
+    ? null  // For groups, we don't have the entity details here
+    : communities?.find(community => community.id === selectedCommunityId);
 
   // Check if there's any active payment method (including defaults)
   const hasActivePaymentMethods = paymentMethods?.some(pm => pm.is_active) || false;
@@ -50,7 +54,7 @@ export const useCommunityRequirements = () => {
 
   return {
     selectedCommunityId,
-    selectedCommunity,
+    selectedCommunity: selectedEntity,
     hasActivePaymentMethods,
     hasPlans,
     isFullyConfigured,

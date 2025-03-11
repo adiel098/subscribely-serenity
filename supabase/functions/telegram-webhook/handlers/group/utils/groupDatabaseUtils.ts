@@ -39,24 +39,11 @@ export async function checkGroupRequirements(supabase: ReturnType<typeof createC
   try {
     await logger.info(`🔍 Checking requirements for group ID: ${groupId}`);
     
-    // First, we need to get the owner of this group
-    const { data: group, error: groupError } = await supabase
-      .from('community_groups')
-      .select('owner_id')
-      .eq('id', groupId)
-      .single();
-    
-    if (groupError || !group) {
-      await logger.error(`❌ Error fetching group owner: ${groupId}`, groupError);
-      return { hasActivePlan: false, hasActivePaymentMethod: false };
-    }
-    
-    const ownerId = group.owner_id;
-    
-    // Check if there's at least one active subscription plan
+    // Check if there's at least one active subscription plan specifically for this group
     const { data: plans, error: plansError } = await supabase
       .from('subscription_plans')
       .select('id')
+      .eq('group_id', groupId)
       .eq('is_active', true)
       .limit(1);
     
@@ -66,21 +53,43 @@ export async function checkGroupRequirements(supabase: ReturnType<typeof createC
     }
     
     const hasActivePlan = plans && plans.length > 0;
+    await logger.info(`Group has active subscription plans: ${hasActivePlan ? 'Yes' : 'No'}`);
     
-    // Check if there's at least one active payment method for this owner
-    const { data: paymentMethods, error: paymentMethodsError } = await supabase
-      .rpc('get_available_payment_methods', { community_id_param: groupId })
+    // Check direct payment methods for this group
+    const { data: directMethods, error: directMethodsError } = await supabase
+      .from('payment_methods')
+      .select('id')
+      .eq('group_id', groupId)
       .eq('is_active', true)
       .limit(1);
-    
-    if (paymentMethodsError) {
-      await logger.error(`❌ Error checking payment methods:`, paymentMethodsError);
+      
+    if (directMethodsError) {
+      await logger.error(`❌ Error checking direct payment methods:`, directMethodsError);
       return { hasActivePlan, hasActivePaymentMethod: false };
     }
     
-    const hasActivePaymentMethod = paymentMethods && paymentMethods.length > 0;
+    // If group has direct payment methods, we can return early
+    if (directMethods && directMethods.length > 0) {
+      await logger.info(`Group has direct payment methods: Yes`);
+      return { hasActivePlan, hasActivePaymentMethod: true };
+    }
     
-    await logger.info(`✅ Group requirements check result: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+    // Check if there's at least one default payment method available
+    const { data: defaultMethods, error: defaultMethodsError } = await supabase
+      .from('payment_methods')
+      .select('id')
+      .eq('is_default', true)
+      .eq('is_active', true)
+      .limit(1);
+      
+    if (defaultMethodsError) {
+      await logger.error(`❌ Error checking default payment methods:`, defaultMethodsError);
+      return { hasActivePlan, hasActivePaymentMethod: false };
+    }
+    
+    const hasActivePaymentMethod = (defaultMethods && defaultMethods.length > 0);
+    
+    await logger.info(`Group requirements check result: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
     
     return { hasActivePlan, hasActivePaymentMethod };
   } catch (error) {

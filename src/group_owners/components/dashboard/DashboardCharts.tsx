@@ -38,7 +38,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
       return (
         <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
           <p className="font-medium">{formatTooltipDate(label)}</p>
-          <p className="text-[#8884d8]">
+          <p className="text-[#8B5CF6]">
             {`${payload[0].name}: ${payload[0].value}`}
           </p>
         </div>
@@ -72,32 +72,35 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                   >
                     <defs>
                       <linearGradient id="colorMembers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.05}/>
                       </linearGradient>
                     </defs>
                     <XAxis 
                       dataKey="date" 
                       tickFormatter={formatDate} 
                       tick={{ fontSize: 12 }} 
-                      axisLine={{ stroke: '#E5E7EB' }}
+                      axisLine={false}
                       tickLine={false}
+                      stroke="#E5E7EB"
                     />
                     <YAxis 
                       tick={{ fontSize: 12 }} 
                       axisLine={false} 
                       tickLine={false}
-                      tickCount={5}
+                      strokeWidth={0}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <CartesianGrid vertical={false} stroke="#E5E7EB" />
+                    <CartesianGrid vertical={false} stroke="#E5E7EB" opacity={0.3} />
                     <Area 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#8884d8" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={2}
                       fillOpacity={1} 
                       fill="url(#colorMembers)" 
-                      name="New Members"
+                      name="Members"
+                      dot={{ fill: "#8B5CF6", r: 4 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -112,32 +115,43 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
             <div className="h-[300px]">
               {revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
+                  <AreaChart
                     data={revenueData}
                     margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                   >
-                    <CartesianGrid vertical={false} stroke="#E5E7EB" />
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.05}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="#E5E7EB" opacity={0.3} />
                     <XAxis 
                       dataKey="date" 
                       tickFormatter={formatDate} 
                       tick={{ fontSize: 12 }} 
-                      axisLine={{ stroke: '#E5E7EB' }}
+                      axisLine={false}
                       tickLine={false}
+                      stroke="#E5E7EB"
                     />
                     <YAxis 
                       tick={{ fontSize: 12 }} 
                       axisLine={false} 
                       tickLine={false}
-                      tickCount={5}
+                      strokeWidth={0}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar 
+                    <Area 
+                      type="monotone"
                       dataKey="value" 
-                      fill="#4CAF50" 
-                      radius={[4, 4, 0, 0]} 
+                      stroke="#8B5CF6"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorRevenue)" 
                       name="Revenue"
+                      dot={{ fill: "#8B5CF6", r: 4 }}
                     />
-                  </BarChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full">

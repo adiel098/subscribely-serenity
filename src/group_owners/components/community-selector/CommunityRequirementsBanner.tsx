@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,7 @@ import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { LinkEditDialog } from "./LinkEditDialog";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
+import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 
 export const CommunityRequirementsBanner = () => {
   const navigate = useNavigate();

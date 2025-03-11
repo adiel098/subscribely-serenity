@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
+import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 
 interface MiniAppLinkButtonProps {
   onClick: () => void;
@@ -19,8 +20,9 @@ export const MiniAppLinkButton = ({ onClick, community }: MiniAppLinkButtonProps
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [customLink, setCustomLink] = useState(community?.custom_link || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const botUsername = getBotUsername();
 
-  const baseUrl = "https://t.me/SubscribelyBot?start=";
+  const baseUrl = `https://t.me/${botUsername}?start=`;
   const fullLink = community?.custom_link 
     ? `${baseUrl}${community.custom_link}` 
     : community?.id 

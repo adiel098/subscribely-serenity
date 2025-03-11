@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunityGroupMembers } from "./useCommunityGroupMembers";
 import { useCommunities } from "./useCommunities";
-import { toast } from "sonner";
 
 export const useGroupMemberCommunities = (groupId: string | null) => {
   const [communityIds, setCommunityIds] = useState<string[]>([]);
@@ -18,7 +17,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   
   // Extract community IDs from members when they load
   useEffect(() => {
-    if (members) {
+    if (members && members.length > 0) {
       const ids = members.map(member => member.community_id);
       setCommunityIds(ids);
     } else {

@@ -18,6 +18,7 @@ export const CommunityRequirementsBanner = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [customLink, setCustomLink] = useState<string | null>(null);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
+  const botUsername = getBotUsername();
 
   const { data: paymentMethods, isLoading: isLoadingPayments } = usePaymentMethods(selectedCommunityId);
   const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(selectedCommunityId || "");
@@ -45,8 +46,8 @@ export const CommunityRequirementsBanner = () => {
     if (!selectedCommunityId) return;
     
     const miniAppUrl = selectedCommunity?.custom_link 
-      ? `https://t.me/membifybot?start=${selectedCommunity.custom_link}`
-      : `https://t.me/membifybot?start=${selectedCommunityId}`;
+      ? `https://t.me/${botUsername}?start=${selectedCommunity.custom_link}`
+      : `https://t.me/${botUsername}?start=${selectedCommunityId}`;
       
     navigator.clipboard.writeText(miniAppUrl)
       .then(() => {
@@ -102,7 +103,7 @@ export const CommunityRequirementsBanner = () => {
           <div className="flex items-center gap-2 ml-2 bg-white/70 rounded-md px-2 py-1 border border-emerald-100 min-w-[300px] max-w-[400px]">
             <Link className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
             <span className="text-xs text-emerald-700 font-mono truncate">
-              t.me/membifybot?start={selectedCommunity?.custom_link || selectedCommunityId?.substring(0, 8) + "..."}
+              t.me/{botUsername}?start={selectedCommunity?.custom_link || selectedCommunityId?.substring(0, 8) + "..."}
             </span>
           </div>
           

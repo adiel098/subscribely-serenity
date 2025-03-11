@@ -13,6 +13,7 @@ import { Community } from "@/group_owners/hooks/useCommunities";
 import { 
   Card, CardHeader, CardTitle, CardDescription, CardContent
 } from "@/components/ui/card";
+import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 
 interface GroupMiniAppLinkButtonProps {
   group: CommunityGroup;
@@ -21,8 +22,9 @@ interface GroupMiniAppLinkButtonProps {
 
 export const GroupMiniAppLinkButton = ({ group, communities }: GroupMiniAppLinkButtonProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
-  const baseUrl = "https://t.me/SubscribelyBot?start=group_";
+  const botUsername = getBotUsername();
+  
+  const baseUrl = `https://t.me/${botUsername}?start=group_`;
   const fullLink = `${baseUrl}${group.id}`;
 
   const handleCopyLink = () => {

@@ -8,7 +8,7 @@ import { useTrialUsers } from "./useTrialUsers";
 import { usePaymentStats } from "./usePaymentStats";
 import { useInsights } from "./useInsights";
 import { useChartData } from "./useChartData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MiniAppData } from "./types";
@@ -25,9 +25,14 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(true);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   
+  // Memoize the community IDs to prevent unnecessary re-renders
+  const communityIdsString = useMemo(() => 
+    communityIds && communityIds.length > 0 ? communityIds.join(',') : '', 
+  [communityIds]);
+  
   // Fetch subscribers for each community in the group
   useEffect(() => {
-    if (!communityIds || !communityIds.length) {
+    if (!communityIdsString) {
       setAllSubscribers([]);
       setIsLoadingSubscribers(false);
       return;
@@ -37,18 +42,21 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     
     const fetchAllSubscribers = async () => {
       try {
-        const { data: subscribers, error } = await supabase
-          .from("telegram_chat_members")
-          .select("*")
-          .in("community_id", communityIds);
-        
-        if (error) {
-          console.error("Error fetching group subscribers:", error);
-          setIsLoadingSubscribers(false);
-          return;
+        // Only fetch if we have community IDs
+        if (communityIds && communityIds.length > 0) {
+          const { data: subscribers, error } = await supabase
+            .from("telegram_chat_members")
+            .select("*")
+            .in("community_id", communityIds);
+          
+          if (error) {
+            console.error("Error fetching group subscribers:", error);
+            setIsLoadingSubscribers(false);
+            return;
+          }
+          
+          setAllSubscribers(subscribers || []);
         }
-        
-        setAllSubscribers(subscribers || []);
         setIsLoadingSubscribers(false);
       } catch (error) {
         console.error("Exception fetching group subscribers:", error);
@@ -57,11 +65,11 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     };
     
     fetchAllSubscribers();
-  }, [communityIds]);
+  }, [communityIdsString]); // Use the memoized string instead of the array
   
   // Fetch subscription plans for all communities
   useEffect(() => {
-    if (!communityIds || !communityIds.length) {
+    if (!communityIdsString) {
       setAllPlans([]);
       setIsLoadingPlans(false);
       return;
@@ -71,18 +79,21 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     
     const fetchAllPlans = async () => {
       try {
-        const { data: plans, error } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .in("community_id", communityIds);
-        
-        if (error) {
-          console.error("Error fetching group plans:", error);
-          setIsLoadingPlans(false);
-          return;
+        // Only fetch if we have community IDs
+        if (communityIds && communityIds.length > 0) {
+          const { data: plans, error } = await supabase
+            .from("subscription_plans")
+            .select("*")
+            .in("community_id", communityIds);
+          
+          if (error) {
+            console.error("Error fetching group plans:", error);
+            setIsLoadingPlans(false);
+            return;
+          }
+          
+          setAllPlans(plans || []);
         }
-        
-        setAllPlans(plans || []);
         setIsLoadingPlans(false);
       } catch (error) {
         console.error("Exception fetching group plans:", error);
@@ -91,7 +102,7 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     };
     
     fetchAllPlans();
-  }, [communityIds]);
+  }, [communityIdsString]); // Use the memoized string instead of the array
   
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
     useFilteredSubscribers(allSubscribers, timeRangeStartDate);
@@ -101,9 +112,15 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   
   const { trialUsers } = useTrialUsers(filteredSubscribers);
   
+  // Create a stable query key for the mini app users
+  const miniAppUsersQueryKey = useMemo(() => 
+    ["groupMiniAppUsers", groupId, communityIdsString],
+    [groupId, communityIdsString]
+  );
+  
   // Fetch mini app users for this group
   const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = useQuery({
-    queryKey: ["groupMiniAppUsers", groupId, communityIds],
+    queryKey: miniAppUsersQueryKey,
     queryFn: async () => {
       if (!groupId || !communityIds || !communityIds.length) return { count: 0, nonSubscribers: 0 };
       
@@ -155,9 +172,12 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   
   const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
   
+  // Create a stable owner query key
+  const ownerQueryKey = useMemo(() => ["groupOwner", groupId], [groupId]);
+  
   // Fetch group owner info (same as the community owner)
   const { data: ownerInfo, isLoading: ownerLoading } = useQuery({
-    queryKey: ["groupOwner", groupId],
+    queryKey: ownerQueryKey,
     queryFn: async () => {
       if (!groupId) return null;
       

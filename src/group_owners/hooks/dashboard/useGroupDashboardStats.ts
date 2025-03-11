@@ -1,6 +1,6 @@
+
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
-import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
 import { useRevenueStats } from "./useRevenueStats";
@@ -8,10 +8,10 @@ import { useTrialUsers } from "./useTrialUsers";
 import { usePaymentStats } from "./usePaymentStats";
 import { useInsights } from "./useInsights";
 import { useChartData } from "./useChartData";
-import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MiniAppData } from "./types";
 
 export const useGroupDashboardStats = (groupId: string | null) => {
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
@@ -25,21 +25,15 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(true);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   
-  // Keep track of which communities have loaded their subscribers and plans
-  const [loadedSubscribersCount, setLoadedSubscribersCount] = useState(0);
-  const [loadedPlansCount, setLoadedPlansCount] = useState(0);
-  
   // Fetch subscribers for each community in the group
   useEffect(() => {
-    if (!communityIds.length) {
+    if (!communityIds || !communityIds.length) {
       setAllSubscribers([]);
       setIsLoadingSubscribers(false);
       return;
     }
     
     setIsLoadingSubscribers(true);
-    setLoadedSubscribersCount(0);
-    setAllSubscribers([]);
     
     const fetchAllSubscribers = async () => {
       try {
@@ -67,15 +61,13 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   
   // Fetch subscription plans for all communities
   useEffect(() => {
-    if (!communityIds.length) {
+    if (!communityIds || !communityIds.length) {
       setAllPlans([]);
       setIsLoadingPlans(false);
       return;
     }
     
     setIsLoadingPlans(true);
-    setLoadedPlansCount(0);
-    setAllPlans([]);
     
     const fetchAllPlans = async () => {
       try {
@@ -111,9 +103,9 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   
   // Fetch mini app users for this group
   const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = useQuery({
-    queryKey: ["groupMiniAppUsers", groupId],
+    queryKey: ["groupMiniAppUsers", groupId, communityIds],
     queryFn: async () => {
-      if (!groupId || !communityIds.length) return { count: 0, nonSubscribers: 0 };
+      if (!groupId || !communityIds || !communityIds.length) return { count: 0, nonSubscribers: 0 };
       
       try {
         const { data: miniAppUsers, error } = await supabase
@@ -144,10 +136,10 @@ export const useGroupDashboardStats = (groupId: string | null) => {
         return { count: 0, nonSubscribers: 0 };
       }
     },
-    enabled: !!groupId && communityIds.length > 0 && !isLoadingSubscribers
+    enabled: !!groupId && !!communityIds && communityIds.length > 0 && !isLoadingSubscribers
   });
   
-  const miniAppUsers = {
+  const miniAppUsers: MiniAppData = {
     count: miniAppUsersData?.count || 0,
     nonSubscribers: miniAppUsersData?.nonSubscribers || 0
   };

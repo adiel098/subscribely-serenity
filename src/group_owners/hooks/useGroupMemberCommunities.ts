@@ -1,35 +1,47 @@
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useCommunityGroupMembers } from "./useCommunityGroupMembers";
 import { useCommunities } from "./useCommunities";
-import { Community } from "./useCommunities";
+import { toast } from "sonner";
 
 export const useGroupMemberCommunities = (groupId: string | null) => {
-  const { data: groupMembers, isLoading: membersLoading } = useCommunityGroupMembers(groupId);
+  const [communityIds, setCommunityIds] = useState<string[]>([]);
+  const [communities, setCommunities] = useState<any[]>([]);
+  
+  // Fetch the member IDs for the group
+  const { data: members, isLoading: membersLoading } = useCommunityGroupMembers(groupId);
+  
+  // Fetch all communities the user has access to
   const { data: allCommunities, isLoading: communitiesLoading } = useCommunities();
   
-  const memberCommunities = useMemo(() => {
-    if (!groupMembers || !allCommunities) return [];
-    
-    // Get list of community IDs in this group
-    const communityIds = groupMembers.map(member => member.community_id);
-    
-    // Find the actual community objects
-    return allCommunities
-      .filter(community => communityIds.includes(community.id))
-      .sort((a, b) => {
-        // Sort by the display order in the group
-        const aIndex = groupMembers.findIndex(m => m.community_id === a.id);
-        const bIndex = groupMembers.findIndex(m => m.community_id === b.id);
-        return aIndex - bIndex;
-      });
-  }, [groupMembers, allCommunities]);
+  // Extract community IDs from members when they load
+  useEffect(() => {
+    if (members) {
+      const ids = members.map(member => member.community_id);
+      setCommunityIds(ids);
+    } else {
+      setCommunityIds([]);
+    }
+  }, [members]);
   
-  const isLoading = membersLoading || communitiesLoading;
+  // Filter communities based on the member IDs
+  useEffect(() => {
+    if (allCommunities && communityIds.length > 0) {
+      const filteredCommunities = allCommunities.filter(community => 
+        communityIds.includes(community.id)
+      );
+      setCommunities(filteredCommunities);
+    } else {
+      setCommunities([]);
+    }
+  }, [allCommunities, communityIds]);
   
+  // Return the combined result
   return {
-    communities: memberCommunities as Community[],
-    isLoading,
-    communityIds: groupMembers?.map(m => m.community_id) || []
+    communities,
+    communityIds,
+    isLoading: membersLoading || communitiesLoading
   };
 };

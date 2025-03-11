@@ -3,13 +3,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateCommunityGroupData } from "./types/communityGroup.types";
 import { toast } from "sonner";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 export const useCreateCommunityGroup = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (data: CreateCommunityGroupData) => {
       console.log("Creating new community group:", data);
+      
+      if (!user) {
+        throw new Error("User is not authenticated");
+      }
       
       try {
         // Insert into community_groups table
@@ -19,7 +25,8 @@ export const useCreateCommunityGroup = () => {
             name: data.name,
             description: data.description || null,
             photo_url: data.photo_url || null,
-            custom_link: data.custom_link || null
+            custom_link: data.custom_link || null,
+            owner_id: user.id // Ensure we set the owner_id explicitly
           })
           .select("*")
           .single();
@@ -71,6 +78,8 @@ export const useCreateCommunityGroup = () => {
       
       if (error.code === "23505") {
         errorMessage = "A group with this custom link already exists";
+      } else if (error.message && typeof error.message === 'string') {
+        errorMessage = error.message;
       }
       
       toast.error(errorMessage);

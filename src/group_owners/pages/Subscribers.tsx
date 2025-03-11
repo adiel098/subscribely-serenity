@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -229,6 +228,7 @@ const Subscribers = () => {
         planFilter={planFilter}
         onPlanFilterChange={setPlanFilter}
         uniquePlans={uniquePlans}
+        onExport={handleExport}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, XCircle, TagIcon, Package } from "lucide-react";
+import { Search, Filter, XCircle, TagIcon, Package, Download } from "lucide-react";
 
 interface SubscriberFiltersProps {
   searchQuery: string;
@@ -18,6 +18,7 @@ interface SubscriberFiltersProps {
   planFilter: string;
   onPlanFilterChange: (value: string) => void;
   uniquePlans: string[];
+  onExport: () => void;
 }
 
 export const SubscriberFilters = ({
@@ -28,6 +29,7 @@ export const SubscriberFilters = ({
   planFilter,
   onPlanFilterChange,
   uniquePlans,
+  onExport,
 }: SubscriberFiltersProps) => {
   return (
     <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm space-y-4">
@@ -107,6 +109,16 @@ export const SubscriberFilters = ({
             className="ml-2"
           >
             Reset
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onExport}
+            className="ml-2 bg-green-50/80 hover:bg-green-100/90 border-green-200"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
           </Button>
         </div>
       </div>

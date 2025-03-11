@@ -98,14 +98,16 @@ const Dashboard = () => {
         timeRange={timeRangeLabel}
       />
 
-      <div className="flex flex-wrap gap-4 mt-6 justify-between">
-        <DashboardCharts
-          memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
-          revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
-          timeRange={timeRangeLabel}
-        />
+      <div className="flex flex-wrap gap-4 mt-6">
+        <div className="w-full lg:w-[60%] xl:w-[65%]">
+          <DashboardCharts
+            memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
+            revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
+            timeRange={timeRangeLabel}
+          />
+        </div>
         
-        <div className="flex flex-wrap gap-4 w-full md:w-auto">
+        <div className="w-full lg:w-[35%] xl:w-[32%] flex flex-col gap-4">
           <AnalyticsOverview
             averageSubscriptionDuration={insights.averageSubscriptionDuration}
             mostPopularPlan={insights.mostPopularPlan}

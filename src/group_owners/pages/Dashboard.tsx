@@ -108,24 +108,13 @@ const Dashboard = () => {
         </div>
         
         <div className="w-full lg:w-[32%] flex flex-col gap-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-4">
-              <div className="w-1/2">
-                <PaymentAnalytics
-                  paymentStats={paymentStats}
-                />
-              </div>
-              <div className="w-1/2">
-                <AnalyticsOverview
-                  averageSubscriptionDuration={insights.averageSubscriptionDuration}
-                  mostPopularPlan={insights.mostPopularPlan}
-                  mostPopularPlanPrice={insights.mostPopularPlanPrice}
-                  mostActiveDay={insights.mostActiveDay}
-                  renewalRate={insights.renewalRate}
-                />
-              </div>
-            </div>
-          </div>
+          <AnalyticsOverview
+            averageSubscriptionDuration={insights.averageSubscriptionDuration}
+            mostPopularPlan={insights.mostPopularPlan}
+            mostPopularPlanPrice={insights.mostPopularPlanPrice}
+            mostActiveDay={insights.mostActiveDay}
+            renewalRate={insights.renewalRate}
+          />
         </div>
       </div>
 

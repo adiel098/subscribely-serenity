@@ -27,7 +27,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
 }) => {
   return (
     <div className="w-full md:w-[45%] lg:w-[45%]">
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-base font-medium text-gray-800 flex items-center gap-2">

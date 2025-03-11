@@ -2,10 +2,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Users, 
   Clock, 
   CreditCard, 
-  CalendarClock, 
   TrendingUp, 
   Award 
 } from "lucide-react";
@@ -61,19 +59,8 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {/* Most Active Day */}
-          <div className="p-3 bg-transparent border border-gray-200 rounded-md">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-1 mb-1">
-                <CalendarClock className="h-3 w-3 text-gray-500" />
-                <p className="text-xs text-gray-500">Most Active Day</p>
-              </div>
-              <p className="text-sm font-bold text-gray-800">{mostActiveDay}</p>
-            </div>
-          </div>
-          
-          {/* Renewal Rate - Removed the div wrapper as requested */}
+        <div className="grid grid-cols-1 gap-2">
+          {/* Renewal Rate */}
           <div className="flex flex-col items-center p-3 bg-transparent border border-gray-200 rounded-md">
             <div className="flex items-center gap-1 mb-1">
               <TrendingUp className="h-3 w-3 text-gray-500" />

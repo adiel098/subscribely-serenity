@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 import { handleSubscription } from '../subscriptionHandler.ts';
 import { createOrUpdateMember } from '../utils/dbLogger.ts';
@@ -93,22 +93,18 @@ async function handleGroupStartCommand(
     const userId = message.from.id.toString();
     const username = message.from.username;
     
-    // Check if group exists using the group ID directly
+    // Get the group and its linked communities
     const { data: group, error: groupError } = await supabase
       .from('community_groups')
       .select(`
         id,
         name,
-        owner_id,
         telegram_chat_id,
-        telegram_invite_link,
-        community_group_members!inner (
-          community_id
-        )
+        telegram_invite_link
       `)
       .eq('id', groupId)
       .single();
-    
+
     if (groupError || !group) {
       console.error(`❌ [START-COMMAND] Group not found: ${groupError?.message || 'Unknown error'}`);
       
@@ -120,15 +116,21 @@ async function handleGroupStartCommand(
       
       return true;
     }
-    
-    console.log(`✅ [START-COMMAND] Found group: ${group.name} (${group.id})`);
-    
+
+    console.log(`✅ [START-COMMAND] Found group: ${group.name}`);
+
     // Get all related communities for this group
     const { data: groupMembers, error: membersError } = await supabase
       .from('community_group_members')
-      .select('community_id')
-      .eq('group_id', group.id);
-      
+      .select(`
+        community_id,
+        communities:community_id (
+          id,
+          name
+        )
+      `)
+      .eq('group_id', groupId);
+
     if (membersError) {
       console.error(`❌ [START-COMMAND] Error fetching group members: ${membersError.message}`);
       return false;
@@ -136,7 +138,17 @@ async function handleGroupStartCommand(
 
     const communityIds = groupMembers?.map(member => member.community_id) || [];
     
-    // Check if user has active subscription to any of the communities in this group
+    if (communityIds.length === 0) {
+      console.log(`⚠️ [START-COMMAND] No communities found for group ${groupId}`);
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `❌ Sorry, this group is not properly configured. Please contact the administrator.`
+      );
+      return true;
+    }
+
+    // Check if user has active subscription to ANY of the communities in this group
     const { data: memberships, error: membershipError } = await supabase
       .from('telegram_chat_members')
       .select('id, subscription_status, subscription_end_date, community_id')
@@ -156,6 +168,7 @@ async function handleGroupStartCommand(
       console.log(`💰 [START-COMMAND] Found active membership in community: ${activeMembership.community_id}`);
       
       try {
+        // Generate invite link for the group
         const inviteLinkResult = await createGroupInviteLink(supabase, group.id, botToken, {
           name: `User ${userId} - ${new Date().toISOString().split('T')[0]}`,
           expireHours: 24
@@ -187,22 +200,19 @@ async function handleGroupStartCommand(
       
       return true;
     } else {
-      console.log(`❌ [START-COMMAND] No active membership found for user ${userId} in any of the required communities`);
+      console.log(`❌ [START-COMMAND] No active membership found for user ${userId} in any group community`);
       
-      // Get the first community name for the message (we could list all but keeping it simple)
-      const { data: firstCommunity } = await supabase
-        .from('communities')
-        .select('name')
-        .eq('id', communityIds[0])
-        .single();
-      
-      const communityName = firstCommunity?.name || "the parent community";
+      // Get a list of community names
+      const communityNames = groupMembers
+        ?.map(member => member.communities?.name)
+        .filter(Boolean)
+        .join(', ');
       
       await sendTelegramMessage(
         botToken,
         message.chat.id,
-        `👋 Welcome! To join ${group.name}, you need an active subscription to ${communityName}.\n\n` +
-        `Please subscribe to the main community first before trying to join this group.`
+        `👋 Welcome! To join ${group.name}, you need an active subscription to at least one of these communities: ${communityNames}.\n\n` +
+        `Please visit our subscription page to get access.`
       );
       
       return true;

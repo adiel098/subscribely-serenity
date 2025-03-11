@@ -68,7 +68,6 @@ export const PaymentMethodCard = ({
         className="h-full"
       >
         <Card className="relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[320px] mx-auto">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader className="pb-3 pt-5 px-5">
             <div className="flex justify-between items-start">
               <CardTitle className="flex items-center gap-3 text-xl">
@@ -117,7 +116,7 @@ export const PaymentMethodCard = ({
                 <ChevronRight className="h-3.5 w-3.5 ml-auto" />
               </Button>
               
-              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-50 border border-indigo-100 ml-1">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-50 border border-indigo-100 mr-6">
                 {isActive ? (
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                 ) : (

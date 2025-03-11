@@ -83,6 +83,22 @@ const PaymentMethods = () => {
         </p>
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="flex justify-center items-center p-4 pb-2 text-center"
+      >
+        <div className="flex flex-col items-center text-center max-w-lg">
+          <Shield className="h-14 w-14 text-indigo-200 mb-3" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Payment Settings Simplified</h3>
+          <p className="text-gray-500 text-base">
+            We've made payment configuration easier! Click on any payment method card below
+            and use the "Configure" button to set up your payment gateway securely. 🔒
+          </p>
+        </div>
+      </motion.div>
+
       <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden max-w-5xl mx-auto">
         <CardHeader className="pb-3 pt-6">
           <CardTitle className="flex items-center justify-center gap-3 text-xl">
@@ -145,22 +161,6 @@ const PaymentMethods = () => {
           </motion.div>
         </CardContent>
       </Card>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex justify-center items-center p-6 text-center"
-      >
-        <div className="flex flex-col items-center text-center max-w-lg">
-          <Shield className="h-14 w-14 text-indigo-200 mb-4" />
-          <h3 className="text-xl font-medium text-gray-700 mb-3">Payment Settings Simplified</h3>
-          <p className="text-gray-500 text-base">
-            We've made payment configuration easier! Click on any payment method card above
-            and use the "Configure" button to set up your payment gateway securely. 🔒
-          </p>
-        </div>
-      </motion.div>
     </div>
   );
 };

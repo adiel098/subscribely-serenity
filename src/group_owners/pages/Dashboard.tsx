@@ -5,6 +5,7 @@ import { DashboardStats } from "@/group_owners/components/dashboard/DashboardSta
 import { TimeFilter } from "@/group_owners/components/dashboard/TimeFilter";
 import { DashboardCharts } from "@/group_owners/components/dashboard/DashboardCharts";
 import { TrialUsersStats } from "@/group_owners/components/dashboard/TrialUsersStats";
+import { MiniAppUsersStats } from "@/group_owners/components/dashboard/MiniAppUsersStats";
 import { PaymentStatus } from "@/group_owners/components/dashboard/PaymentStatus";
 import { AnalyticsOverview } from "@/group_owners/components/dashboard/AnalyticsOverview";
 import { PaymentAnalytics } from "@/group_owners/components/dashboard/PaymentAnalytics";
@@ -88,8 +89,8 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-3">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-8">
           <DashboardStats
             totalSubscribers={filteredSubscribers.length}
             activeSubscribers={activeSubscribers.length}
@@ -100,11 +101,15 @@ const Dashboard = () => {
             timeRange={timeRangeLabel}
           />
         </div>
-        <div className="md:col-span-1">
+        <div className="md:col-span-2">
           <TrialUsersStats
             trialUsers={trialUsers}
-            miniAppUsers={miniAppUsers}
             averageSubscriptionDuration={insights.averageSubscriptionDuration}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <MiniAppUsersStats
+            miniAppUsers={miniAppUsers}
           />
         </div>
       </div>

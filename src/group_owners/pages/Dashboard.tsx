@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { DashboardStats } from "@/group_owners/components/dashboard/DashboardStats";
 import { TimeFilter } from "@/group_owners/components/dashboard/TimeFilter";
@@ -40,7 +40,26 @@ const Dashboard = () => {
   // Get the owner's first name or use a fallback
   const ownerFirstName = ownerInfo?.first_name || 'there';
 
+  useEffect(() => {
+    console.log("🔍 Dashboard loaded with community ID:", selectedCommunityId);
+    console.log("👤 Owner info:", ownerInfo);
+    
+    if (!ownerInfo) {
+      console.log("⚠️ Owner info not found. This might indicate a problem with data fetching.");
+    } else {
+      console.log("✅ Owner info loaded successfully:", ownerFirstName);
+    }
+    
+    console.log("📊 Dashboard statistics:", {
+      subscribersCount: filteredSubscribers.length,
+      activeCount: activeSubscribers.length,
+      inactiveCount: inactiveSubscribers.length,
+      revenue: totalRevenue
+    });
+  }, [selectedCommunityId, ownerInfo, filteredSubscribers, activeSubscribers, inactiveSubscribers, totalRevenue, ownerFirstName]);
+
   if (isLoading) {
+    console.log("⏳ Dashboard is loading...");
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px]">
         <Loader2 className="h-12 w-12 animate-spin text-gray-400 mb-4" />
@@ -48,6 +67,8 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  console.log("✅ Dashboard render completed for community:", selectedCommunityId);
 
   return (
     <div className="space-y-6 pb-10">

@@ -1,15 +1,15 @@
 
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { CreditCard, Filter, Info, Mail } from "lucide-react";
+import { CreditCard, Filter, Info } from "lucide-react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { usePaymentMethods, useAvailablePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { useAvailablePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { PAYMENT_METHOD_ICONS, PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
 import {
   Select,
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PaymentMethod } from "@/group_owners/hooks/types/subscription.types";
 
 export const PaymentMethodsPage = () => {
   const { selectedCommunityId } = useCommunityContext();
@@ -36,10 +37,17 @@ export const PaymentMethodsPage = () => {
       if (error) throw error;
 
       refetch();
-      toast.success("סטטוס אמצעי התשלום עודכן בהצלחה");
+      toast({
+        title: "Success",
+        description: "Payment method status updated successfully",
+      });
     } catch (error) {
       console.error("Failed to toggle payment method", error);
-      toast.error("אירעה שגיאה בעדכון אמצעי התשלום");
+      toast({
+        title: "Error",
+        description: "Failed to update payment method status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -55,33 +63,43 @@ export const PaymentMethodsPage = () => {
       refetch();
       
       if (isDefault) {
-        toast.success("אמצעי התשלום הוגדר כברירת מחדל לכל הקהילות שלך");
+        toast({
+          title: "Success",
+          description: "Payment method set as default for all your communities",
+        });
       } else {
-        toast.success("אמצעי התשלום אינו משמש עוד כברירת מחדל");
+        toast({
+          title: "Success",
+          description: "Payment method is no longer a default",
+        });
       }
     } catch (error) {
       console.error("Failed to toggle default status", error);
-      toast.error("אירעה שגיאה בעדכון אמצעי התשלום");
+      toast({
+        title: "Error",
+        description: "Failed to update payment method status",
+        variant: "destructive",
+      });
     }
   };
 
   // Filter payment methods based on the selected filter
-  const filteredPaymentMethods = paymentMethods?.filter(method => {
+  const filteredPaymentMethods = paymentMethods?.filter((method: PaymentMethod) => {
     if (filter === "all") return true;
     if (filter === "community") return method.community_id === selectedCommunityId;
     if (filter === "default") return method.is_default;
     return true;
   });
 
-  const isPaymentMethodConfigured = (method: any) => {
+  const isPaymentMethodConfigured = (method: PaymentMethod) => {
     return method.config && Object.keys(method.config).length > 0;
   };
 
   return (
     <div className="container py-8">
       <PageHeader
-        title="אמצעי תשלום"
-        description="הגדרת וניהול שיטות תשלום עבור הקהילה שלך"
+        title="Payment Methods"
+        description="Configure and manage payment methods for your community"
         icon={<CreditCard className="w-8 h-8 text-indigo-600" />}
       />
 
@@ -90,13 +108,13 @@ export const PaymentMethodsPage = () => {
           <Filter className="h-5 w-5 text-gray-500" />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-[200px] border-indigo-100 bg-white">
-              <SelectValue placeholder="סנן אמצעי תשלום" />
+              <SelectValue placeholder="Filter payment methods" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">כל אמצעי התשלום</SelectItem>
-                <SelectItem value="community">ייחודיים לקהילה זו</SelectItem>
-                <SelectItem value="default">אמצעי תשלום ברירת מחדל</SelectItem>
+                <SelectItem value="all">All payment methods</SelectItem>
+                <SelectItem value="community">Specific to this community</SelectItem>
+                <SelectItem value="default">Default payment methods</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -112,12 +130,12 @@ export const PaymentMethodsPage = () => {
             </div>
             <div>
               <h3 className="text-base font-medium text-blue-800 mb-1">
-                שיתוף אמצעי תשלום בין קהילות
+                Sharing payment methods between communities
               </h3>
               <p className="text-sm text-blue-600">
-                אמצעי תשלום שמוגדרים כ"ברירת מחדל" יהיו זמינים בכל הקהילות שלך. 
-                סמן אמצעי תשלום כברירת מחדל כדי לחסוך זמן ולא להגדיר מחדש בכל קהילה. 
-                אמצעי תשלום מסומנים בפינה עם סימון כוכב.
+                Payment methods set as "default" will be available in all your communities.
+                Mark a payment method as default to save time and avoid reconfiguring in each community.
+                Default payment methods are marked with a star icon.
               </p>
             </div>
           </div>
@@ -140,7 +158,7 @@ export const PaymentMethodsPage = () => {
         </div>
       ) : filteredPaymentMethods && filteredPaymentMethods.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {filteredPaymentMethods.map((method) => {
+          {filteredPaymentMethods.map((method: PaymentMethod) => {
             const Icon = PAYMENT_METHOD_ICONS[method.provider] || CreditCard;
             const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
             
@@ -155,10 +173,10 @@ export const PaymentMethodsPage = () => {
                   method.provider
                 }
                 description={
-                  method.provider === 'stripe' ? 'קבל תשלומים באמצעות כרטיסי אשראי' : 
-                  method.provider === 'paypal' ? 'קבל תשלומים באמצעות פייפאל' : 
-                  method.provider === 'crypto' ? 'קבל תשלומים במטבעות קריפטו' : 
-                  'אמצעי תשלום'
+                  method.provider === 'stripe' ? 'Accept payments with credit cards' : 
+                  method.provider === 'paypal' ? 'Accept payments with PayPal' : 
+                  method.provider === 'crypto' ? 'Accept payments with cryptocurrencies' : 
+                  'Payment method'
                 }
                 isActive={method.is_active || false}
                 onToggle={(active) => handleTogglePaymentMethod(method.id, active)}
@@ -181,11 +199,11 @@ export const PaymentMethodsPage = () => {
       ) : (
         <EmptyState
           icon={<CreditCard className="h-10 w-10 text-indigo-500" />}
-          title="אין אמצעי תשלום זמינים"
+          title="No payment methods available"
           description={
             filter !== "all" 
-              ? "שנה את הסינון כדי לראות אמצעי תשלום נוספים"
-              : "להשלמת הגדרת הקהילה, נדרש להגדיר לפחות אמצעי תשלום אחד"
+              ? "Change the filter to see more payment methods"
+              : "To complete your community setup, you need to configure at least one payment method"
           }
           action={
             filter !== "all" ? (
@@ -197,7 +215,7 @@ export const PaymentMethodsPage = () => {
                   "h-9 px-4 py-2"
                 )}
               >
-                הצג את כל אמצעי התשלום
+                Show all payment methods
               </button>
             ) : null
           }

@@ -64,13 +64,13 @@ export const UnblockSubscriberDialog = ({
         onClick={(e) => e.stopPropagation()}
         className="border-blue-100 bg-white"
       >
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
-          <div className="h-24 w-24 rounded-full bg-blue-50 border-4 border-white flex items-center justify-center shadow-sm">
-            <UserCheck className="h-12 w-12 text-blue-500" />
+        <div className="mb-4 flex justify-center">
+          <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center">
+            <UserCheck className="h-8 w-8 text-blue-500" />
           </div>
         </div>
         
-        <AlertDialogHeader className="mt-8 text-center">
+        <AlertDialogHeader className="text-center">
           <AlertDialogTitle className="text-xl font-bold text-gray-900">Unblock Subscriber</AlertDialogTitle>
           <AlertDialogDescription className="text-base text-gray-600">
             <p className="mb-2">
@@ -84,7 +84,7 @@ export const UnblockSubscriberDialog = ({
             <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-start gap-2 text-sm text-blue-800">
               <Unlock className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
               <p className="text-left">
-                This will change their status to <strong>inactive</strong> and allow them to subscribe again to your community. They will need to purchase a subscription to regain access.
+                This will change their status to inactive and allow them to subscribe again.
               </p>
             </div>
           </AlertDialogDescription>

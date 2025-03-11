@@ -64,13 +64,13 @@ export const RemoveSubscriberDialog = ({
         onClick={(e) => e.stopPropagation()}
         className="border-red-100 bg-white"
       >
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
-          <div className="h-24 w-24 rounded-full bg-red-50 border-4 border-white flex items-center justify-center shadow-sm">
-            <UserX className="h-12 w-12 text-red-500" />
+        <div className="mb-4 flex justify-center">
+          <div className="h-16 w-16 rounded-full bg-red-50 flex items-center justify-center">
+            <UserX className="h-8 w-8 text-red-500" />
           </div>
         </div>
         
-        <AlertDialogHeader className="mt-8 text-center">
+        <AlertDialogHeader className="text-center">
           <AlertDialogTitle className="text-xl font-bold text-gray-900">Remove Subscriber</AlertDialogTitle>
           <AlertDialogDescription className="text-base text-gray-600">
             <p className="mb-2">
@@ -85,7 +85,7 @@ export const RemoveSubscriberDialog = ({
             <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-2 text-sm text-amber-800">
               <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-left">
-                This action will cancel their subscription and they will be <strong>immediately removed</strong> from the Telegram group.
+                This will cancel their subscription and remove them from the Telegram group.
               </p>
             </div>
           </AlertDialogDescription>

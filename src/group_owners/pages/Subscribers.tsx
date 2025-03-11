@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -46,7 +45,6 @@ const Subscribers = () => {
     uniquePlans
   } = useSubscriberFilters(subscribers);
 
-  // Clean up state when component unmounts
   useEffect(() => {
     return () => {
       setRemoveDialogOpen(false);
@@ -55,7 +53,6 @@ const Subscribers = () => {
       setIsRemoving(false);
       setIsUnblocking(false);
       
-      // Use setTimeout to ensure state cleanup happens after rendering
       setTimeout(() => {
         setSubscriberToRemove(null);
         setSubscriberToUnblock(null);
@@ -64,31 +61,22 @@ const Subscribers = () => {
     };
   }, []);
 
-  // Handle remove click with proper event isolation
   const onRemoveClick = useCallback((subscriber: Subscriber) => {
-    // Clear any existing state first
     setSubscriberToRemove(null);
-    
-    // Use setTimeout to ensure state is updated after current execution
     setTimeout(() => {
       setSubscriberToRemove(subscriber);
       setRemoveDialogOpen(true);
     }, 50);
   }, []);
 
-  // Handle unblock click with proper event isolation
   const onUnblockClick = useCallback((subscriber: Subscriber) => {
-    // Clear any existing state first
     setSubscriberToUnblock(null);
-    
-    // Use setTimeout to ensure state is updated after current execution
     setTimeout(() => {
       setSubscriberToUnblock(subscriber);
       setUnblockDialogOpen(true);
     }, 50);
   }, []);
 
-  // Handle confirmation with proper error handling
   const onConfirmRemove = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber || isRemoving) return;
     
@@ -100,7 +88,6 @@ const Subscribers = () => {
         description: "Subscriber removed successfully"
       });
       
-      // Use refetch to update the table data
       await refetch();
     } catch (error) {
       console.error("Error removing subscriber:", error);
@@ -110,18 +97,15 @@ const Subscribers = () => {
         variant: "destructive"
       });
     } finally {
-      // Clean up state safely with delays to prevent UI glitches
       setIsRemoving(false);
       setRemoveDialogOpen(false);
       
-      // Use a delay to ensure dialog is fully closed before clearing state
       setTimeout(() => {
         setSubscriberToRemove(null);
       }, 500);
     }
   }, [handleRemoveSubscriber, toast, refetch, isRemoving]);
 
-  // Handle unblock confirmation
   const onConfirmUnblock = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber || isUnblocking) return;
     
@@ -133,7 +117,6 @@ const Subscribers = () => {
         description: "Subscriber unblocked successfully"
       });
       
-      // Use refetch to update the table data
       await refetch();
     } catch (error) {
       console.error("Error unblocking subscriber:", error);
@@ -143,52 +126,43 @@ const Subscribers = () => {
         variant: "destructive"
       });
     } finally {
-      // Clean up state safely with delays to prevent UI glitches
       setIsUnblocking(false);
       setUnblockDialogOpen(false);
       
-      // Use a delay to ensure dialog is fully closed before clearing state
       setTimeout(() => {
         setSubscriberToUnblock(null);
       }, 500);
     }
   }, [handleUnblockSubscriber, toast, refetch, isUnblocking]);
 
-  // Safe handler for dialog state changes
   const handleRemoveDialogChange = useCallback((open: boolean) => {
     if (isRemoving && open === false) {
-      // If removing is in progress, don't allow closing
       return;
     }
     
     setRemoveDialogOpen(open);
     
     if (!open) {
-      // Use longer delay to ensure dialog animation completes
       setTimeout(() => {
         setSubscriberToRemove(null);
       }, 500);
     }
   }, [isRemoving]);
 
-  // Safe handler for unblock dialog state changes
   const handleUnblockDialogChange = useCallback((open: boolean) => {
     if (isUnblocking && open === false) {
-      // If unblocking is in progress, don't allow closing
       return;
     }
     
     setUnblockDialogOpen(open);
     
     if (!open) {
-      // Use longer delay to ensure dialog animation completes
       setTimeout(() => {
         setSubscriberToUnblock(null);
       }, 500);
     }
   }, [isUnblocking]);
 
-  // Handle export functionality
   const handleExport = () => {
     const exportData = filteredSubscribers.map(sub => ({
       Username: sub.telegram_username || 'No username',
@@ -232,13 +206,9 @@ const Subscribers = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="relative">
-          <div className="h-16 w-16 rounded-full bg-indigo-100 animate-pulse flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-          </div>
-          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-indigo-500 animate-ping" />
+          <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
         </div>
-        <p className="text-indigo-700 animate-pulse font-medium">Loading subscribers data...</p>
-        <p className="text-sm text-gray-500">Please wait while we fetch your community members</p>
+        <p className="text-gray-600">Loading subscribers data...</p>
       </div>
     );
   }
@@ -261,25 +231,24 @@ const Subscribers = () => {
         uniquePlans={uniquePlans}
       />
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100 shadow-sm">
-          <div className="text-2xl font-bold text-indigo-700">{subscribers.length}</div>
-          <div className="text-sm text-indigo-600">Total Subscribers</div>
+        <div className="bg-white rounded-lg p-4 border shadow-sm">
+          <div className="text-2xl font-bold text-gray-800">{subscribers.length}</div>
+          <div className="text-sm text-gray-600">Total Subscribers</div>
         </div>
         
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100 shadow-sm">
+        <div className="bg-white rounded-lg p-4 border shadow-sm">
           <div className="text-2xl font-bold text-green-700">
             {subscribers.filter(sub => sub.subscription_status === 'active').length}
           </div>
-          <div className="text-sm text-green-600">Active Subscribers</div>
+          <div className="text-sm text-gray-600">Active Subscribers</div>
         </div>
         
-        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 border border-amber-100 shadow-sm">
+        <div className="bg-white rounded-lg p-4 border shadow-sm">
           <div className="text-2xl font-bold text-amber-700">
             {subscribers.filter(sub => sub.subscription_status !== 'active').length}
           </div>
-          <div className="text-sm text-amber-600">Inactive Subscribers</div>
+          <div className="text-sm text-gray-600">Inactive Subscribers</div>
         </div>
       </div>
 
@@ -296,7 +265,7 @@ const Subscribers = () => {
       {filteredSubscribers.length > 0 && (
         <div className="text-center pt-2">
           <p className="text-sm text-gray-500">
-            Showing <span className="font-medium text-indigo-600">{filteredSubscribers.length}</span> of <span className="font-medium text-indigo-600">{subscribers.length}</span> total subscribers
+            Showing {filteredSubscribers.length} of {subscribers.length} total subscribers
           </p>
         </div>
       )}

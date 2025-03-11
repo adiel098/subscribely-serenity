@@ -10,7 +10,6 @@ import {
   Unlock,
   Calendar,
   MessageSquare,
-  Crown,
   Clock,
   ExternalLink
 } from "lucide-react";
@@ -84,19 +83,19 @@ export const SubscribersTable = ({
   };
 
   return (
-    <div className="rounded-lg border border-indigo-100 shadow-sm overflow-hidden bg-white">
+    <div className="rounded-lg border shadow-sm overflow-hidden bg-white">
       <div className="overflow-auto max-h-[calc(100vh-335px)]">
         <Table className="w-full">
           <TableHeader>
-            <TableRow className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
-              <TableHead className="font-semibold text-xs text-indigo-700">User</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Name</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Telegram ID</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Subscription Plan</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Status</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Subscription Period</TableHead>
-              <TableHead className="font-semibold text-xs text-indigo-700">Activity</TableHead>
-              <TableHead className="w-[80px] text-right font-semibold text-xs text-indigo-700">Actions</TableHead>
+            <TableRow className="bg-gray-50 border-b">
+              <TableHead className="font-semibold text-xs text-gray-700">User</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Name</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Telegram ID</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Subscription Plan</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Status</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Subscription Period</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Activity</TableHead>
+              <TableHead className="w-[80px] text-right font-semibold text-xs text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -104,11 +103,11 @@ export const SubscribersTable = ({
               subscribers.map((subscriber) => (
                 <TableRow 
                   key={subscriber.id}
-                  className="hover:bg-indigo-50/30 transition-colors border-b border-indigo-50 group"
+                  className="hover:bg-gray-50 transition-colors border-b group"
                 >
                   <TableCell className="py-3">
                     <div className="flex items-center space-x-3">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-medium border border-indigo-200">
+                      <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium border">
                         {subscriber.telegram_username ? (
                           subscriber.telegram_username.substring(0, 1).toUpperCase()
                         ) : (
@@ -122,7 +121,7 @@ export const SubscribersTable = ({
                               href={`https://t.me/${subscriber.telegram_username}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center"
+                              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
                             >
                               @{subscriber.telegram_username}
                               <ExternalLink className="h-3 w-3 ml-1.5 opacity-50" />
@@ -158,15 +157,10 @@ export const SubscribersTable = ({
                   </TableCell>
                   <TableCell className="py-3">
                     {subscriber.plan ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center">
-                          <Crown className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
-                          <span className="font-semibold text-sm text-gray-800">{subscriber.plan.name}</span>
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center">
-                          <span className="capitalize">{subscriber.plan.interval}</span>
-                          <span className="mx-1.5 text-gray-400">•</span>
-                          <span className="font-medium text-indigo-600">${subscriber.plan.price}</span>
+                      <div>
+                        <div className="font-medium text-sm text-gray-800">{subscriber.plan.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {subscriber.plan.interval} • ${subscriber.plan.price}
                         </div>
                       </div>
                     ) : (
@@ -177,25 +171,21 @@ export const SubscribersTable = ({
                     {getStatusBadge(subscriber)}
                   </TableCell>
                   <TableCell className="py-3">
-                    <div className="space-y-2 text-xs">
+                    <div className="space-y-1 text-xs">
                       <div className="flex items-center">
                         <Calendar className="h-3.5 w-3.5 text-green-500 mr-1.5" />
                         <span className="text-gray-600">
-                          From: <span className="font-medium text-gray-800">
-                            {subscriber.subscription_start_date
-                              ? format(new Date(subscriber.subscription_start_date), "MMM d, yyyy")
-                              : "-"}
-                          </span>
+                          From: {subscriber.subscription_start_date
+                            ? format(new Date(subscriber.subscription_start_date), "MMM d, yyyy")
+                            : "-"}
                         </span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-3.5 w-3.5 text-red-500 mr-1.5" />
                         <span className="text-gray-600">
-                          Until: <span className="font-medium text-gray-800">
-                            {subscriber.subscription_end_date
-                              ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
-                              : "-"}
-                          </span>
+                          Until: {subscriber.subscription_end_date
+                            ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
+                            : "-"}
                         </span>
                       </div>
                     </div>
@@ -203,19 +193,17 @@ export const SubscribersTable = ({
                   <TableCell className="py-3">
                     <div className="text-xs">
                       <div className="flex items-center mb-1">
-                        <MessageSquare className="h-3.5 w-3.5 text-indigo-500 mr-1.5" />
+                        <MessageSquare className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
                         <span className="text-gray-600">
-                          Messages: <span className="font-medium text-gray-800">{subscriber.total_messages || 0}</span>
+                          Messages: {subscriber.total_messages || 0}
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 text-indigo-500 mr-1.5" />
+                        <Clock className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
                         <span className="text-gray-600">
-                          Last active: <span className="font-medium text-gray-800">
-                            {subscriber.last_active 
-                              ? format(new Date(subscriber.last_active), "MMM d, yyyy")
-                              : "Never"}
-                          </span>
+                          Last active: {subscriber.last_active 
+                            ? format(new Date(subscriber.last_active), "MMM d, yyyy")
+                            : "Never"}
                         </span>
                       </div>
                     </div>
@@ -229,19 +217,19 @@ export const SubscribersTable = ({
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 border-indigo-100">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 
                             onClick={() => onEdit(subscriber)}
-                            className="cursor-pointer hover:bg-indigo-50"
+                            className="cursor-pointer"
                           >
-                            <Pencil className="mr-2 h-4 w-4 text-indigo-600" />
+                            <Pencil className="mr-2 h-4 w-4 text-blue-600" />
                             Edit Subscriber
                           </DropdownMenuItem>
                           
                           {/* Show remove or unblock based on current status */}
                           {subscriber.subscription_status === "removed" ? (
                             <DropdownMenuItem
-                              className="text-blue-600 focus:text-blue-600 cursor-pointer hover:bg-blue-50"
+                              className="text-blue-600 focus:text-blue-600 cursor-pointer"
                               onClick={() => onUnblock(subscriber)}
                             >
                               <Unlock className="mr-2 h-4 w-4" />
@@ -249,7 +237,7 @@ export const SubscribersTable = ({
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600 cursor-pointer hover:bg-red-50"
+                              className="text-red-600 focus:text-red-600 cursor-pointer"
                               onClick={() => onRemove(subscriber)}
                             >
                               <XCircle className="mr-2 h-4 w-4" />
@@ -266,12 +254,12 @@ export const SubscribersTable = ({
               <TableRow>
                 <TableCell colSpan={8} className="h-64 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <div className="h-20 w-20 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-3">
-                      <Users className="h-10 w-10 text-indigo-300" />
+                    <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                      <Users className="h-8 w-8 text-gray-300" />
                     </div>
                     <p className="text-lg font-medium mb-2 text-gray-700">No subscribers found</p>
                     <p className="text-sm text-gray-500 max-w-md">
-                      No subscribers match your current filters. Try changing your search criteria or add new subscribers to your community.
+                      No subscribers match your current filters. Try changing your search criteria.
                     </p>
                   </div>
                 </TableCell>

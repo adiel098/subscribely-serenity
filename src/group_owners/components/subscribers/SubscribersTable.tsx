@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -7,9 +8,6 @@ import {
   XCircle,
   Pencil,
   Unlock,
-  Calendar,
-  MessageSquare,
-  Clock,
   ExternalLink
 } from "lucide-react";
 import {
@@ -93,7 +91,6 @@ export const SubscribersTable = ({
               <TableHead className="font-semibold text-xs text-gray-700">Subscription Plan</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Status</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Subscription Period</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700">Activity</TableHead>
               <TableHead className="w-[80px] text-right font-semibold text-xs text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -165,7 +162,6 @@ export const SubscribersTable = ({
                   <TableCell className="py-3">
                     <div className="space-y-1 text-xs">
                       <div className="flex items-center">
-                        <Calendar className="h-3.5 w-3.5 text-green-500 mr-1.5" />
                         <span className="text-gray-600">
                           From: {subscriber.subscription_start_date
                             ? format(new Date(subscriber.subscription_start_date), "MMM d, yyyy")
@@ -177,24 +173,6 @@ export const SubscribersTable = ({
                           Until: {subscriber.subscription_end_date
                             ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
                             : "-"}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <div className="text-xs">
-                      <div className="flex items-center mb-1">
-                        <MessageSquare className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
-                        <span className="text-gray-600">
-                          Messages: {subscriber.total_messages || 0}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 text-blue-500 mr-1.5" />
-                        <span className="text-gray-600">
-                          Last active: {subscriber.last_active 
-                            ? format(new Date(subscriber.last_active), "MMM d, yyyy")
-                            : "Never"}
                         </span>
                       </div>
                     </div>
@@ -242,7 +220,7 @@ export const SubscribersTable = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-64 text-center">
+                <TableCell colSpan={7} className="h-64 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                       <Users className="h-8 w-8 text-gray-300" />
@@ -261,3 +239,4 @@ export const SubscribersTable = ({
     </div>
   );
 };
+

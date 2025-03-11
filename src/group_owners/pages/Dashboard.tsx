@@ -19,7 +19,7 @@ const Dashboard = () => {
   const { data: communities, isLoading } = useCommunities();
   const { selectedCommunityId } = useCommunityContext();
   const { data: subscribers } = useSubscribers(selectedCommunityId || "");
-  const { data: plans } = useSubscriptionPlans(selectedCommunityId || "");
+  const { plans } = useSubscriptionPlans(selectedCommunityId || "");
   
   const {
     timeRange,
@@ -54,7 +54,7 @@ const Dashboard = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Communities Yet</h2>
           <p className="text-gray-600 mb-6">Get started by connecting your first community</p>
-          <Button onClick={addNewCommunity}>
+          <Button onClick={addNewCommunity} className="bg-indigo-600 hover:bg-indigo-700">
             <PlusCircle className="h-4 w-4 mr-2" />
             Add Community
           </Button>
@@ -70,11 +70,11 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-          <p className="text-gray-500">
-            Overview of {currentCommunity.name} performance metrics
+          <p className="text-gray-600">
+            Performance metrics for <span className="font-medium text-indigo-600">{currentCommunity.name}</span>
           </p>
         </div>
         

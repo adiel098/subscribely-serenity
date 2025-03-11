@@ -161,6 +161,75 @@ export type Database = {
           },
         ]
       }
+      community_group_members: {
+        Row: {
+          added_at: string | null
+          community_id: string
+          display_order: number | null
+          group_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          community_id: string
+          display_order?: number | null
+          group_id: string
+        }
+        Update: {
+          added_at?: string | null
+          community_id?: string
+          display_order?: number | null
+          group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_groups: {
+        Row: {
+          created_at: string
+          custom_link: string | null
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_link?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_link?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_logs: {
         Row: {
           amount: number | null

@@ -10,10 +10,24 @@ import { PaymentStatus } from "@/group_owners/components/dashboard/PaymentStatus
 import { AnalyticsOverview } from "@/group_owners/components/dashboard/AnalyticsOverview";
 import { PaymentAnalytics } from "@/group_owners/components/dashboard/PaymentAnalytics";
 import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardStats";
-import { Loader2 } from "lucide-react";
+import { useGroupDashboardStats } from "@/group_owners/hooks/dashboard/useGroupDashboardStats";
+import { Loader2, FolderKanban } from "lucide-react";
+import { GroupCommunitiesDisplay } from "@/group_owners/components/dashboard/GroupCommunitiesDisplay";
 
 const Dashboard = () => {
-  const { selectedCommunityId } = useCommunityContext();
+  const { 
+    selectedCommunityId, 
+    selectedGroupId,
+    isGroupSelected
+  } = useCommunityContext();
+  
+  // Use the appropriate hook based on whether a community or group is selected
+  const communityStats = useDashboardStats(selectedCommunityId || "");
+  const groupStats = useGroupDashboardStats(selectedGroupId);
+  
+  // Use the correct stats based on what's selected
+  const stats = isGroupSelected ? groupStats : communityStats;
+  
   const {
     timeRange,
     setTimeRange,
@@ -36,14 +50,17 @@ const Dashboard = () => {
     
     ownerInfo,
     
-    isLoading
-  } = useDashboardStats(selectedCommunityId || "");
+    isLoading,
+    
+    communities: groupCommunities
+  } = stats;
 
   // Get the owner's first name or use a fallback
   const ownerFirstName = ownerInfo?.first_name || 'there';
 
   useEffect(() => {
     console.log("🔍 Dashboard loaded with community ID:", selectedCommunityId);
+    console.log("🔍 Dashboard loaded with group ID:", selectedGroupId);
     console.log("👤 Owner info:", ownerInfo);
     
     if (!ownerInfo) {
@@ -58,7 +75,7 @@ const Dashboard = () => {
       inactiveCount: inactiveSubscribers.length,
       revenue: totalRevenue
     });
-  }, [selectedCommunityId, ownerInfo, filteredSubscribers, activeSubscribers, inactiveSubscribers, totalRevenue, ownerFirstName]);
+  }, [selectedCommunityId, selectedGroupId, ownerInfo, filteredSubscribers, activeSubscribers, inactiveSubscribers, totalRevenue, ownerFirstName]);
 
   if (isLoading) {
     console.log("⏳ Dashboard is loading...");
@@ -70,17 +87,26 @@ const Dashboard = () => {
     );
   }
 
-  console.log("✅ Dashboard render completed for community:", selectedCommunityId);
+  console.log("✅ Dashboard render completed for ", 
+    selectedCommunityId ? `community: ${selectedCommunityId}` : `group: ${selectedGroupId}`);
 
   return (
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             Hello 👋 {ownerFirstName}
+            {isGroupSelected && (
+              <span className="inline-flex items-center text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md ml-2">
+                <FolderKanban className="h-3.5 w-3.5 mr-1" />
+                Group View
+              </span>
+            )}
           </h1>
           <p className="text-gray-600 mt-1">
-            Overview of your community's performance and metrics
+            {isGroupSelected 
+              ? "Overview of your community group's performance and metrics" 
+              : "Overview of your community's performance and metrics"}
           </p>
         </div>
         <TimeFilter
@@ -117,6 +143,13 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Display communities in the group when a group is selected */}
+      {isGroupSelected && groupCommunities && groupCommunities.length > 0 && (
+        <div className="mt-4">
+          <GroupCommunitiesDisplay communities={groupCommunities} />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-4 mt-6">
         <div className="w-full lg:w-[65%]">

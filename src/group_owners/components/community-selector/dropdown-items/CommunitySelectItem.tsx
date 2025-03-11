@@ -9,16 +9,18 @@ interface CommunitySelectItemProps {
   photoUrl?: string;
   isRefreshing: boolean;
   onRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
+  value: string;
 }
 
 export const CommunitySelectItem: React.FC<CommunitySelectItemProps> = ({
   community,
   photoUrl,
   isRefreshing,
-  onRefreshPhoto
+  onRefreshPhoto,
+  value
 }) => {
   return (
-    <SelectItem key={community.id} value={community.id || "community-fallback"}>
+    <SelectItem key={community.id} value={value}>
       <div className="flex items-center gap-2 relative group">
         <CommunityAvatar
           community={community}

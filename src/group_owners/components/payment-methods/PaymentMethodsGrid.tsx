@@ -1,0 +1,104 @@
+
+import React from "react";
+import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
+import { CreditCard } from "lucide-react";
+import { PAYMENT_METHOD_ICONS, PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
+import { PaymentMethod } from "@/group_owners/hooks/types/subscription.types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+
+interface PaymentMethodsGridProps {
+  paymentMethods: PaymentMethod[] | undefined;
+  isLoading: boolean;
+  filter: string;
+  selectedCommunityId: string | null;
+  onTogglePaymentMethod: (id: string, isActive: boolean) => void;
+  onToggleDefault: (id: string, isDefault: boolean) => void;
+}
+
+export const PaymentMethodsGrid = ({
+  paymentMethods,
+  isLoading,
+  filter,
+  selectedCommunityId,
+  onTogglePaymentMethod,
+  onToggleDefault,
+}: PaymentMethodsGridProps) => {
+  const isPaymentMethodConfigured = (method: PaymentMethod) => {
+    return method.config && Object.keys(method.config).length > 0;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        {[1, 2, 3].map((_, i) => (
+          <Card key={i} className="h-80">
+            <CardContent className="p-6 space-y-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-10 w-full mt-auto" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!paymentMethods?.length) {
+    return (
+      <EmptyState
+        icon={<CreditCard className="h-10 w-10 text-indigo-500" />}
+        title="No payment methods available"
+        description={
+          filter !== "all" 
+            ? "Change the filter to see more payment methods"
+            : "To complete your community setup, you need to configure at least one payment method"
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+      {paymentMethods.map((method) => {
+        const Icon = PAYMENT_METHOD_ICONS[method.provider] || CreditCard;
+        const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
+        
+        return (
+          <PaymentMethodCard
+            key={method.id}
+            icon={Icon}
+            title={
+              method.provider === 'stripe' ? 'Stripe' : 
+              method.provider === 'paypal' ? 'PayPal' : 
+              method.provider === 'crypto' ? 'Crypto' : 
+              method.provider
+            }
+            description={
+              method.provider === 'stripe' ? 'Accept payments with credit cards' : 
+              method.provider === 'paypal' ? 'Accept payments with PayPal' : 
+              method.provider === 'crypto' ? 'Accept payments with cryptocurrencies' : 
+              'Payment method'
+            }
+            isActive={method.is_active || false}
+            onToggle={(active) => onTogglePaymentMethod(method.id, active)}
+            isConfigured={isPaymentMethodConfigured(method)}
+            onConfigure={() => {}}
+            imageSrc={imageSrc}
+            provider={method.provider}
+            communityId={method.community_id}
+            isDefault={method.is_default || false}
+            onDefaultToggle={
+              method.community_id === selectedCommunityId 
+                ? (value) => onToggleDefault(method.id, value) 
+                : undefined
+            }
+          />
+        );
+      })}
+    </div>
+  );
+};

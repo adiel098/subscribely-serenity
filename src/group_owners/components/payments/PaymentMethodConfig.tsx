@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -34,18 +33,17 @@ export const PaymentMethodConfig = ({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDefaultSetting, setIsDefaultSetting] = useState(isDefault);
-  const { selectedGroupId, isGroupSelected } = useCommunityContext();
+  const { selectedGroupId, selectedCommunityId, isGroupSelected } = useCommunityContext();
 
   // Fetch existing configuration if available
   useEffect(() => {
     const fetchConfig = async () => {
       setIsLoading(true);
       try {
-        if (!communityId) {
-          console.error("No community ID provided for payment method configuration");
-          setError(isGroupSelected 
-            ? "Payment methods can only be configured for communities, not groups. Please select a community instead." 
-            : "No community selected. Please select a community first.");
+        const targetId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+        
+        if (!targetId) {
+          setError("No community or group selected. Please select one first.");
           setIsLoading(false);
           return;
         }
@@ -54,7 +52,7 @@ export const PaymentMethodConfig = ({
           .from('payment_methods')
           .select('config, is_default')
           .eq('provider', provider)
-          .eq('community_id', communityId)
+          .eq(isGroupSelected ? 'group_id' : 'community_id', targetId)
           .maybeSingle();
 
         if (error) throw error;
@@ -71,10 +69,10 @@ export const PaymentMethodConfig = ({
       }
     };
 
-    if (provider && communityId) {
+    if (provider && (selectedGroupId || selectedCommunityId)) {
       fetchConfig();
     }
-  }, [provider, communityId, isGroupSelected]);
+  }, [provider, selectedGroupId, selectedCommunityId, isGroupSelected]);
 
   // If isDefault prop changes, update local state
   useEffect(() => {
@@ -94,21 +92,21 @@ export const PaymentMethodConfig = ({
     setError(null);
 
     try {
-      // Validate that we have a valid community ID
-      if (!communityId) {
-        throw new Error(isGroupSelected 
-          ? "Payment methods can only be configured for communities, not groups. Please select a community first." 
-          : "No community selected. Please select a community before saving payment settings.");
+      const targetId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+      
+      // Validate that we have a valid ID
+      if (!targetId) {
+        throw new Error("No community or group selected. Please select one first.");
       }
 
-      console.log(`Saving payment method for community: ${communityId}, provider: ${provider}`);
+      console.log(`Saving payment method for ${isGroupSelected ? 'group' : 'community'}: ${targetId}, provider: ${provider}`);
       
       // Check if the payment method already exists
       const { data: existingMethods, error: checkError } = await supabase
         .from('payment_methods')
         .select('id')
         .eq('provider', provider)
-        .eq('community_id', communityId);
+        .eq(isGroupSelected ? 'group_id' : 'community_id', targetId);
 
       if (checkError) throw checkError;
 
@@ -123,18 +121,26 @@ export const PaymentMethodConfig = ({
             is_default: isDefaultSetting
           })
           .eq('provider', provider)
-          .eq('community_id', communityId);
+          .eq(isGroupSelected ? 'group_id' : 'community_id', targetId);
       } else {
         // Create new payment method
+        const newMethod = {
+          provider,
+          config: formData,
+          is_active: true,
+          is_default: isDefaultSetting
+        };
+
+        // Add the correct ID field based on whether it's a group or community
+        if (isGroupSelected) {
+          newMethod['group_id'] = targetId;
+        } else {
+          newMethod['community_id'] = targetId;
+        }
+
         result = await supabase
           .from('payment_methods')
-          .insert({
-            provider,
-            community_id: communityId,
-            config: formData,
-            is_active: true,
-            is_default: isDefaultSetting
-          });
+          .insert(newMethod);
       }
 
       if (result.error) throw result.error;
@@ -195,23 +201,11 @@ export const PaymentMethodConfig = ({
 
   const fields = getFieldsForProvider();
 
-  if (isGroupSelected) {
+  if (!selectedGroupId && !selectedCommunityId) {
     return (
       <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md">
-        <div className="flex items-center gap-2 mb-2">
-          <AlertCircle className="h-5 w-5" />
-          <p className="font-medium">Group Selected</p>
-        </div>
-        <p className="text-sm">Payment methods can only be configured for communities, not groups. Please select a community from the dropdown at the top of the page.</p>
-      </div>
-    );
-  }
-
-  if (!communityId) {
-    return (
-      <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md">
-        <p className="font-medium">No community selected</p>
-        <p className="text-sm">Please select a community before configuring payment methods.</p>
+        <p className="font-medium">No selection</p>
+        <p className="text-sm">Please select a community or group before configuring payment methods.</p>
       </div>
     );
   }

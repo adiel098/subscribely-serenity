@@ -2,7 +2,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
-import { getBotUsername } from '../../../utils/botUtils.ts';
 
 /**
  * Handle join request for a group
@@ -31,9 +30,6 @@ export async function handleGroupJoinRequest(
       await logger.error(`❌ Error fetching bot settings:`, settingsError);
       // Continue with default welcome message if settings not found
     }
-    
-    // Get bot username
-    const botUsername = await getBotUsername(supabase);
     
     // Use bot settings welcome message if available, otherwise use default
     const welcomeMessage = botSettings?.welcome_message || 

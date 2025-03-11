@@ -38,6 +38,9 @@ verify_jwt = false
 [functions.create-stripe-payment-intent]
 verify_jwt = false
 
+[functions.create-stripe-session]
+verify_jwt = false
+
 [functions.update-community-counts]
 verify_jwt = false
 

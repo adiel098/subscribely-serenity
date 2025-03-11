@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,8 @@ import { useCommunityContext } from "@/contexts/CommunityContext";
 
 interface PaymentMethodConfigProps {
   provider: string;
-  communityId: string;
+  communityId?: string;
+  groupId?: string;
   onSuccess: () => void;
   imageSrc?: string;
   isDefault?: boolean;
@@ -21,7 +23,8 @@ interface PaymentMethodConfigProps {
 
 export const PaymentMethodConfig = ({ 
   provider, 
-  communityId, 
+  communityId,
+  groupId,
   onSuccess,
   imageSrc,
   isDefault = false,
@@ -35,25 +38,28 @@ export const PaymentMethodConfig = ({
   const [isDefaultSetting, setIsDefaultSetting] = useState(isDefault);
   const { selectedGroupId, selectedCommunityId, isGroupSelected } = useCommunityContext();
 
+  // Determine which ID to use (props or context)
+  const targetCommunityId = communityId || selectedCommunityId;
+  const targetGroupId = groupId || selectedGroupId;
+
   // Fetch existing configuration if available
   useEffect(() => {
     const fetchConfig = async () => {
       setIsLoading(true);
       try {
-        const targetId = isGroupSelected ? selectedGroupId : selectedCommunityId;
-        
-        if (!targetId) {
-          setError("No community or group selected. Please select one first.");
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
+        let query = supabase
           .from('payment_methods')
           .select('config, is_default')
-          .eq('provider', provider)
-          .eq(isGroupSelected ? 'group_id' : 'community_id', targetId)
-          .maybeSingle();
+          .eq('provider', provider);
+          
+        // Add the appropriate filter based on whether we're working with a community or group
+        if (isGroupSelected || targetGroupId) {
+          query = query.eq('group_id', targetGroupId);
+        } else {
+          query = query.eq('community_id', targetCommunityId);
+        }
+  
+        const { data, error } = await query.maybeSingle();
 
         if (error) throw error;
         
@@ -69,10 +75,12 @@ export const PaymentMethodConfig = ({
       }
     };
 
-    if (provider && (selectedGroupId || selectedCommunityId)) {
+    if (provider && (targetCommunityId || targetGroupId)) {
       fetchConfig();
+    } else {
+      setError("No community or group selected. Please select one first.");
     }
-  }, [provider, selectedGroupId, selectedCommunityId, isGroupSelected]);
+  }, [provider, targetCommunityId, targetGroupId, isGroupSelected]);
 
   // If isDefault prop changes, update local state
   useEffect(() => {
@@ -92,21 +100,31 @@ export const PaymentMethodConfig = ({
     setError(null);
 
     try {
-      const targetId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+      const targetId = isGroupSelected || targetGroupId 
+        ? targetGroupId 
+        : targetCommunityId;
       
       // Validate that we have a valid ID
       if (!targetId) {
         throw new Error("No community or group selected. Please select one first.");
       }
 
-      console.log(`Saving payment method for ${isGroupSelected ? 'group' : 'community'}: ${targetId}, provider: ${provider}`);
+      console.log(`Saving payment method for ${isGroupSelected || targetGroupId ? 'group' : 'community'}: ${targetId}, provider: ${provider}`);
       
       // Check if the payment method already exists
-      const { data: existingMethods, error: checkError } = await supabase
+      let query = supabase
         .from('payment_methods')
-        .select('id')
-        .eq('provider', provider)
-        .eq(isGroupSelected ? 'group_id' : 'community_id', targetId);
+        .select('id');
+        
+      if (isGroupSelected || targetGroupId) {
+        query = query.eq('group_id', targetId);
+      } else {
+        query = query.eq('community_id', targetId);
+      }
+      
+      query = query.eq('provider', provider);
+      
+      const { data: existingMethods, error: checkError } = await query;
 
       if (checkError) throw checkError;
 
@@ -114,17 +132,24 @@ export const PaymentMethodConfig = ({
       
       if (existingMethods?.length) {
         // Update existing payment method
-        result = await supabase
+        let updateQuery = supabase
           .from('payment_methods')
           .update({ 
             config: formData,
             is_default: isDefaultSetting
           })
-          .eq('provider', provider)
-          .eq(isGroupSelected ? 'group_id' : 'community_id', targetId);
+          .eq('provider', provider);
+          
+        if (isGroupSelected || targetGroupId) {
+          updateQuery = updateQuery.eq('group_id', targetId);
+        } else {
+          updateQuery = updateQuery.eq('community_id', targetId);
+        }
+        
+        result = await updateQuery;
       } else {
         // Create new payment method
-        const newMethod = {
+        const newMethod: any = {
           provider,
           config: formData,
           is_active: true,
@@ -132,7 +157,7 @@ export const PaymentMethodConfig = ({
         };
 
         // Add the correct ID field based on whether it's a group or community
-        if (isGroupSelected) {
+        if (isGroupSelected || targetGroupId) {
           newMethod['group_id'] = targetId;
         } else {
           newMethod['community_id'] = targetId;
@@ -201,7 +226,7 @@ export const PaymentMethodConfig = ({
 
   const fields = getFieldsForProvider();
 
-  if (!selectedGroupId && !selectedCommunityId) {
+  if (!targetCommunityId && !targetGroupId) {
     return (
       <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md">
         <p className="font-medium">No selection</p>

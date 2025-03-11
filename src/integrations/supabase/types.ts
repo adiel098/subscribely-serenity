@@ -276,9 +276,10 @@ export type Database = {
       }
       payment_methods: {
         Row: {
-          community_id: string
+          community_id: string | null
           config: Json | null
           created_at: string
+          group_id: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -286,9 +287,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          community_id: string
+          community_id?: string | null
           config?: Json | null
           created_at?: string
+          group_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -296,9 +298,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          community_id?: string
+          community_id?: string | null
           config?: Json | null
           created_at?: string
+          group_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -311,6 +314,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_methods_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]

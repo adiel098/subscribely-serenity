@@ -32,13 +32,13 @@ serve(async (req) => {
       )
     }
 
-    const { communityId, amount } = params
-    console.log('Creating Stripe payment intent with params:', { communityId, amount })
+    const { communityId, groupId, amount } = params
+    console.log('Creating Stripe payment intent with params:', { communityId, groupId, amount })
 
-    if (!communityId) {
-      console.error('Missing communityId in request')
+    if (!communityId && !groupId) {
+      console.error('Missing entity ID in request')
       return new Response(
-        JSON.stringify({ error: 'Missing communityId parameter' }),
+        JSON.stringify({ error: 'Missing communityId or groupId parameter' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -51,23 +51,46 @@ serve(async (req) => {
       )
     }
 
-    // Get the Stripe secret key from payment_methods
-    const { data: paymentMethod, error: configError } = await supabase
+    // Prepare the query to get the Stripe configuration
+    let query = supabase
       .from('payment_methods')
       .select('config')
-      .eq('community_id', communityId)
       .eq('provider', 'stripe')
-      .eq('is_active', true)
-      .single()
+      .eq('is_active', true);
+      
+    // Filter by either community or group ID
+    if (communityId) {
+      query = query.eq('community_id', communityId);
+    } else if (groupId) {
+      query = query.eq('group_id', groupId);
+    }
+    
+    const { data: paymentMethod, error: configError } = await query.single();
 
     console.log('Stripe config query result:', paymentMethod, configError)
 
     if (configError) {
       console.error('Error fetching Stripe config:', configError)
-      return new Response(
-        JSON.stringify({ error: 'Stripe configuration not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+      
+      // Try to get a default Stripe configuration
+      const { data: defaultMethod, error: defaultError } = await supabase
+        .from('payment_methods')
+        .select('config')
+        .eq('provider', 'stripe')
+        .eq('is_default', true)
+        .eq('is_active', true)
+        .single();
+        
+      if (defaultError || !defaultMethod) {
+        return new Response(
+          JSON.stringify({ error: 'Stripe configuration not found' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        )
+      }
+      
+      // Use the default payment method
+      console.log('Using default Stripe configuration')
+      paymentMethod = defaultMethod;
     }
 
     if (!paymentMethod?.config?.secret_key) {
@@ -90,12 +113,14 @@ serve(async (req) => {
       const amountInCents = Math.round(amount * 100) // Convert to cents
       console.log(`Creating payment intent for amount: ${amount} (${amountInCents} cents)`)
       
+      const metadata: any = {};
+      if (communityId) metadata.communityId = communityId;
+      if (groupId) metadata.groupId = groupId;
+      
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInCents,
         currency: 'usd',
-        metadata: {
-          communityId
-        }
+        metadata
       })
 
       console.log('Created payment intent:', paymentIntent.id)

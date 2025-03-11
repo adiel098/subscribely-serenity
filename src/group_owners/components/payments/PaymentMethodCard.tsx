@@ -1,236 +1,170 @@
 
-import React from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import React, { useState } from "react";
+import { Card, CardContent, CardFooter, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Settings2, 
-  CheckCircle, 
-  AlertCircle, 
-  Lock, 
-  ChevronRight, 
-  Star,
-  Globe
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { SettingsIcon, CheckCircle, AlertCircle, Loader2, LucideIcon } from "lucide-react";
 import { PaymentMethodConfig } from "./PaymentMethodConfig";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 interface PaymentMethodCardProps {
-  icon: React.ElementType;
   title: string;
   description: string;
+  icon: LucideIcon;
   isActive: boolean;
-  onToggle: (active: boolean) => void;
   isConfigured: boolean;
+  onToggle: (active: boolean) => void;
   onConfigure: () => void;
   imageSrc?: string;
   provider: string;
-  communityId: string;
+  communityId?: string;
+  groupId?: string;
   isDefault?: boolean;
-  onDefaultToggle?: (isDefault: boolean) => void;
+  onDefaultToggle?: (value: boolean) => void;
 }
 
-export const PaymentMethodCard = ({ 
-  icon: Icon, 
-  title, 
+export const PaymentMethodCard = ({
+  title,
   description,
+  icon: Icon,
   isActive,
-  onToggle,
   isConfigured,
+  onToggle,
   onConfigure,
   imageSrc,
   provider,
   communityId,
+  groupId,
   isDefault = false,
   onDefaultToggle
 }: PaymentMethodCardProps) => {
-  const [isConfigOpen, setIsConfigOpen] = React.useState(false);
-  
-  const handleConfigClick = () => {
-    setIsConfigOpen(true);
-    onConfigure();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isConfiguring, setIsConfiguring] = useState(false);
+
+  const handleConfigureSuccess = () => {
+    setIsConfiguring(false);
+    setIsOpen(false);
+    if (!isActive && isConfigured) {
+      onToggle(true);
+    }
   };
 
-  const handleDefaultToggle = (newValue: boolean) => {
+  const handleDefaultChange = (value: boolean) => {
     if (onDefaultToggle) {
-      onDefaultToggle(newValue);
+      onDefaultToggle(value);
     }
   };
 
   return (
-    <>
-      <motion.div
-        whileHover={{ y: -5 }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="h-full"
-      >
-        <Card className={`relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[320px] mx-auto ${isDefault ? 'border-amber-300 bg-amber-50/30' : ''}`}>
-          <CardHeader className="pb-3 pt-5 px-5">
-            <div className="flex justify-between items-start">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                {imageSrc ? (
-                  <div className="p-2 rounded-full bg-white shadow-sm flex items-center justify-center w-12 h-12">
-                    <img src={imageSrc} alt={title} className="w-8 h-8 object-contain" />
-                  </div>
-                ) : (
-                  <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 w-12 h-12 flex items-center justify-center">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                )}
-                <span>{title}</span>
-              </CardTitle>
-              <div className="flex gap-2">
-                {isDefault && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 text-sm">
-                          <Star className="h-3 w-3 fill-amber-500" />
-                          Default
-                        </Badge>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Available to all your communities</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {isConfigured && (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-sm">
-                    <CheckCircle className="h-3 w-3" />
-                    Configured
-                  </Badge>
-                )}
-              </div>
+    <motion.div
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
+      className="h-full"
+    >
+      <Card className={cn(
+        "overflow-hidden h-full transition-all duration-200 relative",
+        isActive ? "border-indigo-300 shadow-sm hover:shadow-md" : "hover:border-gray-300"
+      )}>
+        {isDefault && (
+          <div className="absolute top-0 right-0 bg-amber-400 text-white text-xs font-bold px-2 py-1 rounded-bl">
+            Default
+          </div>
+        )}
+        
+        {imageSrc && (
+          <div className="relative h-36 overflow-hidden border-b">
+            <img 
+              src={imageSrc} 
+              alt={title} 
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            />
+          </div>
+        )}
+        
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Icon className="h-5 w-5 text-indigo-600" />
+              <CardTitle className="text-lg font-semibold">{title}</CardTitle>
             </div>
-            {description && <CardDescription className="mt-3 text-sm">{description}</CardDescription>}
-          </CardHeader>
-          <CardContent className="px-5 py-3">
-            {/* Content */}
-            {onDefaultToggle && (
-              <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-indigo-500" />
-                  <span className="text-sm font-medium">Make Default</span>
-                </div>
-                <Switch
-                  checked={isDefault}
-                  onCheckedChange={handleDefaultToggle}
-                  disabled={!isConfigured}
-                  className="data-[state=checked]:bg-amber-500"
-                />
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="pt-0 pb-4 px-5">
-            <div className="flex items-center justify-between w-full gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors gap-2 text-sm py-2 px-3 h-auto"
-                onClick={handleConfigClick}
-              >
-                {isConfigured ? (
-                  <>
-                    <Settings2 className="h-4 w-4" />
-                    <span>Edit</span>
-                  </>
-                ) : (
-                  <>
-                    <Settings2 className="h-4 w-4" />
-                    <span>Configure</span>
-                  </>
-                )}
-                <ChevronRight className="h-3.5 w-3.5 ml-auto" />
-              </Button>
-              
-              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-50 border border-indigo-100 mr-6">
-                {isActive ? (
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-                ) : (
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
-                )}
-                <span className="text-sm font-medium">
-                  {isActive ? 'Active' : 'Inactive'}
+            <Switch 
+              checked={isActive} 
+              onCheckedChange={onToggle}
+              disabled={!isConfigured}
+              className={cn(
+                "data-[state=checked]:bg-indigo-600",
+                !isConfigured && "cursor-not-allowed opacity-50"
+              )}
+            />
+          </div>
+          <CardDescription className="text-sm">{description}</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="py-0">
+          <div className="flex items-center gap-2 h-6">
+            {isConfigured ? (
+              <>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-600 font-medium">
+                  Configured
                 </span>
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={onToggle}
-                  disabled={!isConfigured}
-                  className="data-[state=checked]:bg-indigo-600 h-5 w-10"
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <span className="text-sm text-amber-600 font-medium">
+                  Needs configuration
+                </span>
+              </>
+            )}
+          </div>
+        </CardContent>
+        
+        <CardFooter className="pt-4">
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 hover:bg-indigo-50"
+                onClick={() => setIsConfiguring(true)}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                Configure
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Icon className="h-5 w-5 text-indigo-600" />
+                  Configure {title}
+                </DialogTitle>
+                <DialogDescription>
+                  Set up your {title} payment gateway for {communityId ? "this community" : "this group"}
+                </DialogDescription>
+              </DialogHeader>
+              
+              {isConfiguring ? (
+                <PaymentMethodConfig 
+                  provider={provider} 
+                  communityId={communityId}
+                  groupId={groupId}
+                  onSuccess={handleConfigureSuccess}
+                  imageSrc={imageSrc}
+                  isDefault={isDefault}
+                  onDefaultChange={handleDefaultChange}
                 />
-              </div>
-            </div>
-          </CardFooter>
-          {!isConfigured && (
-            <div className="absolute bottom-0 right-0 p-2">
-              <div className="text-amber-500">
-                <AlertCircle className="h-4 w-4 animate-pulse" />
-              </div>
-            </div>
-          )}
-          {isConfigured && (
-            <div className="absolute bottom-2 right-2">
-              <div className="text-green-500">
-                <Lock className="h-4 w-4" />
-              </div>
-            </div>
-          )}
-          {isDefault && (
-            <div className="absolute top-0 right-0">
-              <div className="w-16 h-16 overflow-hidden inline-block">
-                <div className="h-2 w-2 bg-amber-400 rotate-45 transform origin-top-left absolute top-0 right-0 shadow-md"></div>
-              </div>
-            </div>
-          )}
-        </Card>
-      </motion.div>
-
-      <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              {imageSrc ? (
-                <div className="p-2 rounded-full bg-white shadow-sm flex items-center justify-center w-12 h-12">
-                  <img src={imageSrc} alt={title} className="w-8 h-8 object-contain" />
-                </div>
               ) : (
-                <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 w-12 h-12 flex items-center justify-center">
-                  <Icon className="h-6 w-6" />
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                 </div>
               )}
-              <span>Configure {title}</span>
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              Enter your {title} API details securely to enable payments
-            </DialogDescription>
-          </DialogHeader>
-          <PaymentMethodConfig 
-            provider={provider} 
-            communityId={communityId} 
-            onSuccess={() => setIsConfigOpen(false)}
-            imageSrc={imageSrc}
-            isDefault={isDefault}
-            onDefaultChange={handleDefaultToggle}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+            </DialogContent>
+          </Dialog>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 };

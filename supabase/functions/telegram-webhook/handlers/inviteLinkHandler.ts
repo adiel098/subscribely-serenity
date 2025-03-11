@@ -1,201 +1,164 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
+interface InviteLinkOptions {
+  name?: string;
+  expireHours?: number;
+  memberLimit?: number;
+  createsJoinRequest?: boolean;
+}
+
+/**
+ * Creates an invite link for a Telegram community
+ */
 export async function createInviteLink(
   supabase: ReturnType<typeof createClient>,
   communityId: string,
   botToken: string,
-  options: {
-    name?: string;
-    expireHours?: number;
-    memberLimit?: number;
-  } = {}
+  options: InviteLinkOptions = {}
 ) {
   try {
-    console.log(`[Invite] Creating invite link for community ID: ${communityId}`);
-    
-    const { data: community } = await supabase
+    console.log(`🔗 [INVITE-LINK] Creating invite link for community: ${communityId}`);
+
+    // Get the community's Telegram chat ID
+    const { data: community, error: communityError } = await supabase
       .from('communities')
       .select('telegram_chat_id')
       .eq('id', communityId)
       .single();
 
-    if (!community?.telegram_chat_id) {
-      console.error(`[Invite] ❌ Error: Community chat ID not found for communityId: ${communityId}`);
-      throw new Error('Community chat ID not found');
+    if (communityError || !community || !community.telegram_chat_id) {
+      console.error(`❌ [INVITE-LINK] Error fetching community or no chat ID: ${communityError?.message || 'No chat ID'}`);
+      return null;
     }
-    
-    console.log(`[Invite] Found telegram_chat_id: ${community.telegram_chat_id} for community: ${communityId}`);
 
-    const payload: any = {
+    console.log(`✅ [INVITE-LINK] Found chat ID: ${community.telegram_chat_id} for community ${communityId}`);
+
+    // Create the invite link via Telegram API
+    const createInviteLinkUrl = `https://api.telegram.org/bot${botToken}/createChatInviteLink`;
+    
+    const params: Record<string, any> = {
       chat_id: community.telegram_chat_id,
-      creates_join_request: true,
     };
 
     if (options.name) {
-      payload.name = options.name;
-    } else {
-      // Generate a unique name if none provided
-      payload.name = `Invite-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substring(2, 8)}`;
+      params.name = options.name;
     }
 
     if (options.expireHours) {
-      payload.expire_date = Math.floor(Date.now() / 1000) + (options.expireHours * 3600);
+      const expireDate = Math.floor(Date.now() / 1000) + (options.expireHours * 3600);
+      params.expire_date = expireDate;
     }
 
     if (options.memberLimit) {
-      payload.member_limit = options.memberLimit;
+      params.member_limit = options.memberLimit;
     }
-    
-    console.log(`[Invite] Creating invite link with payload:`, JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/createChatInviteLink`, {
+    if (options.createsJoinRequest !== undefined) {
+      params.creates_join_request = options.createsJoinRequest;
+    }
+
+    console.log(`🔗 [INVITE-LINK] Creating link with params:`, params);
+
+    const response = await fetch(createInviteLinkUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(params)
     });
 
     const result = await response.json();
-    
-    console.log(`[Invite] Telegram API response:`, JSON.stringify(result, null, 2));
-    
+
     if (!result.ok) {
-      console.error(`[Invite] ❌ Telegram API error: ${result.description}`);
-      throw new Error(result.description);
+      console.error(`❌ [INVITE-LINK] Telegram API error:`, result);
+      return null;
     }
 
-    // Save the link in the community
-    if (result.result?.invite_link) {
-      console.log(`[Invite] ✅ Successfully created invite link: ${result.result.invite_link}`);
-      
-      const { error: updateError } = await supabase
-        .from('communities')
-        .update({ telegram_invite_link: result.result.invite_link })
-        .eq('id', communityId);
-        
-      if (updateError) {
-        console.error(`[Invite] Warning: Failed to save invite link to database: ${updateError.message}`);
-      }
-    }
-
+    console.log(`✅ [INVITE-LINK] Successfully created invite link:`, result.result.invite_link);
     return result.result;
+
   } catch (error) {
-    console.error('[Invite] ❌ Error creating invite link:', error);
-    throw error;
+    console.error(`❌ [INVITE-LINK] Error creating invite link:`, error);
+    return null;
   }
 }
 
 /**
- * Create an invite link for a community group
+ * Creates an invite link for a Telegram group (from community_groups)
  */
 export async function createGroupInviteLink(
   supabase: ReturnType<typeof createClient>,
   groupId: string,
   botToken: string,
-  options: {
-    name?: string;
-    expireHours?: number;
-    memberLimit?: number;
-  } = {}
+  options: InviteLinkOptions = {}
 ) {
   try {
-    console.log(`[Invite] 👥 Creating invite link for GROUP ID: ${groupId}`);
-    
-    const { data: group } = await supabase
+    console.log(`🔗 [GROUP-INVITE-LINK] Creating invite link for group: ${groupId}`);
+
+    // Get the group's Telegram chat ID
+    const { data: group, error: groupError } = await supabase
       .from('community_groups')
       .select('telegram_chat_id')
       .eq('id', groupId)
       .single();
 
-    if (!group?.telegram_chat_id) {
-      console.error(`[Invite] ❌ Error: Group chat ID not found for groupId: ${groupId}`);
-      throw new Error('Group chat ID not found');
+    if (groupError || !group || !group.telegram_chat_id) {
+      console.error(`❌ [GROUP-INVITE-LINK] Error fetching group or no chat ID: ${groupError?.message || 'No chat ID'}`);
+      return null;
     }
-    
-    console.log(`[Invite] 👥 Found telegram_chat_id: ${group.telegram_chat_id} for group: ${groupId}`);
 
-    const payload: any = {
+    console.log(`✅ [GROUP-INVITE-LINK] Found chat ID: ${group.telegram_chat_id} for group ${groupId}`);
+
+    // Create the invite link via Telegram API
+    const createInviteLinkUrl = `https://api.telegram.org/bot${botToken}/createChatInviteLink`;
+    
+    const params: Record<string, any> = {
       chat_id: group.telegram_chat_id,
-      creates_join_request: true,
     };
 
     if (options.name) {
-      payload.name = options.name;
-    } else {
-      // Generate a unique name if none provided
-      payload.name = `Group-${new Date().toISOString().split('T')[0]}-${Math.random().toString(36).substring(2, 8)}`;
+      params.name = options.name;
     }
 
     if (options.expireHours) {
-      payload.expire_date = Math.floor(Date.now() / 1000) + (options.expireHours * 3600);
+      const expireDate = Math.floor(Date.now() / 1000) + (options.expireHours * 3600);
+      params.expire_date = expireDate;
     }
 
     if (options.memberLimit) {
-      payload.member_limit = options.memberLimit;
+      params.member_limit = options.memberLimit;
     }
-    
-    console.log(`[Invite] 👥 Creating GROUP invite link with payload:`, JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/createChatInviteLink`, {
+    if (options.createsJoinRequest !== undefined) {
+      params.creates_join_request = options.createsJoinRequest;
+    }
+
+    console.log(`🔗 [GROUP-INVITE-LINK] Creating link with params:`, params);
+
+    const response = await fetch(createInviteLinkUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(params)
     });
 
     const result = await response.json();
-    
-    console.log(`[Invite] 👥 Telegram API response for GROUP:`, JSON.stringify(result, null, 2));
-    
+
     if (!result.ok) {
-      console.error(`[Invite] ❌ Telegram API error for GROUP: ${result.description}`);
-      throw new Error(result.description);
+      console.error(`❌ [GROUP-INVITE-LINK] Telegram API error:`, result);
+      return null;
     }
 
-    // Save the link in the group
-    if (result.result?.invite_link) {
-      console.log(`[Invite] ✅ Successfully created GROUP invite link: ${result.result.invite_link}`);
+    console.log(`✅ [GROUP-INVITE-LINK] Successfully created invite link:`, result.result.invite_link);
+    
+    // Update the group's invite link in the database
+    await supabase
+      .from('community_groups')
+      .update({ telegram_invite_link: result.result.invite_link })
+      .eq('id', groupId);
       
-      const { error: updateError } = await supabase
-        .from('community_groups')
-        .update({ telegram_invite_link: result.result.invite_link })
-        .eq('id', groupId);
-        
-      if (updateError) {
-        console.error(`[Invite] Warning: Failed to save GROUP invite link to database: ${updateError.message}`);
-      }
-    }
-
     return result.result;
-  } catch (error) {
-    console.error('[Invite] ❌ Error creating GROUP invite link:', error);
-    throw error;
-  }
-}
 
-// Function to invalidate an invite link
-export async function invalidateInviteLink(
-  supabase: ReturnType<typeof createClient>,
-  telegramUserId: string,
-  communityId: string
-) {
-  try {
-    console.log(`[Invite] Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
-    
-    const { data, error } = await supabase
-      .from('subscription_payments')
-      .update({ invite_link: null })
-      .eq('telegram_user_id', telegramUserId)
-      .eq('community_id', communityId);
-      
-    if (error) {
-      console.error('[Invite] Error invalidating invite links:', error);
-      throw error;
-    }
-    
-    console.log('[Invite] Successfully invalidated invite links');
-    return true;
   } catch (error) {
-    console.error('[Invite] Error in invalidateInviteLink:', error);
-    return false;
+    console.error(`❌ [GROUP-INVITE-LINK] Error creating invite link:`, error);
+    return null;
   }
 }

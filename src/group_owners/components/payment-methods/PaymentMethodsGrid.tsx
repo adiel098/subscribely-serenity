@@ -1,8 +1,8 @@
 
 import React from "react";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
-import { CreditCard } from "lucide-react";
-import { PAYMENT_METHOD_ICONS, PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
+import { CreditCard, Wallet, Bitcoin, LucideIcon } from "lucide-react";
+import { PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
 import { PaymentMethod } from "@/group_owners/hooks/types/subscription.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +27,20 @@ export const PaymentMethodsGrid = ({
 }: PaymentMethodsGridProps) => {
   const isPaymentMethodConfigured = (method: PaymentMethod) => {
     return method.config && Object.keys(method.config).length > 0;
+  };
+
+  // Define a mapping of payment providers to their corresponding Lucide icons
+  const getPaymentMethodIcon = (provider: string): LucideIcon => {
+    switch (provider) {
+      case 'stripe':
+        return CreditCard;
+      case 'paypal':
+        return Wallet;
+      case 'crypto':
+        return Bitcoin;
+      default:
+        return CreditCard;
+    }
   };
 
   if (isLoading) {
@@ -64,7 +78,7 @@ export const PaymentMethodsGrid = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
       {paymentMethods.map((method) => {
-        const Icon = PAYMENT_METHOD_ICONS[method.provider] || CreditCard;
+        const Icon = getPaymentMethodIcon(method.provider);
         const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
         
         return (

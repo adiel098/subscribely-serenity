@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, Globe, Star } from "lucide-react";
+import { Loader2, Check, Globe, Star, AlertCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 interface PaymentMethodConfigProps {
   provider: string;
@@ -33,6 +34,7 @@ export const PaymentMethodConfig = ({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDefaultSetting, setIsDefaultSetting] = useState(isDefault);
+  const { selectedGroupId, isGroupSelected } = useCommunityContext();
 
   // Fetch existing configuration if available
   useEffect(() => {
@@ -41,7 +43,9 @@ export const PaymentMethodConfig = ({
       try {
         if (!communityId) {
           console.error("No community ID provided for payment method configuration");
-          setError("No community selected. Please select a community first.");
+          setError(isGroupSelected 
+            ? "Payment methods can only be configured for communities, not groups. Please select a community instead." 
+            : "No community selected. Please select a community first.");
           setIsLoading(false);
           return;
         }
@@ -70,7 +74,7 @@ export const PaymentMethodConfig = ({
     if (provider && communityId) {
       fetchConfig();
     }
-  }, [provider, communityId]);
+  }, [provider, communityId, isGroupSelected]);
 
   // If isDefault prop changes, update local state
   useEffect(() => {
@@ -92,7 +96,9 @@ export const PaymentMethodConfig = ({
     try {
       // Validate that we have a valid community ID
       if (!communityId) {
-        throw new Error("No community selected. Please select a community before saving payment settings.");
+        throw new Error(isGroupSelected 
+          ? "Payment methods can only be configured for communities, not groups. Please select a community first." 
+          : "No community selected. Please select a community before saving payment settings.");
       }
 
       console.log(`Saving payment method for community: ${communityId}, provider: ${provider}`);
@@ -188,6 +194,18 @@ export const PaymentMethodConfig = ({
   };
 
   const fields = getFieldsForProvider();
+
+  if (isGroupSelected) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertCircle className="h-5 w-5" />
+          <p className="font-medium">Group Selected</p>
+        </div>
+        <p className="text-sm">Payment methods can only be configured for communities, not groups. Please select a community from the dropdown at the top of the page.</p>
+      </div>
+    );
+  }
 
   if (!communityId) {
     return (

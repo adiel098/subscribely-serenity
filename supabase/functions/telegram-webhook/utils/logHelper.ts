@@ -145,23 +145,38 @@ export async function logUserInteraction(
 
 /**
  * Update member activity timestamp
+ * This function is fixed to not use UUID format for Telegram IDs
  */
 export async function updateMemberActivity(
   supabase: ReturnType<typeof createClient>,
   userId: string
 ): Promise<void> {
   try {
-    console.log(`[LOG-HELPER] 🔄 Updating activity for user ${userId}`);
+    console.log(`[LOG-HELPER] 🔄 Updating activity for Telegram user ${userId}`);
     
-    const { error } = await supabase
-      .from('profiles')
+    // Only update telegram-specific tables, not profiles
+    // Update telegram_chat_members table which uses telegram_user_id as string
+    const { error: memberError } = await supabase
+      .from('telegram_chat_members')
       .update({ last_active: new Date().toISOString() })
-      .eq('id', userId);
+      .eq('telegram_user_id', userId);
       
-    if (error && error.code !== 'PGRST116') { // Ignore if no rows updated
-      console.error('[LOG-HELPER] ❌ Error updating user activity:', error);
+    if (memberError && memberError.code !== 'PGRST116') { // Ignore if no rows updated
+      console.error('[LOG-HELPER] ❌ Error updating telegram_chat_members:', memberError);
     } else {
-      console.log('[LOG-HELPER] ✅ User activity updated successfully');
+      console.log('[LOG-HELPER] ✅ telegram_chat_members activity updated successfully');
+    }
+    
+    // Also update telegram_mini_app_users table
+    const { error: miniAppError } = await supabase
+      .from('telegram_mini_app_users')
+      .update({ last_active: new Date().toISOString() })
+      .eq('telegram_id', userId);
+      
+    if (miniAppError && miniAppError.code !== 'PGRST116') { // Ignore if no rows updated
+      console.error('[LOG-HELPER] ❌ Error updating telegram_mini_app_users:', miniAppError);
+    } else {
+      console.log('[LOG-HELPER] ✅ telegram_mini_app_users activity updated successfully');
     }
   } catch (error) {
     console.error('[LOG-HELPER] ❌ Error in updateMemberActivity:', error);

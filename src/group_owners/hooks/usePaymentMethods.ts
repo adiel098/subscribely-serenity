@@ -1,14 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-export interface PaymentMethod {
-  id: string;
-  provider: 'stripe' | 'paypal' | 'crypto';
-  is_active: boolean;
-  is_default?: boolean;
-  config: Record<string, any>;
-}
+import { PaymentMethod } from "./types/subscription.types";
 
 export const usePaymentMethods = (communityId: string | null) => {
   return useQuery({

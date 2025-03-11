@@ -84,7 +84,7 @@ export const PaymentMethodsPage = () => {
   };
 
   // Filter payment methods based on the selected filter
-  const filteredPaymentMethods = paymentMethods?.filter((method: PaymentMethod) => {
+  const filteredPaymentMethods = paymentMethods?.filter((method) => {
     if (filter === "all") return true;
     if (filter === "community") return method.community_id === selectedCommunityId;
     if (filter === "default") return method.is_default;
@@ -158,7 +158,7 @@ export const PaymentMethodsPage = () => {
         </div>
       ) : filteredPaymentMethods && filteredPaymentMethods.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {filteredPaymentMethods.map((method: PaymentMethod) => {
+          {filteredPaymentMethods.map((method) => {
             const Icon = PAYMENT_METHOD_ICONS[method.provider] || CreditCard;
             const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
             

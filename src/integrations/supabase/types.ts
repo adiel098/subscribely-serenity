@@ -1117,6 +1117,12 @@ export type Database = {
           trial_end_date: string
         }[]
       }
+      check_is_admin: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: boolean
+      }
       delete_all_platform_subscriptions: {
         Args: {
           owner_id_param: string

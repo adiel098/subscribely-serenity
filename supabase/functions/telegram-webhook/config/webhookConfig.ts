@@ -1,5 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../../../_shared/cors.ts';
 
 export interface WebhookConfig {
   supabaseClient: ReturnType<typeof createClient>;
@@ -9,7 +10,7 @@ export interface WebhookConfig {
 export async function setupWebhookConfig(): Promise<WebhookConfig> {
   console.log("[CONFIG] 🔌 Setting up webhook configuration");
   
-  // Create Supabase client
+  // Create Supabase client with admin privileges for webhook operations
   console.log("[CONFIG] 🔌 Creating Supabase client");
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -22,10 +23,16 @@ export async function setupWebhookConfig(): Promise<WebhookConfig> {
     throw new Error('Missing Supabase credentials');
   }
   
-  const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+    global: {
+      headers: {
+        ...corsHeaders
+      }
+    }
+  });
   console.log("[CONFIG] ✅ Supabase client created successfully");
 
-  // Get bot token from settings
+  // Get bot token from global settings
   console.log("[CONFIG] 🔑 Fetching bot token");
   const { data: settings, error: settingsError } = await supabaseClient
     .from('telegram_global_settings')

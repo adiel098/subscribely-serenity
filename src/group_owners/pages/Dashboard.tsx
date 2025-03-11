@@ -103,6 +103,14 @@ const Dashboard = () => {
           revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
           timeRange={timeRangeLabel}
         />
+        
+        <AnalyticsOverview
+          averageSubscriptionDuration={insights.averageSubscriptionDuration}
+          mostPopularPlan={insights.mostPopularPlan}
+          mostPopularPlanPrice={insights.mostPopularPlanPrice}
+          mostActiveDay={insights.mostActiveDay}
+          renewalRate={insights.renewalRate}
+        />
       </div>
 
       <div className="mt-6">
@@ -116,16 +124,6 @@ const Dashboard = () => {
       <div className="mt-6">
         <PaymentStatus
           paymentStats={paymentStats}
-        />
-      </div>
-
-      <div className="mt-6">
-        <AnalyticsOverview
-          averageSubscriptionDuration={insights.averageSubscriptionDuration}
-          mostPopularPlan={insights.mostPopularPlan}
-          mostPopularPlanPrice={insights.mostPopularPlanPrice}
-          mostActiveDay={insights.mostActiveDay}
-          renewalRate={insights.renewalRate}
         />
       </div>
     </div>

@@ -9,8 +9,10 @@ import { PaymentStatus } from "@/group_owners/components/dashboard/PaymentStatus
 import { AnalyticsOverview } from "@/group_owners/components/dashboard/AnalyticsOverview";
 import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardStats";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const { selectedCommunityId } = useCommunityContext();
   const {
     timeRange,
@@ -35,6 +37,9 @@ const Dashboard = () => {
     isLoading
   } = useDashboardStats(selectedCommunityId || "");
 
+  // Get first name from user metadata
+  const firstName = user?.user_metadata?.first_name || 'there';
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px]">
@@ -48,7 +53,9 @@ const Dashboard = () => {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Community Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Hello 👋 {firstName}
+          </h1>
           <p className="text-gray-600 mt-1">
             Overview of your community's performance and metrics
           </p>

@@ -8,17 +8,17 @@ import { useCommunityContext } from "@/contexts/CommunityContext";
 export const useSubscriptionPlans = (entityId: string) => {
   console.log('useSubscriptionPlans hook initialized with entityId:', entityId);
   
-  const { isGroupSelected } = useCommunityContext();
-  
+  // With our consolidated model, all plans belong to communities
+  // (groups are just communities with is_group=true)
   const { 
     data: plans, 
     isLoading, 
     refetch 
-  } = useFetchSubscriptionPlans(entityId, isGroupSelected);
+  } = useFetchSubscriptionPlans(entityId);
   
-  const createPlan = useCreateSubscriptionPlan(entityId, isGroupSelected);
-  const updatePlan = useUpdateSubscriptionPlan(entityId, isGroupSelected);
-  const deletePlan = useDeleteSubscriptionPlan(entityId, isGroupSelected);
+  const createPlan = useCreateSubscriptionPlan(entityId);
+  const updatePlan = useUpdateSubscriptionPlan(entityId);
+  const deletePlan = useDeleteSubscriptionPlan(entityId);
 
   return {
     plans,

@@ -6,7 +6,7 @@ interface MemberDataInterface {
   telegram_username?: string;
   community_id: string;
   is_active: boolean;
-  subscription_status?: string | boolean;
+  subscription_status?: string;
   subscription_plan_id?: string;
   subscription_start_date?: string;
   subscription_end_date?: string;
@@ -29,6 +29,11 @@ export async function createOrUpdateMember(
 ): Promise<MemberResult> {
   try {
     console.log(`[DB-LOGGER] 📝 Creating/updating member for user ${memberData.telegram_user_id} in community ${memberData.community_id}`);
+    
+    // Ensure subscription_status is a string (no longer accepting boolean)
+    if (typeof memberData.subscription_status === 'boolean') {
+      memberData.subscription_status = memberData.subscription_status ? 'active' : 'inactive';
+    }
     
     // First check if member exists
     const { data: existingMember, error: checkError } = await supabase

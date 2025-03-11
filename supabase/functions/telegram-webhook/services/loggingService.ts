@@ -1,55 +1,67 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-export interface Logger {
-  info: (message: string) => Promise<void>;
-  success: (message: string) => Promise<void>;
-  warn: (message: string) => Promise<void>;
-  error: (message: string) => Promise<void>;
-}
-
 /**
- * Creates a logger with consistent formatting for edge functions
- * @param supabase Supabase client
- * @param serviceName Name of the service for identifying log sources
+ * Creates a logger instance for consistent logging across functions
+ * @param supabase The Supabase client
+ * @param context The context for the logs (e.g., 'WEBHOOK', 'INVITE-HANDLER')
+ * @returns Object with logging methods
  */
-export function createLogger(
-  supabase: ReturnType<typeof createClient>,
-  serviceName: string
-): Logger {
-  const logToConsole = (level: string, emoji: string, message: string) => {
-    console.log(`[${serviceName}] ${emoji} ${message}`);
+export function createLogger(supabase: ReturnType<typeof createClient>, context: string) {
+  const logToConsole = (level: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    const prefix = `[${timestamp}] [${context}] [${level}]`;
+    
+    if (data) {
+      console.log(`${prefix} ${message}`, typeof data === 'object' ? JSON.stringify(data) : data);
+    } else {
+      console.log(`${prefix} ${message}`);
+    }
   };
   
-  const logToDatabase = async (level: string, message: string) => {
+  const logToDatabase = async (level: string, message: string, data?: any) => {
     try {
-      await supabase.from('subscription_activity_logs').insert({
-        activity_type: `log_${level.toLowerCase()}`,
-        details: `[${serviceName}] ${message}`,
-        telegram_user_id: '0', // System log
-        community_id: '00000000-0000-0000-0000-000000000000' // System log
-      });
-    } catch (error) {
-      console.error(`[${serviceName}] Failed to log to database:`, error);
+      const { error } = await supabase
+        .from('system_logs')
+        .insert({
+          event_type: `${context}_${level}`,
+          details: message,
+          metadata: data ? (typeof data === 'object' ? data : { value: data }) : {}
+        });
+        
+      if (error) {
+        console.error(`[${context}] Failed to log to database:`, error);
+      }
+    } catch (err) {
+      console.error(`[${context}] Exception in database logging:`, err);
     }
   };
   
   return {
-    info: async (message: string) => {
-      logToConsole('INFO', 'ℹ️', message);
-      // We don't log info messages to the database to reduce noise
+    info: async (message: string, data?: any) => {
+      logToConsole('INFO', message, data);
+      await logToDatabase('INFO', message, data);
     },
-    success: async (message: string) => {
-      logToConsole('SUCCESS', '✅', message);
-      await logToDatabase('SUCCESS', message);
+    
+    warn: async (message: string, data?: any) => {
+      logToConsole('WARN', message, data);
+      await logToDatabase('WARN', message, data);
     },
-    warn: async (message: string) => {
-      logToConsole('WARNING', '⚠️', message);
-      await logToDatabase('WARNING', message);
+    
+    error: async (message: string, data?: any) => {
+      logToConsole('ERROR', message, data);
+      await logToDatabase('ERROR', message, data);
     },
-    error: async (message: string) => {
-      logToConsole('ERROR', '❌', message);
-      await logToDatabase('ERROR', message);
+    
+    success: async (message: string, data?: any) => {
+      logToConsole('SUCCESS', message, data);
+      await logToDatabase('SUCCESS', message, data);
+    },
+    
+    debug: async (message: string, data?: any) => {
+      // Only log to console in development
+      logToConsole('DEBUG', message, data);
+      // Don't store debug logs in the database to reduce noise
     }
   };
 }

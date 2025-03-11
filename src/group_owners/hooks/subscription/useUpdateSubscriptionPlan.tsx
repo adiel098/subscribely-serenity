@@ -1,6 +1,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 interface UpdatePlanParams {
   id: string;
@@ -11,8 +12,9 @@ interface UpdatePlanParams {
   features: string[];
 }
 
-export const useUpdateSubscriptionPlan = (entityId: string, isGroup = false) => {
+export const useUpdateSubscriptionPlan = (communityId: string) => {
   const queryClient = useQueryClient();
+  const { isGroupSelected } = useCommunityContext();
   
   return useMutation({
     mutationFn: async (planData: UpdatePlanParams) => {
@@ -35,7 +37,7 @@ export const useUpdateSubscriptionPlan = (entityId: string, isGroup = false) => 
     onSuccess: () => {
       // Invalidate the query to refetch the updated list
       queryClient.invalidateQueries({ 
-        queryKey: [isGroup ? 'group-subscription-plans' : 'subscription-plans', entityId] 
+        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
       });
     }
   });

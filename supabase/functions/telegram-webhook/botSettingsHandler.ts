@@ -1,43 +1,38 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-export async function getBotSettings(supabase: ReturnType<typeof createClient>, communityId: string | null, groupId: string | null = null) {
+export async function getBotSettings(supabase: ReturnType<typeof createClient>, communityId: string) {
   try {
     // Input validation
-    if (!communityId && !groupId) {
-      console.error("[BOT SETTINGS] ❌ Error: Neither communityId nor groupId provided");
-      throw new Error('Either communityId or groupId must be provided');
+    if (!communityId) {
+      console.error("[BOT SETTINGS] ❌ Error: No communityId provided");
+      throw new Error('Community ID must be provided');
     }
     
-    console.log(`[BOT SETTINGS] 🔍 Fetching bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}`);
+    console.log(`[BOT SETTINGS] 🔍 Fetching bot settings for community ${communityId}`);
     
     // Build the query based on provided parameters
-    let query = supabase
+    const query = supabase
       .from('telegram_bot_settings')
-      .select('*');
-    
-    if (communityId) {
-      query = query.eq('community_id', communityId);
-    } else if (groupId) {
-      query = query.eq('group_id', groupId);
-    }
+      .select('*')
+      .eq('community_id', communityId);
     
     // Execute query
     const { data: settings, error } = await query.single();
 
     if (error) {
-      console.error(`[BOT SETTINGS] ❌ Error fetching bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}:`, error);
+      console.error(`[BOT SETTINGS] ❌ Error fetching bot settings for community ${communityId}:`, error);
       
       // If settings don't exist, we should consider creating default settings
       // This is handled by the trigger in the database, but we'll log it here
       if (error.code === 'PGRST116') {
-        console.log(`[BOT SETTINGS] ⚠️ Bot settings not found for ${communityId ? 'community' : 'group'} ${communityId || groupId}`);
+        console.log(`[BOT SETTINGS] ⚠️ Bot settings not found for community ${communityId}`);
       }
       
       throw error;
     }
 
-    console.log(`[BOT SETTINGS] ✅ Successfully retrieved bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}`);
+    console.log(`[BOT SETTINGS] ✅ Successfully retrieved bot settings for community ${communityId}`);
     return settings;
   } catch (error) {
     console.error('[BOT SETTINGS] ❌ Error in getBotSettings:', error);
@@ -48,38 +43,32 @@ export async function getBotSettings(supabase: ReturnType<typeof createClient>, 
 export async function updateBotSettings(
   supabase: ReturnType<typeof createClient>, 
   settings: Record<string, any>, 
-  communityId: string | null, 
-  groupId: string | null = null
+  communityId: string
 ) {
   try {
     // Input validation
-    if (!communityId && !groupId) {
-      console.error("[BOT SETTINGS] ❌ Error: Neither communityId nor groupId provided for update");
-      throw new Error('Either communityId or groupId must be provided for update');
+    if (!communityId) {
+      console.error("[BOT SETTINGS] ❌ Error: No communityId provided for update");
+      throw new Error('Community ID must be provided for update');
     }
     
-    console.log(`[BOT SETTINGS] 🔄 Updating bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}`);
+    console.log(`[BOT SETTINGS] 🔄 Updating bot settings for community ${communityId}`);
     
     // Build the query based on provided parameters
-    let query = supabase
+    const query = supabase
       .from('telegram_bot_settings')
-      .update(settings);
-    
-    if (communityId) {
-      query = query.eq('community_id', communityId);
-    } else if (groupId) {
-      query = query.eq('group_id', groupId);
-    }
+      .update(settings)
+      .eq('community_id', communityId);
     
     // Execute query with returning set to minimal to reduce payload size
     const { data, error } = await query.select('id').single();
 
     if (error) {
-      console.error(`[BOT SETTINGS] ❌ Error updating bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}:`, error);
+      console.error(`[BOT SETTINGS] ❌ Error updating bot settings for community ${communityId}:`, error);
       throw error;
     }
 
-    console.log(`[BOT SETTINGS] ✅ Successfully updated bot settings for ${communityId ? 'community' : 'group'} ${communityId || groupId}`);
+    console.log(`[BOT SETTINGS] ✅ Successfully updated bot settings for community ${communityId}`);
     return data;
   } catch (error) {
     console.error('[BOT SETTINGS] ❌ Error in updateBotSettings:', error);

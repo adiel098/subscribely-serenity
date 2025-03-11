@@ -2,17 +2,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateSubscriptionPlanData } from "../types/subscription.types";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
-export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => {
+export const useCreateSubscriptionPlan = (communityId: string) => {
   const queryClient = useQueryClient();
+  const { isGroupSelected } = useCommunityContext();
   
   return useMutation({
-    mutationFn: async (planData: Omit<CreateSubscriptionPlanData, 'community_id' | 'group_id'>) => {
-      // Construct the payload based on whether it's a group or community
-      // With our updated constraint, we only set one of community_id or group_id
+    mutationFn: async (planData: Omit<CreateSubscriptionPlanData, 'community_id'>) => {
+      // With our consolidated model, all plans belong to communities
+      // (groups are just communities with is_group=true)
       const payload = {
-        community_id: isGroup ? null : entityId,
-        group_id: isGroup ? entityId : null,
+        community_id: communityId,
         name: planData.name,
         description: planData.description || null,
         price: planData.price,
@@ -39,7 +40,7 @@ export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => 
     onSuccess: () => {
       // Invalidate the query to refetch the updated list
       queryClient.invalidateQueries({ 
-        queryKey: [isGroup ? 'group-subscription-plans' : 'subscription-plans', entityId] 
+        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
       });
     }
   });

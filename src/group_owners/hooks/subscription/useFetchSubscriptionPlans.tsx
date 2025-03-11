@@ -1,20 +1,22 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
-export const useFetchSubscriptionPlans = (entityId: string, isGroup = false) => {
+export const useFetchSubscriptionPlans = (communityId: string) => {
+  const { isGroupSelected } = useCommunityContext();
+  
   return useQuery({
-    queryKey: [isGroup ? 'group-subscription-plans' : 'subscription-plans', entityId],
+    queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId],
     queryFn: async () => {
-      if (!entityId) return [];
+      if (!communityId) return [];
       
-      // Choose column to filter on based on entity type
-      const filterColumn = isGroup ? 'group_id' : 'community_id';
-      
+      // With our consolidated model, all plans belong to communities
+      // (groups are just communities with is_group=true)
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
-        .eq(filterColumn, entityId)
+        .eq('community_id', communityId)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -24,6 +26,6 @@ export const useFetchSubscriptionPlans = (entityId: string, isGroup = false) => 
       
       return data;
     },
-    enabled: !!entityId
+    enabled: !!communityId
   });
 };

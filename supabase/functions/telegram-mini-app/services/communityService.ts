@@ -8,30 +8,24 @@ export async function fetchCommunityData(
   supabase: ReturnType<typeof createClient>,
   start: string
 ) {
-  // Check if start parameter is for a group (prefixed with "group_")
-  const isGroupRequest = start.toString().startsWith("group_");
-  console.log(`🔍 Parameter type: ${isGroupRequest ? "Group" : "Community"} ID - "${start}"`);
+  // Check if this is a community ID (UUID) or a custom link
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
+  console.log(`🔍 Parameter type: ${isUUID ? "UUID" : "Custom link"} - "${start}"`);
   
   let communityQuery;
-  let entityId = start;
   
-  // Handle group requests
-  if (isGroupRequest) {
-    // Extract the actual group ID
-    entityId = start.toString().substring(6);
-    console.log(`🔍 Extracted group ID: "${entityId}"`);
-    
-    // Query for communities with is_group=true (former groups)
+  if (isUUID) {
+    console.log(`✅ Parameter is a UUID, querying by ID: ${start}`);
+    // If it's a UUID, search by ID
     communityQuery = supabase
       .from("communities")
       .select(`
         id,
         name,
         description,
-        owner_id,
-        telegram_chat_id,
-        telegram_invite_link,
         telegram_photo_url,
+        telegram_invite_link,
+        telegram_chat_id,
         is_group,
         community_relationships:community_relationships!parent_community_id(
           community_id,
@@ -43,67 +37,56 @@ export async function fetchCommunityData(
             telegram_invite_link,
             telegram_chat_id
           )
+        ),
+        subscription_plans (
+          id,
+          name,
+          description,
+          price,
+          interval,
+          features
         )
       `)
-      .eq("id", entityId)
-      .eq("is_group", true)
+      .eq("id", start)
       .single();
   } else {
-    // Handle standard community requests (UUID or custom link)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
-    
-    if (isUUID) {
-      console.log(`✅ Parameter is a UUID, querying by ID: ${start}`);
-      // If it's a UUID, search by ID
-      communityQuery = supabase
-        .from("communities")
-        .select(`
+    console.log(`🔗 Parameter appears to be a custom link: "${start}"`);
+    // If it's not a UUID, search by custom_link
+    communityQuery = supabase
+      .from("communities")
+      .select(`
+        id,
+        name,
+        description,
+        telegram_photo_url,
+        telegram_invite_link,
+        telegram_chat_id,
+        is_group,
+        community_relationships:community_relationships!parent_community_id(
+          community_id,
+          communities:community_id(
+            id, 
+            name,
+            description,
+            telegram_photo_url,
+            telegram_invite_link,
+            telegram_chat_id
+          )
+        ),
+        subscription_plans (
           id,
           name,
           description,
-          telegram_photo_url,
-          telegram_invite_link,
-          telegram_chat_id,
-          is_group,
-          subscription_plans (
-            id,
-            name,
-            description,
-            price,
-            interval,
-            features
-          )
-        `)
-        .eq("id", start)
-        .single();
-    } else {
-      console.log(`🔗 Parameter appears to be a custom link: "${start}"`);
-      // If it's not a UUID, search by custom_link
-      communityQuery = supabase
-        .from("communities")
-        .select(`
-          id,
-          name,
-          description,
-          telegram_photo_url,
-          telegram_invite_link,
-          telegram_chat_id,
-          is_group,
-          subscription_plans (
-            id,
-            name,
-            description,
-            price,
-            interval,
-            features
-          )
-        `)
-        .eq("custom_link", start)
-        .single();
-    }
+          price,
+          interval,
+          features
+        )
+      `)
+      .eq("custom_link", start)
+      .single();
   }
 
-  return { communityQuery, isGroupRequest, entityId };
+  return { communityQuery, entityId: start };
 }
 
 /**
@@ -111,12 +94,11 @@ export async function fetchCommunityData(
  */
 export async function processCommunityData(
   supabase: ReturnType<typeof createClient>,
-  data: any,
-  isGroupRequest: boolean
+  data: any
 ) {
   let displayCommunity;
   
-  if (isGroupRequest || data.is_group) {
+  if (data.is_group) {
     console.log(`✅ Successfully found group: ${data.name} (ID: ${data.id})`);
     
     // Extract communities from relationships

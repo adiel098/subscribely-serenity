@@ -12,8 +12,7 @@ export interface ReminderMessage {
 
 export interface BotSettings {
   id: string;
-  community_id: string | null;
-  group_id: string | null;
+  community_id: string;
   welcome_message: string;
   welcome_image: string | null;
   subscription_reminder_days: number;
@@ -36,24 +35,19 @@ export interface BotSettings {
   second_reminder_image: string | null;
 }
 
-export const useBotSettings = (communityId: string | null, groupId: string | null = null) => {
+export const useBotSettings = (communityId: string | null) => {
   const queryClient = useQueryClient();
   const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['bot-settings', communityId, groupId],
+    queryKey: ['bot-settings', communityId],
     queryFn: async () => {
-      if (!communityId && !groupId) return null;
+      if (!communityId) return null;
 
       const query = supabase
         .from('telegram_bot_settings')
-        .select('*');
-      
-      if (communityId) {
-        query.eq('community_id', communityId);
-      } else if (groupId) {
-        query.eq('group_id', groupId);
-      }
+        .select('*')
+        .eq('community_id', communityId);
 
       const { data, error } = await query.single();
 
@@ -61,7 +55,7 @@ export const useBotSettings = (communityId: string | null, groupId: string | nul
         console.error('Error fetching bot settings:', error);
         // If no settings found, create default settings
         if (error.code === 'PGRST116') {
-          return createDefaultBotSettings(communityId, groupId);
+          return createDefaultBotSettings(communityId);
         }
         throw error;
       }
@@ -78,15 +72,14 @@ export const useBotSettings = (communityId: string | null, groupId: string | nul
         second_reminder_image: data.second_reminder_image || null
       } as BotSettings;
     },
-    enabled: Boolean(communityId) || Boolean(groupId),
+    enabled: Boolean(communityId),
   });
 
-  const createDefaultBotSettings = async (communityId: string | null, groupId: string | null) => {
-    console.log("Creating default bot settings for", communityId ? `community ${communityId}` : `group ${groupId}`);
+  const createDefaultBotSettings = async (communityId: string | null) => {
+    console.log("Creating default bot settings for community", communityId);
     
     const defaultSettings = {
       community_id: communityId,
-      group_id: groupId,
       welcome_message: 'Welcome to our community! 👋\nWe\'re excited to have you here.\nFeel free to introduce yourself and join the conversations.',
       welcome_image: null,
       subscription_reminder_days: 3,
@@ -127,17 +120,12 @@ export const useBotSettings = (communityId: string | null, groupId: string | nul
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<BotSettings>) => {
-      if (!communityId && !groupId) throw new Error('No community or group selected');
+      if (!communityId) throw new Error('No community selected');
 
       const query = supabase
         .from('telegram_bot_settings')
-        .update(newSettings);
-      
-      if (communityId) {
-        query.eq('community_id', communityId);
-      } else if (groupId) {
-        query.eq('group_id', groupId);
-      }
+        .update(newSettings)
+        .eq('community_id', communityId);
 
       const { data, error } = await query.select().single();
 
@@ -149,7 +137,7 @@ export const useBotSettings = (communityId: string | null, groupId: string | nul
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bot-settings', communityId, groupId] });
+      queryClient.invalidateQueries({ queryKey: ['bot-settings', communityId] });
       toast.success('Bot settings updated successfully');
     },
     onError: (error: Error) => {

@@ -11,13 +11,15 @@ import { UnifiedMessagePreview } from "./UnifiedMessagePreview";
 
 interface SettingsContentProps {
   settings: BotSettings | null;
-  selectedCommunityId: string | null;
+  entityId: string | null;
+  entityType: 'community' | 'group';
   updateSettings: any;
 }
 
 export const SettingsContent = ({ 
   settings, 
-  selectedCommunityId, 
+  entityId, 
+  entityType,
   updateSettings 
 }: SettingsContentProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>("welcome");
@@ -34,7 +36,7 @@ export const SettingsContent = ({
     <>
       <CronJobTimer />
 
-      <BotStatsHeader communityId={selectedCommunityId || ""} />
+      <BotStatsHeader entityId={entityId || ""} entityType={entityType} />
 
       <div className="grid md:grid-cols-5 gap-6">
         <div className="md:col-span-3">
@@ -47,7 +49,10 @@ export const SettingsContent = ({
           >
             <WelcomeMessageSection settings={settings} updateSettings={updateSettings} />
             <SubscriptionSection settings={settings} updateSettings={updateSettings} />
-            <BroadcastSection communityId={selectedCommunityId || ""} />
+            <BroadcastSection 
+              entityId={entityId || ""} 
+              entityType={entityType}
+            />
           </Accordion>
         </div>
         

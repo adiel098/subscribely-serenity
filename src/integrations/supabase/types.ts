@@ -800,6 +800,7 @@ export type Database = {
           first_reminder_days: number | null
           first_reminder_image: string | null
           first_reminder_message: string | null
+          group_id: string | null
           id: string
           is_admin: boolean | null
           language: string | null
@@ -830,6 +831,7 @@ export type Database = {
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
+          group_id?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -860,6 +862,7 @@ export type Database = {
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
+          group_id?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -892,6 +895,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: true
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_bot_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]

@@ -1,96 +1,144 @@
-
-import { Card, CardContent } from "@/components/ui/card";
-import { useBotStats } from "@/group_owners/hooks/useBotStats";
-import { Users, UserCheck, UserX, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BotStatsHeaderProps {
-  communityId: string;
+  entityId: string;
+  entityType: 'community' | 'group';
 }
 
-export const BotStatsHeader = ({ communityId }: BotStatsHeaderProps) => {
-  const { data: stats, isLoading, refetch } = useBotStats(communityId);
-  const [isUpdating, setIsUpdating] = useState(false);
+export const BotStatsHeader = ({ 
+  entityId, 
+  entityType 
+}: BotStatsHeaderProps) => {
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeSubscriptions: 0,
+    expiringSubscriptions: 0,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleUpdateActivity = async () => {
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase.functions.invoke('telegram-webhook', {
-        body: { 
-          communityId,
-          path: '/update-activity'
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!entityId) return;
+      
+      setIsLoading(true);
+      try {
+        let query;
+        
+        if (entityType === 'community') {
+          // For communities, get chat members directly
+          query = supabase
+            .from('telegram_chat_members')
+            .select('id, subscription_status, subscription_end_date')
+            .eq('community_id', entityId);
+        } else {
+          // For groups, we need to get all community members that belong to this group
+          query = supabase
+            .from('community_group_members')
+            .select(`
+              community_id,
+              telegram_chat_members!inner(
+                id, subscription_status, subscription_end_date
+              )
+            `)
+            .eq('group_id', entityId);
         }
-      });
-
-      if (error) throw error;
-
-      toast.success("Successfully updated member activity status");
-      refetch();
-    } catch (error) {
-      console.error('Error updating member activity:', error);
-      toast.error("Failed to update member activity status");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  if (isLoading || !stats) {
-    return null;
-  }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        let members = [];
+        if (entityType === 'community') {
+          members = data;
+        } else {
+          // For groups, extract members from all communities in the group
+          members = data.flatMap(groupMember => 
+            groupMember.telegram_chat_members || []
+          );
+        }
+        
+        const now = new Date();
+        const inSevenDays = new Date();
+        inSevenDays.setDate(now.getDate() + 7);
+        
+        // Calculate stats
+        const totalMembers = members.length;
+        const activeSubscriptions = members.filter(
+          m => m.subscription_status === 'active'
+        ).length;
+        const expiringSubscriptions = members.filter(
+          m => 
+            m.subscription_status === 'active' && 
+            m.subscription_end_date && 
+            new Date(m.subscription_end_date) < inSevenDays
+        ).length;
+        
+        setStats({
+          totalMembers,
+          activeSubscriptions,
+          expiringSubscriptions
+        });
+      } catch (err) {
+        console.error('Error fetching bot stats:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStats();
+  }, [entityId, entityType]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Bot Statistics</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleUpdateActivity}
-          disabled={isUpdating}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-          Update Activity Status
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Members</p>
-                <p className="text-2xl font-bold">{stats.totalMembers}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <UserCheck className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Active with Bot</p>
-                <p className="text-2xl font-bold">{stats.activeMembers}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <UserX className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Blocked or Inactive</p>
-                <p className="text-2xl font-bold">{stats.inactiveMembers}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Total Members
+          </CardTitle>
+          <Users className="h-4 w-4 text-gray-500" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-4 w-[100px]" />
+          ) : (
+            <div className="text-2xl font-bold">{stats.totalMembers}</div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Active Subscriptions
+          </CardTitle>
+          <CalendarClock className="h-4 w-4 text-gray-500" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-4 w-[100px]" />
+          ) : (
+            <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Expiring Soon
+          </CardTitle>
+          <CalendarClock className="h-4 w-4 text-gray-500" />
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-4 w-[100px]" />
+          ) : (
+            <div className="text-2xl font-bold">{stats.expiringSubscriptions}</div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

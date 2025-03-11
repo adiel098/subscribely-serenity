@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 import { handleSubscription } from '../subscriptionHandler.ts';
@@ -78,6 +77,138 @@ export async function handleStartCommand(
       raw_data: message
     });
     
+    return false;
+  }
+}
+
+async function handleGroupStartCommand(
+  supabase: ReturnType<typeof createClient>, 
+  message: any, 
+  botToken: string,
+  groupId: string
+): Promise<boolean> {
+  try {
+    console.log(`👥👥👥 [START-COMMAND] Processing GROUP start command for group ID: ${groupId}`);
+    
+    const userId = message.from.id.toString();
+    const username = message.from.username;
+    
+    // Check if group exists using the group ID directly
+    const { data: group, error: groupError } = await supabase
+      .from('community_groups')
+      .select(`
+        id,
+        name,
+        owner_id,
+        telegram_chat_id,
+        telegram_invite_link,
+        community_group_members!inner (
+          community_id
+        )
+      `)
+      .eq('id', groupId)
+      .single();
+    
+    if (groupError || !group) {
+      console.error(`❌ [START-COMMAND] Group not found: ${groupError?.message || 'Unknown error'}`);
+      
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `❌ Sorry, the group you're trying to join doesn't exist or there was an error.`
+      );
+      
+      return true;
+    }
+    
+    console.log(`✅ [START-COMMAND] Found group: ${group.name} (${group.id})`);
+    
+    // Get all related communities for this group
+    const { data: groupMembers, error: membersError } = await supabase
+      .from('community_group_members')
+      .select('community_id')
+      .eq('group_id', group.id);
+      
+    if (membersError) {
+      console.error(`❌ [START-COMMAND] Error fetching group members: ${membersError.message}`);
+      return false;
+    }
+
+    const communityIds = groupMembers?.map(member => member.community_id) || [];
+    
+    // Check if user has active subscription to any of the communities in this group
+    const { data: memberships, error: membershipError } = await supabase
+      .from('telegram_chat_members')
+      .select('id, subscription_status, subscription_end_date, community_id')
+      .in('community_id', communityIds)
+      .eq('telegram_user_id', userId);
+      
+    if (membershipError) {
+      console.error(`❌ [START-COMMAND] Error checking membership: ${membershipError.message}`);
+    }
+    
+    const activeMembership = memberships?.find(m => 
+      m.subscription_status === 'active' && 
+      (!m.subscription_end_date || new Date(m.subscription_end_date) > new Date())
+    );
+    
+    if (activeMembership) {
+      console.log(`💰 [START-COMMAND] Found active membership in community: ${activeMembership.community_id}`);
+      
+      try {
+        const inviteLinkResult = await createGroupInviteLink(supabase, group.id, botToken, {
+          name: `User ${userId} - ${new Date().toISOString().split('T')[0]}`,
+          expireHours: 24
+        });
+        
+        if (inviteLinkResult?.invite_link) {
+          console.log(`🔗 [START-COMMAND] Created GROUP invite link: ${inviteLinkResult.invite_link}`);
+          
+          await sendTelegramMessage(
+            botToken,
+            message.chat.id,
+            `✅ Thanks for your interest in ${group.name}!\n\n` +
+            `Here's your invite link to join the group:\n${inviteLinkResult.invite_link}\n\n` +
+            `This link will expire in 24 hours and is for your use only. Please don't share it with others.`
+          );
+          
+          return true;
+        }
+      } catch (linkError) {
+        console.error("❌ [START-COMMAND] Error creating GROUP invite link:", linkError);
+      }
+      
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `✅ Thanks for your interest in ${group.name}!\n\n` +
+        `However, there was an issue creating your invite link. Please contact support for assistance.`
+      );
+      
+      return true;
+    } else {
+      console.log(`❌ [START-COMMAND] No active membership found for user ${userId} in any of the required communities`);
+      
+      // Get the first community name for the message (we could list all but keeping it simple)
+      const { data: firstCommunity } = await supabase
+        .from('communities')
+        .select('name')
+        .eq('id', communityIds[0])
+        .single();
+      
+      const communityName = firstCommunity?.name || "the parent community";
+      
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `👋 Welcome! To join ${group.name}, you need an active subscription to ${communityName}.\n\n` +
+        `Please subscribe to the main community first before trying to join this group.`
+      );
+      
+      return true;
+    }
+  } catch (error) {
+    console.error("❌ [START-COMMAND] Error in handleGroupStartCommand:", error);
     return false;
   }
 }
@@ -224,132 +355,6 @@ async function handleCommunityStartCommand(
     }
   } catch (error) {
     console.error("❌ [START-COMMAND] Error in handleCommunityStartCommand:", error);
-    return false;
-  }
-}
-
-/**
- * Handle start command for group invites
- */
-async function handleGroupStartCommand(
-  supabase: ReturnType<typeof createClient>, 
-  message: any, 
-  botToken: string,
-  groupId: string
-): Promise<boolean> {
-  try {
-    console.log(`👥👥👥 [START-COMMAND] Processing GROUP start command for group ID: ${groupId}`);
-    
-    const userId = message.from.id.toString();
-    const username = message.from.username;
-    
-    // Check if group exists
-    const { data: group, error: groupError } = await supabase
-      .from('community_groups')
-      .select('id, name, community_id, telegram_chat_id')
-      .eq('id', groupId)
-      .single();
-    
-    if (groupError || !group) {
-      console.error(`❌ [START-COMMAND] Group not found: ${groupError?.message || 'Unknown error'}`);
-      
-      await sendTelegramMessage(
-        botToken,
-        message.chat.id,
-        `❌ Sorry, the group you're trying to join doesn't exist or there was an error.`
-      );
-      
-      return true;
-    }
-    
-    console.log(`✅ [START-COMMAND] Found group: ${group.name} (${group.id}) from community ${group.community_id}`);
-    
-    // Get community info
-    const { data: community, error: communityError } = await supabase
-      .from('communities')
-      .select('id, name')
-      .eq('id', group.community_id)
-      .single();
-      
-    if (communityError) {
-      console.error(`❌ [START-COMMAND] Error fetching community for group: ${communityError.message}`);
-    }
-    
-    // Check if user has an active subscription for the parent community
-    const { data: memberships, error: membershipError } = await supabase
-      .from('telegram_chat_members')
-      .select('id, subscription_status, subscription_end_date')
-      .eq('telegram_user_id', userId)
-      .eq('community_id', group.community_id);
-      
-    if (membershipError) {
-      console.error(`❌ [START-COMMAND] Error checking membership: ${membershipError.message}`);
-    }
-    
-    const activeMembership = memberships?.find(m => 
-      m.subscription_status === 'active' || 
-      (m.subscription_status === true) || 
-      (m.subscription_end_date && new Date(m.subscription_end_date) > new Date())
-    );
-    
-    if (activeMembership) {
-      console.log(`💰 [START-COMMAND] Found active membership for group's community: ${activeMembership.id}`);
-      
-      // Create a personalized group invite link
-      console.log(`🔗 [START-COMMAND] Creating personalized GROUP invite link for group: ${group.id}`);
-      
-      try {
-        const inviteLinkResult = await createGroupInviteLink(supabase, group.id, botToken, {
-          name: `User ${userId} - ${new Date().toISOString().split('T')[0]}`,
-          expireHours: 24
-        });
-        
-        if (inviteLinkResult?.invite_link) {
-          console.log(`🔗 [START-COMMAND] Created GROUP invite link: ${inviteLinkResult.invite_link}`);
-          
-          // Send welcome message with invite link
-          await sendTelegramMessage(
-            botToken,
-            message.chat.id,
-            `✅ Thanks for your interest in ${group.name}${community ? ` from ${community.name}` : ''}!\n\n` +
-            `Here's your invite link to join the group:\n${inviteLinkResult.invite_link}\n\n` +
-            `This link will expire in 24 hours and is for your use only. Please don't share it with others.`
-          );
-          
-          return true;
-        } else {
-          console.error("❌ [START-COMMAND] Failed to create GROUP invite link - empty result");
-        }
-      } catch (linkError) {
-        console.error("❌ [START-COMMAND] Error creating GROUP invite link:", linkError);
-      }
-      
-      // If we reach here, something went wrong with the invite link creation
-      await sendTelegramMessage(
-        botToken,
-        message.chat.id,
-        `✅ Thanks for your interest in ${group.name}!\n\n` +
-        `However, there was an issue creating your invite link. Please contact the community owner for assistance.`
-      );
-      
-      return true;
-    } else {
-      console.log(`❌ [START-COMMAND] No active membership found for user ${userId} in community ${group.community_id}`);
-      
-      // No active subscription
-      const communityName = community?.name || "this community";
-      
-      await sendTelegramMessage(
-        botToken,
-        message.chat.id,
-        `👋 Welcome! To join ${group.name}, you need an active subscription to ${communityName}.\n\n` +
-        `Please subscribe to the main community first before trying to join this group.`
-      );
-      
-      return true;
-    }
-  } catch (error) {
-    console.error("❌ [START-COMMAND] Error in handleGroupStartCommand:", error);
     return false;
   }
 }

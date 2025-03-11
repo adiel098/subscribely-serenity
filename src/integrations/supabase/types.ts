@@ -206,6 +206,8 @@ export type Database = {
           name: string
           owner_id: string
           photo_url: string | null
+          telegram_chat_id: string | null
+          telegram_invite_link: string | null
           updated_at: string
         }
         Insert: {
@@ -216,6 +218,8 @@ export type Database = {
           name: string
           owner_id: string
           photo_url?: string | null
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
           updated_at?: string
         }
         Update: {
@@ -226,6 +230,8 @@ export type Database = {
           name?: string
           owner_id?: string
           photo_url?: string | null
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1146,6 +1152,19 @@ export type Database = {
           role: Database["public"]["Enums"]["admin_role"]
           created_at: string
           updated_at: string
+        }[]
+      }
+      get_available_groups: {
+        Args: {
+          group_id_param: string
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string
+          owner_id: string
+          telegram_chat_id: string
+          telegram_invite_link: string
         }[]
       }
       get_available_payment_methods: {

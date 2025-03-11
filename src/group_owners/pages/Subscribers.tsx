@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -225,20 +224,20 @@ const Subscribers = () => {
         </div>
         <div className="w-full md:w-5/12">
           <div className="grid grid-cols-3 gap-3 h-full">
-            <div className="bg-white rounded-lg p-4 border-2 border-gray-300 shadow-sm text-center">
-              <div className="text-2xl font-bold text-gray-800">{subscribers.length}</div>
+            <div className="bg-white/90 rounded-lg p-4 border-2 border-indigo-100 shadow-sm text-center">
+              <div className="text-2xl font-bold text-indigo-600">{subscribers.length}</div>
               <div className="text-sm text-gray-600">Total Subscribers</div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 border-2 border-green-400 shadow-sm text-center">
-              <div className="text-2xl font-bold text-green-700">
+            <div className="bg-white/90 rounded-lg p-4 border-2 border-green-100 shadow-sm text-center">
+              <div className="text-2xl font-bold text-green-600">
                 {subscribers.filter(sub => sub.subscription_status === 'active').length}
               </div>
               <div className="text-sm text-gray-600">Active Subscribers</div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 border-2 border-amber-400 shadow-sm text-center">
-              <div className="text-2xl font-bold text-amber-700">
+            <div className="bg-white/90 rounded-lg p-4 border-2 border-amber-100 shadow-sm text-center">
+              <div className="text-2xl font-bold text-amber-600">
                 {subscribers.filter(sub => sub.subscription_status !== 'active').length}
               </div>
               <div className="text-sm text-gray-600">Inactive Subscribers</div>

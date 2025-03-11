@@ -717,7 +717,7 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
-          community_id: string
+          community_id: string | null
           created_at: string
           description: string | null
           features: Json | null
@@ -730,7 +730,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          community_id: string
+          community_id?: string | null
           created_at?: string
           description?: string | null
           features?: Json | null
@@ -743,7 +743,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          community_id?: string
+          community_id?: string | null
           created_at?: string
           description?: string | null
           features?: Json | null

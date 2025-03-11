@@ -28,7 +28,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   timeRange
 }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <Card className="p-5 bg-white border-l-4 border-l-indigo-500 border-t border-r border-b border-gray-200 shadow-sm rounded-lg">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between mb-3">

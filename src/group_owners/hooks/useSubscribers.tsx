@@ -50,7 +50,6 @@ export const useSubscribers = (communityId: string) => {
         subscription_end_date,
         is_trial,
         trial_end_date,
-        metadata,
         subscription_plan_id
       `)
       .eq("community_id", communityId);

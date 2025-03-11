@@ -98,26 +98,26 @@ const Dashboard = () => {
         timeRange={timeRangeLabel}
       />
 
-      <div className="flex flex-wrap gap-6 mt-6 justify-center md:justify-start">
+      <div className="flex flex-wrap gap-4 mt-6 justify-between">
         <DashboardCharts
           memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
           revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
           timeRange={timeRangeLabel}
         />
         
-        <AnalyticsOverview
-          averageSubscriptionDuration={insights.averageSubscriptionDuration}
-          mostPopularPlan={insights.mostPopularPlan}
-          mostPopularPlanPrice={insights.mostPopularPlanPrice}
-          mostActiveDay={insights.mostActiveDay}
-          renewalRate={insights.renewalRate}
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-6 mt-6 justify-center md:justify-start">
-        <PaymentAnalytics
-          paymentStats={paymentStats}
-        />
+        <div className="flex flex-wrap gap-4 w-full md:w-auto">
+          <AnalyticsOverview
+            averageSubscriptionDuration={insights.averageSubscriptionDuration}
+            mostPopularPlan={insights.mostPopularPlan}
+            mostPopularPlanPrice={insights.mostPopularPlanPrice}
+            mostActiveDay={insights.mostActiveDay}
+            renewalRate={insights.renewalRate}
+          />
+          
+          <PaymentAnalytics
+            paymentStats={paymentStats}
+          />
+        </div>
       </div>
 
       <div className="mt-6">

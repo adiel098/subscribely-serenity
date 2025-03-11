@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Users, 
   Clock, 
@@ -25,15 +26,15 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
   renewalRate
 }) => {
   return (
-    <div className="h-full">
-      <div className="pb-2">
-        <h3 className="text-sm font-medium text-gray-800 flex items-center gap-2">
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
           <Award className="h-4 w-4 text-indigo-500" />
           Plan Analytics
-        </h3>
-      </div>
+        </CardTitle>
+      </CardHeader>
       
-      <div className="pt-0 space-y-3">
+      <CardContent className="pt-0 space-y-3">
         {/* Subscription Analysis */}
         <div className="p-3 bg-white border border-gray-200 rounded-md">
           <div className="flex items-center justify-between">
@@ -81,7 +82,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
             <span className="text-xs font-semibold text-gray-800 min-w-[32px] text-right">{renewalRate}%</span>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

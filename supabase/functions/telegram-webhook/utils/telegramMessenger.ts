@@ -1,107 +1,112 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+/**
+ * Utility for sending messages through the Telegram Bot API
+ */
 
 /**
- * Send a message to a Telegram chat with optional photo and inline keyboard
+ * Send a message to a Telegram chat
+ * @param botToken Telegram Bot API token
+ * @param chatId The target chat ID
+ * @param text Message text
+ * @param photoUrl Optional URL to a photo to include with the message
+ * @param replyMarkup Optional inline keyboard markup
+ * @returns The API response
  */
 export async function sendTelegramMessage(
   botToken: string,
   chatId: number | string,
-  message: string,
+  text: string,
   photoUrl: string | null = null,
-  inlineKeyboard: any = null
+  replyMarkup: any = null
 ): Promise<any> {
+  console.log(`[TELEGRAM-MESSENGER] 📤 Sending message to chat ${chatId}`);
+  console.log(`[TELEGRAM-MESSENGER] 💬 Message text: ${text}`);
+  console.log(`[TELEGRAM-MESSENGER] 🖼️ Photo URL: ${photoUrl || 'No photo'}`);
+  console.log(`[TELEGRAM-MESSENGER] ⌨️ Reply markup: ${replyMarkup ? JSON.stringify(replyMarkup) : 'None'}`);
+  
   try {
-    console.log(`[TELEGRAM-MESSENGER] 📤 Sending ${photoUrl ? 'photo with caption' : 'text'} to chat ${chatId}`);
+    // Different endpoint based on whether we have a photo
+    const endpoint = photoUrl
+      ? 'sendPhoto'
+      : 'sendMessage';
     
-    // Validate bot token
-    if (!botToken || typeof botToken !== 'string' || botToken.length < 10) {
-      console.error('[TELEGRAM-MESSENGER] ❌ Invalid bot token provided');
-      throw new Error('Invalid bot token');
-    }
+    console.log(`[TELEGRAM-MESSENGER] 🎯 Using endpoint: ${endpoint}`);
     
-    // Prepare the request based on whether we're sending a photo or text
-    let url: string;
-    let body: any;
+    // Prepare the payload
+    const payload: any = {
+      chat_id: chatId,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    };
     
     if (photoUrl) {
-      url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-      body = {
-        chat_id: chatId,
-        photo: photoUrl,
-        caption: message,
-        parse_mode: 'HTML'
-      };
-      
-      if (inlineKeyboard) {
-        body.reply_markup = inlineKeyboard;
-      }
+      payload.photo = photoUrl;
+      payload.caption = text;
     } else {
-      url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-      body = {
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML'
-      };
-      
-      if (inlineKeyboard) {
-        body.reply_markup = inlineKeyboard;
-      }
+      payload.text = text;
     }
     
-    // Send the request to the Telegram API
-    console.log(`[TELEGRAM-MESSENGER] 🔄 Calling Telegram API: ${url}`);
-    const response = await fetch(url, {
+    if (replyMarkup) {
+      payload.reply_markup = typeof replyMarkup === 'string'
+        ? replyMarkup
+        : JSON.stringify(replyMarkup);
+    }
+    
+    console.log(`[TELEGRAM-MESSENGER] 📦 Request payload:`, JSON.stringify(payload, null, 2));
+    
+    // Make the API request
+    const apiUrl = `https://api.telegram.org/bot${botToken}/${endpoint}`;
+    console.log(`[TELEGRAM-MESSENGER] 🔗 Making request to: ${apiUrl}`);
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload),
     });
     
-    // Parse and validate the response
+    // Parse the response
     const result = await response.json();
-    console.log(`[TELEGRAM-MESSENGER] ✅ Telegram API response status: ${result.ok ? 'Success' : 'Failure'}`);
+    console.log(`[TELEGRAM-MESSENGER] 📥 Telegram API Response:`, JSON.stringify(result, null, 2));
     
     if (!result.ok) {
-      console.error(`[TELEGRAM-MESSENGER] ❌ Error sending message: ${result.description}`);
+      console.error(`[TELEGRAM-MESSENGER] ❌ Error from Telegram API: ${result.description}`);
+      throw new Error(`Telegram API error: ${result.description}`);
     }
     
+    console.log(`[TELEGRAM-MESSENGER] ✅ Message sent successfully to chat ${chatId}`);
     return result;
   } catch (error) {
-    console.error('[TELEGRAM-MESSENGER] ❌ Exception in sendTelegramMessage:', error);
-    return {
-      ok: false,
-      description: `Error sending message: ${error.message || 'Unknown error'}`
-    };
+    console.error(`[TELEGRAM-MESSENGER] ❌ Error sending message:`, error);
+    throw error;
   }
 }
 
-/**
- * Verify that a Telegram chat exists and the bot can access it
- */
-export async function verifyTelegramChat(
-  botToken: string,
-  chatId: number | string
-): Promise<boolean> {
+export async function getChat(botToken: string, chatId: number | string) {
   try {
-    console.log(`[TELEGRAM-MESSENGER] 🔍 Verifying chat ${chatId}`);
+    console.log(`[TELEGRAM-MESSENGER] 🔍 Getting chat info for chat ID: ${chatId}`);
     
-    const url = `https://api.telegram.org/bot${botToken}/getChat`;
-    const response = await fetch(url, {
+    const apiUrl = `https://api.telegram.org/bot${botToken}/getChat`;
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ chat_id: chatId })
+      body: JSON.stringify({ chat_id: chatId }),
     });
     
     const result = await response.json();
-    console.log(`[TELEGRAM-MESSENGER] ✅ Chat verification result: ${result.ok ? 'Valid' : 'Invalid'}`);
     
-    return result.ok;
+    if (!result.ok) {
+      console.error(`[TELEGRAM-MESSENGER] ❌ Error getting chat: ${result.description}`);
+      throw new Error(`Telegram API error: ${result.description}`);
+    }
+    
+    console.log(`[TELEGRAM-MESSENGER] ✅ Got chat info for chat ${chatId}:`, JSON.stringify(result.result, null, 2));
+    return result.result;
   } catch (error) {
-    console.error('[TELEGRAM-MESSENGER] ❌ Error verifying chat:', error);
-    return false;
+    console.error(`[TELEGRAM-MESSENGER] ❌ Error in getChat:`, error);
+    throw error;
   }
 }

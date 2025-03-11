@@ -53,7 +53,13 @@ export async function handleStartCommand(
     
     // Check if this is a group command (starts with "group_")
     if (startParam.startsWith('group_')) {
-      return await handleGroupStartCommand(supabase, message, botToken, startParam.substring(6));
+      console.log(`[START-COMMAND] 👥 DETECTED GROUP START COMMAND: ${startParam}`);
+      const groupId = startParam.substring(6);
+      console.log(`[START-COMMAND] 👥 Extracted group ID: ${groupId}`);
+      
+      const result = await handleGroupStartCommand(supabase, message, botToken, groupId);
+      console.log(`[START-COMMAND] 👥 Group start command result: ${result ? 'SUCCESS' : 'FAILURE'}`);
+      return result;
     }
     
     // Handle regular community start command
@@ -209,9 +215,15 @@ async function handleGroupStartCommand(
   try {
     console.log(`[START-COMMAND] 🌟 Processing group start command with group ID: ${groupId}`);
     
+    // Debug the input parameter before processing
+    console.log(`[START-COMMAND] 👥 GROUP START COMMAND - Input groupId: ${groupId}`);
+    console.log(`[START-COMMAND] 👥 GROUP START COMMAND - Message text: ${message.text}`);
+    
     // First check if this is a UUID or a custom link
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupId);
     let resolvedGroupId = groupId;
+    
+    console.log(`[START-COMMAND] 👥 GROUP START COMMAND - Is UUID: ${isUUID}`);
     
     // If it's not a UUID, try to find by custom_link
     if (!isUUID) {
@@ -221,6 +233,9 @@ async function handleGroupStartCommand(
         .select('id')
         .eq('custom_link', groupId)
         .single();
+      
+      console.log(`[START-COMMAND] 👥 GROUP START COMMAND - Custom link lookup result:`, 
+        groupData ? `Found: ${JSON.stringify(groupData)}` : `Not found. Error: ${linkError?.message}`);
       
       if (linkError || !groupData) {
         console.log(`[START-COMMAND] ❌ No group found with custom_link: ${groupId}`);
@@ -249,11 +264,15 @@ async function handleGroupStartCommand(
     }
     
     // Get group details
+    console.log(`[START-COMMAND] 👥 Fetching group details for ID: ${resolvedGroupId}`);
     const { data: group, error: groupError } = await supabase
       .from('community_groups')
       .select('*')
       .eq('id', resolvedGroupId)
       .single();
+    
+    console.log(`[START-COMMAND] 👥 Group details result:`, 
+      group ? `Found: ${JSON.stringify(group)}` : `Not found. Error: ${groupError?.message}`);
     
     if (groupError || !group) {
       console.log(`[START-COMMAND] ❌ No group found with ID: ${resolvedGroupId}`);
@@ -277,11 +296,15 @@ async function handleGroupStartCommand(
     }
     
     // Get all communities in this group
+    console.log(`[START-COMMAND] 👥 Fetching communities for group ID: ${group.id}`);
     const { data: groupMembers, error: membersError } = await supabase
       .from('community_group_members')
       .select('community_id')
       .eq('group_id', group.id)
       .order('display_order', { ascending: true });
+    
+    console.log(`[START-COMMAND] 👥 Group members result:`, 
+      groupMembers ? `Found ${groupMembers.length} communities` : `Error: ${membersError?.message}`);
     
     if (membersError) {
       console.error(`[START-COMMAND] ❌ Error fetching group members:`, membersError);
@@ -311,10 +334,15 @@ async function handleGroupStartCommand(
     
     // Get community details for all communities in the group
     const communityIds = groupMembers.map(member => member.community_id);
+    
+    console.log(`[START-COMMAND] 👥 Fetching community details for IDs: ${JSON.stringify(communityIds)}`);
     const { data: communities, error: communitiesError } = await supabase
       .from('communities')
       .select('id, name, description, telegram_photo_url, custom_link')
       .in('id', communityIds);
+    
+    console.log(`[START-COMMAND] 👥 Communities result:`, 
+      communities ? `Found ${communities.length} communities` : `Error: ${communitiesError?.message}`);
     
     if (communitiesError || !communities) {
       console.error(`[START-COMMAND] ❌ Error fetching communities:`, communitiesError);
@@ -347,13 +375,15 @@ async function handleGroupStartCommand(
     console.log(`[START-COMMAND] 🔗 Mini app URL: ${miniAppUrl}?start=group_${group.id}`);
     
     // Send welcome message with photo if available
-    await sendTelegramMessage(
+    const sendResult = await sendTelegramMessage(
       botToken,
       message.chat.id,
       welcomeMessage,
       welcomeImage,
       inlineKeyboard
     );
+    
+    console.log(`[START-COMMAND] 👥 Send message result:`, JSON.stringify(sendResult, null, 2));
     
     // Log the interaction
     await logUserInteraction(

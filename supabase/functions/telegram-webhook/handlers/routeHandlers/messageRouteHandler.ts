@@ -35,6 +35,12 @@ export async function handleMessageRoute(
     if (startParam) {
       console.log(`[MESSAGE-ROUTE] 📎 Start command includes parameter: "${startParam}"`);
       
+      // Enhanced logging for group parameters
+      if (startParam.startsWith('group_')) {
+        console.log(`[MESSAGE-ROUTE] 👥👥👥 GROUP PARAMETER DETECTED in message route: ${startParam}`);
+        console.log(`[MESSAGE-ROUTE] Group ID: ${startParam.substring(6)}`);
+      }
+      
       // Check if it might be a custom link
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam);
       if (!isUUID) {
@@ -43,6 +49,7 @@ export async function handleMessageRoute(
     }
     
     try {
+      console.log(`[MESSAGE-ROUTE] 🚀 Calling handleStartCommand with message:`, JSON.stringify(message, null, 2));
       handled = await handleStartCommand(supabase, message, botToken);
       console.log(`[MESSAGE-ROUTE] ${handled ? '✅' : '❌'} Start command ${handled ? 'handled successfully' : 'not handled'}`);
     } catch (startError) {

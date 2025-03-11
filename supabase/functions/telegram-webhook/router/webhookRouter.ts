@@ -81,9 +81,27 @@ export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnT
       });
     }
 
+    // Enhanced logging for start commands
+    if (message.text && message.text.startsWith('/start')) {
+      console.log("[ROUTER] 🔍 Detected start command with text:", message.text);
+      const parts = message.text.split(' ');
+      if (parts.length > 1) {
+        const param = parts[1];
+        console.log("[ROUTER] 🔑 Start parameter detected:", param);
+        
+        if (param.startsWith('group_')) {
+          console.log("[ROUTER] 👥 GROUP PARAMETER DETECTED:", param.substring(6));
+        } else {
+          console.log("[ROUTER] 🏠 Community parameter detected:", param);
+        }
+      }
+    }
+
     // Process message
+    console.log("[ROUTER] 📨 Processing message via messageRoute handler");
     const messageResult = await handleMessageRoute(supabaseClient, message, botToken);
     const handled = messageResult.handled;
+    console.log(`[ROUTER] ${handled ? '✅' : '❌'} Message ${handled ? 'was handled' : 'was NOT handled'} by messageRoute`);
 
     // Log event to database
     await logWebhookEvent(supabaseClient, update, message, handled);

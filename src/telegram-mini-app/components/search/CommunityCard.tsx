@@ -116,7 +116,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ community, onSelec
               <div className="flex items-center space-x-2">
                 {lowestPricePlan && (
                   <Badge variant="outline" className="text-xs font-normal px-2 py-0 h-5 bg-gradient-to-r from-indigo-50 to-blue-50 border-blue-100 text-blue-700">
-                    From {formatCurrency(lowestPricePlan.price)}/{lowestPricePlan.interval === 'month' ? 'month' : lowestPricePlan.interval}
+                    From {formatCurrency(lowestPricePlan.price)}/{lowestPricePlan.interval === 'monthly' ? 'month' : lowestPricePlan.interval}
                   </Badge>
                 )}
               </div>

@@ -23,7 +23,7 @@ export const PaymentAnalytics: React.FC<PaymentAnalyticsProps> = ({
     : 0;
   
   return (
-    <Card className="h-auto">
+    <Card className="h-full">
       <CardHeader className="pb-1">
         <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-green-500" />
@@ -33,11 +33,11 @@ export const PaymentAnalytics: React.FC<PaymentAnalyticsProps> = ({
       
       <CardContent className="pt-0 pb-4 space-y-3">
         {/* Transaction Status Section - More compact */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1">
           <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
             <div className="flex items-center gap-1 mb-1">
               <CheckCircle className="w-3 h-3 text-emerald-500" />
-              <span className="text-xs text-gray-600">Completed</span>
+              <span className="text-xs text-gray-600">Done</span>
             </div>
             <span className="font-semibold text-sm text-gray-800">{paymentStats.completed}</span>
           </div>

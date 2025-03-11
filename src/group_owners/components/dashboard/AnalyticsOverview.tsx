@@ -26,7 +26,7 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
   renewalRate
 }) => {
   return (
-    <Card className="h-auto">
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-gray-800 flex items-center gap-2">
           <Award className="h-4 w-4 text-indigo-500" />

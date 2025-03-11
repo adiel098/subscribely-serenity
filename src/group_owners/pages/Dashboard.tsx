@@ -99,7 +99,7 @@ const Dashboard = () => {
       />
 
       <div className="flex flex-wrap gap-4 mt-6">
-        <div className="w-full lg:w-[60%] xl:w-[65%]">
+        <div className="w-full lg:w-[65%]">
           <DashboardCharts
             memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
             revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
@@ -107,18 +107,25 @@ const Dashboard = () => {
           />
         </div>
         
-        <div className="w-full lg:w-[35%] xl:w-[32%] flex flex-col gap-4">
-          <AnalyticsOverview
-            averageSubscriptionDuration={insights.averageSubscriptionDuration}
-            mostPopularPlan={insights.mostPopularPlan}
-            mostPopularPlanPrice={insights.mostPopularPlanPrice}
-            mostActiveDay={insights.mostActiveDay}
-            renewalRate={insights.renewalRate}
-          />
-          
-          <PaymentAnalytics
-            paymentStats={paymentStats}
-          />
+        <div className="w-full lg:w-[32%] flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-4">
+              <div className="w-1/2">
+                <PaymentAnalytics
+                  paymentStats={paymentStats}
+                />
+              </div>
+              <div className="w-1/2">
+                <AnalyticsOverview
+                  averageSubscriptionDuration={insights.averageSubscriptionDuration}
+                  mostPopularPlan={insights.mostPopularPlan}
+                  mostPopularPlanPrice={insights.mostPopularPlanPrice}
+                  mostActiveDay={insights.mostActiveDay}
+                  renewalRate={insights.renewalRate}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

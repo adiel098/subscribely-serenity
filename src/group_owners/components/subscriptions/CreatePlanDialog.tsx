@@ -138,6 +138,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange }: Props) => {
                   <SelectItem value="half-yearly">Half-Yearly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
                   <SelectItem value="one-time">One-Time</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>

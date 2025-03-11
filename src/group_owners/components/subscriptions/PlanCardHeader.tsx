@@ -26,6 +26,8 @@ export const PlanCardHeader = ({
         return '📆';
       case 'one-time':
         return '♾️';
+      case 'lifetime':
+        return '🔄';
       default:
         return '⏱️';
     }
@@ -41,13 +43,19 @@ export const PlanCardHeader = ({
           {formatCurrency(price)}
         </span>
         <span className="text-gray-600 text-sm">
-          {interval === "one-time" ? "" : `/ ${intervalLabel}`}
+          {interval === "one-time" || interval === "lifetime" ? "" : `/ ${intervalLabel}`}
         </span>
       </div>
-      {interval !== "one-time" && (
+      {interval !== "one-time" && interval !== "lifetime" && (
         <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
           <Clock className="h-3.5 w-3.5 text-indigo-500" />
           <span>{getIntervalEmoji(interval)} {intervalLabel} plan</span>
+        </div>
+      )}
+      {interval === "lifetime" && (
+        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
+          <Clock className="h-3.5 w-3.5 text-indigo-500" />
+          <span>{getIntervalEmoji(interval)} {intervalLabel} access</span>
         </div>
       )}
     </div>;

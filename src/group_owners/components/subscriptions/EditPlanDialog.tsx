@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -20,7 +19,7 @@ interface Props {
     name: string;
     description: string;
     price: string;
-    interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
+    interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
     features: string[];
   };
 }
@@ -135,6 +134,7 @@ export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData }: Props) =>
                   <SelectItem value="half-yearly">Half-Yearly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
                   <SelectItem value="one-time">One-Time</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </div>

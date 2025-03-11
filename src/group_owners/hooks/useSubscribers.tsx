@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,7 +50,6 @@ export const useSubscribers = (communityId: string) => {
         subscription_end_date,
         is_trial,
         trial_end_date,
-        payment_status,
         metadata,
         subscription_plan_id
       `)
@@ -121,12 +119,46 @@ export const useSubscribers = (communityId: string) => {
       }
     }
 
-    // Map the members with their plans and user details
+    // Get payment status from subscription_payments table
+    const paymentStatusMap: Record<string, string> = {};
+    
+    if (members.length > 0) {
+      const telegramUserIds = members.map(member => member.telegram_user_id);
+      
+      // Get the latest payment status for each user
+      const { data: payments, error: paymentsError } = await supabase
+        .from("subscription_payments")
+        .select(`
+          telegram_user_id,
+          status
+        `)
+        .eq("community_id", communityId)
+        .in("telegram_user_id", telegramUserIds)
+        .order("created_at", { ascending: false });
+        
+      if (paymentsError) {
+        console.error("Error fetching payment status:", paymentsError);
+      } else if (payments) {
+        // Only keep the most recent payment status for each user
+        const processedUserIds = new Set<string>();
+        
+        payments.forEach(payment => {
+          if (!processedUserIds.has(payment.telegram_user_id)) {
+            paymentStatusMap[payment.telegram_user_id] = payment.status;
+            processedUserIds.add(payment.telegram_user_id);
+          }
+        });
+      }
+    }
+
+    // Map the members with their plans, user details and payment status
     return members.map(member => ({
       ...member,
       // Add first_name and last_name from the user details map or use null if not found
       first_name: userDetails[member.telegram_user_id]?.first_name || null,
       last_name: userDetails[member.telegram_user_id]?.last_name || null,
+      // Add payment status from payment status map or use null if not found
+      payment_status: paymentStatusMap[member.telegram_user_id] || null,
       plan: member.subscription_plan_id ? plansData[member.subscription_plan_id] : null
     }));
   };

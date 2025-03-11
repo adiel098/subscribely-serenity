@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -89,7 +90,7 @@ export const SubscribersTable = ({
               <TableHead className="font-semibold text-xs text-gray-700">Telegram ID</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Subscription Plan</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Status</TableHead>
-              <TableHead className="font-semibold text-xs text-gray-700">Subscription Period</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700 text-left">Subscription Period</TableHead>
               <TableHead className="w-[80px] text-right font-semibold text-xs text-gray-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -100,6 +101,7 @@ export const SubscribersTable = ({
                   key={subscriber.id}
                   className="hover:bg-gray-50 transition-colors border-b group"
                 >
+                  {/* User cell */}
                   <TableCell className="py-3">
                     <div className="flex items-center space-x-3">
                       <div>
@@ -124,6 +126,8 @@ export const SubscribersTable = ({
                       </div>
                     </div>
                   </TableCell>
+                  
+                  {/* Name cell */}
                   <TableCell className="py-3">
                     <div className="font-medium text-sm text-gray-800">
                       {subscriber.first_name || "-"}
@@ -131,6 +135,8 @@ export const SubscribersTable = ({
                       {subscriber.last_name || ""}
                     </div>
                   </TableCell>
+                  
+                  {/* Telegram ID cell */}
                   <TableCell className="font-mono text-xs py-3 text-gray-600">
                     <TooltipProvider>
                       <Tooltip>
@@ -143,6 +149,8 @@ export const SubscribersTable = ({
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
+                  
+                  {/* Subscription Plan cell */}
                   <TableCell className="py-3">
                     {subscriber.plan ? (
                       <div>
@@ -155,20 +163,24 @@ export const SubscribersTable = ({
                       <span className="text-gray-400 text-xs italic">No plan</span>
                     )}
                   </TableCell>
+                  
+                  {/* Status cell */}
                   <TableCell className="py-3">
                     {getStatusBadge(subscriber)}
                   </TableCell>
-                  <TableCell className="py-3">
+                  
+                  {/* Subscription Period cell */}
+                  <TableCell className="py-3 text-left">
                     <div className="space-y-1 text-xs">
                       <div className="flex items-center">
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-left">
                           From: {subscriber.subscription_start_date
                             ? format(new Date(subscriber.subscription_start_date), "MMM d, yyyy")
                             : "-"}
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 text-left">
                           Until: {subscriber.subscription_end_date
                             ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
                             : "-"}
@@ -176,6 +188,8 @@ export const SubscribersTable = ({
                       </div>
                     </div>
                   </TableCell>
+                  
+                  {/* Actions cell */}
                   <TableCell className="py-3 text-right">
                     <div className="flex justify-end">
                       <DropdownMenu>

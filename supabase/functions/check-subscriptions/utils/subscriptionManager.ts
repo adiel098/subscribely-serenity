@@ -1,7 +1,8 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 import { logNotification, logSystemEvent } from "./databaseLogger.ts";
 import { sendTelegramMessage } from "./telegramUtils.ts";
-import { BotSettings } from "../types/botSettings.ts";
+import { BotSettings, SubscriptionMember } from "./types.ts";
 
 // Add this type definition in the types section
 export interface SubscriptionMember {

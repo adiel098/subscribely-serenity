@@ -20,21 +20,24 @@ import { useState } from "react";
 
 type FilterType = 'all' | 'active' | 'expired' | 'plan';
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-}
-
 interface FilterTypeSelectorProps {
   value: FilterType;
   onChange: (value: FilterType) => void;
   entityId: string;
   entityType: 'community' | 'group';
+  selectedPlanId?: string; 
+  setSelectedPlanId?: (value: string) => void;
 }
 
-export const FilterTypeSelector = ({ value, onChange, entityId, entityType }: FilterTypeSelectorProps) => {
+export const FilterTypeSelector = ({ 
+  value, 
+  onChange, 
+  entityId, 
+  entityType,
+  selectedPlanId,
+  setSelectedPlanId 
+}: FilterTypeSelectorProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['subscription-plans', entityId],
@@ -84,7 +87,7 @@ export const FilterTypeSelector = ({ value, onChange, entityId, entityType }: Fi
   // Handle filter type change
   const handleFilterChange = (newType: FilterType, planId?: string) => {
     onChange(newType);
-    if (newType === 'plan' && planId) {
+    if (newType === 'plan' && planId && setSelectedPlanId) {
       setSelectedPlanId(planId);
     }
     setOpen(false);

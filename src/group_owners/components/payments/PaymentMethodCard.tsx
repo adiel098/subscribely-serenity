@@ -102,11 +102,11 @@ export const PaymentMethodCard = ({
                       <TooltipTrigger asChild>
                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 text-sm">
                           <Star className="h-3 w-3 fill-amber-500" />
-                          ברירת מחדל
+                          Default
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>זמין לכל הקהילות שלך</p>
+                        <p>Available to all your communities</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -114,7 +114,7 @@ export const PaymentMethodCard = ({
                 {isConfigured && (
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-sm">
                     <CheckCircle className="h-3 w-3" />
-                    מוגדר
+                    Configured
                   </Badge>
                 )}
               </div>
@@ -127,7 +127,7 @@ export const PaymentMethodCard = ({
               <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-indigo-500" />
-                  <span className="text-sm font-medium">הפוך לברירת מחדל</span>
+                  <span className="text-sm font-medium">Make Default</span>
                 </div>
                 <Switch
                   checked={isDefault}
@@ -149,12 +149,12 @@ export const PaymentMethodCard = ({
                 {isConfigured ? (
                   <>
                     <Settings2 className="h-4 w-4" />
-                    <span>ערוך</span>
+                    <span>Edit</span>
                   </>
                 ) : (
                   <>
                     <Settings2 className="h-4 w-4" />
-                    <span>הגדר</span>
+                    <span>Configure</span>
                   </>
                 )}
                 <ChevronRight className="h-3.5 w-3.5 ml-auto" />
@@ -167,7 +167,7 @@ export const PaymentMethodCard = ({
                   <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
                 )}
                 <span className="text-sm font-medium">
-                  {isActive ? 'פעיל' : 'לא פעיל'}
+                  {isActive ? 'Active' : 'Inactive'}
                 </span>
                 <Switch
                   checked={isActive}
@@ -215,10 +215,10 @@ export const PaymentMethodCard = ({
                   <Icon className="h-6 w-6" />
                 </div>
               )}
-              <span>הגדר {title}</span>
+              <span>Configure {title}</span>
             </DialogTitle>
             <DialogDescription className="text-base">
-              הזן את פרטי ה-API של {title} באופן מאובטח כדי לאפשר תשלומים
+              Enter your {title} API details securely to enable payments
             </DialogDescription>
           </DialogHeader>
           <PaymentMethodConfig 

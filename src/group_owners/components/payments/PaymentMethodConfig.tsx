@@ -120,8 +120,8 @@ export const PaymentMethodConfig = ({
       if (result.error) throw result.error;
 
       toast({
-        title: "הגדרות נשמרו בהצלחה",
-        description: `הגדרות התשלום עבור ${provider} נשמרו בהצלחה`,
+        title: "Settings Saved Successfully",
+        description: `Payment settings for ${provider} have been saved`,
         variant: "default",
       });
 
@@ -132,7 +132,7 @@ export const PaymentMethodConfig = ({
       setError(err.message);
       
       toast({
-        title: "שגיאה בשמירת ההגדרות",
+        title: "Error Saving Settings",
         description: err.message,
         variant: "destructive",
       });
@@ -222,8 +222,8 @@ export const PaymentMethodConfig = ({
               <Globe className="h-5 w-5 text-indigo-500" />
             )}
             <div className="flex flex-col">
-              <span className="text-sm font-medium">הגדר כברירת מחדל לכל הקהילות</span>
-              <span className="text-xs text-gray-500">אמצעי תשלום זה יהיה זמין בכל הקהילות שלך</span>
+              <span className="text-sm font-medium">Set as default for all communities</span>
+              <span className="text-xs text-gray-500">This payment method will be available in all your communities</span>
             </div>
           </div>
           <Switch
@@ -246,12 +246,12 @@ export const PaymentMethodConfig = ({
           {isSaving ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              שומר...
+              Saving...
             </>
           ) : (
             <>
               <Check className="h-4 w-4" />
-              שמור הגדרות
+              Save Settings
             </>
           )}
         </Button>

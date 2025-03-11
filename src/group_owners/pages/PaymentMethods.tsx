@@ -31,7 +31,7 @@ const PaymentMethods = () => {
   const [defaultMethods, setDefaultMethods] = useState<any[]>([]);
 
   useEffect(() => {
-    // אם נבחרה קהילה, השג את אמצעי התשלום הזמינים מהפונקציה החדשה
+    // If a community is selected, fetch available payment methods
     const fetchAvailablePaymentMethods = async () => {
       if (!selectedCommunityId) return;
       
@@ -46,7 +46,7 @@ const PaymentMethods = () => {
           return;
         }
         
-        // סנן את אמצעי התשלום ברירת המחדל
+        // Filter default payment methods
         if (data) {
           const defaults = data.filter(method => method.is_default);
           setDefaultMethods(defaults);
@@ -71,13 +71,13 @@ const PaymentMethods = () => {
     if (error) {
       toast({
         variant: "destructive",
-        title: "שגיאה",
-        description: "נכשל בעדכון סטטוס אמצעי תשלום"
+        title: "Error",
+        description: "Failed to update payment method status"
       });
     } else {
       toast({
-        title: "עודכן בהצלחה",
-        description: `תשלומי ${provider} ${active ? 'הופעלו' : 'הושבתו'}`
+        title: "Successfully updated",
+        description: `${provider} payments ${active ? 'enabled' : 'disabled'}`
       });
     }
     refetch();
@@ -95,15 +95,15 @@ const PaymentMethods = () => {
     if (error) {
       toast({
         variant: "destructive",
-        title: "שגיאה",
-        description: "נכשל בעדכון הגדרות ברירת מחדל"
+        title: "Error",
+        description: "Failed to update default settings"
       });
     } else {
       toast({
-        title: "עודכן בהצלחה",
+        title: "Successfully updated",
         description: isDefault 
-          ? `${provider} הוגדר כברירת מחדל לכל הקהילות שלך` 
-          : `${provider} אינו ברירת מחדל יותר`
+          ? `${provider} set as default for all your communities` 
+          : `${provider} is no longer a default payment method`
       });
     }
     refetch();
@@ -149,27 +149,27 @@ const PaymentMethods = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-right"
+        className="text-left"
       >
-        <h1 className="text-3xl font-semibold tracking-tight flex items-center gap-3 justify-end">
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">💰</span>
-          אמצעי תשלום
+        <h1 className="text-3xl font-semibold tracking-tight flex items-center gap-3">
           <Zap className="h-7 w-7 text-indigo-500" />
+          Payment Methods
+          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">💰</span>
         </h1>
         <p className="text-base text-muted-foreground mt-2">
-          הגדר ונהל את שערי התשלום שלך עבור מנויי קהילה 💸
+          Configure and manage payment gateways for your community subscriptions 💸
         </p>
       </motion.div>
 
       <Tabs defaultValue="all" className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <TabsList className="grid grid-cols-3 w-60">
-            <TabsTrigger value="all" onClick={() => setFilter("all")}>הכל</TabsTrigger>
-            <TabsTrigger value="community" onClick={() => setFilter("community")}>קהילה זו</TabsTrigger>
+            <TabsTrigger value="all" onClick={() => setFilter("all")}>All</TabsTrigger>
+            <TabsTrigger value="community" onClick={() => setFilter("community")}>This Community</TabsTrigger>
             <TabsTrigger value="default" onClick={() => setFilter("default")}>
               <div className="flex items-center gap-1">
                 <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                ברירת מחדל
+                Default
               </div>
             </TabsTrigger>
           </TabsList>
@@ -179,10 +179,10 @@ const PaymentMethods = () => {
           <CardHeader className="pb-3 pt-6">
             <CardTitle className="flex items-center justify-center gap-3 text-xl">
               <LayoutGrid className="h-6 w-6 text-indigo-600" />
-              שערי תשלום זמינים
+              Available Payment Gateways
             </CardTitle>
             <CardDescription className="text-center text-base">
-              הפעל והגדר אפשרויות תשלום עבור חברי הקהילה שלך
+              Enable and configure payment options for your community members
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-4">
@@ -196,7 +196,7 @@ const PaymentMethods = () => {
                 <motion.div variants={item} className="h-full w-full">
                   <PaymentMethodCard
                     title="Stripe"
-                    description="קבל תשלומי כרטיס אשראי באופן מאובטח עם Stripe 💳"
+                    description="Accept credit card payments securely with Stripe 💳"
                     icon={CreditCard}
                     isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
                     onToggle={(active) => handleMethodToggle('stripe', active)}
@@ -212,7 +212,7 @@ const PaymentMethods = () => {
                 <motion.div variants={item} className="h-full w-full">
                   <PaymentMethodCard
                     title="PayPal"
-                    description="קבל תשלומי PayPal בקלות ובאופן מאובטח 🔄"
+                    description="Accept PayPal payments easily and securely 🔄"
                     icon={Wallet}
                     isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
                     onToggle={(active) => handleMethodToggle('paypal', active)}
@@ -228,7 +228,7 @@ const PaymentMethods = () => {
                 <motion.div variants={item} className="h-full w-full">
                   <PaymentMethodCard
                     title="Crypto"
-                    description="קבל תשלומי מטבע קריפטו עבור הקבוצות שלך 🪙"
+                    description="Accept cryptocurrency payments for your groups 🪙"
                     icon={Bitcoin}
                     isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
                     onToggle={(active) => handleMethodToggle('crypto', active)}
@@ -257,9 +257,9 @@ const PaymentMethods = () => {
                       <PaymentMethodCard
                         title={method.provider.charAt(0).toUpperCase() + method.provider.slice(1)}
                         description={
-                          method.provider === 'stripe' ? "קבל תשלומי כרטיס אשראי באופן מאובטח עם Stripe 💳" :
-                          method.provider === 'paypal' ? "קבל תשלומי PayPal בקלות ובאופן מאובטח 🔄" :
-                          "קבל תשלומי מטבע קריפטו עבור הקבוצות שלך 🪙"
+                          method.provider === 'stripe' ? "Accept credit card payments securely with Stripe 💳" :
+                          method.provider === 'paypal' ? "Accept PayPal payments easily and securely 🔄" :
+                          "Accept cryptocurrency payments for your groups 🪙"
                         }
                         icon={
                           method.provider === 'stripe' ? CreditCard :
@@ -284,7 +284,7 @@ const PaymentMethods = () => {
                   ))
                 ) : (
                   <div className="col-span-3 p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
-                    לא נמצאו אמצעי תשלום ספציפיים לקהילה זו
+                    No specific payment methods found for this community
                   </div>
                 )}
               </motion.div>
@@ -303,9 +303,9 @@ const PaymentMethods = () => {
                       <PaymentMethodCard
                         title={method.provider.charAt(0).toUpperCase() + method.provider.slice(1)}
                         description={
-                          method.provider === 'stripe' ? "קבל תשלומי כרטיס אשראי באופן מאובטח עם Stripe 💳" :
-                          method.provider === 'paypal' ? "קבל תשלומי PayPal בקלות ובאופן מאובטח 🔄" :
-                          "קבל תשלומי מטבע קריפטו עבור הקבוצות שלך 🪙"
+                          method.provider === 'stripe' ? "Accept credit card payments securely with Stripe 💳" :
+                          method.provider === 'paypal' ? "Accept PayPal payments easily and securely 🔄" :
+                          "Accept cryptocurrency payments for your groups 🪙"
                         }
                         icon={
                           method.provider === 'stripe' ? CreditCard :
@@ -330,7 +330,7 @@ const PaymentMethods = () => {
                   ))
                 ) : (
                   <div className="col-span-3 p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
-                    לא הוגדרו אמצעי תשלום כברירת מחדל
+                    No default payment methods have been set
                   </div>
                 )}
               </motion.div>
@@ -347,10 +347,10 @@ const PaymentMethods = () => {
       >
         <div className="flex flex-col items-center text-center max-w-lg">
           <Shield className="h-14 w-14 text-indigo-200 mb-3" />
-          <h3 className="text-xl font-medium text-gray-700 mb-2">הגדרות תשלום פשוטות יותר</h3>
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Simplified Payment Settings</h3>
           <p className="text-gray-500 text-base">
-            אמצעי תשלום שמוגדרים כברירת מחדל יופיעו בכל הקהילות שלך. 
-            אתה יכול להגדיר אמצעי תשלום ספציפיים לכל קהילה או להשתמש באלו המוגדרים כברירת מחדל. 🔒
+            Payment methods set as default will appear in all your communities.
+            You can configure specific payment methods for each community or use the default ones. 🔒
           </p>
         </div>
       </motion.div>

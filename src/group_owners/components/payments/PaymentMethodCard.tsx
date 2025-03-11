@@ -96,7 +96,7 @@ export const PaymentMethodCard = ({
             {/* Content area */}
           </CardContent>
           <CardFooter className="pt-0 pb-3 px-4">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -117,7 +117,7 @@ export const PaymentMethodCard = ({
                 <ChevronRight className="h-3 w-3 ml-auto" />
               </Button>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-100 ml-1">
                 {isActive ? (
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 ) : (

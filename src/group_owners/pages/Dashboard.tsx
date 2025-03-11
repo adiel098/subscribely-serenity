@@ -97,7 +97,7 @@ const Dashboard = () => {
         timeRange={timeRangeLabel}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="flex flex-wrap gap-6 mt-6 justify-center md:justify-start">
         <DashboardCharts
           memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
           revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}

@@ -49,7 +49,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
   };
 
   return (
-    <Card className="col-span-2">
+    <Card className="w-full md:w-[45%] lg:w-[45%]">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium text-gray-800">Community Growth</CardTitle>
       </CardHeader>

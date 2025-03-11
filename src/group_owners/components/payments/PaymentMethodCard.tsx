@@ -67,70 +67,70 @@ export const PaymentMethodCard = ({
         transition={{ type: "spring", stiffness: 300 }}
         className="h-full"
       >
-        <Card className="relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[290px] mx-auto">
+        <Card className="relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[320px] mx-auto">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader className="pb-2 pt-4 px-4">
+          <CardHeader className="pb-3 pt-5 px-5">
             <div className="flex justify-between items-start">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-3 text-xl">
                 {imageSrc ? (
-                  <div className="p-1.5 rounded-full bg-white shadow-sm flex items-center justify-center w-10 h-10">
-                    <img src={imageSrc} alt={title} className="w-7 h-7 object-contain" />
+                  <div className="p-2 rounded-full bg-white shadow-sm flex items-center justify-center w-12 h-12">
+                    <img src={imageSrc} alt={title} className="w-8 h-8 object-contain" />
                   </div>
                 ) : (
-                  <div className="p-1.5 rounded-full bg-indigo-100 text-indigo-600 w-10 h-10 flex items-center justify-center">
-                    <Icon className="h-5 w-5" />
+                  <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 w-12 h-12 flex items-center justify-center">
+                    <Icon className="h-6 w-6" />
                   </div>
                 )}
                 <span>{title}</span>
               </CardTitle>
               {isConfigured && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-xs">
-                  <CheckCircle className="h-2.5 w-2.5" />
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-sm">
+                  <CheckCircle className="h-3 w-3" />
                   Configured
                 </Badge>
               )}
             </div>
-            {description && <CardDescription className="mt-2 text-xs">{description}</CardDescription>}
+            {description && <CardDescription className="mt-3 text-sm">{description}</CardDescription>}
           </CardHeader>
-          <CardContent className="px-4 py-2">
+          <CardContent className="px-5 py-3">
             {/* Content area */}
           </CardContent>
-          <CardFooter className="pt-0 pb-3 px-4">
-            <div className="flex items-center justify-between w-full gap-2">
+          <CardFooter className="pt-0 pb-4 px-5">
+            <div className="flex items-center justify-between w-full gap-3">
               <Button
                 variant="outline"
                 size="sm"
-                className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors gap-1 text-xs py-1.5 px-2 h-auto w-auto"
+                className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors gap-2 text-sm py-2 px-3 h-auto"
                 onClick={handleConfigClick}
               >
                 {isConfigured ? (
                   <>
-                    <Settings2 className="h-3.5 w-3.5" />
+                    <Settings2 className="h-4 w-4" />
                     <span>Edit</span>
                   </>
                 ) : (
                   <>
-                    <Settings2 className="h-3.5 w-3.5" />
+                    <Settings2 className="h-4 w-4" />
                     <span>Configure</span>
                   </>
                 )}
-                <ChevronRight className="h-3 w-3 ml-auto" />
+                <ChevronRight className="h-3.5 w-3.5 ml-auto" />
               </Button>
               
-              <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-indigo-50 border border-indigo-100 ml-1">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-50 border border-indigo-100 ml-1">
                 {isActive ? (
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                 ) : (
-                  <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
                 )}
-                <span className="text-xs font-medium">
+                <span className="text-sm font-medium">
                   {isActive ? 'Active' : 'Inactive'}
                 </span>
                 <Switch
                   checked={isActive}
                   onCheckedChange={onToggle}
                   disabled={!isConfigured}
-                  className="data-[state=checked]:bg-indigo-600 h-5 w-9"
+                  className="data-[state=checked]:bg-indigo-600 h-5 w-10"
                 />
               </div>
             </div>
@@ -138,14 +138,14 @@ export const PaymentMethodCard = ({
           {!isConfigured && (
             <div className="absolute bottom-0 right-0 p-2">
               <div className="text-amber-500">
-                <AlertCircle className="h-3.5 w-3.5 animate-pulse" />
+                <AlertCircle className="h-4 w-4 animate-pulse" />
               </div>
             </div>
           )}
           {isConfigured && (
             <div className="absolute bottom-2 right-2">
               <div className="text-green-500">
-                <Lock className="h-3.5 w-3.5" />
+                <Lock className="h-4 w-4" />
               </div>
             </div>
           )}
@@ -157,17 +157,17 @@ export const PaymentMethodCard = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               {imageSrc ? (
-                <div className="p-2 rounded-full bg-white shadow-sm flex items-center justify-center w-10 h-10">
-                  <img src={imageSrc} alt={title} className="w-7 h-7 object-contain" />
+                <div className="p-2 rounded-full bg-white shadow-sm flex items-center justify-center w-12 h-12">
+                  <img src={imageSrc} alt={title} className="w-8 h-8 object-contain" />
                 </div>
               ) : (
-                <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 w-10 h-10 flex items-center justify-center">
-                  <Icon className="h-5 w-5" />
+                <div className="p-2 rounded-full bg-indigo-100 text-indigo-600 w-12 h-12 flex items-center justify-center">
+                  <Icon className="h-6 w-6" />
                 </div>
               )}
               <span>Configure {title}</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base">
               Enter your {title} API credentials securely to enable payments
             </DialogDescription>
           </DialogHeader>

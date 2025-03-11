@@ -90,27 +90,31 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        <div className="md:col-span-1">
-          <TrialUsersStats
-            trialUsers={trialUsers}
-            averageSubscriptionDuration={insights.averageSubscriptionDuration}
-          />
-        </div>
-        <div className="md:col-span-1">
-          <MiniAppUsersStats
-            miniAppUsers={miniAppUsers}
-          />
-        </div>
-        <div className="md:col-span-4">
-          <DashboardStats
-            totalSubscribers={filteredSubscribers.length}
-            activeSubscribers={activeSubscribers.length}
-            inactiveSubscribers={inactiveSubscribers.length}
-            totalRevenue={totalRevenue}
-            avgRevenuePerSubscriber={avgRevenuePerSubscriber}
-            conversionRate={conversionRate}
-            timeRange={timeRangeLabel}
-          />
+        <div className="md:col-span-6">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="md:col-span-1">
+              <TrialUsersStats
+                trialUsers={trialUsers}
+                averageSubscriptionDuration={insights.averageSubscriptionDuration}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <MiniAppUsersStats
+                miniAppUsers={miniAppUsers}
+              />
+            </div>
+            <div className="md:col-span-4">
+              <DashboardStats
+                totalSubscribers={filteredSubscribers.length}
+                activeSubscribers={activeSubscribers.length}
+                inactiveSubscribers={inactiveSubscribers.length}
+                totalRevenue={totalRevenue}
+                avgRevenuePerSubscriber={avgRevenuePerSubscriber}
+                conversionRate={conversionRate}
+                timeRange={timeRangeLabel}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

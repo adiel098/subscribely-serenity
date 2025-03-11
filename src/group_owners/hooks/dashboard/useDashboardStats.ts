@@ -10,6 +10,7 @@ import { useChartData } from "./useChartData";
 import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MiniAppData } from "./types";
 
 export const useDashboardStats = (communityId: string) => {
   console.log("📊 useDashboardStats hook initialized with communityId:", communityId);
@@ -34,9 +35,53 @@ export const useDashboardStats = (communityId: string) => {
   const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
     useRevenueStats(filteredSubscribers);
   console.log("💰 Revenue stats:", { totalRevenue, avgRevenuePerSubscriber, conversionRate });
+  
+  // Fetch real mini app users data
+  const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = useQuery({
+    queryKey: ["miniAppUsers", communityId],
+    queryFn: async () => {
+      if (!communityId) return { count: 0, nonSubscribers: 0 };
+      
+      console.log("🔍 Fetching mini app users for community ID:", communityId);
+      
+      const { data: miniAppUsers, error } = await supabase
+        .from("telegram_mini_app_users")
+        .select("*")
+        .eq("community_id", communityId);
+      
+      if (error) {
+        console.error("❌ Error fetching mini app users:", error);
+        return { count: 0, nonSubscribers: 0 };
+      }
+      
+      console.log("📱 Fetched mini app users:", miniAppUsers.length);
+      
+      // Get the telegram_user_ids of active subscribers
+      const activeUserIds = activeSubscribers.map(sub => sub.telegram_user_id);
+      
+      // Count non-subscribers (users who have used the mini app but aren't active subscribers)
+      const nonSubscribersCount = miniAppUsers.filter(
+        user => !activeUserIds.includes(user.telegram_id)
+      ).length;
+      
+      return {
+        count: miniAppUsers.length,
+        nonSubscribers: nonSubscribersCount,
+        users: miniAppUsers
+      };
+    },
+    enabled: !!communityId && !subscribersLoading
+  });
     
-  const { trialUsers, miniAppUsers } = useTrialUsers(filteredSubscribers);
-  console.log("🧪 Trial users:", trialUsers.count, "Mini app users:", miniAppUsers.count);
+  const { trialUsers } = useTrialUsers(filteredSubscribers);
+  console.log("🧪 Trial users:", trialUsers.count);
+  
+  // Use the real mini app users data
+  const miniAppUsers: MiniAppData = {
+    count: miniAppUsersData?.count || 0,
+    nonSubscribers: miniAppUsersData?.nonSubscribers || 0
+  };
+  console.log("📱 Mini app users:", miniAppUsers.count, "Non-subscribers:", miniAppUsers.nonSubscribers);
   
   const { paymentStats } = usePaymentStats(filteredSubscribers);
   console.log("💳 Payment stats calculated");
@@ -100,7 +145,7 @@ export const useDashboardStats = (communityId: string) => {
     enabled: !!communityId
   });
 
-  const isLoading = subscribersLoading || ownerLoading;
+  const isLoading = subscribersLoading || ownerLoading || miniAppUsersLoading;
   
   if (isLoading) {
     console.log("⏳ Dashboard stats still loading...");

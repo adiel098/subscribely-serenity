@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Star, Zap, Shield, Award, Check } from "lucide-react";
+import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { motion } from "framer-motion";
 import { Subscription } from "../services/memberService";
@@ -36,19 +36,19 @@ export const SubscriptionPlans = ({
   const getIntervalDisplay = (interval: string) => {
     switch (interval) {
       case 'monthly':
-        return { emoji: '🔄', label: 'Monthly' };
+        return { emoji: '🔄', icon: <Clock className="h-4 w-4 mr-1 text-blue-500" />, label: 'Monthly' };
       case 'quarterly':
-        return { emoji: '🔷', label: 'Quarterly' };
+        return { emoji: '🗓️', icon: <Calendar className="h-4 w-4 mr-1 text-indigo-500" />, label: 'Quarterly' };
       case 'half-yearly':
-        return { emoji: '½', label: 'Half-Yearly' };
+        return { emoji: '📅', icon: <Calendar className="h-4 w-4 mr-1 text-purple-500" />, label: 'Half-Yearly' };
       case 'yearly':
-        return { emoji: '📅', label: 'Yearly' };
+        return { emoji: '🗓️', icon: <Calendar className="h-4 w-4 mr-1 text-green-600" />, label: 'Yearly' };
       case 'lifetime':
-        return { emoji: '♾️', label: 'Lifetime' };
+        return { emoji: '♾️', icon: <Shield className="h-4 w-4 mr-1 text-indigo-600" />, label: 'Lifetime' };
       case 'one-time':
-        return { emoji: '🎯', label: 'One-Time' };
+        return { emoji: '🎯', icon: <Zap className="h-4 w-4 mr-1 text-amber-500" />, label: 'One-Time' };
       default:
-        return { emoji: '⏱️', label: interval };
+        return { emoji: '⏱️', icon: <Clock className="h-4 w-4 mr-1 text-gray-500" />, label: interval };
     }
   };
 
@@ -79,7 +79,7 @@ export const SubscriptionPlans = ({
 
   return (
     <motion.div 
-      className="grid gap-4 max-w-md mx-auto"
+      className="grid gap-4 max-w-sm mx-auto"
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -93,7 +93,7 @@ export const SubscriptionPlans = ({
           <motion.div
             key={plan.id}
             variants={itemVariants}
-            whileHover={{ scale: 1.01 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`group relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
@@ -106,22 +106,23 @@ export const SubscriptionPlans = ({
           >
             {isActive && (
               <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1">
-                <Check className="h-3 w-3" />
+                <CheckCircle2 className="h-3 w-3" />
               </div>
             )}
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <div className="flex gap-1.5">
-                  <Badge variant={isPremium ? "default" : "outline"} className="mb-1 text-xs">
-                    {intervalDisplay.emoji} {intervalDisplay.label}
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-1 text-xs">
+                    {intervalDisplay.icon} 
+                    <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
                   </Badge>
                   {isActive && (
-                    <Badge variant="success" className="mb-1 text-xs animate-pulse">
+                    <Badge variant="success" className="text-xs animate-pulse">
                       Active
                     </Badge>
                   )}
                   {isPremium && !isActive && (
-                    <Badge variant="secondary" className="mb-1 text-xs bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
+                    <Badge variant="secondary" className="text-xs bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
                       Recommended
                     </Badge>
                   )}
@@ -147,7 +148,7 @@ export const SubscriptionPlans = ({
             
             {plan.features && plan.features.length > 0 && (
               <motion.ul 
-                className="mt-3 space-y-1.5"
+                className="mt-4 space-y-2 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-3 rounded-lg border border-indigo-100/50"
                 initial="hidden"
                 animate="show"
                 variants={{
@@ -160,10 +161,14 @@ export const SubscriptionPlans = ({
                   }
                 }}
               >
+                <h4 className="text-xs font-medium text-indigo-700 mb-2 flex items-center">
+                  <Star className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
+                  Features Included:
+                </h4>
                 {plan.features.map((feature, index) => (
                   <motion.li 
                     key={index} 
-                    className="flex items-center text-gray-700 text-xs"
+                    className="flex items-center text-gray-700 text-xs bg-white/60 p-2 rounded-md border border-indigo-100/30 shadow-sm"
                     variants={{
                       hidden: { opacity: 0, x: -10 },
                       show: { 
@@ -185,3 +190,4 @@ export const SubscriptionPlans = ({
     </motion.div>
   );
 };
+

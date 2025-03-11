@@ -36,7 +36,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   return (
     <>
       <div id="subscription-plans" className="scroll-mt-4">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-xl mb-6">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl mb-5 max-w-sm mx-auto">
           <motion.div 
             className="text-center space-y-2"
             initial={{ opacity: 0, y: -20 }}

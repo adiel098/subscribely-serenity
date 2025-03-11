@@ -9,7 +9,7 @@ interface SubscribersHeaderProps {
 
 export const SubscribersHeader = ({ isUpdating }: SubscribersHeaderProps) => {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 text-gray-800">
@@ -32,4 +32,3 @@ export const SubscribersHeader = ({ isUpdating }: SubscribersHeaderProps) => {
     </div>
   );
 };
-

@@ -63,6 +63,38 @@ export async function fetchCommunityData(
 }
 
 /**
+ * Fetch group data by ID or custom link
+ */
+export async function fetchGroupData(
+  supabase: ReturnType<typeof createClient>,
+  groupId: string,
+  isUUID: boolean
+) {
+  logger.debug(`Fetching group data for ${isUUID ? 'ID' : 'custom link'}: ${groupId}`);
+  
+  let groupQuery;
+  
+  if (isUUID) {
+    logger.debug(`Parameter is a UUID, searching by ID: ${groupId}`);
+    groupQuery = supabase
+      .from('community_groups')
+      .select('*')
+      .eq('id', groupId)
+      .single();
+  } else {
+    logger.debug(`Parameter appears to be a custom link: "${groupId}"`);
+    groupQuery = supabase
+      .from('community_groups')
+      .select('*')
+      .eq('custom_link', groupId)
+      .single();
+  }
+
+  logger.debug(`Executing database query for group ${isUUID ? 'ID' : 'custom link'}: ${groupId}`);
+  return await groupQuery;
+}
+
+/**
  * Update community description in the database
  */
 export async function updateCommunityDescription(
@@ -91,4 +123,51 @@ export async function fetchCommunityPaymentMethods(
     .from('payment_methods')
     .select('id, provider, is_active')
     .eq('community_id', communityId);
+}
+
+/**
+ * Fetch community group members
+ */
+export async function fetchGroupMembers(
+  supabase: ReturnType<typeof createClient>,
+  groupId: string
+) {
+  logger.debug(`Fetching members for group ${groupId}`);
+  
+  return await supabase
+    .from('community_group_members')
+    .select('community_id')
+    .eq('group_id', groupId)
+    .order('display_order', { ascending: true });
+}
+
+/**
+ * Fetch communities by IDs
+ */
+export async function fetchCommunitiesByIds(
+  supabase: ReturnType<typeof createClient>,
+  communityIds: string[]
+) {
+  logger.debug(`Fetching ${communityIds.length} communities by IDs`);
+  
+  return await supabase
+    .from('communities')
+    .select('*')
+    .in('id', communityIds);
+}
+
+/**
+ * Fetch subscription plans for multiple communities
+ */
+export async function fetchSubscriptionPlansForCommunities(
+  supabase: ReturnType<typeof createClient>,
+  communityIds: string[]
+) {
+  logger.debug(`Fetching subscription plans for ${communityIds.length} communities`);
+  
+  return await supabase
+    .from('subscription_plans')
+    .select('*')
+    .in('community_id', communityIds)
+    .eq('is_active', true);
 }

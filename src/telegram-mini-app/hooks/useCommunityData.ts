@@ -4,7 +4,7 @@ import { Community } from "@/telegram-mini-app/types/community.types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
-export const useCommunityData = (communityId: string | null) => {
+export const useCommunityData = (communityIdOrGroupId: string | null) => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -13,17 +13,21 @@ export const useCommunityData = (communityId: string | null) => {
   useEffect(() => {
     const fetchCommunityData = async () => {
       try {
-        if (!communityId) {
-          console.warn("❌ useCommunityData: No community ID provided");
-          throw new Error("No community ID provided");
+        if (!communityIdOrGroupId) {
+          console.warn("❌ useCommunityData: No community or group ID provided");
+          throw new Error("No community or group ID provided");
         }
         
-        console.log('🔍 useCommunityData: Fetching community data with ID:', communityId);
+        // Check if we're dealing with a group ID (starts with "group_")
+        const isGroup = communityIdOrGroupId.startsWith('group_');
+        const id = isGroup ? communityIdOrGroupId.substring(6) : communityIdOrGroupId;
+        
+        console.log(`🔍 useCommunityData: Fetching ${isGroup ? 'group' : 'community'} data with ID:`, id);
         
         const payload = { 
-          community_id: communityId,
+          [isGroup ? 'group_id' : 'community_id']: id,
           debug: true,
-          fetch_telegram_data: true // Add this flag to fetch Telegram data for the community
+          fetch_telegram_data: true
         };
         console.log('📤 useCommunityData: Request payload:', JSON.stringify(payload, null, 2));
         
@@ -35,7 +39,7 @@ export const useCommunityData = (communityId: string | null) => {
 
         if (response.error) {
           console.error('❌ useCommunityData: Error from edge function:', response.error);
-          setError(response.error.message || "Error fetching community data");
+          setError(response.error.message || `Error fetching ${isGroup ? 'group' : 'community'} data`);
           throw new Error(response.error);
         }
 
@@ -66,12 +70,12 @@ export const useCommunityData = (communityId: string | null) => {
           setCommunity(communityData);
         } else {
           console.error('❌ useCommunityData: Community not found in response:', JSON.stringify(response.data));
-          setError("Community not found");
-          throw new Error("Community not found");
+          setError(`${isGroup ? 'Group' : 'Community'} not found`);
+          throw new Error(`${isGroup ? 'Group' : 'Community'} not found`);
         }
       } catch (error) {
-        console.error("❌ useCommunityData: Error fetching community data:", error);
-        if (!error) setError("Failed to load community data");
+        console.error("❌ useCommunityData: Error fetching data:", error);
+        if (!error) setError("Failed to load data");
         toast({
           variant: "destructive",
           title: "Error",
@@ -82,13 +86,13 @@ export const useCommunityData = (communityId: string | null) => {
       }
     };
 
-    if (communityId) {
+    if (communityIdOrGroupId) {
       fetchCommunityData();
     } else {
-      console.error("❌ useCommunityData: No community ID provided");
+      console.error("❌ useCommunityData: No community or group ID provided");
       setLoading(false);
     }
-  }, [communityId, toast]);
+  }, [communityIdOrGroupId, toast]);
 
   return { loading, community, error };
 };

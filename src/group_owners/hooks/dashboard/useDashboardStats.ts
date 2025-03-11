@@ -8,10 +8,12 @@ import { usePaymentStats } from "./usePaymentStats";
 import { useInsights } from "./useInsights";
 import { useChartData } from "./useChartData";
 import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useDashboardStats = (communityId: string) => {
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
-  const { data: subscribers, isLoading } = useSubscribers(communityId);
+  const { data: subscribers, isLoading: subscribersLoading } = useSubscribers(communityId);
   const { data: plans } = useFetchSubscriptionPlans(communityId);
   
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
@@ -32,6 +34,41 @@ export const useDashboardStats = (communityId: string) => {
   );
   
   const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
+
+  // Fetch community owner info
+  const { data: ownerInfo, isLoading: ownerLoading } = useQuery({
+    queryKey: ["communityOwner", communityId],
+    queryFn: async () => {
+      if (!communityId) return null;
+      
+      const { data: community, error } = await supabase
+        .from("communities")
+        .select("owner_id")
+        .eq("id", communityId)
+        .single();
+
+      if (error || !community) {
+        console.error("Error fetching community owner:", error);
+        return null;
+      }
+
+      const { data: owner, error: ownerError } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", community.owner_id)
+        .single();
+
+      if (ownerError) {
+        console.error("Error fetching owner profile:", ownerError);
+        return null;
+      }
+
+      return owner;
+    },
+    enabled: !!communityId
+  });
+
+  const isLoading = subscribersLoading || ownerLoading;
   
   return {
     // Time range data
@@ -57,6 +94,9 @@ export const useDashboardStats = (communityId: string) => {
     // Chart data
     memberGrowthData,
     revenueData,
+    
+    // Owner info
+    ownerInfo,
     
     // Loading state
     isLoading

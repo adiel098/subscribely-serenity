@@ -8,6 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const RevenueOverviewCard = () => {
   const { data: monthlyRevenue, isLoading, error } = useMonthlyRevenue();
 
+  const formatXAxis = (tickItem: string) => {
+    // Just use month name without rotation
+    return tickItem;
+  };
+
   const renderChart = () => {
     if (isLoading) {
       return (
@@ -37,7 +42,11 @@ export const RevenueOverviewCard = () => {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
+          <XAxis 
+            dataKey="month" 
+            tickFormatter={formatXAxis}
+            tick={{fontSize: 12, fill: '#6b7280'}}
+          />
           <YAxis tickFormatter={(value) => formatCurrency(value)} />
           <Tooltip formatter={(value) => formatCurrency(Number(value))} />
           <Bar 

@@ -13,6 +13,13 @@ interface ActivityChartProps {
 }
 
 export const ActivityChart = ({ data }: ActivityChartProps) => {
+  // Create custom tick formatter to shorten dates
+  const formatXAxis = (tickItem: string) => {
+    // Convert full date to MM/DD format
+    const date = new Date(tickItem);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -22,7 +29,11 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data}>
-              <XAxis dataKey="date" />
+              <XAxis 
+                dataKey="date" 
+                tickFormatter={formatXAxis}
+                tick={{fontSize: 12, fill: '#6b7280'}}
+              />
               <YAxis yAxisId="left" />
               <YAxis yAxisId="right" orientation="right" />
               <Tooltip />

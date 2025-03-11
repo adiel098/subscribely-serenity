@@ -14,9 +14,8 @@ import {
   Legend,
   Line,
   LineChart,
-  ComposedChart
 } from "recharts";
-import { TrendingUp, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, BarChart3 } from "lucide-react";
 
 interface ChartData {
   date: string;
@@ -64,6 +63,13 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
     return null;
   };
 
+  // Create custom tick formatter to shorten dates
+  const formatXAxis = (tickItem: string) => {
+    // Convert full date to MM/DD format
+    const date = new Date(tickItem);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
@@ -83,9 +89,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
                 <XAxis 
                   dataKey="date" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={60} 
+                  tickFormatter={formatXAxis}
                   tick={{fontSize: 12, fill: '#6b7280'}}
                   stroke="#e5e7eb"
                 />
@@ -123,9 +127,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
                 <XAxis 
                   dataKey="date" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={60}
+                  tickFormatter={formatXAxis}
                   tick={{fontSize: 12, fill: '#6b7280'}}
                   stroke="#e5e7eb"
                 />
@@ -167,9 +169,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" vertical={false} />
                 <XAxis 
                   dataKey="date" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={60}
+                  tickFormatter={formatXAxis}
                   tick={{fontSize: 12, fill: '#6b7280'}}
                   stroke="#e5e7eb"
                 />

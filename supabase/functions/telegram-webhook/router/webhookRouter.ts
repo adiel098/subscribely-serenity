@@ -1,123 +1,146 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { corsHeaders } from "../cors.ts";
+import { handleMessageRoute } from "../handlers/routeHandlers/messageRouteHandler.ts";
+import { handleMemberRoute } from "../handlers/routeHandlers/memberRouteHandler.ts";
+import { handleJoinRequestRoute } from "../handlers/routeHandlers/joinRequestRouteHandler.ts";
+import { handleCustomActionsRoute } from "../handlers/routeHandlers/customActionsRouteHandler.ts";
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { logTelegramEvent } from '../eventLogger.ts';
-import { corsHeaders } from '../cors.ts';
-import { checkUserSuspension } from '../services/userValidationService.ts';
-import { logWebhookEvent, logWebhookError } from '../services/eventLoggingService.ts';
-import { handleJoinRequestRoute } from '../handlers/routeHandlers/joinRequestRouteHandler.ts';
-import { handleCustomActionsRoute } from '../handlers/routeHandlers/customActionsRouteHandler.ts';
-import { handleMemberRoute } from '../handlers/routeHandlers/memberRouteHandler.ts';
-import { handleMessageRoute } from '../handlers/routeHandlers/messageRouteHandler.ts';
-
-export async function routeTelegramWebhook(req: Request, supabaseClient: ReturnType<typeof createClient>, botToken: string) {
-  console.log("[ROUTER] 🚀🚀🚀 Received webhook request");
-  
+/**
+ * Route a Telegram webhook request to the appropriate handler
+ */
+export async function routeTelegramWebhook(
+  req: Request,
+  supabase: ReturnType<typeof createClient>,
+  botToken: string
+): Promise<Response> {
   try {
-    let body;
-    try {
-      body = await req.json();
-      console.log("[ROUTER] 📝 Request body parsed successfully");
-      // Log truncated version to avoid huge logs
-      const bodyPreview = JSON.stringify(body).substring(0, 500) + (JSON.stringify(body).length > 500 ? '...' : '');
-      console.log("[ROUTER] 📦 Request body preview:", bodyPreview);
-      
-      // Log the full event
-      await logTelegramEvent(supabaseClient, 'webhook_received', body);
-    } catch (error) {
-      console.error("[ROUTER] ❌ Error parsing request body:", error);
-      throw new Error('Invalid JSON in request body');
-    }
+    console.log("🧭 [WEBHOOK-ROUTER] Processing Telegram webhook request");
     
-    // Check if request is a custom action route by looking for path property
-    if (body.path) {
-      console.log("[ROUTER] 🛣️ Detected custom action route:", body.path);
-      const { handled, response } = await handleCustomActionsRoute(
-        supabaseClient, 
-        body.path, 
-        body, 
-        botToken
-      );
+    // Parse the request body
+    const update = await req.json();
+    console.log("📦 [WEBHOOK-ROUTER] Request payload:", JSON.stringify(update, null, 2));
+    
+    // Log the update to the database for debugging
+    await supabase.from('telegram_webhook_logs').insert({
+      payload: update,
+      event_type: 'webhook_received',
+    });
+    
+    // Determine the update type based on the received data
+    let updateType = "unknown";
+    let handled = false;
+    let response = null;
+    
+    // Message update
+    if (update.message) {
+      updateType = "message";
+      console.log("💬 [WEBHOOK-ROUTER] Detected message update");
+      const result = await handleMessageRoute(supabase, update.message, botToken);
+      handled = result.handled;
       
-      if (handled && response) {
-        return response;
+      if (result.response) {
+        response = result.response;
       }
     }
-    
-    // Check if user is suspended before processing any requests
-    if (body.message?.from?.id) {
-      const telegramUserId = body.message.from.id.toString();
-      const isSuspended = await checkUserSuspension(supabaseClient, telegramUserId);
+    // Chat member update
+    else if (update.chat_member) {
+      updateType = "chat_member";
+      console.log("👤 [WEBHOOK-ROUTER] Detected chat member update");
+      const result = await handleMemberRoute(supabase, update.chat_member, botToken);
+      handled = result.handled;
       
-      if (isSuspended) {
-        return new Response(JSON.stringify({ 
-          ok: true,
-          message: "User is suspended" 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (result.response) {
+        response = result.response;
       }
     }
-
-    // Handle chat join requests
-    const joinRequestResult = await handleJoinRequestRoute(supabaseClient, body);
-    if (joinRequestResult.handled) {
-      return joinRequestResult.response;
+    // Join request
+    else if (update.chat_join_request) {
+      updateType = "chat_join_request";
+      console.log("🤝 [WEBHOOK-ROUTER] Detected chat join request");
+      const result = await handleJoinRequestRoute(supabase, update.chat_join_request, botToken);
+      handled = result.handled;
+      
+      if (result.response) {
+        response = result.response;
+      }
     }
-
-    // Handle chat member updates (bot status, member changes)
-    const memberResult = await handleMemberRoute(supabaseClient, body, botToken);
-    if (memberResult.handled) {
-      return memberResult.response;
+    // Callback query
+    else if (update.callback_query) {
+      updateType = "callback_query";
+      console.log("🔘 [WEBHOOK-ROUTER] Detected callback query");
+      const result = await handleCustomActionsRoute(supabase, update.callback_query, botToken);
+      handled = result.handled;
+      
+      if (result.response) {
+        response = result.response;
+      }
     }
-
-    // Handle regular messages
-    const update = body;
-    const message = update.message || update.channel_post;
+    // Inline query
+    else if (update.inline_query) {
+      updateType = "inline_query";
+      console.log("🔍 [WEBHOOK-ROUTER] Detected inline query - not implemented yet");
+      // Not implemented yet
+    }
+    // Channel post
+    else if (update.channel_post) {
+      updateType = "channel_post";
+      console.log("📢 [WEBHOOK-ROUTER] Detected channel post - not implemented yet");
+      // Not implemented yet
+    }
+    // Edited message
+    else if (update.edited_message) {
+      updateType = "edited_message";
+      console.log("✏️ [WEBHOOK-ROUTER] Detected edited message - not implemented yet");
+      // Not implemented yet
+    }
     
-    if (!message) {
-      console.log("[ROUTER] ℹ️ No message or channel_post in update");
-      return new Response(JSON.stringify({ ok: true }), {
+    // Update the webhook log with the handling status
+    await supabase.from('telegram_webhook_logs').update({
+      event_type: updateType,
+      details: handled ? 'handled' : 'not_handled'
+    }).eq('payload', update);
+    
+    console.log(`${handled ? '✅' : '⚠️'} [WEBHOOK-ROUTER] Update type: ${updateType}, Handled: ${handled}`);
+    
+    // If a handler returned a specific response, use it
+    if (response) {
+      return response;
+    }
+    
+    // Otherwise return a standard success response
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Webhook processed. Update type: ${updateType}, Handled: ${handled}`,
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Enhanced logging for start commands
-    if (message.text && message.text.startsWith('/start')) {
-      console.log("[ROUTER] 🔍 Detected start command with text:", message.text);
-      const parts = message.text.split(' ');
-      if (parts.length > 1) {
-        const param = parts[1];
-        console.log("[ROUTER] 🔑 Start parameter detected:", param);
-        
-        if (param.startsWith('group_')) {
-          console.log("[ROUTER] 👥 GROUP PARAMETER DETECTED:", param.substring(6));
-        } else {
-          console.log("[ROUTER] 🏠 Community parameter detected:", param);
-        }
+        status: 200,
       }
-    }
-
-    // Process message
-    console.log("[ROUTER] 📨 Processing message via messageRoute handler");
-    const messageResult = await handleMessageRoute(supabaseClient, message, botToken);
-    const handled = messageResult.handled;
-    console.log(`[ROUTER] ${handled ? '✅' : '❌'} Message ${handled ? 'was handled' : 'was NOT handled'} by messageRoute`);
-
-    // Log event to database
-    await logWebhookEvent(supabaseClient, update, message, handled);
-
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    );
   } catch (error) {
-    console.error('[ROUTER] ❌ Error processing request:', error);
+    console.error('❌ [WEBHOOK-ROUTER] Error routing webhook:', error);
     
-    // Try to log the error
-    await logWebhookError(supabaseClient, error);
+    // Log the error to the database
+    try {
+      await supabase.from('telegram_errors').insert({
+        error_type: 'webhook_router_error',
+        error_message: error.message,
+        stack_trace: error.stack,
+      });
+    } catch (logError) {
+      console.error('❌ [WEBHOOK-ROUTER] Failed to log error to database:', logError);
+    }
     
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: `Error routing webhook: ${error.message}`,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
   }
 }

@@ -39,6 +39,13 @@ export const PaymentMethodConfig = ({
     const fetchConfig = async () => {
       setIsLoading(true);
       try {
+        if (!communityId) {
+          console.error("No community ID provided for payment method configuration");
+          setError("No community selected. Please select a community first.");
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('payment_methods')
           .select('config, is_default')
@@ -83,6 +90,13 @@ export const PaymentMethodConfig = ({
     setError(null);
 
     try {
+      // Validate that we have a valid community ID
+      if (!communityId) {
+        throw new Error("No community selected. Please select a community before saving payment settings.");
+      }
+
+      console.log(`Saving payment method for community: ${communityId}, provider: ${provider}`);
+      
       // Check if the payment method already exists
       const { data: existingMethods, error: checkError } = await supabase
         .from('payment_methods')
@@ -174,6 +188,15 @@ export const PaymentMethodConfig = ({
   };
 
   const fields = getFieldsForProvider();
+
+  if (!communityId) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-md">
+        <p className="font-medium">No community selected</p>
+        <p className="text-sm">Please select a community before configuring payment methods.</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

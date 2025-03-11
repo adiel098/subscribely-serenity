@@ -13,10 +13,22 @@ export async function sendTelegramMessage(
   try {
     console.log(`Sending Telegram message to user ${telegramUserId}`);
     
+    // Message validation - Ensure message is not empty and is a valid string
+    if (!message || typeof message !== 'string') {
+      console.error("Error: Invalid message format", message);
+      return false;
+    }
+    
+    // Sanitize message to avoid HTML/Markdown parsing issues
+    let sanitizedMessage = message
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
     // Append signature if provided
     const formattedMessage = signature 
-      ? `${message}\n\n${signature}` 
-      : message;
+      ? `${sanitizedMessage}\n\n${signature}` 
+      : sanitizedMessage;
     
     // Get the bot token from global settings
     const { data: tokenData, error: tokenError } = await supabase
@@ -40,15 +52,48 @@ export async function sendTelegramMessage(
         body: JSON.stringify({
           chat_id: telegramUserId,
           text: formattedMessage,
-          parse_mode: "Markdown"
+          parse_mode: "HTML"  // Using HTML instead of Markdown for better compatibility
         }),
       }
     );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error response from Telegram API: ${errorText}`);
+      return false;
+    }
 
     const responseData = await response.json();
     
     if (!responseData.ok) {
       console.error(`Error sending Telegram message: ${responseData.description}`);
+      
+      // If error is related to parsing, retry without parse_mode
+      if (responseData.description && responseData.description.includes("parse")) {
+        console.log("Retrying without parse_mode...");
+        const retryResponse = await fetch(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: telegramUserId,
+              text: formattedMessage,
+              // No parse_mode here
+            }),
+          }
+        );
+        
+        const retryData = await retryResponse.json();
+        if (retryData.ok) {
+          console.log(`Successfully sent Telegram message to user ${telegramUserId} (fallback mode)`);
+          return true;
+        } else {
+          console.error(`Fallback also failed: ${retryData.description}`);
+          return false;
+        }
+      }
+      
       return false;
     }
 

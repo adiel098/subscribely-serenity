@@ -1,124 +1,140 @@
 
 import React, { useState } from "react";
-import { Image } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ImageUploadSection } from "../welcome-message/ImageUploadSection";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { MessagePreview } from "../MessagePreview";
+import { FilterTypeSelector } from "./FilterTypeSelector";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
+import { Loader2 } from "lucide-react";
 
-interface BroadcastMessageFormProps {
+export interface BroadcastMessageFormProps {
   entityId: string;
   entityType: 'community' | 'group';
 }
 
-export const BroadcastMessageForm = ({
-  entityId,
-  entityType
-}: BroadcastMessageFormProps) => {
-  const [message, setMessage] = useState('');
-  const [includeButton, setIncludeButton] = useState(false);
-  const [broadcastImage, setBroadcastImage] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
+type FilterType = 'all' | 'active' | 'expired' | 'plan';
+
+interface BroadcastFormValues {
+  message: string;
+  filterType: FilterType;
+  subscriptionPlanId?: string;
+}
+
+export const BroadcastMessageForm = ({ entityId, entityType }: BroadcastMessageFormProps) => {
   const [isSending, setIsSending] = useState(false);
+  const { sendBroadcastMessage } = useBroadcast();
 
-  const handleSendBroadcast = async () => {
-    if (!message.trim()) {
-      toast.error("Please enter a message");
-      return;
+  const form = useForm<BroadcastFormValues>({
+    defaultValues: {
+      message: "",
+      filterType: "all"
     }
+  });
 
+  const handleSubmit = async (values: BroadcastFormValues) => {
     setIsSending(true);
     try {
-      // Create a draft broadcast message
-      const broadcastData = {
-        message,
-        community_id: entityType === 'community' ? entityId : null,
-        group_id: entityType === 'group' ? entityId : null,
-        status: 'draft',
-        filter_type: 'all',
-        filter_data: {},
-        image_url: broadcastImage,
-        include_button: includeButton
-      };
+      const result = await sendBroadcastMessage({
+        entityId,
+        entityType,
+        message: values.message,
+        filterType: values.filterType,
+        subscriptionPlanId: values.subscriptionPlanId
+      });
 
-      const { error } = await supabase
-        .from('broadcast_messages')
-        .insert(broadcastData);
-
-      if (error) {
-        console.error('Error creating broadcast message:', error);
-        toast.error("Failed to create broadcast message");
-        return;
+      if (result.success) {
+        toast.success("Broadcast message sent successfully", {
+          description: `Sent to ${result.sent_success} recipients, Failed: ${result.sent_failed}`
+        });
+        form.reset();
+      } else {
+        toast.error("Failed to send broadcast message", {
+          description: result.error || "Please try again later"
+        });
       }
-
-      // Here you would typically trigger the actual broadcast sending process
-      // For now, we'll just show a success message
-      toast.success("Broadcast message created and queued for delivery");
-      
-      // Reset form
-      setMessage('');
-      setIncludeButton(false);
-      setBroadcastImage(null);
     } catch (error) {
-      console.error('Error sending broadcast:', error);
-      toast.error("Something went wrong while sending broadcast");
+      console.error("Error sending broadcast:", error);
+      toast.error("Failed to send broadcast message", {
+        description: "An unexpected error occurred"
+      });
     } finally {
       setIsSending(false);
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <Textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type your broadcast message..."
-        className="min-h-[150px]"
-      />
-      
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Image className="h-4 w-4" />
-          Broadcast Image
-        </Label>
-        <ImageUploadSection
-          image={broadcastImage}
-          setImage={setBroadcastImage}
-          updateSettings={{ mutate: () => {} }} // No auto-update for broadcast
-          settingsKey="broadcast_image"
-          isUploading={isUploading}
-          setIsUploading={setIsUploading}
-          imageError={imageError}
-          setImageError={setImageError}
-          label="Broadcast Image"
-        />
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="include-button"
-          checked={includeButton}
-          onCheckedChange={(checked) => setIncludeButton(checked as boolean)}
-        />
-        <label
-          htmlFor="include-button"
-          className="text-sm text-muted-foreground"
-        >
-          Include join button with message
-        </label>
-      </div>
+  const message = form.watch("message");
 
-      <Button 
-        onClick={handleSendBroadcast} 
-        disabled={isSending || !message.trim() || isUploading}
-        className="w-full"
-      >
-        {isSending ? "Sending..." : "Send Broadcast"}
-      </Button>
-    </div>
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="message"
+              rules={{ required: "Message is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter your broadcast message here..."
+                      className="min-h-[150px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="filterType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipients</FormLabel>
+                  <FormControl>
+                    <FilterTypeSelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={entityId}
+                      entityType={entityType}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSending || !message.trim()}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Broadcast"
+              )}
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Message Preview</h3>
+            <MessagePreview
+              message={message || "Your message will appear here..."}
+              buttonText={message ? "Join Now" : undefined}
+            />
+          </div>
+        </div>
+      </form>
+    </Form>
   );
 };

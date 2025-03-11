@@ -13,12 +13,13 @@ export async function checkUserSuspension(
   }
   
   try {
-    // Check user suspension status
+    // Check user suspension status from telegram_mini_app_users table instead of profiles
+    // This avoids the UUID conversion error as telegram_mini_app_users uses telegram_id as string
     const { data: userProfile, error: profileError } = await supabase
-      .from('profiles')
+      .from('telegram_mini_app_users')
       .select('is_suspended')
-      .eq('id', userId)
-      .single();
+      .eq('telegram_id', userId)
+      .maybeSingle();
     
     if (profileError) {
       console.error("[USER-VALIDATION] ❌ Error checking user suspension status:", profileError);

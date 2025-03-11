@@ -1,5 +1,5 @@
 
-import { StarIcon } from "lucide-react";
+import { StarIcon, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface PlanCardHeaderProps {
@@ -10,6 +10,17 @@ interface PlanCardHeaderProps {
 }
 
 export const PlanCardHeader = ({ name, price, interval, intervalLabel }: PlanCardHeaderProps) => {
+  // Helper function to get emoji based on interval
+  const getIntervalEmoji = (interval: string) => {
+    switch (interval) {
+      case 'monthly': return '📅';
+      case 'quarterly': return '🗓️';
+      case 'yearly': return '📆';
+      case 'one-time': return '♾️';
+      default: return '⏱️';
+    }
+  };
+
   return (
     <div className="space-y-2">
       <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
@@ -24,6 +35,12 @@ export const PlanCardHeader = ({ name, price, interval, intervalLabel }: PlanCar
           {interval === "one-time" ? "" : `/ ${intervalLabel}`}
         </span>
       </div>
+      {interval !== "one-time" && (
+        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
+          <Clock className="h-3.5 w-3.5 text-indigo-500" />
+          <span>{getIntervalEmoji(interval)} {intervalLabel} plan</span>
+        </div>
+      )}
     </div>
   );
 };

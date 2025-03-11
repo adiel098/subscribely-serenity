@@ -18,11 +18,11 @@ export const PlanFeatureList = ({
       {features.map((feature, index) => (
         <li 
           key={index} 
-          className="flex items-center justify-between gap-1.5 py-2 px-2.5 bg-indigo-50/80 rounded text-sm animate-fade-in group transition-all hover:bg-indigo-100/80"
+          className="flex items-center justify-between gap-1.5 py-2 px-3 bg-indigo-50/80 rounded-md text-sm animate-fade-in group transition-all hover:bg-indigo-100/80"
           style={{ animationDelay: `${index * 50}ms` }}
         >
           <div className="flex items-center gap-2">
-            <div className="h-4 w-4 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
               <CheckIcon className="h-3 w-3 text-indigo-600" />
             </div>
             <span className="text-gray-700 text-sm leading-tight">{feature}</span>

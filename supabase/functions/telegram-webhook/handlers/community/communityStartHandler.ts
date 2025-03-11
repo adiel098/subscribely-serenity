@@ -31,6 +31,19 @@ export async function handleCommunityStartCommand(
       return true;
     }
     
+    // Check if community has at least one active subscription plan and one active payment method
+    const { hasActivePlan, hasActivePaymentMethod } = await checkCommunityRequirements(supabase, communityId);
+    
+    if (!hasActivePlan || !hasActivePaymentMethod) {
+      console.log(`⚠️ [START-COMMAND] Community ${communityId} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `⚠️ This community is not fully configured yet. Please contact the administrator.`
+      );
+      return true;
+    }
+    
     const { data: subscriptionInfo } = await handleSubscription(supabase, communityId);
     
     if (subscriptionInfo) {
@@ -50,6 +63,39 @@ export async function handleCommunityStartCommand(
     console.error("❌ [START-COMMAND] Error in handleCommunityStartCommand:", error);
     return false;
   }
+}
+
+/**
+ * Check if a community has at least one active subscription plan and one active payment method
+ */
+async function checkCommunityRequirements(
+  supabase: ReturnType<typeof createClient>,
+  communityId: string
+): Promise<{ hasActivePlan: boolean, hasActivePaymentMethod: boolean }> {
+  console.log(`🔍 [START-COMMAND] Checking community requirements for community ${communityId}`);
+  
+  // Check for active subscription plans
+  const { count: planCount } = await supabase
+    .from('subscription_plans')
+    .select('id', { count: 'exact', head: true })
+    .eq('community_id', communityId)
+    .eq('is_active', true)
+    .limit(1);
+    
+  // Check for active payment methods
+  const { count: paymentMethodCount } = await supabase
+    .from('payment_methods')
+    .select('id', { count: 'exact', head: true })
+    .eq('community_id', communityId)
+    .eq('is_active', true)
+    .limit(1);
+  
+  const hasActivePlan = (planCount || 0) > 0;
+  const hasActivePaymentMethod = (paymentMethodCount || 0) > 0;
+  
+  console.log(`✅ [START-COMMAND] Community ${communityId} requirements check: Active Plans: ${hasActivePlan ? 'YES' : 'NO'}, Active Payment Methods: ${hasActivePaymentMethod ? 'YES' : 'NO'}`);
+  
+  return { hasActivePlan, hasActivePaymentMethod };
 }
 
 async function findCommunityById(supabase: ReturnType<typeof createClient>, communityId: string) {

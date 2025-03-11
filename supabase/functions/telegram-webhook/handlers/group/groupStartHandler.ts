@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../utils/telegramMessenger.ts';
 import { createGroupInviteLink } from '../inviteLinkHandler.ts';
@@ -28,6 +27,18 @@ export async function handleGroupStartCommand(
       return true;
     }
 
+    const { hasActivePlan, hasActivePaymentMethod } = await checkGroupRequirements(supabase, groupId);
+    
+    if (!hasActivePlan || !hasActivePaymentMethod) {
+      console.log(`⚠️ [START-COMMAND] Group ${groupId} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `⚠️ This group is not fully configured yet. Please contact the administrator.`
+      );
+      return true;
+    }
+
     const groupCommunities = await findGroupCommunities(supabase, groupId);
     if (!groupCommunities.success) return false;
 
@@ -51,6 +62,49 @@ export async function handleGroupStartCommand(
     console.error("❌ [START-COMMAND] Error in handleGroupStartCommand:", error);
     return false;
   }
+}
+
+/**
+ * Check if a group has at least one active subscription plan and one active payment method
+ */
+async function checkGroupRequirements(
+  supabase: ReturnType<typeof createClient>,
+  groupId: string
+): Promise<{ hasActivePlan: boolean, hasActivePaymentMethod: boolean }> {
+  console.log(`🔍 [START-COMMAND] Checking group requirements for group ${groupId}`);
+  
+  const { data: groupMembers } = await supabase
+    .from('community_group_members')
+    .select('community_id')
+    .eq('group_id', groupId);
+  
+  if (!groupMembers || groupMembers.length === 0) {
+    console.log(`⚠️ [START-COMMAND] No communities found for group ${groupId}`);
+    return { hasActivePlan: false, hasActivePaymentMethod: false };
+  }
+  
+  const communityIds = groupMembers.map(member => member.community_id);
+  
+  const { count: planCount } = await supabase
+    .from('subscription_plans')
+    .select('id', { count: 'exact', head: true })
+    .in('community_id', communityIds)
+    .eq('is_active', true)
+    .limit(1);
+    
+  const { count: paymentMethodCount } = await supabase
+    .from('payment_methods')
+    .select('id', { count: 'exact', head: true })
+    .in('community_id', communityIds)
+    .eq('is_active', true)
+    .limit(1);
+  
+  const hasActivePlan = (planCount || 0) > 0;
+  const hasActivePaymentMethod = (paymentMethodCount || 0) > 0;
+  
+  console.log(`✅ [START-COMMAND] Group ${groupId} requirements check: Active Plans: ${hasActivePlan ? 'YES' : 'NO'}, Active Payment Methods: ${hasActivePaymentMethod ? 'YES' : 'NO'}`);
+  
+  return { hasActivePlan, hasActivePaymentMethod };
 }
 
 /**

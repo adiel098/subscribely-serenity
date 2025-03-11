@@ -1,22 +1,33 @@
 
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
-export type TimeRange = "7d" | "30d" | "90d" | "all";
+export interface DashboardSubscriber extends Subscriber {
+  // Extended properties for dashboard
+  is_trial?: boolean;
+  trial_end_date?: string | null;
+  payment_status?: string;
+  metadata?: {
+    mini_app_accessed?: boolean;
+    [key: string]: any;
+  };
+}
 
-export interface ChartData {
-  date: string;
-  members: number;
+export interface TimeRangeData {
+  timeRange: "7d" | "30d" | "90d" | "all";
+  timeRangeLabel: string;
+  timeRangeStartDate: Date;
+}
+
+export interface FilteredSubscriberData {
+  filteredSubscribers: DashboardSubscriber[];
+  activeSubscribers: DashboardSubscriber[];
+  inactiveSubscribers: DashboardSubscriber[];
 }
 
 export interface RevenueData {
-  date: string;
-  revenue: number;
-}
-
-export interface PaymentStatistics {
-  completed: number;
-  pending: number;
-  failed: number;
+  totalRevenue: number;
+  avgRevenuePerSubscriber: number;
+  conversionRate: number;
 }
 
 export interface TrialUsersData {
@@ -29,20 +40,26 @@ export interface MiniAppData {
   nonSubscribers: number;
 }
 
-export interface DashboardInsights {
+export interface PaymentStatistics {
+  completed: number;
+  pending: number;
+  failed: number;
+}
+
+export interface ChartDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface ChartData {
+  memberGrowthData: ChartDataPoint[];
+  revenueData: ChartDataPoint[];
+}
+
+export interface Insights {
   averageSubscriptionDuration: number;
   mostPopularPlan: string;
   mostPopularPlanPrice: number;
   mostActiveDay: string;
   renewalRate: number;
-}
-
-// Extended Subscriber type with properties needed for the dashboard
-export interface DashboardSubscriber extends Subscriber {
-  is_trial?: boolean;
-  trial_end_date?: string | null;
-  payment_status?: string;
-  metadata?: {
-    mini_app_accessed?: boolean;
-  };
 }

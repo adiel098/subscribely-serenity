@@ -88,15 +88,26 @@ const Dashboard = () => {
         />
       </div>
 
-      <DashboardStats
-        totalSubscribers={filteredSubscribers.length}
-        activeSubscribers={activeSubscribers.length}
-        inactiveSubscribers={inactiveSubscribers.length}
-        totalRevenue={totalRevenue}
-        avgRevenuePerSubscriber={avgRevenuePerSubscriber}
-        conversionRate={conversionRate}
-        timeRange={timeRangeLabel}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-3">
+          <DashboardStats
+            totalSubscribers={filteredSubscribers.length}
+            activeSubscribers={activeSubscribers.length}
+            inactiveSubscribers={inactiveSubscribers.length}
+            totalRevenue={totalRevenue}
+            avgRevenuePerSubscriber={avgRevenuePerSubscriber}
+            conversionRate={conversionRate}
+            timeRange={timeRangeLabel}
+          />
+        </div>
+        <div className="md:col-span-1">
+          <TrialUsersStats
+            trialUsers={trialUsers}
+            miniAppUsers={miniAppUsers}
+            averageSubscriptionDuration={insights.averageSubscriptionDuration}
+          />
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-4 mt-6">
         <div className="w-full lg:w-[65%]">
@@ -121,14 +132,6 @@ const Dashboard = () => {
             />
           </div>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <TrialUsersStats
-          trialUsers={trialUsers}
-          miniAppUsers={miniAppUsers}
-          averageSubscriptionDuration={insights.averageSubscriptionDuration}
-        />
       </div>
     </div>
   );

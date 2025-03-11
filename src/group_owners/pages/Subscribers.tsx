@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -224,19 +225,19 @@ const Subscribers = () => {
         </div>
         <div className="w-full md:w-5/12">
           <div className="grid grid-cols-3 gap-3 h-full">
-            <div className="bg-white rounded-lg p-4 border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border-2 border-gray-300 shadow-sm text-center">
               <div className="text-2xl font-bold text-gray-800">{subscribers.length}</div>
               <div className="text-sm text-gray-600">Total Subscribers</div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border-2 border-green-400 shadow-sm text-center">
               <div className="text-2xl font-bold text-green-700">
                 {subscribers.filter(sub => sub.subscription_status === 'active').length}
               </div>
               <div className="text-sm text-gray-600">Active Subscribers</div>
             </div>
             
-            <div className="bg-white rounded-lg p-4 border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border-2 border-amber-400 shadow-sm text-center">
               <div className="text-2xl font-bold text-amber-700">
                 {subscribers.filter(sub => sub.subscription_status !== 'active').length}
               </div>

@@ -28,3 +28,4 @@ export async function getBotSettings(supabase: ReturnType<typeof createClient>, 
     throw error;
   }
 }
+

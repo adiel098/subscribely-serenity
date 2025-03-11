@@ -7,6 +7,7 @@ import { DashboardCharts } from "@/group_owners/components/dashboard/DashboardCh
 import { TrialUsersStats } from "@/group_owners/components/dashboard/TrialUsersStats";
 import { PaymentStatus } from "@/group_owners/components/dashboard/PaymentStatus";
 import { AnalyticsOverview } from "@/group_owners/components/dashboard/AnalyticsOverview";
+import { PaymentAnalytics } from "@/group_owners/components/dashboard/PaymentAnalytics";
 import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardStats";
 import { Loader2 } from "lucide-react";
 
@@ -113,17 +114,17 @@ const Dashboard = () => {
         />
       </div>
 
+      <div className="flex flex-wrap gap-6 mt-6 justify-center md:justify-start">
+        <PaymentAnalytics
+          paymentStats={paymentStats}
+        />
+      </div>
+
       <div className="mt-6">
         <TrialUsersStats
           trialUsers={trialUsers}
           miniAppUsers={miniAppUsers}
           averageSubscriptionDuration={insights.averageSubscriptionDuration}
-        />
-      </div>
-
-      <div className="mt-6">
-        <PaymentStatus
-          paymentStats={paymentStats}
         />
       </div>
     </div>

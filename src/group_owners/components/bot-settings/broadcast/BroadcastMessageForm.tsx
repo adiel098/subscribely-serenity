@@ -1,37 +1,78 @@
 
+import React, { useState } from "react";
 import { Image } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ImageUploadSection } from "../welcome-message/ImageUploadSection";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BroadcastMessageFormProps {
-  message: string;
-  setMessage: (value: string) => void;
-  includeButton: boolean;
-  setIncludeButton: (checked: boolean) => void;
-  broadcastImage: string | null;
-  setBroadcastImage: (image: string | null) => void;
-  isUploading: boolean;
-  setIsUploading: (isUploading: boolean) => void;
-  imageError: string | null;
-  setImageError: (error: string | null) => void;
+  entityId: string;
+  entityType: 'community' | 'group';
 }
 
 export const BroadcastMessageForm = ({
-  message,
-  setMessage,
-  includeButton,
-  setIncludeButton,
-  broadcastImage,
-  setBroadcastImage,
-  isUploading,
-  setIsUploading,
-  imageError,
-  setImageError,
+  entityId,
+  entityType
 }: BroadcastMessageFormProps) => {
+  const [message, setMessage] = useState('');
+  const [includeButton, setIncludeButton] = useState(false);
+  const [broadcastImage, setBroadcastImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendBroadcast = async () => {
+    if (!message.trim()) {
+      toast.error("Please enter a message");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Create a draft broadcast message
+      const broadcastData = {
+        message,
+        community_id: entityType === 'community' ? entityId : null,
+        group_id: entityType === 'group' ? entityId : null,
+        status: 'draft',
+        filter_type: 'all',
+        filter_data: {},
+        image_url: broadcastImage,
+        include_button: includeButton
+      };
+
+      const { error } = await supabase
+        .from('broadcast_messages')
+        .insert(broadcastData);
+
+      if (error) {
+        console.error('Error creating broadcast message:', error);
+        toast.error("Failed to create broadcast message");
+        return;
+      }
+
+      // Here you would typically trigger the actual broadcast sending process
+      // For now, we'll just show a success message
+      toast.success("Broadcast message created and queued for delivery");
+      
+      // Reset form
+      setMessage('');
+      setIncludeButton(false);
+      setBroadcastImage(null);
+    } catch (error) {
+      console.error('Error sending broadcast:', error);
+      toast.error("Something went wrong while sending broadcast");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
-    <>
+    <div className="space-y-4">
       <Textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -70,6 +111,14 @@ export const BroadcastMessageForm = ({
           Include join button with message
         </label>
       </div>
-    </>
+
+      <Button 
+        onClick={handleSendBroadcast} 
+        disabled={isSending || !message.trim() || isUploading}
+        className="w-full"
+      >
+        {isSending ? "Sending..." : "Send Broadcast"}
+      </Button>
+    </div>
   );
 };

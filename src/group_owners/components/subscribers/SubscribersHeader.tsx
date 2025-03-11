@@ -1,19 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
-  Loader2, 
-  Download, 
-  UserCheck, 
-  UserX, 
-  ChevronDown, 
-  Users 
-} from "lucide-react";
+import { Download, Loader2, Users } from "lucide-react";
 
 interface SubscribersHeaderProps {
   onUpdateStatus: (status: string) => void;
@@ -21,7 +8,7 @@ interface SubscribersHeaderProps {
   isUpdating: boolean;
 }
 
-export const SubscribersHeader = ({ onUpdateStatus, onExport, isUpdating }: SubscribersHeaderProps) => {
+export const SubscribersHeader = ({ onExport, isUpdating }: SubscribersHeaderProps) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -36,31 +23,6 @@ export const SubscribersHeader = ({ onUpdateStatus, onExport, isUpdating }: Subs
         </div>
         
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-1">
-                <ChevronDown className="h-4 w-4" />
-                Bulk Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem 
-                onClick={() => onUpdateStatus("active")}
-                className="cursor-pointer"
-              >
-                <UserCheck className="mr-2 h-4 w-4 text-green-600" />
-                Set All Active
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onUpdateStatus("inactive")}
-                className="cursor-pointer"
-              >
-                <UserX className="mr-2 h-4 w-4 text-red-500" />
-                Set All Inactive
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
           <Button 
             variant="outline" 
             onClick={onExport}

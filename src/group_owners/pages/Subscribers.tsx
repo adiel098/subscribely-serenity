@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -29,7 +30,6 @@ const Subscribers = () => {
     isLoading,
     isUpdating,
     refetch,
-    handleUpdateStatus,
     handleRemoveSubscriber,
     handleUnblockSubscriber
   } = useSubscriberManagement(selectedCommunityId || "");
@@ -216,7 +216,7 @@ const Subscribers = () => {
   return (
     <div className="space-y-6 pb-8">
       <SubscribersHeader
-        onUpdateStatus={handleUpdateStatus}
+        onUpdateStatus={() => {}}
         onExport={handleExport}
         isUpdating={isUpdating}
       />

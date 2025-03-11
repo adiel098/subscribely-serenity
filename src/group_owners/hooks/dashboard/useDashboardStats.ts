@@ -36,7 +36,7 @@ export const useDashboardStats = (communityId: string) => {
   console.log("💰 Revenue stats:", { totalRevenue, avgRevenuePerSubscriber, conversionRate });
     
   const { trialUsers, miniAppUsers } = useTrialUsers(filteredSubscribers);
-  console.log("🧪 Trial users:", trialUsers.length, "Mini app users:", miniAppUsers.length);
+  console.log("🧪 Trial users:", trialUsers.count, "Mini app users:", miniAppUsers.count);
   
   const { paymentStats } = usePaymentStats(filteredSubscribers);
   console.log("💳 Payment stats calculated");
@@ -74,7 +74,7 @@ export const useDashboardStats = (communityId: string) => {
         .from("communities")
         .select("owner_id")
         .eq("id", communityId)
-        .single();
+        .maybeSingle();
 
       if (error || !community) {
         console.error("❌ Error fetching community owner:", error);
@@ -87,7 +87,7 @@ export const useDashboardStats = (communityId: string) => {
         .from("profiles")
         .select("first_name, last_name")
         .eq("id", community.owner_id)
-        .single();
+        .maybeSingle();
 
       if (ownerError) {
         console.error("❌ Error fetching owner profile:", ownerError);

@@ -214,11 +214,37 @@ const Subscribers = () => {
 
   return (
     <div className="space-y-6 pb-8">
-      <SubscribersHeader
-        onUpdateStatus={() => {}}
-        onExport={handleExport}
-        isUpdating={isUpdating}
-      />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="w-full md:w-7/12">
+          <SubscribersHeader
+            onUpdateStatus={() => {}}
+            onExport={handleExport}
+            isUpdating={isUpdating}
+          />
+        </div>
+        <div className="w-full md:w-5/12">
+          <div className="grid grid-cols-3 gap-3 h-full">
+            <div className="bg-white rounded-lg p-4 border shadow-sm">
+              <div className="text-2xl font-bold text-gray-800">{subscribers.length}</div>
+              <div className="text-sm text-gray-600">Total Subscribers</div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 border shadow-sm">
+              <div className="text-2xl font-bold text-green-700">
+                {subscribers.filter(sub => sub.subscription_status === 'active').length}
+              </div>
+              <div className="text-sm text-gray-600">Active Subscribers</div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 border shadow-sm">
+              <div className="text-2xl font-bold text-amber-700">
+                {subscribers.filter(sub => sub.subscription_status !== 'active').length}
+              </div>
+              <div className="text-sm text-gray-600">Inactive Subscribers</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <SubscriberFilters
         searchQuery={searchQuery}
@@ -230,27 +256,6 @@ const Subscribers = () => {
         uniquePlans={uniquePlans}
         onExport={handleExport}
       />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg p-4 border shadow-sm">
-          <div className="text-2xl font-bold text-gray-800">{subscribers.length}</div>
-          <div className="text-sm text-gray-600">Total Subscribers</div>
-        </div>
-        
-        <div className="bg-white rounded-lg p-4 border shadow-sm">
-          <div className="text-2xl font-bold text-green-700">
-            {subscribers.filter(sub => sub.subscription_status === 'active').length}
-          </div>
-          <div className="text-sm text-gray-600">Active Subscribers</div>
-        </div>
-        
-        <div className="bg-white rounded-lg p-4 border shadow-sm">
-          <div className="text-2xl font-bold text-amber-700">
-            {subscribers.filter(sub => sub.subscription_status !== 'active').length}
-          </div>
-          <div className="text-sm text-gray-600">Inactive Subscribers</div>
-        </div>
-      </div>
 
       <SubscribersTable 
         subscribers={filteredSubscribers}

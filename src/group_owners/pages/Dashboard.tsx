@@ -89,8 +89,8 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="md:col-span-8">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="md:col-span-6">
           <DashboardStats
             totalSubscribers={filteredSubscribers.length}
             activeSubscribers={activeSubscribers.length}
@@ -101,13 +101,13 @@ const Dashboard = () => {
             timeRange={timeRangeLabel}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <TrialUsersStats
             trialUsers={trialUsers}
             averageSubscriptionDuration={insights.averageSubscriptionDuration}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <MiniAppUsersStats
             miniAppUsers={miniAppUsers}
           />

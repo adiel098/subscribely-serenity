@@ -38,7 +38,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
       return (
         <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
           <p className="font-medium">{formatTooltipDate(label)}</p>
-          <p className="text-[#8B5CF6]">
+          <p className={payload[0].name === "Revenue" ? "text-green-600" : "text-[#8B5CF6]"}>
             {`${payload[0].name}: ${payload[0].value}`}
           </p>
         </div>
@@ -121,8 +121,8 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                   >
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.05}/>
+                        <stop offset="5%" stopColor="#4ADE80" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#4ADE80" stopOpacity={0.05}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} stroke="#E5E7EB" opacity={0.3} />
@@ -144,12 +144,12 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                     <Area 
                       type="monotone"
                       dataKey="value" 
-                      stroke="#8B5CF6"
+                      stroke="#4ADE80"
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorRevenue)" 
                       name="Revenue"
-                      dot={{ fill: "#8B5CF6", r: 4 }}
+                      dot={{ fill: "#4ADE80", r: 4 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>

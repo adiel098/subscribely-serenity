@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -84,7 +83,6 @@ const PaymentMethods = () => {
       </motion.div>
 
       <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden max-w-4xl mx-auto">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-center gap-2 text-lg">
             <LayoutGrid className="h-5 w-5 text-indigo-600" />

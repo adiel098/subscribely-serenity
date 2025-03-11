@@ -1,10 +1,9 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../utils/telegramMessenger.ts';
-import { handleSubscription } from '../../subscriptionHandler.ts';
-import { createOrUpdateMember } from '../../utils/dbLogger.ts';
-import { updateCommunityMemberCount } from '../../utils/communityCountUtils.ts';
-import { createInviteLink } from '../inviteLinkHandler.ts';
+import { findCommunityById, checkCommunityRequirements } from './utils/communityDatabaseUtils.ts';
+import { handleCommunityJoinRequest } from './utils/inviteHandlerUtils.ts';
+import { createLogger } from '../../services/loggingService.ts';
 
 /**
  * Handle start command for community invites
@@ -15,14 +14,18 @@ export async function handleCommunityStartCommand(
   botToken: string,
   communityId: string
 ): Promise<boolean> {
+  const logger = createLogger(supabase, 'COMMUNITY-START-COMMAND');
+  
   try {
-    console.log(`🏢 [START-COMMAND] Processing community start command for community ID: ${communityId}`);
+    await logger.info(`🏢 Processing community start command for community ID: ${communityId}`);
     
     const userId = message.from.id.toString();
     const username = message.from.username;
     
     const community = await findCommunityById(supabase, communityId);
     if (!community.success) {
+      await logger.error(`❌ Community not found for ID: ${communityId}`);
+      
       await sendTelegramMessage(
         botToken,
         message.chat.id,
@@ -35,7 +38,8 @@ export async function handleCommunityStartCommand(
     const { hasActivePlan, hasActivePaymentMethod } = await checkCommunityRequirements(supabase, communityId);
     
     if (!hasActivePlan || !hasActivePaymentMethod) {
-      console.log(`⚠️ [START-COMMAND] Community ${communityId} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+      await logger.warn(`⚠️ Community ${communityId} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+      
       await sendTelegramMessage(
         botToken,
         message.chat.id,
@@ -44,150 +48,17 @@ export async function handleCommunityStartCommand(
       return true;
     }
     
-    const { data: subscriptionInfo } = await handleSubscription(supabase, communityId);
-    
-    if (subscriptionInfo) {
-      return await handleActiveSubscriber(
-        supabase,
-        message,
-        botToken,
-        community.data,
-        userId,
-        username,
-        subscriptionInfo
-      );
-    } else {
-      return await handleInactiveSubscriber(message, botToken, community.data);
-    }
+    // Now handle the join request
+    return await handleCommunityJoinRequest(
+      supabase,
+      message,
+      botToken,
+      community.data,
+      userId,
+      username
+    );
   } catch (error) {
-    console.error("❌ [START-COMMAND] Error in handleCommunityStartCommand:", error);
+    await logger.error(`❌ Error in handleCommunityStartCommand:`, error);
     return false;
   }
-}
-
-/**
- * Check if a community has at least one active subscription plan and one active payment method
- */
-async function checkCommunityRequirements(
-  supabase: ReturnType<typeof createClient>,
-  communityId: string
-): Promise<{ hasActivePlan: boolean, hasActivePaymentMethod: boolean }> {
-  console.log(`🔍 [START-COMMAND] Checking community requirements for community ${communityId}`);
-  
-  // Check for active subscription plans
-  const { count: planCount } = await supabase
-    .from('subscription_plans')
-    .select('id', { count: 'exact', head: true })
-    .eq('community_id', communityId)
-    .eq('is_active', true)
-    .limit(1);
-    
-  // Check for active payment methods
-  const { count: paymentMethodCount } = await supabase
-    .from('payment_methods')
-    .select('id', { count: 'exact', head: true })
-    .eq('community_id', communityId)
-    .eq('is_active', true)
-    .limit(1);
-  
-  const hasActivePlan = (planCount || 0) > 0;
-  const hasActivePaymentMethod = (paymentMethodCount || 0) > 0;
-  
-  console.log(`✅ [START-COMMAND] Community ${communityId} requirements check: Active Plans: ${hasActivePlan ? 'YES' : 'NO'}, Active Payment Methods: ${hasActivePaymentMethod ? 'YES' : 'NO'}`);
-  
-  return { hasActivePlan, hasActivePaymentMethod };
-}
-
-async function findCommunityById(supabase: ReturnType<typeof createClient>, communityId: string) {
-  const { data: community, error: communityError } = await supabase
-    .from('communities')
-    .select('id, name, telegram_chat_id')
-    .eq('id', communityId)
-    .single();
-  
-  if (communityError || !community) {
-    console.error(`❌ [START-COMMAND] Community not found: ${communityError?.message || 'Unknown error'}`);
-    return { success: false, error: communityError };
-  }
-  
-  return { success: true, data: community };
-}
-
-async function handleActiveSubscriber(
-  supabase: ReturnType<typeof createClient>,
-  message: any,
-  botToken: string,
-  community: any,
-  userId: string,
-  username: string | undefined,
-  subscriptionInfo: any
-): Promise<boolean> {
-  // Create/update member record
-  const memberData = {
-    telegram_user_id: userId,
-    telegram_username: username,
-    community_id: community.id,
-    is_active: true,
-    subscription_status: 'active',
-    subscription_plan_id: subscriptionInfo.subscriptionPlanId,
-    subscription_start_date: subscriptionInfo.subscriptionStartDate.toISOString(),
-    subscription_end_date: subscriptionInfo.subscriptionEndDate.toISOString()
-  };
-  
-  const { success: memberSuccess } = await createOrUpdateMember(supabase, memberData);
-  
-  if (!memberSuccess) {
-    await sendTelegramMessage(
-      botToken,
-      message.chat.id,
-      `❌ Sorry, there was an error processing your subscription.`
-    );
-    return true;
-  }
-  
-  try {
-    const inviteLinkResult = await createInviteLink(supabase, community.id, botToken, {
-      name: `User ${userId} - ${new Date().toISOString().split('T')[0]}`,
-      expireHours: 24
-    });
-    
-    if (inviteLinkResult?.invite_link) {
-      await sendTelegramMessage(
-        botToken,
-        message.chat.id,
-        `✅ Thanks for subscribing to ${community.name}!\n\n` +
-        `Here's your invite link to join the community:\n${inviteLinkResult.invite_link}\n\n` +
-        `This link will expire in 24 hours and is for your use only. Please don't share it with others.`
-      );
-      
-      await updateCommunityMemberCount(supabase, community.id);
-      return true;
-    }
-  } catch (linkError) {
-    console.error("❌ [START-COMMAND] Error creating invite link:", linkError);
-  }
-  
-  await sendTelegramMessage(
-    botToken,
-    message.chat.id,
-    `✅ Thanks for subscribing to ${community.name}!\n\n` +
-    `However, there was an issue creating your invite link. Please contact the community owner for assistance.`
-  );
-  
-  return true;
-}
-
-async function handleInactiveSubscriber(
-  message: any,
-  botToken: string,
-  community: any
-): Promise<boolean> {
-  await sendTelegramMessage(
-    botToken,
-    message.chat.id,
-    `👋 Welcome! To join ${community.name}, you need an active subscription.\n\n` +
-    `Please visit our mini app to purchase a subscription.`
-  );
-  
-  return true;
 }

@@ -79,7 +79,7 @@ export const SubscriptionPlans = ({
 
   return (
     <motion.div 
-      className="grid gap-4"
+      className="grid gap-4 max-w-md mx-auto"
       variants={containerVariants}
       initial="hidden"
       animate="show"

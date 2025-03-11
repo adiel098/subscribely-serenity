@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { useAvailablePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 
@@ -12,11 +12,13 @@ export const useCommunityRequirements = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
 
-  const { data: paymentMethods, isLoading: isLoadingPayments } = usePaymentMethods(selectedCommunityId);
+  // שימוש בהוק החדש שמביא גם אמצעי תשלום ברירת מחדל
+  const { data: paymentMethods, isLoading: isLoadingPayments } = useAvailablePaymentMethods(selectedCommunityId);
   const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(selectedCommunityId || "");
 
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
 
+  // בדיקה אם יש אמצעי תשלום פעיל (כולל ברירות מחדל)
   const hasActivePaymentMethods = paymentMethods?.some(pm => pm.is_active) || false;
   const hasPlans = (plans?.length || 0) > 0;
   const isFullyConfigured = hasActivePaymentMethods && hasPlans;

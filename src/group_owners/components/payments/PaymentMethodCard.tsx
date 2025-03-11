@@ -15,7 +15,9 @@ import {
   CheckCircle, 
   AlertCircle, 
   Lock, 
-  ChevronRight 
+  ChevronRight, 
+  Star,
+  Globe
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PaymentMethodConfig } from "./PaymentMethodConfig";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PaymentMethodCardProps {
   icon: React.ElementType;
@@ -39,6 +42,8 @@ interface PaymentMethodCardProps {
   imageSrc?: string;
   provider: string;
   communityId: string;
+  isDefault?: boolean;
+  onDefaultToggle?: (isDefault: boolean) => void;
 }
 
 export const PaymentMethodCard = ({ 
@@ -51,13 +56,21 @@ export const PaymentMethodCard = ({
   onConfigure,
   imageSrc,
   provider,
-  communityId
+  communityId,
+  isDefault = false,
+  onDefaultToggle
 }: PaymentMethodCardProps) => {
   const [isConfigOpen, setIsConfigOpen] = React.useState(false);
   
   const handleConfigClick = () => {
     setIsConfigOpen(true);
     onConfigure();
+  };
+
+  const handleDefaultToggle = (newValue: boolean) => {
+    if (onDefaultToggle) {
+      onDefaultToggle(newValue);
+    }
   };
 
   return (
@@ -67,7 +80,7 @@ export const PaymentMethodCard = ({
         transition={{ type: "spring", stiffness: 300 }}
         className="h-full"
       >
-        <Card className="relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[320px] mx-auto">
+        <Card className={`relative h-full border hover:border-indigo-300 transition-all duration-300 shadow-sm hover:shadow-md group overflow-hidden bg-white max-w-[320px] mx-auto ${isDefault ? 'border-amber-300 bg-amber-50/30' : ''}`}>
           <CardHeader className="pb-3 pt-5 px-5">
             <div className="flex justify-between items-start">
               <CardTitle className="flex items-center gap-3 text-xl">
@@ -82,17 +95,48 @@ export const PaymentMethodCard = ({
                 )}
                 <span>{title}</span>
               </CardTitle>
-              {isConfigured && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-sm">
-                  <CheckCircle className="h-3 w-3" />
-                  Configured
-                </Badge>
-              )}
+              <div className="flex gap-2">
+                {isDefault && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 text-sm">
+                          <Star className="h-3 w-3 fill-amber-500" />
+                          ברירת מחדל
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>זמין לכל הקהילות שלך</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {isConfigured && (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 text-sm">
+                    <CheckCircle className="h-3 w-3" />
+                    מוגדר
+                  </Badge>
+                )}
+              </div>
             </div>
             {description && <CardDescription className="mt-3 text-sm">{description}</CardDescription>}
           </CardHeader>
           <CardContent className="px-5 py-3">
-            {/* Content area */}
+            {/* תוכן */}
+            {onDefaultToggle && (
+              <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-indigo-500" />
+                  <span className="text-sm font-medium">הפוך לברירת מחדל</span>
+                </div>
+                <Switch
+                  checked={isDefault}
+                  onCheckedChange={handleDefaultToggle}
+                  disabled={!isConfigured}
+                  className="data-[state=checked]:bg-amber-500"
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="pt-0 pb-4 px-5">
             <div className="flex items-center justify-between w-full gap-3">
@@ -105,12 +149,12 @@ export const PaymentMethodCard = ({
                 {isConfigured ? (
                   <>
                     <Settings2 className="h-4 w-4" />
-                    <span>Edit</span>
+                    <span>ערוך</span>
                   </>
                 ) : (
                   <>
                     <Settings2 className="h-4 w-4" />
-                    <span>Configure</span>
+                    <span>הגדר</span>
                   </>
                 )}
                 <ChevronRight className="h-3.5 w-3.5 ml-auto" />
@@ -123,7 +167,7 @@ export const PaymentMethodCard = ({
                   <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
                 )}
                 <span className="text-sm font-medium">
-                  {isActive ? 'Active' : 'Inactive'}
+                  {isActive ? 'פעיל' : 'לא פעיל'}
                 </span>
                 <Switch
                   checked={isActive}
@@ -148,6 +192,13 @@ export const PaymentMethodCard = ({
               </div>
             </div>
           )}
+          {isDefault && (
+            <div className="absolute top-0 right-0">
+              <div className="w-16 h-16 overflow-hidden inline-block">
+                <div className="h-2 w-2 bg-amber-400 rotate-45 transform origin-top-left absolute top-0 right-0 shadow-md"></div>
+              </div>
+            </div>
+          )}
         </Card>
       </motion.div>
 
@@ -164,10 +215,10 @@ export const PaymentMethodCard = ({
                   <Icon className="h-6 w-6" />
                 </div>
               )}
-              <span>Configure {title}</span>
+              <span>הגדר {title}</span>
             </DialogTitle>
             <DialogDescription className="text-base">
-              Enter your {title} API credentials securely to enable payments
+              הזן את פרטי ה-API של {title} באופן מאובטח כדי לאפשר תשלומים
             </DialogDescription>
           </DialogHeader>
           <PaymentMethodConfig 
@@ -175,6 +226,8 @@ export const PaymentMethodCard = ({
             communityId={communityId} 
             onSuccess={() => setIsConfigOpen(false)}
             imageSrc={imageSrc}
+            isDefault={isDefault}
+            onDefaultChange={handleDefaultToggle}
           />
         </DialogContent>
       </Dialog>

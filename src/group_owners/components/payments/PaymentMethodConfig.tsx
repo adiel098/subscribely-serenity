@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Key, LockKeyhole, Loader2, Shield, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Key, LockKeyhole, Loader2, Shield, RefreshCw, AlertTriangle, CheckCircle2, Globe, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface PaymentMethodConfigProps {
@@ -13,6 +14,8 @@ interface PaymentMethodConfigProps {
   communityId: string;
   onSuccess: () => void;
   imageSrc?: string;
+  isDefault?: boolean;
+  onDefaultChange?: (isDefault: boolean) => void;
 }
 
 interface StripeConfig {
@@ -35,18 +38,21 @@ export const PaymentMethodConfig = ({
   provider, 
   communityId, 
   onSuccess,
-  imageSrc 
+  imageSrc,
+  isDefault = false,
+  onDefaultChange
 }: PaymentMethodConfigProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState<ConfigType>({} as ConfigType);
+  const [makeDefault, setMakeDefault] = useState(isDefault);
 
   useEffect(() => {
     const fetchConfig = async () => {
       try {
         const { data, error } = await supabase
           .from('payment_methods')
-          .select('config')
+          .select('config, is_default')
           .eq('community_id', communityId)
           .eq('provider', provider)
           .single();
@@ -58,6 +64,7 @@ export const PaymentMethodConfig = ({
 
         if (data?.config) {
           setConfig(data.config as ConfigType);
+          setMakeDefault(data.is_default || false);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -80,8 +87,8 @@ export const PaymentMethodConfig = ({
       isValid = !!stripeConfig.public_key && !!stripeConfig.secret_key;
       if (!isValid) {
         toast({
-          title: "Missing information",
-          description: "Please fill in both Stripe keys",
+          title: "מידע חסר",
+          description: "אנא מלא את כל השדות הנדרשים עבור Stripe",
           variant: "destructive",
         });
         return;
@@ -91,8 +98,8 @@ export const PaymentMethodConfig = ({
       isValid = !!paypalConfig.client_id && !!paypalConfig.secret;
       if (!isValid) {
         toast({
-          title: "Missing information",
-          description: "Please fill in both PayPal credentials",
+          title: "מידע חסר",
+          description: "אנא מלא את כל השדות הנדרשים עבור PayPal",
           variant: "destructive",
         });
         return;
@@ -102,8 +109,8 @@ export const PaymentMethodConfig = ({
       isValid = !!cryptoConfig.wallet_address;
       if (!isValid) {
         toast({
-          title: "Missing information",
-          description: "Please enter a wallet address",
+          title: "מידע חסר",
+          description: "אנא הזן כתובת ארנק עבור מטבע קריפטו",
           variant: "destructive",
         });
         return;
@@ -118,7 +125,8 @@ export const PaymentMethodConfig = ({
           community_id: communityId,
           provider: provider,
           is_active: true,
-          config: config
+          config: config,
+          is_default: makeDefault
         }, {
           onConflict: 'community_id,provider'
         });
@@ -126,17 +134,21 @@ export const PaymentMethodConfig = ({
       if (error) throw error;
 
       toast({
-        title: "Configuration saved",
-        description: `Your ${provider} payment method has been configured successfully`,
+        title: "הגדרות נשמרו בהצלחה",
+        description: `אמצעי התשלום ${provider} הוגדר בהצלחה`,
         variant: "default",
       });
+      
+      if (onDefaultChange) {
+        onDefaultChange(makeDefault);
+      }
       
       onSuccess();
     } catch (error) {
       console.error(`Error saving ${provider} config:`, error);
       toast({
-        title: "Error",
-        description: `Failed to save ${provider} configuration`,
+        title: "שגיאה",
+        description: `נכשל בשמירת הגדרות ${provider}`,
         variant: "destructive",
       });
     } finally {
@@ -178,7 +190,7 @@ export const PaymentMethodConfig = ({
             onChange={(e) => handleChange('public_key', e.target.value)}
             className="border-indigo-100 focus:border-indigo-300 shadow-sm"
           />
-          <p className="text-xs text-muted-foreground">Your Stripe publishable key starts with 'pk_'</p>
+          <p className="text-xs text-muted-foreground">מפתח Stripe הציבורי מתחיל ב-'pk_'</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="stripe-secret" className="flex items-center gap-2 text-sm font-medium">
@@ -193,7 +205,7 @@ export const PaymentMethodConfig = ({
             onChange={(e) => handleChange('secret_key', e.target.value)}
             className="border-indigo-100 focus:border-indigo-300 shadow-sm"
           />
-          <p className="text-xs text-muted-foreground">Your Stripe secret key starts with 'sk_'</p>
+          <p className="text-xs text-muted-foreground">מפתח Stripe הסודי מתחיל ב-'sk_'</p>
         </div>
       </motion.div>
     );
@@ -238,9 +250,9 @@ export const PaymentMethodConfig = ({
         <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-700">PayPal integration is in beta</p>
+            <p className="text-sm font-medium text-amber-700">שילוב PayPal נמצא בגרסת בטא</p>
             <p className="text-xs text-amber-600 mt-1">
-              PayPal integration is currently in beta testing. Some features may be limited.
+              שילוב PayPal נמצא כרגע בבדיקות בטא. חלק מהתכונות עשויות להיות מוגבלות.
             </p>
           </div>
         </div>
@@ -260,23 +272,23 @@ export const PaymentMethodConfig = ({
         <div className="space-y-2">
           <Label htmlFor="crypto-wallet" className="flex items-center gap-2 text-sm font-medium">
             <Key className="h-4 w-4 text-orange-500" />
-            Wallet Address
+            כתובת ארנק
           </Label>
           <Input 
             id="crypto-wallet" 
-            placeholder="Your crypto wallet address..." 
+            placeholder="כתובת ארנק הקריפטו שלך..." 
             value={cryptoConfig.wallet_address || ''}
             onChange={(e) => handleChange('wallet_address', e.target.value)}
             className="border-orange-100 focus:border-orange-300 shadow-sm"
           />
-          <p className="text-xs text-muted-foreground">Enter the wallet address where you want to receive payments</p>
+          <p className="text-xs text-muted-foreground">הזן את כתובת הארנק שבה ברצונך לקבל תשלומים</p>
         </div>
         <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-700">Cryptocurrency integration is in beta</p>
+            <p className="text-sm font-medium text-amber-700">שילוב קריפטו נמצא בגרסת בטא</p>
             <p className="text-xs text-amber-600 mt-1">
-              Cryptocurrency payment integration is currently in beta testing. Support for Bitcoin, Ethereum, and more coming soon!
+              שילוב תשלומי קריפטו נמצא כרגע בבדיקות בטא. תמיכה בביטקוין, אתריום ועוד בקרוב!
             </p>
           </div>
         </div>
@@ -293,7 +305,7 @@ export const PaymentMethodConfig = ({
       case 'crypto':
         return renderCryptoConfig();
       default:
-        return <p>Unknown provider</p>;
+        return <p>ספק לא ידוע</p>;
     }
   };
 
@@ -315,6 +327,25 @@ export const PaymentMethodConfig = ({
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
       {renderProviderConfig()}
       
+      {onDefaultChange && (
+        <div className="flex items-center justify-between p-4 rounded-md bg-amber-50/60 border border-amber-200">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+              <span className="font-medium">הפוך לברירת מחדל</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              אמצעי תשלום ברירת מחדל יהיו זמינים בכל הקהילות שלך
+            </p>
+          </div>
+          <Switch
+            checked={makeDefault}
+            onCheckedChange={setMakeDefault}
+            className="data-[state=checked]:bg-amber-500"
+          />
+        </div>
+      )}
+      
       <div className="pt-3">
         <Button 
           type="submit" 
@@ -324,7 +355,7 @@ export const PaymentMethodConfig = ({
           {isLoading ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              Saving Configuration...
+              שומר הגדרות...
             </>
           ) : (
             <>
@@ -336,7 +367,7 @@ export const PaymentMethodConfig = ({
                 />
               )}
               <CheckCircle2 className="h-4 w-4 mr-1" />
-              Save Configuration
+              שמור הגדרות
             </>
           )}
         </Button>
@@ -345,7 +376,7 @@ export const PaymentMethodConfig = ({
       <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg">
         <div className="flex items-center gap-2 text-blue-700">
           <Shield className="h-4 w-4" />
-          <p className="text-sm">Your API keys are encrypted and stored securely</p>
+          <p className="text-sm">מפתחות ה-API שלך מוצפנים ומאוחסנים באופן מאובטח</p>
         </div>
         <RefreshCw className="h-4 w-4 text-blue-500" />
       </div>

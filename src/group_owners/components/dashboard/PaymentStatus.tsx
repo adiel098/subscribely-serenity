@@ -7,7 +7,7 @@ import {
   XCircle, 
   CreditCard
 } from "lucide-react";
-import { PaymentStatistics } from "@/group_owners/hooks/useDashboardData";
+import { PaymentStatistics } from "@/group_owners/hooks/dashboard/types";
 
 interface PaymentStatusProps {
   paymentStats: PaymentStatistics;

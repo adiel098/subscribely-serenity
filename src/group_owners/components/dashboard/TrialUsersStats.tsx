@@ -7,7 +7,7 @@ import {
   Smartphone, 
   TrendingUp
 } from "lucide-react";
-import { TrialUsersData, MiniAppData } from "@/group_owners/hooks/useDashboardData";
+import { TrialUsersData, MiniAppData } from "@/group_owners/hooks/dashboard/types";
 
 interface TrialUsersStatsProps {
   trialUsers: TrialUsersData;

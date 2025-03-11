@@ -13,10 +13,13 @@ export interface Subscriber {
   is_active: boolean;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
+  first_name: string | null;
+  last_name: string | null;
   plan?: {
     id: string;
     name: string;
     price: number;
+    interval: string;
   } | null;
   // Extended properties for dashboard
   is_trial?: boolean;
@@ -46,6 +49,8 @@ export const useSubscribers = (communityId: string) => {
         is_active,
         subscription_start_date,
         subscription_end_date,
+        first_name,
+        last_name,
         is_trial,
         trial_end_date,
         payment_status,
@@ -53,7 +58,8 @@ export const useSubscribers = (communityId: string) => {
         subscription_plans:plan_id (
           id,
           name,
-          price
+          price,
+          interval
         )
       `)
       .eq("community_id", communityId);

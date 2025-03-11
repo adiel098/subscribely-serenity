@@ -1,32 +1,27 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface CreatePlanParams {
-  community_id?: string;
-  group_id?: string;
-  name: string;
-  description: string;
-  price: number;
-  interval: string;
-  features: string[];
-}
+import { CreateSubscriptionPlanData } from "../types/subscription.types";
 
 export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (planData: Omit<CreatePlanParams, 'community_id' | 'group_id'>) => {
+    mutationFn: async (planData: Omit<CreateSubscriptionPlanData, 'community_id' | 'group_id'>) => {
+      // Construct the payload based on whether it's a group or community
       const payload = {
         ...(isGroup 
-          ? { group_id: entityId } 
-          : { community_id: entityId }),
+          ? { group_id: entityId, community_id: null } 
+          : { community_id: entityId, group_id: null }),
         name: planData.name,
-        description: planData.description,
+        description: planData.description || null,
         price: planData.price,
         interval: planData.interval,
-        features: planData.features
+        features: planData.features || [],
+        is_active: true // Ensure plans are active by default
       };
+      
+      console.log("Creating subscription plan with payload:", payload);
       
       const { data, error } = await supabase
         .from('subscription_plans')
@@ -34,7 +29,11 @@ export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => 
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error in subscription plan creation:", error);
+        throw error;
+      }
+      
       return data;
     },
     onSuccess: () => {

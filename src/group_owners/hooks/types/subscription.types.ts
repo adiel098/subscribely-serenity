@@ -1,8 +1,8 @@
 
 export interface SubscriptionPlan {
   id: string;
-  community_id?: string;
-  group_id?: string;
+  community_id?: string | null;
+  group_id?: string | null;
   name: string;
   description: string | null;
   price: number;
@@ -14,13 +14,14 @@ export interface SubscriptionPlan {
 }
 
 export interface CreateSubscriptionPlanData {
-  community_id?: string;
-  group_id?: string;
+  community_id?: string | null;
+  group_id?: string | null;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
   interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
   features?: string[];
+  is_active?: boolean;
 }
 
 export interface PlatformSubscription {

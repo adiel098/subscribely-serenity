@@ -33,8 +33,8 @@ export async function handleCommunityJoinRequest(
     
     await logger.info(`✅ Got bot settings for community ${community.id}`);
 
-    // Create the Mini App URL for this community with the correct domain
-    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.id}`;
+    // Create the Mini App URL for this community with the correct domain - using simplified format
+    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?${community.id}`;
     await logger.info(`🔗 Generated Mini App URL: ${miniAppUrl}`);
 
     // If auto welcome message is enabled, send the configured welcome message (default is enabled)

@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
@@ -22,7 +23,7 @@ export async function handleGroupJoinRequest(
     const { data: botSettings, error: settingsError } = await supabase
       .from('telegram_bot_settings')
       .select('welcome_message, welcome_image')
-      .eq('group_id', group.id)
+      .eq('community_id', group.id)
       .single();
       
     if (settingsError) {

@@ -275,6 +275,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean | null
+          is_default: boolean | null
           provider: string
           updated_at: string
         }
@@ -284,6 +285,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_default?: boolean | null
           provider: string
           updated_at?: string
         }
@@ -293,6 +295,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_default?: boolean | null
           provider?: string
           updated_at?: string
         }
@@ -1132,6 +1135,21 @@ export type Database = {
           id: string
           user_id: string
           role: Database["public"]["Enums"]["admin_role"]
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_available_payment_methods: {
+        Args: {
+          community_id_param: string
+        }
+        Returns: {
+          id: string
+          provider: string
+          is_active: boolean
+          is_default: boolean
+          config: Json
+          community_id: string
           created_at: string
           updated_at: string
         }[]

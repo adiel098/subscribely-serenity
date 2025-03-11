@@ -122,7 +122,7 @@ export const PaymentMethodCard = ({
             {description && <CardDescription className="mt-3 text-sm">{description}</CardDescription>}
           </CardHeader>
           <CardContent className="px-5 py-3">
-            {/* תוכן */}
+            {/* Content */}
             {onDefaultToggle && (
               <div className="flex items-center justify-between p-2 px-3 rounded-lg bg-indigo-50/50 border border-indigo-100">
                 <div className="flex items-center gap-2">

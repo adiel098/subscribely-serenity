@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Loader2, Check, Globe, Star } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Key, LockKeyhole, Loader2, Shield, RefreshCw, AlertTriangle, CheckCircle2, Globe, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface PaymentMethodConfigProps {
   provider: string;
@@ -15,24 +16,8 @@ interface PaymentMethodConfigProps {
   onSuccess: () => void;
   imageSrc?: string;
   isDefault?: boolean;
-  onDefaultChange?: (isDefault: boolean) => void;
+  onDefaultChange?: (value: boolean) => void;
 }
-
-interface StripeConfig {
-  public_key: string;
-  secret_key: string;
-}
-
-interface PaypalConfig {
-  client_id: string;
-  secret: string;
-}
-
-interface CryptoConfig {
-  wallet_address: string;
-}
-
-type ConfigType = StripeConfig | PaypalConfig | CryptoConfig;
 
 export const PaymentMethodConfig = ({ 
   provider, 
@@ -44,341 +29,232 @@ export const PaymentMethodConfig = ({
 }: PaymentMethodConfigProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [config, setConfig] = useState<ConfigType>({} as ConfigType);
-  const [makeDefault, setMakeDefault] = useState(isDefault);
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDefaultSetting, setIsDefaultSetting] = useState(isDefault);
 
+  // Fetch existing configuration if available
   useEffect(() => {
     const fetchConfig = async () => {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from('payment_methods')
           .select('config, is_default')
-          .eq('community_id', communityId)
           .eq('provider', provider)
-          .single();
+          .eq('community_id', communityId)
+          .maybeSingle();
 
-        if (error) {
-          console.error(`Error fetching ${provider} config:`, error);
-          return;
+        if (error) throw error;
+        
+        if (data) {
+          setFormData(data.config || {});
+          setIsDefaultSetting(data.is_default || false);
         }
-
-        if (data?.config) {
-          setConfig(data.config as ConfigType);
-          setMakeDefault(data.is_default || false);
-        }
-      } catch (error) {
-        console.error('Error:', error);
+      } catch (err: any) {
+        console.error('Error fetching configuration:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (communityId) {
+    if (provider && communityId) {
       fetchConfig();
     }
-  }, [communityId, provider]);
+  }, [provider, communityId]);
 
+  // If isDefault prop changes, update local state
+  useEffect(() => {
+    setIsDefaultSetting(isDefault);
+  }, [isDefault]);
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate config based on provider
-    let isValid = false;
-    
-    if (provider === 'stripe') {
-      const stripeConfig = config as StripeConfig;
-      isValid = !!stripeConfig.public_key && !!stripeConfig.secret_key;
-      if (!isValid) {
-        toast({
-          title: "מידע חסר",
-          description: "אנא מלא את כל השדות הנדרשים עבור Stripe",
-          variant: "destructive",
-        });
-        return;
-      }
-    } else if (provider === 'paypal') {
-      const paypalConfig = config as PaypalConfig;
-      isValid = !!paypalConfig.client_id && !!paypalConfig.secret;
-      if (!isValid) {
-        toast({
-          title: "מידע חסר",
-          description: "אנא מלא את כל השדות הנדרשים עבור PayPal",
-          variant: "destructive",
-        });
-        return;
-      }
-    } else if (provider === 'crypto') {
-      const cryptoConfig = config as CryptoConfig;
-      isValid = !!cryptoConfig.wallet_address;
-      if (!isValid) {
-        toast({
-          title: "מידע חסר",
-          description: "אנא הזן כתובת ארנק עבור מטבע קריפטו",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    setIsSaving(true);
+    setError(null);
 
-    setIsLoading(true);
     try {
-      const { error } = await supabase
+      // Check if the payment method already exists
+      const { data: existingMethods, error: checkError } = await supabase
         .from('payment_methods')
-        .upsert({
-          community_id: communityId,
-          provider: provider,
-          is_active: true,
-          config: config,
-          is_default: makeDefault
-        }, {
-          onConflict: 'community_id,provider'
-        });
+        .select('id')
+        .eq('provider', provider)
+        .eq('community_id', communityId);
 
-      if (error) throw error;
+      if (checkError) throw checkError;
+
+      let result;
+      
+      if (existingMethods?.length) {
+        // Update existing payment method
+        result = await supabase
+          .from('payment_methods')
+          .update({ 
+            config: formData,
+            is_default: isDefaultSetting
+          })
+          .eq('provider', provider)
+          .eq('community_id', communityId);
+      } else {
+        // Create new payment method
+        result = await supabase
+          .from('payment_methods')
+          .insert({
+            provider,
+            community_id: communityId,
+            config: formData,
+            is_active: true,
+            is_default: isDefaultSetting
+          });
+      }
+
+      if (result.error) throw result.error;
 
       toast({
         title: "הגדרות נשמרו בהצלחה",
-        description: `אמצעי התשלום ${provider} הוגדר בהצלחה`,
+        description: `הגדרות התשלום עבור ${provider} נשמרו בהצלחה`,
         variant: "default",
       });
-      
-      if (onDefaultChange) {
-        onDefaultChange(makeDefault);
-      }
-      
+
+      // Call the success callback
       onSuccess();
-    } catch (error) {
-      console.error(`Error saving ${provider} config:`, error);
+    } catch (err: any) {
+      console.error('Error saving configuration:', err);
+      setError(err.message);
+      
       toast({
-        title: "שגיאה",
-        description: `נכשל בשמירת הגדרות ${provider}`,
+        title: "שגיאה בשמירת ההגדרות",
+        description: err.message,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setConfig(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Handle the default toggle change
+  const handleDefaultToggle = (checked: boolean) => {
+    setIsDefaultSetting(checked);
+    if (onDefaultChange) {
+      onDefaultChange(checked);
+    }
   };
 
-  // Animation variants
-  const fadeIn = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
-  };
-
-  const renderStripeConfig = () => {
-    const stripeConfig = config as StripeConfig;
-    return (
-      <motion.div
-        variants={fadeIn}
-        initial="hidden"
-        animate="show"
-        className="space-y-5"
-      >
-        <div className="space-y-2">
-          <Label htmlFor="stripe-public" className="flex items-center gap-2 text-sm font-medium">
-            <Key className="h-4 w-4 text-indigo-500" />
-            Stripe Public Key
-          </Label>
-          <Input 
-            id="stripe-public" 
-            placeholder="pk_test_..." 
-            value={stripeConfig.public_key || ''}
-            onChange={(e) => handleChange('public_key', e.target.value)}
-            className="border-indigo-100 focus:border-indigo-300 shadow-sm"
-          />
-          <p className="text-xs text-muted-foreground">מפתח Stripe הציבורי מתחיל ב-'pk_'</p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="stripe-secret" className="flex items-center gap-2 text-sm font-medium">
-            <LockKeyhole className="h-4 w-4 text-indigo-500" />
-            Stripe Secret Key
-          </Label>
-          <Input 
-            id="stripe-secret" 
-            type="password" 
-            placeholder="sk_test_..." 
-            value={stripeConfig.secret_key || ''}
-            onChange={(e) => handleChange('secret_key', e.target.value)}
-            className="border-indigo-100 focus:border-indigo-300 shadow-sm"
-          />
-          <p className="text-xs text-muted-foreground">מפתח Stripe הסודי מתחיל ב-'sk_'</p>
-        </div>
-      </motion.div>
-    );
-  };
-
-  const renderPaypalConfig = () => {
-    const paypalConfig = config as PaypalConfig;
-    return (
-      <motion.div
-        variants={fadeIn}
-        initial="hidden"
-        animate="show"
-        className="space-y-5"
-      >
-        <div className="space-y-2">
-          <Label htmlFor="paypal-client-id" className="flex items-center gap-2 text-sm font-medium">
-            <Key className="h-4 w-4 text-blue-500" />
-            PayPal Client ID
-          </Label>
-          <Input 
-            id="paypal-client-id" 
-            placeholder="Your PayPal client ID..." 
-            value={paypalConfig.client_id || ''}
-            onChange={(e) => handleChange('client_id', e.target.value)}
-            className="border-blue-100 focus:border-blue-300 shadow-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="paypal-secret" className="flex items-center gap-2 text-sm font-medium">
-            <LockKeyhole className="h-4 w-4 text-blue-500" />
-            PayPal Secret
-          </Label>
-          <Input 
-            id="paypal-secret" 
-            type="password" 
-            placeholder="Your PayPal secret..." 
-            value={paypalConfig.secret || ''}
-            onChange={(e) => handleChange('secret', e.target.value)}
-            className="border-blue-100 focus:border-blue-300 shadow-sm"
-          />
-        </div>
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-amber-700">שילוב PayPal נמצא בגרסת בטא</p>
-            <p className="text-xs text-amber-600 mt-1">
-              שילוב PayPal נמצא כרגע בבדיקות בטא. חלק מהתכונות עשויות להיות מוגבלות.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
-
-  const renderCryptoConfig = () => {
-    const cryptoConfig = config as CryptoConfig;
-    return (
-      <motion.div
-        variants={fadeIn}
-        initial="hidden"
-        animate="show"
-        className="space-y-5"
-      >
-        <div className="space-y-2">
-          <Label htmlFor="crypto-wallet" className="flex items-center gap-2 text-sm font-medium">
-            <Key className="h-4 w-4 text-orange-500" />
-            כתובת ארנק
-          </Label>
-          <Input 
-            id="crypto-wallet" 
-            placeholder="כתובת ארנק הקריפטו שלך..." 
-            value={cryptoConfig.wallet_address || ''}
-            onChange={(e) => handleChange('wallet_address', e.target.value)}
-            className="border-orange-100 focus:border-orange-300 shadow-sm"
-          />
-          <p className="text-xs text-muted-foreground">הזן את כתובת הארנק שבה ברצונך לקבל תשלומים</p>
-        </div>
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-amber-700">שילוב קריפטו נמצא בגרסת בטא</p>
-            <p className="text-xs text-amber-600 mt-1">
-              שילוב תשלומי קריפטו נמצא כרגע בבדיקות בטא. תמיכה בביטקוין, אתריום ועוד בקרוב!
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
-
-  const renderProviderConfig = () => {
+  // Get fields based on provider
+  const getFieldsForProvider = () => {
     switch (provider) {
       case 'stripe':
-        return renderStripeConfig();
+        return [
+          { name: 'api_key', label: 'Stripe API Key', type: 'password' },
+          { name: 'public_key', label: 'Stripe Public Key', type: 'text' },
+          { name: 'webhook_secret', label: 'Webhook Secret', type: 'password' },
+        ];
       case 'paypal':
-        return renderPaypalConfig();
+        return [
+          { name: 'client_id', label: 'Client ID', type: 'text' },
+          { name: 'client_secret', label: 'Client Secret', type: 'password' },
+        ];
       case 'crypto':
-        return renderCryptoConfig();
+        return [
+          { name: 'wallet_address', label: 'Wallet Address', type: 'text' },
+          { name: 'currency', label: 'Currency (BTC, ETH, etc.)', type: 'text' },
+        ];
       default:
-        return <p>ספק לא ידוע</p>;
+        return [];
     }
   };
 
-  // Get button color based on provider
-  const getButtonClasses = () => {
-    switch (provider) {
-      case 'stripe':
-        return "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800";
-      case 'paypal':
-        return "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800";
-      case 'crypto':
-        return "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600";
-      default:
-        return "bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800";
-    }
-  };
+  const fields = getFieldsForProvider();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
-      {renderProviderConfig()}
-      
-      {onDefaultChange && (
-        <div className="flex items-center justify-between p-4 rounded-md bg-amber-50/60 border border-amber-200">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-              <span className="font-medium">הפוך לברירת מחדל</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              אמצעי תשלום ברירת מחדל יהיו זמינים בכל הקהילות שלך
-            </p>
-          </div>
-          <Switch
-            checked={makeDefault}
-            onCheckedChange={setMakeDefault}
-            className="data-[state=checked]:bg-amber-500"
-          />
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm">
+          {error}
         </div>
       )}
-      
-      <div className="pt-3">
+
+      <div className="space-y-4">
+        {fields.map((field) => (
+          <div key={field.name} className="space-y-2">
+            <Label htmlFor={field.name} className="text-base">
+              {field.label}
+            </Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              type={field.type}
+              value={formData[field.name] || ''}
+              onChange={handleInputChange}
+              required
+              className="text-base border-indigo-100 focus:border-indigo-300"
+            />
+          </div>
+        ))}
+
+        <Separator className="my-4" />
+        
+        <div className={cn(
+          "flex items-center justify-between p-3 rounded-lg border",
+          isDefaultSetting ? "bg-amber-50 border-amber-200" : "bg-indigo-50/50 border-indigo-100"
+        )}>
+          <div className="flex items-center gap-2">
+            {isDefaultSetting ? (
+              <Star className="h-5 w-5 text-amber-500" />
+            ) : (
+              <Globe className="h-5 w-5 text-indigo-500" />
+            )}
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">הגדר כברירת מחדל לכל הקהילות</span>
+              <span className="text-xs text-gray-500">אמצעי תשלום זה יהיה זמין בכל הקהילות שלך</span>
+            </div>
+          </div>
+          <Switch
+            checked={isDefaultSetting}
+            onCheckedChange={handleDefaultToggle}
+            className={cn(
+              "data-[state=checked]:bg-amber-500",
+              "data-[state=unchecked]:bg-gray-200"
+            )}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end">
         <Button 
           type="submit" 
-          className={`w-full ${getButtonClasses()} flex items-center gap-2 shadow-md py-6`}
-          disabled={isLoading}
+          disabled={isSaving} 
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700"
         >
-          {isLoading ? (
+          {isSaving ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              שומר הגדרות...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              שומר...
             </>
           ) : (
             <>
-              {imageSrc && (
-                <img 
-                  src={imageSrc} 
-                  alt={provider} 
-                  className="h-5 w-5 object-contain bg-white rounded-full p-0.5" 
-                />
-              )}
-              <CheckCircle2 className="h-4 w-4 mr-1" />
+              <Check className="h-4 w-4" />
               שמור הגדרות
             </>
           )}
         </Button>
-      </div>
-      
-      <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg">
-        <div className="flex items-center gap-2 text-blue-700">
-          <Shield className="h-4 w-4" />
-          <p className="text-sm">מפתחות ה-API שלך מוצפנים ומאוחסנים באופן מאובטח</p>
-        </div>
-        <RefreshCw className="h-4 w-4 text-blue-500" />
       </div>
     </form>
   );

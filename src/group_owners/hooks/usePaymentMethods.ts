@@ -17,7 +17,7 @@ export const usePaymentMethods = (communityId: string | null) => {
       if (!communityId) return [];
       
       try {
-        // השתמש בפונקציית RPC החדשה שהוספנו
+        // Use the new stored function we created to get all available payment methods
         const { data, error } = await supabase
           .rpc('get_available_payment_methods', {
             community_id_param: communityId
@@ -31,7 +31,7 @@ export const usePaymentMethods = (communityId: string | null) => {
         return data as PaymentMethod[];
       } catch (err) {
         console.error("Error:", err);
-        // נסה עם השיטה הישנה כגיבוי
+        // Try with the old method as fallback
         const { data, error } = await supabase
           .from('payment_methods')
           .select('*')
@@ -45,7 +45,7 @@ export const usePaymentMethods = (communityId: string | null) => {
   });
 };
 
-// הוק חדש לקבלת כל אמצעי התשלום הזמינים (כולל ברירות מחדל) לקהילה
+// New hook to get all available payment methods (including defaults) for a community
 export const useAvailablePaymentMethods = (communityId: string | null) => {
   return useQuery({
     queryKey: ['available-payment-methods', communityId],

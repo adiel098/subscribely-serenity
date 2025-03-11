@@ -12,13 +12,13 @@ export const useCommunityRequirements = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
 
-  // שימוש בהוק החדש שמביא גם אמצעי תשלום ברירת מחדל
+  // Use the new hook that brings both community-specific and default payment methods
   const { data: paymentMethods, isLoading: isLoadingPayments } = useAvailablePaymentMethods(selectedCommunityId);
   const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(selectedCommunityId || "");
 
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
 
-  // בדיקה אם יש אמצעי תשלום פעיל (כולל ברירות מחדל)
+  // Check if there's any active payment method (including defaults)
   const hasActivePaymentMethods = paymentMethods?.some(pm => pm.is_active) || false;
   const hasPlans = (plans?.length || 0) > 0;
   const isFullyConfigured = hasActivePaymentMethods && hasPlans;

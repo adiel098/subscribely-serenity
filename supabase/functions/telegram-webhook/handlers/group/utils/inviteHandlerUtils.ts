@@ -20,17 +20,18 @@ export async function handleGroupJoinRequest(
   try {
     await logger.info(`👋 Processing join request for user ${userId} to group ${group.name}`);
     
-    // Get bot username (for mini app URL construction)
+    // Get bot username
     const botUsername = await getBotUsername(supabase);
-    
-    // Construct mini app URL for this group
-    const miniAppUrl = `https://t.me/${botUsername}/app?startapp=group_${group.id}`;
-    
-    await logger.info(`🔗 Created mini app URL: ${miniAppUrl}`);
     
     // Prepare welcome message with mini app button
     const welcomeMessage = `✅ Thanks for your interest in ${group.name}!\n\n` +
       `Click the button below to access the subscription options and join the group.`;
+    
+    // Create mini app URL with the correct format for web_app buttons
+    // Important: For web_app buttons, we need a direct https URL, not the t.me format
+    const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app?group=${group.id}`;
+    
+    await logger.info(`🔗 Created mini app URL: ${miniAppUrl}`);
     
     // Prepare inline keyboard with web_app button
     const inlineKeyboard = {

@@ -40,7 +40,7 @@ export async function processNewMember(
         telegram_username: username,
         community_id: communityId,
         is_active: true,
-        subscription_status: false
+        subscription_status: 'inactive'
       });
     }
   } catch (error) {
@@ -111,7 +111,7 @@ export async function processPaymentBasedMembership(
       telegram_username: username,
       community_id: communityId,
       is_active: true,
-      subscription_status: true,
+      subscription_status: 'active',
       subscription_plan_id: payment.plan_id,
       subscription_start_date: subscriptionStartDate.toISOString(),
       subscription_end_date: subscriptionEndDate.toISOString(),
@@ -141,7 +141,7 @@ export async function processMemberLeft(
       telegram_username: username,
       community_id: communityId,
       is_active: false,
-      subscription_status: false
+      subscription_status: 'inactive'
     });
     
     console.log(`[MEMBER-SERVICE] ✅ Member record updated for left/kicked user ${telegramUserId}`);

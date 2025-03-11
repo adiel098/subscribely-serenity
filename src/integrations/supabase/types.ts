@@ -274,6 +274,51 @@ export type Database = {
           },
         ]
       }
+      community_migration_data: {
+        Row: {
+          created_at: string | null
+          custom_link: string | null
+          description: string | null
+          id: string
+          is_group: boolean | null
+          migrated_at: string | null
+          name: string
+          owner_id: string
+          telegram_chat_id: string | null
+          telegram_invite_link: string | null
+          telegram_photo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_link?: string | null
+          description?: string | null
+          id: string
+          is_group?: boolean | null
+          migrated_at?: string | null
+          name: string
+          owner_id: string
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
+          telegram_photo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_link?: string | null
+          description?: string | null
+          id?: string
+          is_group?: boolean | null
+          migrated_at?: string | null
+          name?: string
+          owner_id?: string
+          telegram_chat_id?: string | null
+          telegram_invite_link?: string | null
+          telegram_photo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           community_id: string | null

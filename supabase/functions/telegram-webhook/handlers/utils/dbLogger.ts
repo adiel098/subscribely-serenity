@@ -30,6 +30,11 @@ export async function createOrUpdateMember(
   try {
     console.log(`[DB-LOGGER] 📝 Creating/updating member for user ${memberData.telegram_user_id} in community ${memberData.community_id}`);
     
+    // Convert boolean subscription_status to string if needed for the updated schema
+    if (typeof memberData.subscription_status === 'boolean') {
+      memberData.subscription_status = memberData.subscription_status ? 'active' : 'inactive';
+    }
+    
     // First check if member exists
     const { data: existingMember, error: checkError } = await supabase
       .from('telegram_chat_members')

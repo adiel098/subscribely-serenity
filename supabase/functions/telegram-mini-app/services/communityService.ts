@@ -21,9 +21,9 @@ export async function fetchCommunityData(
     entityId = start.toString().substring(6);
     console.log(`🔍 Extracted group ID: "${entityId}"`);
     
-    // Query for groups
+    // Query for communities with is_group=true (former groups)
     communityQuery = supabase
-      .from("community_groups")
+      .from("communities")
       .select(`
         id,
         name,
@@ -31,16 +31,22 @@ export async function fetchCommunityData(
         owner_id,
         telegram_chat_id,
         telegram_invite_link,
-        communities (
-          id,
-          name,
-          description,
-          telegram_photo_url,
-          telegram_invite_link,
-          telegram_chat_id
+        telegram_photo_url,
+        is_group,
+        community_relationships:community_relationships!parent_community_id(
+          community_id,
+          communities:community_id(
+            id, 
+            name,
+            description,
+            telegram_photo_url,
+            telegram_invite_link,
+            telegram_chat_id
+          )
         )
       `)
       .eq("id", entityId)
+      .eq("is_group", true)
       .single();
   } else {
     // Handle standard community requests (UUID or custom link)
@@ -58,6 +64,7 @@ export async function fetchCommunityData(
           telegram_photo_url,
           telegram_invite_link,
           telegram_chat_id,
+          is_group,
           subscription_plans (
             id,
             name,
@@ -81,6 +88,7 @@ export async function fetchCommunityData(
           telegram_photo_url,
           telegram_invite_link,
           telegram_chat_id,
+          is_group,
           subscription_plans (
             id,
             name,
@@ -108,35 +116,30 @@ export async function processCommunityData(
 ) {
   let displayCommunity;
   
-  if (isGroupRequest) {
+  if (isGroupRequest || data.is_group) {
     console.log(`✅ Successfully found group: ${data.name} (ID: ${data.id})`);
-    console.log(`📝 Group has ${data.communities?.length || 0} communities`);
+    
+    // Extract communities from relationships
+    let groupCommunities = [];
+    if (data.community_relationships && Array.isArray(data.community_relationships)) {
+      groupCommunities = data.community_relationships
+        .map(rel => rel.communities)
+        .filter(Boolean);
+      console.log(`📝 Group has ${groupCommunities.length} communities`);
+    }
     
     // For groups, we'll return the group data with its communities
     displayCommunity = {
       id: data.id,
       name: data.name,
       description: data.description || "Group subscription",
-      telegram_photo_url: null, // Groups may not have photos
+      telegram_photo_url: data.telegram_photo_url,
       telegram_invite_link: data.telegram_invite_link,
       telegram_chat_id: data.telegram_chat_id,
       is_group: true,
-      communities: data.communities || [],
-      subscription_plans: [] // Will fetch separately if needed
+      communities: groupCommunities || [],
+      subscription_plans: data.subscription_plans || []
     };
-    
-    // Fetch subscription plans for the group
-    const { data: groupPlans, error: groupPlansError } = await supabase
-      .from("subscription_plans")
-      .select("*")
-      .eq("group_id", data.id);
-      
-    if (!groupPlansError && groupPlans) {
-      displayCommunity.subscription_plans = groupPlans;
-      console.log(`📊 Found ${groupPlans.length} subscription plans for group`);
-    } else if (groupPlansError) {
-      console.error("Error fetching group plans:", groupPlansError);
-    }
     
   } else {
     // Standard community display

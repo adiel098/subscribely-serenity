@@ -1,12 +1,12 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../utils/telegramMessenger.ts';
-import { findGroupById, findGroupCommunities, checkGroupRequirements } from './utils/groupDatabaseUtils.ts';
-import { handleJoinRequest } from './utils/inviteHandlerUtils.ts';
+import { findGroupById, checkGroupRequirements } from './utils/groupDatabaseUtils.ts';
+import { handleGroupJoinRequest } from './utils/inviteHandlerUtils.ts';
 import { createLogger } from '../../services/loggingService.ts';
 
 /**
- * Handle the start command for group invites
+ * Handle start command for group invites
  */
 export async function handleGroupStartCommand(
   supabase: ReturnType<typeof createClient>, 
@@ -17,7 +17,7 @@ export async function handleGroupStartCommand(
   const logger = createLogger(supabase, 'GROUP-START-COMMAND');
   
   try {
-    await logger.info(`👥👥👥 Processing GROUP start command for group ID: ${groupId}`);
+    await logger.info(`🏢 Processing group start command for group ID: ${groupId}`);
     
     const userId = message.from.id.toString();
     const username = message.from.username;
@@ -33,7 +33,8 @@ export async function handleGroupStartCommand(
       );
       return true;
     }
-
+    
+    // Check if group has at least one active subscription plan and one active payment method
     const { hasActivePlan, hasActivePaymentMethod } = await checkGroupRequirements(supabase, groupId);
     
     if (!hasActivePlan || !hasActivePaymentMethod) {
@@ -46,22 +47,16 @@ export async function handleGroupStartCommand(
       );
       return true;
     }
-
-    const groupCommunities = await findGroupCommunities(supabase, groupId);
-    if (!groupCommunities.success) return false;
-
-    if (groupCommunities.communityIds.length === 0) {
-      await logger.warn(`⚠️ Group ${groupId} has no associated communities`);
-      
-      await sendTelegramMessage(
-        botToken,
-        message.chat.id,
-        `❌ Sorry, this group is not properly configured. Please contact the administrator.`
-      );
-      return true;
-    }
-
-    return await handleJoinRequest(supabase, message, botToken, group.data, userId);
+    
+    // Now handle the join request
+    return await handleGroupJoinRequest(
+      supabase,
+      message,
+      botToken,
+      group.data,
+      userId,
+      username
+    );
   } catch (error) {
     await logger.error(`❌ Error in handleGroupStartCommand:`, error);
     return false;

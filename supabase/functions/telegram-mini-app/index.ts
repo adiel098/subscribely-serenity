@@ -84,84 +84,151 @@ serve(async (req) => {
       );
     }
 
-    // 🔄 IMPORTANT: Improved logging for custom links
-    console.log(`🔍 Processing start parameter: "${start}"`);
+    // 🔄 Check if start parameter is for a group (prefixed with "group_")
+    const isGroupRequest = start.toString().startsWith("group_");
+    console.log(`🔍 Parameter type: ${isGroupRequest ? "Group" : "Community"} ID - "${start}"`);
     
-    // Check if start is a UUID or a custom link
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
     let communityQuery;
+    let entityId = start;
     
-    if (isUUID) {
-      console.log(`✅ Parameter is a UUID, querying by ID: ${start}`);
-      // If it's a UUID, search by ID
+    // Handle group requests
+    if (isGroupRequest) {
+      // Extract the actual group ID
+      entityId = start.toString().substring(6);
+      console.log(`🔍 Extracted group ID: "${entityId}"`);
+      
+      // Query for groups
       communityQuery = supabase
-        .from("communities")
+        .from("community_groups")
         .select(`
           id,
           name,
           description,
-          telegram_photo_url,
-          telegram_invite_link,
+          owner_id,
           telegram_chat_id,
-          subscription_plans (
+          telegram_invite_link,
+          communities (
             id,
             name,
             description,
-            price,
-            interval,
-            features
+            telegram_photo_url,
+            telegram_invite_link,
+            telegram_chat_id
           )
         `)
-        .eq("id", start)
+        .eq("id", entityId)
         .single();
     } else {
-      console.log(`🔗 Parameter appears to be a custom link: "${start}"`);
-      // If it's not a UUID, search by custom_link
-      communityQuery = supabase
-        .from("communities")
-        .select(`
-          id,
-          name,
-          description,
-          telegram_photo_url,
-          telegram_invite_link,
-          telegram_chat_id,
-          subscription_plans (
+      // Handle standard community requests (UUID or custom link)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(start);
+      
+      if (isUUID) {
+        console.log(`✅ Parameter is a UUID, querying by ID: ${start}`);
+        // If it's a UUID, search by ID
+        communityQuery = supabase
+          .from("communities")
+          .select(`
             id,
             name,
             description,
-            price,
-            interval,
-            features
-          )
-        `)
-        .eq("custom_link", start)
-        .single();
+            telegram_photo_url,
+            telegram_invite_link,
+            telegram_chat_id,
+            subscription_plans (
+              id,
+              name,
+              description,
+              price,
+              interval,
+              features
+            )
+          `)
+          .eq("id", start)
+          .single();
+      } else {
+        console.log(`🔗 Parameter appears to be a custom link: "${start}"`);
+        // If it's not a UUID, search by custom_link
+        communityQuery = supabase
+          .from("communities")
+          .select(`
+            id,
+            name,
+            description,
+            telegram_photo_url,
+            telegram_invite_link,
+            telegram_chat_id,
+            subscription_plans (
+              id,
+              name,
+              description,
+              price,
+              interval,
+              features
+            )
+          `)
+          .eq("custom_link", start)
+          .single();
+      }
     }
 
-    // Fetch community data
-    const { data: community, error: communityError } = await communityQuery;
+    // Fetch data from database
+    const { data, error } = await communityQuery;
 
-    if (communityError) {
-      console.error(`❌ Error fetching community with ${isUUID ? 'ID' : 'custom link'} "${start}":`, communityError);
-      console.error("Error details:", communityError.message, communityError.details);
+    if (error) {
+      console.error(`❌ Error fetching ${isGroupRequest ? 'group' : 'community'} with ID "${entityId}":`, error);
+      console.error("Error details:", error.message, error.details);
       
       return new Response(
         JSON.stringify({
-          error: "Failed to fetch community data",
-          details: communityError.message,
+          error: `Failed to fetch ${isGroupRequest ? 'group' : 'community'} data`,
+          details: error.message,
           param: start,
-          isUUID: isUUID
+          isGroupRequest
         }),
         { headers: corsHeaders, status: 500 }
       );
     }
 
-    console.log(`✅ Successfully found community: ${community.name} (ID: ${community.id})`);
+    // Process the response based on whether it's a group or community
+    let displayCommunity;
     
-    // Log community description to check if it exists
-    console.log(`📝 Community description: "${community.description || 'NOT SET'}"`);
-    console.log(`📊 Full community data:`, JSON.stringify(community, null, 2));
+    if (isGroupRequest) {
+      console.log(`✅ Successfully found group: ${data.name} (ID: ${data.id})`);
+      console.log(`📝 Group has ${data.communities?.length || 0} communities`);
+      
+      // For groups, we'll return the group data with its communities
+      displayCommunity = {
+        id: data.id,
+        name: data.name,
+        description: data.description || "Group subscription",
+        telegram_photo_url: null, // Groups may not have photos
+        telegram_invite_link: data.telegram_invite_link,
+        telegram_chat_id: data.telegram_chat_id,
+        is_group: true,
+        communities: data.communities || [],
+        subscription_plans: [] // Will fetch separately if needed
+      };
+      
+      // Fetch subscription plans for the group
+      const { data: groupPlans, error: groupPlansError } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .eq("group_id", data.id);
+        
+      if (!groupPlansError && groupPlans) {
+        displayCommunity.subscription_plans = groupPlans;
+        console.log(`📊 Found ${groupPlans.length} subscription plans for group`);
+      } else if (groupPlansError) {
+        console.error("Error fetching group plans:", groupPlansError);
+      }
+      
+    } else {
+      // Standard community display
+      console.log(`✅ Successfully found community: ${data.name} (ID: ${data.id})`);
+      displayCommunity = data;
+    }
+    
+    console.log(`📝 Entity description: "${displayCommunity.description || 'NOT SET'}"`);
 
     // Process Telegram Mini App init data if provided
     let userData = null;
@@ -194,21 +261,31 @@ serve(async (req) => {
                 last_name: telegramUser.last_name,
                 username: telegramUser.username,
                 photo_url: telegramUser.photo_url,
-                community_id: community.id, // Use resolved community ID
+                community_id: isGroupRequest ? null : displayCommunity.id, // Use resolved ID, null for groups
+                group_id: isGroupRequest ? displayCommunity.id : null, // Set group_id if it's a group request
               },
             ]);
           } else {
             // Update existing user with latest session info
             console.log("Updating existing user:", telegramUser.id);
+            const updateData = {
+              first_name: telegramUser.first_name,
+              last_name: telegramUser.last_name,
+              username: telegramUser.username,
+              photo_url: telegramUser.photo_url,
+              last_active: new Date().toISOString()
+            };
+            
+            // Only update community or group ID if this is a direct request for that entity
+            if (isGroupRequest) {
+              updateData.group_id = displayCommunity.id;
+            } else {
+              updateData.community_id = displayCommunity.id;
+            }
+            
             await supabase
               .from("telegram_mini_app_users")
-              .update({
-                first_name: telegramUser.first_name,
-                last_name: telegramUser.last_name,
-                username: telegramUser.username,
-                photo_url: telegramUser.photo_url,
-                community_id: community.id, // Use resolved community ID
-              })
+              .update(updateData)
               .eq("telegram_id", telegramUser.id);
               
             // Include email in userData if available
@@ -227,11 +304,11 @@ serve(async (req) => {
     }
     
     console.log("Final userData being returned:", userData);
-    console.log("Final community data being returned:", JSON.stringify(community, null, 2));
+    console.log("Final community data being returned:", JSON.stringify(displayCommunity, null, 2));
 
     return new Response(
       JSON.stringify({
-        community,
+        community: displayCommunity,
         user: userData,
       }),
       { headers: corsHeaders }

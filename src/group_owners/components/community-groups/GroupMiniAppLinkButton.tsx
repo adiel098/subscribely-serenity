@@ -24,7 +24,7 @@ export const GroupMiniAppLinkButton = ({ group, communities }: GroupMiniAppLinkB
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const botUsername = getBotUsername();
   
-  // Update to use the "group_" prefix for group IDs
+  // Ensure we use the "group_" prefix for group IDs
   const baseUrl = `https://t.me/${botUsername}?start=group_`;
   const fullLink = `${baseUrl}${group.id}`;
 

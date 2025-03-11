@@ -1,15 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, RotateCcw, Users } from "lucide-react";
+import { Download, Loader2, Users } from "lucide-react";
 
 interface SubscribersHeaderProps {
   onUpdateStatus: (status: string) => void;
   onExport: () => void;
-  onReset?: () => void;
   isUpdating: boolean;
 }
 
-export const SubscribersHeader = ({ onExport, onReset = () => {}, isUpdating }: SubscribersHeaderProps) => {
+export const SubscribersHeader = ({ onExport, isUpdating }: SubscribersHeaderProps) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -24,14 +23,6 @@ export const SubscribersHeader = ({ onExport, onReset = () => {}, isUpdating }: 
         </div>
         
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={onReset}
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset
-          </Button>
-          
           <Button 
             variant="outline" 
             onClick={onExport}

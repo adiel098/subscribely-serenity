@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { 
   MoreHorizontal, 
@@ -169,7 +168,7 @@ export const SubscribersTable = ({
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <span className="text-gray-600 ml-5">
+                        <span className="text-gray-600">
                           Until: {subscriber.subscription_end_date
                             ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
                             : "-"}
@@ -239,4 +238,3 @@ export const SubscribersTable = ({
     </div>
   );
 };
-

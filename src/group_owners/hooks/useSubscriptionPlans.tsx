@@ -18,7 +18,7 @@ export const useSubscriptionPlans = (entityId: string) => {
   
   const createPlan = useCreateSubscriptionPlan(entityId, isGroupSelected);
   const updatePlan = useUpdateSubscriptionPlan(entityId, isGroupSelected);
-  const deletePlan = useDeleteSubscriptionPlan(entityId);
+  const deletePlan = useDeleteSubscriptionPlan(entityId, isGroupSelected);
 
   return {
     plans,

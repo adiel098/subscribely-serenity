@@ -79,12 +79,6 @@ const Subscriptions = () => {
     );
   }
 
-  if (!plans || plans.length === 0) {
-    return <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />;
-  }
-
-  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
-
   return (
     <div className="space-y-6 py-6">
       <motion.div 
@@ -114,7 +108,7 @@ const Subscriptions = () => {
         </motion.div>
       </motion.div>
 
-      {plans.length === 0 ? (
+      {!plans || plans.length === 0 ? (
         <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
       ) : (
         <motion.div 
@@ -143,28 +137,32 @@ const Subscriptions = () => {
         isGroupMode={isGroupSelected}
       />
 
-      {selectedPlan && (
-        <EditPlanDialog 
-          isOpen={editDialogOpen} 
-          onOpenChange={setEditDialogOpen} 
-          editPlanData={{
-            id: selectedPlan.id,
-            name: selectedPlan.name,
-            description: selectedPlan.description || "",
-            price: selectedPlan.price.toString(),
-            interval: selectedPlan.interval,
-            features: selectedPlan.features
-          }} 
-          isGroupMode={isGroupSelected}
-        />
-      )}
-      
       {selectedPlanId && (
-        <DeletePlanDialog 
-          isOpen={deleteDialogOpen} 
-          onOpenChange={setDeleteDialogOpen} 
-          planId={selectedPlanId} 
-        />
+        <>
+          <EditPlanDialog 
+            isOpen={editDialogOpen} 
+            onOpenChange={setEditDialogOpen} 
+            editPlanData={
+              plans?.find(plan => plan.id === selectedPlanId) 
+                ? {
+                    id: selectedPlanId,
+                    name: plans.find(plan => plan.id === selectedPlanId)?.name || "",
+                    description: plans.find(plan => plan.id === selectedPlanId)?.description || "",
+                    price: plans.find(plan => plan.id === selectedPlanId)?.price.toString() || "",
+                    interval: plans.find(plan => plan.id === selectedPlanId)?.interval || "monthly",
+                    features: plans.find(plan => plan.id === selectedPlanId)?.features || []
+                  }
+                : undefined
+            }
+            isGroupMode={isGroupSelected}
+          />
+          
+          <DeletePlanDialog 
+            isOpen={deleteDialogOpen} 
+            onOpenChange={setDeleteDialogOpen} 
+            planId={selectedPlanId} 
+          />
+        </>
       )}
     </div>
   );

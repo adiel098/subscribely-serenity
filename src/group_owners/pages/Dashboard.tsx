@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ const Dashboard = () => {
     conversionRate,
     memberGrowthData,
     revenueData,
-    dailyStats,
     insights,
     trialUsers,
     miniAppUsers,
@@ -121,7 +119,7 @@ const Dashboard = () => {
         <DashboardCharts
           memberGrowthData={memberGrowthData}
           revenueData={revenueData}
-          dailyStats={dailyStats}
+          dailyStats={[]} // Passing empty array but component doesn't use it anymore
         />
       </div>
 

@@ -9,13 +9,10 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
   Line,
   LineChart,
 } from "recharts";
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 interface ChartData {
   date: string;
@@ -27,22 +24,15 @@ interface RevenueData {
   revenue: number;
 }
 
-interface DailyStats {
-  date: string;
-  subscriptions: number;
-  revenue: number;
-}
-
 interface DashboardChartsProps {
   memberGrowthData: ChartData[];
   revenueData: RevenueData[];
-  dailyStats: DailyStats[];
+  dailyStats: any[]; // Keeping the prop but not using it
 }
 
 export const DashboardCharts: React.FC<DashboardChartsProps> = ({
   memberGrowthData,
-  revenueData,
-  dailyStats
+  revenueData
 }) => {
   // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -54,7 +44,6 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
             <p key={`item-${index}`} className="text-sm" style={{ color: entry.color }}>
               {entry.name === 'members' && `Members: ${entry.value}`}
               {entry.name === 'revenue' && `Revenue: $${entry.value.toFixed(2)}`}
-              {entry.name === 'subscriptions' && `New Subscribers: ${entry.value}`}
             </p>
           ))}
         </div>
@@ -146,69 +135,6 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
                   strokeWidth={2}
                 />
               </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden lg:col-span-2">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-base font-medium text-gray-800 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-blue-500" />
-            Daily Activity Analysis
-          </h3>
-        </div>
-        <CardContent className="p-4">
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={dailyStats} 
-                margin={{ top: 15, right: 15, bottom: 25, left: 15 }}
-                barGap={8}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" vertical={false} />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatXAxis}
-                  tick={{fontSize: 12, fill: '#6b7280'}}
-                  stroke="#e5e7eb"
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  orientation="left" 
-                  tick={{fontSize: 12, fill: '#6b7280'}} 
-                  stroke="#e5e7eb" 
-                />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right" 
-                  tick={{fontSize: 12, fill: '#6b7280'}} 
-                  stroke="#e5e7eb" 
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                  wrapperStyle={{ paddingTop: 15, fontSize: 12 }}
-                  iconType="circle"
-                  iconSize={8}
-                />
-                <Bar 
-                  yAxisId="left" 
-                  dataKey="subscriptions" 
-                  name="New Subscribers"
-                  fill="#818cf8" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={30}
-                />
-                <Bar 
-                  yAxisId="right" 
-                  dataKey="revenue" 
-                  name="Revenue"
-                  fill="#34d399" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={30}
-                />
-              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

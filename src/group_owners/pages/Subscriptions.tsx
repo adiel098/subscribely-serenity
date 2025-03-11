@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans"
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { Loader2, Plus, PackagePlus, SparklesIcon } from "lucide-react";
 import { motion } from "framer-motion";
+
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
   quarterly: "bg-green-100 text-green-700",
@@ -16,6 +18,7 @@ const intervalColors = {
   yearly: "bg-orange-100 text-orange-700",
   "one-time": "bg-gray-100 text-gray-700"
 };
+
 const intervalLabels = {
   monthly: "Monthly",
   quarterly: "Quarterly",
@@ -23,6 +26,7 @@ const intervalLabels = {
   yearly: "Yearly",
   "one-time": "One Time"
 };
+
 const Subscriptions = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -38,17 +42,21 @@ const Subscriptions = () => {
     plans,
     isLoading
   } = useSubscriptionPlans(selectedCommunityId || "");
+
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
   };
+
   const handleEditPlan = (plan: any) => {
     setSelectedPlanId(plan.id);
     setEditDialogOpen(true);
   };
+
   const handleDeletePlan = (planId: string) => {
     setSelectedPlanId(planId);
     setDeleteDialogOpen(true);
   };
+
   const containerVariants = {
     hidden: {
       opacity: 0
@@ -60,6 +68,7 @@ const Subscriptions = () => {
       }
     }
   };
+
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -70,17 +79,21 @@ const Subscriptions = () => {
       y: 0
     }
   };
+
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>;
   }
+
   if (!plans) {
     return <div className="text-center py-8">
         <p className="text-red-500">No plans found</p>
       </div>;
   }
+
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
+
   return <div className="space-y-6 py-6">
       <motion.div className="flex justify-between items-center" initial={{
       opacity: 0,
@@ -130,7 +143,7 @@ const Subscriptions = () => {
             <Plus className="h-4 w-4 mr-1.5" />
             Create Your First Plan
           </Button>
-        </motion.div> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 px-[120px]">
+        </motion.div> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl">
           {plans?.map(plan => <motion.div key={plan.id} variants={itemVariants}>
               <SubscriptionPlanCard plan={plan} onEdit={handleEditPlan} onDelete={handleDeletePlan} intervalColors={intervalColors} intervalLabels={intervalLabels} />
             </motion.div>)}
@@ -150,4 +163,5 @@ const Subscriptions = () => {
       {selectedPlanId && <DeletePlanDialog isOpen={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} planId={selectedPlanId} />}
     </div>;
 };
+
 export default Subscriptions;

@@ -106,7 +106,7 @@ export const SubscriptionPlanCard = ({
           )}
           
           {plan.features && plan.features.length > 0 && (
-            <div className="mt-auto pt-4">
+            <div className="mt-3">
               <PlanFeatureList features={plan.features} />
             </div>
           )}

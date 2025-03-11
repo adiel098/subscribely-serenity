@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Unlock } from "lucide-react";
+import { Loader2, Unlock, UserCheck } from "lucide-react";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 interface UnblockSubscriberDialogProps {
@@ -60,31 +60,47 @@ export const UnblockSubscriberDialog = ({
 
   return (
     <AlertDialog open={open} onOpenChange={safeDialogChange}>
-      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unblock Subscriber</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to unblock{" "}
-            <span className="font-semibold">
-              {subscriber.telegram_username
-                ? `@${subscriber.telegram_username}`
-                : subscriber.telegram_user_id}
-            </span>?
-            This will change their status to "inactive" and allow them to subscribe again to your community.
+      <AlertDialogContent 
+        onClick={(e) => e.stopPropagation()}
+        className="border-blue-100 bg-white"
+      >
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <div className="h-24 w-24 rounded-full bg-blue-50 border-4 border-white flex items-center justify-center shadow-sm">
+            <UserCheck className="h-12 w-12 text-blue-500" />
+          </div>
+        </div>
+        
+        <AlertDialogHeader className="mt-8 text-center">
+          <AlertDialogTitle className="text-xl font-bold text-gray-900">Unblock Subscriber</AlertDialogTitle>
+          <AlertDialogDescription className="text-base text-gray-600">
+            <p className="mb-2">
+              Are you sure you want to unblock{" "}
+              <span className="font-semibold text-gray-900">
+                {subscriber.telegram_username
+                  ? `@${subscriber.telegram_username}`
+                  : subscriber.telegram_user_id}
+              </span>?
+            </p>
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-start gap-2 text-sm text-blue-800">
+              <Unlock className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-left">
+                This will change their status to <strong>inactive</strong> and allow them to subscribe again to your community. They will need to purchase a subscription to regain access.
+              </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="sm:justify-center gap-2 sm:space-x-0">
           <AlertDialogCancel 
             disabled={isProcessing} 
             onClick={handleCancel}
-            className="z-10"
+            className="border-gray-200 bg-white hover:bg-gray-50 text-gray-700 sm:w-32"
           >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmClick}
             disabled={isProcessing}
-            className="bg-blue-600 text-white hover:bg-blue-700 z-10"
+            className="bg-blue-600 text-white hover:bg-blue-700 sm:w-32"
           >
             {isProcessing ? (
               <>

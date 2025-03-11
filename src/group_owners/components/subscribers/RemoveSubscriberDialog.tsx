@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserX, AlertTriangle } from "lucide-react";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 interface RemoveSubscriberDialogProps {
@@ -60,31 +60,48 @@ export const RemoveSubscriberDialog = ({
 
   return (
     <AlertDialog open={open} onOpenChange={safeDialogChange}>
-      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to remove{" "}
-            <span className="font-semibold">
-              {subscriber.telegram_username
-                ? `@${subscriber.telegram_username}`
-                : subscriber.telegram_user_id}
-            </span>{" "}
-            from your group? This will cancel their subscription and they will be kicked from the Telegram group.
+      <AlertDialogContent 
+        onClick={(e) => e.stopPropagation()}
+        className="border-red-100 bg-white"
+      >
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
+          <div className="h-24 w-24 rounded-full bg-red-50 border-4 border-white flex items-center justify-center shadow-sm">
+            <UserX className="h-12 w-12 text-red-500" />
+          </div>
+        </div>
+        
+        <AlertDialogHeader className="mt-8 text-center">
+          <AlertDialogTitle className="text-xl font-bold text-gray-900">Remove Subscriber</AlertDialogTitle>
+          <AlertDialogDescription className="text-base text-gray-600">
+            <p className="mb-2">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold text-gray-900">
+                {subscriber.telegram_username
+                  ? `@${subscriber.telegram_username}`
+                  : subscriber.telegram_user_id}
+              </span>{" "}
+              from your group?
+            </p>
+            <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-2 text-sm text-amber-800">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-left">
+                This action will cancel their subscription and they will be <strong>immediately removed</strong> from the Telegram group.
+              </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="sm:justify-center gap-2 sm:space-x-0">
           <AlertDialogCancel 
             disabled={isProcessing} 
             onClick={handleCancel}
-            className="z-10"
+            className="border-gray-200 bg-white hover:bg-gray-50 text-gray-700 sm:w-32"
           >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmClick}
             disabled={isProcessing}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 z-10"
+            className="bg-red-600 text-white hover:bg-red-700 sm:w-32"
           >
             {isProcessing ? (
               <>

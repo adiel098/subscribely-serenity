@@ -231,14 +231,20 @@ const Subscribers = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Loading subscribers...</p>
+        <div className="relative">
+          <div className="h-16 w-16 rounded-full bg-indigo-100 animate-pulse flex items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+          </div>
+          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-indigo-500 animate-ping" />
+        </div>
+        <p className="text-indigo-700 animate-pulse font-medium">Loading subscribers data...</p>
+        <p className="text-sm text-gray-500">Please wait while we fetch your community members</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <SubscribersHeader
         onUpdateStatus={handleUpdateStatus}
         onExport={handleExport}
@@ -255,6 +261,28 @@ const Subscribers = () => {
         uniquePlans={uniquePlans}
       />
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100 shadow-sm">
+          <div className="text-2xl font-bold text-indigo-700">{subscribers.length}</div>
+          <div className="text-sm text-indigo-600">Total Subscribers</div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100 shadow-sm">
+          <div className="text-2xl font-bold text-green-700">
+            {subscribers.filter(sub => sub.subscription_status === 'active').length}
+          </div>
+          <div className="text-sm text-green-600">Active Subscribers</div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-4 border border-amber-100 shadow-sm">
+          <div className="text-2xl font-bold text-amber-700">
+            {subscribers.filter(sub => sub.subscription_status !== 'active').length}
+          </div>
+          <div className="text-sm text-amber-600">Inactive Subscribers</div>
+        </div>
+      </div>
+
       <SubscribersTable 
         subscribers={filteredSubscribers}
         onEdit={(subscriber) => {
@@ -264,6 +292,14 @@ const Subscribers = () => {
         onRemove={onRemoveClick}
         onUnblock={onUnblockClick}
       />
+      
+      {filteredSubscribers.length > 0 && (
+        <div className="text-center pt-2">
+          <p className="text-sm text-gray-500">
+            Showing <span className="font-medium text-indigo-600">{filteredSubscribers.length}</span> of <span className="font-medium text-indigo-600">{subscribers.length}</span> total subscribers
+          </p>
+        </div>
+      )}
 
       {selectedSubscriber && (
         <EditSubscriberDialog

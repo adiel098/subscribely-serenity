@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -74,12 +73,8 @@ const Subscriptions = () => {
     );
   }
 
-  if (!plans) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-500">No plans found</p>
-      </div>
-    );
+  if (!plans || plans.length === 0) {
+    return <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />;
   }
 
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);

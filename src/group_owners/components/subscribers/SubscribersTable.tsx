@@ -173,8 +173,7 @@ export const SubscribersTable = ({
                         </span>
                       </div>
                       <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 text-red-500 mr-1.5" />
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 ml-5">
                           Until: {subscriber.subscription_end_date
                             ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
                             : "-"}

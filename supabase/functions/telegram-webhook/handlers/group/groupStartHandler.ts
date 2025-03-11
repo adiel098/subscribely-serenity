@@ -51,13 +51,7 @@ export async function handleGroupStartCommand(
       return true;
     }
 
-    const activeMembership = await checkActiveMembership(supabase, userId, groupCommunities.communityIds);
-    
-    if (activeMembership) {
-      return await handleActiveUser(supabase, message, botToken, group.data, userId);
-    } else {
-      return await handleInactiveUser(message, botToken, group.data, groupCommunities.communityNames);
-    }
+    return await handleJoinRequest(supabase, message, botToken, group.data, userId);
   } catch (error) {
     console.error("❌ [START-COMMAND] Error in handleGroupStartCommand:", error);
     return false;
@@ -165,40 +159,16 @@ async function findGroupCommunities(supabase: ReturnType<typeof createClient>, g
 }
 
 /**
- * Check if user has an active membership in any of the communities
+ * Handle join request for any user regardless of subscription status
  */
-async function checkActiveMembership(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  communityIds: string[]
-) {
-  const { data: memberships, error: membershipError } = await supabase
-    .from('telegram_chat_members')
-    .select('id, subscription_status, subscription_end_date, community_id')
-    .in('community_id', communityIds)
-    .eq('telegram_user_id', userId);
-    
-  if (membershipError) {
-    console.error(`❌ [START-COMMAND] Error checking membership: ${membershipError.message}`);
-  }
-  
-  return memberships?.find(m => 
-    m.subscription_status === 'active' && 
-    (!m.subscription_end_date || new Date(m.subscription_end_date) > new Date())
-  );
-}
-
-/**
- * Handle user with active membership
- */
-async function handleActiveUser(
+async function handleJoinRequest(
   supabase: ReturnType<typeof createClient>,
   message: any,
   botToken: string,
   group: any,
   userId: string
 ): Promise<boolean> {
-  console.log(`💰 [START-COMMAND] Found active membership for user ${userId}`);
+  console.log(`👋 [START-COMMAND] Processing join request for user ${userId} to group ${group.name}`);
   
   try {
     const inviteLinkResult = await createGroupInviteLink(supabase, group.id, botToken, {
@@ -225,27 +195,6 @@ async function handleActiveUser(
     message.chat.id,
     `✅ Thanks for your interest in ${group.name}!\n\n` +
     `However, there was an issue creating your invite link. Please contact support for assistance.`
-  );
-  
-  return true;
-}
-
-/**
- * Handle user without active membership
- */
-async function handleInactiveUser(
-  message: any,
-  botToken: string,
-  group: any,
-  communityNames: string
-): Promise<boolean> {
-  console.log(`❌ [START-COMMAND] No active membership found for this user`);
-  
-  await sendTelegramMessage(
-    botToken,
-    message.chat.id,
-    `👋 Welcome! To join ${group.name}, you need an active subscription to at least one of these communities: ${communityNames}.\n\n` +
-    `Please visit our subscription page to get access.`
   );
   
   return true;

@@ -32,38 +32,41 @@ export const PaymentAnalytics: React.FC<PaymentAnalyticsProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0 pb-4 space-y-3">
-        {/* Transaction Status Section - More compact */}
-        <div className="grid grid-cols-3 gap-1">
-          <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
+        {/* Transaction Status Section - 2 per row */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col items-center p-2 bg-transparent border border-gray-200 rounded-md">
             <div className="flex items-center gap-1 mb-1">
               <CheckCircle className="w-3 h-3 text-emerald-500" />
               <span className="text-xs text-gray-600">Done</span>
             </div>
             <span className="font-semibold text-sm text-gray-800">{paymentStats.completed}</span>
           </div>
-          <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
+          <div className="flex flex-col items-center p-2 bg-transparent border border-gray-200 rounded-md">
             <div className="flex items-center gap-1 mb-1">
               <Clock className="w-3 h-3 text-yellow-500" />
               <span className="text-xs text-gray-600">Pending</span>
             </div>
             <span className="font-semibold text-sm text-gray-800">{paymentStats.pending}</span>
           </div>
-          <div className="flex flex-col items-center p-2 bg-gray-50 rounded-md">
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col items-center p-2 bg-transparent border border-gray-200 rounded-md">
             <div className="flex items-center gap-1 mb-1">
               <XCircle className="w-3 h-3 text-red-500" />
               <span className="text-xs text-gray-600">Failed</span>
             </div>
             <span className="font-semibold text-sm text-gray-800">{paymentStats.failed}</span>
           </div>
-        </div>
-
-        {/* Transaction Total */}
-        <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-          <div>
-            <p className="text-xs text-gray-500">Total Transactions</p>
-            <p className="text-sm font-bold text-gray-800">{totalPayments}</p>
+          
+          {/* Transaction Total */}
+          <div className="flex flex-col items-center p-2 bg-transparent border border-gray-200 rounded-md">
+            <div className="flex items-center gap-1 mb-1">
+              <Wallet className="w-3 h-3 text-gray-500" />
+              <span className="text-xs text-gray-600">Total</span>
+            </div>
+            <span className="font-semibold text-sm text-gray-800">{totalPayments}</span>
           </div>
-          <Wallet className="h-4 w-4 text-gray-400" />
         </div>
 
         {/* Success Rate */}

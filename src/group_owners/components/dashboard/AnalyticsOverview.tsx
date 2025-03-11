@@ -35,43 +35,59 @@ export const AnalyticsOverview: React.FC<AnalyticsOverviewProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0 space-y-3">
-        {/* Subscription Analysis */}
-        <div className="p-3 bg-white border border-gray-200 rounded-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500">Avg. Subscription</p>
+        {/* Two items per row */}
+        <div className="grid grid-cols-2 gap-2">
+          {/* Subscription Analysis */}
+          <div className="p-3 bg-transparent border border-gray-200 rounded-md">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1 mb-1">
+                <Clock className="h-3 w-3 text-gray-500" />
+                <p className="text-xs text-gray-500">Avg. Subscription</p>
+              </div>
               <p className="text-sm font-bold text-gray-800">{averageSubscriptionDuration} days</p>
             </div>
-            <Clock className="h-4 w-4 text-gray-400" />
           </div>
-        </div>
-        
-        {/* Most Popular Plan */}
-        <div className="p-3 bg-white border border-gray-200 rounded-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500">Most Popular</p>
+          
+          {/* Most Popular Plan */}
+          <div className="p-3 bg-transparent border border-gray-200 rounded-md">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1 mb-1">
+                <CreditCard className="h-3 w-3 text-gray-500" />
+                <p className="text-xs text-gray-500">Most Popular</p>
+              </div>
               <p className="text-sm font-bold text-gray-800">{mostPopularPlan}</p>
               <p className="text-xs font-medium text-green-600">${mostPopularPlanPrice}</p>
             </div>
-            <CreditCard className="h-4 w-4 text-gray-400" />
           </div>
         </div>
 
-        {/* Most Active Day */}
-        <div className="p-3 bg-white border border-gray-200 rounded-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500">Most Active Day</p>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Most Active Day */}
+          <div className="p-3 bg-transparent border border-gray-200 rounded-md">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1 mb-1">
+                <CalendarClock className="h-3 w-3 text-gray-500" />
+                <p className="text-xs text-gray-500">Most Active Day</p>
+              </div>
               <p className="text-sm font-bold text-gray-800">{mostActiveDay}</p>
             </div>
-            <CalendarClock className="h-4 w-4 text-gray-400" />
+          </div>
+          
+          {/* Empty or placeholder box to maintain grid layout */}
+          <div className="p-3 bg-transparent border border-gray-200 rounded-md">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-1 mb-1">
+                <TrendingUp className="h-3 w-3 text-gray-500" />
+                <p className="text-xs text-gray-500">Renewal Rate</p>
+              </div>
+              <p className="text-sm font-bold text-gray-800">{renewalRate}%</p>
+            </div>
           </div>
         </div>
         
-        {/* Renewal Rate */}
+        {/* Renewal Rate Progress Bar */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Renewal Rate</p>
+          <p className="text-xs text-gray-500 mb-1">Renewal Progress</p>
           <div className="flex items-center gap-2">
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div 

@@ -20,15 +20,27 @@ export async function handleGroupJoinRequest(
   try {
     await logger.info(`👋 Processing join request for user ${userId} to group ${group.name}`);
     
+    // Get bot settings for this group
+    const { data: botSettings, error: settingsError } = await supabase
+      .from('telegram_bot_settings')
+      .select('welcome_message, welcome_image')
+      .eq('group_id', group.id)
+      .single();
+      
+    if (settingsError) {
+      await logger.error(`❌ Error fetching bot settings:`, settingsError);
+      // Continue with default welcome message if settings not found
+    }
+    
     // Get bot username
     const botUsername = await getBotUsername(supabase);
     
-    // Prepare welcome message with mini app button
-    const welcomeMessage = `✅ Thanks for your interest in ${group.name}!\n\n` +
+    // Use bot settings welcome message if available, otherwise use default
+    const welcomeMessage = botSettings?.welcome_message || 
+      `✅ Thanks for your interest in ${group.name}!\n\n` +
       `Click the button below to access the subscription options and join the group.`;
     
     // Create mini app URL with the correct format for web_app buttons
-    // Important: For web_app buttons, we need a direct https URL, not the t.me format
     const miniAppUrl = `https://trkiniaqliiwdkrvvuky.supabase.co/functions/v1/telegram-mini-app?group=${group.id}`;
     
     await logger.info(`🔗 Created mini app URL: ${miniAppUrl}`);
@@ -50,7 +62,7 @@ export async function handleGroupJoinRequest(
       botToken,
       message.chat.id,
       welcomeMessage,
-      null, // No photo URL
+      botSettings?.welcome_image || null,
       inlineKeyboard
     );
     

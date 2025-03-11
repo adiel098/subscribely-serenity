@@ -1,7 +1,7 @@
 
 import { useMemo } from "react";
 import { format, differenceInDays } from "date-fns";
-import { DashboardSubscriber, DashboardInsights } from "./types";
+import { DashboardSubscriber, Insights } from "./types";
 
 export const useInsights = (
   filteredSubscribers: DashboardSubscriber[],
@@ -79,7 +79,7 @@ export const useInsights = (
     return Math.round((activeSubscribers.length / (activeSubscribers.length + inactiveSubscribers.length || 1)) * 100);
   }, [activeSubscribers, inactiveSubscribers]);
 
-  const insights: DashboardInsights = {
+  const insights: Insights = {
     averageSubscriptionDuration,
     mostPopularPlan: mostPopularPlan.name,
     mostPopularPlanPrice: mostPopularPlan.price,

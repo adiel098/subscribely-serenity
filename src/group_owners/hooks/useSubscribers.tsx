@@ -36,7 +36,7 @@ export const useSubscribers = (communityId: string) => {
     if (!communityId) return [];
 
     // Fetch subscribers from database
-    const { data, error } = await supabase
+    const { data: members, error: membersError } = await supabase
       .from("telegram_chat_members")
       .select(`
         id,
@@ -55,24 +55,49 @@ export const useSubscribers = (communityId: string) => {
         trial_end_date,
         payment_status,
         metadata,
-        subscription_plans:plan_id (
+        subscription_plan_id
+      `)
+      .eq("community_id", communityId);
+
+    if (membersError) {
+      console.error("Error fetching subscribers:", membersError);
+      return [];
+    }
+
+    // Get all plan IDs to fetch plan data separately
+    const planIds = members
+      .filter(member => member.subscription_plan_id)
+      .map(member => member.subscription_plan_id);
+
+    // If there are plan IDs, fetch plans
+    let plansData: Record<string, any> = {};
+    
+    if (planIds.length > 0) {
+      const { data: plans, error: plansError } = await supabase
+        .from("subscription_plans")
+        .select(`
           id,
           name,
           price,
           interval
-        )
-      `)
-      .eq("community_id", communityId);
+        `)
+        .in("id", planIds);
 
-    if (error) {
-      console.error("Error fetching subscribers:", error);
-      return [];
+      if (plansError) {
+        console.error("Error fetching subscription plans:", plansError);
+      } else if (plans) {
+        // Create a map of plans by ID for easy lookup
+        plansData = plans.reduce((acc, plan) => {
+          acc[plan.id] = plan;
+          return acc;
+        }, {} as Record<string, any>);
+      }
     }
 
-    // Map the data to match our Subscriber interface
-    return data.map((member: any) => ({
+    // Map the members with their plans
+    return members.map(member => ({
       ...member,
-      plan: member.subscription_plans
+      plan: member.subscription_plan_id ? plansData[member.subscription_plan_id] : null
     }));
   };
 

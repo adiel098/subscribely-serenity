@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface BroadcastParams {
+interface BroadcastMessageParams {
   entityId: string;
   entityType: 'community' | 'group';
   message: string;
@@ -10,34 +11,22 @@ interface BroadcastParams {
   subscriptionPlanId?: string;
 }
 
-interface BroadcastResult {
-  success: boolean;
-  sent_success?: number;
-  sent_failed?: number;
-  total_recipients?: number;
-  error?: string;
-}
-
 export const useBroadcast = () => {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const sendBroadcastMessage = async (params: BroadcastParams): Promise<BroadcastResult> => {
-    setIsLoading(true);
+  const sendBroadcastMessage = async (params: BroadcastMessageParams) => {
     try {
-      console.log("Broadcasting message with params:", params);
+      console.log('Sending broadcast message:', params);
       
-      // Determine the ID field name based on entity type
-      const idField = params.entityType === 'community' ? 'community_id' : 'group_id';
-      
-      // Insert the broadcast record to track it
-      const { data: broadcastRecord, error: insertError } = await supabase
+      // Create a new broadcast record
+      const { data: broadcastRecord, error: broadcastError } = await supabase
         .from('broadcast_messages')
         .insert({
-          [idField]: params.entityId,
           message: params.message,
           filter_type: params.filterType,
           subscription_plan_id: params.filterType === 'plan' ? params.subscriptionPlanId : null,
-          status: 'sending',
+          ...(params.entityType === 'community' 
+            ? { community_id: params.entityId } 
+            : { group_id: params.entityId }),
+          status: 'pending',
           total_recipients: 0,
           sent_success: 0,
           sent_failed: 0
@@ -45,78 +34,42 @@ export const useBroadcast = () => {
         .select()
         .single();
       
-      if (insertError) {
-        console.error("Error creating broadcast record:", insertError);
-        return {
-          success: false,
-          error: "Failed to create broadcast record"
-        };
+      if (broadcastError) {
+        console.error('Error creating broadcast record:', broadcastError);
+        throw new Error(`Failed to create broadcast: ${broadcastError.message}`);
       }
       
-      // Call the edge function to handle the actual sending
-      const { data, error } = await supabase.functions.invoke('telegram-webhook', {
+      // Call the edge function to send the broadcast
+      const response = await supabase.functions.invoke('send-broadcast', {
         body: {
-          action: 'broadcast',
-          community_id: params.entityType === 'community' ? params.entityId : null,
-          group_id: params.entityType === 'group' ? params.entityId : null,
-          message: params.message,
+          broadcast_id: broadcastRecord.id,
+          entity_id: params.entityId,
+          entity_type: params.entityType,
           filter_type: params.filterType,
-          subscription_plan_id: params.filterType === 'plan' ? params.subscriptionPlanId : null,
-          broadcast_id: broadcastRecord.id
+          subscription_plan_id: params.subscriptionPlanId
         }
       });
       
-      if (error) {
-        console.error("Error sending broadcast:", error);
-        
-        // Update the broadcast record with the error status
-        await supabase
-          .from('broadcast_messages')
-          .update({
-            status: 'failed',
-            filter_data: { error: error.message }
-          })
-          .eq('id', broadcastRecord.id);
-          
-        return {
-          success: false,
-          error: error.message
-        };
-      }
-      
-      // Update the broadcast record with the result
-      if (data?.status) {
-        await supabase
-          .from('broadcast_messages')
-          .update({
-            status: 'completed',
-            total_recipients: data.totalRecipients || 0,
-            sent_success: data.successCount || 0,
-            sent_failed: data.failureCount || 0,
-            sent_at: new Date().toISOString()
-          })
-          .eq('id', broadcastRecord.id);
+      if (response.error) {
+        console.error('Error invoking send-broadcast function:', response.error);
+        throw new Error(`Failed to send broadcast: ${response.error.message}`);
       }
       
       return {
         success: true,
-        sent_success: data?.successCount || 0,
-        sent_failed: data?.failureCount || 0,
-        total_recipients: data?.totalRecipients || 0
+        broadcast_id: broadcastRecord.id,
+        ...response.data
       };
     } catch (error) {
-      console.error("Error in sendBroadcastMessage:", error);
+      console.error('Error in sendBroadcastMessage:', error);
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error sending broadcast'
       };
-    } finally {
-      setIsLoading(false);
     }
   };
-
+  
   return {
-    sendBroadcastMessage,
-    isLoading
+    sendBroadcastMessage
   };
 };

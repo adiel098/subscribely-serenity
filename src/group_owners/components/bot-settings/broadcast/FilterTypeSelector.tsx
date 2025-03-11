@@ -1,193 +1,144 @@
 
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-
-type FilterType = 'all' | 'active' | 'expired' | 'plan';
+import { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
 
 interface FilterTypeSelectorProps {
-  value: FilterType;
-  onChange: (value: FilterType) => void;
+  value: 'all' | 'active' | 'expired' | 'plan';
+  onChange: (value: 'all' | 'active' | 'expired' | 'plan') => void;
   entityId: string;
   entityType: 'community' | 'group';
-  selectedPlanId?: string; 
-  setSelectedPlanId?: (value: string) => void;
+  selectedPlanId: string;
+  setSelectedPlanId: (id: string) => void;
 }
 
-export const FilterTypeSelector = ({ 
-  value, 
-  onChange, 
-  entityId, 
+export const FilterTypeSelector = ({
+  value,
+  onChange,
+  entityId,
   entityType,
   selectedPlanId,
-  setSelectedPlanId 
+  setSelectedPlanId
 }: FilterTypeSelectorProps) => {
-  const [open, setOpen] = useState(false);
-
-  const { data: plans, isLoading } = useQuery({
-    queryKey: ['subscription-plans', entityId],
-    queryFn: async () => {
-      const query = supabase
-        .from('subscription_plans')
-        .select('id, name')
-        .eq('is_active', true);
-        
-      if (entityType === 'community') {
-        query.eq('community_id', entityId);
-      } else {
-        // For groups, we need to find the community they belong to
-        const { data: group } = await supabase
-          .from('community_groups')
-          .select('id, community_members(community_id)')
-          .eq('id', entityId)
-          .single();
-        
-        if (group?.community_members?.[0]?.community_id) {
-          query.eq('community_id', group.community_members[0].community_id);
-        }
+  // For groups, we need to fetch all communities in the group to get their plans
+  const { communities: groupCommunities, isLoading: isLoadingGroupCommunities } = 
+    useGroupMemberCommunities(entityType === 'group' ? entityId : null);
+  
+  // For single community
+  const { data: communityPlans, isLoading: isLoadingCommunityPlans } = 
+    useFetchSubscriptionPlans(entityType === 'community' ? entityId : null);
+  
+  // State to hold combined plans from all communities if it's a group
+  const [combinedPlans, setCombinedPlans] = useState<any[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  
+  // When it's a group, fetch plans for all communities in the group
+  useEffect(() => {
+    const fetchGroupPlans = async () => {
+      if (entityType !== 'group' || !groupCommunities || groupCommunities.length === 0) {
+        setIsLoadingPlans(false);
+        return;
       }
       
-      const { data, error } = await query;
+      setIsLoadingPlans(true);
       
-      if (error) {
-        console.error('Error fetching subscription plans:', error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: Boolean(entityId),
-  });
-
-  // Labels for filter types
-  const filterTypeLabels: Record<FilterType, string> = {
-    all: 'All Subscribers',
-    active: 'Active Subscriptions Only',
-    expired: 'Expired Subscriptions Only',
-    plan: selectedPlanId 
-      ? `Plan: ${plans?.find(p => p.id === selectedPlanId)?.name || 'Selected Plan'}`
-      : 'Select a Plan',
-  };
-
-  // Handle filter type change
-  const handleFilterChange = (newType: FilterType, planId?: string) => {
-    onChange(newType);
-    if (newType === 'plan' && planId && setSelectedPlanId) {
-      setSelectedPlanId(planId);
-    }
-    setOpen(false);
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-        >
-          {filterTypeLabels[value]}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
-        <Command>
-          <CommandInput placeholder="Search filter type..." />
-          <CommandEmpty>No filter type found.</CommandEmpty>
-          <CommandGroup>
-            <CommandItem
-              value="all"
-              onSelect={() => handleFilterChange('all')}
-              className={cn(
-                "cursor-pointer",
-                value === 'all' && "bg-primary/10"
-              )}
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  value === 'all' ? "opacity-100" : "opacity-0"
-                )}
-              />
-              All Subscribers
-            </CommandItem>
-            <CommandItem
-              value="active"
-              onSelect={() => handleFilterChange('active')}
-              className={cn(
-                "cursor-pointer",
-                value === 'active' && "bg-primary/10"
-              )}
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  value === 'active' ? "opacity-100" : "opacity-0"
-                )}
-              />
-              Active Subscriptions Only
-            </CommandItem>
-            <CommandItem
-              value="expired"
-              onSelect={() => handleFilterChange('expired')}
-              className={cn(
-                "cursor-pointer",
-                value === 'expired' && "bg-primary/10"
-              )}
-            >
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  value === 'expired' ? "opacity-100" : "opacity-0"
-                )}
-              />
-              Expired Subscriptions Only
-            </CommandItem>
-          </CommandGroup>
+      try {
+        // For each community in the group, fetch their plans
+        const plansPromises = groupCommunities.map(community => 
+          supabase
+            .from('subscription_plans')
+            .select('*')
+            .eq('community_id', community.id)
+            .eq('is_active', true)
+        );
+        
+        const plansResults = await Promise.all(plansPromises);
+        
+        // Combine all plans with community info
+        const allPlans = plansResults.flatMap((result, index) => {
+          if (result.error) {
+            console.error(`Error fetching plans for community ${groupCommunities[index].id}:`, result.error);
+            return [];
+          }
           
-          {plans && plans.length > 0 && (
-            <CommandGroup heading="Specific Plan">
-              {plans.map((plan) => (
-                <CommandItem
-                  key={plan.id}
-                  value={`plan-${plan.id}`}
-                  onSelect={() => handleFilterChange('plan', plan.id)}
-                  className={cn(
-                    "cursor-pointer",
-                    value === 'plan' && selectedPlanId === plan.id && "bg-primary/10"
-                  )}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === 'plan' && selectedPlanId === plan.id
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
-                  {plan.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+          return result.data.map(plan => ({
+            ...plan,
+            community_name: groupCommunities[index].name
+          }));
+        });
+        
+        setCombinedPlans(allPlans);
+      } catch (error) {
+        console.error('Error fetching group plans:', error);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+    
+    fetchGroupPlans();
+  }, [entityType, groupCommunities]);
+  
+  // Reset selected plan when changing filter type
+  useEffect(() => {
+    if (value !== 'plan') {
+      setSelectedPlanId("");
+    }
+  }, [value, setSelectedPlanId]);
+  
+  const isLoading = 
+    (entityType === 'community' && isLoadingCommunityPlans) || 
+    (entityType === 'group' && (isLoadingGroupCommunities || isLoadingPlans));
+  
+  const plans = entityType === 'community' ? communityPlans : combinedPlans;
+  
+  return (
+    <div className="space-y-4">
+      <Select
+        value={value}
+        onValueChange={(val) => onChange(val as any)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select recipients" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Members</SelectItem>
+          <SelectItem value="active">Members with Active Subscriptions</SelectItem>
+          <SelectItem value="expired">Members with Expired Subscriptions</SelectItem>
+          <SelectItem value="plan">Specific Subscription Plan</SelectItem>
+        </SelectContent>
+      </Select>
+      
+      {value === 'plan' && (
+        <div className="mt-2">
+          {isLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : plans && plans.length > 0 ? (
+            <Select
+              value={selectedPlanId}
+              onValueChange={setSelectedPlanId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a subscription plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {entityType === 'group' && plan.community_name 
+                      ? `${plan.name} (${plan.community_name})` 
+                      : plan.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No subscription plans available
+            </p>
           )}
-        </Command>
-      </PopoverContent>
-    </Popover>
+        </div>
+      )}
+    </div>
   );
 };

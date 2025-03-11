@@ -794,7 +794,7 @@ export type Database = {
           auto_welcome_message: boolean | null
           bot_signature: string | null
           chat_id: string | null
-          community_id: string
+          community_id: string | null
           created_at: string
           expired_subscription_message: string | null
           first_reminder_days: number | null
@@ -825,7 +825,7 @@ export type Database = {
           auto_welcome_message?: boolean | null
           bot_signature?: string | null
           chat_id?: string | null
-          community_id: string
+          community_id?: string | null
           created_at?: string
           expired_subscription_message?: string | null
           first_reminder_days?: number | null
@@ -856,7 +856,7 @@ export type Database = {
           auto_welcome_message?: boolean | null
           bot_signature?: string | null
           chat_id?: string | null
-          community_id?: string
+          community_id?: string | null
           created_at?: string
           expired_subscription_message?: string | null
           first_reminder_days?: number | null

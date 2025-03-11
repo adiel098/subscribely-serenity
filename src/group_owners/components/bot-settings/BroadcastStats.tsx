@@ -1,109 +1,111 @@
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 interface BroadcastStatsProps {
-  broadcastId: string;
+  entityId: string;
+  entityType: 'community' | 'group';
 }
 
-export const BroadcastStats = ({ broadcastId }: BroadcastStatsProps) => {
-  const { data: stats, isLoading, refetch } = useQuery({
-    queryKey: ['broadcast-stats', broadcastId],
+export const BroadcastStats = ({ entityId, entityType }: BroadcastStatsProps) => {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['broadcast-stats', entityId, entityType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('broadcast_messages')
-        .select('total_recipients, sent_success, sent_failed, status')
-        .eq('id', broadcastId)
-        .single();
-
-      if (error) throw error;
-      return data;
+        .select('id, status, sent_success, sent_failed, total_recipients, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (entityType === 'community') {
+        query.eq('community_id', entityId);
+      } else {
+        query.eq('group_id', entityId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching broadcast stats:', error);
+        return { recentMessages: [], totalSent: 0 };
+      }
+      
+      // Count total messages sent in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentCount = await supabase
+        .from('broadcast_messages')
+        .select('id', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .eq(entityType === 'community' ? 'community_id' : 'group_id', entityId);
+      
+      return { 
+        recentMessages: data || [],
+        totalSent: recentCount.count || 0
+      };
     },
+    refetchInterval: 10000, // Refresh every 10 seconds
   });
-
-  useEffect(() => {
-    // Subscribe to changes in the broadcast_messages table
-    const channel = supabase
-      .channel('broadcast-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'broadcast_messages',
-          filter: `id=eq.${broadcastId}`,
-        },
-        () => {
-          console.log('Received broadcast update, refetching stats...');
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [broadcastId, refetch]);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-4">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
+      <Card>
+        <CardContent className="pt-6 flex justify-center items-center h-32">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
     );
   }
 
-  if (!stats) return null;
-
-  const isInProgress = stats.status === 'pending';
-
   return (
-    <div className="grid grid-cols-3 gap-4 mt-4">
-      <Card>
-        <CardHeader className="py-2">
-          <CardTitle className="text-sm">Total Recipients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">{stats.total_recipients}</p>
-          {isInProgress && (
-            <p className="text-sm text-muted-foreground">Sending in progress...</p>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="py-2">
-          <CardTitle className="text-sm text-green-600">Sent Successfully</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold text-green-600">{stats.sent_success}</p>
-          {isInProgress && (
-            <div className="mt-1">
-              <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Recent Broadcasts</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            {stats?.totalSent || 0} broadcasts sent in the last 30 days
+          </p>
+          
+          {stats?.recentMessages && stats.recentMessages.length > 0 ? (
+            <div className="space-y-2">
+              {stats.recentMessages.map((message) => (
+                <div 
+                  key={message.id} 
+                  className="flex justify-between items-center border p-2 rounded-md"
+                >
+                  <div>
+                    <span className="text-sm font-medium">
+                      {new Date(message.created_at).toLocaleDateString()}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {new Date(message.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      {message.sent_success} sent
+                    </span>
+                    {message.sent_failed > 0 && (
+                      <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded">
+                        {message.sent_failed} failed
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              No recent broadcasts found
+            </p>
           )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="py-2">
-          <CardTitle className="text-sm text-red-600">Failed</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold text-red-600">{stats.sent_failed}</p>
-          {isInProgress && (
-            <div className="mt-1">
-              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

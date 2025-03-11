@@ -66,7 +66,7 @@ const PaymentMethods = () => {
   };
 
   return (
-    <div className="space-y-6 py-6 animate-fade-in">
+    <div className="space-y-4 py-6 animate-fade-in">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ const PaymentMethods = () => {
             Enable and configure payment options for your members
           </CardDescription>
         </CardHeader>
-        <CardContent className="pb-6">
+        <CardContent className="pb-4">
           <motion.div 
             className="grid gap-8 sm:grid-cols-1 md:grid-cols-3 mx-auto"
             variants={container}
@@ -150,11 +150,11 @@ const PaymentMethods = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex justify-center items-center p-6 text-center"
+        className="flex justify-center items-center pt-1 pb-3 text-center"
       >
         <div className="flex flex-col items-center text-center max-w-lg">
-          <Shield className="h-14 w-14 text-indigo-200 mb-4" />
-          <h3 className="text-xl font-medium text-gray-700 mb-3">Payment Settings Simplified</h3>
+          <Shield className="h-14 w-14 text-indigo-200 mb-3" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Payment Settings Simplified</h3>
           <p className="text-gray-500 text-base">
             We've made payment configuration easier! Click on any payment method card above
             and use the "Configure" button to set up your payment gateway securely. 🔒

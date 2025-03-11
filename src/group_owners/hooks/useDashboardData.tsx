@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { subDays, format, isAfter, differenceInDays } from "date-fns";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
@@ -70,7 +69,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     return filteredSubscribers.filter(sub => sub.subscription_status !== "active" || !sub.is_active);
   }, [filteredSubscribers]);
 
-  // Calculate users in trial period
   const trialUsers = useMemo((): TrialUsersData => {
     const trialSubs = filteredSubscribers.filter(sub => 
       sub.is_trial === true && 
@@ -78,7 +76,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
       isAfter(new Date(sub.trial_end_date), new Date())
     );
     
-    // Calculate conversion rate based on historic data
     const expiredTrials = filteredSubscribers.filter(sub => 
       sub.is_trial === true && 
       sub.trial_end_date && 
@@ -99,17 +96,13 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     };
   }, [filteredSubscribers]);
 
-  // Mini app usage data
   const miniAppUsers = useMemo((): MiniAppData => {
-    // This is a simulated count as we don't have direct access to mini app data
-    // In a real implementation, this would fetch from a dedicated table
     const miniAppAccessCount = filteredSubscribers.filter(sub => 
-      sub.metadata && sub.metadata.mini_app_accessed === true
+      sub.metadata?.mini_app_accessed === true
     ).length;
     
     const nonSubscribers = filteredSubscribers.filter(sub => 
-      sub.metadata && 
-      sub.metadata.mini_app_accessed === true && 
+      sub.metadata?.mini_app_accessed === true && 
       sub.subscription_status !== "active"
     ).length;
     
@@ -119,9 +112,7 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     };
   }, [filteredSubscribers]);
 
-  // Payment statistics
   const paymentStats = useMemo((): PaymentStatistics => {
-    // This is simplified - in a real implementation, we would fetch from payment records
     return {
       completed: filteredSubscribers.filter(sub => 
         sub.payment_status === "completed" || sub.payment_status === "successful"
@@ -154,7 +145,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     return (activeSubscribers.length / filteredSubscribers.length) * 100;
   }, [activeSubscribers, filteredSubscribers]);
 
-  // Calculate member growth data
   const memberGrowthData = useMemo(() => {
     if (!filteredSubscribers.length) return [];
     
@@ -173,7 +163,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     );
   }, [filteredSubscribers]);
 
-  // Calculate revenue data
   const revenueData = useMemo(() => {
     if (!filteredSubscribers.length) return [];
     
@@ -194,7 +183,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     );
   }, [filteredSubscribers]);
 
-  // Calculate daily stats for bar chart
   const dailyStats = useMemo(() => {
     if (!filteredSubscribers.length) return [];
     
@@ -216,7 +204,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     );
   }, [filteredSubscribers]);
 
-  // Calculate average subscription duration
   const averageSubscriptionDuration = useMemo(() => {
     if (!filteredSubscribers.length) return 0;
     
@@ -238,7 +225,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     return count > 0 ? Math.round(totalDays / count) : 0;
   }, [filteredSubscribers]);
 
-  // Most popular plan
   const mostPopularPlan = useMemo(() => {
     if (!filteredSubscribers.length || !plans?.length) return { name: "None", price: 0 };
     
@@ -261,7 +247,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     return sortedPlans.length > 0 ? sortedPlans[0] : { name: "None", price: 0 };
   }, [filteredSubscribers, plans]);
 
-  // Most active day
   const mostActiveDay = useMemo(() => {
     if (!filteredSubscribers.length) return "N/A";
     
@@ -285,7 +270,6 @@ export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: a
     return maxDay;
   }, [filteredSubscribers]);
 
-  // Renewal rate (mock data - would need actual renewal tracking)
   const renewalRate = useMemo(() => {
     return Math.round((activeSubscribers.length / (activeSubscribers.length + inactiveSubscribers.length || 1)) * 100);
   }, [activeSubscribers, inactiveSubscribers]);

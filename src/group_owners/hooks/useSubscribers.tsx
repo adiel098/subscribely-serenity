@@ -23,6 +23,14 @@ export interface Subscriber {
     interval: string;
     price: number;
   } | null;
+  // Add missing properties
+  is_trial?: boolean;
+  trial_end_date?: string | null;
+  metadata?: {
+    mini_app_accessed?: boolean;
+    [key: string]: any;
+  } | null;
+  payment_status?: string;
 }
 
 export const useSubscribers = (communityId: string) => {

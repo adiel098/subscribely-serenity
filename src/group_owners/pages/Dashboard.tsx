@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,18 @@ import { TimeFilter } from '@/group_owners/components/dashboard/TimeFilter';
 import { DashboardStats } from '@/group_owners/components/dashboard/DashboardStats';
 import { DashboardCharts } from '@/group_owners/components/dashboard/DashboardCharts';
 import { AnalyticsOverview } from '@/group_owners/components/dashboard/AnalyticsOverview';
-import { useDashboardData } from '@/group_owners/hooks/useDashboardData';
-import { useSubscriptionPlans } from '@/group_owners/hooks/useSubscriptionPlans';
 import { PaymentStatus } from '@/group_owners/components/dashboard/PaymentStatus';
 import { TrialUsersStats } from '@/group_owners/components/dashboard/TrialUsersStats';
+import { useSubscriptionPlans } from '@/group_owners/hooks/useSubscriptionPlans';
+
+// Import all the refactored hooks
+import { useTimeRange } from '@/group_owners/hooks/dashboard/useTimeRange';
+import { useFilteredSubscribers } from '@/group_owners/hooks/dashboard/useFilteredSubscribers';
+import { useRevenueStats } from '@/group_owners/hooks/dashboard/useRevenueStats';
+import { useTrialUsers } from '@/group_owners/hooks/dashboard/useTrialUsers';
+import { usePaymentStats } from '@/group_owners/hooks/dashboard/usePaymentStats';
+import { useChartData } from '@/group_owners/hooks/dashboard/useChartData';
+import { useInsights } from '@/group_owners/hooks/dashboard/useInsights';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -22,22 +31,27 @@ const Dashboard = () => {
   const { data: subscribers } = useSubscribers(selectedCommunityId || "");
   const { plans } = useSubscriptionPlans(selectedCommunityId || "");
   
-  const {
-    timeRange,
-    setTimeRange,
-    timeRangeLabel,
-    activeSubscribers,
-    inactiveSubscribers,
-    totalRevenue,
-    avgRevenuePerSubscriber,
-    conversionRate,
-    memberGrowthData,
-    revenueData,
-    insights,
-    trialUsers,
-    miniAppUsers,
-    paymentStats
-  } = useDashboardData(subscribers, plans);
+  // Use the refactored hooks directly instead of the combined useDashboardData
+  const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
+  
+  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
+    useFilteredSubscribers(subscribers, timeRangeStartDate);
+  
+  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
+    useRevenueStats(filteredSubscribers);
+  
+  const { trialUsers, miniAppUsers } = useTrialUsers(filteredSubscribers);
+  
+  const { paymentStats } = usePaymentStats(filteredSubscribers);
+  
+  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
+  
+  const { insights } = useInsights(
+    filteredSubscribers, 
+    activeSubscribers, 
+    inactiveSubscribers, 
+    plans
+  );
 
   const addNewCommunity = () => {
     navigate('/platform-select');
@@ -119,7 +133,7 @@ const Dashboard = () => {
         <DashboardCharts
           memberGrowthData={memberGrowthData}
           revenueData={revenueData}
-          dailyStats={[]} // Passing empty array but component doesn't use it anymore
+          dailyStats={[]} // Passing empty array as this prop isn't used anymore
         />
       </div>
 

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,8 +38,8 @@ export const SubscriberFilters = ({
             </button>}
         </div>
         
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-          <div className="flex items-center min-w-[130px]">
+        <div className="grid grid-cols-4 gap-3 w-full sm:w-auto">
+          <div className="col-span-1 w-full">
             <div className="relative">
               <Select value={statusFilter} onValueChange={onStatusFilterChange}>
                 <SelectTrigger className="w-full pl-8">
@@ -57,7 +58,7 @@ export const SubscriberFilters = ({
             </div>
           </div>
 
-          <div className="flex items-center min-w-[130px]">
+          <div className="col-span-1 w-full">
             <div className="relative">
               <Select value={planFilter} onValueChange={onPlanFilterChange}>
                 <SelectTrigger className="w-full pl-8">
@@ -76,17 +77,27 @@ export const SubscriberFilters = ({
             </div>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => {
-          onSearchChange("");
-          onStatusFilterChange("all");
-          onPlanFilterChange("all");
-        }} className="ml-2 px-[23px] py-0 my-0 font-normal">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              onSearchChange("");
+              onStatusFilterChange("all");
+              onPlanFilterChange("all");
+            }} 
+            className="col-span-1 w-full h-10"
+          >
             Reset
           </Button>
           
-          <Button variant="outline" size="sm" onClick={onExport} className="ml-2 bg-green-50/80 hover:bg-green-100/90 border-green-200">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onExport} 
+            className="col-span-1 w-full h-10 bg-green-50/80 hover:bg-green-100/90 border-green-200"
+          >
             <Download className="mr-2 h-4 w-4" />
-            Export CSV
+            Export
           </Button>
         </div>
       </div>

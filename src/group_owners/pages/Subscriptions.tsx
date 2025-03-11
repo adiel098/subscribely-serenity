@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,6 @@ const Subscriptions = () => {
   const { toast } = useToast();
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   
-  // Use the appropriate ID based on whether we're in a community or group context
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
   const { plans, isLoading } = useSubscriptionPlans(entityId || "");
 

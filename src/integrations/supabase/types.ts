@@ -721,6 +721,7 @@ export type Database = {
           created_at: string
           description: string | null
           features: Json | null
+          group_id: string | null
           id: string
           interval: string
           is_active: boolean | null
@@ -733,6 +734,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
+          group_id?: string | null
           id?: string
           interval: string
           is_active?: boolean | null
@@ -745,6 +747,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
+          group_id?: string | null
           id?: string
           interval?: string
           is_active?: boolean | null
@@ -758,6 +761,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_plans_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]

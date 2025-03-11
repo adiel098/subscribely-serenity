@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -55,9 +54,6 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
     
     try {
       await createPlan.mutateAsync({
-        ...(isGroupMode 
-          ? { group_id: entityId } 
-          : { community_id: entityId }),
         name: newPlan.name,
         description: newPlan.description,
         price: Number(newPlan.price),

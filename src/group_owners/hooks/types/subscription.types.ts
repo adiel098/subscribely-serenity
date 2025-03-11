@@ -1,7 +1,8 @@
 
 export interface SubscriptionPlan {
   id: string;
-  community_id: string;
+  community_id?: string;
+  group_id?: string;
   name: string;
   description: string | null;
   price: number;
@@ -13,7 +14,8 @@ export interface SubscriptionPlan {
 }
 
 export interface CreateSubscriptionPlanData {
-  community_id: string;
+  community_id?: string;
+  group_id?: string;
   name: string;
   description?: string;
   price: number;

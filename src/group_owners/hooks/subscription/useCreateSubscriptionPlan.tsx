@@ -16,19 +16,21 @@ export const useCreateSubscriptionPlan = (entityId: string, isGroup = false) => 
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (planData: CreatePlanParams) => {
+    mutationFn: async (planData: Omit<CreatePlanParams, 'community_id' | 'group_id'>) => {
+      const payload = {
+        ...(isGroup 
+          ? { group_id: entityId } 
+          : { community_id: entityId }),
+        name: planData.name,
+        description: planData.description,
+        price: planData.price,
+        interval: planData.interval,
+        features: planData.features
+      };
+      
       const { data, error } = await supabase
         .from('subscription_plans')
-        .insert({
-          ...(isGroup 
-            ? { group_id: entityId } 
-            : { community_id: entityId }),
-          name: planData.name,
-          description: planData.description,
-          price: planData.price,
-          interval: planData.interval,
-          features: planData.features
-        })
+        .insert(payload)
         .select()
         .single();
         

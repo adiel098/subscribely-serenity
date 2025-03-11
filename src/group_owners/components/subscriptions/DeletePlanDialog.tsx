@@ -14,8 +14,9 @@ interface Props {
 }
 
 export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
-  const { selectedCommunityId } = useCommunityContext();
-  const { deletePlan, plans } = useSubscriptionPlans(selectedCommunityId || "");
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const { deletePlan, plans } = useSubscriptionPlans(entityId || "");
   const [isDeleting, setIsDeleting] = useState(false);
 
   const planToDelete = plans?.find(plan => plan.id === planId);

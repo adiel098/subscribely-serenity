@@ -20,7 +20,7 @@ export interface Community {
 export type Plan = SubscriptionPlan;
 
 // Fix the CommunityCard component comparison by adding this subscription interval type
-export type SubscriptionInterval = 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
+export type SubscriptionInterval = 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
 
 // Adding Subscription type that was missing in subscriptionService.ts
 export interface Subscription {

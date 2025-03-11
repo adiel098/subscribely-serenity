@@ -46,6 +46,9 @@ export async function handleSubscription(supabase: ReturnType<typeof createClien
       case 'one-time':
         subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
         break;
+      case 'lifetime':
+        subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
+        break;
     }
   }
 

@@ -45,6 +45,8 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
         break;
       case "lifetime":
         return "Lifetime";
+      case "one-time":
+        return "Lifetime"; // Treat one-time as lifetime for end date display
       default:
         endDate.setMonth(endDate.getMonth() + 1); // Default to monthly
     }
@@ -71,6 +73,8 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
         break;
       case "lifetime":
         return "lifetime";
+      case "one-time":
+        return "lifetime"; // Treat one-time as lifetime for duration text
       default:
         baseDuration = "one month";
     }

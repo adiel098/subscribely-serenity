@@ -16,7 +16,8 @@ const intervalColors = {
   quarterly: "bg-green-100 text-green-700",
   "half-yearly": "bg-purple-100 text-purple-700",
   yearly: "bg-orange-100 text-orange-700",
-  "one-time": "bg-gray-100 text-gray-700"
+  "one-time": "bg-gray-100 text-gray-700",
+  "lifetime": "bg-amber-100 text-amber-700"
 };
 
 const intervalLabels = {
@@ -24,7 +25,8 @@ const intervalLabels = {
   quarterly: "Quarterly",
   "half-yearly": "Half Yearly",
   yearly: "Yearly",
-  "one-time": "One Time"
+  "one-time": "One Time",
+  "lifetime": "Lifetime"
 };
 
 const Subscriptions = () => {

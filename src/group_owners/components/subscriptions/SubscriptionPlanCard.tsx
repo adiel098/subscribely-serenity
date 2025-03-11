@@ -17,7 +17,7 @@ interface SubscriptionPlan {
   name: string;
   description: string | null;
   price: number;
-  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
+  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
   features: string[];
 }
 

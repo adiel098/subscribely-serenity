@@ -42,49 +42,20 @@ export const useCreateCommunityGroup = () => {
         
         console.log("Successfully created community group:", newGroup);
         
-        // If photo_url is provided, update the community_groups table with it
-        if (data.photo_url) {
-          const { error: photoError } = await supabase
-            .from("community_groups")
-            .update({
-              photo_url: data.photo_url
-            })
-            .eq("id", newGroup.id);
-            
-          if (photoError) {
-            console.error("Error updating group photo:", photoError);
-            // Don't throw, just log the error
-            toast.error("Warning: Failed to update group photo");
-          }
-        }
-        
         // Insert community members if provided
         if (data.communities && data.communities.length > 0) {
-          // Create batch array for group members
-          const groupMembers = data.communities.map((communityId, index) => ({
-            parent_id: newGroup.id,
-            community_id: communityId,
-            display_order: index
-          }));
-          
-          // Use separate RPC function to avoid policy issues
-          const { error: membersError } = await supabase
-            .rpc('add_communities_to_group', { 
-              group_id: newGroup.id,
-              community_ids: data.communities
-            });
+          // Use the edge function to add communities to the group
+          const { error: membersError } = await supabase.functions.invoke("add-communities-to-group", {
+            body: { 
+              groupId: newGroup.id,
+              communityIds: data.communities,
+              userId: user.id
+            }
+          });
           
           if (membersError) {
             console.error("Error adding communities to group:", membersError);
-            // Try direct insert as fallback
-            const { error: directInsertError } = await supabase
-              .from("community_group_members")
-              .insert(groupMembers);
-              
-            if (directInsertError) {
-              console.error("Fallback insert also failed:", directInsertError);
-              toast.error("Warning: Some communities could not be added to the group");
-            }
+            toast.error("Warning: Some communities could not be added to the group");
           }
         }
         

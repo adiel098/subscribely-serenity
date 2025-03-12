@@ -18,7 +18,6 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
       }
       
       try {
-        // Changed to use community_group_members table instead of community_relationships
         const { data: groupMembers, error } = await supabase
           .from("community_group_members")
           .select("*")

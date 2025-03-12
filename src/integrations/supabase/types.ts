@@ -171,7 +171,7 @@ export type Database = {
             foreignKeyName: "community_group_members_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
-            referencedRelation: "community_groups"
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -1029,6 +1029,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_communities_to_group: {
+        Args: {
+          group_id: string
+          community_ids: string[]
+        }
+        Returns: {
+          added_at: string | null
+          community_id: string
+          display_order: number | null
+          parent_id: string
+        }[]
+      }
       can_modify_admin_users: {
         Args: {
           user_uuid: string

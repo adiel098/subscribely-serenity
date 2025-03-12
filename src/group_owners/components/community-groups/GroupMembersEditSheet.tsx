@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter 
@@ -55,57 +54,35 @@ export const GroupMembersEditSheet = ({
     try {
       setIsSubmitting(true);
       
-      // Find communities to remove (in current but not in selected)
-      const communitiesToRemove = currentCommunities
-        .filter(c => !selectedCommunities.includes(c.id))
-        .map(c => c.id);
+      // Get the current user ID to pass to the edge function
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Find communities to add (in selected but not in current)
-      const communitiesToAdd = selectedCommunities
-        .filter(id => !currentCommunities.some(c => c.id === id));
-      
-      // Remove communities if needed
-      if (communitiesToRemove.length > 0) {
-        const { error: removeError } = await supabase
-          .from("community_group_members")
-          .delete()
-          .eq("parent_id", group.id)
-          .in("community_id", communitiesToRemove);
-          
-        if (removeError) {
-          console.error("Error removing communities:", removeError);
-          toast.error("Failed to remove some communities");
-        }
+      if (!user) {
+        toast.error("You must be logged in to update communities");
+        return;
       }
       
-      // Add communities if needed
-      if (communitiesToAdd.length > 0) {
-        try {
-          // Use the add-communities-to-group edge function
-          const { error } = await supabase.functions.invoke("add-communities-to-group", {
-            body: {
-              groupId: group.id,
-              communityIds: communitiesToAdd,
-              userId: (await supabase.auth.getUser()).data.user?.id
-            }
-          });
-          
-          if (error) {
-            console.error("Error adding communities:", error);
-            toast.error("Failed to add some communities");
-          }
-        } catch (error) {
-          console.error("Error invoking add-communities function:", error);
-          toast.error("Failed to add communities");
+      // Use the edge function to handle the update
+      const { data, error } = await supabase.functions.invoke("add-communities-to-group", {
+        body: {
+          groupId: group.id,
+          communityIds: selectedCommunities,
+          userId: user.id
         }
+      });
+      
+      if (error) {
+        console.error("Error updating group communities:", error);
+        toast.error("Failed to update communities");
+        return;
       }
       
       toast.success("Group communities updated successfully");
       onCommunitiesUpdated();
       onClose();
     } catch (error) {
-      console.error("Error updating group communities:", error);
-      toast.error("An error occurred while updating communities");
+      console.error("Error in handleSaveCommunities:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }

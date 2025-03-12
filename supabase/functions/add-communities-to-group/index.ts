@@ -39,7 +39,7 @@ serve(async (req) => {
 
     if (groupError) {
       return new Response(
-        JSON.stringify({ error: 'Group not found' }),
+        JSON.stringify({ error: 'Group not found', details: groupError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       )
     }
@@ -51,6 +51,13 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
+
+    // First, clear existing members to avoid duplicates (make this operation idempotent)
+    await supabase
+      .from('community_group_members')
+      .delete()
+      .eq('parent_id', groupId)
+      .in('community_id', communityIds);
 
     // Create batch of group members
     const groupMembers = communityIds.map((communityId, index) => ({
@@ -66,7 +73,14 @@ serve(async (req) => {
       .select();
 
     if (error) {
-      throw error;
+      console.error('Insert error:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to add communities to group', 
+          details: error 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
     }
 
     return new Response(
@@ -77,7 +91,7 @@ serve(async (req) => {
     console.error('Error adding communities to group:', error)
     
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+      JSON.stringify({ error: error.message || 'Unknown error occurred', stack: error.stack }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

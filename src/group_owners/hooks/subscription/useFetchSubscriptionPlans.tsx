@@ -12,7 +12,6 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
       if (!communityId) return [];
       
       // With our consolidated model, all plans belong to communities
-      // (groups are just communities with is_group=true)
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')

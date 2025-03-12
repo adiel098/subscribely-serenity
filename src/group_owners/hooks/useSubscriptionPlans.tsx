@@ -9,7 +9,6 @@ export const useSubscriptionPlans = (entityId: string) => {
   console.log('useSubscriptionPlans hook initialized with entityId:', entityId);
   
   // With our consolidated model, all plans belong to communities
-  // (groups are just communities with is_group=true)
   const { 
     data: plans, 
     isLoading, 

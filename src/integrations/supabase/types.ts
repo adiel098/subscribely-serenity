@@ -145,19 +145,19 @@ export type Database = {
           added_at: string | null
           community_id: string
           display_order: number | null
-          group_id: string
+          parent_id: string
         }
         Insert: {
           added_at?: string | null
           community_id: string
           display_order?: number | null
-          group_id: string
+          parent_id: string
         }
         Update: {
           added_at?: string | null
           community_id?: string
           display_order?: number | null
-          group_id?: string
+          parent_id?: string
         }
         Relationships: [
           {
@@ -168,8 +168,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "community_group_members_group_id_fkey"
-            columns: ["group_id"]
+            foreignKeyName: "community_group_members_parent_id_fkey"
+            columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "community_groups"
             referencedColumns: ["id"]
@@ -178,7 +178,6 @@ export type Database = {
       }
       community_groups: {
         Row: {
-          community_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -188,7 +187,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          community_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -198,7 +196,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          community_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -325,7 +322,6 @@ export type Database = {
           community_id: string | null
           config: Json | null
           created_at: string
-          group_id: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -336,7 +332,6 @@ export type Database = {
           community_id?: string | null
           config?: Json | null
           created_at?: string
-          group_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -347,7 +342,6 @@ export type Database = {
           community_id?: string | null
           config?: Json | null
           created_at?: string
-          group_id?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -360,13 +354,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_methods_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -752,7 +739,6 @@ export type Database = {
           created_at: string
           description: string | null
           features: Json | null
-          group_id: string | null
           id: string
           interval: string
           is_active: boolean | null
@@ -765,7 +751,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
-          group_id?: string | null
           id?: string
           interval: string
           is_active?: boolean | null
@@ -778,7 +763,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
-          group_id?: string | null
           id?: string
           interval?: string
           is_active?: boolean | null
@@ -792,13 +776,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscription_plans_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -857,7 +834,6 @@ export type Database = {
           first_reminder_days: number | null
           first_reminder_image: string | null
           first_reminder_message: string | null
-          group_id: string | null
           id: string
           is_admin: boolean | null
           language: string | null
@@ -886,7 +862,6 @@ export type Database = {
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
-          group_id?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -915,7 +890,6 @@ export type Database = {
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
-          group_id?: string | null
           id?: string
           is_admin?: boolean | null
           language?: string | null
@@ -939,13 +913,6 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: true
             referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telegram_bot_settings_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "community_groups"
             referencedColumns: ["id"]
           },
         ]

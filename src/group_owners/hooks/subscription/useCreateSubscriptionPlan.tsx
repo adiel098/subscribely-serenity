@@ -11,7 +11,6 @@ export const useCreateSubscriptionPlan = (communityId: string) => {
   return useMutation({
     mutationFn: async (planData: Omit<CreateSubscriptionPlanData, 'community_id'>) => {
       // With our consolidated model, all plans belong to communities
-      // (groups are just communities with is_group=true)
       const payload = {
         community_id: communityId,
         name: planData.name,

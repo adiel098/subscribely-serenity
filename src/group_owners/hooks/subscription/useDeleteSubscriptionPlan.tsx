@@ -1,9 +1,11 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
-export const useDeleteSubscriptionPlan = (entityId: string, isGroup = false) => {
+export const useDeleteSubscriptionPlan = (communityId: string) => {
   const queryClient = useQueryClient();
+  const { isGroupSelected } = useCommunityContext();
   
   return useMutation({
     mutationFn: async (planId: string) => {
@@ -18,7 +20,7 @@ export const useDeleteSubscriptionPlan = (entityId: string, isGroup = false) => 
     onSuccess: () => {
       // Invalidate the query to refetch the updated list
       queryClient.invalidateQueries({ 
-        queryKey: [isGroup ? 'group-subscription-plans' : 'subscription-plans', entityId] 
+        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
       });
     }
   });

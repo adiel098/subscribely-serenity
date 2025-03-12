@@ -7,15 +7,14 @@ import { SettingsContent } from "@/group_owners/components/bot-settings/Settings
 const BotSettings = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const { settings, isLoading, updateSettings } = useBotSettings(
-    isGroupSelected ? null : selectedCommunityId,
-    isGroupSelected ? selectedGroupId : null
+    isGroupSelected ? selectedCommunityId : selectedCommunityId
   );
 
   return (
     <BotSettingsLayout isLoading={isLoading}>
       <SettingsContent 
         settings={settings} 
-        entityId={isGroupSelected ? selectedGroupId : selectedCommunityId} 
+        entityId={selectedCommunityId} 
         entityType={isGroupSelected ? 'group' : 'community'}
         updateSettings={updateSettings} 
       />

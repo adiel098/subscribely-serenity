@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, Sparkles, Edit2, ExternalLink, Users, Link } from "lucide-react";
+import { Copy, Sparkles, Edit2, ExternalLink, Users, Link, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle, 

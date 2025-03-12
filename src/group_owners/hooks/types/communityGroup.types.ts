@@ -1,4 +1,3 @@
-
 import { Community } from "../useCommunities";
 
 export interface CommunityGroup extends Community {
@@ -44,4 +43,12 @@ export interface UpdateCommunityGroupData {
   photo_url?: string | null;
   custom_link?: string | null;
   communities?: string[];
+}
+
+export interface CommunityRelationship {
+  community_id: string;
+  member_id: string;
+  display_order: number;
+  relationship_type: string;
+  added_at: string;
 }

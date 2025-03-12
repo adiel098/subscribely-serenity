@@ -9,10 +9,11 @@ export interface Community {
   telegram_invite_link: string | null;
   telegram_chat_id: string | null;
   custom_link: string | null;
-  member_count: number;
-  subscription_count: number;
+  photo_url?: string | null;
+  member_count?: number;
+  subscription_count?: number;
   subscription_plans: SubscriptionPlan[];
-  is_group?: boolean; // New field to identify if this is a group
+  is_group?: boolean; // Field to identify if this is a group
   communities?: Community[]; // For groups, contains the included communities
 }
 

@@ -12,9 +12,13 @@ export interface Community {
   telegram_chat_id: string | null;
   telegram_photo_url: string | null;
   telegram_username: string | null;
+  custom_link: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
   is_group: boolean;
+  member_count?: number;
+  subscription_count?: number;
 }
 
 export const useCommunities = () => {

@@ -1,5 +1,7 @@
 
-export interface CommunityGroup {
+import { Community } from "../useCommunities";
+
+export interface CommunityGroup extends Community {
   id: string;
   name: string;
   description: string | null;

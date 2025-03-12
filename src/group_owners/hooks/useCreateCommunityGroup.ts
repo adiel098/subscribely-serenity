@@ -58,22 +58,33 @@ export const useCreateCommunityGroup = () => {
           }
         }
         
-        // Insert community members if provided - FIX: Use community_group_members table
+        // Insert community members if provided
         if (data.communities && data.communities.length > 0) {
+          // Create batch array for group members
           const groupMembers = data.communities.map((communityId, index) => ({
             parent_id: newGroup.id,
             community_id: communityId,
             display_order: index
           }));
           
+          // Use separate RPC function to avoid policy issues
           const { error: membersError } = await supabase
-            .from("community_group_members")
-            .insert(groupMembers);
+            .rpc('add_communities_to_group', { 
+              group_id: newGroup.id,
+              community_ids: data.communities
+            });
           
           if (membersError) {
             console.error("Error adding communities to group:", membersError);
-            // Don't throw here, we've already created the group
-            toast.error("Warning: Some communities could not be added to the group");
+            // Try direct insert as fallback
+            const { error: directInsertError } = await supabase
+              .from("community_group_members")
+              .insert(groupMembers);
+              
+            if (directInsertError) {
+              console.error("Fallback insert also failed:", directInsertError);
+              toast.error("Warning: Some communities could not be added to the group");
+            }
           }
         }
         

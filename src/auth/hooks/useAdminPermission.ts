@@ -18,7 +18,7 @@ const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
 
 /**
  * Hook to check if the current user has admin permissions
- * Uses security definer functions to avoid infinite recursion in RLS policies
+ * Uses edge function to avoid infinite recursion in RLS policies
  * Implements caching to prevent redundant checks
  */
 export const useAdminPermission = () => {
@@ -60,46 +60,61 @@ export const useAdminPermission = () => {
         console.log(`🔍 useAdminPermission: Checking admin status for user ${user.id}`);
         setIsLoading(true);
         
-        // Use the security definer function to avoid infinite recursion
-        const { data, error } = await supabase
-          .rpc('get_admin_status', { user_id_param: user.id });
+        // Call edge function to check admin status
+        const { data: adminData, error: fnError } = await supabase.functions.invoke('get-admin-status', {
+          body: { userId: user.id }
+        });
         
-        if (error) {
-          console.error("❌ useAdminPermission: Error checking admin status:", error);
-          throw error;
+        if (fnError) {
+          console.error("❌ useAdminPermission: Error calling admin status function:", fnError);
+          
+          // Fallback to rpc if edge function fails
+          const { data: rpcData, error: rpcError } = await supabase
+            .rpc('get_admin_status', { user_id_param: user.id });
+            
+          if (rpcError) {
+            console.error("❌ useAdminPermission: Fallback also failed:", rpcError);
+            throw rpcError;
+          }
+          
+          if (!mounted) return;
+          
+          const adminFound = !!rpcData?.is_admin;
+          const roleFound = rpcData?.admin_role || null;
+          
+          setIsAdmin(adminFound);
+          setRole(roleFound);
+          setLastCheckedId(user.id);
+          
+          // Update the cache
+          adminStatusCache[user.id] = {
+            isAdmin: adminFound,
+            role: roleFound,
+            timestamp: Date.now()
+          };
+          
+          console.log(`✅ useAdminPermission: Fallback - User ${user.id} is admin: ${adminFound}, role: ${roleFound || 'none'}`);
+        } else {
+          if (!mounted) return;
+          
+          console.log("🔐 useAdminPermission: Admin status response:", adminData);
+          
+          const adminFound = !!adminData?.is_admin;
+          const roleFound = adminData?.admin_role || null;
+          
+          setIsAdmin(adminFound);
+          setRole(roleFound);
+          setLastCheckedId(user.id);
+          
+          // Update the cache
+          adminStatusCache[user.id] = {
+            isAdmin: adminFound,
+            role: roleFound,
+            timestamp: Date.now()
+          };
+          
+          console.log(`✅ useAdminPermission: Edge function - User ${user.id} is admin: ${adminFound}, role: ${roleFound || 'none'}`);
         }
-        
-        if (!mounted) return;
-        
-        console.log("🔐 useAdminPermission: Admin status response:", data);
-        
-        // Check if data exists and explicitly handle the admin status
-        let adminFound = false;
-        let roleFound = null;
-        
-        if (Array.isArray(data) && data.length > 0) {
-          adminFound = data[0]?.is_admin === true;
-          roleFound = data[0]?.admin_role || null;
-          console.log(`✅ useAdminPermission: Array response - admin: ${adminFound}, role: ${roleFound}`);
-        } else if (data) {
-          adminFound = data.is_admin === true;
-          roleFound = data.admin_role || null;
-          console.log(`✅ useAdminPermission: Object response - admin: ${adminFound}, role: ${roleFound}`);
-        }
-        
-        setIsAdmin(adminFound);
-        setRole(roleFound);
-        setLastCheckedId(user.id);
-        
-        // Update the cache
-        adminStatusCache[user.id] = {
-          isAdmin: adminFound,
-          role: roleFound,
-          timestamp: Date.now()
-        };
-        
-        console.log(`✅ useAdminPermission: Final status - User ${user.id} is admin: ${adminFound}, role: ${roleFound || 'none'}`);
-        console.log(`✅ useAdminPermission: Admin status cached for user ${user.id}`);
       } catch (err: any) {
         console.error("❌ useAdminPermission: Error in admin check:", err);
         if (mounted) {
@@ -120,7 +135,7 @@ export const useAdminPermission = () => {
     };
   }, [user]);
 
-  // Function to check if user is a super admin using the security definer function
+  // Function to check if user is a super admin using the edge function
   const isSuperAdmin = async (): Promise<boolean> => {
     if (!user) return false;
     
@@ -135,30 +150,17 @@ export const useAdminPermission = () => {
     }
     
     try {
-      const { data, error } = await supabase
-        .rpc('get_admin_status', { user_id_param: user.id });
+      const { data, error } = await supabase.functions.invoke('get-admin-status', {
+        body: { userId: user.id }
+      });
         
-      if (error) throw error;
+      if (error) {
+        console.error("❌ useAdminPermission: Error checking super admin status:", error);
+        return false;
+      }
+      
       console.log("🔐 isSuperAdmin check result:", data);
-      
-      // Handle different response formats
-      let isSuperAdmin = false;
-      if (Array.isArray(data) && data.length > 0) {
-        isSuperAdmin = data[0]?.admin_role === 'super_admin';
-      } else {
-        isSuperAdmin = data?.admin_role === 'super_admin';
-      }
-      
-      // Update the cache
-      if (!adminStatusCache[user.id]) {
-        adminStatusCache[user.id] = {
-          isAdmin: !!data?.is_admin,
-          role: data?.admin_role || null,
-          timestamp: Date.now()
-        };
-      }
-      
-      return isSuperAdmin;
+      return data?.admin_role === 'super_admin';
     } catch (err) {
       console.error("❌ useAdminPermission: Error checking super admin status:", err);
       return false;

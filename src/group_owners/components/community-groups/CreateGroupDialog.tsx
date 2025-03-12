@@ -10,7 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateCommunityGroup } from "@/group_owners/hooks/useCreateCommunityGroup";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -25,26 +28,41 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
   const [description, setDescription] = useState("");
   const [customLink, setCustomLink] = useState("");
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
+  const { user } = useAuth();
   const { data: communities, isLoading: isCommunitiesLoading } = useCommunities();
   const createGroupMutation = useCreateCommunityGroup();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
-    createGroupMutation.mutate({
-      name,
-      description: description || null,
-      custom_link: customLink || null,
-      communities: selectedCommunities
-      // Note: photo_url is not included here as it should be managed separately
-      // in the community_groups table
-    }, {
-      onSuccess: () => {
-        resetForm();
-        onOpenChange(false);
-      }
-    });
+    if (!user) {
+      setError("You must be logged in to create a group");
+      toast.error("Authentication required");
+      return;
+    }
+    
+    if (selectedCommunities.length === 0) {
+      setError("Please select at least one community");
+      return;
+    }
+    
+    try {
+      await createGroupMutation.mutateAsync({
+        name,
+        description: description || null,
+        custom_link: customLink || null,
+        communities: selectedCommunities
+      });
+      
+      resetForm();
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error("Error in form submission:", err);
+      setError(err.message || "Failed to create group");
+    }
   };
 
   const resetForm = () => {
@@ -52,6 +70,7 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
     setDescription("");
     setCustomLink("");
     setSelectedCommunities([]);
+    setError(null);
   };
 
   const handleCommunityToggle = (communityId: string) => {
@@ -69,7 +88,10 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) resetForm();
+      onOpenChange(open);
+    }}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Community Group</DialogTitle>
@@ -77,6 +99,13 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
             Create a group of communities that can be managed together.
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">

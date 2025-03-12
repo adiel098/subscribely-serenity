@@ -64,10 +64,14 @@ serve(async (req) => {
       .from('community_relationships')
       .delete()
       .eq('community_id', groupId)
-      .in('member_id', communityIds);
+      .eq('relationship_type', 'group');
       
     if (deleteError) {
       console.error('❌ Error clearing existing relationships:', deleteError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to clear existing relationships', details: deleteError }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
     } else {
       console.log('✅ Cleared existing relationships successfully');
     }

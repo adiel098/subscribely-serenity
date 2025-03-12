@@ -244,6 +244,45 @@ export type Database = {
           },
         ]
       }
+      community_relationships: {
+        Row: {
+          added_at: string | null
+          community_id: string
+          display_order: number | null
+          member_id: string
+          relationship_type: string
+        }
+        Insert: {
+          added_at?: string | null
+          community_id: string
+          display_order?: number | null
+          member_id: string
+          relationship_type?: string
+        }
+        Update: {
+          added_at?: string | null
+          community_id?: string
+          display_order?: number | null
+          member_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_relationships_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_relationships_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_subscribers: {
         Row: {
           community_id: string

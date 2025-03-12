@@ -43,18 +43,19 @@ export const GroupMembersEditSheet = ({
      community.name.toLowerCase().includes(searchQuery.toLowerCase()))
   ) || [];
 
-  // Initialize selected communities when component mounts or when currentCommunities changes
+  // Initialize selected communities when component mounts or when currentCommunities or isOpen changes
   useEffect(() => {
-    if (currentCommunities.length > 0) {
+    if (isOpen && currentCommunities.length > 0) {
       setSelectedCommunities(currentCommunities.map(c => c.id));
-    } else {
+    } else if (isOpen) {
       setSelectedCommunities([]);
     }
-  }, [currentCommunities, isOpen]); // Also reset when sheet opens or closes
+  }, [currentCommunities, isOpen]); 
 
   // Handle adding/removing communities to/from the group
   const handleSaveCommunities = async () => {
     try {
+      console.log("Starting to save communities to group. Selection:", selectedCommunities);
       setIsSubmitting(true);
       
       // Get the current user ID to pass to the edge function
@@ -72,7 +73,7 @@ export const GroupMembersEditSheet = ({
       });
       
       // Use the edge function to handle the update
-      const { data, error } = await supabase.functions.invoke("add-communities-to-group", {
+      const response = await supabase.functions.invoke("add-communities-to-group", {
         body: {
           groupId: group.id,
           communityIds: selectedCommunities,
@@ -80,12 +81,13 @@ export const GroupMembersEditSheet = ({
         }
       });
       
-      if (error) {
-        console.error("Error updating group communities:", error);
+      if (response.error) {
+        console.error("Error updating group communities:", response.error);
         toast.error("Failed to update communities");
         return;
       }
       
+      console.log("Successfully updated communities:", response.data);
       toast.success("Group communities updated successfully");
       onCommunitiesUpdated();
       onClose();

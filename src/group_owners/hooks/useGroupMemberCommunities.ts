@@ -8,8 +8,8 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   const [communityIds, setCommunityIds] = useState<string[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
   
-  // Fetch the member IDs for the group using the new community_relationships table
-  const { data: members, isLoading: membersLoading } = useQuery({
+  // Fetch the member IDs for the group using the community_relationships table
+  const { data: relationships, isLoading: relationshipsLoading } = useQuery({
     queryKey: ["group-member-communities", groupId],
     queryFn: async () => {
       if (!groupId) {
@@ -18,8 +18,8 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
       }
       
       try {
-        // Use the new community_relationships table instead of community_group_members
-        const { data: groupMembers, error } = await supabase
+        // Use the community_relationships table
+        const { data: relationships, error } = await supabase
           .from("community_relationships")
           .select("*")
           .eq("community_id", groupId)
@@ -27,14 +27,14 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
           .order("display_order", { ascending: true });
 
         if (error) {
-          console.error("Error fetching community group members:", error);
+          console.error("Error fetching community relationships:", error);
           throw error;
         }
 
-        console.log("Group members loaded:", groupMembers);
-        return groupMembers || [];
+        console.log("Group relationships loaded:", relationships);
+        return relationships || [];
       } catch (error) {
-        console.error("Error in community group members query:", error);
+        console.error("Error in community relationships query:", error);
         return [];
       }
     },
@@ -44,16 +44,16 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   // Fetch all communities the user has access to
   const { data: allCommunities, isLoading: communitiesLoading } = useCommunities();
   
-  // Extract community IDs from members when they load
+  // Extract community IDs from relationships when they load
   useEffect(() => {
-    if (members && members.length > 0) {
-      // Update to use member_id instead of community_id for relationships
-      const ids = members.map(member => member.member_id);
+    if (relationships && relationships.length > 0) {
+      // Use member_id from community_relationships
+      const ids = relationships.map(rel => rel.member_id);
       setCommunityIds(ids);
     } else {
       setCommunityIds([]);
     }
-  }, [members]);
+  }, [relationships]);
   
   // Filter communities based on the member IDs
   useEffect(() => {
@@ -71,6 +71,6 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   return {
     communities,
     communityIds,
-    isLoading: membersLoading || communitiesLoading
+    isLoading: relationshipsLoading || communitiesLoading
   };
 };

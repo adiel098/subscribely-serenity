@@ -8,7 +8,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   const [communityIds, setCommunityIds] = useState<string[]>([]);
   const [communities, setCommunities] = useState<any[]>([]);
   
-  // Fetch the member IDs for the group
+  // Fetch the member IDs for the group using the new community_relationships table
   const { data: members, isLoading: membersLoading } = useQuery({
     queryKey: ["group-member-communities", groupId],
     queryFn: async () => {
@@ -18,10 +18,12 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
       }
       
       try {
+        // Use the new community_relationships table instead of community_group_members
         const { data: groupMembers, error } = await supabase
-          .from("community_group_members")
+          .from("community_relationships")
           .select("*")
-          .eq("parent_id", groupId)
+          .eq("community_id", groupId)
+          .eq("relationship_type", "group")
           .order("display_order", { ascending: true });
 
         if (error) {
@@ -29,6 +31,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
           throw error;
         }
 
+        console.log("Group members loaded:", groupMembers);
         return groupMembers || [];
       } catch (error) {
         console.error("Error in community group members query:", error);
@@ -44,7 +47,8 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   // Extract community IDs from members when they load
   useEffect(() => {
     if (members && members.length > 0) {
-      const ids = members.map(member => member.community_id);
+      // Update to use member_id instead of community_id for relationships
+      const ids = members.map(member => member.member_id);
       setCommunityIds(ids);
     } else {
       setCommunityIds([]);

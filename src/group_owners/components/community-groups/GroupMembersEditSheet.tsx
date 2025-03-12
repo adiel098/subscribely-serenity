@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter 
@@ -42,12 +43,14 @@ export const GroupMembersEditSheet = ({
      community.name.toLowerCase().includes(searchQuery.toLowerCase()))
   ) || [];
 
-  // Initialize selected communities when component mounts
+  // Initialize selected communities when component mounts or when currentCommunities changes
   useEffect(() => {
     if (currentCommunities.length > 0) {
       setSelectedCommunities(currentCommunities.map(c => c.id));
+    } else {
+      setSelectedCommunities([]);
     }
-  }, [currentCommunities]);
+  }, [currentCommunities, isOpen]); // Also reset when sheet opens or closes
 
   // Handle adding/removing communities to/from the group
   const handleSaveCommunities = async () => {
@@ -61,6 +64,12 @@ export const GroupMembersEditSheet = ({
         toast.error("You must be logged in to update communities");
         return;
       }
+      
+      console.log("Saving communities to group:", {
+        groupId: group.id,
+        communityIds: selectedCommunities,
+        userId: user.id
+      });
       
       // Use the edge function to handle the update
       const { data, error } = await supabase.functions.invoke("add-communities-to-group", {
@@ -96,6 +105,13 @@ export const GroupMembersEditSheet = ({
         : [...prev, communityId]
     );
   };
+
+  // Reset state when sheet closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("");
+    }
+  }, [isOpen]);
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>

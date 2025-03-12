@@ -17,7 +17,10 @@ serve(async (req) => {
     // Get group ID and community IDs from request
     const { groupId, communityIds, userId } = await req.json();
     
+    console.log('🔄 Request data:', { groupId, communityIds, userId });
+    
     if (!groupId || !communityIds || !Array.isArray(communityIds) || !userId) {
+      console.error('❌ Invalid request parameters:', { groupId, communityIds, userId });
       return new Response(
         JSON.stringify({ error: 'groupId, communityIds array, and userId are required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -38,6 +41,7 @@ serve(async (req) => {
       .single();
 
     if (groupError) {
+      console.error('❌ Group not found:', groupError);
       return new Response(
         JSON.stringify({ error: 'Group not found', details: groupError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
@@ -46,34 +50,46 @@ serve(async (req) => {
 
     // Check ownership
     if (group.owner_id !== userId) {
+      console.error('❌ Permission denied. User is not the owner:', { groupOwnerId: group.owner_id, userId });
       return new Response(
         JSON.stringify({ error: 'You do not have permission to modify this group' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       )
     }
 
-    // First, clear existing members to avoid duplicates (make this operation idempotent)
-    await supabase
-      .from('community_group_members')
-      .delete()
-      .eq('parent_id', groupId)
-      .in('community_id', communityIds);
+    console.log('✅ Verified ownership. Moving to update relationships');
 
-    // Create batch of group members
-    const groupMembers = communityIds.map((communityId, index) => ({
-      parent_id: groupId,
-      community_id: communityId,
-      display_order: index
+    // First, clear existing relationships to avoid duplicates (make this operation idempotent)
+    const { error: deleteError } = await supabase
+      .from('community_relationships')
+      .delete()
+      .eq('community_id', groupId)
+      .in('member_id', communityIds);
+      
+    if (deleteError) {
+      console.error('❌ Error clearing existing relationships:', deleteError);
+    } else {
+      console.log('✅ Cleared existing relationships successfully');
+    }
+
+    // Create batch of group relationships
+    const groupRelationships = communityIds.map((communityId, index) => ({
+      community_id: groupId,
+      member_id: communityId,
+      display_order: index,
+      relationship_type: 'group'
     }));
 
-    // Insert communities as group members
+    console.log('📋 Preparing to insert relationships:', groupRelationships);
+
+    // Insert communities as group members in the new table
     const { data, error } = await supabase
-      .from('community_group_members')
-      .insert(groupMembers)
+      .from('community_relationships')
+      .insert(groupRelationships)
       .select();
 
     if (error) {
-      console.error('Insert error:', error);
+      console.error('❌ Insert error:', error);
       return new Response(
         JSON.stringify({ 
           error: 'Failed to add communities to group', 
@@ -83,12 +99,14 @@ serve(async (req) => {
       )
     }
 
+    console.log('✅ Successfully added communities to group:', data);
+
     return new Response(
       JSON.stringify({ success: true, data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error adding communities to group:', error)
+    console.error('❌ Error adding communities to group:', error);
     
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error occurred', stack: error.stack }),

@@ -24,7 +24,6 @@ export const useCreateCommunityGroup = () => {
           .insert({
             name: data.name,
             description: data.description || null,
-            photo_url: data.photo_url || null,
             custom_link: data.custom_link || null,
             owner_id: user.id,
             is_group: true // Mark this as a group
@@ -42,6 +41,22 @@ export const useCreateCommunityGroup = () => {
         }
         
         console.log("Successfully created community group:", newGroup);
+        
+        // If photo_url is provided, update the community_groups table with it
+        if (data.photo_url) {
+          const { error: photoError } = await supabase
+            .from("community_groups")
+            .update({
+              photo_url: data.photo_url
+            })
+            .eq("id", newGroup.id);
+            
+          if (photoError) {
+            console.error("Error updating group photo:", photoError);
+            // Don't throw, just log the error
+            toast.error("Warning: Failed to update group photo");
+          }
+        }
         
         // Insert community members if provided
         if (data.communities && data.communities.length > 0) {

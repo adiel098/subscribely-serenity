@@ -6,11 +6,16 @@ export interface CommunityGroup extends Community {
   name: string;
   description: string | null;
   owner_id: string;
-  photo_url: string | null;
   custom_link: string | null;
   created_at: string;
   updated_at: string;
   is_group: boolean;
+}
+
+// This should only include fields that are specific to community_groups table
+export interface GroupSpecificData {
+  id: string;
+  photo_url: string | null;
 }
 
 export interface CommunityRelationship {
@@ -34,7 +39,7 @@ export interface CommunityGroupMember {
 
 export interface CreateCommunityGroupData {
   name: string;
-  description?: string;
+  description?: string | null;
   photo_url?: string | null;
   custom_link?: string | null;
   communities: string[];

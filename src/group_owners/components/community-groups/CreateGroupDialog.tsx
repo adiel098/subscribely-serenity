@@ -37,6 +37,8 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
       description: description || null,
       custom_link: customLink || null,
       communities: selectedCommunities
+      // Note: photo_url is not included here as it should be managed separately
+      // in the community_groups table
     }, {
       onSuccess: () => {
         resetForm();

@@ -58,17 +58,16 @@ export const useCreateCommunityGroup = () => {
           }
         }
         
-        // Insert community members if provided
+        // Insert community members if provided - FIX: Use community_group_members table
         if (data.communities && data.communities.length > 0) {
           const groupMembers = data.communities.map((communityId, index) => ({
-            community_id: newGroup.id,
-            member_id: communityId,
-            display_order: index,
-            relationship_type: 'group'
+            parent_id: newGroup.id,
+            community_id: communityId,
+            display_order: index
           }));
           
           const { error: membersError } = await supabase
-            .from("community_relationships")
+            .from("community_group_members")
             .insert(groupMembers);
           
           if (membersError) {

@@ -18,21 +18,21 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
       }
       
       try {
-        const { data: relationships, error } = await supabase
-          .from("community_relationships")
+        // Changed to use community_group_members table instead of community_relationships
+        const { data: groupMembers, error } = await supabase
+          .from("community_group_members")
           .select("*")
-          .eq("community_id", groupId)
-          .eq("relationship_type", "group")
+          .eq("parent_id", groupId)
           .order("display_order", { ascending: true });
 
         if (error) {
-          console.error("Error fetching community relationships:", error);
+          console.error("Error fetching community group members:", error);
           throw error;
         }
 
-        return relationships || [];
+        return groupMembers || [];
       } catch (error) {
-        console.error("Error in community relationships query:", error);
+        console.error("Error in community group members query:", error);
         return [];
       }
     },
@@ -45,7 +45,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   // Extract community IDs from members when they load
   useEffect(() => {
     if (members && members.length > 0) {
-      const ids = members.map(member => member.member_id);
+      const ids = members.map(member => member.community_id);
       setCommunityIds(ids);
     } else {
       setCommunityIds([]);

@@ -18,23 +18,15 @@ export interface GroupSpecificData {
   photo_url: string | null;
 }
 
-export interface CommunityRelationship {
+export interface CommunityGroupMember {
+  parent_id: string;
   community_id: string;
-  member_id: string;
   added_at: string;
   display_order: number;
-  relationship_type: string;
 }
 
 export interface CommunityGroupWithMembers extends CommunityGroup {
   communities: string[];
-}
-
-export interface CommunityGroupMember {
-  id: string;
-  community_id: string;
-  added_at: string;
-  relationship_type: string;
 }
 
 export interface CreateCommunityGroupData {

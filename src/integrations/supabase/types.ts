@@ -1140,6 +1140,20 @@ export type Database = {
           subscription_status: string
         }[]
       }
+      get_system_logs: {
+        Args: {
+          event_types?: string[]
+          limit_count?: number
+        }
+        Returns: {
+          created_at: string
+          details: string
+          event_type: string
+          id: number
+          metadata: Json | null
+          user_id: string | null
+        }[]
+      }
       handle_telegram_webhook: {
         Args: Record<PropertyKey, never>
         Returns: undefined

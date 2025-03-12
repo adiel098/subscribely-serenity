@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 
@@ -12,6 +12,23 @@ export type CronJobStatus = {
   timeLeft: number;
 };
 
+// Cache for system logs to reduce API calls
+interface LogsCache {
+  data: any[] | null;
+  timestamp: number;
+  expiresAt: number;
+}
+
+// In-memory cache for system logs
+const systemLogsCache: LogsCache = {
+  data: null,
+  timestamp: 0,
+  expiresAt: 0
+};
+
+// Cache expiration time in milliseconds (2 minutes)
+const CACHE_DURATION = 1000 * 60 * 2;
+
 export const useCronJobStatus = () => {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
@@ -20,26 +37,62 @@ export const useCronJobStatus = () => {
   const [cronStatus, setCronStatus] = useState<string | null>(null);
   const [processedMembers, setProcessedMembers] = useState<number | null>(null);
   const { selectedCommunityId } = useCommunityContext();
+  const [retryCount, setRetryCount] = useState<number>(0);
 
-  const fetchLatestRunStatus = async () => {
+  // Helper function to check if cache is valid
+  const isCacheValid = useCallback(() => {
+    return systemLogsCache.data !== null && Date.now() < systemLogsCache.expiresAt;
+  }, []);
+
+  const fetchLatestRunStatus = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Get the most recent system log for subscription checks
-      const { data, error } = await supabase
-        .from("system_logs")
-        .select("*")
-        .or("event_type.eq.subscription_check,event_type.eq.subscription_check_error,event_type.eq.subscription_check_start")
-        .order("created_at", { ascending: false })
-        .limit(5);
 
-      if (error) {
-        console.error("Error fetching latest run status:", error);
-        return;
+      let logData;
+      
+      // Use cache if available and valid
+      if (isCacheValid()) {
+        console.log("🔄 Using cached system logs");
+        logData = systemLogsCache.data;
+      } else {
+        console.log("🔍 Fetching fresh system logs");
+        
+        // Use the security definer function to get system logs
+        const { data, error } = await supabase
+          .rpc("get_system_logs", {
+            event_types: ["subscription_check", "subscription_check_error", "subscription_check_start"],
+            limit_count: 5
+          });
+
+        if (error) {
+          console.error("❌ Error fetching system logs:", error);
+          
+          // Implement exponential backoff retry
+          if (retryCount < 3) {
+            const delay = Math.pow(2, retryCount) * 1000;
+            console.log(`⏱️ Retrying in ${delay/1000} seconds...`);
+            setTimeout(() => {
+              setRetryCount(prev => prev + 1);
+              fetchLatestRunStatus();
+            }, delay);
+          }
+          
+          return;
+        }
+
+        // Update cache
+        systemLogsCache.data = data;
+        systemLogsCache.timestamp = Date.now();
+        systemLogsCache.expiresAt = Date.now() + CACHE_DURATION;
+        
+        logData = data;
+        // Reset retry count on success
+        setRetryCount(0);
       }
 
-      if (data && data.length > 0) {
+      if (logData && logData.length > 0) {
         // Find the latest successful completion log
-        const successLog = data.find(log => log.event_type === "subscription_check");
+        const successLog = logData.find(log => log.event_type === "subscription_check");
         
         if (successLog) {
           setLastCheck(new Date(successLog.created_at));
@@ -48,7 +101,7 @@ export const useCronJobStatus = () => {
         }
         
         // Check for any errors in recent logs
-        const errorLog = data.find(log => log.event_type === "subscription_check_error");
+        const errorLog = logData.find(log => log.event_type === "subscription_check_error");
         if (errorLog) {
           setLatestRunError(errorLog.details);
         }
@@ -75,7 +128,7 @@ export const useCronJobStatus = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isCacheValid, retryCount]);
 
   useEffect(() => {
     // Initial fetch
@@ -109,14 +162,17 @@ export const useCronJobStatus = () => {
 
     // Check status every minute
     const statusChecker = setInterval(() => {
-      fetchLatestRunStatus();
+      // Only fetch if cache is expired
+      if (!isCacheValid()) {
+        fetchLatestRunStatus();
+      }
     }, 60000);
 
     return () => {
       clearInterval(timer);
       clearInterval(statusChecker);
     };
-  }, [timeLeft]);
+  }, [timeLeft, fetchLatestRunStatus, isCacheValid]);
 
   return {
     status: {

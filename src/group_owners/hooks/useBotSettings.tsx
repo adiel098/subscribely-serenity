@@ -35,19 +35,19 @@ export interface BotSettings {
   second_reminder_image: string | null;
 }
 
-export const useBotSettings = (communityId: string | null) => {
+export const useBotSettings = (entityId: string | null) => {
   const queryClient = useQueryClient();
   const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['bot-settings', communityId],
+    queryKey: ['bot-settings', entityId],
     queryFn: async () => {
-      if (!communityId) return null;
+      if (!entityId) return null;
 
       const query = supabase
         .from('telegram_bot_settings')
         .select('*')
-        .eq('community_id', communityId);
+        .eq('community_id', entityId);
 
       const { data, error } = await query.single();
 
@@ -55,7 +55,7 @@ export const useBotSettings = (communityId: string | null) => {
         console.error('Error fetching bot settings:', error);
         // If no settings found, create default settings
         if (error.code === 'PGRST116') {
-          return createDefaultBotSettings(communityId);
+          return createDefaultBotSettings(entityId);
         }
         throw error;
       }
@@ -72,14 +72,14 @@ export const useBotSettings = (communityId: string | null) => {
         second_reminder_image: data.second_reminder_image || null
       } as BotSettings;
     },
-    enabled: Boolean(communityId),
+    enabled: Boolean(entityId),
   });
 
-  const createDefaultBotSettings = async (communityId: string | null) => {
-    console.log("Creating default bot settings for community", communityId);
+  const createDefaultBotSettings = async (entityId: string | null) => {
+    console.log("Creating default bot settings for entity", entityId);
     
     const defaultSettings = {
-      community_id: communityId,
+      community_id: entityId,
       welcome_message: 'Welcome to our community! 👋\nWe\'re excited to have you here.\nFeel free to introduce yourself and join the conversations.',
       welcome_image: null,
       subscription_reminder_days: 3,
@@ -120,12 +120,12 @@ export const useBotSettings = (communityId: string | null) => {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<BotSettings>) => {
-      if (!communityId) throw new Error('No community selected');
+      if (!entityId) throw new Error('No entity selected');
 
       const query = supabase
         .from('telegram_bot_settings')
         .update(newSettings)
-        .eq('community_id', communityId);
+        .eq('community_id', entityId);
 
       const { data, error } = await query.select().single();
 
@@ -137,7 +137,7 @@ export const useBotSettings = (communityId: string | null) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bot-settings', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['bot-settings', entityId] });
       toast.success('Bot settings updated successfully');
     },
     onError: (error: Error) => {

@@ -37,7 +37,7 @@ export const useSubscribers = (communityId: string) => {
 
     // Fetch subscribers from database - updated table name
     const { data: members, error: membersError } = await supabase
-      .from("community_subscribers") // Updated from telegram_chat_members
+      .from("community_subscribers") // Using updated table name
       .select(`
         id,
         telegram_user_id,

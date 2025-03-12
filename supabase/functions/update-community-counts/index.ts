@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       communities.map(async (community) => {
         // Get member count - count of active members
         const { count: memberCount, error: memberError } = await supabase
-          .from('telegram_chat_members')
+          .from('community_subscribers') // Updated from telegram_chat_members
           .select('id', { count: 'exact', head: true })
           .eq('community_id', community.id)
           .eq('is_active', true);
@@ -50,11 +50,11 @@ Deno.serve(async (req) => {
 
         // Get subscription count - count of active members with active subscriptions
         const { count: subscriptionCount, error: subscriptionError } = await supabase
-          .from('telegram_chat_members')
+          .from('community_subscribers') // Updated from telegram_chat_members
           .select('id', { count: 'exact', head: true })
           .eq('community_id', community.id)
           .eq('is_active', true)
-          .eq('subscription_status', true);
+          .eq('subscription_status', 'active'); // Updated from boolean to 'active' string
 
         if (subscriptionError) {
           console.error(`Error counting subscriptions for community ${community.id}:`, subscriptionError);

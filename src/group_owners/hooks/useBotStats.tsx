@@ -18,7 +18,7 @@ export const useBotStats = (communityId: string) => {
       }
 
       const { data: members, error } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers') // Updated from telegram_chat_members
         .select('is_active')
         .eq('community_id', communityId);
 

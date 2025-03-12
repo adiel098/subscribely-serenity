@@ -48,7 +48,7 @@ export interface Database {
           is_active: boolean;
         };
       };
-      telegram_chat_members: {
+      community_subscribers: { // Updated from telegram_chat_members
         Row: {
           id: string;
           telegram_user_id: string;

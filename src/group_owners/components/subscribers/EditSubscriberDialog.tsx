@@ -58,7 +58,7 @@ export const EditSubscriberDialog = ({ subscriber, open, onOpenChange, onSuccess
       };
 
       const { error: updateError } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers') // Updated from telegram_chat_members
         .update(updateData)
         .eq('id', subscriber.id);
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CalendarClock } from "lucide-react";
@@ -29,9 +30,9 @@ export const BotStatsHeader = ({
         let query;
         
         if (entityType === 'community') {
-          // For communities, get chat members directly
+          // For communities, get subscribers directly
           query = supabase
-            .from('telegram_chat_members')
+            .from('community_subscribers') // Updated from telegram_chat_members
             .select('id, subscription_status, subscription_end_date')
             .eq('community_id', entityId);
         } else {
@@ -40,7 +41,7 @@ export const BotStatsHeader = ({
             .from('community_group_members')
             .select(`
               community_id,
-              telegram_chat_members!inner(
+              community_subscribers!inner( 
                 id, subscription_status, subscription_end_date
               )
             `)
@@ -57,7 +58,7 @@ export const BotStatsHeader = ({
         } else {
           // For groups, extract members from all communities in the group
           members = data.flatMap(groupMember => 
-            groupMember.telegram_chat_members || []
+            groupMember.community_subscribers || []
           );
         }
         

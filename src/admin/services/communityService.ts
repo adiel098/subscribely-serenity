@@ -22,12 +22,12 @@ export async function fetchCommunities() {
       throw error;
     }
 
-    // For each community, fetch the actual member and subscription counts from telegram_chat_members
+    // For each community, fetch the actual member and subscription counts from community_subscribers
     if (communities && communities.length > 0) {
       const communitiesWithCounts = await Promise.all(communities.map(async (community) => {
         // Get member count - all active members
         const { data: memberData, error: memberError } = await supabase
-          .from('telegram_chat_members')
+          .from('community_subscribers') // Updated from telegram_chat_members
           .select('id', { count: 'exact' })
           .eq('community_id', community.id)
           .eq('is_active', true);
@@ -38,11 +38,11 @@ export async function fetchCommunities() {
 
         // Get subscription count - active members with active subscriptions
         const { data: subscriptionData, error: subscriptionError } = await supabase
-          .from('telegram_chat_members')
+          .from('community_subscribers') // Updated from telegram_chat_members
           .select('id', { count: 'exact' })
           .eq('community_id', community.id)
           .eq('is_active', true)
-          .eq('subscription_status', true);
+          .eq('subscription_status', 'active'); // Updated from boolean to 'active' string
 
         if (subscriptionError) {
           console.error(`Error fetching subscription count for community ${community.id}:`, subscriptionError);

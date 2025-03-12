@@ -30,14 +30,14 @@ export async function createOrUpdateMember(
   try {
     console.log(`[DB-LOGGER] 📝 Creating/updating member for user ${memberData.telegram_user_id} in community ${memberData.community_id}`);
     
-    // Convert boolean subscription_status to string if needed for the updated schema
+    // Ensure subscription_status is a string (no longer accepting boolean)
     if (typeof memberData.subscription_status === 'boolean') {
       memberData.subscription_status = memberData.subscription_status ? 'active' : 'inactive';
     }
     
     // First check if member exists
     const { data: existingMember, error: checkError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers') // Updated from telegram_chat_members
       .select('id')
       .eq('telegram_user_id', memberData.telegram_user_id)
       .eq('community_id', memberData.community_id)
@@ -54,7 +54,7 @@ export async function createOrUpdateMember(
       // Update existing member
       console.log(`[DB-LOGGER] 🔄 Updating existing member ID: ${existingMember.id}`);
       const { data, error } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers') // Updated from telegram_chat_members
         .update(memberData)
         .eq('id', existingMember.id)
         .select('id')
@@ -70,7 +70,7 @@ export async function createOrUpdateMember(
       // Create new member
       console.log('[DB-LOGGER] ➕ Creating new member record');
       const { data, error } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers') // Updated from telegram_chat_members
         .insert(memberData)
         .select('id')
         .single();

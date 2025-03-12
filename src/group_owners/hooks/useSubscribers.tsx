@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,9 +35,9 @@ export const useSubscribers = (communityId: string) => {
   const fetchSubscribers = async (): Promise<Subscriber[]> => {
     if (!communityId) return [];
 
-    // Fetch subscribers from database
+    // Fetch subscribers from database - updated table name
     const { data: members, error: membersError } = await supabase
-      .from("telegram_chat_members")
+      .from("community_subscribers") // Updated from telegram_chat_members
       .select(`
         id,
         telegram_user_id,

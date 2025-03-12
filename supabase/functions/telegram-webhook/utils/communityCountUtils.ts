@@ -13,7 +13,7 @@ export async function updateCommunityMemberCount(
     
     // Count all members in the community
     const { data: membersCount, error: membersError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers') // Updated from telegram_chat_members
       .select('id', { count: 'exact', head: true })
       .eq('community_id', communityId);
     
@@ -24,10 +24,10 @@ export async function updateCommunityMemberCount(
     
     // Count active subscriptions
     const { data: subscriptionsCount, error: subsError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers') // Updated from telegram_chat_members
       .select('id', { count: 'exact', head: true })
       .eq('community_id', communityId)
-      .eq('subscription_status', 'active');
+      .eq('subscription_status', 'active'); // Updated from boolean to 'active' string
     
     if (subsError) {
       console.error('[COMMUNITY-COUNTS] ❌ Error counting subscriptions:', subsError);

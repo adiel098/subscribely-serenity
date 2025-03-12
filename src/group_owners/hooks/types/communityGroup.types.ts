@@ -23,6 +23,13 @@ export interface CommunityGroupWithMembers extends CommunityGroup {
   communities: string[];
 }
 
+export interface CommunityGroupMember {
+  id: string;
+  community_id: string;
+  added_at: string;
+  relationship_type: string;
+}
+
 export interface CreateCommunityGroupData {
   name: string;
   description?: string;

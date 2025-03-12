@@ -7,19 +7,14 @@ import { toast } from "sonner";
 export interface Community {
   id: string;
   name: string;
+  description: string | null;
   owner_id: string;
+  telegram_chat_id: string | null;
+  telegram_photo_url: string | null;
+  telegram_username: string | null;
   created_at: string;
   updated_at: string;
-  platform_id: string;
-  member_count: number;
-  subscription_count: number;
-  subscription_revenue: number;
-  description: string | null;
-  platform: 'telegram' | 'discord';
-  telegram_chat_id: string | null;
-  telegram_invite_link: string | null;
-  telegram_photo_url: string | null;
-  custom_link: string | null;
+  is_group: boolean;
 }
 
 export const useCommunities = () => {
@@ -29,11 +24,9 @@ export const useCommunities = () => {
     queryKey: ["communities", user?.id],
     queryFn: async () => {
       if (!user) {
-        console.log("No user found, returning empty array");
+        console.log("No user found");
         return [];
       }
-      
-      console.log("Fetching communities for user:", user.id);
       
       try {
         const { data: communities, error } = await supabase
@@ -48,18 +41,17 @@ export const useCommunities = () => {
           throw error;
         }
 
-        console.log("Successfully fetched communities:", communities);
         return communities as Community[];
       } catch (error) {
-        console.error("Error in communities query:", error);
+        console.error("Error fetching communities:", error);
         toast.error("An error occurred while fetching communities");
         return [];
       }
     },
     enabled: !!user,
     retry: 2,
-    staleTime: 0, // Changed from 5 minutes to 0 to always fetch fresh data
-    refetchOnWindowFocus: true // Changed to true to refresh when window gets focus
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   return query;

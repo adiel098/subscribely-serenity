@@ -5,7 +5,7 @@ import { Community } from "@/group_owners/hooks/useCommunities";
 import { CommunityAvatar } from "../photo-handling/CommunityAvatar";
 
 interface CommunitySelectedDisplayProps {
-  community: Community | undefined;
+  community: Community;
   photoUrl?: string;
   isRefreshing: boolean;
   onRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
@@ -17,15 +17,6 @@ export const CommunitySelectedDisplay: React.FC<CommunitySelectedDisplayProps> =
   isRefreshing,
   onRefreshPhoto
 }) => {
-  if (!community) {
-    return (
-      <div className="flex items-center">
-        <span className="text-gray-400 text-sm">Select community</span>
-        <ChevronDown className="h-3 w-3 ml-1 text-gray-400" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex items-center gap-2">
       <CommunityAvatar

@@ -1,6 +1,4 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 
 export type AdminRole = 'super_admin' | 'moderator';
 
@@ -60,8 +58,6 @@ export const grantAdminAccess = async (userId: string, role: AdminRole = 'modera
       }
     });
     
-    // We can't use useToast directly in a non-component function
-    // So we'll just return success and let the caller show a toast
     return { success: true, data: result.data };
   } catch (error: any) {
     console.error("Error granting admin access:", error);

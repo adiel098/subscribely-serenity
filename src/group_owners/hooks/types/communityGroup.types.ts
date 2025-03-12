@@ -8,13 +8,15 @@ export interface CommunityGroup {
   custom_link: string | null;
   created_at: string;
   updated_at: string;
+  is_group: boolean;
 }
 
-export interface CommunityGroupMember {
-  group_id: string;
+export interface CommunityRelationship {
   community_id: string;
+  member_id: string;
   added_at: string;
   display_order: number;
+  relationship_type: string;
 }
 
 export interface CommunityGroupWithMembers extends CommunityGroup {

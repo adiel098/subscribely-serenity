@@ -20,9 +20,10 @@ export const useCommunityGroups = () => {
       
       try {
         const { data: groups, error } = await supabase
-          .from("community_groups")
+          .from("communities")
           .select("*")
           .eq("owner_id", user.id)
+          .eq("is_group", true)
           .order("created_at", { ascending: false });
 
         if (error) {

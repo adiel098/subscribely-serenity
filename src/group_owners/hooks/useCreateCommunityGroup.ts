@@ -18,15 +18,16 @@ export const useCreateCommunityGroup = () => {
       }
       
       try {
-        // Insert into community_groups table
+        // Insert into communities table with is_group flag set to true
         const { data: newGroup, error } = await supabase
-          .from("community_groups")
+          .from("communities")
           .insert({
             name: data.name,
             description: data.description || null,
             photo_url: data.photo_url || null,
             custom_link: data.custom_link || null,
-            owner_id: user.id // Ensure we set the owner_id explicitly
+            owner_id: user.id,
+            is_group: true // Mark this as a group
           })
           .select("*")
           .single();
@@ -45,13 +46,14 @@ export const useCreateCommunityGroup = () => {
         // Insert community members if provided
         if (data.communities && data.communities.length > 0) {
           const groupMembers = data.communities.map((communityId, index) => ({
-            group_id: newGroup.id,
-            community_id: communityId,
-            display_order: index
+            community_id: newGroup.id,
+            member_id: communityId,
+            display_order: index,
+            relationship_type: 'group'
           }));
           
           const { error: membersError } = await supabase
-            .from("community_group_members")
+            .from("community_relationships")
             .insert(groupMembers);
           
           if (membersError) {

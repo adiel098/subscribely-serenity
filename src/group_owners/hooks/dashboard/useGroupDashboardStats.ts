@@ -175,7 +175,7 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   // Create a stable owner query key
   const ownerQueryKey = useMemo(() => ["groupOwner", groupId], [groupId]);
   
-  // Fetch group owner info (same as the community owner)
+  // Fetch group owner info
   const { data: ownerInfo, isLoading: ownerLoading } = useQuery({
     queryKey: ownerQueryKey,
     queryFn: async () => {
@@ -183,9 +183,10 @@ export const useGroupDashboardStats = (groupId: string | null) => {
       
       try {
         const { data: group, error } = await supabase
-          .from("community_groups")
+          .from("communities")
           .select("owner_id")
           .eq("id", groupId)
+          .eq("is_group", true)
           .single();
         
         if (error || !group) {

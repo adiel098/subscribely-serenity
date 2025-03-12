@@ -67,7 +67,7 @@ export async function fetchGroupData(groupId: string): Promise<Community | null>
 
   try {
     const payload = {
-      group_id: groupId,
+      community_id: groupId,
       debug: true,
       fetch_telegram_data: true
     };

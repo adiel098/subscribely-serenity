@@ -1,8 +1,7 @@
 
 import React from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, FolderKanban } from "lucide-react";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
-import { FolderKanban } from "lucide-react";
 
 interface GroupSelectedDisplayProps {
   group: CommunityGroup | undefined;

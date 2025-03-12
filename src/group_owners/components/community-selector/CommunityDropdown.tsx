@@ -1,155 +1,140 @@
 
-import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Community } from "../../hooks/useCommunities";
+import React, { useEffect, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePhotos } from "@/group_owners/hooks/usePhotos";
+import { Community } from "@/group_owners/hooks/useCommunities";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
-import { useCommunityPhotos } from "./photo-handling/useCommunityPhotos";
 import { CommunitySelectItem } from "./dropdown-items/CommunitySelectItem";
 import { CommunitySelectedDisplay } from "./dropdown-items/CommunitySelectedDisplay";
 import { GroupSelectItem } from "./dropdown-items/GroupSelectItem";
 import { GroupSelectedDisplay } from "./dropdown-items/GroupSelectedDisplay";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
 
 interface CommunityDropdownProps {
-  communities?: Community[];
-  groups?: CommunityGroup[];
+  communities: Community[] | undefined;
+  groups: CommunityGroup[] | undefined;
   selectedCommunityId: string | null;
+  setSelectedCommunityId: (id: string | null) => void;
   selectedGroupId: string | null;
-  setSelectedCommunityId: (id: string) => void;
-  setSelectedGroupId: (id: string) => void;
+  setSelectedGroupId: (id: string | null) => void;
 }
 
-export const CommunityDropdown = ({ 
-  communities, 
+export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
+  communities,
   groups,
-  selectedCommunityId, 
-  selectedGroupId,
+  selectedCommunityId,
   setSelectedCommunityId,
+  selectedGroupId,
   setSelectedGroupId
-}: CommunityDropdownProps) => {
-  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
-  const selectedGroup = groups?.find(g => g.id === selectedGroupId);
+}) => {
+  const [selectedValue, setSelectedValue] = useState<string>("");
+  const [selectedType, setSelectedType] = useState<'community' | 'group' | null>(null);
+  const { getPhotoUrl, refreshPhoto, isRefreshing } = usePhotos();
   
-  const {
-    refreshingCommunityId,
-    isUpdatingAllPhotos,
-    lastError,
-    handleRefreshPhoto,
-    getPhotoUrl,
-    retryFetchAllPhotos
-  } = useCommunityPhotos(communities);
-
-  const handleSelectChange = (value: string) => {
-    // Check if the selected value is a community or a group
+  const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
+  const selectedGroup = groups?.find(group => group.id === selectedGroupId);
+  
+  const communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
+  
+  // When prop values change, update internal state
+  useEffect(() => {
+    if (selectedCommunityId) {
+      setSelectedValue(`community-${selectedCommunityId}`);
+      setSelectedType('community');
+    } else if (selectedGroupId) {
+      setSelectedValue(`group-${selectedGroupId}`);
+      setSelectedType('group');
+    } else {
+      setSelectedValue("");
+      setSelectedType(null);
+    }
+  }, [selectedCommunityId, selectedGroupId]);
+  
+  const handleValueChange = (value: string) => {
+    setSelectedValue(value);
+    
     if (value.startsWith("community-")) {
       const communityId = value.replace("community-", "");
       setSelectedCommunityId(communityId);
+      setSelectedGroupId(null);
+      setSelectedType('community');
     } else if (value.startsWith("group-")) {
       const groupId = value.replace("group-", "");
       setSelectedGroupId(groupId);
+      setSelectedCommunityId(null);
+      setSelectedType('group');
     }
   };
-
-  // Current selected value
-  const selectedValue = selectedCommunityId 
-    ? `community-${selectedCommunityId}` 
-    : selectedGroupId 
-      ? `group-${selectedGroupId}` 
-      : undefined;
-
+  
+  const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
+    e.stopPropagation();
+    refreshPhoto(communityId, chatId);
+  };
+  
   return (
-    <div className="flex items-center gap-3 bg-white py-1 px-3 rounded-lg border shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <p className="text-xs text-gray-500 font-medium">COMMUNITY</p>
-          <Select value={selectedValue} onValueChange={handleSelectChange}>
-            <SelectTrigger className="w-[220px] border-none p-0 h-auto shadow-none focus:ring-0 focus:ring-offset-0">
-              {selectedCommunityId ? (
-                <CommunitySelectedDisplay
-                  community={selectedCommunity}
-                  photoUrl={selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined}
-                  isRefreshing={selectedCommunity?.id === refreshingCommunityId}
-                  onRefreshPhoto={handleRefreshPhoto}
-                />
-              ) : selectedGroupId ? (
-                <GroupSelectedDisplay
-                  group={selectedGroup}
-                />
-              ) : (
-                <div className="flex items-center">
-                  <span className="text-gray-400 text-sm">Select community</span>
-                </div>
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {/* Display communities */}
-              {communities?.map(community => (
-                <CommunitySelectItem
-                  key={`community-${community.id}`}
-                  value={`community-${community.id}`}
-                  community={community}
-                  photoUrl={getPhotoUrl(community.id)}
-                  isRefreshing={community.id === refreshingCommunityId}
-                  onRefreshPhoto={handleRefreshPhoto}
-                />
-              ))}
-              
-              {/* Add separator if we have both communities and groups */}
-              {communities?.length && groups?.length ? (
-                <Separator className="my-2" />
-              ) : null}
-              
-              {/* Display groups */}
-              {groups?.map(group => (
-                <GroupSelectItem
-                  key={`group-${group.id}`}
-                  value={`group-${group.id}`}
-                  group={group}
-                />
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {isUpdatingAllPhotos && (
-            <div className="absolute -right-6 top-1/2 transform -translate-y-1/2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <p className="text-xs">Loading community photos...</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+    <div className="w-[280px]">
+      <Select value={selectedValue} onValueChange={handleValueChange}>
+        <SelectTrigger>
+          <SelectValue>
+            {selectedType === 'community' && selectedCommunity ? (
+              <CommunitySelectedDisplay
+                community={selectedCommunity}
+                photoUrl={communityPhotoUrl}
+                isRefreshing={isRefreshing}
+                onRefreshPhoto={handleRefreshPhoto}
+              />
+            ) : selectedType === 'group' && selectedGroup ? (
+              <GroupSelectedDisplay
+                group={selectedGroup}
+              />
+            ) : (
+              <div className="flex items-center">
+                <span className="text-gray-400 text-sm">Select community or group</span>
+              </div>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        
+        <SelectContent>
+          {groups && groups.length > 0 && (
+            <div className="px-2 py-1.5">
+              <h3 className="text-xs font-medium text-gray-500 mb-1">Groups</h3>
+              <div className="space-y-1">
+                {groups.map(group => (
+                  <GroupSelectItem
+                    key={group.id}
+                    group={group}
+                    value={`group-${group.id}`}
+                  />
+                ))}
+              </div>
             </div>
           )}
           
-          {lastError && (
-            <div className="absolute -right-6 top-1/2 transform -translate-y-1/2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="w-4 h-4 p-0" 
-                      onClick={retryFetchAllPhotos}
-                    >
-                      <AlertCircle className="w-3 h-3 text-red-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="max-w-[220px]">
-                    <p className="text-xs">Error loading photos. Click to retry.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          {communities && communities.length > 0 && (
+            <div className="px-2 py-1.5">
+              <h3 className="text-xs font-medium text-gray-500 mb-1">Communities</h3>
+              <div className="space-y-1">
+                {communities.filter(community => !community.is_group).map(community => (
+                  <CommunitySelectItem 
+                    key={community.id}
+                    community={community}
+                    photoUrl={getPhotoUrl(community.id)}
+                    isRefreshing={isRefreshing}
+                    onRefreshPhoto={handleRefreshPhoto}
+                    value={`community-${community.id}`}
+                  />
+                ))}
+              </div>
             </div>
           )}
-        </div>
-      </div>
+          
+          {(!communities || communities.length === 0) && (!groups || groups.length === 0) && (
+            <div className="px-2 py-4 text-center">
+              <p className="text-sm text-gray-500">No communities or groups found</p>
+            </div>
+          )}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

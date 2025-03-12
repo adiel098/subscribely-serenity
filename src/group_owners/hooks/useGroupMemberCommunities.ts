@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunityGroupMembers } from "./useCommunityGroupMembers";
 import { useCommunities } from "./useCommunities";
 
 export const useGroupMemberCommunities = (groupId: string | null) => {
@@ -10,7 +9,35 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   const [communities, setCommunities] = useState<any[]>([]);
   
   // Fetch the member IDs for the group
-  const { data: members, isLoading: membersLoading } = useCommunityGroupMembers(groupId);
+  const { data: members, isLoading: membersLoading } = useQuery({
+    queryKey: ["group-member-communities", groupId],
+    queryFn: async () => {
+      if (!groupId) {
+        console.log("No group ID provided, returning empty array");
+        return [];
+      }
+      
+      try {
+        const { data: relationships, error } = await supabase
+          .from("community_relationships")
+          .select("*")
+          .eq("community_id", groupId)
+          .eq("relationship_type", "group")
+          .order("display_order", { ascending: true });
+
+        if (error) {
+          console.error("Error fetching community relationships:", error);
+          throw error;
+        }
+
+        return relationships || [];
+      } catch (error) {
+        console.error("Error in community relationships query:", error);
+        return [];
+      }
+    },
+    enabled: !!groupId
+  });
   
   // Fetch all communities the user has access to
   const { data: allCommunities, isLoading: communitiesLoading } = useCommunities();
@@ -18,7 +45,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   // Extract community IDs from members when they load
   useEffect(() => {
     if (members && members.length > 0) {
-      const ids = members.map(member => member.community_id);
+      const ids = members.map(member => member.member_id);
       setCommunityIds(ids);
     } else {
       setCommunityIds([]);

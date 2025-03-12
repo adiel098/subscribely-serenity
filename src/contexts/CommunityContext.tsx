@@ -30,8 +30,10 @@ export const CommunityProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { data: communities, isLoading: isCommunitiesLoading } = useCommunities();
+  const { data: allCommunities, isLoading: isCommunitiesLoading } = useCommunities();
   const { data: groups, isLoading: isGroupsLoading } = useCommunityGroups();
+  
+  const communities = allCommunities?.filter(community => !community.is_group);
   
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(() => {
     // Check for saved community ID in localStorage
@@ -73,7 +75,7 @@ export const CommunityProvider = ({
 
   useEffect(() => {
     const isDataLoaded = !isCommunitiesLoading && !isGroupsLoading;
-    const hasCommunities = communities?.length > 0;
+    const hasCommunities = communities && communities.length > 0;
     const hasGroups = groups?.length > 0;
     
     if (!isDataLoaded) return;
@@ -81,9 +83,12 @@ export const CommunityProvider = ({
     // If coming from Telegram connect page, select the latest community
     if (location.pathname === '/dashboard' && location.state?.from === '/connect/telegram') {
       if (hasCommunities) {
-        const latestCommunity = communities[0]; // Communities are ordered by created_at in descending order
-        setSelectedCommunityId(latestCommunity.id);
-        setSelectedGroupId(null);
+        const regularCommunities = communities.filter(c => !c.is_group);
+        if (regularCommunities.length > 0) {
+          const latestCommunity = regularCommunities[0]; // Communities are ordered by created_at in descending order
+          setSelectedCommunityId(latestCommunity.id);
+          setSelectedGroupId(null);
+        }
       }
       return;
     }
@@ -91,7 +96,10 @@ export const CommunityProvider = ({
     // If nothing is selected but we have communities or groups, select one
     if (!selectedCommunityId && !selectedGroupId) {
       if (hasCommunities) {
-        setSelectedCommunityId(communities[0].id);
+        const regularCommunities = communities.filter(c => !c.is_group);
+        if (regularCommunities.length > 0) {
+          setSelectedCommunityId(regularCommunities[0].id);
+        }
       } else if (hasGroups) {
         setSelectedGroupId(groups[0].id);
       }
@@ -100,7 +108,12 @@ export const CommunityProvider = ({
     
     // If a community is selected but doesn't exist anymore, select another one
     if (selectedCommunityId && hasCommunities && !communities.find(c => c.id === selectedCommunityId)) {
-      setSelectedCommunityId(communities[0].id);
+      const regularCommunities = communities.filter(c => !c.is_group);
+      if (regularCommunities.length > 0) {
+        setSelectedCommunityId(regularCommunities[0].id);
+      } else {
+        setSelectedCommunityId(null);
+      }
       return;
     }
     

@@ -1,16 +1,12 @@
 
 import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Edit2, Plus, Users } from "lucide-react";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, 
-  DialogDescription, DialogFooter 
-} from "@/components/ui/dialog";
-import { 
-  Card, CardHeader, CardTitle, CardDescription, CardContent
-} from "@/components/ui/card";
+import { Copy, Edit, PenLine, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface GroupDetailsDialogProps {
   isOpen: boolean;
@@ -31,114 +27,109 @@ export const GroupDetailsDialog = ({
   fullLink,
   onCopyLink,
   onEditLink,
-  onEditCommunities
+  onEditCommunities,
 }: GroupDetailsDialogProps) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[600px] max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Group Details: {group.name}</DialogTitle>
-          <DialogDescription>
-            This group contains {communities.length} communities that users can join with a single subscription.
-          </DialogDescription>
+          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+            {group.name}
+            <Badge variant="outline" className="bg-purple-50 text-purple-700 ml-2">
+              Group
+            </Badge>
+          </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4 py-2">
-          <div className="p-2 bg-muted rounded-md">
+
+        <div className="space-y-5 my-2">
+          {/* Group Description */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-700">Description</h3>
+            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+              {group.description || "No description provided"}
+            </p>
+          </div>
+
+          {/* Group Link */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-medium text-sm">Mini App Link:</p>
+              <h3 className="text-sm font-medium text-gray-700">Group Link</h3>
               <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-xs h-7 px-2 text-indigo-600"
+                variant="outline" 
+                size="sm"
+                className="h-6 text-xs gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
                 onClick={onEditLink}
               >
-                <Edit2 className="h-3 w-3 mr-1" />
-                Edit Link
+                <PenLine className="h-3 w-3" />
+                Edit
               </Button>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="text-sm break-all bg-background p-2 rounded border flex-1">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-gray-50 p-2 rounded-md text-sm font-mono text-gray-700 overflow-x-auto">
                 {fullLink}
               </div>
               <Button 
                 size="sm" 
-                variant="outline" 
-                className="shrink-0"
+                className="h-8 gap-1 bg-indigo-600 hover:bg-indigo-700" 
                 onClick={onCopyLink}
               >
                 <Copy className="h-3.5 w-3.5" />
+                Copy
               </Button>
             </div>
           </div>
-          
-          <GroupCommunitiesList 
-            communities={communities} 
-            onEditCommunities={onEditCommunities} 
-          />
+
+          {/* Communities in group */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-700">Communities in Group</h3>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="h-6 text-xs gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
+                onClick={onEditCommunities}
+              >
+                <Edit className="h-3 w-3" />
+                Edit
+              </Button>
+            </div>
+            
+            {communities && communities.length > 0 ? (
+              <ScrollArea className="max-h-44 pr-4">
+                <div className="space-y-2">
+                  {communities.map((community) => (
+                    <div key={community.id} className="flex items-center justify-between bg-white p-2 rounded-md border border-gray-100">
+                      <div className="text-sm font-medium">{community.name}</div>
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                        {community.is_group ? "Group" : "Community"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="text-center p-4 bg-gray-50 rounded-md">
+                <p className="text-sm text-gray-500">No communities added to this group</p>
+                <Button 
+                  variant="link" 
+                  className="mt-1 text-indigo-600 text-xs gap-1" 
+                  onClick={onEditCommunities}
+                >
+                  <Plus className="h-3 w-3" />
+                  Add communities
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
+            <X className="h-4 w-4 mr-1" />
             Close
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
-
-interface GroupCommunitiesListProps {
-  communities: Community[];
-  onEditCommunities: () => void;
-}
-
-const GroupCommunitiesList = ({ communities, onEditCommunities }: GroupCommunitiesListProps) => {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-medium">Communities in this group:</h4>
-        <Button 
-          size="sm" 
-          variant="ghost" 
-          className="text-xs h-7 px-2 text-indigo-600"
-          onClick={onEditCommunities}
-        >
-          <Edit2 className="h-3 w-3 mr-1" />
-          Edit Communities
-        </Button>
-      </div>
-      
-      <div className="grid gap-3 md:grid-cols-2">
-        {communities.map(community => (
-          <Card key={community.id} className="shadow-sm">
-            <CardHeader className="p-3 pb-2">
-              <CardTitle className="text-sm">{community.name}</CardTitle>
-            </CardHeader>
-            {community.description && (
-              <CardContent className="p-3 pt-0">
-                <p className="text-xs text-muted-foreground line-clamp-2">{community.description}</p>
-              </CardContent>
-            )}
-          </Card>
-        ))}
-        
-        {communities.length === 0 && (
-          <div className="col-span-2 text-center p-6 border rounded-md border-dashed">
-            <Users className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No communities added to this group yet.</p>
-            <Button 
-              className="mt-2" 
-              variant="outline" 
-              size="sm"
-              onClick={onEditCommunities}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              Add Communities
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
   );
 };

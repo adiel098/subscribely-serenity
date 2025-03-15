@@ -30,13 +30,13 @@ export const PlatformPaymentMethodsGrid = ({
   const getPaymentMethodIcon = (method: string) => {
     switch (method) {
       case 'stripe':
-        return <CreditCard className="h-6 w-6" />;
+        return <CreditCard className="h-5 w-5 text-indigo-500" />;
       case 'paypal':
-        return <Wallet className="h-6 w-6" />;
+        return <Wallet className="h-5 w-5 text-blue-500" />;
       case 'crypto':
-        return <Bitcoin className="h-6 w-6" />;
+        return <Bitcoin className="h-5 w-5 text-orange-500" />;
       default:
-        return <CreditCard className="h-6 w-6" />;
+        return <CreditCard className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -60,7 +60,9 @@ export const PlatformPaymentMethodsGrid = ({
             <Card className="h-full cursor-pointer hover:border-indigo-300 transition-all">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {getPaymentMethodIcon(method.provider)}
+                  <span className="flex items-center justify-center w-6 h-6">
+                    {getPaymentMethodIcon(method.provider)}
+                  </span>
                   <span className="capitalize">{method.provider}</span>
                 </CardTitle>
                 <CardDescription>

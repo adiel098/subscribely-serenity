@@ -110,7 +110,7 @@ export const TelegramPaymentOption = ({
           </div>
         ) : (
           <>
-            <div className="w-16 h-16 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center">
               {!imageError ? (
                 <img 
                   src={getImagePath()} 
@@ -120,7 +120,7 @@ export const TelegramPaymentOption = ({
                   onLoad={() => console.log(`[TelegramPaymentOption] ${method} image loaded successfully`)}
                 />
               ) : (
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
                   {method.charAt(0).toUpperCase()}
                 </div>
               )}

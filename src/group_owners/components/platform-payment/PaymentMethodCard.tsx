@@ -49,7 +49,7 @@ export const PaymentMethodCard = ({
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {icon}
+              <span className="flex items-center justify-center w-6 h-6">{icon}</span>
               <span className="capitalize">{provider}</span>
             </div>
             {isDemo && (

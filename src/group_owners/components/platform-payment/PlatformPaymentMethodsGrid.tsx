@@ -4,6 +4,8 @@ import { CreditCard, Wallet, Bitcoin, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
 
 interface PaymentMethod {
   id: string;
@@ -58,6 +60,18 @@ export const PlatformPaymentMethodsGrid = ({
             whileTap={{ scale: 0.98 }}
           >
             <Card className="h-full cursor-pointer hover:border-indigo-300 transition-all">
+              {PAYMENT_METHOD_IMAGES[method.provider] && (
+                <div className="w-full overflow-hidden">
+                  <AspectRatio ratio={16/9} className="bg-gray-100">
+                    <img 
+                      src={PAYMENT_METHOD_IMAGES[method.provider]} 
+                      alt={`${method.provider} payment`}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </AspectRatio>
+                </div>
+              )}
+              
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-6 h-6">
@@ -82,7 +96,7 @@ export const PlatformPaymentMethodsGrid = ({
                     </>
                   ) : (
                     <>
-                      Pay ${selectedPlan.price}
+                      Pay ${selectedPlan?.price}
                       <ArrowRight className="h-4 w-4 ml-auto" />
                     </>
                   )}

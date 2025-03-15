@@ -2,6 +2,7 @@
 import { Loader2, CreditCard, Wallet, Bitcoin } from "lucide-react";
 import { PaymentMethodCard } from "./PaymentMethodCard";
 import { motion } from "framer-motion";
+import { PAYMENT_METHOD_IMAGES } from "@/group_owners/data/paymentMethodsData";
 
 interface PaymentMethod {
   id: string;
@@ -77,6 +78,7 @@ export const PaymentMethodsGrid = ({
               isProcessing={isProcessing && selectedPaymentMethod === method.provider}
               onSelect={onSelectPaymentMethod}
               isSelected={selectedPaymentMethod === method.provider}
+              imageSrc={PAYMENT_METHOD_IMAGES[method.provider]}
             />
           ))
         ) : (

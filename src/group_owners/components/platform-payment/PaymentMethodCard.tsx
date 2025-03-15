@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface PaymentMethodCardProps {
   id: string;
@@ -12,6 +13,7 @@ interface PaymentMethodCardProps {
   isProcessing: boolean;
   onSelect: (provider: string) => void;
   isSelected?: boolean;
+  imageSrc?: string;
 }
 
 export const PaymentMethodCard = ({ 
@@ -20,7 +22,8 @@ export const PaymentMethodCard = ({
   icon, 
   isProcessing, 
   onSelect,
-  isSelected = false
+  isSelected = false,
+  imageSrc
 }: PaymentMethodCardProps) => {
   // Check if this is a demo payment method
   const isDemo = id.startsWith('demo-');
@@ -46,6 +49,18 @@ export const PaymentMethodCard = ({
         }`}
         onClick={() => onSelect(provider)}
       >
+        {imageSrc && (
+          <div className="w-full h-24 overflow-hidden">
+            <AspectRatio ratio={16/9} className="bg-gray-100">
+              <img 
+                src={imageSrc} 
+                alt={`${provider} payment`}
+                className="w-full h-full object-contain p-2"
+              />
+            </AspectRatio>
+          </div>
+        )}
+        
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">

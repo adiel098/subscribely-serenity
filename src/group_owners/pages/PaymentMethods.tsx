@@ -20,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 
 const PaymentMethods = () => {
   const { toast } = useToast();

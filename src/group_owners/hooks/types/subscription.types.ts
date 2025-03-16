@@ -39,6 +39,7 @@ export interface PaymentMethod {
   is_default?: boolean;
   config: Record<string, any>;
   owner_id: string;
+  community_id?: string | null; // Will be deprecated in next phase
   created_at: string;
   updated_at: string | null;
 }

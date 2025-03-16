@@ -28,7 +28,7 @@ export async function fetchCommunityPhoto(
     if (!forceFetch) {
       const { data: community, error: communityError } = await supabase
         .from('communities')
-        .select('telegram_photo_url, updated_at')
+        .select('telegram_photo_url, updated_at, telegram_chat_id')
         .eq('id', communityId)
         .single();
       
@@ -37,6 +37,13 @@ export async function fetchCommunityPhoto(
       } else if (community?.telegram_photo_url && isPhotoCacheFresh(community.updated_at)) {
         console.log(`Using cached photo URL, age: ${isPhotoCacheFresh(community.updated_at)}`);
         return community.telegram_photo_url;
+      }
+      
+      // Verify that the chat ID matches what's in the database
+      if (community?.telegram_chat_id && community.telegram_chat_id !== chatId) {
+        console.warn(`Chat ID mismatch: passed ${chatId}, stored ${community.telegram_chat_id}`);
+        // Use the stored chat ID as it's more likely to be correct
+        chatId = community.telegram_chat_id;
       }
     }
     
@@ -50,13 +57,17 @@ export async function fetchCommunityPhoto(
       // Update the community with the new photo URL
       const { error: updateError } = await supabase
         .from('communities')
-        .update({ telegram_photo_url: photoUrl })
+        .update({ 
+          telegram_photo_url: photoUrl,
+          telegram_chat_id: formattedChatId, // Ensure the chat ID is stored
+          updated_at: new Date().toISOString()
+        })
         .eq('id', communityId);
       
       if (updateError) {
         console.error('Failed to update community with photo URL:', updateError);
       } else {
-        console.log('Successfully updated community with new photo URL');
+        console.log('Successfully updated community with new photo URL and chat ID');
       }
     }
     

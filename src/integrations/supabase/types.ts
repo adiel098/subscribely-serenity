@@ -105,6 +105,7 @@ export type Database = {
           is_group: boolean | null
           name: string
           owner_id: string
+          telegram_chat_id: string | null
           telegram_photo_url: string | null
           updated_at: string
         }
@@ -116,6 +117,7 @@ export type Database = {
           is_group?: boolean | null
           name: string
           owner_id: string
+          telegram_chat_id?: string | null
           telegram_photo_url?: string | null
           updated_at?: string
         }
@@ -127,6 +129,7 @@ export type Database = {
           is_group?: boolean | null
           name?: string
           owner_id?: string
+          telegram_chat_id?: string | null
           telegram_photo_url?: string | null
           updated_at?: string
         }

@@ -70,7 +70,7 @@ export const useTelegramChatPhoto = ({
         };
         console.log("[useTelegramChatPhoto] Request payload:", JSON.stringify(requestPayload, null, 2));
 
-        const { data, error } = await supabase.functions.invoke("get-telegram-chat-photo", {
+        const { data, error } = await supabase.functions.invoke("check-community-photo", {
           body: requestPayload
         });
 

@@ -103,7 +103,6 @@ export const useCommunityPhotos = (communities?: Community[]) => {
   };
 
   // Function to refresh a single community photo
-  // Updated to exclude the event parameter from its signature
   const handleRefreshPhoto = async (communityId: string, chatId?: string | null) => {
     if (!communityId || !chatId) {
       toast.error("Cannot refresh photo: missing community info");

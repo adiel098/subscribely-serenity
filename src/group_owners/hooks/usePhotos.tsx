@@ -11,7 +11,11 @@ export const usePhotos = () => {
     return photoUrls[communityId];
   };
 
-  const refreshPhoto = async (communityId: string, chatId?: string | null) => {
+  // Updated function signature to match how it's being called in CommunityDropdown
+  const refreshPhoto = async (
+    communityId: string, 
+    chatId?: string | null
+  ) => {
     if (!communityId || !chatId) {
       console.log("Cannot refresh photo: missing community info");
       return;

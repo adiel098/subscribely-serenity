@@ -24,10 +24,10 @@ export const CommunitySelectedDisplay: React.FC<CommunitySelectedDisplayProps> =
         photoUrl={photoUrl}
         isRefreshing={isRefreshing}
         onRefresh={onRefreshPhoto}
-        size="md"
+        size="sm"
       />
-      <span className="font-medium text-gray-800 text-sm truncate flex-1">{community.name}</span>
-      <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0 ml-auto" />
+      <span className="font-medium text-gray-800 text-xs truncate flex-1">{community.name}</span>
+      <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0 ml-auto" />
     </div>
   );
 };

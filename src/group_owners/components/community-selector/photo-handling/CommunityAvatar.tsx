@@ -25,7 +25,7 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
 }) => {
   const sizeClasses = {
     sm: "h-5 w-5",
-    md: "h-8 w-8",
+    md: "h-7 w-7",
     lg: "h-10 w-10"
   };
 

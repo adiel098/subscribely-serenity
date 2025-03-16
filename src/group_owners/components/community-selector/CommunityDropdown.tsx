@@ -78,9 +78,9 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   };
   
   return (
-    <div className="w-[280px]">
+    <div className="w-[260px]">
       <Select value={selectedValue} onValueChange={handleValueChange}>
-        <SelectTrigger className="h-10">
+        <SelectTrigger className="h-8 text-xs">
           <SelectValue>
             {selectedType === 'community' && selectedCommunity ? (
               <CommunitySelectedDisplay
@@ -96,7 +96,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
               />
             ) : (
               <div className="flex items-center">
-                <span className="text-gray-400 text-sm">Select community or group</span>
+                <span className="text-gray-400 text-xs">Select community or group</span>
               </div>
             )}
           </SelectValue>
@@ -104,9 +104,9 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
         
         <SelectContent className="max-h-[300px]">
           {groups && groups.length > 0 && (
-            <div className="px-2 py-1.5">
+            <div className="px-2 py-1">
               <h3 className="text-xs font-medium text-gray-500 mb-1">Groups</h3>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {groups.map(group => (
                   <GroupSelectItem
                     key={group.id}
@@ -119,9 +119,9 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           )}
           
           {communities && communities.length > 0 && (
-            <div className="px-2 py-1.5">
+            <div className="px-2 py-1">
               <h3 className="text-xs font-medium text-gray-500 mb-1">Communities</h3>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {communities.filter(community => !community.is_group).map(community => (
                   <CommunitySelectItem 
                     key={`item-${community.id}-${getPhotoUrl(community.id)}-${lastUpdate}`}
@@ -137,8 +137,8 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           )}
           
           {(!communities || communities.length === 0) && (!groups || groups.length === 0) && (
-            <div className="px-2 py-4 text-center">
-              <p className="text-sm text-gray-500">No communities or groups found</p>
+            <div className="px-2 py-3 text-center">
+              <p className="text-xs text-gray-500">No communities or groups found</p>
             </div>
           )}
         </SelectContent>

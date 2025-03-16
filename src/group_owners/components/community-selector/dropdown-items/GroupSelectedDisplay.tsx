@@ -13,7 +13,7 @@ export const GroupSelectedDisplay: React.FC<GroupSelectedDisplayProps> = ({
   if (!group) {
     return (
       <div className="flex items-center">
-        <span className="text-gray-400 text-sm">Select community</span>
+        <span className="text-gray-400 text-xs">Select community</span>
         <ChevronDown className="h-3 w-3 ml-1 text-gray-400" />
       </div>
     );
@@ -21,10 +21,10 @@ export const GroupSelectedDisplay: React.FC<GroupSelectedDisplayProps> = ({
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-shrink-0 h-6 w-6 bg-indigo-100 rounded-md flex items-center justify-center">
-        <FolderKanban className="h-4 w-4 text-indigo-600" />
+      <div className="flex-shrink-0 h-5 w-5 bg-indigo-100 rounded-md flex items-center justify-center">
+        <FolderKanban className="h-3 w-3 text-indigo-600" />
       </div>
-      <span className="font-medium text-gray-800 text-sm truncate">{group.name}</span>
+      <span className="font-medium text-gray-800 text-xs truncate">{group.name}</span>
       <ChevronDown className="h-3 w-3 ml-1 text-gray-400" />
     </div>
   );

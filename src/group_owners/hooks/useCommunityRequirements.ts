@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { useAvailablePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 
@@ -14,15 +14,15 @@ export const useCommunityRequirements = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { data: communities, refetch: refetchCommunities } = useCommunities();
 
-  // Use the new hook that brings both entity-specific and default payment methods
-  const { data: paymentMethods, isLoading: isLoadingPayments } = useAvailablePaymentMethods(entityId, isGroupSelected);
+  // Use the payment methods hook for owner's payment methods
+  const { data: paymentMethods, isLoading: isLoadingPayments } = usePaymentMethods();
   const { plans, isLoading: isLoadingPlans } = useSubscriptionPlans(entityId || "");
 
   const selectedEntity = isGroupSelected 
     ? null  // For groups, we don't have the entity details here
     : communities?.find(community => community.id === selectedCommunityId);
 
-  // Check if there's any active payment method (including defaults)
+  // Check if there's any active payment method
   const hasActivePaymentMethods = paymentMethods?.some(pm => pm.is_active) || false;
   const hasPlans = (plans?.length || 0) > 0;
   const isFullyConfigured = hasActivePaymentMethods && hasPlans;

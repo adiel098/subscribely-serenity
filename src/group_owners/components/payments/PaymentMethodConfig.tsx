@@ -8,7 +8,7 @@ import { Loader2, Check, AlertCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface PaymentMethodConfigProps {
   provider: string;

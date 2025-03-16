@@ -1,14 +1,14 @@
 
 import { useState } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { useAvailablePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { PaymentMethod } from "@/group_owners/hooks/types/subscription.types";
 
 export const usePaymentMethodsPage = () => {
   const { selectedCommunityId } = useCommunityContext();
-  const { data: paymentMethods, isLoading, refetch } = useAvailablePaymentMethods(selectedCommunityId);
+  const { data: paymentMethods, isLoading, refetch } = usePaymentMethods();
   const [filter, setFilter] = useState<string>("all");
 
   const handleTogglePaymentMethod = async (id: string, isActive: boolean) => {
@@ -75,7 +75,6 @@ export const usePaymentMethodsPage = () => {
 
   const filteredPaymentMethods = paymentMethods?.filter((method: PaymentMethod) => {
     if (filter === "all") return true;
-    if (filter === "community") return method.community_id === selectedCommunityId;
     if (filter === "default") return method.is_default;
     return true;
   });

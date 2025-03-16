@@ -90,6 +90,7 @@ export const PaymentMethodsGrid = ({
               'Payment method'
             }
             isActive={method.is_active || false}
+            isDefault={method.is_default || false}
             onToggle={(active) => onTogglePaymentMethod(method.id, active)}
             isConfigured={isPaymentMethodConfigured(method)}
             onConfigure={() => {}}

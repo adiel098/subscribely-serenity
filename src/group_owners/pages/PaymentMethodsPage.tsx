@@ -5,7 +5,7 @@ import { CreditCard } from "lucide-react";
 import { PaymentMethodsInfo } from "@/group_owners/components/payment-methods/PaymentMethodsInfo";
 import { PaymentMethodsGrid } from "@/group_owners/components/payment-methods/PaymentMethodsGrid";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 

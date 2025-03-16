@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "./types/subscription.types";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 /**
  * Hook to fetch only active payment methods that can be used for payments

@@ -68,7 +68,6 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   // This function handles the photo refresh, properly forwarding arguments
   const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.stopPropagation();
-    // Modified to match usePhotos.refreshPhoto signature by removing event parameter
     refreshPhoto(communityId, chatId);
   };
   

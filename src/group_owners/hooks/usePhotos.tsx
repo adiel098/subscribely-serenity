@@ -11,7 +11,6 @@ export const usePhotos = () => {
     return photoUrls[communityId];
   };
 
-  // Updated function signature to match how it's being called in CommunityDropdown
   const refreshPhoto = async (
     communityId: string, 
     chatId?: string | null

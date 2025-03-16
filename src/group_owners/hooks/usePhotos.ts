@@ -17,13 +17,16 @@ export const usePhotos = () => {
   
   const isRefreshing = !!refreshingCommunityId || isUpdatingAllPhotos;
   
+  // We'll maintain the same interface for backwards compatibility
+  const refreshPhoto = handleRefreshPhoto;
+  
   return {
     communityPhotos,
     isRefreshing,
     refreshingCommunityId,
     isUpdatingAllPhotos,
     lastError,
-    refreshPhoto: handleRefreshPhoto,
+    refreshPhoto,
     getPhotoUrl,
     retryFetchAllPhotos
   };

@@ -40,7 +40,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     if (idToUse) {
-      // Check if it's a UUID or custom link
+      // Check if this is a UUID or custom link
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idToUse);
       
       let query = supabase.from("communities").select(`
@@ -48,7 +48,6 @@ serve(async (req) => {
         name,
         description,
         telegram_chat_id,
-        telegram_invite_link,
         telegram_photo_url,
         custom_link,
         is_group,
@@ -91,7 +90,6 @@ serve(async (req) => {
               name,
               description,
               telegram_chat_id,
-              telegram_invite_link,
               telegram_photo_url,
               custom_link
             )

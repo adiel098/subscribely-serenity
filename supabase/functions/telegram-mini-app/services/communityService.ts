@@ -24,7 +24,6 @@ export async function fetchCommunityData(
         name,
         description,
         telegram_photo_url,
-        telegram_invite_link,
         telegram_chat_id,
         custom_link,
         is_group,
@@ -35,7 +34,6 @@ export async function fetchCommunityData(
             name,
             description,
             telegram_photo_url,
-            telegram_invite_link,
             telegram_chat_id,
             custom_link
           )
@@ -61,7 +59,6 @@ export async function fetchCommunityData(
         name,
         description,
         telegram_photo_url,
-        telegram_invite_link,
         telegram_chat_id,
         custom_link,
         is_group,
@@ -72,7 +69,6 @@ export async function fetchCommunityData(
             name,
             description,
             telegram_photo_url,
-            telegram_invite_link,
             telegram_chat_id,
             custom_link
           )
@@ -120,7 +116,6 @@ export async function processCommunityData(
       name: data.name,
       description: data.description || "Group subscription",
       telegram_photo_url: data.telegram_photo_url,
-      telegram_invite_link: data.telegram_invite_link,
       telegram_chat_id: data.telegram_chat_id,
       custom_link: data.custom_link,
       is_group: true,

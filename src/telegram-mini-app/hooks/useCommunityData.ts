@@ -45,11 +45,12 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         setCommunity(communityData);
       } catch (error) {
         logger.error("Error fetching data:", error);
-        if (!error) setError("Failed to load community data");
+        const errorMessage = error instanceof Error ? error.message : "Failed to load community data";
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load community data. Please try again."
+          description: errorMessage
         });
       } finally {
         setLoading(false);

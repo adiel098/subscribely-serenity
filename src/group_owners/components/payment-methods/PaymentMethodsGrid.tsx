@@ -80,6 +80,7 @@ export const PaymentMethodsGrid = ({
       {paymentMethods.map((method) => {
         const Icon = getPaymentMethodIcon(method.provider);
         const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
+        const isOwnerOfMethod = method.community_id === selectedCommunityId;
         
         return (
           <PaymentMethodCard
@@ -106,7 +107,8 @@ export const PaymentMethodsGrid = ({
             communityId={method.community_id}
             isDefault={method.is_default || false}
             onDefaultToggle={
-              method.community_id === selectedCommunityId 
+              // Only allow toggling default status if the user owns this payment method
+              isOwnerOfMethod
                 ? (value) => onToggleDefault(method.id, value) 
                 : undefined
             }

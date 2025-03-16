@@ -13,17 +13,23 @@ export const usePaymentMethodsPage = () => {
 
   const handleTogglePaymentMethod = async (id: string, isActive: boolean) => {
     try {
+      console.log(`Toggling payment method ${id} to ${isActive}`);
+      
       const { error } = await supabase
         .from('payment_methods')
         .update({ is_active: isActive })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error toggling payment method:", error);
+        throw error;
+      }
 
-      refetch();
+      await refetch();
+      
       toast({
         title: "Success",
-        description: "Payment method status updated successfully",
+        description: `Payment method ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
     } catch (error) {
       console.error("Failed to toggle payment method", error);
@@ -37,14 +43,19 @@ export const usePaymentMethodsPage = () => {
 
   const handleToggleDefault = async (id: string, isDefault: boolean) => {
     try {
+      console.log(`Setting payment method ${id} default status to ${isDefault}`);
+      
       const { error } = await supabase
         .from('payment_methods')
         .update({ is_default: isDefault })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error toggling default status:", error);
+        throw error;
+      }
 
-      refetch();
+      await refetch();
       
       toast({
         title: "Success",
@@ -56,7 +67,7 @@ export const usePaymentMethodsPage = () => {
       console.error("Failed to toggle default status", error);
       toast({
         title: "Error",
-        description: "Failed to update payment method status",
+        description: "Failed to update payment method default status",
         variant: "destructive",
       });
     }
@@ -68,6 +79,8 @@ export const usePaymentMethodsPage = () => {
     if (filter === "default") return method.is_default;
     return true;
   });
+
+  console.log("Filtered payment methods:", filteredPaymentMethods);
 
   return {
     selectedCommunityId,

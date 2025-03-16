@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "./types/subscription.types";
 
-// Get payment methods for a specific community
+/**
+ * Hook to fetch payment methods for a specific community, including both
+ * community-specific and default payment methods
+ */
 export const usePaymentMethods = (communityId: string | null) => {
   return useQuery({
     queryKey: ['payment-methods', communityId],
@@ -24,14 +27,18 @@ export const usePaymentMethods = (communityId: string | null) => {
         
         return data as PaymentMethod[];
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error in usePaymentMethods:", err);
         // Try with the old method as fallback
         const { data, error } = await supabase
           .from('payment_methods')
           .select('*')
           .eq('community_id', communityId);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Fallback query also failed:", error);
+          throw error;
+        }
+        
         return data as PaymentMethod[];
       }
     },
@@ -39,7 +46,9 @@ export const usePaymentMethods = (communityId: string | null) => {
   });
 };
 
-// Get payment methods for a specific group
+/**
+ * Hook to fetch only active payment methods for a group
+ */
 export const useGroupPaymentMethods = (groupId: string | null) => {
   return useQuery({
     queryKey: ['group-payment-methods', groupId],
@@ -85,7 +94,7 @@ export const useGroupPaymentMethods = (groupId: string | null) => {
         
         return allMethods as PaymentMethod[];
       } catch (err) {
-        console.error("Error fetching group payment methods:", err);
+        console.error("Error in useGroupPaymentMethods:", err);
         return [];
       }
     },
@@ -93,17 +102,22 @@ export const useGroupPaymentMethods = (groupId: string | null) => {
   });
 };
 
-// New hook to get all available payment methods (including defaults) for a community or group
+/**
+ * Hook to get all available payment methods (including defaults) for a community or group
+ */
 export const useAvailablePaymentMethods = (entityId: string | null, isGroup: boolean = false) => {
   return useQuery({
     queryKey: ['available-payment-methods', entityId, isGroup],
     queryFn: async () => {
       if (!entityId) return [];
       
-      if (isGroup) {
-        return useGroupPaymentMethods(entityId).data || [];
-      } else {
-        try {
+      try {
+        if (isGroup) {
+          // Use the group payment methods hook
+          const groupPaymentMethodsHook = useGroupPaymentMethods(entityId);
+          return groupPaymentMethodsHook.data || [];
+        } else {
+          // Use the RPC function for community payment methods
           const { data, error } = await supabase
             .rpc('get_available_payment_methods', {
               community_id_param: entityId
@@ -115,10 +129,10 @@ export const useAvailablePaymentMethods = (entityId: string | null, isGroup: boo
           }
           
           return data as PaymentMethod[];
-        } catch (err) {
-          console.error("Error:", err);
-          return [];
         }
+      } catch (err) {
+        console.error("Error in useAvailablePaymentMethods:", err);
+        return [];
       }
     },
     enabled: !!entityId

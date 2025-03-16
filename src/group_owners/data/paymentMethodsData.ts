@@ -1,17 +1,7 @@
 
-import { CreditCard, DollarSign, Landmark, Bitcoin } from "lucide-react";
-
-// Icons for payment methods
-export const PAYMENT_METHOD_ICONS: Record<string, React.ElementType> = {
-  'stripe': CreditCard,
-  'paypal': DollarSign,
-  'crypto': Bitcoin,
-  'bank': Landmark
-};
-
-// Image sources for payment methods
 export const PAYMENT_METHOD_IMAGES: Record<string, string> = {
-  'stripe': '/lovable-uploads/5a20d054-33f7-43c0-8b20-079ddd9a5dd3.png',
-  'paypal': '/lovable-uploads/1fe01199-01ba-4d5d-9d6e-88af5097a5f0.png',
-  'crypto': '/lovable-uploads/d7aa5d26-7f8d-42f8-bdc1-7c9b5567f6c1.png'
+  stripe: "/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png",
+  paypal: "/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png",
+  crypto: "/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png",
+  telegram: "/lovable-uploads/d7b82bfb-6189-40c0-8cba-643eb0c03b4c.png"
 };

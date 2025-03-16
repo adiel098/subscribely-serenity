@@ -122,3 +122,50 @@ export async function fetchGroupData(groupIdOrLink: string): Promise<Community |
     return null;
   }
 }
+
+export async function fetchCommunityByIdOrLink(idOrLink: string): Promise<Community | null> {
+  logServiceAction("🔍 fetchCommunityByIdOrLink", { idOrLink });
+
+  try {
+    const payload = {
+      community_id: idOrLink,
+      debug: true
+    };
+    console.log("📤 Sending to edge function:", payload);
+    
+    const { data, error } = await invokeSupabaseFunction("telegram-community-data", payload);
+
+    if (error) {
+      console.error("❌ Error fetching community data:", error);
+      toast({
+        title: "Error",
+        description: "Could not retrieve community data. Please try again later.",
+        variant: "destructive"
+      });
+      throw new Error(error.message);
+    }
+
+    if (!data?.community) {
+      console.error("❌ No community data found:", data);
+      return null;
+    }
+
+    // Process the community data
+    const community = data.community;
+    
+    // Ensure subscription_plans is always an array
+    if (!community.subscription_plans) {
+      console.warn(`⚠️ Community ${community.name} missing subscription_plans - adding empty array`);
+      community.subscription_plans = [];
+    } else if (!Array.isArray(community.subscription_plans)) {
+      console.error(`❌ Community ${community.name} has non-array subscription_plans:`, community.subscription_plans);
+      community.subscription_plans = [];
+    }
+
+    logServiceAction("✅ Processed community data", community);
+    return community;
+  } catch (error) {
+    console.error("❌ Failed to fetch community data:", error);
+    return null;
+  }
+}

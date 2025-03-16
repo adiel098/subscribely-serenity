@@ -59,19 +59,18 @@ serve(async (req) => {
     }
 
     // Fetch community or group data based on the start parameter
-    const { communityQuery, isGroupRequest, entityId } = await fetchCommunityData(supabase, start);
+    const { communityQuery, entityId } = await fetchCommunityData(supabase, start);
     const { data, error } = await communityQuery;
 
     if (error) {
-      console.error(`❌ Error fetching ${isGroupRequest ? 'group' : 'community'} with ID "${entityId}":`, error);
+      console.error(`❌ Error fetching entity with identifier "${entityId}":`, error);
       console.error("Error details:", error.message, error.details);
       
       return new Response(
         JSON.stringify({
-          error: `Failed to fetch ${isGroupRequest ? 'group' : 'community'} data`,
+          error: `Failed to fetch community data`,
           details: error.message,
           param: start,
-          isGroupRequest,
           requestUrl: req.url
         }),
         { headers: corsHeaders, status: 500 }
@@ -79,7 +78,7 @@ serve(async (req) => {
     }
 
     // Process the community data
-    const displayCommunity = await processCommunityData(supabase, data, isGroupRequest);
+    const displayCommunity = await processCommunityData(supabase, data);
 
     // Process Telegram Mini App init data if provided
     let userData = null;
@@ -90,9 +89,9 @@ serve(async (req) => {
 
         if (parsedInitData.user) {
           const telegramUser = parsedInitData.user;
-          // Set appropriate IDs based on request type
-          const communityId = isGroupRequest ? null : displayCommunity.id;
-          const groupId = isGroupRequest ? displayCommunity.id : null;
+          // Set appropriate IDs based on community type
+          const communityId = displayCommunity.is_group ? null : displayCommunity.id;
+          const groupId = displayCommunity.is_group ? displayCommunity.id : null;
           
           userData = await processUserData(supabase, telegramUser, communityId, groupId);
         }

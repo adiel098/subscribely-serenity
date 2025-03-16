@@ -63,6 +63,47 @@ export const createLogger = (componentName: string) => {
     },
     success: (message: string, ...args: any[]) => {
       console.log(`✅ [${componentName}] ${message}`, ...args);
+    },
+    debug: (message: string, ...args: any[]) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`🔧 [${componentName}] ${message}`, ...args);
+      }
+    },
+    group: (label: string) => {
+      console.group(`🔍 [${componentName}] ${label}`);
+    },
+    groupEnd: () => {
+      console.groupEnd();
+    },
+    time: (label: string) => {
+      console.time(`[${componentName}] ${label}`);
+    },
+    timeEnd: (label: string) => {
+      console.timeEnd(`[${componentName}] ${label}`);
     }
   };
+};
+
+/**
+ * Function to log actions related to custom links
+ */
+export const logCustomLinkAction = (
+  action: string,
+  entityType: 'community' | 'group',
+  idOrLink: string,
+  result?: any
+) => {
+  console.group(`🔗 Custom Link Action: ${action}`);
+  console.log(`Entity Type: ${entityType}`);
+  console.log(`ID or Link: ${idOrLink}`);
+  
+  if (result) {
+    if (result.error) {
+      console.error('Error:', result.error);
+    } else {
+      console.log('Result:', result);
+    }
+  }
+  
+  console.groupEnd();
 };

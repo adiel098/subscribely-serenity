@@ -21,11 +21,12 @@ serve(async (req) => {
       return createErrorResponse("Invalid request body", error, 400);
     }
 
-    const { community_id, debug, fetch_telegram_data } = payload || {};
+    const { community_id, group_id, debug, fetch_telegram_data } = payload || {};
+    const idToUse = community_id || group_id;
     
     // Log request details
     logger.debug("Request payload:", payload);
-    logger.info(`Processing request for community ID: ${community_id}`);
+    logger.info(`Processing request for ID: ${idToUse}`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -38,9 +39,9 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (community_id) {
+    if (idToUse) {
       // Check if it's a UUID or custom link
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(community_id);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idToUse);
       
       let query = supabase.from("communities").select(`
         id,
@@ -49,6 +50,7 @@ serve(async (req) => {
         telegram_chat_id,
         telegram_invite_link,
         telegram_photo_url,
+        custom_link,
         is_group,
         subscription_plans (
           id,
@@ -61,21 +63,21 @@ serve(async (req) => {
       `);
       
       if (isUuid) {
-        logger.debug(`Querying community by UUID: ${community_id}`);
-        query = query.eq("id", community_id);
+        logger.debug(`Querying by UUID: ${idToUse}`);
+        query = query.eq("id", idToUse);
       } else {
-        logger.debug(`Querying community by custom_link: ${community_id}`);
-        query = query.eq("custom_link", community_id);
+        logger.debug(`Querying by custom_link: ${idToUse}`);
+        query = query.eq("custom_link", idToUse);
       }
       
       const { data: community, error } = await query.single();
       
       if (error) {
-        logger.error(`Error fetching community: ${error.message}`, error);
-        return createNotFoundResponse(`Community not found: ${community_id}`);
+        logger.error(`Error fetching by ID/link "${idToUse}": ${error.message}`, error);
+        return createNotFoundResponse(`Community not found with identifier: ${idToUse}`);
       }
       
-      logger.success(`Successfully fetched community: ${community.name}`);
+      logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
       
       // If this is a group, fetch its member communities
       if (community.is_group) {
@@ -90,7 +92,8 @@ serve(async (req) => {
               description,
               telegram_chat_id,
               telegram_invite_link,
-              telegram_photo_url
+              telegram_photo_url,
+              custom_link
             )
           `)
           .eq("community_id", community.id)
@@ -114,8 +117,8 @@ serve(async (req) => {
       return createSuccessResponse({ community });
     } 
     else {
-      logger.error("Missing required parameter: community_id");
-      return createErrorResponse("Missing required parameter: community_id", null, 400);
+      logger.error("Missing required parameter: community_id or group_id");
+      return createErrorResponse("Missing required parameter: community_id or group_id", null, 400);
     }
   } catch (error) {
     logger.error("Unexpected error:", error);

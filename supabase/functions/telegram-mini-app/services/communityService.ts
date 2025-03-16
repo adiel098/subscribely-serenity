@@ -26,6 +26,7 @@ export async function fetchCommunityData(
         telegram_photo_url,
         telegram_invite_link,
         telegram_chat_id,
+        custom_link,
         is_group,
         community_relationships:community_relationships!parent_community_id(
           community_id,
@@ -35,7 +36,8 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_invite_link,
-            telegram_chat_id
+            telegram_chat_id,
+            custom_link
           )
         ),
         subscription_plans (
@@ -61,6 +63,7 @@ export async function fetchCommunityData(
         telegram_photo_url,
         telegram_invite_link,
         telegram_chat_id,
+        custom_link,
         is_group,
         community_relationships:community_relationships!parent_community_id(
           community_id,
@@ -70,7 +73,8 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_invite_link,
-            telegram_chat_id
+            telegram_chat_id,
+            custom_link
           )
         ),
         subscription_plans (
@@ -118,6 +122,7 @@ export async function processCommunityData(
       telegram_photo_url: data.telegram_photo_url,
       telegram_invite_link: data.telegram_invite_link,
       telegram_chat_id: data.telegram_chat_id,
+      custom_link: data.custom_link,
       is_group: true,
       communities: groupCommunities || [],
       subscription_plans: data.subscription_plans || []
@@ -130,6 +135,7 @@ export async function processCommunityData(
   }
   
   console.log(`📝 Entity description: "${displayCommunity.description || 'NOT SET'}"`);
+  console.log(`🔗 Entity custom_link: "${displayCommunity.custom_link || 'NOT SET'}"`);
   
   return displayCommunity;
 }

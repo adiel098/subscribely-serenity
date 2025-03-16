@@ -1,10 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { Community } from "@/telegram-mini-app/types/community.types";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchCommunityByIdOrLink } from "@/telegram-mini-app/services/communityService";
 import { useToast } from "@/components/ui/use-toast";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
-export const useCommunityData = (communityIdOrGroupId: string | null) => {
+const logger = createLogger("useCommunityData");
+
+export const useCommunityData = (communityIdOrLink: string | null) => {
   const [loading, setLoading] = useState(true);
   const [community, setCommunity] = useState<Community | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -13,86 +16,53 @@ export const useCommunityData = (communityIdOrGroupId: string | null) => {
   useEffect(() => {
     const fetchCommunityData = async () => {
       try {
-        if (!communityIdOrGroupId) {
-          console.warn("❌ useCommunityData: No community or group ID provided");
-          throw new Error("No community or group ID provided");
+        if (!communityIdOrLink) {
+          logger.warn("No community ID or link provided");
+          throw new Error("No community ID or link provided");
         }
         
-        // Check if we're dealing with a group ID (starts with "group_")
-        const isGroup = communityIdOrGroupId.startsWith('group_');
-        const id = isGroup ? communityIdOrGroupId.substring(6) : communityIdOrGroupId;
+        logger.log(`Fetching community data with ID or link: ${communityIdOrLink}`);
         
-        console.log(`🔍 useCommunityData: Fetching ${isGroup ? 'group' : 'community'} data with ID:`, id);
+        // Remove any "group_" prefix if present
+        const idOrLink = communityIdOrLink.startsWith('group_') ? 
+                         communityIdOrLink.substring(6) : 
+                         communityIdOrLink;
         
-        const payload = { 
-          [isGroup ? 'group_id' : 'community_id']: id,
-          debug: true,
-          fetch_telegram_data: true
-        };
-        console.log('📤 useCommunityData: Request payload:', JSON.stringify(payload, null, 2));
+        // Check if we're dealing with a UUID or custom link
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
+        logger.log(`Parameter type: ${isUUID ? "UUID" : "Custom link"} - "${idOrLink}"`);
         
-        const response = await supabase.functions.invoke("telegram-community-data", {
-          body: payload
-        });
-
-        console.log('📥 useCommunityData: Raw response:', JSON.stringify(response, null, 2));
-
-        if (response.error) {
-          console.error('❌ useCommunityData: Error from edge function:', response.error);
-          setError(response.error.message || `Error fetching ${isGroup ? 'group' : 'community'} data`);
-          throw new Error(response.error);
+        const communityData = await fetchCommunityByIdOrLink(idOrLink);
+        
+        if (!communityData) {
+          logger.error(`Community not found with identifier: ${idOrLink}`);
+          setError(`Community not found with identifier: ${idOrLink}`);
+          throw new Error(`Community not found`);
         }
-
-        if (response.data?.community) {
-          // Ensure subscription_plans is always an array
-          const communityData = response.data.community;
-          
-          console.log('📊 useCommunityData: Community data before processing:', JSON.stringify(communityData, null, 2));
-          console.log('📝 useCommunityData: Description from API:', communityData.description);
-          console.log('📝 useCommunityData: Description type:', typeof communityData.description);
-          
-          if (!communityData.subscription_plans) {
-            console.warn('⚠️ useCommunityData: subscription_plans is missing - adding empty array');
-            communityData.subscription_plans = [];
-          } else if (!Array.isArray(communityData.subscription_plans)) {
-            console.error('❌ useCommunityData: subscription_plans is not an array:', typeof communityData.subscription_plans);
-            console.error('Value:', JSON.stringify(communityData.subscription_plans));
-            communityData.subscription_plans = [];
-          } else {
-            console.log(`✅ useCommunityData: Received ${communityData.subscription_plans.length} subscription plans`);
-            if (communityData.subscription_plans.length > 0) {
-              console.log(`   Plan names: ${communityData.subscription_plans.map(p => p.name).join(', ')}`);
-              console.log(`   First plan details:`, JSON.stringify(communityData.subscription_plans[0]));
-            }
-          }
-          
-          console.log('🔍 useCommunityData: Processed community data:', JSON.stringify(communityData, null, 2));
-          setCommunity(communityData);
-        } else {
-          console.error('❌ useCommunityData: Community not found in response:', JSON.stringify(response.data));
-          setError(`${isGroup ? 'Group' : 'Community'} not found`);
-          throw new Error(`${isGroup ? 'Group' : 'Community'} not found`);
-        }
+        
+        logger.log(`Successfully fetched community: ${communityData.name}`);
+        logger.log(`Has custom_link: ${communityData.custom_link || 'None'}`);
+        setCommunity(communityData);
       } catch (error) {
-        console.error("❌ useCommunityData: Error fetching data:", error);
-        if (!error) setError("Failed to load data");
+        logger.error("Error fetching data:", error);
+        if (!error) setError("Failed to load community data");
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load community data. Please try again."
+          description: error instanceof Error ? error.message : "Failed to load community data. Please try again."
         });
       } finally {
         setLoading(false);
       }
     };
 
-    if (communityIdOrGroupId) {
+    if (communityIdOrLink) {
       fetchCommunityData();
     } else {
-      console.error("❌ useCommunityData: No community or group ID provided");
+      logger.error("No community ID or link provided");
       setLoading(false);
     }
-  }, [communityIdOrGroupId, toast]);
+  }, [communityIdOrLink, toast]);
 
   return { loading, community, error };
 };

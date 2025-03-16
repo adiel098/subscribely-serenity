@@ -10,6 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("MiniAppLinkButton");
 
 interface MiniAppLinkButtonProps {
   onClick: () => void;
@@ -23,17 +26,17 @@ export const MiniAppLinkButton = ({ onClick, community }: MiniAppLinkButtonProps
   const botUsername = getBotUsername();
 
   const baseUrl = `https://t.me/${botUsername}?start=`;
-  const fullLink = community?.custom_link 
-    ? `${baseUrl}${community.custom_link}` 
-    : community?.id 
-      ? `${baseUrl}${community.id}` 
-      : "";
+  
+  // Use custom link if available, otherwise use ID
+  const linkParameter = community?.custom_link || community?.id || "";
+  const fullLink = `${baseUrl}${linkParameter}`;
 
   const handleSaveCustomLink = async () => {
     if (!community?.id) return;
     
     try {
       setIsSubmitting(true);
+      logger.log(`Attempting to save custom link "${customLink}" for community ${community.id}`);
       
       // Check if the custom link is already in use
       if (customLink) {
@@ -45,6 +48,7 @@ export const MiniAppLinkButton = ({ onClick, community }: MiniAppLinkButtonProps
           .single();
           
         if (data) {
+          logger.error(`Custom link "${customLink}" is already in use by another community`);
           toast.error("This custom link is already in use. Please choose another one.");
           return;
         }
@@ -57,16 +61,17 @@ export const MiniAppLinkButton = ({ onClick, community }: MiniAppLinkButtonProps
         .eq("id", community.id);
         
       if (error) {
-        console.error("Error updating custom link:", error);
+        logger.error("Error updating custom link:", error);
         toast.error("Failed to update custom link");
         return;
       }
       
+      logger.success(`Successfully updated custom link to "${customLink}"`);
       toast.success("Custom link updated successfully");
       setIsEditDialogOpen(false);
       
     } catch (error) {
-      console.error("Error in handleSaveCustomLink:", error);
+      logger.error("Error in handleSaveCustomLink:", error);
       toast.error("An error occurred while updating the custom link");
     } finally {
       setIsSubmitting(false);

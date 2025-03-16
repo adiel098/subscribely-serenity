@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Community } from "@/group_owners/hooks/useCommunities";
+import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 interface CommunityAvatarProps {
   community: Community;
@@ -41,15 +42,29 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
     lg: "h-3 w-3"
   };
 
+  // Process the photo URL to ensure it's properly loaded
+  const processedPhotoUrl = getProxiedImageUrl(photoUrl);
+  
   // Log photo URL for debugging
   if (process.env.NODE_ENV === 'development') {
-    console.log(`Avatar for ${community.name}:`, photoUrl);
+    console.log(`Avatar for ${community.name}:`, {
+      original: photoUrl,
+      processed: processedPhotoUrl
+    });
   }
 
   return (
     <div className="relative group">
       <Avatar className={sizeClasses[size]}>
-        <AvatarImage src={photoUrl} alt={community.name} />
+        <AvatarImage 
+          src={processedPhotoUrl || undefined} 
+          alt={community.name}
+          onError={(e) => {
+            console.error(`Failed to load image for ${community.name}:`, e);
+            // Force fallback by removing the src attribute
+            (e.target as HTMLImageElement).src = '';
+          }}
+        />
         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
           {community.name?.charAt(0)?.toUpperCase() || '?'}
         </AvatarFallback>

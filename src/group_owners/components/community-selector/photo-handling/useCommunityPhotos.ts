@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
-import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 type CommunityPhotoMap = Record<string, string>;
 
@@ -112,7 +111,10 @@ export const useCommunityPhotos = (communities?: Community[]) => {
   };
 
   // Function to refresh a single community photo
-  const handleRefreshPhoto = async (communityId: string, chatId?: string | null) => {
+  const handleRefreshPhoto = async (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
+    // Stop event propagation to prevent dropdown from closing
+    e.stopPropagation();
+    
     if (!communityId || !chatId) {
       toast.error("Cannot refresh photo: missing community info");
       return;

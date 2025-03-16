@@ -3,7 +3,6 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { CommunityAvatar } from "../photo-handling/CommunityAvatar";
-import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 interface CommunitySelectedDisplayProps {
   community: Community;
@@ -18,14 +17,11 @@ export const CommunitySelectedDisplay: React.FC<CommunitySelectedDisplayProps> =
   isRefreshing,
   onRefreshPhoto
 }) => {
-  // Apply proxy to the Telegram photos to ensure they load correctly
-  const proxiedPhotoUrl = getProxiedImageUrl(photoUrl);
-  
   return (
     <div className="flex items-center gap-2 w-full">
       <CommunityAvatar
         community={community}
-        photoUrl={proxiedPhotoUrl}
+        photoUrl={photoUrl}
         isRefreshing={isRefreshing}
         onRefresh={onRefreshPhoto}
         size="sm"

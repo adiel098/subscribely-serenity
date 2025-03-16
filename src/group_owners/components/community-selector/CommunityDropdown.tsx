@@ -65,9 +65,10 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
     }
   };
   
+  // Update to match the handleRefreshPhoto signature from useCommunityPhotos
   const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.stopPropagation();
-    refreshPhoto(e, communityId, chatId);
+    refreshPhoto(communityId, chatId);
   };
   
   return (

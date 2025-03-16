@@ -34,13 +34,25 @@ serve(async (req) => {
       );
     }
 
-    const { start, initData } = body || {};
-    console.log("Request payload:", { start, initData });
+    // Extract start parameter from body or URL
+    let start = body?.start || null;
+    
+    // If start is not in the body, try to get it from URL query parameters
+    if (!start) {
+      const url = new URL(req.url);
+      start = url.searchParams.get("start");
+      console.log("Extracted start parameter from URL:", start);
+    }
+    
+    const initData = body?.initData;
+    console.log("Request payload:", { start, initData, url: req.url });
 
     if (!start) {
       return new Response(
         JSON.stringify({
           error: "Missing start parameter",
+          details: "No community identifier provided in the request",
+          requestUrl: req.url
         }),
         { headers: corsHeaders, status: 400 }
       );
@@ -59,7 +71,8 @@ serve(async (req) => {
           error: `Failed to fetch ${isGroupRequest ? 'group' : 'community'} data`,
           details: error.message,
           param: start,
-          isGroupRequest
+          isGroupRequest,
+          requestUrl: req.url
         }),
         { headers: corsHeaders, status: 500 }
       );

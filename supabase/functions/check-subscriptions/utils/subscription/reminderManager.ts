@@ -104,7 +104,7 @@ async function getNotificationConfig(
     
     const [tokenResult, communityResult] = await Promise.all([
       supabase.from("telegram_global_settings").select("bot_token").single(),
-      supabase.from("communities").select("id, miniapp_url, name, telegram_photo_url").eq("id", communityId).single()
+      supabase.from("communities").select("id, miniapp_url, name, telegram_photo_url, custom_link").eq("id", communityId).single()
     ]);
 
     if (tokenResult.error || !tokenResult.data?.bot_token) {
@@ -115,9 +115,9 @@ async function getNotificationConfig(
     const botToken = tokenResult.data.bot_token;
     
     // Use the community miniapp_url or fall back to the default URL
-    let miniAppUrl = communityResult.data?.miniapp_url;
+    let miniAppBaseUrl = communityResult.data?.miniapp_url;
     
-    if (!miniAppUrl) {
+    if (!miniAppBaseUrl) {
       console.warn(`No miniapp_url found for community ${communityId}, using default URL`);
       
       // Update the community with the default miniapp_url
@@ -136,8 +136,14 @@ async function getNotificationConfig(
         console.error("Exception updating community miniapp_url:", updateError);
       }
       
-      miniAppUrl = DEFAULT_MINI_APP_URL;
+      miniAppBaseUrl = DEFAULT_MINI_APP_URL;
     }
+    
+    // Get community custom link or ID
+    const customLinkOrId = communityResult.data?.custom_link || communityId;
+    
+    // Ensure URL has proper start parameter format
+    const miniAppUrl = `${miniAppBaseUrl}?start=${customLinkOrId}`;
     
     console.log(`Creating renew button with miniAppUrl: ${miniAppUrl} for community: ${communityResult.data?.name || communityId}`);
     
@@ -148,7 +154,7 @@ async function getNotificationConfig(
           {
             text: "Renew Now! 🔄",
             web_app: {
-              url: `${miniAppUrl}?start=${communityId}`
+              url: miniAppUrl
             }
           }
         ]

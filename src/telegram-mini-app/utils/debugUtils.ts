@@ -60,6 +60,9 @@ export const createLogger = (componentName: string) => {
     },
     info: (message: string, ...args: any[]) => {
       console.info(`ℹ️ [${componentName}] ${message}`, ...args);
+    },
+    success: (message: string, ...args: any[]) => {
+      console.log(`✅ [${componentName}] ${message}`, ...args);
     }
   };
 };

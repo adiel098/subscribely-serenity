@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createLogger } from "../../utils/debugUtils";
+
+const logger = createLogger("useInviteLink");
 
 export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
@@ -8,7 +11,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   
   // Generate a new invite link after successful payment
   useEffect(() => {
-    console.log('Community invite link in useInviteLink:', initialInviteLink);
+    logger.log('Community invite link in useInviteLink:', initialInviteLink);
     
     // Always generate a new invite link regardless of initial link
     generateNewInviteLink();
@@ -19,7 +22,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   const generateNewInviteLink = async () => {
     setIsLoadingLink(true);
     try {
-      console.log('Generating new invite link for renewal...');
+      logger.log('Generating new invite link for renewal...');
       
       // Get community ID from recent payment
       const { data: recentPayment, error: paymentError } = await supabase
@@ -29,19 +32,19 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         .limit(1);
       
       if (paymentError) {
-        console.error('Error fetching recent payment:', paymentError);
+        logger.error('Error fetching recent payment:', paymentError);
         return;
       }
       
       if (!recentPayment || recentPayment.length === 0 || !recentPayment[0].community_id) {
-        console.error('No recent payment or community ID found');
+        logger.error('No recent payment or community ID found');
         return;
       }
       
       const communityId = recentPayment[0].community_id;
       const paymentId = recentPayment[0].id;
       
-      console.log(`Found community ID for invite link generation: ${communityId}`);
+      logger.log(`Found community ID for invite link generation: ${communityId}`);
       
       // Call the create-invite-link edge function with forceNew=true
       const response = await supabase.functions.invoke('create-invite-link', {
@@ -52,12 +55,12 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       });
       
       if (response.error) {
-        console.error('Error generating new invite link:', response.error);
+        logger.error('Error generating new invite link:', response.error);
         return;
       }
       
       if (response.data?.inviteLink) {
-        console.log('Generated new invite link:', response.data.inviteLink);
+        logger.log('Generated new invite link:', response.data.inviteLink);
         setInviteLink(response.data.inviteLink);
         
         // Update the most recent payment with the new link
@@ -67,15 +70,15 @@ export const useInviteLink = (initialInviteLink: string | null) => {
           .eq('id', paymentId);
           
         if (updateError) {
-          console.error('Error updating payment with new invite link:', updateError);
+          logger.error('Error updating payment with new invite link:', updateError);
         } else {
-          console.log('Updated payment record with new invite link');
+          logger.log('Updated payment record with new invite link');
         }
       } else {
-        console.error('No invite link received from function');
+        logger.error('No invite link received from function');
       }
     } catch (err) {
-      console.error('Error in generateNewInviteLink:', err);
+      logger.error('Error in generateNewInviteLink:', err);
     } finally {
       setIsLoadingLink(false);
     }

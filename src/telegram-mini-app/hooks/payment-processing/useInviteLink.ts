@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logPaymentAction } from "./utils";
+import { createLogger } from "../../utils/debugUtils";
+
+const logger = createLogger("payment-useInviteLink");
 
 /**
  * Hook to manage invite link fetching and creation
@@ -28,12 +31,12 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         // First try to get the invite link from the community record
         const { data: community, error: communityError } = await supabase
           .from('communities')
-          .select('telegram_invite_link')
+          .select('telegram_invite_link, custom_link')
           .eq('id', communityId)
           .single();
         
         if (communityError) {
-          console.error('[useInviteLink] Error fetching community:', communityError);
+          logger.error('Error fetching community:', communityError);
         } else if (community?.telegram_invite_link) {
           logPaymentAction('Found invite link in community record', community.telegram_invite_link);
           setInviteLink(community.telegram_invite_link);
@@ -48,7 +51,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       });
       
       if (error) {
-        console.error('[useInviteLink] Error calling create-invite-link function:', error);
+        logger.error('Error calling create-invite-link function:', error);
         throw new Error(`Failed to create invite link: ${error.message}`);
       }
       
@@ -57,11 +60,11 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         setInviteLink(data.inviteLink);
         return data.inviteLink;
       } else {
-        console.error('[useInviteLink] No invite link returned from function:', data);
+        logger.error('No invite link returned from function:', data);
         throw new Error('No invite link returned from function');
       }
     } catch (err) {
-      console.error('[useInviteLink] Error in fetchOrCreateInviteLink:', err);
+      logger.error('Error in fetchOrCreateInviteLink:', err);
       return null;
     }
   };

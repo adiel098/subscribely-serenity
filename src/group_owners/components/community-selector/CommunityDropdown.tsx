@@ -28,7 +28,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
 }) => {
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [selectedType, setSelectedType] = useState<'community' | 'group' | null>(null);
-  const { getPhotoUrl, refreshPhoto, isRefreshing } = usePhotos();
+  const { getPhotoUrl, refreshPhoto, isRefreshing, lastUpdate } = usePhotos();
   
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
@@ -48,6 +48,12 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
       setSelectedType(null);
     }
   }, [selectedCommunityId, selectedGroupId]);
+  
+  // Force render when photos are updated
+  useEffect(() => {
+    // This is intentionally empty but the dependency on lastUpdate 
+    // will trigger a re-render when photos change
+  }, [lastUpdate]);
   
   const handleValueChange = (value: string) => {
     setSelectedValue(value);
@@ -78,6 +84,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           <SelectValue>
             {selectedType === 'community' && selectedCommunity ? (
               <CommunitySelectedDisplay
+                key={`selected-${selectedCommunity.id}-${communityPhotoUrl}-${lastUpdate}`}
                 community={selectedCommunity}
                 photoUrl={communityPhotoUrl}
                 isRefreshing={isRefreshing}
@@ -117,7 +124,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
               <div className="space-y-1">
                 {communities.filter(community => !community.is_group).map(community => (
                   <CommunitySelectItem 
-                    key={community.id}
+                    key={`item-${community.id}-${getPhotoUrl(community.id)}-${lastUpdate}`}
                     community={community}
                     photoUrl={getPhotoUrl(community.id)}
                     isRefreshing={isRefreshing}

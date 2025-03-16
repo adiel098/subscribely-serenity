@@ -11,6 +11,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
   const [refreshingCommunityId, setRefreshingCommunityId] = useState<string | null>(null);
   const [isUpdatingAllPhotos, setIsUpdatingAllPhotos] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
 
   // Initialize with existing photo URLs
   useEffect(() => {
@@ -70,10 +71,17 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       // Update photo URLs if we received results
       if (data?.results && Object.keys(data.results).length > 0) {
         console.log("Received photo results:", data.results);
-        setCommunityPhotos(prev => ({
-          ...prev,
-          ...data.results
-        }));
+        setCommunityPhotos(prev => {
+          const updatedPhotos = {
+            ...prev,
+            ...data.results
+          };
+          console.log("Updated photo map:", updatedPhotos);
+          return updatedPhotos;
+        });
+        
+        // Force a refresh to ensure UI updates
+        setLastUpdate(Date.now());
         
         // Show success toast only if we got at least some photos
         if (Object.keys(data.results).length > 0) {
@@ -129,10 +137,18 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       console.log("Photo refresh response:", data);
       
       if (data?.photoUrl) {
-        setCommunityPhotos(prev => ({
-          ...prev,
-          [communityId]: data.photoUrl
-        }));
+        setCommunityPhotos(prev => {
+          const updated = {
+            ...prev,
+            [communityId]: data.photoUrl
+          };
+          console.log("Updated single photo. New photo map:", updated);
+          return updated;
+        });
+        
+        // Force a refresh of components that use this hook
+        setLastUpdate(Date.now());
+        
         toast.success("Community photo updated");
       } else {
         if (data?.error) {
@@ -151,6 +167,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
 
   // Function to get the correct photo URL for a community
   const getPhotoUrl = (communityId: string) => {
+    console.log(`Getting photo URL for community ${communityId}:`, communityPhotos[communityId] || "Not found");
     return communityPhotos[communityId] || undefined;
   };
 
@@ -166,6 +183,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
     refreshingCommunityId,
     isUpdatingAllPhotos,
     lastError,
+    lastUpdate,
     handleRefreshPhoto,
     getPhotoUrl,
     retryFetchAllPhotos

@@ -1,33 +1,28 @@
 
-import { useCommunityPhotos } from "../components/community-selector/photo-handling/useCommunityPhotos";
+import { useCommunityPhotos } from "@/group_owners/components/community-selector/photo-handling/useCommunityPhotos";
 import { useCommunities } from "./useCommunities";
 
 export const usePhotos = () => {
   const { data: communities } = useCommunities();
-  
-  const {
-    communityPhotos,
-    refreshingCommunityId,
+  const { 
+    communityPhotos, 
+    refreshingCommunityId, 
     isUpdatingAllPhotos,
     lastError,
+    lastUpdate,
     handleRefreshPhoto,
     getPhotoUrl,
     retryFetchAllPhotos
   } = useCommunityPhotos(communities);
-  
-  const isRefreshing = !!refreshingCommunityId || isUpdatingAllPhotos;
-  
-  // We'll maintain the same interface for backwards compatibility
-  const refreshPhoto = handleRefreshPhoto;
-  
+
   return {
     communityPhotos,
-    isRefreshing,
-    refreshingCommunityId,
-    isUpdatingAllPhotos,
-    lastError,
-    refreshPhoto,
     getPhotoUrl,
+    refreshPhoto: handleRefreshPhoto,
+    isRefreshing: !!refreshingCommunityId || isUpdatingAllPhotos,
+    refreshingCommunityId,
+    lastError,
+    lastUpdate,
     retryFetchAllPhotos
   };
 };

@@ -15,7 +15,7 @@ export const GroupCommunitiesDisplay: React.FC<GroupCommunitiesDisplayProps> = (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {communities && communities.length > 0 ? (
           communities.map(community => (
-            <Card key={community.id} className="shadow-sm hover:shadow-md transition-shadow">
+            <Card key={community.id} className="shadow-sm hover:shadow-md transition-shadow h-full">
               <CardHeader className="px-4 py-3 pb-0">
                 <CardTitle className="text-sm font-medium truncate">{community.name}</CardTitle>
               </CardHeader>

@@ -143,72 +143,6 @@ export type Database = {
           },
         ]
       }
-      community_group_members: {
-        Row: {
-          added_at: string | null
-          community_id: string
-          display_order: number | null
-          parent_id: string
-        }
-        Insert: {
-          added_at?: string | null
-          community_id: string
-          display_order?: number | null
-          parent_id: string
-        }
-        Update: {
-          added_at?: string | null
-          community_id?: string
-          display_order?: number | null
-          parent_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_group_members_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_group_members_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      community_groups: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          owner_id: string
-          photo_url: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          owner_id: string
-          photo_url?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          owner_id?: string
-          photo_url?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       community_logs: {
         Row: {
           amount: number | null
@@ -1071,18 +1005,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_communities_to_group: {
-        Args: {
-          group_id: string
-          community_ids: string[]
-        }
-        Returns: {
-          added_at: string | null
-          community_id: string
-          display_order: number | null
-          parent_id: string
-        }[]
-      }
       can_modify_admin_users: {
         Args: {
           user_uuid: string

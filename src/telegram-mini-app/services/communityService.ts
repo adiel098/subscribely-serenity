@@ -62,12 +62,16 @@ export async function searchCommunities(query: string = ""): Promise<Community[]
   }
 }
 
-export async function fetchGroupData(groupId: string): Promise<Community | null> {
-  logServiceAction("🔍 fetchGroupData", { groupId });
+export async function fetchGroupData(groupIdOrLink: string): Promise<Community | null> {
+  logServiceAction("🔍 fetchGroupData", { groupIdOrLink });
 
   try {
+    // Check if it's a UUID
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupIdOrLink);
+    console.log(`🔍 Parameter type check: ${isUUID ? "UUID" : "Custom link"}`);
+    
     const payload = {
-      community_id: groupId,
+      community_id: groupIdOrLink,
       debug: true,
       fetch_telegram_data: true
     };

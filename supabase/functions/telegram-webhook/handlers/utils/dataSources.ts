@@ -23,51 +23,50 @@ export async function fetchStartCommandData(
     
     // Check if it's a UUID or a custom link
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
-    let communityId = communityIdOrLink;
+    let communityQuery;
     
-    if (!isUUID) {
-      await logger.info(`Input appears to be a custom link: ${communityIdOrLink}`);
-      
-      // Fetch community by custom_link
-      const { data: communityData, error: linkError } = await supabase
+    if (isUUID) {
+      // If it's a UUID, search by ID
+      communityQuery = supabase
         .from('communities')
-        .select('id')
-        .eq('custom_link', communityIdOrLink)
-        .single();
-      
-      if (linkError || !communityData) {
-        await logger.error(`Failed to find community with custom link: ${communityIdOrLink}`, linkError);
-        return {
-          success: false,
-          error: `Community not found with custom link: ${communityIdOrLink}`
-        };
-      }
-      
-      communityId = communityData.id;
-      await logger.info(`Custom link ${communityIdOrLink} resolved to community ID: ${communityId}`);
+        .select('*')
+        .eq('id', communityIdOrLink);
+    } else {
+      // If it's not a UUID, search by custom_link
+      communityQuery = supabase
+        .from('communities')
+        .select('*')
+        .eq('custom_link', communityIdOrLink);
     }
     
-    // Now fetch community data by ID
-    const communityResult = await supabase
-      .from('communities')
-      .select('*')
-      .eq('id', communityId)
-      .single();
+    // Execute the query
+    const { data: communities, error: communityError } = await communityQuery;
     
-    // Handle errors in fetching community
-    if (communityResult.error) {
-      await logger.error('Error fetching community:', communityResult.error);
+    if (communityError) {
+      await logger.error('Error fetching community:', communityError);
       return {
         success: false,
-        error: `Community not found: ${communityResult.error.message}`
+        error: `Community not found: ${communityError.message}`
       };
     }
+    
+    if (!communities || communities.length === 0) {
+      await logger.error(`No community found with identifier: ${communityIdOrLink}`);
+      return {
+        success: false,
+        error: `No community found with identifier: ${communityIdOrLink}`
+      };
+    }
+    
+    // Get the first matching community
+    const community = communities[0];
+    await logger.info(`Found community: ${community.name} (ID: ${community.id})`);
     
     // Now fetch bot settings, but handle the case when they don't exist
     const botSettingsResult = await supabase
       .from('telegram_bot_settings')
       .select('*')
-      .eq('community_id', communityId)
+      .eq('community_id', community.id)
       .maybeSingle(); // Use maybeSingle() instead of single() to handle missing bot settings
     
     // If bot settings don't exist, we'll use a default settings object but won't try to save it
@@ -77,8 +76,8 @@ export async function fetchStartCommandData(
       
       // Create default bot settings object (but don't insert to database)
       const defaultBotSettings = {
-        community_id: communityId,
-        welcome_message: `Welcome to ${communityResult.data.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`,
+        community_id: community.id,
+        welcome_message: `Welcome to ${community.name}! 🎉\n\nTo access this community, you need to purchase a subscription.`,
         auto_welcome_message: true,
         auto_remove_expired: false,
         language: 'en',
@@ -91,7 +90,7 @@ export async function fetchStartCommandData(
       // Return success with community data and default settings
       return {
         success: true,
-        community: communityResult.data,
+        community: community,
         botSettings: defaultBotSettings
       };
     }
@@ -100,7 +99,7 @@ export async function fetchStartCommandData(
     
     return {
       success: true,
-      community: communityResult.data,
+      community: community,
       botSettings: botSettingsResult.data
     };
   } catch (error) {

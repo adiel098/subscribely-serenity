@@ -12,19 +12,19 @@ export async function handleCommunityStartCommand(
   supabase: ReturnType<typeof createClient>, 
   message: any, 
   botToken: string,
-  communityId: string
+  communityIdOrLink: string
 ): Promise<boolean> {
   const logger = createLogger(supabase, 'COMMUNITY-START-COMMAND');
   
   try {
-    await logger.info(`🏢 Processing community start command for community ID: ${communityId}`);
+    await logger.info(`🏢 Processing community start command for identifier: ${communityIdOrLink}`);
     
     const userId = message.from.id.toString();
     const username = message.from.username;
     
-    const community = await findCommunityById(supabase, communityId);
-    if (!community.success) {
-      await logger.error(`❌ Community not found for ID: ${communityId}`);
+    const communityResult = await findCommunityById(supabase, communityIdOrLink);
+    if (!communityResult.success) {
+      await logger.error(`❌ Community not found for identifier: ${communityIdOrLink}`);
       
       await sendTelegramMessage(
         botToken,
@@ -34,11 +34,16 @@ export async function handleCommunityStartCommand(
       return true;
     }
     
+    const community = communityResult.data;
+    
+    // Log the found community information
+    await logger.info(`✅ Found community: ${community.name} (ID: ${community.id})`);
+    
     // Check if community has at least one active subscription plan and one active payment method
-    const { hasActivePlan, hasActivePaymentMethod } = await checkCommunityRequirements(supabase, communityId);
+    const { hasActivePlan, hasActivePaymentMethod } = await checkCommunityRequirements(supabase, community.id);
     
     if (!hasActivePlan || !hasActivePaymentMethod) {
-      await logger.warn(`⚠️ Community ${communityId} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
+      await logger.warn(`⚠️ Community ${community.id} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
       
       await sendTelegramMessage(
         botToken,
@@ -53,7 +58,7 @@ export async function handleCommunityStartCommand(
       supabase,
       message,
       botToken,
-      community.data,
+      community,
       userId,
       username
     );

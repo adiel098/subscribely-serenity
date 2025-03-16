@@ -39,12 +39,10 @@ export async function handleMessageRoute(
       if (startParam.startsWith('group_')) {
         console.log(`[MESSAGE-ROUTE] 👥👥👥 GROUP PARAMETER DETECTED in message route: ${startParam}`);
         console.log(`[MESSAGE-ROUTE] Group ID: ${startParam.substring(6)}`);
-      }
-      
-      // Check if it might be a custom link
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam);
-      if (!isUUID) {
-        console.log(`[MESSAGE-ROUTE] 🔗 Parameter appears to be a custom link: ${startParam}`);
+      } else {
+        // If not a group parameter, it could be a community ID or custom link
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(startParam);
+        console.log(`[MESSAGE-ROUTE] 🔍 Parameter is ${isUUID ? 'a UUID' : 'likely a custom link'}: ${startParam}`);
       }
     }
     

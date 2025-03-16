@@ -3,30 +3,54 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../../../services/loggingService.ts';
 
 /**
- * Find a community by its ID
+ * Find a community by its ID or custom link
  */
-export async function findCommunityById(supabase: ReturnType<typeof createClient>, communityId: string) {
+export async function findCommunityById(supabase: ReturnType<typeof createClient>, communityIdOrLink: string) {
   const logger = createLogger(supabase, 'COMMUNITY-DB-UTILS');
   
   try {
-    await logger.info(`🔍 Looking up community by ID: ${communityId}`);
+    await logger.info(`🔍 Looking up community by ID or link: ${communityIdOrLink}`);
     
-    const { data: community, error: communityError } = await supabase
-      .from('communities')
-      .select('id, name, telegram_chat_id')
-      .eq('id', communityId)
-      .single();
+    // Check if it's a UUID or custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
     
-    if (communityError || !community) {
-      await logger.error(`❌ Community not found: ${communityError?.message || 'Unknown error'}`);
-      return { success: false, error: communityError };
+    let query;
+    if (isUUID) {
+      await logger.info(`🆔 Input appears to be a UUID: ${communityIdOrLink}`);
+      // Search by ID
+      query = supabase
+        .from('communities')
+        .select('id, name, telegram_chat_id, custom_link')
+        .eq('id', communityIdOrLink);
+    } else {
+      await logger.info(`🔗 Input appears to be a custom link: ${communityIdOrLink}`);
+      // Search by custom link
+      query = supabase
+        .from('communities')
+        .select('id, name, telegram_chat_id, custom_link')
+        .eq('custom_link', communityIdOrLink);
     }
     
-    await logger.success(`✅ Found community: ${community.name}`);
+    const { data: communities, error: searchError } = await query;
+    
+    if (searchError) {
+      await logger.error(`❌ Error searching for community: ${searchError.message}`);
+      return { success: false, error: searchError };
+    }
+    
+    if (!communities || communities.length === 0) {
+      await logger.error(`❌ No community found with identifier: ${communityIdOrLink}`);
+      return { success: false, error: { message: 'Community not found' } };
+    }
+    
+    // Get the first matching community
+    const community = communities[0];
+    
+    await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
     return { success: true, data: community };
   } catch (error) {
-    await logger.error(`❌ Error in findCommunityById for ID: ${communityId}`, error);
-    throw error;
+    await logger.error(`❌ Error in findCommunityById for ID or link: ${communityIdOrLink}`, error);
+    return { success: false, error };
   }
 }
 
@@ -55,11 +79,25 @@ export async function checkCommunityRequirements(
       return { hasActivePlan: false, hasActivePaymentMethod: false };
     }
     
-    // Check for active payment methods
+    // Find the owner of the community
+    const { data: communityData, error: communityError } = await supabase
+      .from('communities')
+      .select('owner_id')
+      .eq('id', communityId)
+      .single();
+    
+    if (communityError) {
+      await logger.error(`❌ Error finding community owner: ${communityError.message}`);
+      return { hasActivePlan: planCount > 0, hasActivePaymentMethod: false };
+    }
+    
+    const ownerId = communityData.owner_id;
+    
+    // Check for active payment methods owned by the community owner
     const { count: paymentMethodCount, error: paymentError } = await supabase
       .from('payment_methods')
       .select('id', { count: 'exact', head: true })
-      .eq('community_id', communityId)
+      .eq('owner_id', ownerId)
       .eq('is_active', true)
       .limit(1);
     

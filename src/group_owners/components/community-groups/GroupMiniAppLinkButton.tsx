@@ -29,7 +29,7 @@ export const GroupMiniAppLinkButton = ({
   
   const botUsername = getBotUsername();
   
-  // Ensure we use the "group_" prefix for group IDs
+  // Build the link using either custom_link or group_id prefix
   const baseUrl = `https://t.me/${botUsername}?start=`;
   const fullLink = `${baseUrl}${customLink || `group_${group.id}`}`;
 
@@ -51,6 +51,7 @@ export const GroupMiniAppLinkButton = ({
 
   const handleLinkUpdated = (newLink: string | null) => {
     setCustomLink(newLink);
+    toast.success(newLink ? "Custom link updated" : "Custom link removed");
   };
 
   return (

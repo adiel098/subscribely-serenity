@@ -58,8 +58,8 @@ export async function handleGroupJoinRequest(
       botToken,
       message.chat.id,
       welcomeMessage,
-      botSettings?.welcome_image || null,
-      inlineKeyboard
+      inlineKeyboard,
+      botSettings?.welcome_image || null
     );
     
     await logger.success(`✅ Sent welcome message with mini app button to user ${userId}`);

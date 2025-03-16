@@ -47,6 +47,18 @@ export async function handleCommunityJoinRequest(
       await logger.info(`📤 Sending welcome message to user ${userId}`);
       
       try {
+        // Create the inline keyboard markup
+        const inlineKeyboardMarkup = {
+          inline_keyboard: [[
+            {
+              text: "Join Community 🚀",
+              web_app: { url: miniAppUrl }
+            }
+          ]]
+        };
+        
+        await logger.info(`⌨️ Prepared inline keyboard: ${JSON.stringify(inlineKeyboardMarkup)}`);
+        
         if (botSettings.welcome_image) {
           // Send welcome message with image if configured
           await logger.info(`🖼️ Including welcome image in message`);
@@ -55,15 +67,8 @@ export async function handleCommunityJoinRequest(
             botToken,
             message.chat.id,
             welcomeMessage,
-            botSettings.welcome_image,
-            {
-              inline_keyboard: [[
-                {
-                  text: "Join Community 🚀",
-                  web_app: { url: miniAppUrl }
-                }
-              ]]
-            }
+            inlineKeyboardMarkup,
+            botSettings.welcome_image
           );
         } else {
           // Send text-only welcome message
@@ -73,15 +78,7 @@ export async function handleCommunityJoinRequest(
             botToken,
             message.chat.id,
             welcomeMessage,
-            null,
-            {
-              inline_keyboard: [[
-                {
-                  text: "Join Community 🚀",
-                  web_app: { url: miniAppUrl }
-                }
-              ]]
-            }
+            inlineKeyboardMarkup
           );
         }
         

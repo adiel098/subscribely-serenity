@@ -10,8 +10,8 @@ export async function sendTelegramMessage(
   botToken: string,
   chatId: string | number,
   message: string,
-  photoUrl: string | null = null,
-  inlineKeyboard: any = null
+  inlineKeyboard: any = null,
+  photoUrl: string | null = null
 ): Promise<boolean> {
   try {
     if (!chatId) {
@@ -33,8 +33,8 @@ export async function sendTelegramMessage(
     console.log(`sendTelegramMessage parameters:
       - chatId: ${chatId}
       - message length: ${message ? message.length : 0}
-      - photoUrl: ${photoUrl ? (photoUrl.length > 30 ? photoUrl.substring(0, 30) + '...' : photoUrl) : 'Not provided'}
       - inlineKeyboard: ${inlineKeyboard ? 'Provided' : 'Not provided'}
+      - photoUrl: ${photoUrl ? (photoUrl.length > 30 ? photoUrl.substring(0, 30) + '...' : photoUrl) : 'Not provided'}
     `);
 
     // If photo URL is provided, send as photo with caption
@@ -76,10 +76,12 @@ export async function sendTextMessage(
       parse_mode: "HTML"
     };
 
-    // Add inline keyboard if provided
+    // Add inline keyboard if provided - ensure we don't double stringify
     if (inlineKeyboard) {
-      payload.reply_markup = inlineKeyboard;
-      console.log("Adding inline keyboard to text message:", JSON.stringify(inlineKeyboard));
+      payload.reply_markup = typeof inlineKeyboard === 'string' 
+        ? inlineKeyboard 
+        : JSON.stringify(inlineKeyboard);
+      console.log("Adding inline keyboard to text message:", typeof inlineKeyboard === 'string' ? inlineKeyboard : JSON.stringify(inlineKeyboard));
     } else {
       console.log("No inline keyboard provided for text message");
     }
@@ -234,10 +236,12 @@ export async function sendPhotoMessage(
         payload.caption = caption;
       }
       
-      // Add inline keyboard if provided
+      // Add inline keyboard if provided - ensure we don't double stringify
       if (inlineKeyboard) {
-        payload.reply_markup = inlineKeyboard;
-        console.log("Adding inline keyboard to photo message:", JSON.stringify(inlineKeyboard));
+        payload.reply_markup = typeof inlineKeyboard === 'string' 
+          ? inlineKeyboard 
+          : JSON.stringify(inlineKeyboard);
+        console.log("Adding inline keyboard to photo message:", typeof inlineKeyboard === 'string' ? inlineKeyboard : JSON.stringify(inlineKeyboard));
       } else {
         console.log("No inline keyboard provided for photo message");
       }

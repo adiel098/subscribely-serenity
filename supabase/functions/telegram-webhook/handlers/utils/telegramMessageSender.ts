@@ -43,19 +43,22 @@ export async function sendTextMessage(
       return false;
     }
     
+    // Prepare the inline keyboard
+    const inlineKeyboard = {
+      inline_keyboard: [[
+        {
+          text: "Join Community🚀",
+          web_app: { url: miniAppUrl }
+        }
+      ]]
+    };
+    
     // Prepare the message payload
     const payload = {
       chat_id: chatId,
       text: text,
       parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [[
-          {
-            text: "Join Community🚀",
-            web_app: { url: miniAppUrl }
-          }
-        ]]
-      }
+      reply_markup: JSON.stringify(inlineKeyboard)
     };
     
     console.log('[TelegramSender] 📦 Message payload:', JSON.stringify(payload, null, 2));
@@ -105,20 +108,23 @@ export async function sendPhotoMessage(
       return false;
     }
     
+    // Prepare the inline keyboard
+    const inlineKeyboard = {
+      inline_keyboard: [[
+        {
+          text: "Join Community🚀",
+          web_app: { url: miniAppUrl }
+        }
+      ]]
+    };
+    
     // Prepare the message payload
     const payload = {
       chat_id: chatId,
       photo: photoUrl,
       caption: caption,
       parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [[
-          {
-            text: "Join Community🚀",
-            web_app: { url: miniAppUrl }
-          }
-        ]]
-      }
+      reply_markup: JSON.stringify(inlineKeyboard)
     };
     
     console.log('[TelegramSender] 📦 Photo message payload:', JSON.stringify(payload, null, 2));

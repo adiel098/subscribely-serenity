@@ -21,8 +21,11 @@ export async function sendTelegramMessage(
   };
   
   if (replyMarkup) {
-    body.reply_markup = replyMarkup;
-    console.log(`[Telegram Client] Including reply markup:`, JSON.stringify(replyMarkup));
+    // Ensure reply markup is properly formatted
+    body.reply_markup = typeof replyMarkup === 'string' 
+      ? replyMarkup 
+      : JSON.stringify(replyMarkup);
+    console.log(`[Telegram Client] Including reply markup:`, typeof replyMarkup === 'string' ? replyMarkup : JSON.stringify(replyMarkup));
   }
 
   try {
@@ -64,6 +67,12 @@ export async function sendTelegramPhotoMessage(
 ): Promise<any> {
   console.log(`[Telegram Client] Sending photo to chat ${chatId}`);
   
+  // Validate photo URL
+  if (!photo.startsWith('https://') && !photo.startsWith('data:image/')) {
+    console.error(`[Telegram Client] Invalid photo URL: ${photo.substring(0, 30)}...`);
+    throw new Error("Invalid photo URL format. Must be HTTPS URL or base64 data URL.");
+  }
+  
   const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
   
   const body: any = {
@@ -77,8 +86,11 @@ export async function sendTelegramPhotoMessage(
   }
   
   if (replyMarkup) {
-    body.reply_markup = replyMarkup;
-    console.log(`[Telegram Client] Including reply markup:`, JSON.stringify(replyMarkup));
+    // Ensure reply markup is properly formatted
+    body.reply_markup = typeof replyMarkup === 'string' 
+      ? replyMarkup 
+      : JSON.stringify(replyMarkup);
+    console.log(`[Telegram Client] Including reply markup:`, typeof replyMarkup === 'string' ? replyMarkup : JSON.stringify(replyMarkup));
   }
 
   try {
@@ -127,7 +139,7 @@ export async function sendTelegramPhotoMessage(
       }
       
       if (replyMarkup) {
-        formData.append('reply_markup', JSON.stringify(replyMarkup));
+        formData.append('reply_markup', typeof replyMarkup === 'string' ? replyMarkup : JSON.stringify(replyMarkup));
       }
       
       // Make the request
@@ -143,7 +155,9 @@ export async function sendTelegramPhotoMessage(
       
       if (!responseData.ok) {
         console.error(`[Telegram Client] API Error: ${responseData.description}`);
-        throw new Error(responseData.description);
+        // Try to fall back to text-only message
+        console.log(`[Telegram Client] Falling back to text-only message`);
+        return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
       }
       
       console.log(`[Telegram Client] Photo sent successfully to ${chatId}`);
@@ -164,7 +178,10 @@ export async function sendTelegramPhotoMessage(
       if (!responseData.ok) {
         console.error(`[Telegram Client] API Error: ${responseData.description}`);
         console.error(`[Telegram Client] Request body was:`, JSON.stringify(body));
-        throw new Error(responseData.description);
+        
+        // Try to fall back to text-only message
+        console.log(`[Telegram Client] Falling back to text-only message`);
+        return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
       }
       
       console.log(`[Telegram Client] Photo sent successfully to ${chatId}`);
@@ -172,7 +189,15 @@ export async function sendTelegramPhotoMessage(
     }
   } catch (error) {
     console.error(`[Telegram Client] Error sending photo:`, error);
-    throw error;
+    
+    // Attempt to fall back to text-only message
+    try {
+      console.log(`[Telegram Client] Falling back to text-only message after exception`);
+      return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
+    } catch (fallbackError) {
+      console.error(`[Telegram Client] Even fallback message failed:`, fallbackError);
+      throw error;
+    }
   }
 }
 
@@ -210,6 +235,26 @@ export async function canMessageUser(
     }
   } catch (error) {
     console.error(`[Telegram Client] Error checking if bot can message user:`, error);
+    return false;
+  }
+}
+
+/**
+ * Helper function to validate image URLs
+ */
+function isValidImageUrl(url: string): boolean {
+  if (!url) return false;
+  
+  // Check if it's a base64 data URL for an image
+  if (url.startsWith('data:image/')) {
+    return true;
+  }
+  
+  // Check if it's a URL
+  try {
+    new URL(url);
+    return url.startsWith('https://');
+  } catch (e) {
     return false;
   }
 }

@@ -59,30 +59,68 @@ export async function handleCommunityJoinRequest(
         
         await logger.info(`⌨️ Prepared inline keyboard: ${JSON.stringify(inlineKeyboardMarkup)}`);
         
+        // Check if welcome image is valid before attempting to send
+        let shouldIncludeImage = false;
         if (botSettings.welcome_image) {
-          // Send welcome message with image if configured
-          await logger.info(`🖼️ Including welcome image in message`);
-          
-          await sendTelegramMessage(
-            botToken,
-            message.chat.id,
-            welcomeMessage,
-            inlineKeyboardMarkup,
-            botSettings.welcome_image
-          );
-        } else {
-          // Send text-only welcome message
-          await logger.info(`📝 Sending text-only welcome message`);
-          
-          await sendTelegramMessage(
-            botToken,
-            message.chat.id,
-            welcomeMessage,
-            inlineKeyboardMarkup
-          );
+          // Very basic validation to prevent obvious issues
+          const imageUrl = botSettings.welcome_image;
+          if (typeof imageUrl === 'string' && (
+              imageUrl.startsWith('https://') || 
+              imageUrl.startsWith('data:image/')
+            )) {
+            shouldIncludeImage = true;
+            await logger.info(`🖼️ Including welcome image in message: ${imageUrl.substring(0, 30)}...`);
+          } else {
+            await logger.warn(`⚠️ Invalid welcome image format, skipping image: ${
+              typeof imageUrl === 'string' ? imageUrl.substring(0, 30) + '...' : 'not a string'
+            }`);
+          }
         }
         
-        await logger.success(`✅ Successfully sent welcome message to user ${userId}`);
+        try {
+          if (shouldIncludeImage) {
+            // Send welcome message with image if configured
+            await sendTelegramMessage(
+              botToken,
+              message.chat.id,
+              welcomeMessage,
+              inlineKeyboardMarkup,
+              botSettings.welcome_image
+            );
+          } else {
+            // Send text-only welcome message
+            await logger.info(`📝 Sending text-only welcome message`);
+            
+            await sendTelegramMessage(
+              botToken,
+              message.chat.id,
+              welcomeMessage,
+              inlineKeyboardMarkup,
+              null
+            );
+          }
+          
+          await logger.success(`✅ Successfully sent welcome message to user ${userId}`);
+        } catch (sendError) {
+          await logger.error(`❌ Error sending welcome message: ${sendError.message}`);
+          
+          // Final fallback attempt - try to send just a plain text message
+          try {
+            await sendTelegramMessage(
+              botToken,
+              message.chat.id,
+              `Welcome to ${community.name}! To join, use this link: ${miniAppUrl}`,
+              null,
+              null
+            );
+            await logger.info(`✅ Sent fallback plain text message without formatting or images`);
+          } catch (finalError) {
+            await logger.error(`❌ Complete failure sending any message: ${finalError.message}`);
+          }
+          
+          // We still return true because we want to continue the flow
+          // The user will see the error in logs but the function won't fail
+        }
       } catch (msgError) {
         await logger.error(`❌ Error sending welcome message: ${msgError.message}`);
         return false;

@@ -53,16 +53,66 @@ export async function handleGroupJoinRequest(
       ]
     };
     
-    // Send message with mini app button
-    await sendTelegramMessage(
-      botToken,
-      message.chat.id,
-      welcomeMessage,
-      inlineKeyboard,
-      botSettings?.welcome_image || null
-    );
+    // Check if welcome image exists and is valid
+    let shouldIncludeImage = false;
+    if (botSettings?.welcome_image) {
+      const imageUrl = botSettings.welcome_image;
+      if (typeof imageUrl === 'string' && (
+          imageUrl.startsWith('https://') || 
+          imageUrl.startsWith('data:image/')
+        )) {
+        shouldIncludeImage = true;
+        await logger.info(`🖼️ Including welcome image in message: ${imageUrl.substring(0, 30)}...`);
+      } else {
+        await logger.warn(`⚠️ Invalid welcome image format, skipping image: ${
+          typeof imageUrl === 'string' ? imageUrl.substring(0, 30) + '...' : 'not a string'
+        }`);
+      }
+    }
     
-    await logger.success(`✅ Sent welcome message with mini app button to user ${userId}`);
+    try {
+      // Send message with mini app button and image if available
+      if (shouldIncludeImage) {
+        await sendTelegramMessage(
+          botToken,
+          message.chat.id,
+          welcomeMessage,
+          inlineKeyboard,
+          botSettings?.welcome_image
+        );
+      } else {
+        // Send text-only welcome message
+        await logger.info(`📝 Sending text-only welcome message`);
+        
+        await sendTelegramMessage(
+          botToken,
+          message.chat.id,
+          welcomeMessage,
+          inlineKeyboard,
+          null
+        );
+      }
+      
+      await logger.success(`✅ Sent welcome message with mini app button to user ${userId}`);
+    } catch (sendError) {
+      await logger.error(`❌ Error sending welcome message: ${sendError.message}`);
+      
+      // Fallback to plain text message
+      try {
+        await sendTelegramMessage(
+          botToken,
+          message.chat.id,
+          `Welcome to ${group.name}! To join, use this link: ${miniAppUrl}`,
+          null,
+          null
+        );
+        await logger.info(`✅ Sent fallback plain text message without formatting or images`);
+      } catch (finalError) {
+        await logger.error(`❌ Complete failure sending any message: ${finalError.message}`);
+        return false;
+      }
+    }
+    
     return true;
   } catch (error) {
     await logger.error(`❌ Error in handleGroupJoinRequest:`, error);

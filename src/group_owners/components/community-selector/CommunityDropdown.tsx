@@ -8,6 +8,7 @@ import { CommunitySelectItem } from "./dropdown-items/CommunitySelectItem";
 import { CommunitySelectedDisplay } from "./dropdown-items/CommunitySelectedDisplay";
 import { GroupSelectItem } from "./dropdown-items/GroupSelectItem";
 import { GroupSelectedDisplay } from "./dropdown-items/GroupSelectedDisplay";
+import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 interface CommunityDropdownProps {
   communities: Community[] | undefined;
@@ -33,7 +34,9 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
   
-  const communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
+  // Get the photo URL and proxy it for proper display
+  let communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
+  const proxiedPhotoUrl = communityPhotoUrl ? getProxiedImageUrl(communityPhotoUrl) : undefined;
   
   // When prop values change, update internal state
   useEffect(() => {
@@ -53,6 +56,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   useEffect(() => {
     // This is intentionally empty but the dependency on lastUpdate 
     // will trigger a re-render when photos change
+    console.log("Photos lastUpdate:", lastUpdate);
   }, [lastUpdate]);
   
   const handleValueChange = (value: string) => {
@@ -122,16 +126,19 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
             <div className="px-2 py-1">
               <h3 className="text-xs font-medium text-gray-500 mb-1">Communities</h3>
               <div className="space-y-0.5">
-                {communities.filter(community => !community.is_group).map(community => (
-                  <CommunitySelectItem 
-                    key={`item-${community.id}-${getPhotoUrl(community.id)}-${lastUpdate}`}
-                    community={community}
-                    photoUrl={getPhotoUrl(community.id)}
-                    isRefreshing={isRefreshing}
-                    onRefreshPhoto={handleRefreshPhoto}
-                    value={`community-${community.id}`}
-                  />
-                ))}
+                {communities.filter(community => !community.is_group).map(community => {
+                  const photoUrl = getPhotoUrl(community.id);
+                  return (
+                    <CommunitySelectItem 
+                      key={`item-${community.id}-${photoUrl}-${lastUpdate}`}
+                      community={community}
+                      photoUrl={photoUrl}
+                      isRefreshing={isRefreshing}
+                      onRefreshPhoto={handleRefreshPhoto}
+                      value={`community-${community.id}`}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

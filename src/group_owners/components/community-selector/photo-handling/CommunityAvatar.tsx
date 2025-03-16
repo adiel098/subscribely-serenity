@@ -41,6 +41,11 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
     lg: "h-3 w-3"
   };
 
+  // Log photo URL for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Avatar for ${community.name}:`, photoUrl);
+  }
+
   return (
     <div className="relative group">
       <Avatar className={sizeClasses[size]}>

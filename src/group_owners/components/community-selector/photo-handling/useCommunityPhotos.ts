@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
+import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 type CommunityPhotoMap = Record<string, string>;
 
@@ -137,6 +138,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
       console.log("Photo refresh response:", data);
       
       if (data?.photoUrl) {
+        // Update the photo URL
         setCommunityPhotos(prev => {
           const updated = {
             ...prev,
@@ -167,8 +169,9 @@ export const useCommunityPhotos = (communities?: Community[]) => {
 
   // Function to get the correct photo URL for a community
   const getPhotoUrl = (communityId: string) => {
-    console.log(`Getting photo URL for community ${communityId}:`, communityPhotos[communityId] || "Not found");
-    return communityPhotos[communityId] || undefined;
+    const photoUrl = communityPhotos[communityId] || undefined;
+    console.log(`Getting photo URL for community ${communityId}:`, photoUrl);
+    return photoUrl; 
   };
 
   // Function to retry after a failed batch fetch

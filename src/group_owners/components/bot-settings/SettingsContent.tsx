@@ -2,7 +2,6 @@
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useState } from "react";
 import { Accordion } from "@/components/ui/accordion";
-import { CronJobTimer } from "./CronJobTimer";
 import { BotStatsHeader } from "./BotStatsHeader";
 import { WelcomeMessageSection } from "./WelcomeMessageSection";
 import { SubscriptionSection } from "./SubscriptionSection";
@@ -34,8 +33,6 @@ export const SettingsContent = ({
 
   return (
     <>
-      <CronJobTimer />
-
       <BotStatsHeader entityId={entityId || ""} entityType={entityType} />
 
       <div className="grid md:grid-cols-5 gap-6">

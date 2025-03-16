@@ -20,10 +20,19 @@ export function getProxiedImageUrl(photoUrl: string | null): string | null {
       return photoUrl; // Return original URL as fallback
     }
     
-    // Construct the proxy URL using the correct method
-    const functionUrl = `${supabaseUrl}/functions/v1/telegram-image-proxy?url=${encodeURIComponent(photoUrl)}`;
-    console.log(`Proxying image: ${photoUrl} -> ${functionUrl}`);
-    return functionUrl;
+    try {
+      // Construct the proxy URL using the correct method
+      const functionUrl = `${supabaseUrl}/functions/v1/telegram-image-proxy?url=${encodeURIComponent(photoUrl)}`;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Proxying image: ${photoUrl} -> ${functionUrl}`);
+      }
+      
+      return functionUrl;
+    } catch (error) {
+      console.error('Error creating proxied image URL:', error);
+      return photoUrl; // Return original URL as fallback
+    }
   }
   
   // Return the original URL if it doesn't need proxying

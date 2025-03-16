@@ -16,35 +16,20 @@ export async function sendTelegramMessage(
   botToken: string,
   chatId: number | string,
   text: string,
-  photoUrl: string | null = null,
   replyMarkup: any = null
 ): Promise<any> {
   console.log(`[TELEGRAM-MESSENGER] 📤 Sending message to chat ${chatId}`);
   console.log(`[TELEGRAM-MESSENGER] 💬 Message text: ${text}`);
-  console.log(`[TELEGRAM-MESSENGER] 🖼️ Photo URL: ${photoUrl || 'No photo'}`);
   console.log(`[TELEGRAM-MESSENGER] ⌨️ Reply markup: ${replyMarkup ? JSON.stringify(replyMarkup) : 'None'}`);
   
   try {
-    // Different endpoint based on whether we have a photo
-    const endpoint = photoUrl
-      ? 'sendPhoto'
-      : 'sendMessage';
-    
-    console.log(`[TELEGRAM-MESSENGER] 🎯 Using endpoint: ${endpoint}`);
-    
     // Prepare the payload
     const payload: any = {
       chat_id: chatId,
+      text: text,
       parse_mode: 'HTML',
       disable_web_page_preview: true,
     };
-    
-    if (photoUrl) {
-      payload.photo = photoUrl;
-      payload.caption = text;
-    } else {
-      payload.text = text;
-    }
     
     if (replyMarkup) {
       payload.reply_markup = typeof replyMarkup === 'string'
@@ -55,7 +40,7 @@ export async function sendTelegramMessage(
     console.log(`[TELEGRAM-MESSENGER] 📦 Request payload:`, JSON.stringify(payload, null, 2));
     
     // Make the API request
-    const apiUrl = `https://api.telegram.org/bot${botToken}/${endpoint}`;
+    const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     console.log(`[TELEGRAM-MESSENGER] 🔗 Making request to: ${apiUrl}`);
     
     const response = await fetch(apiUrl, {

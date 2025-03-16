@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
     }
 
     console.log(`🚀 Processing broadcast ${broadcast_id} for ${entity_type} ${entity_id}`);
-    
+    console.log('Filter type:', filter_type);
+
     // Get the broadcast message
     const { data: broadcast, error: broadcastError } = await supabase
       .from('broadcast_messages')

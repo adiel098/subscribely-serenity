@@ -126,3 +126,28 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to check cron job status
+CREATE OR REPLACE FUNCTION check_cron_job_status(job_name text)
+RETURNS TABLE(
+    jobid integer,
+    schedule text,
+    last_run timestamp with time zone,
+    next_run timestamp with time zone,
+    status text
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        j.jobid,
+        j.schedule,
+        j.last_run,
+        j.next_run,
+        CASE 
+            WHEN j.active THEN 'active'
+            ELSE 'inactive'
+        END as status
+    FROM cron.job j
+    WHERE j.jobname = job_name;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

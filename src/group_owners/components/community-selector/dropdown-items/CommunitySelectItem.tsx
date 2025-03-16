@@ -21,7 +21,7 @@ export const CommunitySelectItem: React.FC<CommunitySelectItemProps> = ({
 }) => {
   return (
     <SelectItem key={community.id} value={value} className="focus:bg-slate-100">
-      <div className="flex items-center gap-2 relative group py-1">
+      <div className="flex items-center gap-2 relative group">
         <CommunityAvatar
           community={community}
           photoUrl={photoUrl}
@@ -30,7 +30,7 @@ export const CommunitySelectItem: React.FC<CommunitySelectItemProps> = ({
           size="md"
           showRefreshButton={false}
         />
-        <span className="text-sm font-medium truncate">{community.name}</span>
+        <span className="text-sm truncate">{community.name}</span>
       </div>
     </SelectItem>
   );

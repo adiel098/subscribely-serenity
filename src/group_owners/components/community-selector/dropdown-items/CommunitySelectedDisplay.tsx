@@ -18,16 +18,16 @@ export const CommunitySelectedDisplay: React.FC<CommunitySelectedDisplayProps> =
   onRefreshPhoto
 }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
       <CommunityAvatar
         community={community}
         photoUrl={photoUrl}
         isRefreshing={isRefreshing}
         onRefresh={onRefreshPhoto}
-        size="sm"
+        size="md"
       />
-      <span className="font-medium text-gray-800 text-sm truncate">{community.name}</span>
-      <ChevronDown className="h-3 w-3 ml-1 text-gray-400" />
+      <span className="font-medium text-gray-800 text-sm truncate flex-1">{community.name}</span>
+      <ChevronDown className="h-3.5 w-3.5 text-gray-400 flex-shrink-0 ml-auto" />
     </div>
   );
 };

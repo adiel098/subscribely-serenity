@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePhotos } from "@/group_owners/hooks/usePhotos";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
@@ -67,13 +67,13 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   
   const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.stopPropagation();
-    refreshPhoto(communityId, chatId);
+    refreshPhoto(e, communityId, chatId);
   };
   
   return (
     <div className="w-[280px]">
       <Select value={selectedValue} onValueChange={handleValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className="h-10">
           <SelectValue>
             {selectedType === 'community' && selectedCommunity ? (
               <CommunitySelectedDisplay
@@ -94,7 +94,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           </SelectValue>
         </SelectTrigger>
         
-        <SelectContent>
+        <SelectContent className="max-h-[300px]">
           {groups && groups.length > 0 && (
             <div className="px-2 py-1.5">
               <h3 className="text-xs font-medium text-gray-500 mb-1">Groups</h3>

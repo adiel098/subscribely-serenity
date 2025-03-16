@@ -11,7 +11,7 @@ interface CommunityAvatarProps {
   photoUrl?: string;
   isRefreshing: boolean;
   onRefresh: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   showRefreshButton?: boolean;
 }
 
@@ -25,25 +25,28 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
 }) => {
   const sizeClasses = {
     sm: "h-5 w-5",
-    md: "h-8 w-8"
+    md: "h-8 w-8",
+    lg: "h-10 w-10"
   };
 
   const refreshButtonSizeClasses = {
     sm: "h-3 w-3 rounded-full p-0.5",
-    md: "h-4 w-4 rounded-full p-0.5"
+    md: "h-4 w-4 rounded-full p-0.5",
+    lg: "h-5 w-5 rounded-full p-0.5"
   };
 
   const refreshIconSizeClasses = {
     sm: "h-2 w-2",
-    md: "h-2.5 w-2.5"
+    md: "h-2.5 w-2.5",
+    lg: "h-3 w-3"
   };
 
   return (
-    <div className="relative">
+    <div className="relative group">
       <Avatar className={sizeClasses[size]}>
-        <AvatarImage src={photoUrl} />
+        <AvatarImage src={photoUrl} alt={community.name} />
         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
-          {community.name?.charAt(0)}
+          {community.name?.charAt(0)?.toUpperCase() || '?'}
         </AvatarFallback>
       </Avatar>
       

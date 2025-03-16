@@ -2,56 +2,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "./types/subscription.types";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Hook to fetch only active payment methods that can be used for payments
+ * Returns all active payment methods for the current user (owner) across all communities
  */
-export const useActivePaymentMethods = (communityId?: string | null) => {
+export const useActivePaymentMethods = () => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['active-payment-methods', communityId],
+    queryKey: ['active-payment-methods', user?.id],
     queryFn: async () => {
-      if (!communityId) return [];
+      if (!user?.id) return [];
       
       try {
-        // Use the stored function to get all available payment methods
+        // Get all payment methods for the current user
         const { data, error } = await supabase
-          .rpc('get_available_payment_methods', {
-            community_id_param: communityId
-          });
+          .from('payment_methods')
+          .select('*')
+          .eq('owner_id', user.id)
+          .eq('is_active', true);
           
         if (error) {
           console.error("Error fetching active payment methods:", error);
           throw error;
         }
         
-        // Filter to only active payment methods
-        const activeMethods = (data || []).filter((method: PaymentMethod) => method.is_active);
-        console.log("Active payment methods:", activeMethods);
-        return activeMethods as PaymentMethod[];
+        console.log("Active payment methods:", data);
+        return data as PaymentMethod[];
       } catch (err) {
         console.error("Error in useActivePaymentMethods:", err);
-        
-        try {
-          // Fall back to direct query as a backup
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('payment_methods')
-            .select('*')
-            .eq('community_id', communityId)
-            .eq('is_active', true);
-            
-          if (fallbackError) {
-            console.error("Fallback query also failed:", fallbackError);
-            throw fallbackError;
-          }
-          
-          console.log("Fallback active payment methods:", fallbackData);
-          return (fallbackData || []) as PaymentMethod[];
-        } catch (fallbackErr) {
-          console.error("All queries failed in useActivePaymentMethods:", fallbackErr);
-          return [];
-        }
+        return [];
       }
     },
-    enabled: !!communityId
+    enabled: !!user?.id
   });
 };

@@ -11,19 +11,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 interface PaymentMethodsGridProps {
   paymentMethods: PaymentMethod[] | undefined;
   isLoading: boolean;
-  filter: string;
-  selectedCommunityId: string | null;
+  userId: string | undefined;
   onTogglePaymentMethod: (id: string, isActive: boolean) => void;
-  onToggleDefault: (id: string, isDefault: boolean) => void;
 }
 
 export const PaymentMethodsGrid = ({
   paymentMethods,
   isLoading,
-  filter,
-  selectedCommunityId,
+  userId,
   onTogglePaymentMethod,
-  onToggleDefault,
 }: PaymentMethodsGridProps) => {
   const isPaymentMethodConfigured = (method: PaymentMethod) => {
     return method.config && Object.keys(method.config).length > 0;
@@ -66,11 +62,7 @@ export const PaymentMethodsGrid = ({
       <EmptyState
         icon={<CreditCard className="h-10 w-10 text-indigo-500" />}
         title="No payment methods available"
-        description={
-          filter !== "all" 
-            ? "Change the filter to see more payment methods"
-            : "To complete your community setup, you need to configure at least one payment method"
-        }
+        description="To complete your setup, you need to configure at least one payment method that will be used across all your communities"
       />
     );
   }
@@ -80,7 +72,6 @@ export const PaymentMethodsGrid = ({
       {paymentMethods.map((method) => {
         const Icon = getPaymentMethodIcon(method.provider);
         const imageSrc = PAYMENT_METHOD_IMAGES[method.provider];
-        const isOwnerOfMethod = method.community_id === selectedCommunityId;
         
         return (
           <PaymentMethodCard
@@ -104,14 +95,7 @@ export const PaymentMethodsGrid = ({
             onConfigure={() => {}}
             imageSrc={imageSrc}
             provider={method.provider}
-            communityId={method.community_id}
-            isDefault={method.is_default || false}
-            onDefaultToggle={
-              // Only allow toggling default status if the user owns this payment method
-              isOwnerOfMethod
-                ? (value) => onToggleDefault(method.id, value) 
-                : undefined
-            }
+            ownerId={method.owner_id}
           />
         );
       })}

@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { SettingsIcon, CheckCircle, AlertCircle, Loader2, LucideIcon } from "lucide-react";
 import { PaymentMethodConfig } from "./PaymentMethodConfig";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 
 interface PaymentMethodCardProps {
@@ -20,10 +19,7 @@ interface PaymentMethodCardProps {
   onConfigure: () => void;
   imageSrc?: string;
   provider: string;
-  communityId?: string;
-  groupId?: string;
-  isDefault?: boolean;
-  onDefaultToggle?: (value: boolean) => void;
+  ownerId?: string;
 }
 
 export const PaymentMethodCard = ({
@@ -36,10 +32,7 @@ export const PaymentMethodCard = ({
   onConfigure,
   imageSrc,
   provider,
-  communityId,
-  groupId,
-  isDefault = false,
-  onDefaultToggle
+  ownerId
 }: PaymentMethodCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfiguring, setIsConfiguring] = useState(false);
@@ -49,12 +42,6 @@ export const PaymentMethodCard = ({
     setIsOpen(false);
     if (!isActive && isConfigured) {
       onToggle(true);
-    }
-  };
-
-  const handleDefaultChange = (value: boolean) => {
-    if (onDefaultToggle) {
-      onDefaultToggle(value);
     }
   };
 
@@ -68,12 +55,6 @@ export const PaymentMethodCard = ({
         "overflow-hidden h-full transition-all duration-200 relative",
         isActive ? "border-indigo-300 shadow-sm hover:shadow-md" : "hover:border-gray-300"
       )}>
-        {isDefault && (
-          <div className="absolute top-0 right-0 bg-amber-400 text-white text-xs font-bold px-2 py-1 rounded-bl">
-            Default
-          </div>
-        )}
-        
         {imageSrc && (
           <div className="relative h-36 overflow-hidden border-b">
             <img 
@@ -142,19 +123,16 @@ export const PaymentMethodCard = ({
                   Configure {title}
                 </DialogTitle>
                 <DialogDescription>
-                  Set up your {title} payment gateway for {communityId ? "this community" : "this group"}
+                  Set up your {title} payment gateway for all your communities
                 </DialogDescription>
               </DialogHeader>
               
               {isConfiguring ? (
                 <PaymentMethodConfig 
-                  provider={provider} 
-                  communityId={communityId}
-                  groupId={groupId}
+                  provider={provider}
+                  ownerId={ownerId}
                   onSuccess={handleConfigureSuccess}
                   imageSrc={imageSrc}
-                  isDefault={isDefault}
-                  onDefaultChange={handleDefaultChange}
                 />
               ) : (
                 <div className="flex justify-center py-8">

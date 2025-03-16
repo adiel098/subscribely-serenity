@@ -36,9 +36,8 @@ export interface PaymentMethod {
   id: string;
   provider: 'stripe' | 'paypal' | 'crypto' | 'telegram';
   is_active: boolean;
-  is_default?: boolean;
   config: Record<string, any>;
-  community_id: string;
+  owner_id: string;
   created_at: string;
   updated_at: string | null;
 }

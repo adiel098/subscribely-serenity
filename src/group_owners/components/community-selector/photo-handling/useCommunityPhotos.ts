@@ -111,10 +111,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
   };
 
   // Function to refresh a single community photo
-  const handleRefreshPhoto = async (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
-    // Stop event propagation to prevent dropdown from closing
-    e.stopPropagation();
-    
+  const handleRefreshPhoto = async (communityId: string, chatId?: string | null) => {
     if (!communityId || !chatId) {
       toast.error("Cannot refresh photo: missing community info");
       return;
@@ -170,9 +167,9 @@ export const useCommunityPhotos = (communities?: Community[]) => {
   };
 
   // Function to get the correct photo URL for a community
-  const getPhotoUrl = (communityId: string) => {
-    const photoUrl = communityPhotos[communityId] || undefined;
-    console.log(`Getting photo URL for community ${communityId}:`, photoUrl);
+  const getPhotoUrl = (communityId: string): string | undefined => {
+    const photoUrl = communityPhotos[communityId];
+    console.log(`Getting photo URL for community ${communityId}:`, photoUrl || "No photo available");
     return photoUrl; 
   };
 

@@ -8,7 +8,6 @@ import { CommunitySelectItem } from "./dropdown-items/CommunitySelectItem";
 import { CommunitySelectedDisplay } from "./dropdown-items/CommunitySelectedDisplay";
 import { GroupSelectItem } from "./dropdown-items/GroupSelectItem";
 import { GroupSelectedDisplay } from "./dropdown-items/GroupSelectedDisplay";
-import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 interface CommunityDropdownProps {
   communities: Community[] | undefined;
@@ -34,9 +33,8 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
   
-  // Get the photo URL and proxy it for proper display
-  let communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
-  const proxiedPhotoUrl = communityPhotoUrl ? getProxiedImageUrl(communityPhotoUrl) : undefined;
+  // Get the photo URL for the selected community
+  const communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
   
   // When prop values change, update internal state
   useEffect(() => {
@@ -88,7 +86,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           <SelectValue>
             {selectedType === 'community' && selectedCommunity ? (
               <CommunitySelectedDisplay
-                key={`selected-${selectedCommunity.id}-${communityPhotoUrl}-${lastUpdate}`}
+                key={`selected-${selectedCommunity.id}-${lastUpdate}`}
                 community={selectedCommunity}
                 photoUrl={communityPhotoUrl}
                 isRefreshing={isRefreshing}
@@ -130,7 +128,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
                   const photoUrl = getPhotoUrl(community.id);
                   return (
                     <CommunitySelectItem 
-                      key={`item-${community.id}-${photoUrl}-${lastUpdate}`}
+                      key={`item-${community.id}-${lastUpdate}`}
                       community={community}
                       photoUrl={photoUrl}
                       isRefreshing={isRefreshing}

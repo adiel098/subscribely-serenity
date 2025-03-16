@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
   size = "sm",
   showRefreshButton = true
 }) => {
+  const [imageError, setImageError] = useState(false);
+  
   const sizeClasses = {
     sm: "h-5 w-5",
     md: "h-7 w-7",
@@ -43,28 +45,30 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
   };
 
   // Process the photo URL to ensure it's properly loaded
-  const processedPhotoUrl = getProxiedImageUrl(photoUrl);
+  const processedPhotoUrl = photoUrl && !imageError ? getProxiedImageUrl(photoUrl) : null;
   
   // Log photo URL for debugging
   if (process.env.NODE_ENV === 'development') {
     console.log(`Avatar for ${community.name}:`, {
       original: photoUrl,
-      processed: processedPhotoUrl
+      processed: processedPhotoUrl,
+      hasError: imageError
     });
   }
 
   return (
     <div className="relative group">
       <Avatar className={sizeClasses[size]}>
-        <AvatarImage 
-          src={processedPhotoUrl || undefined} 
-          alt={community.name}
-          onError={(e) => {
-            console.error(`Failed to load image for ${community.name}:`, e);
-            // Force fallback by removing the src attribute
-            (e.target as HTMLImageElement).src = '';
-          }}
-        />
+        {processedPhotoUrl && !imageError ? (
+          <AvatarImage 
+            src={processedPhotoUrl} 
+            alt={community.name}
+            onError={(e) => {
+              console.error(`Failed to load image for ${community.name}:`, e);
+              setImageError(true);
+            }}
+          />
+        ) : null}
         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
           {community.name?.charAt(0)?.toUpperCase() || '?'}
         </AvatarFallback>

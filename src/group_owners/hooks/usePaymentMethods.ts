@@ -16,7 +16,7 @@ export const usePaymentMethods = () => {
       if (!user?.id) return [];
       
       try {
-        // Get all payment methods for the current user
+        // Get all payment methods for the current user using owner_id
         const { data, error } = await supabase
           .from('payment_methods')
           .select('*')

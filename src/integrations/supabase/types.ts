@@ -301,6 +301,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          owner_id: string | null
           provider: string
           updated_at: string
         }
@@ -311,6 +312,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          owner_id?: string | null
           provider: string
           updated_at?: string
         }
@@ -321,6 +323,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          owner_id?: string | null
           provider?: string
           updated_at?: string
         }
@@ -1114,6 +1117,22 @@ export type Database = {
           subscription_end_date: string
           is_active: boolean
           subscription_status: string
+        }[]
+      }
+      get_payment_methods_by_owner: {
+        Args: {
+          owner_id_param: string
+        }
+        Returns: {
+          id: string
+          provider: string
+          is_active: boolean
+          is_default: boolean
+          config: Json
+          owner_id: string
+          community_id: string
+          created_at: string
+          updated_at: string
         }[]
       }
       get_system_logs: {

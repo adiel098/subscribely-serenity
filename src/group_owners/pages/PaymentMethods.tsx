@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Card,
@@ -14,102 +14,22 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid, Star, Filter, AlertCircle } from "lucide-react";
+import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid, Star } from "lucide-react";
 import { useCommunityContext } from '@/contexts/CommunityContext';
-import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
-import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
+import { usePaymentMethodsPage } from "@/group_owners/hooks/usePaymentMethodsPage";
 import { motion } from "framer-motion";
 
 const PaymentMethods = () => {
   const { toast } = useToast();
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
-  const { data: paymentMethods, refetch: refetchMethods } = usePaymentMethods();
-  const [filter, setFilter] = useState<"all" | "default">("all");
-  const [defaultMethods, setDefaultMethods] = useState<any[]>([]);
-
-  useEffect(() => {
-    // Fetch available payment methods
-    const fetchDefaultPaymentMethods = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('payment_methods')
-          .select('*')
-          .eq('is_default', true);
-        
-        if (error) {
-          console.error("Error fetching default payment methods:", error);
-          return;
-        }
-        
-        setDefaultMethods(data || []);
-      } catch (err) {
-        console.error("Error:", err);
-      }
-    };
-    
-    fetchDefaultPaymentMethods();
-  }, []);
-
-  const handleMethodToggle = async (id: string, active: boolean) => {
-    const { error } = await supabase
-      .from('payment_methods')
-      .update({ is_active: active })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update payment method status"
-      });
-    } else {
-      toast({
-        title: "Successfully updated",
-        description: `Payment method ${active ? 'enabled' : 'disabled'}`
-      });
-    }
-    refetchMethods();
-  };
-
-  const handleDefaultToggle = async (id: string, isDefault: boolean) => {
-    const { error } = await supabase
-      .from('payment_methods')
-      .update({ is_default: isDefault })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update default settings"
-      });
-    } else {
-      toast({
-        title: "Successfully updated",
-        description: isDefault 
-          ? `Payment method set as default for all your communities` 
-          : `Payment method is no longer a default payment method`
-      });
-    }
-    refetchMethods();
-  };
-
-  const isMethodConfigured = (provider: string) => {
-    const method = paymentMethods?.find(m => m.provider === provider);
-    return method && Object.keys(method.config || {}).length > 0;
-  };
-
-  const getFilteredMethods = () => {
-    if (!paymentMethods) return [];
-    
-    switch (filter) {
-      case "default":
-        return paymentMethods.filter(m => m.is_default);
-      default:
-        return paymentMethods;
-    }
-  };
+  const { 
+    paymentMethods, 
+    isLoading, 
+    filter, 
+    setFilter,
+    handleTogglePaymentMethod,
+    handleToggleDefault
+  } = usePaymentMethodsPage();
 
   // Animation variants
   const container = {
@@ -176,51 +96,65 @@ const PaymentMethods = () => {
                 initial="hidden"
                 animate="show"
               >
-                <motion.div variants={item} className="h-full w-full">
-                  <PaymentMethodCard
-                    title="Stripe"
-                    description="Accept credit card payments securely with Stripe 💳"
-                    icon={CreditCard}
-                    isActive={paymentMethods?.some(m => m.provider === 'stripe' && m.is_active) ?? false}
-                    onToggle={(active) => handleMethodToggle(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', active)}
-                    isConfigured={isMethodConfigured('stripe')}
-                    onConfigure={() => {}}
-                    imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png"
-                    provider="stripe"
-                    isDefault={paymentMethods?.some(m => m.provider === 'stripe' && m.is_default) ?? false}
-                    onDefaultToggle={(isDefault) => handleDefaultToggle(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', isDefault)}
-                  />
-                </motion.div>
-                <motion.div variants={item} className="h-full w-full">
-                  <PaymentMethodCard
-                    title="PayPal"
-                    description="Accept PayPal payments easily and securely 🔄"
-                    icon={Wallet}
-                    isActive={paymentMethods?.some(m => m.provider === 'paypal' && m.is_active) ?? false}
-                    onToggle={(active) => handleMethodToggle(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', active)}
-                    isConfigured={isMethodConfigured('paypal')}
-                    onConfigure={() => {}}
-                    imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png"
-                    provider="paypal"
-                    isDefault={paymentMethods?.some(m => m.provider === 'paypal' && m.is_default) ?? false}
-                    onDefaultToggle={(isDefault) => handleDefaultToggle(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', isDefault)}
-                  />
-                </motion.div>
-                <motion.div variants={item} className="h-full w-full">
-                  <PaymentMethodCard
-                    title="Crypto"
-                    description="Accept cryptocurrency payments for your groups 🪙"
-                    icon={Bitcoin}
-                    isActive={paymentMethods?.some(m => m.provider === 'crypto' && m.is_active) ?? false}
-                    onToggle={(active) => handleMethodToggle(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', active)}
-                    isConfigured={isMethodConfigured('crypto')}
-                    onConfigure={() => {}}
-                    imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
-                    provider="crypto"
-                    isDefault={paymentMethods?.some(m => m.provider === 'crypto' && m.is_default) ?? false}
-                    onDefaultToggle={(isDefault) => handleDefaultToggle(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', isDefault)}
-                  />
-                </motion.div>
+                {paymentMethods?.some(m => m.provider === 'stripe') ? (
+                  <motion.div variants={item} className="h-full w-full">
+                    <PaymentMethodCard
+                      title="Stripe"
+                      description="Accept credit card payments securely with Stripe 💳"
+                      icon={CreditCard}
+                      isActive={paymentMethods?.find(m => m.provider === 'stripe')?.is_active ?? false}
+                      onToggle={(active) => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', active)}
+                      isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'stripe')?.config || {}).length > 0}
+                      onConfigure={() => {}}
+                      imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png"
+                      provider="stripe"
+                      isDefault={paymentMethods?.find(m => m.provider === 'stripe')?.is_default ?? false}
+                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', isDefault)}
+                    />
+                  </motion.div>
+                ) : null}
+                
+                {paymentMethods?.some(m => m.provider === 'paypal') ? (
+                  <motion.div variants={item} className="h-full w-full">
+                    <PaymentMethodCard
+                      title="PayPal"
+                      description="Accept PayPal payments easily and securely 🔄"
+                      icon={Wallet}
+                      isActive={paymentMethods?.find(m => m.provider === 'paypal')?.is_active ?? false}
+                      onToggle={(active) => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', active)}
+                      isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'paypal')?.config || {}).length > 0}
+                      onConfigure={() => {}}
+                      imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png"
+                      provider="paypal"
+                      isDefault={paymentMethods?.find(m => m.provider === 'paypal')?.is_default ?? false}
+                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', isDefault)}
+                    />
+                  </motion.div>
+                ) : null}
+                
+                {paymentMethods?.some(m => m.provider === 'crypto') ? (
+                  <motion.div variants={item} className="h-full w-full">
+                    <PaymentMethodCard
+                      title="Crypto"
+                      description="Accept cryptocurrency payments for your groups 🪙"
+                      icon={Bitcoin}
+                      isActive={paymentMethods?.find(m => m.provider === 'crypto')?.is_active ?? false}
+                      onToggle={(active) => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', active)}
+                      isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'crypto')?.config || {}).length > 0}
+                      onConfigure={() => {}}
+                      imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
+                      provider="crypto"
+                      isDefault={paymentMethods?.find(m => m.provider === 'crypto')?.is_default ?? false}
+                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', isDefault)}
+                    />
+                  </motion.div>
+                ) : null}
+                
+                {paymentMethods?.length === 0 && (
+                  <div className="col-span-3 p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
+                    No payment methods configured yet
+                  </div>
+                )}
               </motion.div>
             </TabsContent>
             
@@ -231,8 +165,8 @@ const PaymentMethods = () => {
                 initial="hidden"
                 animate="show"
               >
-                {getFilteredMethods().length > 0 ? (
-                  getFilteredMethods().map((method) => (
+                {paymentMethods?.filter(m => m.is_default).length > 0 ? (
+                  paymentMethods.filter(m => m.is_default).map((method) => (
                     <motion.div key={method.provider} variants={item} className="h-full w-full">
                       <PaymentMethodCard
                         title={method.provider.charAt(0).toUpperCase() + method.provider.slice(1)}
@@ -247,7 +181,7 @@ const PaymentMethods = () => {
                           Bitcoin
                         }
                         isActive={method.is_active}
-                        onToggle={(active) => handleMethodToggle(method.id, active)}
+                        onToggle={(active) => handleTogglePaymentMethod(method.id, active)}
                         isConfigured={Object.keys(method.config || {}).length > 0}
                         onConfigure={() => {}}
                         imageSrc={
@@ -257,7 +191,7 @@ const PaymentMethods = () => {
                         }
                         provider={method.provider}
                         isDefault={method.is_default}
-                        onDefaultToggle={(isDefault) => handleDefaultToggle(method.id, isDefault)}
+                        onDefaultToggle={(isDefault) => handleToggleDefault(method.id, isDefault)}
                       />
                     </motion.div>
                   ))

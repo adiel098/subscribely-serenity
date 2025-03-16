@@ -74,3 +74,55 @@ BEGIN
     (SELECT role::text FROM public.admin_users WHERE user_id = user_id_param) as admin_role;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get available payment methods with fixed column references
+CREATE OR REPLACE FUNCTION get_available_payment_methods(community_id_param uuid)
+RETURNS TABLE(
+  id uuid, 
+  provider text, 
+  is_active boolean, 
+  is_default boolean, 
+  config jsonb, 
+  community_id uuid, 
+  created_at timestamp with time zone, 
+  updated_at timestamp with time zone
+) AS $$
+BEGIN
+  RETURN QUERY
+  -- Get all specific payment methods for the community
+  SELECT 
+    pm.id,
+    pm.provider,
+    pm.is_active,
+    pm.is_default,
+    pm.config,
+    pm.community_id,
+    pm.created_at,
+    pm.updated_at
+  FROM payment_methods pm
+  WHERE pm.community_id = community_id_param
+  
+  UNION ALL
+  
+  -- Add default payment methods that don't conflict with the current community's payment methods
+  SELECT 
+    pm.id,
+    pm.provider,
+    pm.is_active,
+    pm.is_default,
+    pm.config,
+    pm.community_id,
+    pm.created_at,
+    pm.updated_at
+  FROM payment_methods pm
+  JOIN communities c ON c.owner_id = (SELECT owner_id FROM communities WHERE id = community_id_param)
+  WHERE pm.is_default = TRUE
+  AND pm.community_id != community_id_param
+  AND NOT EXISTS (
+    -- Check if there's already a payment method of the same type for the current community
+    SELECT 1 FROM payment_methods 
+    WHERE community_id = community_id_param 
+    AND provider = pm.provider
+  );
+END;
+$$ LANGUAGE plpgsql;

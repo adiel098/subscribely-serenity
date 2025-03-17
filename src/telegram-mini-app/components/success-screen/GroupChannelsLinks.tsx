@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Copy, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -64,48 +63,44 @@ export const GroupChannelsLinks: React.FC<GroupChannelsLinksProps> = ({
   };
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-2">
       <h3 className="text-sm font-medium text-center mb-2">
         Your subscription includes access to these channels:
       </h3>
 
       {channels.map((channel, index) => (
-        <Card 
+        <div 
           key={channel.id || index} 
-          className="p-3 bg-green-50 dark:bg-green-900/20 shadow-sm border-green-200 dark:border-green-800"
+          className="p-3 bg-white border border-green-200 rounded-lg shadow-sm flex items-center justify-between"
         >
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-green-900 dark:text-green-100">{channel.name}</h4>
-              <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full">
-                {channel.isMiniApp ? 'Mini App' : 'Channel'}
-              </span>
-            </div>
+          <span className="text-sm font-medium text-gray-800 truncate mr-2">
+            {channel.name}
+          </span>
+          
+          <div className="flex gap-1.5">
+            <Button
+              onClick={() => openLink(channel.inviteLink, channel.name)}
+              className="h-7 w-7 p-0 bg-green-50 hover:bg-green-100 border border-green-200 text-green-600"
+              size="sm"
+              variant="outline"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
             
-            <div className="flex gap-2">
-              <Button
-                onClick={() => openLink(channel.inviteLink, channel.name)}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white h-8 py-0"
-                size="sm"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={() => copyToClipboard(channel.inviteLink, index)}
-                className="h-8 w-8 p-0 flex items-center justify-center border-green-300 dark:border-green-700"
-                size="sm"
-              >
-                {copiedIndex === index ? (
-                  <Check className="h-3.5 w-3.5 text-green-500" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(channel.inviteLink, index)}
+              className="h-7 w-7 p-0 bg-green-50 hover:bg-green-100 border border-green-200 text-green-600"
+              size="sm"
+            >
+              {copiedIndex === index ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </Button>
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );

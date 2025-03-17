@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Image, Upload } from "lucide-react";
+import { Image, Upload, Link } from "lucide-react";
 
 interface GroupPropertyEditSectionProps {
   name: string;
@@ -13,6 +13,8 @@ interface GroupPropertyEditSectionProps {
   setDescription: (description: string) => void;
   photoUrl: string;
   setPhotoUrl: (photoUrl: string) => void;
+  customLink: string;
+  setCustomLink: (customLink: string) => void;
 }
 
 export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> = ({
@@ -21,7 +23,9 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
   description,
   setDescription,
   photoUrl,
-  setPhotoUrl
+  setPhotoUrl,
+  customLink,
+  setCustomLink
 }) => {
   // For future implementation of file upload
   const handlePhotoUpload = () => {
@@ -80,6 +84,28 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
           className="w-full"
           required
         />
+      </div>
+
+      {/* Custom Link */}
+      <div className="space-y-2">
+        <Label htmlFor="customLink" className="text-sm font-medium text-gray-700">
+          Custom Link Identifier
+        </Label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Link className="h-4 w-4 text-gray-400" />
+          </div>
+          <Input
+            id="customLink"
+            value={customLink}
+            onChange={(e) => setCustomLink(e.target.value)}
+            placeholder="e.g. premium_group"
+            className="pl-10 font-mono"
+          />
+        </div>
+        <p className="text-xs text-gray-500">
+          Leave blank to use the default ID. Custom links make your group easier to share.
+        </p>
       </div>
 
       {/* Group Description */}

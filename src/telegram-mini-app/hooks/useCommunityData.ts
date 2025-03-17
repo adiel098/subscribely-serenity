@@ -48,6 +48,12 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         // Log if no subscription plans are found
         if (!communityData.subscription_plans || communityData.subscription_plans.length === 0) {
           logger.warn(`No active subscription plans found for community: ${communityData.name}`);
+        } else {
+          logger.success(`Found ${communityData.subscription_plans.length} active subscription plans`);
+          // Log plan details for debugging
+          communityData.subscription_plans.forEach((plan, index) => {
+            logger.debug(`Plan ${index + 1}: ${plan.name} (${plan.id}) - Features: ${plan.features?.length || 0}`);
+          });
         }
         
         setCommunity(communityData);

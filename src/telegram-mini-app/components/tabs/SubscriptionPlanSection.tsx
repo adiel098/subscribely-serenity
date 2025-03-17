@@ -7,6 +7,9 @@ import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("SubscriptionPlanSection");
 
 interface SubscriptionPlanSectionProps {
   plans: Plan[];
@@ -26,9 +29,16 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   // Safe guard against undefined or non-array plans
   const validPlans = Array.isArray(plans) ? plans : [];
   
-  console.log('🔍 SubscriptionPlanSection received plans:', validPlans);
+  logger.log('SubscriptionPlanSection received plans:', validPlans);
+  
+  // Validate that plans have all necessary data
+  const invalidPlans = validPlans.filter(plan => !plan.id || !plan.name || typeof plan.price !== 'number');
+  if (invalidPlans.length > 0) {
+    logger.warn(`Found ${invalidPlans.length} invalid plans:`, invalidPlans);
+  }
   
   if (validPlans.length === 0) {
+    logger.warn("No subscription plans available");
     return (
       <div className="text-center p-6 max-w-sm mx-auto">
         <Alert variant="destructive" className="bg-amber-50 border-amber-200">

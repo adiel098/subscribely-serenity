@@ -86,7 +86,9 @@ serve(async (req) => {
             price,
             interval,
             features,
-            is_active
+            is_active,
+            created_at,
+            updated_at
           `)
           .eq("community_id", community.id)  // Explicit filtering by community_id
           .eq("is_active", true);  // Only get active plans

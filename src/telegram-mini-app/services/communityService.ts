@@ -2,6 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { ensurePlanFields, debugPlans } from "@/telegram-mini-app/utils/planDebugUtils";
+import { invokeSupabaseFunction } from "./utils/serviceUtils";
 
 const logger = createLogger("communityService");
 
@@ -16,11 +18,9 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
     
     // Call the edge function to fetch community data
-    const { data, error } = await supabase.functions.invoke("telegram-community-data", {
-      body: { 
-        community_id: idOrLink,
-        debug: true 
-      }
+    const { data, error } = await invokeSupabaseFunction("telegram-community-data", {
+      community_id: idOrLink,
+      debug: true
     });
     
     if (error) {
@@ -40,14 +40,11 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     logger.log(`Is group: ${community.is_group ? 'Yes' : 'No'}`);
     logger.log(`Has ${community.subscription_plans?.length || 0} subscription plans`);
     
-    // Log subscription plan details for debugging
-    if (community.subscription_plans && community.subscription_plans.length > 0) {
-      logger.log(`Subscription plans details:`);
-      community.subscription_plans.forEach((plan, index) => {
-        logger.log(`Plan ${index + 1}: ${plan.name} (${plan.id}) - Active: ${plan.is_active}`);
-      });
-    } else {
-      logger.warn(`No subscription plans found for community: ${community.name}`);
+    // Debug subscription plans data
+    if (community.subscription_plans) {
+      debugPlans(community.subscription_plans);
+      // Ensure all plans have required fields to prevent frontend issues
+      community.subscription_plans = ensurePlanFields(community.subscription_plans);
     }
     
     // Process the data for both regular communities and groups
@@ -64,21 +61,13 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         custom_link: community.custom_link,
         is_group: true,
         communities: community.communities || [],
-        subscription_plans: (community.subscription_plans || []).map(plan => ({
-          ...plan,
-          created_at: plan.created_at || new Date().toISOString(),
-          updated_at: plan.updated_at || new Date().toISOString()
-        }))
+        subscription_plans: community.subscription_plans || []
       };
     } else {
       // Return regular community data
       return {
         ...community,
-        subscription_plans: (community.subscription_plans || []).map(plan => ({
-          ...plan,
-          created_at: plan.created_at || new Date().toISOString(),
-          updated_at: plan.updated_at || new Date().toISOString()
-        }))
+        subscription_plans: community.subscription_plans || []
       };
     }
   } catch (error) {
@@ -133,14 +122,9 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
     
     // Process the results and ensure all required fields are present
     return data.map(community => {
+      // Filter for active plans only
       const activePlans = community.subscription_plans 
-        ? community.subscription_plans
-            .filter(plan => plan.is_active)
-            .map(plan => ({
-              ...plan,
-              created_at: plan.created_at || new Date().toISOString(),
-              updated_at: plan.updated_at || new Date().toISOString()
-            }))
+        ? ensurePlanFields(community.subscription_plans.filter(plan => plan.is_active))
         : [];
         
       return {

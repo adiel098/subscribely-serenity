@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Channel, Lock, Radio, MessagesSquare, ChevronDown, ChevronUp, Star, Shield, Zap, Info, CheckCircle2 } from "lucide-react";
+import { Tv, Lock, Radio, MessagesSquare, ChevronDown, ChevronUp, Star, Shield, Zap, Info, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,7 +59,7 @@ export const AvailableChannelsPreview: React.FC<AvailableChannelsPreviewProps> =
     if (lowerName.includes("vip") || lowerName.includes("premium")) return <Star className="h-3.5 w-3.5 text-amber-500" />;
     if (lowerName.includes("announcement") || lowerName.includes("news")) return <Radio className="h-3.5 w-3.5 text-purple-500" />;
     
-    if (type === "channel") return <Channel className="h-3.5 w-3.5 text-blue-500" />;
+    if (type === "channel") return <Tv className="h-3.5 w-3.5 text-blue-500" />;
     if (type === "bot") return <Zap className="h-3.5 w-3.5 text-green-500" />;
     if (type === "supergroup") return <Shield className="h-3.5 w-3.5 text-indigo-500" />;
     

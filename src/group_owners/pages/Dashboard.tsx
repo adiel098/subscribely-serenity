@@ -12,7 +12,6 @@ import { PaymentAnalytics } from "@/group_owners/components/dashboard/PaymentAna
 import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardStats";
 import { useGroupDashboardStats } from "@/group_owners/hooks/dashboard/useGroupDashboardStats";
 import { Loader2, FolderKanban } from "lucide-react";
-import { GroupCommunitiesDisplay } from "@/group_owners/components/dashboard/GroupCommunitiesDisplay";
 
 const Dashboard = () => {
   const { 
@@ -50,9 +49,7 @@ const Dashboard = () => {
     
     ownerInfo,
     
-    isLoading,
-    
-    communities: groupCommunities
+    isLoading
   } = stats;
 
   // Get the owner's first name or use a fallback
@@ -143,13 +140,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Display communities in the group when a group is selected */}
-      {isGroupSelected && groupCommunities && groupCommunities.length > 0 && (
-        <div className="mt-4">
-          <GroupCommunitiesDisplay communities={groupCommunities} />
-        </div>
-      )}
 
       <div className="flex flex-wrap gap-4 mt-6">
         <div className="w-full lg:w-[65%]">

@@ -16,14 +16,14 @@ import { MiniAppData } from "./types";
 export const useGroupDashboardStats = (groupId: string | null) => {
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
   
-  // First get all communities in the group
-  const { communities, isLoading: communitiesLoading, communityIds } = useGroupMemberCommunities(groupId);
-  
-  // State to hold aggregated subscribers from all communities
+  // State to hold aggregated subscribers from all communities in the group
   const [allSubscribers, setAllSubscribers] = useState<any[]>([]);
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(true);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  
+  // Get all communities in the group
+  const { isLoading: communitiesLoading, communityIds } = useGroupMemberCommunities(groupId);
   
   // Memoize the community IDs to prevent unnecessary re-renders
   const communityIdsString = useMemo(() => 
@@ -45,8 +45,16 @@ export const useGroupDashboardStats = (groupId: string | null) => {
         // Only fetch if we have community IDs
         if (communityIds && communityIds.length > 0) {
           const { data: subscribers, error } = await supabase
-            .from("telegram_chat_members")
-            .select("*")
+            .from("community_subscribers")
+            .select(`
+              *,
+              plan:subscription_plan_id (
+                id,
+                name,
+                price,
+                interval
+              )
+            `)
             .in("community_id", communityIds);
           
           if (error) {
@@ -65,7 +73,7 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     };
     
     fetchAllSubscribers();
-  }, [communityIdsString]); // Use the memoized string instead of the array
+  }, [communityIdsString, communityIds]);
   
   // Fetch subscription plans for all communities
   useEffect(() => {
@@ -102,7 +110,7 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     };
     
     fetchAllPlans();
-  }, [communityIdsString]); // Use the memoized string instead of the array
+  }, [communityIdsString, communityIds]);
   
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
     useFilteredSubscribers(allSubscribers, timeRangeStartDate);
@@ -226,7 +234,6 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     setTimeRange,
     timeRangeLabel,
     
-    communities,
     filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,

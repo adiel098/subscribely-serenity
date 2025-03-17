@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,28 +34,22 @@ export const useSubscribers = (communityId: string) => {
   const fetchSubscribers = async (): Promise<Subscriber[]> => {
     if (!communityId) return [];
 
-    // Fetch subscribers from database - updated table name
-    const { data: members, error: membersError } = await supabase
-      .from("community_subscribers") // Using updated table name
+    // Fetch subscribers directly from the database with plan information
+    const { data: subscribers, error: subscribersError } = await supabase
+      .from("community_subscribers")
       .select(`
-        id,
-        telegram_user_id,
-        telegram_username,
-        community_id,
-        joined_at,
-        last_active,
-        subscription_status,
-        is_active,
-        subscription_start_date,
-        subscription_end_date,
-        is_trial,
-        trial_end_date,
-        subscription_plan_id
+        *,
+        plan:subscription_plan_id (
+          id,
+          name,
+          price,
+          interval
+        )
       `)
       .eq("community_id", communityId);
 
-    if (membersError) {
-      console.error("Error fetching subscribers:", membersError);
+    if (subscribersError) {
+      console.error("Error fetching subscribers:", subscribersError);
       return [];
     }
 
@@ -64,8 +57,8 @@ export const useSubscribers = (communityId: string) => {
     const userDetails: Record<string, { first_name: string | null, last_name: string | null }> = {};
     
     // Fetch user details from telegram_mini_app_users for all telegram_user_ids
-    if (members.length > 0) {
-      const telegramIds = members.map(member => member.telegram_user_id);
+    if (subscribers.length > 0) {
+      const telegramIds = subscribers.map(subscriber => subscriber.telegram_user_id);
       
       const { data: users, error: usersError } = await supabase
         .from("telegram_mini_app_users")
@@ -89,41 +82,11 @@ export const useSubscribers = (communityId: string) => {
       }
     }
 
-    // Get all plan IDs to fetch plan data separately
-    const planIds = members
-      .filter(member => member.subscription_plan_id)
-      .map(member => member.subscription_plan_id);
-
-    // If there are plan IDs, fetch plans
-    let plansData: Record<string, any> = {};
-    
-    if (planIds.length > 0) {
-      const { data: plans, error: plansError } = await supabase
-        .from("subscription_plans")
-        .select(`
-          id,
-          name,
-          price,
-          interval
-        `)
-        .in("id", planIds);
-
-      if (plansError) {
-        console.error("Error fetching subscription plans:", plansError);
-      } else if (plans) {
-        // Create a map of plans by ID for easy lookup
-        plansData = plans.reduce((acc, plan) => {
-          acc[plan.id] = plan;
-          return acc;
-        }, {} as Record<string, any>);
-      }
-    }
-
     // Get payment status from subscription_payments table
     const paymentStatusMap: Record<string, string> = {};
     
-    if (members.length > 0) {
-      const telegramUserIds = members.map(member => member.telegram_user_id);
+    if (subscribers.length > 0) {
+      const telegramUserIds = subscribers.map(subscriber => subscriber.telegram_user_id);
       
       // Get the latest payment status for each user
       const { data: payments, error: paymentsError } = await supabase
@@ -151,15 +114,12 @@ export const useSubscribers = (communityId: string) => {
       }
     }
 
-    // Map the members with their plans, user details and payment status
-    return members.map(member => ({
-      ...member,
-      // Add first_name and last_name from the user details map or use null if not found
-      first_name: userDetails[member.telegram_user_id]?.first_name || null,
-      last_name: userDetails[member.telegram_user_id]?.last_name || null,
-      // Add payment status from payment status map or use null if not found
-      payment_status: paymentStatusMap[member.telegram_user_id] || null,
-      plan: member.subscription_plan_id ? plansData[member.subscription_plan_id] : null
+    // Map the subscribers with their additional details
+    return subscribers.map(subscriber => ({
+      ...subscriber,
+      first_name: userDetails[subscriber.telegram_user_id]?.first_name || null,
+      last_name: userDetails[subscriber.telegram_user_id]?.last_name || null,
+      payment_status: paymentStatusMap[subscriber.telegram_user_id] || null
     }));
   };
 

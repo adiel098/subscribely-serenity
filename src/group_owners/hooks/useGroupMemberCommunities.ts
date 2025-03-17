@@ -38,7 +38,11 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         
         const { data: communities, error: comError } = await supabase
           .from("communities")
-          .select("*")
+          .select(`
+            *,
+            member_count,
+            subscription_count
+          `)
           .in("id", communityIds);
         
         if (comError) {

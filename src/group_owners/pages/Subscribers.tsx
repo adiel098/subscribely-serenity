@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -7,13 +8,13 @@ import { SubscribersHeader } from "../components/subscribers/SubscribersHeader";
 import { SubscriberFilters } from "../components/subscribers/SubscriberFilters";
 import { useSubscriberManagement } from "../hooks/useSubscriberManagement";
 import { useSubscriberFilters } from "../hooks/useSubscriberFilters";
-import { Loader2 } from "lucide-react";
+import { Loader2, FolderKanban } from "lucide-react";
 import { RemoveSubscriberDialog } from "../components/subscribers/RemoveSubscriberDialog";
 import { UnblockSubscriberDialog } from "../components/subscribers/UnblockSubscriberDialog";
 import { Subscriber } from "../hooks/useSubscribers";
 
 const Subscribers = () => {
-  const { selectedCommunityId } = useCommunityContext();
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
@@ -24,6 +25,9 @@ const Subscribers = () => {
   const [isUnblocking, setIsUnblocking] = useState(false);
   const { toast } = useToast();
 
+  // Use either the selected community ID or group ID based on what's selected
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+
   const {
     subscribers,
     isLoading,
@@ -31,7 +35,7 @@ const Subscribers = () => {
     refetch,
     handleRemoveSubscriber,
     handleUnblockSubscriber
-  } = useSubscriberManagement(selectedCommunityId || "");
+  } = useSubscriberManagement(entityId || "");
 
   const {
     searchQuery,
@@ -221,6 +225,14 @@ const Subscribers = () => {
             onExport={handleExport}
             isUpdating={isUpdating}
           />
+          {isGroupSelected && (
+            <div className="flex items-center mt-2">
+              <span className="inline-flex items-center text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md">
+                <FolderKanban className="h-3.5 w-3.5 mr-1" />
+                Group View
+              </span>
+            </div>
+          )}
         </div>
         <div className="w-full md:w-5/12">
           <div className="grid grid-cols-3 gap-3 h-full">

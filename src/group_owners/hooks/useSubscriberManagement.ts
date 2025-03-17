@@ -1,131 +1,64 @@
+
 import { useState } from "react";
 import { useSubscribers, Subscriber } from "./useSubscribers";
 import { supabase } from "@/integrations/supabase/client";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 export const useSubscriberManagement = (communityId: string) => {
+  const { isGroupSelected } = useCommunityContext();
+  const { data: subscribers = [], isLoading, refetch } = useSubscribers(communityId);
   const [isUpdating, setIsUpdating] = useState(false);
-  const { data: subscribers = [], isLoading, error, refetch } = useSubscribers(communityId);
-
-  const handleUpdateStatus = async (newStatus: string) => {
-    if (!communityId) return;
-    
-    setIsUpdating(true);
-    try {
-      // Determine is_active based on the new status
-      const isActive = newStatus === "active";
-      
-      const { error } = await supabase
-        .from("telegram_chat_members")
-        .update({ 
-          subscription_status: newStatus,
-          is_active: isActive
-        })
-        .eq("community_id", communityId);
-
-      if (error) throw error;
-      await refetch();
-    } catch (error) {
-      console.error("Error updating subscribers status:", error);
-      throw error; // Re-throw to allow parent component to handle
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   const handleRemoveSubscriber = async (subscriber: Subscriber) => {
-    if (!subscriber?.id) {
-      console.error("Invalid subscriber provided to handleRemoveSubscriber");
-      throw new Error("Invalid subscriber data");
-    }
+    console.log(`Starting subscription removal process for subscriber in ${isGroupSelected ? 'group' : 'community'}:`, subscriber);
     
     try {
-      console.log("Removing subscriber:", subscriber.id, "from community:", subscriber.community_id);
+      console.log('Attempting to update subscription status and end date...');
       
-      // Call the kick-member function directly with explicit "removed" reason
-      const { error: kickError } = await supabase.functions.invoke('kick-member', {
-        body: { 
-          memberId: subscriber.id,
-          reason: 'removed' // Explicitly specify manual removal
-        }
-      });
+      const { error: updateError } = await supabase
+        .from('community_subscribers')
+        .update({
+          subscription_status: 'inactive',
+          subscription_end_date: new Date().toISOString(),
+          subscription_plan_id: null
+        })
+        .eq('id', subscriber.id);
 
-      if (kickError) {
-        console.error('Error removing subscriber:', kickError);
-        throw new Error('Failed to remove subscriber from channel');
+      if (updateError) {
+        console.error('Error in update:', updateError);
+        throw updateError;
       }
-      
-      await refetch();
+
+      console.log('Successfully updated subscriber status');
       return true;
     } catch (error) {
-      console.error("Error removing subscriber:", error);
+      console.error('Detailed error in subscription removal:', error);
+      console.error('Error stack:', (error as Error).stack);
       throw error;
     }
   };
 
   const handleUnblockSubscriber = async (subscriber: Subscriber) => {
-    if (!subscriber?.id) {
-      console.error("Invalid subscriber provided to handleUnblockSubscriber");
-      throw new Error("Invalid subscriber data");
-    }
+    console.log(`Starting unblock process for subscriber in ${isGroupSelected ? 'group' : 'community'}:`, subscriber);
     
     try {
-      console.log("Unblocking subscriber:", subscriber.id, "from community:", subscriber.community_id);
-      
-      // Get the Telegram chat ID from the community first
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('telegram_chat_id')
-        .eq('id', subscriber.community_id)
-        .single();
-        
-      if (communityError || !community?.telegram_chat_id) {
-        console.error('Error getting telegram_chat_id:', communityError);
-        throw new Error('Could not retrieve Telegram chat ID');
-      }
-      
-      // Unblock member from Telegram using the webhook function
-      const { error: unblockError } = await supabase.functions.invoke('telegram-webhook', {
-        body: { 
-          path: '/unblock-member',
-          chat_id: community.telegram_chat_id,
-          user_id: subscriber.telegram_user_id
-        }
-      });
-
-      if (unblockError) {
-        console.error('Error unblocking member from channel:', unblockError);
-        throw new Error('Failed to unblock member from channel');
-      }
-      
-      // Update the database to set subscription status to "inactive" only after successful unblock
-      const { error } = await supabase
-        .from("telegram_chat_members")
-        .update({ 
-          subscription_status: "inactive",
-          is_active: true 
+      const { error: updateError } = await supabase
+        .from('community_subscribers')
+        .update({
+          is_blocked: false
         })
-        .eq("id", subscriber.id);
+        .eq('id', subscriber.id);
 
-      if (error) {
-        console.error("Error updating subscriber status:", error);
-        throw error;
+      if (updateError) {
+        console.error('Error in unblock:', updateError);
+        throw updateError;
       }
-      
-      // Log the action to activity logs
-      await supabase
-        .from('subscription_activity_logs')
-        .insert({
-          telegram_user_id: subscriber.telegram_user_id,
-          community_id: subscriber.community_id,
-          activity_type: 'member_unblocked',
-          details: 'User was unblocked by admin',
-          status: 'inactive' // Use the new status column
-        });
-      
-      await refetch();
+
+      console.log('Successfully unblocked subscriber');
       return true;
     } catch (error) {
-      console.error("Error unblocking subscriber:", error);
+      console.error('Detailed error in subscriber unblock:', error);
+      console.error('Error stack:', (error as Error).stack);
       throw error;
     }
   };
@@ -133,12 +66,10 @@ export const useSubscriberManagement = (communityId: string) => {
   return {
     subscribers,
     isLoading,
-    error,
     isUpdating,
+    setIsUpdating,
     refetch,
-    handleUpdateStatus,
     handleRemoveSubscriber,
     handleUnblockSubscriber
   };
 };
-

@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
 const logger = createLogger("useSubscribers");
 
@@ -35,12 +36,15 @@ export interface Subscriber {
 }
 
 export const useSubscribers = (communityId: string) => {
+  const { isGroupSelected } = useCommunityContext();
+  
   const fetchSubscribers = async (): Promise<Subscriber[]> => {
     if (!communityId) return [];
 
-    logger.log("Fetching subscribers for community/group ID:", communityId);
+    logger.log(`Fetching subscribers for ${isGroupSelected ? 'group' : 'community'} ID: ${communityId}`);
 
     // Fetch subscribers directly from the database with plan information
+    // The query is the same for both communities and groups, as we're directly querying by community_id
     const { data: subscribers, error: subscribersError } = await supabase
       .from("community_subscribers")
       .select(`
@@ -130,7 +134,7 @@ export const useSubscribers = (communityId: string) => {
   };
 
   return useQuery({
-    queryKey: ["subscribers", communityId],
+    queryKey: ["subscribers", communityId, isGroupSelected ? "group" : "community"],
     queryFn: fetchSubscribers,
     enabled: !!communityId,
   });

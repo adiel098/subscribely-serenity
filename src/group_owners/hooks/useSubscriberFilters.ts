@@ -1,45 +1,60 @@
 
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { Subscriber } from "./useSubscribers";
 
-export const useSubscriberFilters = (subscribers: Subscriber[] = []) => {
+export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [planFilter, setPlanFilter] = useState<string | null>(null);
 
-  // Get unique plans from subscribers for the filter dropdown
-  const uniquePlans = useMemo(() => {
-    const plans = new Set<string>();
-    subscribers.forEach((subscriber) => {
-      if (subscriber.plan?.name) {
-        plans.add(subscriber.plan.name);
-      }
-    });
-    return Array.from(plans);
-  }, [subscribers]);
-
-  // Filter subscribers based on search query, status, and plan
   const filteredSubscribers = useMemo(() => {
-    return subscribers.filter((subscriber) => {
-      // Filter by search query
-      const matchesSearch =
-        searchQuery === "" ||
-        subscriber.telegram_username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        subscriber.telegram_user_id.toLowerCase().includes(searchQuery.toLowerCase());
+    return (subscribers || []).filter((subscriber) => {
+      // Search filter
+      const matchesSearch = 
+        (subscriber.telegram_username || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        subscriber.telegram_user_id
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        (subscriber.first_name || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        (subscriber.last_name || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
-      // Filter by status
-      let matchesStatus = true;
-      if (statusFilter !== "all") {
-        matchesStatus = subscriber.subscription_status === statusFilter;
-      }
+      // Status filter
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && subscriber.subscription_status === "active") ||
+        (statusFilter === "inactive" && subscriber.subscription_status !== "active");
 
-      // Filter by plan
+      // Plan filter
       const matchesPlan =
-        planFilter === "all" || subscriber.plan?.name === planFilter;
+        !planFilter ||
+        subscriber.plan?.id === planFilter;
 
       return matchesSearch && matchesStatus && matchesPlan;
     });
   }, [subscribers, searchQuery, statusFilter, planFilter]);
+
+  // Extract unique plans for the filter dropdown
+  const uniquePlans = useMemo(() => {
+    const plans = (subscribers || [])
+      .map((s) => s.plan)
+      .filter(Boolean) as NonNullable<Subscriber['plan']>[];
+    
+    // Get unique plans by id
+    const uniquePlanMap = new Map();
+    plans.forEach(plan => {
+      if (plan && !uniquePlanMap.has(plan.id)) {
+        uniquePlanMap.set(plan.id, plan);
+      }
+    });
+    
+    return Array.from(uniquePlanMap.values());
+  }, [subscribers]);
 
   return {
     searchQuery,
@@ -49,6 +64,6 @@ export const useSubscriberFilters = (subscribers: Subscriber[] = []) => {
     planFilter,
     setPlanFilter,
     filteredSubscribers,
-    uniquePlans,
+    uniquePlans
   };
 };

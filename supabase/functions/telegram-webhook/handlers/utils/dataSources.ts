@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../../services/loggingService.ts';
 
@@ -142,5 +141,59 @@ export async function fetchCommunityWithPlans(
   } catch (error) {
     await logger.error('Exception in fetchCommunityWithPlans:', error);
     throw error;
+  }
+}
+
+/**
+ * Fetch community by either ID or custom link
+ */
+export async function fetchCommunityByIdOrLink(
+  supabase: ReturnType<typeof createClient>,
+  communityIdOrLink: string
+): Promise<any> {
+  const logger = createLogger(supabase, 'DATA-SOURCES');
+  
+  try {
+    await logger.info(`Fetching data for community ID or link: ${communityIdOrLink}`);
+    
+    // Check if it's a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
+    let communityQuery;
+    
+    if (isUUID) {
+      // If it's a UUID, search by ID
+      communityQuery = supabase
+        .from('communities')
+        .select('*')
+        .eq('id', communityIdOrLink);
+    } else {
+      // If it's not a UUID, search by custom_link
+      communityQuery = supabase
+        .from('communities')
+        .select('*')
+        .eq('custom_link', communityIdOrLink);
+    }
+    
+    // Execute the query
+    const { data: communities, error: communityError } = await communityQuery;
+    
+    if (communityError) {
+      await logger.error('Error fetching community:', communityError);
+      return null;
+    }
+    
+    if (!communities || communities.length === 0) {
+      await logger.error(`No community found with identifier: ${communityIdOrLink}`);
+      return null;
+    }
+    
+    // Get the first matching community
+    const community = communities[0];
+    await logger.info(`Found community: ${community.name} (ID: ${community.id})`);
+    
+    return community;
+  } catch (error) {
+    await logger.error('Exception in fetchCommunityByIdOrLink:', error);
+    return null;
   }
 }

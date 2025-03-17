@@ -35,12 +35,29 @@ serve(async (req: Request) => {
       { global: { headers: { 'X-Client-Info': 'create-invite-link' } } }
     )
 
-    // First, check if the community is a group
-    const { data: communityData, error: communityDataError } = await supabaseAdmin
-      .from('communities')
-      .select('is_group, name, custom_link')
-      .eq('id', communityId)
-      .single()
+    // Check if this is a UUID or a custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityId);
+    
+    // First, check if the community exists and whether it's a group
+    let communityQuery;
+    
+    if (isUUID) {
+      console.log(`[create-invite-link] Looking up community by UUID: ${communityId}`);
+      communityQuery = supabaseAdmin
+        .from('communities')
+        .select('id, is_group, name, custom_link')
+        .eq('id', communityId)
+        .single();
+    } else {
+      console.log(`[create-invite-link] Looking up community by custom link: ${communityId}`);
+      communityQuery = supabaseAdmin
+        .from('communities')
+        .select('id, is_group, name, custom_link')
+        .eq('custom_link', communityId)
+        .single();
+    }
+    
+    const { data: communityData, error: communityDataError } = await communityQuery;
     
     if (communityDataError) {
       console.error(`[create-invite-link] Error fetching community data: ${communityDataError.message}`)
@@ -50,9 +67,20 @@ serve(async (req: Request) => {
       )
     }
     
+    if (!communityData) {
+      console.error(`[create-invite-link] No community found with identifier: ${communityId}`)
+      return new Response(
+        JSON.stringify({ error: `No community found with identifier: ${communityId}` }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    const actualCommunityId = communityData.id;
+    console.log(`[create-invite-link] Found community: ${communityData.name} (ID: ${actualCommunityId})`);
+    
     // If this is a group, handle it differently
     if (communityData?.is_group) {
-      console.log(`[create-invite-link] Community ${communityId} is a group, generating invite links for member communities`)
+      console.log(`[create-invite-link] Community ${actualCommunityId} is a group, generating invite links for member communities`)
       
       // Get all member communities in this group
       const { data: memberCommunities, error: memberError } = await supabaseAdmin
@@ -66,7 +94,7 @@ serve(async (req: Request) => {
             telegram_chat_id
           )
         `)
-        .eq('community_id', communityId)
+        .eq('community_id', actualCommunityId)
         .eq('relationship_type', 'group')
       
       if (memberError) {
@@ -89,7 +117,7 @@ serve(async (req: Request) => {
       
       // Use bot username for constructing mini app link for the group itself
       const botUsername = "MembifyBot"; // Fallback value
-      const groupLinkParam = communityData.custom_link || communityId;
+      const groupLinkParam = communityData.custom_link || communityData.id;
       const miniAppLink = `https://t.me/${botUsername}?start=${groupLinkParam}`;
       
       // Create an array of channel info with actual Telegram invite links
@@ -187,7 +215,7 @@ serve(async (req: Request) => {
       const { data: community, error: communityError } = await supabaseAdmin
         .from('communities')
         .select('telegram_chat_id')
-        .eq('id', communityId)
+        .eq('id', actualCommunityId)
         .single()
       
       if (communityError) {
@@ -199,7 +227,7 @@ serve(async (req: Request) => {
     const { data: community, error: communityError } = await supabaseAdmin
       .from('communities')
       .select('telegram_chat_id')
-      .eq('id', communityId)
+      .eq('id', actualCommunityId)
       .single()
 
     if (communityError) {

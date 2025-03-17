@@ -57,7 +57,8 @@ serve(async (req) => {
           description,
           price,
           interval,
-          features
+          features,
+          is_active
         )
       `);
       
@@ -83,6 +84,12 @@ serve(async (req) => {
         }
         
         logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
+        
+        // Filter out inactive subscription plans
+        if (community.subscription_plans) {
+          community.subscription_plans = community.subscription_plans.filter(plan => plan.is_active);
+          logger.info(`Filtered to ${community.subscription_plans.length} active subscription plans`);
+        }
         
         // If this is a group, fetch its member communities
         if (community.is_group) {

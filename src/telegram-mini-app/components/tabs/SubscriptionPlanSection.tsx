@@ -1,11 +1,12 @@
 
 import React from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles, AlertTriangle } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SubscriptionPlans } from "@/telegram-mini-app/components/SubscriptionPlans";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface SubscriptionPlanSectionProps {
   plans: Plan[];
@@ -27,8 +28,15 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   
   if (validPlans.length === 0) {
     return (
-      <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
-        <p className="text-gray-500">No subscription plans available for this community.</p>
+      <div className="text-center p-6 max-w-sm mx-auto">
+        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <AlertTitle className="text-amber-800 font-semibold">No subscription plans available</AlertTitle>
+          <AlertDescription className="text-amber-700 text-sm">
+            This community doesn't have any active subscription plans at the moment. 
+            Please check back later or contact the community owner.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }

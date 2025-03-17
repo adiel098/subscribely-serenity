@@ -38,6 +38,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     logger.success(`Successfully fetched community: ${community.name}`);
     logger.log(`Has custom_link: ${community.custom_link || 'None'}`);
     logger.log(`Is group: ${community.is_group ? 'Yes' : 'No'}`);
+    logger.log(`Has ${community.subscription_plans?.length || 0} subscription plans`);
     
     // Process the data for both regular communities and groups
     if (community.is_group) {
@@ -92,9 +93,7 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
           price,
           interval,
           features,
-          is_active,
-          created_at,
-          updated_at
+          is_active
         )
       `)
       .ilike('name', `%${query}%`)
@@ -113,16 +112,23 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
     logger.success(`Found ${data.length} communities for query: "${query}"`);
     
     // Process the results to ensure the proper format is returned
-    return data.map(community => ({
-      id: community.id,
-      name: community.name,
-      description: community.description,
-      telegram_photo_url: community.telegram_photo_url,
-      telegram_chat_id: community.telegram_chat_id,
-      custom_link: community.custom_link,
-      is_group: community.is_group,
-      subscription_plans: community.subscription_plans || []
-    }));
+    // Filter active subscription plans
+    return data.map(community => {
+      const activePlans = community.subscription_plans 
+        ? community.subscription_plans.filter(plan => plan.is_active) 
+        : [];
+        
+      return {
+        id: community.id,
+        name: community.name,
+        description: community.description,
+        telegram_photo_url: community.telegram_photo_url,
+        telegram_chat_id: community.telegram_chat_id,
+        custom_link: community.custom_link,
+        is_group: community.is_group,
+        subscription_plans: activePlans
+      };
+    });
   } catch (error) {
     logger.error(`Error in searchCommunities:`, error);
     return [];

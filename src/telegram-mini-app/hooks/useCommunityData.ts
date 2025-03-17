@@ -43,6 +43,12 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         logger.log(`Successfully fetched community: ${communityData.name}`);
         logger.log(`Has custom_link: ${communityData.custom_link || 'None'}`);
         logger.log(`Is group: ${communityData.is_group ? 'Yes' : 'No'}`);
+        logger.log(`Has ${communityData.subscription_plans?.length || 0} subscription plans`);
+        
+        // Log if no subscription plans are found
+        if (!communityData.subscription_plans || communityData.subscription_plans.length === 0) {
+          logger.warn(`No active subscription plans found for community: ${communityData.name}`);
+        }
         
         setCommunity(communityData);
       } catch (error) {

@@ -27,9 +27,9 @@ export async function fetchCommunityData(
         telegram_chat_id,
         custom_link,
         is_group,
-        community_relationships:community_relationships!parent_community_id(
-          community_id,
-          communities:community_id(
+        community_relationships:community_relationships!community_id(
+          member_id,
+          communities:member_id(
             id, 
             name,
             description,
@@ -44,7 +44,8 @@ export async function fetchCommunityData(
           description,
           price,
           interval,
-          features
+          features,
+          is_active
         )
       `)
       .eq("id", idOrLink)
@@ -62,9 +63,9 @@ export async function fetchCommunityData(
         telegram_chat_id,
         custom_link,
         is_group,
-        community_relationships:community_relationships!parent_community_id(
-          community_id,
-          communities:community_id(
+        community_relationships:community_relationships!community_id(
+          member_id,
+          communities:member_id(
             id, 
             name,
             description,
@@ -79,7 +80,8 @@ export async function fetchCommunityData(
           description,
           price,
           interval,
-          features
+          features,
+          is_active
         )
       `)
       .eq("custom_link", idOrLink)
@@ -111,6 +113,13 @@ export async function processCommunityData(
     }
     
     // For groups, we'll return the group data with its communities
+    // Filter out inactive subscription plans
+    const activePlans = data.subscription_plans 
+      ? data.subscription_plans.filter(plan => plan.is_active) 
+      : [];
+    
+    console.log(`📝 Group has ${activePlans.length} active subscription plans`);
+    
     displayCommunity = {
       id: data.id,
       name: data.name,
@@ -120,15 +129,22 @@ export async function processCommunityData(
       custom_link: data.custom_link,
       is_group: true,
       communities: groupCommunities || [],
-      subscription_plans: data.subscription_plans || []
+      subscription_plans: activePlans
     };
     
   } else {
     // Standard community display
+    // Filter out inactive subscription plans
+    const activePlans = data.subscription_plans 
+      ? data.subscription_plans.filter(plan => plan.is_active) 
+      : [];
+    
     console.log(`✅ Successfully found community: ${data.name} (ID: ${data.id})`);
+    console.log(`📝 Community has ${activePlans.length} active subscription plans`);
+    
     displayCommunity = {
       ...data,
-      subscription_plans: data.subscription_plans || []
+      subscription_plans: activePlans
     };
   }
   

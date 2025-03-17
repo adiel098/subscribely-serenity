@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -25,7 +24,6 @@ const Subscribers = () => {
   const [isUnblocking, setIsUnblocking] = useState(false);
   const { toast } = useToast();
 
-  // Use either the selected community ID or group ID based on what's selected
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
 
   const {
@@ -262,7 +260,7 @@ const Subscribers = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}
         planFilter={planFilter}
         onPlanFilterChange={setPlanFilter}
         uniquePlans={uniquePlans}

@@ -3,16 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, XCircle, TagIcon, Package, Download } from "lucide-react";
+
 interface SubscriberFiltersProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusFilterChange: (value: string) => void;
-  planFilter: string;
-  onPlanFilterChange: (value: string) => void;
-  uniquePlans: string[];
+  statusFilter: "all" | "active" | "inactive";
+  onStatusFilterChange: (value: "all" | "active" | "inactive") => void;
+  planFilter: string | null;
+  onPlanFilterChange: (value: string | null) => void;
+  uniquePlans: any[];
   onExport: () => void;
 }
+
 export const SubscriberFilters = ({
   searchQuery,
   onSearchChange,
@@ -41,7 +43,10 @@ export const SubscriberFilters = ({
         <div className="grid grid-cols-4 gap-3 w-full sm:w-auto">
           <div className="col-span-1 w-full">
             <div className="relative">
-              <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+              <Select 
+                value={statusFilter} 
+                onValueChange={(value: "all" | "active" | "inactive") => onStatusFilterChange(value)}
+              >
                 <SelectTrigger className="w-full pl-8">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -52,7 +57,6 @@ export const SubscriberFilters = ({
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="removed">Removed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -60,7 +64,10 @@ export const SubscriberFilters = ({
 
           <div className="col-span-1 w-full">
             <div className="relative">
-              <Select value={planFilter} onValueChange={onPlanFilterChange}>
+              <Select 
+                value={planFilter || "all"} 
+                onValueChange={(value) => onPlanFilterChange(value === "all" ? null : value)}
+              >
                 <SelectTrigger className="w-full pl-8">
                   <SelectValue placeholder="Plan" />
                 </SelectTrigger>
@@ -69,9 +76,11 @@ export const SubscriberFilters = ({
                 </div>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  {uniquePlans.map(plan => <SelectItem key={plan} value={plan}>
-                      {plan}
-                    </SelectItem>)}
+                  {uniquePlans.map(plan => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -83,7 +92,7 @@ export const SubscriberFilters = ({
             onClick={() => {
               onSearchChange("");
               onStatusFilterChange("all");
-              onPlanFilterChange("all");
+              onPlanFilterChange(null);
             }} 
             className="col-span-1 w-full h-10"
           >
@@ -114,9 +123,9 @@ export const SubscriberFilters = ({
             <XCircle className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => onStatusFilterChange("all")} />
           </div>}
         
-        {planFilter !== "all" && <div className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-            Plan: {planFilter}
-            <XCircle className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => onPlanFilterChange("all")} />
+        {planFilter !== null && <div className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+            Plan: {uniquePlans.find(p => p.id === planFilter)?.name || planFilter}
+            <XCircle className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600 cursor-pointer" onClick={() => onPlanFilterChange(null)} />
           </div>}
       </div>
     </div>;

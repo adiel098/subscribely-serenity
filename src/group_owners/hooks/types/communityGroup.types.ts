@@ -1,3 +1,4 @@
+
 import { Community } from "../useCommunities";
 
 export interface CommunityGroup extends Community {
@@ -18,8 +19,8 @@ export interface GroupSpecificData {
 }
 
 export interface CommunityGroupMember {
-  parent_id: string;
   community_id: string;
+  member_id: string;
   added_at: string;
   display_order: number;
 }

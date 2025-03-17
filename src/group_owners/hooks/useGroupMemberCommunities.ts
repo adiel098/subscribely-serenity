@@ -1,76 +1,67 @@
 
-import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunities } from "./useCommunities";
+import { Community } from "./useCommunities";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("useGroupMemberCommunities");
 
 export const useGroupMemberCommunities = (groupId: string | null) => {
-  const [communityIds, setCommunityIds] = useState<string[]>([]);
-  const [communities, setCommunities] = useState<any[]>([]);
-  
-  // Fetch the member IDs for the group using the community_relationships table
-  const { data: relationships, isLoading: relationshipsLoading } = useQuery({
-    queryKey: ["group-member-communities", groupId],
-    queryFn: async () => {
-      if (!groupId) {
-        console.log("No group ID provided, returning empty array");
-        return [];
-      }
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["community-group-members", groupId],
+    queryFn: async (): Promise<Community[]> => {
+      if (!groupId) return [];
       
       try {
-        // Use the community_relationships table
-        const { data: relationships, error } = await supabase
+        // Fetch the communities that are members of this group
+        const { data: relationships, error: relError } = await supabase
           .from("community_relationships")
-          .select("*")
+          .select(`
+            member_id,
+            display_order
+          `)
           .eq("community_id", groupId)
           .eq("relationship_type", "group")
-          .order("display_order", { ascending: true });
-
-        if (error) {
-          console.error("Error fetching community relationships:", error);
-          throw error;
+          .order("display_order");
+        
+        if (relError) {
+          logger.error("Error fetching group member relationships:", relError);
+          throw relError;
         }
-
-        console.log("Group relationships loaded:", relationships);
-        return relationships || [];
+        
+        if (!relationships || relationships.length === 0) {
+          return [];
+        }
+        
+        // Get the actual community details
+        const communityIds = relationships.map(rel => rel.member_id);
+        
+        const { data: communities, error: comError } = await supabase
+          .from("communities")
+          .select("*")
+          .in("id", communityIds);
+        
+        if (comError) {
+          logger.error("Error fetching group member communities:", comError);
+          throw comError;
+        }
+        
+        return communities || [];
       } catch (error) {
-        console.error("Error in community relationships query:", error);
-        return [];
+        logger.error("Error in useGroupMemberCommunities:", error);
+        throw error;
       }
     },
-    enabled: !!groupId
+    enabled: !!groupId,
   });
   
-  // Fetch all communities the user has access to
-  const { data: allCommunities, isLoading: communitiesLoading } = useCommunities();
+  // Extract just the community IDs for convenience
+  const communityIds = data ? data.map(community => community.id) : [];
   
-  // Extract community IDs from relationships when they load
-  useEffect(() => {
-    if (relationships && relationships.length > 0) {
-      // Use member_id from community_relationships
-      const ids = relationships.map(rel => rel.member_id);
-      setCommunityIds(ids);
-    } else {
-      setCommunityIds([]);
-    }
-  }, [relationships]);
-  
-  // Filter communities based on the member IDs
-  useEffect(() => {
-    if (allCommunities && communityIds.length > 0) {
-      const filteredCommunities = allCommunities.filter(community => 
-        communityIds.includes(community.id)
-      );
-      setCommunities(filteredCommunities);
-    } else {
-      setCommunities([]);
-    }
-  }, [allCommunities, communityIds]);
-  
-  // Return the combined result
   return {
-    communities,
-    communityIds,
-    isLoading: relationshipsLoading || communitiesLoading
+    communities: data || [],
+    isLoading,
+    error,
+    communityIds
   };
 };

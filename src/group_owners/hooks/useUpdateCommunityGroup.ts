@@ -59,7 +59,7 @@ export const useUpdateCommunityGroup = () => {
           const { error: deleteError } = await supabase
             .from("community_relationships")
             .delete()
-            .eq("parent_community_id", data.id)
+            .eq("community_id", data.id)
             .eq("relationship_type", "group");
           
           if (deleteError) {
@@ -70,8 +70,8 @@ export const useUpdateCommunityGroup = () => {
           // Then add the new members
           if (data.communities.length > 0) {
             const groupMembers = data.communities.map((communityId, index) => ({
-              parent_community_id: data.id,
-              community_id: communityId,
+              community_id: data.id,
+              member_id: communityId,
               display_order: index,
               relationship_type: "group"
             }));

@@ -60,8 +60,9 @@ export const GroupDetailsDialog = ({
       },
       {
         onSuccess: () => {
-          setIsEditing(false);
           toast.success("Group details updated successfully!");
+          // Close the dialog after successful save
+          onClose();
         },
         onError: (error) => {
           toast.error(`Failed to update group: ${error.message}`);

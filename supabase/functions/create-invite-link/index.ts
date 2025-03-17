@@ -38,7 +38,7 @@ serve(async (req: Request) => {
     // First, check if the community is a group
     const { data: communityData, error: communityDataError } = await supabaseAdmin
       .from('communities')
-      .select('is_group, name')
+      .select('is_group, name, custom_link')
       .eq('id', communityId)
       .single()
     
@@ -54,13 +54,57 @@ serve(async (req: Request) => {
     if (communityData?.is_group) {
       console.log(`[create-invite-link] Community ${communityId} is a group, generating links for member communities`)
       
-      // For groups, we'll return a deep link to the mini app for this group
-      const miniAppLink = `https://t.me/MembifyBot?start=${communityId}`
+      // Get all member communities in this group
+      const { data: memberCommunities, error: memberError } = await supabaseAdmin
+        .from('community_relationships')
+        .select(`
+          member_id,
+          member:member_id (
+            id,
+            name,
+            custom_link
+          )
+        `)
+        .eq('community_id', communityId)
+        .eq('relationship_type', 'group')
       
-      console.log(`[create-invite-link] Returning mini app link: ${miniAppLink}`)
+      if (memberError) {
+        console.error(`[create-invite-link] Error fetching member communities: ${memberError.message}`)
+        return new Response(
+          JSON.stringify({ error: `Failed to fetch group member communities: ${memberError.message}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      // Use bot username for constructing mini app links
+      const botUsername = "MembifyBot"; // Fallback value
+      
+      // For groups, we'll return a deep link to the mini app for this group
+      const groupLinkParam = communityData.custom_link || communityId;
+      const miniAppLink = `https://t.me/${botUsername}?start=${groupLinkParam}`;
+      
+      // Create an array of channel info with links
+      const channelLinks = memberCommunities?.map(relation => {
+        const member = relation.member;
+        const linkParam = member.custom_link || member.id;
+        const channelLink = `https://t.me/${botUsername}?start=${linkParam}`;
+        
+        return {
+          id: member.id,
+          name: member.name,
+          inviteLink: channelLink
+        };
+      }) || [];
+      
+      console.log(`[create-invite-link] Returning group link and ${channelLinks.length} channel links`);
       
       return new Response(
-        JSON.stringify({ inviteLink: miniAppLink }),
+        JSON.stringify({ 
+          inviteLink: miniAppLink,
+          isGroup: true,
+          groupName: communityData.name,
+          channels: channelLinks
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -79,7 +123,7 @@ serve(async (req: Request) => {
       } else if (community?.telegram_invite_link) {
         console.log(`[create-invite-link] Found existing invite link: ${community.telegram_invite_link}`)
         return new Response(
-          JSON.stringify({ inviteLink: community.telegram_invite_link }),
+          JSON.stringify({ inviteLink: community.telegram_invite_link, isGroup: false }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -152,19 +196,24 @@ serve(async (req: Request) => {
     const inviteLink = result.result.invite_link
     console.log(`[create-invite-link] Successfully created new invite link: ${inviteLink}`)
 
-    // Update the community record with the new invite link
-    const { error: updateError } = await supabaseAdmin
-      .from('communities')
-      .update({ telegram_invite_link: inviteLink })
-      .eq('id', communityId)
+    // Update the community record with the new invite link if a column exists
+    try {
+      const { error: updateError } = await supabaseAdmin
+        .from('communities')
+        .update({ telegram_invite_link: inviteLink })
+        .eq('id', communityId)
 
-    if (updateError) {
-      console.error(`[create-invite-link] Error updating community with new invite link: ${updateError.message}`)
-      // Continue anyway since we got the link, just couldn't save it
+      if (updateError) {
+        // Column might not exist, just log and continue
+        console.log(`[create-invite-link] Note: Could not update community with invite link: ${updateError.message}`)
+      }
+    } catch (e) {
+      // Ignore errors here as the column might not exist
+      console.log(`[create-invite-link] Note: Could not update community with invite link: ${e.message}`)
     }
 
     return new Response(
-      JSON.stringify({ inviteLink }),
+      JSON.stringify({ inviteLink, isGroup: false }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

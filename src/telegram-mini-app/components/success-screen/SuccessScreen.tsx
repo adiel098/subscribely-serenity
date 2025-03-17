@@ -1,10 +1,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useInviteLink } from "./useInviteLink";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { CheckCircle2, LinkIcon, Copy } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupChannelsLinks } from "./GroupChannelsLinks";
@@ -28,127 +27,56 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
   
   console.log("Rendering success screen with invite link:", inviteLink);
   
-  // Extract community ID from the invite link
+  // Get links for all channels in the group
   useEffect(() => {
-    const fetchCommunityDetails = async () => {
+    const getGroupChannelLinks = async () => {
       if (!inviteLink) return;
       
       try {
-        // Extract community ID from link or URL parameters
-        const communityIdMatch = inviteLink.match(/start=([^&]+)/);
-        if (!communityIdMatch) return;
+        // Extract group ID or custom link from the invite link
+        const startParamMatch = inviteLink.match(/start=([^&]+)/);
+        if (!startParamMatch) return;
         
-        const communityId = communityIdMatch[1];
-        console.log("Extracted community ID:", communityId);
+        const startParam = startParamMatch[1];
+        console.log("Extracted start parameter:", startParam);
         
-        // Fetch community details to check if it's a group
-        const { data: community, error } = await supabase
-          .from('communities')
-          .select('id, name, is_group')
-          .eq('id', communityId)
-          .single();
-          
-        if (error) throw error;
+        setIsLoadingChannels(true);
         
-        if (community?.is_group) {
-          setIsGroup(true);
-          setGroupName(community.name || "Group");
-          
-          // Fetch group channels
-          setIsLoadingChannels(true);
-          const { data: relationships, error: relError } = await supabase
-            .from('community_relationships')
-            .select('member_id, display_order')
-            .eq('community_id', communityId)
-            .eq('relationship_type', 'group')
-            .order('display_order', { ascending: true });
-            
-          if (relError) throw relError;
-          
-          if (relationships && relationships.length > 0) {
-            // Get community details for each related channel
-            const memberIds = relationships.map(rel => rel.member_id);
-            
-            const { data: channelCommunities, error: channelsError } = await supabase
-              .from('communities')
-              .select('id, name, description, custom_link')
-              .in('id', memberIds);
-              
-            if (channelsError) throw channelsError;
-            
-            // For each channel community, get or generate invite link
-            const channelsWithLinks: ChannelLink[] = [];
-            
-            for (const channel of channelCommunities || []) {
-              // Try to get stored invite link
-              let channelInviteLink;
-              
-              if (channel.custom_link) {
-                channelInviteLink = `https://t.me/MembifyBot?start=${channel.custom_link}`;
-              } else {
-                channelInviteLink = `https://t.me/MembifyBot?start=${channel.id}`;
-              }
-              
-              channelsWithLinks.push({
-                id: channel.id,
-                name: channel.name,
-                inviteLink: channelInviteLink,
-                description: channel.description
-              });
-            }
-            
-            // Sort channels according to the original relationship display_order
-            channelsWithLinks.sort((a, b) => {
-              const aOrder = relationships.find(r => r.member_id === a.id)?.display_order || 0;
-              const bOrder = relationships.find(r => r.member_id === b.id)?.display_order || 0;
-              return aOrder - bOrder;
-            });
-            
-            setChannels(channelsWithLinks);
+        // Call create-invite-link function with the group ID
+        const response = await supabase.functions.invoke('create-invite-link', {
+          body: { 
+            communityId: startParam
           }
+        });
+        
+        if (response.error) {
+          console.error("Error getting group channel links:", response.error);
+          toast({
+            title: "Error",
+            description: "Failed to load channels. Please try again.",
+            variant: "destructive"
+          });
           setIsLoadingChannels(false);
+          return;
         }
-      } catch (err) {
-        console.error("Error fetching community details:", err);
+        
+        // If response contains isGroup and channels, it's a group
+        if (response.data?.isGroup && response.data?.channels) {
+          setIsGroup(true);
+          setGroupName(response.data.groupName || "Group");
+          setChannels(response.data.channels);
+          console.log("Loaded channels for group:", response.data.channels);
+        }
+        
+        setIsLoadingChannels(false);
+      } catch (error) {
+        console.error("Error in getGroupChannelLinks:", error);
         setIsLoadingChannels(false);
       }
     };
     
-    fetchCommunityDetails();
-  }, [inviteLink]);
-  
-  // Copy link to clipboard functionality
-  const copyToClipboard = () => {
-    if (inviteLink) {
-      navigator.clipboard.writeText(inviteLink)
-        .then(() => {
-          toast({
-            title: "Link Copied",
-            description: "Invite link copied to clipboard",
-          });
-          
-          // Trigger haptic feedback if available in Telegram Mini App
-          if (window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-          }
-        })
-        .catch(err => {
-          console.error("Failed to copy text: ", err);
-          toast({
-            title: "Copy Failed",
-            description: "Could not copy link to clipboard",
-            variant: "destructive",
-          });
-        });
-    }
-  };
-
-  const handleJoinCommunity = () => {
-    if (inviteLink) {
-      console.log("Opening invite link:", inviteLink);
-      window.open(inviteLink, "_blank");
-    }
-  };
+    getGroupChannelLinks();
+  }, [inviteLink, toast]);
 
   // Show loading state
   if (isLoadingLink || isLoadingChannels) {

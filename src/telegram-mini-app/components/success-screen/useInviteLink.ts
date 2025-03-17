@@ -9,20 +9,23 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
   const [isLoadingLink, setIsLoadingLink] = useState<boolean>(false);
   
-  // Generate a new invite link after successful payment
+  // Process initial invite link or generate a new one
   useEffect(() => {
     logger.log('Community invite link in useInviteLink:', initialInviteLink);
     
-    // Always generate a new invite link regardless of initial link
-    generateNewInviteLink();
-    
+    if (initialInviteLink) {
+      setInviteLink(initialInviteLink);
+    } else {
+      // Generate a new invite link
+      generateNewInviteLink();
+    }
   }, [initialInviteLink]);
 
   // Generate a fresh invite link for this member
   const generateNewInviteLink = async () => {
     setIsLoadingLink(true);
     try {
-      logger.log('Generating new invite link for renewal...');
+      logger.log('Generating new invite link...');
       
       // Get community ID from recent payment
       const { data: recentPayment, error: paymentError } = await supabase
@@ -33,11 +36,13 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       
       if (paymentError) {
         logger.error('Error fetching recent payment:', paymentError);
+        setIsLoadingLink(false);
         return;
       }
       
       if (!recentPayment || recentPayment.length === 0 || !recentPayment[0].community_id) {
         logger.error('No recent payment or community ID found');
+        setIsLoadingLink(false);
         return;
       }
       
@@ -46,7 +51,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       
       logger.log(`Found community ID for invite link generation: ${communityId}`);
       
-      // Call the create-invite-link edge function with forceNew=true
+      // Call the create-invite-link edge function
       const response = await supabase.functions.invoke('create-invite-link', {
         body: { 
           communityId: communityId,
@@ -55,7 +60,8 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       });
       
       if (response.error) {
-        logger.error('Error generating new invite link:', response.error);
+        logger.error('Error generating invite link:', response.error);
+        setIsLoadingLink(false);
         return;
       }
       

@@ -42,6 +42,8 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         
         logger.log(`Successfully fetched community: ${communityData.name}`);
         logger.log(`Has custom_link: ${communityData.custom_link || 'None'}`);
+        logger.log(`Is group: ${communityData.is_group ? 'Yes' : 'No'}`);
+        
         setCommunity(communityData);
       } catch (error) {
         logger.error("Error fetching data:", error);

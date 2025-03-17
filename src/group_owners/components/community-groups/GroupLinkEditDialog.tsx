@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { LoaderCircle, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupLinkEditDialog");
 
 interface GroupLinkEditDialogProps {
   isOpen: boolean;
@@ -36,23 +39,41 @@ export const GroupLinkEditDialog = ({
         return;
       }
       
-      // Submit to Supabase
+      // Check if custom link is already in use by another community
+      if (customLink) {
+        const { data: existingCommunity, error: checkError } = await supabase
+          .from("communities")
+          .select("id")
+          .eq("custom_link", customLink)
+          .neq("id", groupId)
+          .maybeSingle();
+
+        if (existingCommunity) {
+          toast.error("This custom link is already in use by another community or group");
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Submit to Supabase - update the communities table since groups are in this table
+      logger.log(`Updating custom link for group ${groupId} to: ${customLink || 'null'}`);
       const { error } = await supabase
-        .from("community_groups")
+        .from("communities")
         .update({ custom_link: customLink || null })
         .eq("id", groupId);
       
       if (error) {
-        console.error("Error updating custom link:", error);
-        toast.error("Failed to update custom link");
+        logger.error("Error updating custom link:", error);
+        toast.error(error.message || "Failed to update custom link");
         return;
       }
       
+      logger.success("Custom link updated successfully");
       toast.success("Custom link updated successfully");
       onLinkUpdated(customLink || null);
       onClose();
     } catch (err) {
-      console.error("Error in handleSave:", err);
+      logger.error("Error in handleSave:", err);
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);

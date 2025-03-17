@@ -1,171 +1,109 @@
 
-import { logServiceAction, invokeSupabaseFunction } from "./utils/serviceUtils";
-import { Community } from "../types/community.types";
-import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Community } from "@/telegram-mini-app/types/community.types";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
-export async function searchCommunities(query: string = ""): Promise<Community[]> {
-  logServiceAction("🔍 searchCommunities", { query });
+const logger = createLogger("communityService");
 
+/**
+ * Fetches a community by its ID or custom link
+ */
+export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Community | null> => {
   try {
-    // Create payload with detailed logging
-    const payload = {
-      action: "search_communities", 
-      query: query, 
-      filter_ready: true,
-      include_plans: true,  
-      debug: true           
-    };
-    console.log("📤 Sending to edge function:", payload);
+    logger.log(`Fetching community with ID or link: ${idOrLink}`);
     
-    const { data, error } = await invokeSupabaseFunction("telegram-user-manager", payload);
-
+    // Check if this is a UUID or custom link
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
+    
+    // Build the query based on whether we have a UUID or custom link
+    let query = supabase.from("communities").select(`
+      id,
+      name,
+      description,
+      telegram_photo_url,
+      telegram_chat_id,
+      custom_link,
+      is_group,
+      community_relationships:community_relationships!parent_community_id(
+        community_id,
+        communities:community_id(
+          id, 
+          name,
+          description,
+          telegram_photo_url,
+          telegram_chat_id,
+          custom_link
+        )
+      ),
+      subscription_plans (
+        id,
+        name,
+        description,
+        price,
+        interval,
+        features
+      )
+    `);
+    
+    if (isUUID) {
+      logger.log(`Querying by UUID: ${idOrLink}`);
+      query = query.eq("id", idOrLink);
+    } else {
+      logger.log(`Querying by custom link: ${idOrLink}`);
+      query = query.eq("custom_link", idOrLink);
+    }
+    
+    const { data, error } = await query.maybeSingle();
+    
     if (error) {
-      console.error("❌ Error searching communities:", error);
-      toast({
-        title: "Search Error",
-        description: "Could not retrieve communities. Please try again later.",
-        variant: "destructive"
-      });
-      throw new Error(error.message);
-    }
-
-    // Ensure each community has subscription_plans array
-    const communities = data?.communities || [];
-    
-    // Log metadata information if available
-    if (data?.metadata) {
-      console.log("📊 Search metadata:", data.metadata);
-      console.log(`🔍 Found ${data.metadata.total_found} communities, ${data.metadata.eligible_count} eligible after filtering`);
+      logger.error(`Error fetching community: ${error.message}`);
+      throw error;
     }
     
-    // Detailed logging of received data
-    console.log(`📋 Received ${communities.length} communities from API`);
+    if (!data) {
+      logger.warn(`No community found for identifier: ${idOrLink}`);
+      return null;
+    }
     
-    communities.forEach((community: Community, index: number) => {
-      if (!community.subscription_plans) {
-        console.warn(`⚠️ Community ${community.name} (${community.id}) missing subscription_plans - adding empty array`);
-        community.subscription_plans = [];
-      } else if (!Array.isArray(community.subscription_plans)) {
-        console.error(`❌ Community ${community.name} (${community.id}) has non-array subscription_plans:`, community.subscription_plans);
-        console.log("Type of subscription_plans:", typeof community.subscription_plans);
-        community.subscription_plans = [];
-      } else {
-        console.log(`✅ Community ${index + 1}: ${community.name} has ${community.subscription_plans.length} subscription plans`);
+    logger.success(`Successfully fetched community: ${data.name}`);
+    
+    // Process the data for both regular communities and groups
+    if (data.is_group) {
+      // Format group data
+      logger.log(`Processing group data: ${data.name}`);
+      
+      // Extract member communities from relationships
+      const memberCommunities = [];
+      if (data.community_relationships && Array.isArray(data.community_relationships)) {
+        for (const rel of data.community_relationships) {
+          if (rel.communities) {
+            memberCommunities.push(rel.communities);
+          }
+        }
       }
-    });
-
-    logServiceAction("✅ Processed communities data", communities);
-    return communities;
+      
+      logger.log(`Group has ${memberCommunities.length} communities`);
+      
+      return {
+        id: data.id,
+        name: data.name,
+        description: data.description || "Group subscription",
+        telegram_photo_url: data.telegram_photo_url,
+        telegram_chat_id: data.telegram_chat_id,
+        custom_link: data.custom_link,
+        is_group: true,
+        communities: memberCommunities,
+        subscription_plans: data.subscription_plans || []
+      };
+    } else {
+      // Return regular community data
+      return {
+        ...data,
+        subscription_plans: data.subscription_plans || []
+      };
+    }
   } catch (error) {
-    console.error("❌ Failed to search communities:", error);
-    return [];
+    logger.error("Error in fetchCommunityByIdOrLink:", error);
+    throw error;
   }
-}
-
-export async function fetchGroupData(groupIdOrLink: string): Promise<Community | null> {
-  logServiceAction("🔍 fetchGroupData", { groupIdOrLink });
-
-  try {
-    // Check if it's a UUID
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupIdOrLink);
-    console.log(`🔍 Parameter type check: ${isUUID ? "UUID" : "Custom link"}`);
-    
-    const payload = {
-      community_id: groupIdOrLink,
-      debug: true,
-      fetch_telegram_data: true
-    };
-    console.log("📤 Sending to edge function:", payload);
-    
-    const { data, error } = await invokeSupabaseFunction("telegram-community-data", payload);
-
-    if (error) {
-      console.error("❌ Error fetching group data:", error);
-      toast({
-        title: "Error",
-        description: "Could not retrieve group data. Please try again later.",
-        variant: "destructive"
-      });
-      throw new Error(error.message);
-    }
-
-    if (!data?.community) {
-      console.error("❌ No group data found:", data);
-      return null;
-    }
-
-    // Process the community data
-    const community = data.community;
-    
-    // Ensure subscription_plans is always an array
-    if (!community.subscription_plans) {
-      console.warn(`⚠️ Group ${community.name} missing subscription_plans - adding empty array`);
-      community.subscription_plans = [];
-    } else if (!Array.isArray(community.subscription_plans)) {
-      console.error(`❌ Group ${community.name} has non-array subscription_plans:`, community.subscription_plans);
-      community.subscription_plans = [];
-    }
-    
-    // Ensure communities is always an array if this is a group
-    if (community.is_group && !community.communities) {
-      console.warn(`⚠️ Group ${community.name} missing communities array - adding empty array`);
-      community.communities = [];
-    } else if (community.is_group && !Array.isArray(community.communities)) {
-      console.error(`❌ Group ${community.name} has non-array communities:`, community.communities);
-      community.communities = [];
-    }
-
-    logServiceAction("✅ Processed group data", community);
-    return community;
-  } catch (error) {
-    console.error("❌ Failed to fetch group data:", error);
-    return null;
-  }
-}
-
-export async function fetchCommunityByIdOrLink(idOrLink: string): Promise<Community | null> {
-  logServiceAction("🔍 fetchCommunityByIdOrLink", { idOrLink });
-
-  try {
-    const payload = {
-      community_id: idOrLink,
-      debug: true
-    };
-    console.log("📤 Sending to edge function:", payload);
-    
-    const { data, error } = await invokeSupabaseFunction("telegram-community-data", payload);
-
-    if (error) {
-      console.error("❌ Error fetching community data:", error);
-      toast({
-        title: "Error",
-        description: "Could not retrieve community data. Please try again later.",
-        variant: "destructive"
-      });
-      throw new Error(error.message);
-    }
-
-    if (!data?.community) {
-      console.error("❌ No community data found:", data);
-      return null;
-    }
-
-    // Process the community data
-    const community = data.community;
-    
-    // Ensure subscription_plans is always an array
-    if (!community.subscription_plans) {
-      console.warn(`⚠️ Community ${community.name} missing subscription_plans - adding empty array`);
-      community.subscription_plans = [];
-    } else if (!Array.isArray(community.subscription_plans)) {
-      console.error(`❌ Community ${community.name} has non-array subscription_plans:`, community.subscription_plans);
-      community.subscription_plans = [];
-    }
-
-    logServiceAction("✅ Processed community data", community);
-    return community;
-  } catch (error) {
-    console.error("❌ Failed to fetch community data:", error);
-    return null;
-  }
-}
+};

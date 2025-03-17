@@ -122,7 +122,7 @@ export const GroupDetailsDialog = ({
                 size="sm"
                 className="h-6 text-xs gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
                 onClick={onEditLink}
-                disabled={isEditing}
+                // Removed the disabled={isEditing} prop to make button always available
               >
                 <PenLine className="h-3 w-3" />
                 Edit
@@ -152,7 +152,7 @@ export const GroupDetailsDialog = ({
                 size="sm"
                 className="h-6 text-xs gap-1 text-purple-600 border-purple-200 hover:bg-purple-50"
                 onClick={onEditCommunities}
-                disabled={isEditing}
+                // Removed the disabled={isEditing} prop to make button always available
               >
                 <Edit className="h-3 w-3" />
                 Edit
@@ -179,7 +179,7 @@ export const GroupDetailsDialog = ({
                   variant="link" 
                   className="mt-1 text-indigo-600 text-xs gap-1" 
                   onClick={onEditCommunities}
-                  disabled={isEditing}
+                  // Removed the disabled={isEditing} prop to make button always available
                 >
                   <Plus className="h-3 w-3" />
                   Add communities

@@ -54,13 +54,21 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         custom_link: community.custom_link,
         is_group: true,
         communities: community.communities || [],
-        subscription_plans: community.subscription_plans || []
+        subscription_plans: (community.subscription_plans || []).map(plan => ({
+          ...plan,
+          created_at: plan.created_at || new Date().toISOString(),
+          updated_at: plan.updated_at || new Date().toISOString()
+        }))
       };
     } else {
       // Return regular community data
       return {
         ...community,
-        subscription_plans: community.subscription_plans || []
+        subscription_plans: (community.subscription_plans || []).map(plan => ({
+          ...plan,
+          created_at: plan.created_at || new Date().toISOString(),
+          updated_at: plan.updated_at || new Date().toISOString()
+        }))
       };
     }
   } catch (error) {
@@ -93,7 +101,9 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
           price,
           interval,
           features,
-          is_active
+          is_active,
+          created_at,
+          updated_at
         )
       `)
       .ilike('name', `%${query}%`)
@@ -111,11 +121,16 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
     
     logger.success(`Found ${data.length} communities for query: "${query}"`);
     
-    // Process the results to ensure the proper format is returned
-    // Filter active subscription plans
+    // Process the results and ensure all required fields are present
     return data.map(community => {
       const activePlans = community.subscription_plans 
-        ? community.subscription_plans.filter(plan => plan.is_active) 
+        ? community.subscription_plans
+            .filter(plan => plan.is_active)
+            .map(plan => ({
+              ...plan,
+              created_at: plan.created_at || new Date().toISOString(),
+              updated_at: plan.updated_at || new Date().toISOString()
+            }))
         : [];
         
       return {

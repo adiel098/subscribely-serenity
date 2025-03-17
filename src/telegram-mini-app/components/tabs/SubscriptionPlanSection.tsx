@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ChevronDown, Sparkles, AlertTriangle } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
@@ -29,7 +28,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   if (validPlans.length === 0) {
     return (
       <div className="text-center p-6 max-w-sm mx-auto">
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Alert variant="destructive" className="bg-amber-50 border-amber-200">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
           <AlertTitle className="text-amber-800 font-semibold">No subscription plans available</AlertTitle>
           <AlertDescription className="text-amber-700 text-sm">

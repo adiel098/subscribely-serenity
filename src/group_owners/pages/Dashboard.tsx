@@ -144,8 +144,8 @@ const Dashboard = () => {
       <div className="flex flex-wrap gap-4 mt-6">
         <div className="w-full lg:w-[65%]">
           <DashboardCharts
-            memberGrowthData={memberGrowthData.map(d => ({ date: d.date, value: d.members }))}
-            revenueData={revenueData.map(d => ({ date: d.date, value: d.revenue }))}
+            memberGrowthData={memberGrowthData}
+            revenueData={revenueData}
             timeRange={timeRangeLabel}
           />
         </div>

@@ -1,7 +1,7 @@
 
 import { useMemo } from "react";
 import { format } from "date-fns";
-import { DashboardSubscriber, ChartData, RevenueData } from "./types";
+import { DashboardSubscriber, ChartDataPoint } from "./types";
 
 export const useChartData = (
   filteredSubscribers: DashboardSubscriber[]
@@ -9,12 +9,12 @@ export const useChartData = (
   const memberGrowthData = useMemo(() => {
     if (!filteredSubscribers.length) return [];
     
-    const dataByDate: Record<string, { date: string; members: number }> = {};
+    const dataByDate: Record<string, ChartDataPoint> = {};
     
     filteredSubscribers.forEach(sub => {
       const date = format(new Date(sub.joined_at), "yyyy-MM-dd");
       if (!dataByDate[date]) {
-        dataByDate[date] = { date, members: 0 };
+        dataByDate[date] = { date, members: 0, revenue: 0 };
       }
       dataByDate[date].members += 1;
     });
@@ -27,14 +27,14 @@ export const useChartData = (
   const revenueData = useMemo(() => {
     if (!filteredSubscribers.length) return [];
     
-    const dataByDate: Record<string, { date: string; revenue: number }> = {};
+    const dataByDate: Record<string, ChartDataPoint> = {};
     
     filteredSubscribers.forEach(sub => {
       if (!sub.plan?.price) return;
       
       const date = format(new Date(sub.subscription_start_date || sub.joined_at), "yyyy-MM-dd");
       if (!dataByDate[date]) {
-        dataByDate[date] = { date, revenue: 0 };
+        dataByDate[date] = { date, members: 0, revenue: 0 };
       }
       dataByDate[date].revenue += sub.plan.price;
     });

@@ -33,10 +33,18 @@ export interface ChartDataPoint {
   revenue: number;
 }
 
+export type TimeRange = '7d' | '30d' | '90d' | 'all';
+
 export interface TrialUserData {
   count: number;
   // Percentage of trial users who convert to paid subscriptions
   conversionRate: number;
+}
+
+// Alias for TrialUserData to maintain backward compatibility
+export interface TrialUsersData {
+  count: number;
+  conversion: number;
 }
 
 export interface MiniAppData {
@@ -52,8 +60,15 @@ export interface Insight {
   renewalRate: number;
 }
 
+// Alias for Insight to maintain backward compatibility
+export type Insights = Insight;
+
 export interface PaymentStatistics {
   completed: number;
   pending: number;
   failed: number;
 }
+
+// Additional types needed for chart data
+export type ChartData = { date: string; members: number }[];
+export type RevenueData = { date: string; revenue: number }[];

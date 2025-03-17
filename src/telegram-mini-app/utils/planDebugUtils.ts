@@ -46,6 +46,17 @@ export const debugPlans = (plans: SubscriptionPlan[] | null | undefined): void =
     if (planErrors.length > 0) {
       allErrors.push(...planErrors);
     }
+    
+    // Log detailed plan information
+    logger.debug(`Plan ${index + 1} details:`, JSON.stringify({
+      id: plan.id,
+      name: plan.name,
+      community_id: plan.community_id || 'MISSING',
+      price: plan.price,
+      interval: plan.interval,
+      is_active: plan.is_active,
+      features: Array.isArray(plan.features) ? plan.features.length : 'not an array'
+    }));
   });
   
   if (allErrors.length > 0) {
@@ -55,7 +66,7 @@ export const debugPlans = (plans: SubscriptionPlan[] | null | undefined): void =
   }
   
   // Log the first plan for reference
-  logger.debug("Sample plan data:", plans[0]);
+  logger.debug("Sample plan data:", JSON.stringify(plans[0]));
 };
 
 /**
@@ -70,11 +81,12 @@ export const ensurePlanFields = (plans: any[]): SubscriptionPlan[] => {
   
   return plans.map((plan, index) => {
     const now = new Date().toISOString();
+    const originalPlan = { ...plan };
     
     // Ensure all required fields are present
     const fixedPlan: SubscriptionPlan = {
       id: plan.id || `missing-id-${index}`,
-      community_id: plan.community_id || '',
+      community_id: plan.community_id || '', // This could be a problem if missing
       name: plan.name || `Unnamed Plan ${index + 1}`,
       description: plan.description || null,
       price: typeof plan.price === 'number' ? plan.price : 0,
@@ -86,13 +98,49 @@ export const ensurePlanFields = (plans: any[]): SubscriptionPlan[] => {
     };
     
     // Log any fixes we made
-    const original = JSON.stringify(plan);
+    const original = JSON.stringify(originalPlan);
     const fixed = JSON.stringify(fixedPlan);
     
     if (original !== fixed) {
-      logger.debug(`Fixed plan ${index + 1}:`, { original, fixed });
+      logger.debug(`Fixed plan ${index + 1}:`, { 
+        original, 
+        fixed, 
+        changes: Object.keys(fixedPlan).filter(key => 
+          JSON.stringify(originalPlan[key]) !== JSON.stringify(fixedPlan[key])
+        )
+      });
     }
     
     return fixedPlan;
   });
+};
+
+/**
+ * Performs a direct database query to verify plans exist for a community
+ */
+export const verifyPlansInDatabase = async (communityId: string, supabase: any): Promise<void> => {
+  try {
+    logger.debug(`Verifying plans in database for community ID: ${communityId}`);
+    
+    const { data, error } = await supabase
+      .from('subscription_plans')
+      .select('id, name, community_id, is_active')
+      .eq('community_id', communityId);
+      
+    if (error) {
+      logger.error(`Database error checking plans: ${error.message}`);
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      logger.warn(`No plans found in database for community ID: ${communityId}`);
+      return;
+    }
+    
+    const activePlans = data.filter(plan => plan.is_active);
+    logger.success(`Found ${data.length} total plans in database (${activePlans.length} active)`);
+    logger.debug(`Database plans:`, JSON.stringify(data));
+  } catch (error) {
+    logger.error(`Error verifying plans in database:`, error);
+  }
 };

@@ -77,6 +77,7 @@ serve(async (req) => {
         logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
         
         // Now fetch subscription plans separately for proper filtering
+        logger.debug(`Fetching subscription plans for community ID: ${community.id}`);
         const { data: subscriptionPlans, error: planError } = await supabase
           .from("subscription_plans")
           .select(`
@@ -99,10 +100,33 @@ serve(async (req) => {
           // Continue anyway, we'll just return the community without plans
         }
         
+        // Log raw subscription plans data before processing
+        logger.debug(`Raw subscription plans data:`, JSON.stringify(subscriptionPlans || []));
+        
         // Add subscription plans to community
         community.subscription_plans = subscriptionPlans || [];
         
         logger.info(`Found ${community.subscription_plans.length} active subscription plans for ${community.name}`);
+        
+        // Log each plan to verify its structure
+        if (community.subscription_plans.length > 0) {
+          community.subscription_plans.forEach((plan, index) => {
+            logger.debug(`Plan ${index + 1}: ${plan.name} (ID: ${plan.id}), community_id: ${plan.community_id}`);
+          });
+        } else {
+          logger.warn(`No active subscription plans found for community: ${community.name} (ID: ${community.id})`);
+          // Double-check with a raw query to see all plans regardless of active status
+          const { data: allPlans, error: allPlansError } = await supabase
+            .from("subscription_plans")
+            .select("id, name, is_active, community_id")
+            .eq("community_id", community.id);
+            
+          if (allPlansError) {
+            logger.error(`Error checking all plans: ${allPlansError.message}`);
+          } else {
+            logger.debug(`All plans (including inactive) for this community:`, JSON.stringify(allPlans || []));
+          }
+        }
         
         // If this is a group, fetch its member communities
         if (community.is_group) {
@@ -143,6 +167,9 @@ serve(async (req) => {
             // Continue anyway, we'll just return the group without members
           }
         }
+        
+        // Log the final response data
+        logger.debug(`Final response data:`, JSON.stringify({ community }));
         
         return createSuccessResponse({ community });
       } catch (queryError) {

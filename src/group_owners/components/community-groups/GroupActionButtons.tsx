@@ -37,7 +37,7 @@ export const GroupActionButtons = ({ onCopyLink, onShowDetails }: GroupActionBut
           className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 h-8"
         >
           <Edit className="h-3.5 w-3.5" />
-          Details & Edit
+          Edit Group
         </Button>
       </motion.div>
     </div>

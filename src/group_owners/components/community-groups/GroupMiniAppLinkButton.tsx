@@ -29,9 +29,9 @@ export const GroupMiniAppLinkButton = ({
   
   const botUsername = getBotUsername();
   
-  // Build the link using either custom_link or group_id prefix
+  // Build the link using either custom_link or group ID (without the group_ prefix)
   const baseUrl = `https://t.me/${botUsername}?start=`;
-  const fullLink = `${baseUrl}${customLink || `group_${group.id}`}`;
+  const fullLink = `${baseUrl}${customLink || group.id}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(fullLink)
@@ -71,6 +71,7 @@ export const GroupMiniAppLinkButton = ({
         onCopyLink={handleCopyLink}
         onEditLink={() => setIsLinkEditOpen(true)}
         onEditCommunities={() => setIsMembersEditOpen(true)}
+        isEditModeByDefault={true} // Set to true to start in edit mode by default
       />
       
       {/* Members Edit Sheet */}

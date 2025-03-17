@@ -20,6 +20,7 @@ interface GroupDetailsDialogProps {
   onCopyLink: () => void;
   onEditLink: () => void;
   onEditCommunities: () => void;
+  isEditModeByDefault?: boolean;
 }
 
 export const GroupDetailsDialog = ({
@@ -31,8 +32,9 @@ export const GroupDetailsDialog = ({
   onCopyLink,
   onEditLink,
   onEditCommunities,
+  isEditModeByDefault = true, // Changed to default to true
 }: GroupDetailsDialogProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEditModeByDefault);
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description || "");
   const [photoUrl, setPhotoUrl] = useState(group.telegram_photo_url || "");
@@ -42,12 +44,12 @@ export const GroupDetailsDialog = ({
   // Reset form state when dialog opens
   React.useEffect(() => {
     if (isOpen) {
-      setIsEditing(false);
+      setIsEditing(isEditModeByDefault);
       setName(group.name);
       setDescription(group.description || "");
       setPhotoUrl(group.telegram_photo_url || "");
     }
-  }, [isOpen, group]);
+  }, [isOpen, group, isEditModeByDefault]);
   
   const handleSaveChanges = () => {
     updateGroupMutation.mutate(

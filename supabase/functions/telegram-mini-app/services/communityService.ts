@@ -25,6 +25,7 @@ export async function fetchCommunityData(
         description,
         telegram_photo_url,
         telegram_chat_id,
+        telegram_invite_link,
         custom_link,
         is_group,
         community_relationships:community_relationships!parent_community_id(
@@ -35,6 +36,7 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_chat_id,
+            telegram_invite_link,
             custom_link
           )
         ),
@@ -60,6 +62,7 @@ export async function fetchCommunityData(
         description,
         telegram_photo_url,
         telegram_chat_id,
+        telegram_invite_link,
         custom_link,
         is_group,
         community_relationships:community_relationships!parent_community_id(
@@ -70,6 +73,7 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_chat_id,
+            telegram_invite_link,
             custom_link
           )
         ),
@@ -117,6 +121,7 @@ export async function processCommunityData(
       description: data.description || "Group subscription",
       telegram_photo_url: data.telegram_photo_url,
       telegram_chat_id: data.telegram_chat_id,
+      telegram_invite_link: data.telegram_invite_link || null,
       custom_link: data.custom_link,
       is_group: true,
       communities: groupCommunities || [],
@@ -126,7 +131,11 @@ export async function processCommunityData(
   } else {
     // Standard community display
     console.log(`✅ Successfully found community: ${data.name} (ID: ${data.id})`);
-    displayCommunity = data;
+    displayCommunity = {
+      ...data,
+      telegram_invite_link: data.telegram_invite_link || null,
+      subscription_plans: data.subscription_plans || []
+    };
   }
   
   console.log(`📝 Entity description: "${displayCommunity.description || 'NOT SET'}"`);

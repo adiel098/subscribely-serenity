@@ -22,6 +22,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
       description,
       telegram_photo_url,
       telegram_chat_id,
+      telegram_invite_link,
       custom_link,
       is_group,
       community_relationships:community_relationships!parent_community_id(
@@ -32,6 +33,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
           description,
           telegram_photo_url,
           telegram_chat_id,
+          telegram_invite_link,
           custom_link
         )
       ),
@@ -93,6 +95,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         description: data.description || "Group subscription",
         telegram_photo_url: data.telegram_photo_url,
         telegram_chat_id: data.telegram_chat_id,
+        telegram_invite_link: data.telegram_invite_link || null,
         custom_link: data.custom_link,
         is_group: true,
         communities: memberCommunities,
@@ -102,6 +105,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
       // Return regular community data
       return {
         ...data,
+        telegram_invite_link: data.telegram_invite_link || null,
         subscription_plans: data.subscription_plans || []
       };
     }
@@ -126,6 +130,7 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
         description,
         telegram_photo_url,
         telegram_chat_id,
+        telegram_invite_link,
         custom_link,
         is_group,
         subscription_plans (
@@ -162,6 +167,7 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
       description: community.description,
       telegram_photo_url: community.telegram_photo_url,
       telegram_chat_id: community.telegram_chat_id,
+      telegram_invite_link: community.telegram_invite_link || null,
       custom_link: community.custom_link,
       is_group: community.is_group,
       subscription_plans: community.subscription_plans || []

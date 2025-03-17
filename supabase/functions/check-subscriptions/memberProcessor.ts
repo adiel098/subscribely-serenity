@@ -44,7 +44,7 @@ export async function processMember(
     // Get the community information to access telegram_chat_id
     const { data: community, error: communityError } = await supabase
       .from("communities")
-      .select("telegram_chat_id, telegram_invite_link, name")
+      .select("telegram_chat_id, name")
       .eq("id", member.community_id)
       .single();
 

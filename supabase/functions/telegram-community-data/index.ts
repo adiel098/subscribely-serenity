@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { corsHeaders } from "./utils/cors.ts";
 import { createSuccessResponse, createErrorResponse, createNotFoundResponse } from "./utils/response.ts";
 import { logger } from "./utils/logger.ts";
+import { createSupabaseClient } from "./utils/database.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -29,16 +30,15 @@ serve(async (req) => {
     logger.info(`Processing request for ID: ${idToUse}`);
 
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    
-    if (!supabaseUrl || !supabaseKey) {
-      logger.error("Missing Supabase credentials");
-      return createErrorResponse("Server configuration error");
+    let supabase;
+    try {
+      supabase = createSupabaseClient();
+      logger.debug("Supabase client initialized successfully");
+    } catch (error) {
+      logger.error("Failed to initialize Supabase client:", error);
+      return createErrorResponse("Server configuration error: Unable to initialize database connection");
     }
     
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     if (idToUse) {
       // Check if this is a UUID or custom link
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idToUse);
@@ -49,6 +49,7 @@ serve(async (req) => {
         description,
         telegram_chat_id,
         telegram_photo_url,
+        telegram_invite_link,
         custom_link,
         is_group,
         subscription_plans (
@@ -69,50 +70,67 @@ serve(async (req) => {
         query = query.eq("custom_link", idToUse);
       }
       
-      const { data: community, error } = await query.single();
-      
-      if (error) {
-        logger.error(`Error fetching by ID/link "${idToUse}": ${error.message}`, error);
-        return createNotFoundResponse(`Community not found with identifier: ${idToUse}`);
-      }
-      
-      logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
-      
-      // If this is a group, fetch its member communities
-      if (community.is_group) {
-        // Get member communities
-        const { data: relationships, error: relationshipsError } = await supabase
-          .from("community_relationships")
-          .select(`
-            member_id,
-            communities:member_id (
-              id, 
-              name,
-              description,
-              telegram_chat_id,
-              telegram_photo_url,
-              custom_link
-            )
-          `)
-          .eq("community_id", community.id)
-          .eq("relationship_type", "group");
+      try {
+        const { data: community, error } = await query.maybeSingle();
         
-        if (relationshipsError) {
-          logger.error(`Error fetching group relationships: ${relationshipsError.message}`, relationshipsError);
-        } else {
-          // Process the communities within the group
-          const memberCommunities = relationships
-            ?.map(item => item.communities)
-            .filter(Boolean) || [];
-          
-          logger.success(`Successfully fetched group: ${community.name} with ${memberCommunities.length} communities`);
-          
-          // Add communities to the response
-          community.communities = memberCommunities;
+        if (error) {
+          logger.error(`Database error fetching community: ${error.message}`, error);
+          return createErrorResponse(`Database error: ${error.message}`, error);
         }
+        
+        if (!community) {
+          logger.warn(`No community found for identifier: ${idToUse}`);
+          return createNotFoundResponse(`Community not found with identifier: ${idToUse}`);
+        }
+        
+        logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
+        
+        // If this is a group, fetch its member communities
+        if (community.is_group) {
+          // Get member communities using the updated structure
+          try {
+            const { data: relationships, error: relationshipsError } = await supabase
+              .from("community_relationships")
+              .select(`
+                member_id,
+                communities:member_id (
+                  id, 
+                  name,
+                  description,
+                  telegram_chat_id,
+                  telegram_photo_url,
+                  telegram_invite_link,
+                  custom_link
+                )
+              `)
+              .eq("community_id", community.id)
+              .eq("relationship_type", "group");
+            
+            if (relationshipsError) {
+              logger.error(`Error fetching group relationships: ${relationshipsError.message}`, relationshipsError);
+              // Continue anyway, we'll just return the group without members
+            } else {
+              // Process the communities within the group
+              const memberCommunities = relationships
+                ?.map(item => item.communities)
+                .filter(Boolean) || [];
+              
+              logger.success(`Group '${community.name}' has ${memberCommunities.length} communities`);
+              
+              // Add communities to the response
+              community.communities = memberCommunities;
+            }
+          } catch (relError) {
+            logger.error(`Unexpected error fetching group relationships: ${relError.message}`, relError);
+            // Continue anyway, we'll just return the group without members
+          }
+        }
+        
+        return createSuccessResponse({ community });
+      } catch (queryError) {
+        logger.error(`Error executing database query: ${queryError.message}`, queryError);
+        return createErrorResponse(`Error executing database query: ${queryError.message}`, queryError);
       }
-      
-      return createSuccessResponse({ community });
     } 
     else {
       logger.error("Missing required parameter: community_id or group_id");

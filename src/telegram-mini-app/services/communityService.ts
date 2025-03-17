@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
@@ -15,98 +14,53 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     // Check if this is a UUID or custom link
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
     
-    // Build the query based on whether we have a UUID or custom link
-    let query = supabase.from("communities").select(`
-      id,
-      name,
-      description,
-      telegram_photo_url,
-      telegram_chat_id,
-      telegram_invite_link,
-      custom_link,
-      is_group,
-      community_relationships:community_relationships!parent_community_id(
-        community_id,
-        communities:community_id(
-          id, 
-          name,
-          description,
-          telegram_photo_url,
-          telegram_chat_id,
-          telegram_invite_link,
-          custom_link
-        )
-      ),
-      subscription_plans (
-        id,
-        name,
-        description,
-        price,
-        interval,
-        features,
-        is_active,
-        created_at,
-        updated_at
-      )
-    `);
-    
-    if (isUUID) {
-      logger.log(`Querying by UUID: ${idOrLink}`);
-      query = query.eq("id", idOrLink);
-    } else {
-      logger.log(`Querying by custom link: ${idOrLink}`);
-      query = query.eq("custom_link", idOrLink);
-    }
-    
-    const { data, error } = await query.maybeSingle();
+    // Call the edge function to fetch community data
+    const { data, error } = await supabase.functions.invoke("telegram-community-data", {
+      body: { 
+        community_id: idOrLink,
+        debug: true 
+      }
+    });
     
     if (error) {
-      logger.error(`Error fetching community: ${error.message}`);
-      throw error;
+      logger.error(`Error invoking edge function: ${error.message}`, error);
+      throw new Error(`Failed to load community data: ${error.message}`);
     }
     
-    if (!data) {
-      logger.warn(`No community found for identifier: ${idOrLink}`);
+    if (!data || !data.community) {
+      logger.warn(`No community data returned for identifier: ${idOrLink}`);
       return null;
     }
     
-    logger.success(`Successfully fetched community: ${data.name}`);
+    const community = data.community;
+    
+    logger.success(`Successfully fetched community: ${community.name}`);
+    logger.log(`Has custom_link: ${community.custom_link || 'None'}`);
+    logger.log(`Is group: ${community.is_group ? 'Yes' : 'No'}`);
     
     // Process the data for both regular communities and groups
-    if (data.is_group) {
+    if (community.is_group) {
       // Format group data
-      logger.log(`Processing group data: ${data.name}`);
-      
-      // Extract member communities from relationships
-      const memberCommunities = [];
-      if (data.community_relationships && Array.isArray(data.community_relationships)) {
-        for (const rel of data.community_relationships) {
-          if (rel.communities) {
-            memberCommunities.push(rel.communities);
-          }
-        }
-      }
-      
-      logger.log(`Group has ${memberCommunities.length} communities`);
+      logger.log(`Processing group data: ${community.name}`);
       
       return {
-        id: data.id,
-        name: data.name,
-        description: data.description || "Group subscription",
-        telegram_photo_url: data.telegram_photo_url,
-        telegram_chat_id: data.telegram_chat_id,
-        telegram_invite_link: data.telegram_invite_link || null,
-        custom_link: data.custom_link,
+        id: community.id,
+        name: community.name,
+        description: community.description || "Group subscription",
+        telegram_photo_url: community.telegram_photo_url,
+        telegram_chat_id: community.telegram_chat_id,
+        telegram_invite_link: community.telegram_invite_link || null,
+        custom_link: community.custom_link,
         is_group: true,
-        communities: memberCommunities,
-        subscription_plans: data.subscription_plans || []
+        communities: community.communities || [],
+        subscription_plans: community.subscription_plans || []
       };
     } else {
       // Return regular community data
       return {
-        ...data,
-        telegram_invite_link: data.telegram_invite_link || null,
-        subscription_plans: data.subscription_plans || []
+        ...community,
+        telegram_invite_link: community.telegram_invite_link || null,
+        subscription_plans: community.subscription_plans || []
       };
     }
   } catch (error) {

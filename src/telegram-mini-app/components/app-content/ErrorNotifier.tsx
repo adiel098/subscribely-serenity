@@ -17,6 +17,7 @@ export const ErrorNotifier: React.FC<ErrorNotifierProps> = ({ errorState }) => {
         variant: "destructive",
         title: "Application Error",
         description: errorState || "There was a problem loading the application. Please try again.",
+        duration: 5000,
       });
     }
   }, [errorState, toast]);
@@ -28,6 +29,9 @@ export const ErrorNotifier: React.FC<ErrorNotifierProps> = ({ errorState }) => {
         <div className="flex items-center">
           <AlertCircle className="mr-2 h-4 w-4" />
           <span>Error: {errorState}</span>
+        </div>
+        <div className="mt-1 text-xs opacity-80">
+          Check the console logs for more details
         </div>
       </div>
     );

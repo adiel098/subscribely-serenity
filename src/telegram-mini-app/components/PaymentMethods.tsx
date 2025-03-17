@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -51,7 +52,8 @@ export const PaymentMethods = ({
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
     communityId: communityId || selectedPlan.community_id,
     planId: selectedPlan.id,
-    planPrice: selectedPlan.price, 
+    planPrice: selectedPlan.price,
+    planInterval: selectedPlan.interval, // Pass the interval to the payment processing hook
     communityInviteLink,
     telegramUserId,
     telegramUsername,
@@ -66,6 +68,7 @@ export const PaymentMethods = ({
     console.log('[PaymentMethods] Community invite link:', communityInviteLink);
     console.log('[PaymentMethods] Selected plan:', selectedPlan);
     console.log('[PaymentMethods] Selected plan price:', selectedPlan.price);
+    console.log('[PaymentMethods] Selected plan interval:', selectedPlan.interval);
     console.log('[PaymentMethods] Telegram user ID:', telegramUserId);
     console.log('[PaymentMethods] Telegram username:', telegramUsername);
     console.log('[PaymentMethods] First name:', firstName);
@@ -89,6 +92,7 @@ export const PaymentMethods = ({
       console.log('[PaymentMethods] Community ID:', selectedPlan.community_id);
       console.log('[PaymentMethods] Plan ID:', selectedPlan.id);
       console.log('[PaymentMethods] Plan price:', selectedPlan.price);
+      console.log('[PaymentMethods] Plan interval:', selectedPlan.interval);
       console.log('[PaymentMethods] Community invite link:', communityInviteLink);
       console.log('[PaymentMethods] Telegram username:', telegramUsername);
       console.log('[PaymentMethods] First name:', firstName);

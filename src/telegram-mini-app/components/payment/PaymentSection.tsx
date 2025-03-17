@@ -49,6 +49,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
     console.log('[PaymentSection] Selected plan:', selectedPlan);
     if (selectedPlan) {
       console.log('[PaymentSection] Selected plan price:', selectedPlan.price);
+      console.log('[PaymentSection] Selected plan interval:', selectedPlan.interval);
     }
     console.log('[PaymentSection] Show success:', showSuccess);
     console.log('[PaymentSection] Telegram user ID:', telegramUserId);

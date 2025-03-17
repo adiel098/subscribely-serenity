@@ -10,6 +10,7 @@ interface PaymentProcessingParams {
   communityId: string;
   planId: string;
   planPrice: number;
+  planInterval?: string; // Add this property to get the interval information
   communityInviteLink?: string | null;
   telegramUserId?: string;
   telegramUsername?: string;
@@ -25,6 +26,7 @@ export const usePaymentProcessing = ({
   communityId,
   planId,
   planPrice,
+  planInterval,
   communityInviteLink,
   telegramUserId,
   telegramUsername,
@@ -56,6 +58,7 @@ export const usePaymentProcessing = ({
       console.log(`[usePaymentProcessing] Starting payment process with ${paymentMethod}`);
       console.log('[usePaymentProcessing] communityId:', communityId);
       console.log('[usePaymentProcessing] planId:', planId);
+      console.log('[usePaymentProcessing] planInterval:', planInterval);
       console.log('[usePaymentProcessing] telegramUserId:', telegramUserId);
       console.log('[usePaymentProcessing] telegramUsername:', telegramUsername);
       console.log('[usePaymentProcessing] firstName:', firstName);
@@ -89,7 +92,7 @@ export const usePaymentProcessing = ({
         }
       }
       
-      // Record the payment in the database
+      // Record the payment in the database, including the plan interval
       const { success, paymentData, error: paymentError, inviteLink: paymentInviteLink } = await recordPayment({
         telegramUserId,
         communityId,
@@ -100,7 +103,8 @@ export const usePaymentProcessing = ({
         username: telegramUsername,
         firstName,
         lastName,
-        activeSubscription
+        activeSubscription,
+        interval: planInterval // Pass the interval to the payment record
       });
       
       if (!success || paymentError) {
@@ -115,8 +119,34 @@ export const usePaymentProcessing = ({
       const startDate = new Date();
       let endDate = new Date(startDate);
       
-      // Add time based on plan interval (we'll fetch this in createOrUpdateMember)
-      // The member will be created with active status
+      // Add time based on plan interval
+      if (planInterval) {
+        switch (planInterval) {
+          case "monthly":
+            endDate.setMonth(endDate.getMonth() + 1);
+            break;
+          case "yearly":
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            break;
+          case "half-yearly":
+            endDate.setMonth(endDate.getMonth() + 6);
+            break;
+          case "quarterly":
+            endDate.setMonth(endDate.getMonth() + 3);
+            break;
+          case "one-time":
+          case "one_time":
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            break;
+          case "lifetime":
+            endDate.setFullYear(endDate.getFullYear() + 100);
+            break;
+          default:
+            // Default to 30 days if interval not recognized
+            endDate.setDate(endDate.getDate() + 30);
+        }
+        console.log(`[usePaymentProcessing] Calculated subscription dates: Start=${startDate.toISOString()}, End=${endDate.toISOString()}`);
+      }
       
       const memberResult = await createOrUpdateMember({
         telegram_id: telegramUserId,
@@ -126,7 +156,7 @@ export const usePaymentProcessing = ({
         payment_id: paymentData?.id,
         username: telegramUsername,
         subscription_start_date: startDate.toISOString(),
-        // Let the service set the end date based on the plan interval
+        subscription_end_date: endDate.toISOString()
       });
       
       if (!memberResult) {

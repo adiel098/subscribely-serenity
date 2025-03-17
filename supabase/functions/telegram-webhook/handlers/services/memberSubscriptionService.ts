@@ -85,13 +85,15 @@ export async function processPaymentBasedMembership(
 
       if (plan) {
         if (plan.interval === 'monthly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
         } else if (plan.interval === 'yearly') {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 365);
+          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1); // Proper handling for yearly plans
         } else if (plan.interval === 'half-yearly') {
           subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
         } else if (plan.interval === 'quarterly') {
           subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+        } else if (plan.interval === 'one-time' || plan.interval === 'lifetime') {
+          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100); // Set to far future for lifetime/one-time
         } else {
           // Default to 30 days
           subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);

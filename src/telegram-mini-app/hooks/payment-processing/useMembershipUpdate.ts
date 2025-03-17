@@ -51,23 +51,34 @@ export const useMembershipUpdate = () => {
       if (planDetails?.interval) {
         subscriptionEndDate = new Date(subscriptionStartDate);
         
-        // Add duration based on interval
-        if (planDetails.interval === "monthly") {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-        } else if (planDetails.interval === "yearly") {
-          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
-        } else if (planDetails.interval === "half-yearly") {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
-        } else if (planDetails.interval === "quarterly") {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
-        } else if (planDetails.interval === "weekly") {
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 7);
-        } else if (planDetails.interval === "one_time") {
-          // Default 1-year validity for one-time payments
-          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
-        } else {
-          // Default to 30 days if interval not recognized
-          subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+        // Add duration based on interval - FIX for yearly subscriptions
+        switch (planDetails.interval) {
+          case "monthly":
+            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+            break;
+          case "yearly":
+            subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+            break;
+          case "half-yearly":
+            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
+            break;
+          case "quarterly":
+            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
+            break;
+          case "weekly":
+            subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 7);
+            break;
+          case "one_time":
+          case "one-time":
+            subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+            break;
+          case "lifetime":
+            subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
+            break;
+          default:
+            // Default to 30 days if interval not recognized
+            subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+            break;
         }
         
         console.log(`[useMembershipUpdate] Calculated subscription dates: Start=${subscriptionStartDate.toISOString()}, End=${subscriptionEndDate.toISOString()}`);
@@ -75,7 +86,7 @@ export const useMembershipUpdate = () => {
         console.log('[useMembershipUpdate] No plan details provided, will retrieve from server');
       }
 
-      // Immediately create/update member record in telegram_chat_members with all subscription details
+      // Immediately create/update member record with all subscription details
       const membershipResult = await createOrUpdateMember({
         telegram_id: formattedTelegramId,
         community_id: communityId,

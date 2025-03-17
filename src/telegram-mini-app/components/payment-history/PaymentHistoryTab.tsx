@@ -1,9 +1,9 @@
+
 import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Receipt, ExternalLink, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, Receipt, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/telegram-mini-app/utils/formatUtils";
 import { format } from "date-fns";
 
@@ -183,21 +183,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
                       <p>{format(new Date(payment.created_at), 'PPp')}</p>
                     </div>
                   </div>
-                  
-                  {payment.invite_link && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-2" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(payment.invite_link, "_blank");
-                      }}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open Invite Link
-                    </Button>
-                  )}
                 </div>
               )}
             </div>

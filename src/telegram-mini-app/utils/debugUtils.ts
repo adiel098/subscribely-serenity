@@ -38,6 +38,31 @@ export const createLogger = (scope: string) => {
       } else {
         console.info(formatMessage(''), ...args);
       }
+    },
+    
+    // Add missing methods that are being used in the codebase
+    debug: (...args: any[]) => {
+      if (typeof args[0] === 'string') {
+        console.debug(formatMessage(args[0]), ...args.slice(1));
+      } else {
+        console.debug(formatMessage(''), ...args);
+      }
+    },
+    
+    success: (...args: any[]) => {
+      if (typeof args[0] === 'string') {
+        console.log(`%c${formatMessage(args[0])}`, 'color: green', ...args.slice(1));
+      } else {
+        console.log(`%c${formatMessage('Success:')}`, 'color: green', ...args);
+      }
+    },
+    
+    group: (label: string) => {
+      console.group(formatMessage(label));
+    },
+    
+    groupEnd: () => {
+      console.groupEnd();
     }
   };
 };

@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { createPayment } from "../../services/paymentService";
+import { PaymentData } from "../../types/payment.types";
 
 export interface RecordPaymentParams {
   telegramUserId?: string;
@@ -13,7 +14,7 @@ export interface RecordPaymentParams {
   firstName?: string;
   lastName?: string;
   activeSubscription?: any;
-  interval?: string; // Add this property to support interval information
+  interval?: string; // Keep this property to support interval information
 }
 
 export const usePaymentRecord = () => {
@@ -45,7 +46,7 @@ export const usePaymentRecord = () => {
         status: 'completed',
         invite_link: inviteLink || '',
         telegram_user_id: telegramUserId,
-        telegram_username: username,
+        telegram_username: username, // Now this property is correctly defined in PaymentData
         first_name: firstName,
         last_name: lastName
       });

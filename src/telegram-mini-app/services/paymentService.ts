@@ -30,4 +30,3 @@ export const createInviteLink = async (communityId: string) => {
 
   return data?.inviteLink;
 };
-

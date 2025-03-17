@@ -104,6 +104,8 @@ serve(async (req: Request) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
+
+      console.log(`[create-invite-link] Found ${memberCommunities?.length || 0} member communities in group ${communityData.name}`)
       
       // Fetch bot token from secrets
       const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
@@ -120,10 +122,24 @@ serve(async (req: Request) => {
       const groupLinkParam = communityData.custom_link || communityData.id;
       const miniAppLink = `https://t.me/${botUsername}?start=${groupLinkParam}`;
       
+      // Detailed logging of member communities
+      console.log('[create-invite-link] Member communities details:');
+      memberCommunities?.forEach((relation, index) => {
+        console.log(`[create-invite-link] Member ${index+1}:`, JSON.stringify({
+          member_id: relation.member_id,
+          name: relation.member?.name,
+          telegram_chat_id: relation.member?.telegram_chat_id,
+          has_chat_id: !!relation.member?.telegram_chat_id
+        }));
+      });
+      
       // Create an array of channel info with actual Telegram invite links
-      const channelPromises = memberCommunities?.map(async (relation) => {
+      const channelPromises = memberCommunities?.map(async (relation, index) => {
         const member = relation.member;
+        console.log(`[create-invite-link] Processing member ${index+1}: ${member.name} (ID: ${member.id})`);
+        
         if (!member.telegram_chat_id) {
+          console.log(`[create-invite-link] No telegram_chat_id for member ${member.name}, using mini app link as fallback`);
           // If no telegram_chat_id, use the mini app link as fallback
           const linkParam = member.custom_link || member.id;
           return {
@@ -138,6 +154,8 @@ serve(async (req: Request) => {
         try {
           // Generate a unique name for the invite link
           const linkName = `Member ${new Date().toISOString().split('T')[0]} ${Math.random().toString(36).substring(2, 8)}`;
+          
+          console.log(`[create-invite-link] Creating Telegram invite link for member ${member.name} with chat_id: ${member.telegram_chat_id}`);
           
           const createLinkResponse = await fetch(
             `https://api.telegram.org/bot${botToken}/createChatInviteLink`,
@@ -155,6 +173,7 @@ serve(async (req: Request) => {
           );
           
           const result = await createLinkResponse.json();
+          console.log(`[create-invite-link] Telegram API response for member ${member.name}:`, JSON.stringify(result));
           
           if (!result.ok) {
             console.error(`[create-invite-link] Telegram API error for channel ${member.name}: ${JSON.stringify(result)}`);
@@ -169,7 +188,7 @@ serve(async (req: Request) => {
             };
           }
           
-          console.log(`[create-invite-link] Created Telegram invite link for channel ${member.name}: ${result.result.invite_link}`);
+          console.log(`[create-invite-link] Successfully created Telegram invite link for channel ${member.name}: ${result.result.invite_link}`);
           
           return {
             id: member.id,
@@ -194,7 +213,10 @@ serve(async (req: Request) => {
       // Wait for all invite link creation promises to resolve
       const channelLinks = await Promise.all(channelPromises);
       
-      console.log(`[create-invite-link] Returning group link and ${channelLinks.length} channel links`);
+      console.log(`[create-invite-link] Generated ${channelLinks.length} channel links:`);
+      channelLinks.forEach((link, index) => {
+        console.log(`[create-invite-link] Channel ${index+1}: ${link.name}, Link: ${link.inviteLink.substring(0, 30)}..., isMiniApp: ${link.isMiniApp}, error: ${link.error || 'none'}`);
+      });
       
       // Prepare result object with all invite links in a structured format
       const linksObject = {

@@ -44,7 +44,18 @@ export const useInviteLink = (initialInviteLink: string | null) => {
           // This is a group link stored as JSON
           setIsGroup(true);
           setGroupName(parsedData.groupName || "Group");
-          setChannels(parsedData.channels || []);
+          
+          if (parsedData.channels && Array.isArray(parsedData.channels)) {
+            logger.log(`Found ${parsedData.channels.length} channels in parsed data`);
+            parsedData.channels.forEach((channel: ChannelLink, index: number) => {
+              logger.log(`Channel ${index + 1}: ${channel.name} - Link: ${(channel.inviteLink || '').substring(0, 30)}... - isMiniApp: ${channel.isMiniApp || false}`);
+            });
+            setChannels(parsedData.channels || []);
+          } else {
+            logger.warn('No channels array in parsed data or invalid format');
+            setChannels([]);
+          }
+          
           setInviteLink(parsedData.mainGroupLink);
           return;
         }
@@ -80,6 +91,8 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         }
       });
       
+      logger.log('Response from create-invite-link:', response);
+      
       if (response.error) {
         logger.error('Error checking if group link:', response.error);
         setIsLoadingLink(false);
@@ -91,7 +104,17 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         logger.log('Found group data:', response.data);
         setIsGroup(true);
         setGroupName(response.data.groupName || "Group");
-        setChannels(response.data.channels);
+        
+        if (Array.isArray(response.data.channels)) {
+          logger.log(`Found ${response.data.channels.length} channels in response`);
+          response.data.channels.forEach((channel: ChannelLink, index: number) => {
+            logger.log(`Channel ${index + 1}: ${channel.name} - Link: ${(channel.inviteLink || '').substring(0, 30)}... - isMiniApp: ${channel.isMiniApp || false}`);
+          });
+          setChannels(response.data.channels);
+        } else {
+          logger.warn('No channels array in response or invalid format');
+          setChannels([]);
+        }
       }
       setIsLoadingLink(false);
     } catch (err) {
@@ -138,6 +161,8 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         }
       });
       
+      logger.log('Response from create-invite-link:', response);
+      
       if (response.error) {
         logger.error('Error generating invite link:', response.error);
         setIsLoadingLink(false);
@@ -149,7 +174,17 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         logger.log('Received group data from invite link generation:', response.data);
         setIsGroup(true);
         setGroupName(response.data.groupName || "Group");
-        setChannels(response.data.channels || []);
+        
+        if (Array.isArray(response.data.channels)) {
+          logger.log(`Found ${response.data.channels.length} channels in response`);
+          response.data.channels.forEach((channel: ChannelLink, index: number) => {
+            logger.log(`Channel ${index + 1}: ${channel.name} - Link: ${(channel.inviteLink || '').substring(0, 30)}... - isMiniApp: ${channel.isMiniApp || false}`);
+          });
+          setChannels(response.data.channels || []);
+        } else {
+          logger.warn('No channels array in response or invalid format');
+          setChannels([]);
+        }
         
         // If this is a group, store the complete JSON structure
         if (response.data.inviteLink) {

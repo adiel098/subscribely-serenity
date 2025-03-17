@@ -1,216 +1,113 @@
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link, ExternalLink, Copy, Check, ChevronDown, ChevronUp, MessagesSquare, AlertCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExternalLink, Copy, Check } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { createLogger } from "../../utils/debugUtils";
 
-interface ChannelLink {
+const logger = createLogger("GroupChannelsLinks");
+
+interface Channel {
   id: string;
   name: string;
   inviteLink: string;
-  description?: string;
   isMiniApp?: boolean;
   error?: string;
 }
 
 interface GroupChannelsLinksProps {
   groupName: string;
-  channels: ChannelLink[];
+  channels: Channel[];
 }
 
-export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksProps) => {
-  const [expanded, setExpanded] = useState(true);
-  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+export const GroupChannelsLinks: React.FC<GroupChannelsLinksProps> = ({ 
+  groupName, 
+  channels 
+}) => {
+  const { toast } = useToast();
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   
-  // Show only 5 channels initially, expand for more
-  const showCollapsible = channels.length > 5;
-  const initialChannels = showCollapsible ? channels.slice(0, 5) : channels;
-  const remainingChannels = showCollapsible ? channels.slice(5) : [];
+  logger.log(`Rendering GroupChannelsLinks for ${groupName} with ${channels.length} channels`);
+  channels.forEach((channel, index) => {
+    logger.log(`Channel ${index + 1}: ${channel.name} - Link: ${channel.inviteLink.substring(0, 30)}... - isMiniApp: ${channel.isMiniApp || false}`);
+  });
 
-  const copyLinkToClipboard = (link: string, id: string) => {
+  if (!channels || channels.length === 0) {
+    logger.log("No channels to display");
+    return null;
+  }
+
+  const copyToClipboard = (link: string, index: number) => {
     navigator.clipboard.writeText(link)
       .then(() => {
-        setCopiedLinkId(id);
+        setCopiedIndex(index);
         toast({
-          title: "✅ Link Copied!",
+          title: "Link Copied",
           description: "The invite link has been copied to your clipboard",
-          duration: 3000,
         });
-        
-        // Reset copied state after 2 seconds
-        setTimeout(() => setCopiedLinkId(null), 2000);
+        setTimeout(() => setCopiedIndex(null), 2000);
       })
-      .catch(() => {
+      .catch(err => {
+        logger.error("Failed to copy link: ", err);
         toast({
           title: "Copy Failed",
-          description: "Failed to copy link. Try again or copy it manually.",
-          variant: "destructive"
+          description: "Could not copy link to clipboard",
+          variant: "destructive",
         });
       });
   };
 
-  const openLink = (link: string) => {
+  const openLink = (link: string, name: string) => {
+    logger.log(`Opening channel link for: ${name} - Link: ${link.substring(0, 30)}...`);
     window.open(link, "_blank");
-  };
-
-  // Emoji mapping for different types of channels
-  const getChannelEmoji = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("news") || lowerName.includes("announcement")) return "📢";
-    if (lowerName.includes("help") || lowerName.includes("support")) return "🆘";
-    if (lowerName.includes("chat") || lowerName.includes("discussion")) return "💬";
-    if (lowerName.includes("vip")) return "⭐";
-    if (lowerName.includes("premium")) return "💎";
-    return "📱";
-  };
-
-  // Render a single channel card - now more compact
-  const renderChannelCard = (channel: ChannelLink) => {
-    const emoji = getChannelEmoji(channel.name);
-    const isMiniAppLink = channel.isMiniApp === true;
-    const hasError = !!channel.error;
-    
-    return (
-      <motion.div
-        key={channel.id}
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2 mb-2 border border-indigo-100 dark:border-gray-700"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center min-w-0 gap-1.5">
-            <span className="text-sm">{emoji}</span>
-            <h3 className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
-              {channel.name}
-            </h3>
-            {hasError && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
-                    <p>Could not create direct invite link</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    className={`h-6 w-6 rounded-full ${isMiniAppLink ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'}`}
-                    onClick={() => openLink(channel.inviteLink)}
-                  >
-                    <ExternalLink className="h-3 w-3 text-white" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  <p>{isMiniAppLink ? 'Subscribe to channel' : 'Join channel'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => copyLinkToClipboard(channel.inviteLink, channel.id)}
-                    className="h-6 w-6 rounded-full border-indigo-200 dark:border-gray-600"
-                  >
-                    {copiedLinkId === channel.id ? (
-                      <Check className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  <p>Copy invite link</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
-      </motion.div>
-    );
   };
 
   return (
     <div className="w-full space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1.5">
-          <MessagesSquare className="h-4 w-4 text-indigo-600" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            Group Channels
-          </h3>
-        </div>
-        <Badge variant="secondary" className="text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-          {channels.length}
-        </Badge>
-      </div>
-      
-      <div className="rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 p-1">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-3">
-          <p className="text-xs text-center text-gray-600 dark:text-gray-300 mb-3">
-            🎉 Access to <span className="font-medium text-indigo-600 dark:text-indigo-400">{groupName}</span> channels:
-          </p>
-          
-          <div className="space-y-2">
-            {/* Always show initial channels */}
-            {initialChannels.map(renderChannelCard)}
+      <h3 className="text-sm font-medium text-center mb-2">
+        Your subscription includes access to these channels:
+      </h3>
+
+      {channels.map((channel, index) => (
+        <Card 
+          key={channel.id || index} 
+          className="p-3 bg-white dark:bg-gray-800 shadow-sm border-indigo-100 dark:border-gray-700"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">{channel.name}</h4>
+              <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                {channel.isMiniApp ? 'Mini App' : 'Channel'}
+              </span>
+            </div>
             
-            {/* Collapsible section for additional channels */}
-            {showCollapsible && (
-              <Collapsible open={expanded} onOpenChange={setExpanded} className="mt-1">
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full border-dashed border-indigo-200 dark:border-gray-700 flex items-center justify-center gap-1 py-1 text-xs text-indigo-600 dark:text-indigo-400"
-                  >
-                    {expanded ? (
-                      <>
-                        <ChevronUp className="h-3 w-3" />
-                        <span>Show Less</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-3 w-3" />
-                        <span>Show {remainingChannels.length} More</span>
-                      </>
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent className="mt-2">
-                  <ScrollArea className={remainingChannels.length > 8 ? "h-44" : ""}>
-                    <AnimatePresence>
-                      {remainingChannels.map(renderChannelCard)}
-                    </AnimatePresence>
-                  </ScrollArea>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => openLink(channel.inviteLink, channel.name)}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-8 py-0"
+                size="sm"
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Join Channel
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => copyToClipboard(channel.inviteLink, index)}
+                className="h-8 w-8 p-0 flex items-center justify-center"
+                size="sm"
+              >
+                {copiedIndex === index ? (
+                  <Check className="h-3.5 w-3.5 text-green-500" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-        💡 Click the icons to join or copy invite links
-      </p>
+        </Card>
+      ))}
     </div>
   );
 };

@@ -8,14 +8,24 @@ import { useToast } from "@/components/ui/use-toast";
 import { GroupChannelsLinks } from "./GroupChannelsLinks";
 import { InviteLinkSection } from "./InviteLinkSection";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { createLogger } from "../../utils/debugUtils";
+
+const logger = createLogger("SuccessScreen");
 
 export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: string | null }) => {
   const { inviteLink, isLoadingLink, isGroup, groupName, channels } = useInviteLink(communityInviteLink);
   const { toast } = useToast();
   
-  console.log("Rendering success screen with invite link:", inviteLink);
-  console.log("Is group:", isGroup, "Group name:", groupName);
-  console.log("Channels:", channels);
+  logger.log("Rendering success screen with invite link:", inviteLink);
+  logger.log("Is group:", isGroup, "Group name:", groupName);
+  logger.log("Channels count:", channels?.length || 0);
+  
+  if (channels && channels.length > 0) {
+    logger.log("Channels details:");
+    channels.forEach((channel, index) => {
+      logger.log(`Channel ${index + 1}: ${channel.name || 'unnamed'} - Link: ${(channel.inviteLink || '').substring(0, 30)}... - isMiniApp: ${channel.isMiniApp || false}`);
+    });
+  }
   
   // Show loading state
   if (isLoadingLink) {
@@ -56,7 +66,7 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
               : " Now you can join the community using the button below."}
           </p>
           
-          {isGroup && channels.length > 0 ? (
+          {isGroup && channels && channels.length > 0 ? (
             <GroupChannelsLinks 
               groupName={groupName} 
               channels={channels} 

@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { Link, ExternalLink, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { createLogger } from "../../utils/debugUtils";
+
+const logger = createLogger("InviteLinkSection");
 
 interface InviteLinkSectionProps {
   inviteLink: string;
@@ -12,6 +15,8 @@ interface InviteLinkSectionProps {
 export const InviteLinkSection = ({ inviteLink }: InviteLinkSectionProps) => {
   const [copied, setCopied] = useState(false);
   
+  logger.log(`Rendering InviteLinkSection with link: ${inviteLink.substring(0, 30)}...`);
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(inviteLink)
       .then(() => {
@@ -25,7 +30,7 @@ export const InviteLinkSection = ({ inviteLink }: InviteLinkSectionProps) => {
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(err => {
-        console.error("Failed to copy: ", err);
+        logger.error("Failed to copy: ", err);
         toast({
           title: "Copy Failed",
           description: "Could not copy link to clipboard",
@@ -35,6 +40,7 @@ export const InviteLinkSection = ({ inviteLink }: InviteLinkSectionProps) => {
   };
 
   const openLink = () => {
+    logger.log(`Opening invite link: ${inviteLink.substring(0, 30)}...`);
     window.open(inviteLink, "_blank");
   };
 

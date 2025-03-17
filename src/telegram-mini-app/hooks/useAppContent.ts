@@ -45,6 +45,8 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   // Set initial community when data loads
   useEffect(() => {
     if (community && !selectedCommunity) {
+      console.log('🌟 Setting initial community:', community);
+      console.log('🌟 Community has plans:', community.subscription_plans?.length || 0);
       setSelectedCommunity(community);
     }
   }, [community, selectedCommunity]);
@@ -59,6 +61,7 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   
   // Methods
   const handlePlanSelect = (plan: Plan) => {
+    console.log('🎯 Selected plan:', plan);
     setSelectedPlan(plan);
     setShowPaymentMethods(true);
     

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ChevronDown, Sparkles, AlertTriangle } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
@@ -24,6 +25,8 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
 }) => {
   // Safe guard against undefined or non-array plans
   const validPlans = Array.isArray(plans) ? plans : [];
+  
+  console.log('🔍 SubscriptionPlanSection received plans:', validPlans);
   
   if (validPlans.length === 0) {
     return (

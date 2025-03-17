@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, isSubscriptionActive, getDaysRemaining, getTimeRemainingText } from "./utils";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCommunityChannels } from "../../hooks/useCommunityChannels";
+import { GroupChannelsLinks } from "../success-screen/GroupChannelsLinks";
 
 interface MembershipCardProps {
   subscription: Subscription;
@@ -29,6 +31,17 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   const daysRemaining = getDaysRemaining(subscription);
   const isExpiringSoon = active && daysRemaining <= 3;
   const timeRemainingText = getTimeRemainingText(subscription);
+  
+  // Fetch channels for groups
+  const { channels, isGroup, isLoading } = useCommunityChannels(subscription.community_id);
+  
+  const formattedChannels = channels?.map(channel => ({
+    id: channel.id,
+    name: channel.name,
+    inviteLink: subscription.community.telegram_invite_link || '',
+    isMiniApp: channel.type === 'bot',
+    type: channel.type
+  }));
 
   const handleCommunityLink = () => {
     if (subscription.community.telegram_invite_link) {
@@ -96,8 +109,6 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
           
           <AccordionContent className="px-4 pb-4">
             <div className="text-sm space-y-4">
-              {/* Description has been removed as requested */}
-              
               <div className="flex justify-between text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
@@ -109,12 +120,19 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 </div>
               </div>
               
-              {/* Styled Community Link Button */}
-              {subscription.community.telegram_invite_link && (
+              {/* Show group channels if this is a group subscription */}
+              {isGroup && formattedChannels && formattedChannels.length > 0 ? (
+                <div className="mt-4">
+                  <GroupChannelsLinks 
+                    groupName={subscription.community.name} 
+                    channels={formattedChannels} 
+                  />
+                </div>
+              ) : subscription.community.telegram_invite_link && (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full bg-purple-500/10 text-purple-700 hover:bg-purple-500/20 hover:text-purple-800 border border-purple-200 transition-all duration-300"
+                  className="w-full mt-2 bg-purple-500/10 text-purple-700 hover:bg-purple-500/20 hover:text-purple-800 border border-purple-200 transition-all duration-300"
                   onClick={handleCommunityLink}
                 >
                   <ExternalLink className="h-4 w-4 mr-1.5" />

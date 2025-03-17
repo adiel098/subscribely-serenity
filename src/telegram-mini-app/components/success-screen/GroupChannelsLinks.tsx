@@ -72,12 +72,12 @@ export const GroupChannelsLinks: React.FC<GroupChannelsLinksProps> = ({
       {channels.map((channel, index) => (
         <Card 
           key={channel.id || index} 
-          className="p-3 bg-white dark:bg-gray-800 shadow-sm border-indigo-100 dark:border-gray-700"
+          className="p-3 bg-green-50 dark:bg-green-900/20 shadow-sm border-green-200 dark:border-green-800"
         >
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">{channel.name}</h4>
-              <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+              <h4 className="text-sm font-medium text-green-900 dark:text-green-100">{channel.name}</h4>
+              <span className="text-xs bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-0.5 rounded-full">
                 {channel.isMiniApp ? 'Mini App' : 'Channel'}
               </span>
             </div>
@@ -85,17 +85,16 @@ export const GroupChannelsLinks: React.FC<GroupChannelsLinksProps> = ({
             <div className="flex gap-2">
               <Button
                 onClick={() => openLink(channel.inviteLink, channel.name)}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-8 py-0"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white h-8 py-0"
                 size="sm"
               >
-                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                Join Channel
+                <ExternalLink className="h-3.5 w-3.5" />
               </Button>
               
               <Button
                 variant="outline"
                 onClick={() => copyToClipboard(channel.inviteLink, index)}
-                className="h-8 w-8 p-0 flex items-center justify-center"
+                className="h-8 w-8 p-0 flex items-center justify-center border-green-300 dark:border-green-700"
                 size="sm"
               >
                 {copiedIndex === index ? (

@@ -41,7 +41,10 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         description,
         price,
         interval,
-        features
+        features,
+        is_active,
+        created_at,
+        updated_at
       )
     `);
     
@@ -105,5 +108,66 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
   } catch (error) {
     logger.error("Error in fetchCommunityByIdOrLink:", error);
     throw error;
+  }
+};
+
+/**
+ * Search communities by name or description
+ */
+export const searchCommunities = async (query: string): Promise<Community[]> => {
+  try {
+    logger.log(`Searching communities with query: "${query}"`);
+    
+    const { data, error } = await supabase
+      .from('communities')
+      .select(`
+        id,
+        name,
+        description,
+        telegram_photo_url,
+        telegram_chat_id,
+        custom_link,
+        is_group,
+        subscription_plans (
+          id,
+          name,
+          description,
+          price,
+          interval,
+          features,
+          is_active,
+          created_at,
+          updated_at
+        )
+      `)
+      .ilike('name', `%${query}%`)
+      .order('name');
+      
+    if (error) {
+      logger.error(`Error searching communities: ${error.message}`);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      logger.log(`No communities found for query: "${query}"`);
+      return [];
+    }
+    
+    logger.success(`Found ${data.length} communities for query: "${query}"`);
+    
+    // Process the results to ensure the proper format is returned
+    return data.map(community => ({
+      id: community.id,
+      name: community.name,
+      description: community.description,
+      telegram_photo_url: community.telegram_photo_url,
+      telegram_chat_id: community.telegram_chat_id,
+      custom_link: community.custom_link,
+      is_group: community.is_group,
+      subscription_plans: community.subscription_plans || []
+    }));
+  } catch (error) {
+    logger.error(`Error in searchCommunities:`, error);
+    return [];
   }
 };

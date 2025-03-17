@@ -40,6 +40,16 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     logger.log(`Is group: ${community.is_group ? 'Yes' : 'No'}`);
     logger.log(`Has ${community.subscription_plans?.length || 0} subscription plans`);
     
+    // Log subscription plan details for debugging
+    if (community.subscription_plans && community.subscription_plans.length > 0) {
+      logger.log(`Subscription plans details:`);
+      community.subscription_plans.forEach((plan, index) => {
+        logger.log(`Plan ${index + 1}: ${plan.name} (${plan.id}) - Active: ${plan.is_active}`);
+      });
+    } else {
+      logger.warn(`No subscription plans found for community: ${community.name}`);
+    }
+    
     // Process the data for both regular communities and groups
     if (community.is_group) {
       // Format group data

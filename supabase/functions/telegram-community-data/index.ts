@@ -50,16 +50,7 @@ serve(async (req) => {
         telegram_chat_id,
         telegram_photo_url,
         custom_link,
-        is_group,
-        subscription_plans (
-          id,
-          name,
-          description,
-          price,
-          interval,
-          features,
-          is_active
-        )
+        is_group
       `);
       
       if (isUuid) {
@@ -85,11 +76,30 @@ serve(async (req) => {
         
         logger.success(`Successfully fetched: ${community.name} (ID: ${community.id})`);
         
-        // Filter out inactive subscription plans
-        if (community.subscription_plans) {
-          community.subscription_plans = community.subscription_plans.filter(plan => plan.is_active);
-          logger.info(`Filtered to ${community.subscription_plans.length} active subscription plans`);
+        // Now fetch subscription plans separately for proper filtering
+        const { data: subscriptionPlans, error: planError } = await supabase
+          .from("subscription_plans")
+          .select(`
+            id,
+            name, 
+            description,
+            price,
+            interval,
+            features,
+            is_active
+          `)
+          .eq("community_id", community.id)  // Explicit filtering by community_id
+          .eq("is_active", true);  // Only get active plans
+          
+        if (planError) {
+          logger.error(`Error fetching subscription plans: ${planError.message}`, planError);
+          // Continue anyway, we'll just return the community without plans
         }
+        
+        // Add subscription plans to community
+        community.subscription_plans = subscriptionPlans || [];
+        
+        logger.info(`Found ${community.subscription_plans.length} active subscription plans for ${community.name}`);
         
         // If this is a group, fetch its member communities
         if (community.is_group) {

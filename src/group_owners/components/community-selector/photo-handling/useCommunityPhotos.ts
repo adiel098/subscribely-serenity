@@ -83,10 +83,7 @@ export const useCommunityPhotos = (communities?: Community[]) => {
         // Force a refresh to ensure UI updates
         setLastUpdate(Date.now());
         
-        // Show success toast only if we got at least some photos
-        if (Object.keys(data.results).length > 0) {
-          toast.success(`Loaded ${Object.keys(data.results).length} community photos`);
-        }
+        // Removed the success toast for loaded photos
       } else {
         console.log("No photo results returned");
         if (data?.message) {

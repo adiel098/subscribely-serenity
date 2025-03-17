@@ -60,7 +60,7 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
     searchQuery,
     setSearchQuery,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: (value: "all" | "active" | "inactive") => setStatusFilter(value), // Explicitly type the setter
     planFilter,
     setPlanFilter,
     filteredSubscribers,

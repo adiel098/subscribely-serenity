@@ -35,6 +35,37 @@ serve(async (req: Request) => {
       { global: { headers: { 'X-Client-Info': 'create-invite-link' } } }
     )
 
+    // First, check if the community is a group
+    const { data: communityData, error: communityDataError } = await supabaseAdmin
+      .from('communities')
+      .select('is_group, name')
+      .eq('id', communityId)
+      .single()
+    
+    if (communityDataError) {
+      console.error(`[create-invite-link] Error fetching community data: ${communityDataError.message}`)
+      return new Response(
+        JSON.stringify({ error: `Error fetching community data: ${communityDataError.message}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // If this is a group, handle it differently
+    if (communityData?.is_group) {
+      console.log(`[create-invite-link] Community ${communityId} is a group, generating links for member communities`)
+      
+      // For groups, we'll return a deep link to the mini app for this group
+      const miniAppLink = `https://t.me/MembifyBot?start=${communityId}`
+      
+      console.log(`[create-invite-link] Returning mini app link: ${miniAppLink}`)
+      
+      return new Response(
+        JSON.stringify({ inviteLink: miniAppLink }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // For regular communities (not groups), continue with the existing logic
     // First, check if there's an existing invite link in the community record (unless forceNew is true)
     if (!forceNew) {
       const { data: community, error: communityError } = await supabaseAdmin

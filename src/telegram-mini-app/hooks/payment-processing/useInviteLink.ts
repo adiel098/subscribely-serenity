@@ -11,6 +11,9 @@ const logger = createLogger("payment-useInviteLink");
  */
 export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
+  const [isGroup, setIsGroup] = useState<boolean>(false);
+  const [groupName, setGroupName] = useState<string>("");
+  const [channels, setChannels] = useState<any[]>([]);
 
   // Log the invite link for debugging
   useEffect(() => {
@@ -38,13 +41,26 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         throw new Error(`Failed to create invite link: ${error.message}`);
       }
       
-      if (data?.inviteLink) {
-        logPaymentAction('Successfully created invite link', data.inviteLink);
-        setInviteLink(data.inviteLink);
-        return data.inviteLink;
+      if (data) {
+        // Check if this is a group response
+        if (data.isGroup) {
+          logger.log('Received group data:', data);
+          setIsGroup(true);
+          setGroupName(data.groupName || "Group");
+          setChannels(data.channels || []);
+        }
+        
+        if (data.inviteLink) {
+          logPaymentAction('Successfully created invite link', data.inviteLink);
+          setInviteLink(data.inviteLink);
+          return data.inviteLink;
+        } else {
+          logger.error('No invite link returned from function:', data);
+          throw new Error('No invite link returned from function');
+        }
       } else {
-        logger.error('No invite link returned from function:', data);
-        throw new Error('No invite link returned from function');
+        logger.error('No data returned from create-invite-link function');
+        throw new Error('No data returned from create-invite-link function');
       }
     } catch (err) {
       logger.error('Error in fetchOrCreateInviteLink:', err);
@@ -55,6 +71,9 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   return {
     inviteLink,
     setInviteLink,
-    fetchOrCreateInviteLink
+    fetchOrCreateInviteLink,
+    isGroup,
+    groupName,
+    channels
   };
 };

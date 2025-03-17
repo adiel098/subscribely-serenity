@@ -5,9 +5,19 @@ import { createLogger } from "../../utils/debugUtils";
 
 const logger = createLogger("useInviteLink");
 
+interface ChannelLink {
+  id: string;
+  name: string;
+  inviteLink: string;
+  description?: string;
+}
+
 export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
   const [isLoadingLink, setIsLoadingLink] = useState<boolean>(false);
+  const [isGroup, setIsGroup] = useState<boolean>(false);
+  const [groupName, setGroupName] = useState<string>("");
+  const [channels, setChannels] = useState<ChannelLink[]>([]);
   
   // Process initial invite link or generate a new one
   useEffect(() => {
@@ -15,11 +25,48 @@ export const useInviteLink = (initialInviteLink: string | null) => {
     
     if (initialInviteLink) {
       setInviteLink(initialInviteLink);
+      // Check if this is a group link by extracting parameters
+      if (initialInviteLink.includes('start=')) {
+        checkIfGroupLink(initialInviteLink);
+      }
     } else {
       // Generate a new invite link
       generateNewInviteLink();
     }
   }, [initialInviteLink]);
+
+  // Check if the link is for a group and fetch channels if it is
+  const checkIfGroupLink = async (link: string) => {
+    try {
+      const startParamMatch = link.match(/start=([^&]+)/);
+      if (!startParamMatch) return;
+      
+      const startParam = startParamMatch[1];
+      logger.log(`Checking if ${startParam} is a group`);
+      
+      // Call the edge function to get community data
+      const response = await supabase.functions.invoke('create-invite-link', {
+        body: { 
+          communityId: startParam
+        }
+      });
+      
+      if (response.error) {
+        logger.error('Error checking if group link:', response.error);
+        return;
+      }
+      
+      // If response contains isGroup and channels, it's a group
+      if (response.data?.isGroup && response.data?.channels) {
+        logger.log('Found group data:', response.data);
+        setIsGroup(true);
+        setGroupName(response.data.groupName || "Group");
+        setChannels(response.data.channels);
+      }
+    } catch (err) {
+      logger.error('Error in checkIfGroupLink:', err);
+    }
+  };
 
   // Generate a fresh invite link for this member
   const generateNewInviteLink = async () => {
@@ -65,6 +112,14 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         return;
       }
       
+      // Handle group data if present
+      if (response.data?.isGroup) {
+        logger.log('Received group data from invite link generation:', response.data);
+        setIsGroup(true);
+        setGroupName(response.data.groupName || "Group");
+        setChannels(response.data.channels || []);
+      }
+      
       if (response.data?.inviteLink) {
         logger.log('Generated new invite link:', response.data.inviteLink);
         setInviteLink(response.data.inviteLink);
@@ -90,5 +145,5 @@ export const useInviteLink = (initialInviteLink: string | null) => {
     }
   };
 
-  return { inviteLink, isLoadingLink };
+  return { inviteLink, isLoadingLink, isGroup, groupName, channels };
 };

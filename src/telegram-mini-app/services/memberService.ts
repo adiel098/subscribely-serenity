@@ -63,15 +63,10 @@ export async function getUserSubscriptions(userId: string): Promise<Subscription
       console.error("❌ Error fetching subscriptions:", error);
       throw new Error(error.message);
     }
-
-    if (!data?.subscriptions) {
-      console.warn("⚠️ No subscriptions returned from the API");
-      return [];
-    }
     
-    console.log(`✅ Received ${data.subscriptions.length} subscriptions from API`);
+    console.log(`✅ Received ${data?.length || 0} subscriptions from API`);
     logServiceAction("Received subscriptions data", data);
-    return data.subscriptions || [];
+    return data || [];
   } catch (error) {
     console.error("❌ Failed to fetch subscriptions:", error);
     return [];

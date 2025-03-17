@@ -15,7 +15,7 @@ export async function handleGetSubscriptions(supabase, requestData) {
 
   try {
     const { data, error } = await supabase
-      .from("telegram_chat_members")
+      .from("community_subscribers")  // Changed from telegram_chat_members to community_subscribers
       .select(`
         id,
         telegram_user_id,
@@ -28,7 +28,7 @@ export async function handleGetSubscriptions(supabase, requestData) {
         is_active,
         total_messages,
         community_id,
-        community:communities!telegram_chat_members_community_id_fkey(
+        community:communities(
           id,
           name,
           description,
@@ -72,7 +72,7 @@ export async function handleCancelSubscription(supabase, requestData) {
 
   try {
     const { data, error } = await supabase
-      .from("telegram_chat_members")
+      .from("community_subscribers")  // Changed from telegram_chat_members to community_subscribers
       .update({
         subscription_status: "removed",
         is_active: false,

@@ -1,4 +1,3 @@
-
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 
 export interface Community {
@@ -14,6 +13,8 @@ export interface Community {
   subscription_plans: SubscriptionPlan[];
   is_group?: boolean; // Field to identify if this is a group
   communities?: Community[]; // For groups, contains the included communities
+  platform_url?: string; // Added missing property
+  miniapp_url?: string; // Added missing property
 }
 
 // Add the Plan type that was missing and causing errors

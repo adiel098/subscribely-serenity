@@ -81,6 +81,7 @@ serve(async (req) => {
           .from("subscription_plans")
           .select(`
             id,
+            community_id,  /* Added community_id field to the query */
             name, 
             description,
             price,

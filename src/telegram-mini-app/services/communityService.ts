@@ -42,9 +42,22 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     
     // Debug subscription plans data
     if (community.subscription_plans) {
+      // Log the raw plans before any processing
+      logger.debug('Raw subscription plans received:', community.subscription_plans);
+      
+      // Debug the plans to find any issues
       debugPlans(community.subscription_plans);
+      
       // Ensure all plans have required fields to prevent frontend issues
       community.subscription_plans = ensurePlanFields(community.subscription_plans);
+      
+      // Log each plan's community_id to verify it's properly set
+      community.subscription_plans.forEach((plan, index) => {
+        logger.debug(`Plan ${index + 1} (${plan.name}) community_id: ${plan.community_id}`);
+        if (plan.community_id !== community.id) {
+          logger.warn(`Plan ${plan.name} has mismatched community_id: ${plan.community_id} vs ${community.id}`);
+        }
+      });
     }
     
     // Process the data for both regular communities and groups
@@ -102,7 +115,8 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
           features,
           is_active,
           created_at,
-          updated_at
+          updated_at,
+          community_id
         )
       `)
       .ilike('name', `%${query}%`)

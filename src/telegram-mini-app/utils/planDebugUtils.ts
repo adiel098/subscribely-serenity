@@ -17,6 +17,7 @@ export const validatePlan = (plan: SubscriptionPlan, index: number = 0): string[
   if (!plan.interval) errors.push(`Plan ${index}: Missing interval`);
   if (!plan.created_at) errors.push(`Plan ${index}: Missing created_at field`);
   if (!plan.updated_at) errors.push(`Plan ${index}: Missing updated_at field`);
+  if (!plan.community_id) errors.push(`Plan ${index}: Missing community_id field`);
   
   return errors;
 };
@@ -73,6 +74,7 @@ export const ensurePlanFields = (plans: any[]): SubscriptionPlan[] => {
     // Ensure all required fields are present
     const fixedPlan: SubscriptionPlan = {
       id: plan.id || `missing-id-${index}`,
+      community_id: plan.community_id || '',
       name: plan.name || `Unnamed Plan ${index + 1}`,
       description: plan.description || null,
       price: typeof plan.price === 'number' ? plan.price : 0,

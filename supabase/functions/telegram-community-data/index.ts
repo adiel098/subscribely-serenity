@@ -80,7 +80,18 @@ serve(async (req) => {
         logger.debug(`Fetching subscription plans for community ID: ${community.id}`);
         const { data: subscriptionPlans, error: planError } = await supabase
           .from("subscription_plans")
-          .select("id, community_id, name, description, price, interval, features, is_active, created_at, updated_at")
+          .select(`
+            id, 
+            name, 
+            description, 
+            price, 
+            interval, 
+            features, 
+            is_active, 
+            community_id, 
+            created_at, 
+            updated_at
+          `)
           .eq("community_id", community.id)
           .eq("is_active", true);
           

@@ -45,7 +45,8 @@ export async function fetchCommunityData(
           price,
           interval,
           features,
-          is_active
+          is_active,
+          community_id
         )
       `)
       .eq("id", idOrLink)
@@ -81,7 +82,8 @@ export async function fetchCommunityData(
           price,
           interval,
           features,
-          is_active
+          is_active,
+          community_id
         )
       `)
       .eq("custom_link", idOrLink)
@@ -120,6 +122,12 @@ export async function processCommunityData(
     
     console.log(`📝 Group has ${activePlans.length} active subscription plans`);
     
+    // Debug logging to inspect the structure of active plans
+    if (activePlans.length > 0) {
+      console.log(`First plan structure: ${JSON.stringify(activePlans[0])}`);
+      console.log(`First plan community_id: ${activePlans[0].community_id}`);
+    }
+    
     displayCommunity = {
       id: data.id,
       name: data.name,
@@ -134,13 +142,22 @@ export async function processCommunityData(
     
   } else {
     // Standard community display
-    // Filter out inactive subscription plans
+    // Filter out inactive subscription plans and ensure community_id is set
     const activePlans = data.subscription_plans 
-      ? data.subscription_plans.filter(plan => plan.is_active) 
+      ? data.subscription_plans.filter(plan => plan.is_active).map(plan => ({
+          ...plan,
+          community_id: plan.community_id || data.id // Ensure community_id is set
+        }))
       : [];
     
     console.log(`✅ Successfully found community: ${data.name} (ID: ${data.id})`);
     console.log(`📝 Community has ${activePlans.length} active subscription plans`);
+    
+    // Debug logging to inspect the structure of active plans
+    if (activePlans.length > 0) {
+      console.log(`First plan structure: ${JSON.stringify(activePlans[0])}`);
+      console.log(`First plan community_id: ${activePlans[0].community_id}`);
+    }
     
     displayCommunity = {
       ...data,

@@ -23,7 +23,6 @@ export interface Subscription {
   subscription_end_date: string | null;
   subscription_status: 'active' | 'inactive' | 'expired' | 'removed';
   is_active: boolean;
-  total_messages: number | null;
   community_id: string;
   expiry_date?: string | null;  // For backward compatibility
   community: {

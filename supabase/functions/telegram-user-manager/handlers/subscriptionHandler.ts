@@ -1,3 +1,4 @@
+
 import { logSubscriptionActivity } from "../utils/logger.ts";
 
 /**
@@ -25,7 +26,6 @@ export async function handleGetSubscriptions(supabase, requestData) {
         subscription_end_date,
         subscription_status,
         is_active,
-        total_messages,
         community_id,
         community:communities(
           id,

@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, Edit, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface GroupActionButtonsProps {
@@ -36,8 +36,8 @@ export const GroupActionButtons = ({ onCopyLink, onShowDetails }: GroupActionBut
           variant="outline"
           className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 h-8"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
-          Details
+          <Edit className="h-3.5 w-3.5" />
+          Details & Edit
         </Button>
       </motion.div>
     </div>

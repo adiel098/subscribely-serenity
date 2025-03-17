@@ -51,7 +51,8 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_chat_id,
-            custom_link
+            custom_link,
+            is_group
           )
         )
       `)
@@ -88,7 +89,8 @@ export async function fetchCommunityData(
             description,
             telegram_photo_url,
             telegram_chat_id,
-            custom_link
+            custom_link,
+            is_group
           )
         )
       `)

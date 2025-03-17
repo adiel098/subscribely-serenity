@@ -21,6 +21,7 @@ interface ContentTabsProps {
   onRenewSubscription: (subscription: Subscription) => void;
   onSelectCommunity: (community: Community) => void;
   telegramUserId?: string;
+  community?: Community | null;
 }
 
 export const ContentTabs: React.FC<ContentTabsProps> = ({
@@ -34,7 +35,8 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   onRefreshSubscriptions,
   onRenewSubscription,
   onSelectCommunity,
-  telegramUserId
+  telegramUserId,
+  community
 }) => {
   
   // Handler for when a community is selected from search
@@ -87,6 +89,8 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             onPlanSelect={onPlanSelect}
             showPaymentMethods={showPaymentMethods}
             userSubscriptions={subscriptions}
+            communityId={community?.id}
+            communityName={community?.name}
           />
         </div>
       </TabsContent>

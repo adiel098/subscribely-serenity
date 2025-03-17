@@ -93,6 +93,7 @@ export const MainContent = ({
           onRenewSubscription={handleRenew}
           onSelectCommunity={handleSelectCommunity}
           telegramUserId={telegramUser?.id}
+          community={community}
         />
         
         <PaymentWrapper

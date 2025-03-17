@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { AvailableChannelsPreview } from "../channel-access/AvailableChannelsPreview";
+import { useCommunityChannels } from "@/telegram-mini-app/hooks/useCommunityChannels";
 
 const logger = createLogger("SubscriptionPlanSection");
 
@@ -17,6 +19,8 @@ interface SubscriptionPlanSectionProps {
   onPlanSelect: (plan: Plan) => void;
   showPaymentMethods: boolean;
   userSubscriptions?: Subscription[];
+  communityId?: string;
+  communityName?: string;
 }
 
 export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = ({
@@ -24,12 +28,19 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   selectedPlan,
   onPlanSelect,
   showPaymentMethods,
-  userSubscriptions = []
+  userSubscriptions = [],
+  communityId,
+  communityName = "Community"
 }) => {
   // Safe guard against undefined or non-array plans
   const validPlans = Array.isArray(plans) ? plans : [];
   
+  // Get channel information for this community
+  const { channels, isGroup, isLoading: channelsLoading } = useCommunityChannels(communityId || null);
+  
   logger.log('SubscriptionPlanSection received plans:', validPlans);
+  logger.log('Community channels:', channels);
+  logger.log('Is group:', isGroup);
   
   // Validate that plans have all necessary data
   const invalidPlans = validPlans.filter(plan => !plan.id || !plan.name || typeof plan.price !== 'number');
@@ -55,6 +66,13 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
 
   return (
     <>
+      {/* Display channel access preview for group communities */}
+      <AvailableChannelsPreview 
+        communityName={communityName}
+        channels={channels}
+        isGroup={isGroup}
+      />
+      
       <div id="subscription-plans" className="scroll-mt-4">
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl mb-5 max-w-sm mx-auto">
           <motion.div 

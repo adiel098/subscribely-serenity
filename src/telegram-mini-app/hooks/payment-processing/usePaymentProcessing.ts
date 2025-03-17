@@ -10,7 +10,7 @@ interface PaymentProcessingParams {
   communityId: string;
   planId: string;
   planPrice: number;
-  planInterval?: string; // Add this property to get the interval information
+  planInterval?: string;
   communityInviteLink?: string | null;
   telegramUserId?: string;
   telegramUsername?: string;
@@ -92,6 +92,13 @@ export const usePaymentProcessing = ({
         }
       }
       
+      // Check if the invite link is for a group (begins with { for JSON)
+      let isGroupSubscription = false;
+      if (finalInviteLink && (finalInviteLink.startsWith('{') || finalInviteLink.includes('"isGroup":true'))) {
+        isGroupSubscription = true;
+        console.log("[usePaymentProcessing] Detected a group subscription with JSON invite links");
+      }
+      
       // Record the payment in the database, including the plan interval
       const { success, paymentData, error: paymentError, inviteLink: paymentInviteLink } = await recordPayment({
         telegramUserId,
@@ -99,12 +106,12 @@ export const usePaymentProcessing = ({
         planId,
         amount: planPrice,
         paymentMethod,
-        inviteLink: finalInviteLink,
+        inviteLink: finalInviteLink, // This could be a JSON string for groups
         username: telegramUsername,
         firstName,
         lastName,
         activeSubscription,
-        interval: planInterval // Pass the interval to the payment record
+        interval: planInterval
       });
       
       if (!success || paymentError) {
@@ -114,7 +121,7 @@ export const usePaymentProcessing = ({
       
       console.log("[usePaymentProcessing] Payment recorded successfully:", paymentData);
       
-      // 1. IMMEDIATE MEMBER CREATION: Create or update the member record right after payment
+      // IMMEDIATE MEMBER CREATION: Create or update the member record right after payment
       // Calculate start and end dates for subscription
       const startDate = new Date();
       let endDate = new Date(startDate);
@@ -162,7 +169,6 @@ export const usePaymentProcessing = ({
       if (!memberResult) {
         console.error("[usePaymentProcessing] Failed to create/update member record");
         toast.error("Payment processed but membership record creation failed");
-        // Continue anyway as payment was successful
       } else {
         console.log("[usePaymentProcessing] Member record created/updated successfully");
       }

@@ -14,6 +14,13 @@ interface ChannelLink {
   error?: string;
 }
 
+interface GroupInviteData {
+  mainGroupLink: string;
+  isGroup: boolean;
+  groupName: string;
+  channels: ChannelLink[];
+}
+
 export const useInviteLink = (initialInviteLink: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
   const [isLoadingLink, setIsLoadingLink] = useState<boolean>(false);
@@ -27,6 +34,25 @@ export const useInviteLink = (initialInviteLink: string | null) => {
     
     if (initialInviteLink) {
       setInviteLink(initialInviteLink);
+      
+      // Try to parse the invite link as JSON first (for group links)
+      try {
+        const parsedData = JSON.parse(initialInviteLink);
+        logger.log('Successfully parsed invite link as JSON:', parsedData);
+        
+        if (parsedData.isGroup) {
+          // This is a group link stored as JSON
+          setIsGroup(true);
+          setGroupName(parsedData.groupName || "Group");
+          setChannels(parsedData.channels || []);
+          setInviteLink(parsedData.mainGroupLink);
+          return;
+        }
+      } catch (err) {
+        // Not a JSON string, continue with normal processing
+        logger.log('Invite link is not in JSON format, processing as regular link');
+      }
+      
       // Check if this is a group link by extracting parameters
       if (initialInviteLink.includes('start=')) {
         checkIfGroupLink(initialInviteLink);
@@ -124,6 +150,29 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         setIsGroup(true);
         setGroupName(response.data.groupName || "Group");
         setChannels(response.data.channels || []);
+        
+        // If this is a group, store the complete JSON structure
+        if (response.data.inviteLink) {
+          // This is the JSON stringified version of all channel links
+          logger.log('Storing complete JSON of group links');
+          
+          const storeLink = response.data.inviteLink;
+          setInviteLink(response.data.directAccess?.mainGroupLink || null);
+          
+          // Update the most recent payment with the complete JSON structure of links
+          const { error: updateError } = await supabase
+            .from('subscription_payments')
+            .update({ invite_link: storeLink })
+            .eq('id', paymentId);
+            
+          if (updateError) {
+            logger.error('Error updating payment with JSON invite links:', updateError);
+          } else {
+            logger.log('Updated payment record with JSON invite links structure');
+          }
+          
+          return;
+        }
       }
       
       if (response.data?.inviteLink) {

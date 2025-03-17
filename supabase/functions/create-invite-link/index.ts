@@ -196,9 +196,18 @@ serve(async (req: Request) => {
       
       console.log(`[create-invite-link] Returning group link and ${channelLinks.length} channel links`);
       
+      // Prepare result object with all invite links in a structured format
+      const linksObject = {
+        mainGroupLink: miniAppLink,
+        isGroup: true,
+        groupName: communityData.name,
+        channels: channelLinks
+      };
+      
       return new Response(
         JSON.stringify({ 
-          inviteLink: miniAppLink,
+          inviteLink: JSON.stringify(linksObject),
+          directAccess: linksObject,
           isGroup: true,
           groupName: communityData.name,
           channels: channelLinks

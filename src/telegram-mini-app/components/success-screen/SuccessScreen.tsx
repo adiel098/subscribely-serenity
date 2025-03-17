@@ -14,7 +14,8 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
   const { toast } = useToast();
   
   console.log("Rendering success screen with invite link:", inviteLink);
-  console.log("Is group:", isGroup, "Group name:", groupName, "Channels:", channels);
+  console.log("Is group:", isGroup, "Group name:", groupName);
+  console.log("Channels:", channels);
   
   // Show loading state
   if (isLoadingLink) {

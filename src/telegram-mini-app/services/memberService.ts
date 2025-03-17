@@ -31,7 +31,7 @@ export interface Subscription {
     name: string;
     description: string | null;
     telegram_photo_url: string | null;
-    telegram_invite_link: string | null;
+    telegram_invite_link?: string | null;  // Make this optional
   };
   plan: {
     id: string;

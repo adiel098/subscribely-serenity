@@ -1,4 +1,3 @@
-
 import { logSubscriptionActivity } from "../utils/logger.ts";
 
 /**
@@ -15,7 +14,7 @@ export async function handleGetSubscriptions(supabase, requestData) {
 
   try {
     const { data, error } = await supabase
-      .from("community_subscribers")  // Changed from telegram_chat_members to community_subscribers
+      .from("community_subscribers")
       .select(`
         id,
         telegram_user_id,
@@ -32,8 +31,7 @@ export async function handleGetSubscriptions(supabase, requestData) {
           id,
           name,
           description,
-          telegram_photo_url,
-          telegram_invite_link
+          telegram_photo_url
         ),
         plan:subscription_plans(
           id,
@@ -72,7 +70,7 @@ export async function handleCancelSubscription(supabase, requestData) {
 
   try {
     const { data, error } = await supabase
-      .from("community_subscribers")  // Changed from telegram_chat_members to community_subscribers
+      .from("community_subscribers")
       .update({
         subscription_status: "removed",
         is_active: false,

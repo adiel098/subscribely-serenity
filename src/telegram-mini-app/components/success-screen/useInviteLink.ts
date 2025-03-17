@@ -10,6 +10,8 @@ interface ChannelLink {
   name: string;
   inviteLink: string;
   description?: string;
+  isMiniApp?: boolean;
+  error?: string;
 }
 
 export const useInviteLink = (initialInviteLink: string | null) => {
@@ -45,6 +47,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       logger.log(`Checking if ${startParam} is a group`);
       
       // Call the edge function to get community data
+      setIsLoadingLink(true);
       const response = await supabase.functions.invoke('create-invite-link', {
         body: { 
           communityId: startParam
@@ -53,6 +56,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       
       if (response.error) {
         logger.error('Error checking if group link:', response.error);
+        setIsLoadingLink(false);
         return;
       }
       
@@ -63,8 +67,10 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         setGroupName(response.data.groupName || "Group");
         setChannels(response.data.channels);
       }
+      setIsLoadingLink(false);
     } catch (err) {
       logger.error('Error in checkIfGroupLink:', err);
+      setIsLoadingLink(false);
     }
   };
 

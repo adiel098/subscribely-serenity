@@ -52,7 +52,7 @@ serve(async (req: Request) => {
     
     // If this is a group, handle it differently
     if (communityData?.is_group) {
-      console.log(`[create-invite-link] Community ${communityId} is a group, generating links for member communities`)
+      console.log(`[create-invite-link] Community ${communityId} is a group, generating invite links for member communities`)
       
       // Get all member communities in this group
       const { data: memberCommunities, error: memberError } = await supabaseAdmin
@@ -62,7 +62,8 @@ serve(async (req: Request) => {
           member:member_id (
             id,
             name,
-            custom_link
+            custom_link,
+            telegram_chat_id
           )
         `)
         .eq('community_id', communityId)
@@ -76,25 +77,94 @@ serve(async (req: Request) => {
         )
       }
       
-      // Use bot username for constructing mini app links
-      const botUsername = "MembifyBot"; // Fallback value
+      // Fetch bot token from secrets
+      const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+      if (!botToken) {
+        console.error('[create-invite-link] Error: TELEGRAM_BOT_TOKEN not set')
+        return new Response(
+          JSON.stringify({ error: 'Bot token not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
       
-      // For groups, we'll return a deep link to the mini app for this group
+      // Use bot username for constructing mini app link for the group itself
+      const botUsername = "MembifyBot"; // Fallback value
       const groupLinkParam = communityData.custom_link || communityId;
       const miniAppLink = `https://t.me/${botUsername}?start=${groupLinkParam}`;
       
-      // Create an array of channel info with links
-      const channelLinks = memberCommunities?.map(relation => {
+      // Create an array of channel info with actual Telegram invite links
+      const channelPromises = memberCommunities?.map(async (relation) => {
         const member = relation.member;
-        const linkParam = member.custom_link || member.id;
-        const channelLink = `https://t.me/${botUsername}?start=${linkParam}`;
+        if (!member.telegram_chat_id) {
+          // If no telegram_chat_id, use the mini app link as fallback
+          const linkParam = member.custom_link || member.id;
+          return {
+            id: member.id,
+            name: member.name,
+            inviteLink: `https://t.me/${botUsername}?start=${linkParam}`,
+            isMiniApp: true
+          };
+        }
         
-        return {
-          id: member.id,
-          name: member.name,
-          inviteLink: channelLink
-        };
+        // Try to create an actual Telegram invite link for this channel
+        try {
+          // Generate a unique name for the invite link
+          const linkName = `Member ${new Date().toISOString().split('T')[0]} ${Math.random().toString(36).substring(2, 8)}`;
+          
+          const createLinkResponse = await fetch(
+            `https://api.telegram.org/bot${botToken}/createChatInviteLink`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: member.telegram_chat_id,
+                name: linkName,
+                creates_join_request: true,
+                // Making the link expire in 30 days
+                expire_date: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60)
+              }),
+            }
+          );
+          
+          const result = await createLinkResponse.json();
+          
+          if (!result.ok) {
+            console.error(`[create-invite-link] Telegram API error for channel ${member.name}: ${JSON.stringify(result)}`);
+            // Fallback to mini app link if Telegram API fails
+            const linkParam = member.custom_link || member.id;
+            return {
+              id: member.id,
+              name: member.name,
+              inviteLink: `https://t.me/${botUsername}?start=${linkParam}`,
+              isMiniApp: true,
+              error: result.description
+            };
+          }
+          
+          console.log(`[create-invite-link] Created Telegram invite link for channel ${member.name}: ${result.result.invite_link}`);
+          
+          return {
+            id: member.id,
+            name: member.name,
+            inviteLink: result.result.invite_link,
+            isMiniApp: false
+          };
+        } catch (error) {
+          console.error(`[create-invite-link] Error creating invite link for channel ${member.name}:`, error);
+          // Fallback to mini app link if an error occurs
+          const linkParam = member.custom_link || member.id;
+          return {
+            id: member.id,
+            name: member.name,
+            inviteLink: `https://t.me/${botUsername}?start=${linkParam}`,
+            isMiniApp: true,
+            error: error.message
+          };
+        }
       }) || [];
+      
+      // Wait for all invite link creation promises to resolve
+      const channelLinks = await Promise.all(channelPromises);
       
       console.log(`[create-invite-link] Returning group link and ${channelLinks.length} channel links`);
       
@@ -112,20 +182,16 @@ serve(async (req: Request) => {
     // For regular communities (not groups), continue with the existing logic
     // First, check if there's an existing invite link in the community record (unless forceNew is true)
     if (!forceNew) {
+      // We're not checking for telegram_invite_link in the communities table anymore
+      // Instead, we'll try to create a new invite link directly
       const { data: community, error: communityError } = await supabaseAdmin
         .from('communities')
-        .select('telegram_invite_link, telegram_chat_id')
+        .select('telegram_chat_id')
         .eq('id', communityId)
         .single()
       
       if (communityError) {
         console.error(`[create-invite-link] Error fetching community: ${communityError.message}`)
-      } else if (community?.telegram_invite_link) {
-        console.log(`[create-invite-link] Found existing invite link: ${community.telegram_invite_link}`)
-        return new Response(
-          JSON.stringify({ inviteLink: community.telegram_invite_link, isGroup: false }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
       }
     }
 
@@ -196,21 +262,8 @@ serve(async (req: Request) => {
     const inviteLink = result.result.invite_link
     console.log(`[create-invite-link] Successfully created new invite link: ${inviteLink}`)
 
-    // Update the community record with the new invite link if a column exists
-    try {
-      const { error: updateError } = await supabaseAdmin
-        .from('communities')
-        .update({ telegram_invite_link: inviteLink })
-        .eq('id', communityId)
-
-      if (updateError) {
-        // Column might not exist, just log and continue
-        console.log(`[create-invite-link] Note: Could not update community with invite link: ${updateError.message}`)
-      }
-    } catch (e) {
-      // Ignore errors here as the column might not exist
-      console.log(`[create-invite-link] Note: Could not update community with invite link: ${e.message}`)
-    }
+    // No longer updating the communities table with the invite link
+    // as the column doesn't exist
 
     return new Response(
       JSON.stringify({ inviteLink, isGroup: false }),

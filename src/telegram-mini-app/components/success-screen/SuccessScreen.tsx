@@ -1,99 +1,28 @@
-import React, { useEffect, useState } from "react";
+
+import React from "react";
 import { useInviteLink } from "./useInviteLink";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { GroupChannelsLinks } from "./GroupChannelsLinks";
 import { InviteLinkSection } from "./InviteLinkSection";
 import { LoadingSpinner } from "../LoadingSpinner";
 
-interface ChannelLink {
-  id: string;
-  name: string;
-  inviteLink: string;
-  description?: string;
-}
-
 export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: string | null }) => {
   const { inviteLink, isLoadingLink, isGroup, groupName, channels } = useInviteLink(communityInviteLink);
   const { toast } = useToast();
-  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
-  const [localChannels, setLocalChannels] = useState<ChannelLink[]>([]);
-  const [localIsGroup, setLocalIsGroup] = useState(false);
-  const [localGroupName, setLocalGroupName] = useState("");
   
   console.log("Rendering success screen with invite link:", inviteLink);
   console.log("Is group:", isGroup, "Group name:", groupName, "Channels:", channels);
   
-  // Get links for all channels in the group
-  useEffect(() => {
-    if (!inviteLink) return;
-    
-    const getGroupChannelLinks = async () => {
-      try {
-        // Extract group ID or custom link from the invite link
-        const startParamMatch = inviteLink.match(/start=([^&]+)/);
-        if (!startParamMatch) return;
-        
-        const startParam = startParamMatch[1];
-        console.log("Extracted start parameter:", startParam);
-        
-        setIsLoadingChannels(true);
-        
-        // Call create-invite-link function with the group ID
-        const response = await supabase.functions.invoke('create-invite-link', {
-          body: { 
-            communityId: startParam
-          }
-        });
-        
-        if (response.error) {
-          console.error("Error getting group channel links:", response.error);
-          toast({
-            title: "Error",
-            description: "Failed to load channels. Please try again.",
-            variant: "destructive"
-          });
-          setIsLoadingChannels(false);
-          return;
-        }
-        
-        // If response contains isGroup and channels, it's a group
-        if (response.data?.isGroup && response.data?.channels) {
-          setLocalIsGroup(true);
-          setLocalGroupName(response.data.groupName || "Group");
-          setLocalChannels(response.data.channels);
-          console.log("Loaded channels for group:", response.data.channels);
-        }
-        
-        setIsLoadingChannels(false);
-      } catch (error) {
-        console.error("Error in getGroupChannelLinks:", error);
-        setIsLoadingChannels(false);
-      }
-    };
-    
-    // If we already have channels from the hook, use those
-    if (isGroup && channels && channels.length > 0) {
-      console.log("Using channels data from hook:", channels);
-      setLocalIsGroup(true);
-      setLocalGroupName(groupName);
-      setLocalChannels(channels);
-    } else {
-      // Otherwise, try to fetch them
-      getGroupChannelLinks();
-    }
-  }, [inviteLink, toast, isGroup, channels, groupName]);
-
   // Show loading state
-  if (isLoadingLink || isLoadingChannels) {
+  if (isLoadingLink) {
     return (
       <div className="flex flex-col items-center justify-center p-8 h-60">
         <LoadingSpinner size="lg" className="text-indigo-600" />
         <p className="mt-4 text-gray-600 dark:text-gray-300 text-center">
-          {isLoadingChannels ? "Loading group channels..." : "Preparing your access..."}
+          Preparing your access links...
         </p>
       </div>
     );
@@ -121,15 +50,15 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
           
           <p className="text-gray-600 dark:text-gray-300">
             Your subscription has been activated successfully. 
-            {(localIsGroup || isGroup)
-              ? ` You now have access to all channels in the ${localGroupName || groupName} group.` 
+            {isGroup
+              ? ` You now have access to all channels in the ${groupName} group.` 
               : " Now you can join the community using the button below."}
           </p>
           
-          {(localIsGroup || isGroup) && (localChannels.length > 0 || channels.length > 0) ? (
+          {isGroup && channels.length > 0 ? (
             <GroupChannelsLinks 
-              groupName={localGroupName || groupName} 
-              channels={localChannels.length > 0 ? localChannels : channels} 
+              groupName={groupName} 
+              channels={channels} 
             />
           ) : inviteLink ? (
             <InviteLinkSection inviteLink={inviteLink} />

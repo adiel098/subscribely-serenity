@@ -1,18 +1,21 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, ExternalLink, Copy, Check, ChevronDown, ChevronUp, MessagesSquare } from "lucide-react";
+import { Link, ExternalLink, Copy, Check, ChevronDown, ChevronUp, MessagesSquare, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ChannelLink {
   id: string;
   name: string;
   inviteLink: string;
   description?: string;
+  isMiniApp?: boolean;
+  error?: string;
 }
 
 interface GroupChannelsLinksProps {
@@ -69,6 +72,8 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
   // Render a single channel card
   const renderChannelCard = (channel: ChannelLink) => {
     const emoji = getChannelEmoji(channel.name);
+    const isMiniAppLink = channel.isMiniApp === true;
+    const hasError = !!channel.error;
     
     return (
       <motion.div
@@ -88,9 +93,26 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate pr-2">
                 {channel.name}
               </h3>
-              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-xs">
-                Channel
-              </Badge>
+              <div className="flex items-center gap-1">
+                {isMiniAppLink ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-xs">
+                          Subscribe
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">This channel requires subscription via mini app</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
+                    Direct Join
+                  </Badge>
+                )}
+              </div>
             </div>
             
             {channel.description && (
@@ -99,14 +121,21 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
               </p>
             )}
             
+            {hasError && (
+              <div className="flex items-center gap-1 mt-1 mb-2 text-xs text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-3 w-3" />
+                <span>Could not create direct invite link</span>
+              </div>
+            )}
+            
             <div className="mt-3 flex space-x-2">
               <Button
                 size="sm"
                 onClick={() => openLink(channel.inviteLink)}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className={`flex-1 ${isMiniAppLink ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
               >
                 <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                Join
+                {isMiniAppLink ? 'Subscribe' : 'Join Now'}
               </Button>
               
               <Button
@@ -189,7 +218,7 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
       </div>
       
       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">
-        💡 Tip: Click "Join" to open each channel directly or copy the invite links to share with others.
+        💡 Tip: Click "Join Now" to open direct Telegram invite links or "Subscribe" to access mini app links.
       </p>
     </div>
   );

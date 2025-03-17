@@ -80,24 +80,25 @@ serve(async (req) => {
         logger.debug(`Fetching subscription plans for community ID: ${community.id}`);
         const { data: subscriptionPlans, error: planError } = await supabase
           .from("subscription_plans")
-          .select(`
-            id,
-            community_id,
-            name, 
-            description,
-            price,
-            interval,
-            features,
-            is_active,
-            created_at,
-            updated_at
-          `)
-          .eq("community_id", community.id)  // Explicit filtering by community_id
-          .eq("is_active", true);  // Only get active plans
+          .select("id, community_id, name, description, price, interval, features, is_active, created_at, updated_at")
+          .eq("community_id", community.id)
+          .eq("is_active", true);
           
         if (planError) {
           logger.error(`Error fetching subscription plans: ${planError.message}`, planError);
           // Continue anyway, we'll just return the community without plans
+        }
+        
+        // Perform a direct count query to verify plans exist
+        const { count, error: countError } = await supabase
+          .from("subscription_plans")
+          .select("id", { count: 'exact', head: true })
+          .eq("community_id", community.id);
+          
+        if (countError) {
+          logger.error(`Error counting plans: ${countError.message}`);
+        } else {
+          logger.info(`Total plans in database for community ${community.id}: ${count}`);
         }
         
         // Log raw subscription plans data before processing
@@ -167,6 +168,10 @@ serve(async (req) => {
             // Continue anyway, we'll just return the group without members
           }
         }
+        
+        // Update community with platform URLs
+        community.platform_url = "https://preview--subscribely-serenity.lovable.app";
+        community.miniapp_url = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
         
         // Log the final response data
         logger.debug(`Final response data:`, JSON.stringify({ community }));

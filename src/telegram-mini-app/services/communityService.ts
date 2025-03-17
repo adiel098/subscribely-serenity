@@ -2,8 +2,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
-import { ensurePlanFields, debugPlans } from "@/telegram-mini-app/utils/planDebugUtils";
+import { debugPlans, ensurePlanFields, verifyPlansInDatabase, deepVerifyPlans } from "@/telegram-mini-app/utils/planDebugUtils";
 import { invokeSupabaseFunction } from "./utils/serviceUtils";
+import { PLATFORM_BASE_URL, TELEGRAM_MINI_APP_URL } from "@/telegram-mini-app/utils/config";
 
 const logger = createLogger("communityService");
 
@@ -17,6 +18,17 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     // Check if this is a UUID or custom link
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrLink);
     logger.debug(`Parameter type: ${isUUID ? "UUID" : "Custom link"}, Value: "${idOrLink}"`);
+    
+    // If it's a UUID, perform extended verification
+    if (isUUID) {
+      logger.debug(`Running extended verification for UUID ${idOrLink}...`);
+      
+      // First verify plans exist in the database directly
+      await verifyPlansInDatabase(idOrLink, supabase);
+      
+      // Then do a deep verification across multiple access methods
+      await deepVerifyPlans(idOrLink, supabase);
+    }
     
     // Call the edge function to fetch community data
     logger.debug(`Invoking edge function telegram-community-data with payload:`, { community_id: idOrLink, debug: true });
@@ -46,6 +58,18 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
       logger.debug('Raw subscription plans received from edge function:', JSON.stringify(community.subscription_plans));
       logger.log(`Received ${community.subscription_plans.length} subscription plans`);
       
+      // Detailed logging of each plan
+      community.subscription_plans.forEach((plan, index) => {
+        logger.debug(`Plan ${index + 1} details:`, {
+          id: plan.id,
+          name: plan.name,
+          community_id: plan.community_id || 'MISSING',
+          price: plan.price,
+          interval: plan.interval,
+          is_active: plan.is_active
+        });
+      });
+      
       // Check for missing community_id in plans
       const missingCommunityIdPlans = community.subscription_plans.filter(p => !p.community_id);
       if (missingCommunityIdPlans.length > 0) {
@@ -59,6 +83,12 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
       // Ensure all plans have required fields to prevent frontend issues
       logger.debug('Ensuring all plans have required fields...');
       community.subscription_plans = ensurePlanFields(community.subscription_plans);
+      
+      // Verify the final result
+      logger.debug(`Final plans count after processing: ${community.subscription_plans.length}`);
+      if (community.subscription_plans.length > 0) {
+        logger.debug(`First processed plan:`, community.subscription_plans[0]);
+      }
       
       // Log each plan's community_id to verify it's properly set
       community.subscription_plans.forEach((plan, index) => {
@@ -90,15 +120,26 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
           if (directPlans && directPlans.length > 0) {
             const activePlans = directPlans.filter(p => p.is_active);
             logger.warn(`Direct query found ${activePlans.length} active plans but edge function returned none!`);
+            
+            // Use the direct query results if edge function failed to return plans
+            logger.info(`Using direct query results for subscription plans`);
+            community.subscription_plans = ensurePlanFields(directPlans);
           }
         }
       } catch (directQueryError) {
         logger.error(`Error in direct plans query:`, directQueryError);
       }
       
-      // Initialize empty array to prevent null reference errors
-      community.subscription_plans = [];
+      // Initialize empty array if still not set to prevent null reference errors
+      if (!community.subscription_plans) {
+        logger.warn(`Initializing empty subscription_plans array as fallback`);
+        community.subscription_plans = [];
+      }
     }
+    
+    // Ensure the platform and mini app URLs are correctly set
+    community.platform_url = community.platform_url || PLATFORM_BASE_URL;
+    community.miniapp_url = community.miniapp_url || TELEGRAM_MINI_APP_URL;
     
     // Process the data for both regular communities and groups
     if (community.is_group) {
@@ -112,6 +153,8 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         telegram_photo_url: community.telegram_photo_url,
         telegram_chat_id: community.telegram_chat_id,
         custom_link: community.custom_link,
+        platform_url: community.platform_url,
+        miniapp_url: community.miniapp_url,
         is_group: true,
         communities: community.communities || [],
         subscription_plans: community.subscription_plans || []
@@ -119,12 +162,15 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     } else {
       // Return regular community data
       logger.debug(`Final community data being returned:`, JSON.stringify({
-        ...community,
+        id: community.id,
+        name: community.name,
         subscription_plans_count: community.subscription_plans?.length || 0
       }));
       
       return {
         ...community,
+        platform_url: community.platform_url,
+        miniapp_url: community.miniapp_url,
         subscription_plans: community.subscription_plans || []
       };
     }
@@ -194,6 +240,8 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
         telegram_chat_id: community.telegram_chat_id,
         custom_link: community.custom_link,
         is_group: community.is_group,
+        platform_url: PLATFORM_BASE_URL,
+        miniapp_url: TELEGRAM_MINI_APP_URL,
         subscription_plans: activePlans
       };
     });

@@ -67,11 +67,13 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   return (
     <>
       {/* Display channel access preview for group communities */}
-      <AvailableChannelsPreview 
-        communityName={communityName}
-        channels={channels}
-        isGroup={isGroup}
-      />
+      {isGroup && channels.length > 0 && (
+        <AvailableChannelsPreview 
+          communityName={communityName}
+          channels={channels}
+          isGroup={isGroup}
+        />
+      )}
       
       <div id="subscription-plans" className="scroll-mt-4">
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl mb-5 max-w-sm mx-auto">

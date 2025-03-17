@@ -31,8 +31,11 @@ export const AvailableChannelsPreview: React.FC<AvailableChannelsPreviewProps> =
   
   // If not a group or no channels, don't render anything
   if (!isGroup || !channels || channels.length === 0) {
+    console.log("Not rendering channels: isGroup=", isGroup, "channels=", channels?.length || 0);
     return null;
   }
+
+  console.log("Rendering AvailableChannelsPreview with", channels.length, "channels");
 
   // Get appropriate emoji for channel type
   const getChannelEmoji = (name: string, type: string) => {

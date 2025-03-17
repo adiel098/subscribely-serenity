@@ -37,7 +37,7 @@ export const useCommunityChannels = (communityId: string | null): CommunityChann
         
         logger.log(`Fetching channels for community ${communityId}`);
         
-        // Call the edge function to get community channels
+        // Call the dedicated edge function to get community channels
         const { data, error } = await supabase.functions.invoke("get-community-channels", {
           body: { communityId }
         });
@@ -54,9 +54,11 @@ export const useCommunityChannels = (communityId: string | null): CommunityChann
           if (data.isGroup && Array.isArray(data.channels)) {
             setIsGroup(true);
             setChannels(data.channels);
+            logger.log(`Set ${data.channels.length} channels for group ${communityId}`);
           } else {
             setIsGroup(false);
             setChannels([]);
+            logger.log(`Community ${communityId} is not a group or has no channels`);
           }
         }
       } catch (err) {

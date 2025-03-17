@@ -115,17 +115,61 @@ export async function processCommunityData(
     }
     
     // For groups, we'll return the group data with its communities
+    // Check if we have subscription plans directly on the group
+    if (!data.subscription_plans || !Array.isArray(data.subscription_plans)) {
+      console.log(`⚠️ No subscription plans on group data, fetching plans directly...`);
+      
+      // Fall back to fetching plans directly if they weren't included in the original query
+      try {
+        const { data: plansData, error: plansError } = await supabase
+          .from('subscription_plans')
+          .select('id, name, description, price, interval, features, is_active, community_id')
+          .eq('community_id', data.id);
+          
+        if (plansError) {
+          console.error(`❌ Error fetching subscription plans for group: ${plansError.message}`);
+          console.error(`❌ Error details:`, JSON.stringify(plansError));
+        } else {
+          console.log(`📊 Directly fetched ${plansData?.length || 0} subscription plans for group ID: ${data.id}`);
+          data.subscription_plans = plansData || [];
+        }
+      } catch (err) {
+        console.error(`❌ Exception fetching subscription plans: ${err}`);
+      }
+    }
+    
     // Filter out inactive subscription plans
     const activePlans = data.subscription_plans 
-      ? data.subscription_plans.filter(plan => plan.is_active) 
+      ? data.subscription_plans.filter(plan => plan.is_active).map(plan => ({
+          ...plan,
+          community_id: plan.community_id || data.id // Ensure community_id is set
+        }))
       : [];
     
-    console.log(`📝 Group has ${activePlans.length} active subscription plans`);
+    console.log(`📝 Group has ${activePlans.length} active subscription plans out of ${data.subscription_plans?.length || 0} total`);
     
     // Debug logging to inspect the structure of active plans
     if (activePlans.length > 0) {
       console.log(`First plan structure: ${JSON.stringify(activePlans[0])}`);
       console.log(`First plan community_id: ${activePlans[0].community_id}`);
+    } else {
+      console.log(`⚠️ No active plans found for group: ${data.id}`);
+      
+      // Check permissions - this will help diagnose if it's a permissions issue
+      try {
+        const { count, error: countError } = await supabase
+          .from('subscription_plans')
+          .select('id', { count: 'exact', head: true });
+          
+        if (countError) {
+          console.error(`❌ Permission error checking plans: ${countError.message}`);
+          console.error(`❌ This suggests a permissions issue with the subscription_plans table`);
+        } else {
+          console.log(`🔐 Successfully counted ${count} total plans in database - permissions seem OK`);
+        }
+      } catch (err) {
+        console.error(`❌ Exception checking plan permissions: ${err}`);
+      }
     }
     
     displayCommunity = {
@@ -142,6 +186,29 @@ export async function processCommunityData(
     
   } else {
     // Standard community display
+    // Check if we need to fetch plans directly
+    if (!data.subscription_plans || !Array.isArray(data.subscription_plans)) {
+      console.log(`⚠️ No subscription plans on community data, fetching plans directly...`);
+      
+      // Fall back to fetching plans directly if they weren't included in the original query
+      try {
+        const { data: plansData, error: plansError } = await supabase
+          .from('subscription_plans')
+          .select('id, name, description, price, interval, features, is_active, community_id')
+          .eq('community_id', data.id);
+          
+        if (plansError) {
+          console.error(`❌ Error fetching subscription plans for community: ${plansError.message}`);
+          console.error(`❌ Error details:`, JSON.stringify(plansError));
+        } else {
+          console.log(`📊 Directly fetched ${plansData?.length || 0} subscription plans for community ID: ${data.id}`);
+          data.subscription_plans = plansData || [];
+        }
+      } catch (err) {
+        console.error(`❌ Exception fetching subscription plans: ${err}`);
+      }
+    }
+    
     // Filter out inactive subscription plans and ensure community_id is set
     const activePlans = data.subscription_plans 
       ? data.subscription_plans.filter(plan => plan.is_active).map(plan => ({
@@ -151,18 +218,52 @@ export async function processCommunityData(
       : [];
     
     console.log(`✅ Successfully found community: ${data.name} (ID: ${data.id})`);
-    console.log(`📝 Community has ${activePlans.length} active subscription plans`);
+    console.log(`📝 Community has ${activePlans.length} active subscription plans out of ${data.subscription_plans?.length || 0} total`);
     
     // Debug logging to inspect the structure of active plans
     if (activePlans.length > 0) {
       console.log(`First plan structure: ${JSON.stringify(activePlans[0])}`);
       console.log(`First plan community_id: ${activePlans[0].community_id}`);
+    } else {
+      console.log(`⚠️ No active plans found for community: ${data.id}`);
+      
+      // Check permissions - this will help diagnose if it's a permissions issue
+      try {
+        const { count, error: countError } = await supabase
+          .from('subscription_plans')
+          .select('id', { count: 'exact', head: true });
+          
+        if (countError) {
+          console.error(`❌ Permission error checking plans: ${countError.message}`);
+          console.error(`❌ This suggests a permissions issue with the subscription_plans table`);
+        } else {
+          console.log(`🔐 Successfully counted ${count} total plans in database - permissions seem OK`);
+        }
+      } catch (err) {
+        console.error(`❌ Exception checking plan permissions: ${err}`);
+      }
     }
     
     displayCommunity = {
       ...data,
       subscription_plans: activePlans
     };
+  }
+  
+  // Import and use the debug utilities
+  try {
+    // Importing utility functions directly in edge functions
+    const { verifyPlansInDatabase, deepVerifyPlans, debugPlans, ensurePlanFields } = await import("../utils/planDebugUtils.ts");
+    
+    // Add full debug verification to help diagnose permission issues
+    await verifyPlansInDatabase(displayCommunity.id, supabase);
+    await deepVerifyPlans(displayCommunity.id, supabase);
+    
+    // Debug and normalize plans
+    debugPlans(displayCommunity.subscription_plans);
+    displayCommunity.subscription_plans = ensurePlanFields(displayCommunity.subscription_plans);
+  } catch (err) {
+    console.error(`❌ Error importing/using debug utils: ${err}`);
   }
   
   console.log(`📝 Entity description: "${displayCommunity.description || 'NOT SET'}"`);

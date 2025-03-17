@@ -1,6 +1,4 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
 import { useRevenueStats } from "./useRevenueStats";
@@ -12,134 +10,167 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MiniAppData } from "./types";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("useGroupDashboardStats");
 
 export const useGroupDashboardStats = (groupId: string | null) => {
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
   
-  // State to hold aggregated subscribers from all communities in the group
-  const [allSubscribers, setAllSubscribers] = useState<any[]>([]);
-  const [allPlans, setAllPlans] = useState<any[]>([]);
-  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(true);
-  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
-  
-  // Get all communities in the group
-  const { isLoading: communitiesLoading, communityIds } = useGroupMemberCommunities(groupId);
-  
-  // Memoize the community IDs to prevent unnecessary re-renders
-  const communityIdsString = useMemo(() => 
-    communityIds && communityIds.length > 0 ? communityIds.join(',') : '', 
-  [communityIds]);
-  
-  // Fetch subscribers for each community in the group
-  useEffect(() => {
-    if (!communityIdsString) {
-      setAllSubscribers([]);
-      setIsLoadingSubscribers(false);
-      return;
-    }
-    
-    setIsLoadingSubscribers(true);
-    
-    const fetchAllSubscribers = async () => {
+  // Fetch subscribers directly for the group ID, not aggregating from member communities
+  const { data: subscribersData, isLoading: subscribersLoading } = useQuery({
+    queryKey: ["group-subscribers", groupId],
+    queryFn: async () => {
+      if (!groupId) return [];
+      
+      logger.log("Fetching subscribers for group ID:", groupId);
+      
       try {
-        // Only fetch if we have community IDs
-        if (communityIds && communityIds.length > 0) {
-          const { data: subscribers, error } = await supabase
-            .from("community_subscribers")
+        // Fetch subscribers directly from the database with plan information
+        const { data: subscribers, error: subscribersError } = await supabase
+          .from("community_subscribers")
+          .select(`
+            *,
+            plan:subscription_plan_id (
+              id,
+              name,
+              price,
+              interval
+            )
+          `)
+          .eq("community_id", groupId);
+
+        if (subscribersError) {
+          logger.error("Error fetching group subscribers:", subscribersError);
+          return [];
+        }
+
+        // Create a map to store user details
+        const userDetails: Record<string, { first_name: string | null, last_name: string | null }> = {};
+        
+        // Fetch user details from telegram_mini_app_users for all telegram_user_ids
+        if (subscribers.length > 0) {
+          const telegramIds = subscribers.map(subscriber => subscriber.telegram_user_id);
+          
+          const { data: users, error: usersError } = await supabase
+            .from("telegram_mini_app_users")
             .select(`
-              *,
-              plan:subscription_plan_id (
-                id,
-                name,
-                price,
-                interval
-              )
+              telegram_id,
+              first_name,
+              last_name
             `)
-            .in("community_id", communityIds);
-          
-          if (error) {
-            console.error("Error fetching group subscribers:", error);
-            setIsLoadingSubscribers(false);
-            return;
+            .in("telegram_id", telegramIds);
+            
+          if (usersError) {
+            logger.error("Error fetching user details for group:", usersError);
+          } else if (users) {
+            // Create a map of user details by telegram_id
+            users.forEach(user => {
+              userDetails[user.telegram_id] = {
+                first_name: user.first_name,
+                last_name: user.last_name
+              };
+            });
           }
-          
-          setAllSubscribers(subscribers || []);
         }
-        setIsLoadingSubscribers(false);
+
+        // Get payment status from subscription_payments table
+        const paymentStatusMap: Record<string, string> = {};
+        
+        if (subscribers.length > 0) {
+          const telegramUserIds = subscribers.map(subscriber => subscriber.telegram_user_id);
+          
+          // Get the latest payment status for each user
+          const { data: payments, error: paymentsError } = await supabase
+            .from("subscription_payments")
+            .select(`
+              telegram_user_id,
+              status
+            `)
+            .eq("community_id", groupId)
+            .in("telegram_user_id", telegramUserIds)
+            .order("created_at", { ascending: false });
+            
+          if (paymentsError) {
+            logger.error("Error fetching payment status for group:", paymentsError);
+          } else if (payments) {
+            // Only keep the most recent payment status for each user
+            const processedUserIds = new Set<string>();
+            
+            payments.forEach(payment => {
+              if (!processedUserIds.has(payment.telegram_user_id)) {
+                paymentStatusMap[payment.telegram_user_id] = payment.status;
+                processedUserIds.add(payment.telegram_user_id);
+              }
+            });
+          }
+        }
+
+        // Map the subscribers with their additional details
+        return subscribers.map(subscriber => ({
+          ...subscriber,
+          first_name: userDetails[subscriber.telegram_user_id]?.first_name || null,
+          last_name: userDetails[subscriber.telegram_user_id]?.last_name || null,
+          payment_status: paymentStatusMap[subscriber.telegram_user_id] || null
+        }));
       } catch (error) {
-        console.error("Exception fetching group subscribers:", error);
-        setIsLoadingSubscribers(false);
+        logger.error("Exception in group subscribers fetch:", error);
+        return [];
       }
-    };
-    
-    fetchAllSubscribers();
-  }, [communityIdsString, communityIds]);
+    },
+    enabled: !!groupId
+  });
   
-  // Fetch subscription plans for all communities
-  useEffect(() => {
-    if (!communityIdsString) {
-      setAllPlans([]);
-      setIsLoadingPlans(false);
-      return;
-    }
-    
-    setIsLoadingPlans(true);
-    
-    const fetchAllPlans = async () => {
+  // Fetch subscription plans for the group
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: ["group-plans", groupId],
+    queryFn: async () => {
+      if (!groupId) return [];
+      
+      logger.log("Fetching plans for group ID:", groupId);
+      
       try {
-        // Only fetch if we have community IDs
-        if (communityIds && communityIds.length > 0) {
-          const { data: plans, error } = await supabase
-            .from("subscription_plans")
-            .select("*")
-            .in("community_id", communityIds);
-          
-          if (error) {
-            console.error("Error fetching group plans:", error);
-            setIsLoadingPlans(false);
-            return;
-          }
-          
-          setAllPlans(plans || []);
+        const { data: plans, error } = await supabase
+          .from("subscription_plans")
+          .select("*")
+          .eq("community_id", groupId);
+        
+        if (error) {
+          logger.error("Error fetching group plans:", error);
+          return [];
         }
-        setIsLoadingPlans(false);
+        
+        return plans || [];
       } catch (error) {
-        console.error("Exception fetching group plans:", error);
-        setIsLoadingPlans(false);
+        logger.error("Exception in group plans fetch:", error);
+        return [];
       }
-    };
-    
-    fetchAllPlans();
-  }, [communityIdsString, communityIds]);
+    },
+    enabled: !!groupId
+  });
   
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(allSubscribers, timeRangeStartDate);
+    useFilteredSubscribers(subscribersData, timeRangeStartDate);
   
   const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
     useRevenueStats(filteredSubscribers);
   
   const { trialUsers } = useTrialUsers(filteredSubscribers);
   
-  // Create a stable query key for the mini app users
-  const miniAppUsersQueryKey = useMemo(() => 
-    ["groupMiniAppUsers", groupId, communityIdsString],
-    [groupId, communityIdsString]
-  );
-  
   // Fetch mini app users for this group
   const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = useQuery({
-    queryKey: miniAppUsersQueryKey,
+    queryKey: ["groupMiniAppUsers", groupId],
     queryFn: async () => {
-      if (!groupId || !communityIds || !communityIds.length) return { count: 0, nonSubscribers: 0 };
+      if (!groupId) return { count: 0, nonSubscribers: 0 };
       
       try {
         const { data: miniAppUsers, error } = await supabase
           .from("telegram_mini_app_users")
           .select("*")
-          .in("community_id", communityIds);
+          .eq("community_id", groupId);
         
         if (error) {
-          console.error("Error fetching group mini app users:", error);
+          logger.error("Error fetching group mini app users:", error);
           return { count: 0, nonSubscribers: 0 };
         }
         
@@ -157,11 +188,11 @@ export const useGroupDashboardStats = (groupId: string | null) => {
           users: miniAppUsers
         };
       } catch (error) {
-        console.error("Exception fetching group mini app users:", error);
+        logger.error("Exception fetching group mini app users:", error);
         return { count: 0, nonSubscribers: 0 };
       }
     },
-    enabled: !!groupId && !!communityIds && communityIds.length > 0 && !isLoadingSubscribers
+    enabled: !!groupId && !subscribersLoading
   });
   
   const miniAppUsers: MiniAppData = {
@@ -175,17 +206,14 @@ export const useGroupDashboardStats = (groupId: string | null) => {
     filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,
-    allPlans
+    plansData
   );
   
   const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
   
-  // Create a stable owner query key
-  const ownerQueryKey = useMemo(() => ["groupOwner", groupId], [groupId]);
-  
   // Fetch group owner info
   const { data: ownerInfo, isLoading: ownerLoading } = useQuery({
-    queryKey: ownerQueryKey,
+    queryKey: ["groupOwner", groupId],
     queryFn: async () => {
       if (!groupId) return null;
       
@@ -198,7 +226,7 @@ export const useGroupDashboardStats = (groupId: string | null) => {
           .single();
         
         if (error || !group) {
-          console.error("Error fetching group owner:", error);
+          logger.error("Error fetching group owner:", error);
           return null;
         }
         
@@ -209,13 +237,13 @@ export const useGroupDashboardStats = (groupId: string | null) => {
           .single();
         
         if (ownerError) {
-          console.error("Error fetching owner profile:", ownerError);
+          logger.error("Error fetching owner profile:", ownerError);
           return null;
         }
         
         return owner;
       } catch (error) {
-        console.error("Exception fetching group owner:", error);
+        logger.error("Exception fetching group owner:", error);
         return null;
       }
     },
@@ -223,9 +251,8 @@ export const useGroupDashboardStats = (groupId: string | null) => {
   });
   
   const isLoading = 
-    communitiesLoading || 
-    isLoadingSubscribers || 
-    isLoadingPlans || 
+    subscribersLoading || 
+    plansLoading || 
     miniAppUsersLoading || 
     ownerLoading;
   

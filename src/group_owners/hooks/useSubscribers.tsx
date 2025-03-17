@@ -1,5 +1,9 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("useSubscribers");
 
 export interface Subscriber {
   id: string;
@@ -34,6 +38,8 @@ export const useSubscribers = (communityId: string) => {
   const fetchSubscribers = async (): Promise<Subscriber[]> => {
     if (!communityId) return [];
 
+    logger.log("Fetching subscribers for community/group ID:", communityId);
+
     // Fetch subscribers directly from the database with plan information
     const { data: subscribers, error: subscribersError } = await supabase
       .from("community_subscribers")
@@ -49,7 +55,7 @@ export const useSubscribers = (communityId: string) => {
       .eq("community_id", communityId);
 
     if (subscribersError) {
-      console.error("Error fetching subscribers:", subscribersError);
+      logger.error("Error fetching subscribers:", subscribersError);
       return [];
     }
 
@@ -70,7 +76,7 @@ export const useSubscribers = (communityId: string) => {
         .in("telegram_id", telegramIds);
         
       if (usersError) {
-        console.error("Error fetching user details:", usersError);
+        logger.error("Error fetching user details:", usersError);
       } else if (users) {
         // Create a map of user details by telegram_id
         users.forEach(user => {
@@ -100,7 +106,7 @@ export const useSubscribers = (communityId: string) => {
         .order("created_at", { ascending: false });
         
       if (paymentsError) {
-        console.error("Error fetching payment status:", paymentsError);
+        logger.error("Error fetching payment status:", paymentsError);
       } else if (payments) {
         // Only keep the most recent payment status for each user
         const processedUserIds = new Set<string>();

@@ -13,6 +13,8 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
       if (!groupId) return [];
       
       try {
+        logger.log("Fetching member communities for group ID:", groupId);
+        
         // Fetch the communities that are members of this group
         const { data: relationships, error: relError } = await supabase
           .from("community_relationships")
@@ -30,11 +32,13 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         }
         
         if (!relationships || relationships.length === 0) {
+          logger.log("No member communities found for group", groupId);
           return [];
         }
         
         // Get the actual community details
         const communityIds = relationships.map(rel => rel.member_id);
+        logger.log(`Found ${communityIds.length} member communities for group ${groupId}`);
         
         const { data: communities, error: comError } = await supabase
           .from("communities")

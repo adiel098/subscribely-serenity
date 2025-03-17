@@ -1,8 +1,23 @@
 
-import { Subscriber } from "@/group_owners/hooks/useSubscribers";
-
-export interface DashboardSubscriber extends Subscriber {
-  // Extended properties for dashboard
+export interface DashboardSubscriber {
+  id: string;
+  telegram_user_id: string;
+  telegram_username: string | null;
+  community_id: string;
+  joined_at: string;
+  last_active: string | null;
+  subscription_status: string;
+  is_active: boolean;
+  subscription_start_date: string | null;
+  subscription_end_date: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  plan?: {
+    id: string;
+    name: string;
+    price: number;
+    interval: string;
+  } | null;
   is_trial?: boolean;
   trial_end_date?: string | null;
   payment_status?: string;
@@ -12,29 +27,16 @@ export interface DashboardSubscriber extends Subscriber {
   };
 }
 
-export type TimeRange = "7d" | "30d" | "90d" | "all";
-
-export interface TimeRangeData {
-  timeRange: TimeRange;
-  timeRangeLabel: string;
-  timeRangeStartDate: Date;
+export interface ChartDataPoint {
+  date: string;
+  members: number;
+  revenue: number;
 }
 
-export interface FilteredSubscriberData {
-  filteredSubscribers: DashboardSubscriber[];
-  activeSubscribers: DashboardSubscriber[];
-  inactiveSubscribers: DashboardSubscriber[];
-}
-
-export interface RevenueData {
-  totalRevenue: number;
-  avgRevenuePerSubscriber: number;
-  conversionRate: number;
-}
-
-export interface TrialUsersData {
+export interface TrialUserData {
   count: number;
-  conversion: number;
+  // Percentage of trial users who convert to paid subscriptions
+  conversionRate: number;
 }
 
 export interface MiniAppData {
@@ -42,26 +44,16 @@ export interface MiniAppData {
   nonSubscribers: number;
 }
 
+export interface Insight {
+  averageSubscriptionDuration: number;
+  mostPopularPlan: string | null;
+  mostPopularPlanPrice: number | null;
+  mostActiveDay: string | null;
+  renewalRate: number;
+}
+
 export interface PaymentStatistics {
   completed: number;
   pending: number;
   failed: number;
-}
-
-export interface ChartDataPoint {
-  date: string;
-  value: number;
-}
-
-export interface ChartData {
-  memberGrowthData: ChartDataPoint[];
-  revenueData: ChartDataPoint[];
-}
-
-export interface Insights {
-  averageSubscriptionDuration: number;
-  mostPopularPlan: string;
-  mostPopularPlanPrice: number;
-  mostActiveDay: string;
-  renewalRate: number;
 }

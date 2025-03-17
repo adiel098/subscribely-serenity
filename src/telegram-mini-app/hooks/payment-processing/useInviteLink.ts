@@ -27,24 +27,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
     logPaymentAction('Attempting to fetch or create invite link', { communityId, forceNew });
     
     try {
-      if (!forceNew) {
-        // First try to get the invite link from the community record
-        const { data: community, error: communityError } = await supabase
-          .from('communities')
-          .select('telegram_invite_link, custom_link')
-          .eq('id', communityId)
-          .single();
-        
-        if (communityError) {
-          logger.error('Error fetching community:', communityError);
-        } else if (community?.telegram_invite_link) {
-          logPaymentAction('Found invite link in community record', community.telegram_invite_link);
-          setInviteLink(community.telegram_invite_link);
-          return community.telegram_invite_link;
-        }
-      }
-      
-      // If no invite link was found or forceNew is true, try to create one using the edge function
+      // Call the edge function to create an invite link
       logPaymentAction('Calling create-invite-link function', { communityId, forceNew });
       const { data, error } = await supabase.functions.invoke('create-invite-link', {
         body: { communityId, forceNew }

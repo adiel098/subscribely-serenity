@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
@@ -49,7 +50,6 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
         description: community.description || "Group subscription",
         telegram_photo_url: community.telegram_photo_url,
         telegram_chat_id: community.telegram_chat_id,
-        telegram_invite_link: community.telegram_invite_link || null,
         custom_link: community.custom_link,
         is_group: true,
         communities: community.communities || [],
@@ -59,7 +59,6 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
       // Return regular community data
       return {
         ...community,
-        telegram_invite_link: community.telegram_invite_link || null,
         subscription_plans: community.subscription_plans || []
       };
     }
@@ -84,7 +83,6 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
         description,
         telegram_photo_url,
         telegram_chat_id,
-        telegram_invite_link,
         custom_link,
         is_group,
         subscription_plans (
@@ -121,7 +119,6 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
       description: community.description,
       telegram_photo_url: community.telegram_photo_url,
       telegram_chat_id: community.telegram_chat_id,
-      telegram_invite_link: community.telegram_invite_link || null,
       custom_link: community.custom_link,
       is_group: community.is_group,
       subscription_plans: community.subscription_plans || []

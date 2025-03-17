@@ -49,7 +49,6 @@ serve(async (req) => {
         description,
         telegram_chat_id,
         telegram_photo_url,
-        telegram_invite_link,
         custom_link,
         is_group,
         subscription_plans (
@@ -99,7 +98,6 @@ serve(async (req) => {
                   description,
                   telegram_chat_id,
                   telegram_photo_url,
-                  telegram_invite_link,
                   custom_link
                 )
               `)

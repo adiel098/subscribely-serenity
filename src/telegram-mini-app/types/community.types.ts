@@ -6,7 +6,6 @@ export interface Community {
   name: string;
   description: string | null;
   telegram_photo_url: string | null;
-  telegram_invite_link?: string | null;  // Make this optional
   telegram_chat_id: string | null;
   custom_link: string | null;
   photo_url?: string | null;

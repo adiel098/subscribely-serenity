@@ -50,7 +50,7 @@ export const BroadcastMessageForm = ({
 
     setIsSending(true);
     try {
-      const result = await sendBroadcastMessage({
+      sendBroadcastMessage({
         entityId,
         entityType,
         message,
@@ -58,19 +58,26 @@ export const BroadcastMessageForm = ({
         includeButton,
         image,
         ...(filterType === 'plan' && { subscriptionPlanId: selectedPlanId })
+      }, {
+        onSuccess: (data) => {
+          if (data.success) {
+            toast.success(`Message sent to ${data.sent_success || 0} recipients`);
+            setMessage("");
+            // Don't reset image and button settings to allow for similar follow-up messages
+          } else {
+            toast.error(`Failed to send message: ${data.error}`);
+          }
+          setIsSending(false);
+        },
+        onError: (error) => {
+          console.error('Error sending broadcast:', error);
+          toast.error('An error occurred while sending the broadcast');
+          setIsSending(false);
+        }
       });
-
-      if (result.success) {
-        toast.success(`Message sent to ${result.sent_success} recipients`);
-        setMessage("");
-        // Don't reset image and button settings to allow for similar follow-up messages
-      } else {
-        toast.error(`Failed to send message: ${result.error}`);
-      }
     } catch (error) {
       console.error('Error sending broadcast:', error);
       toast.error('An error occurred while sending the broadcast');
-    } finally {
       setIsSending(false);
     }
   };

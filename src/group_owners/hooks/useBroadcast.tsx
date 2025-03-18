@@ -13,8 +13,17 @@ interface BroadcastMessageParams {
   image?: string | null;
 }
 
+interface BroadcastResult {
+  success: boolean;
+  broadcast_id?: string;
+  sent_success?: number;
+  sent_failed?: number;
+  total_recipients?: number;
+  error?: string;
+}
+
 export const useBroadcast = () => {
-  const sendBroadcastMessage = async (params: BroadcastMessageParams) => {
+  const sendBroadcastMessage = async (params: BroadcastMessageParams): Promise<BroadcastResult> => {
     try {
       console.log('Sending broadcast message:', params);
       
@@ -82,7 +91,7 @@ export const useBroadcast = () => {
     mutationFn: sendBroadcastMessage,
     onSuccess: (data) => {
       if (data.success) {
-        toast.success(`Broadcast sent successfully to ${data.total_recipients || 0} recipients`);
+        toast.success(`Broadcast sent successfully to ${data.sent_success || 0} recipients`);
       } else {
         toast.error(`Failed to send broadcast: ${data.error}`);
       }

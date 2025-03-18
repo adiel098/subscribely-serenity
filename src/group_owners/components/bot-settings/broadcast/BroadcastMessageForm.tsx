@@ -56,7 +56,7 @@ export const BroadcastMessageForm = ({
         message,
         filterType,
         includeButton,
-        image, // Pass the image exactly as it is - telegramMessenger will handle it
+        image,
         ...(filterType === 'plan' && { subscriptionPlanId: selectedPlanId })
       }, {
         onSuccess: (data) => {

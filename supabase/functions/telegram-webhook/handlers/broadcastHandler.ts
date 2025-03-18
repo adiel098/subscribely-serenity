@@ -56,7 +56,7 @@ function processImageData(imageData: string | null): string | null {
   }
   
   // For base64 data URLs, ensure they're properly formatted
-  if (imageData.startsWith('data:image/')) {
+  if (imageData.startsWith('data:image')) {
     // The image data is already correctly formatted for our telegramMessenger utility
     console.log(`🖼️ [BROADCAST-HANDLER] Image is a data URL, properly formatted`);
     return imageData;
@@ -64,6 +64,28 @@ function processImageData(imageData: string | null): string | null {
   
   console.log(`⚠️ [BROADCAST-HANDLER] Unrecognized image format, returning null`);
   return null;
+}
+
+// Get the bot username by querying Telegram API
+async function getBotUsernameFromToken(botToken: string): Promise<string> {
+  try {
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching bot username from API`);
+    
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
+    const data = await response.json();
+    
+    if (data.ok && data.result && data.result.username) {
+      const username = data.result.username;
+      console.log(`✅ [BROADCAST-HANDLER] Got bot username from API: ${username}`);
+      return username;
+    }
+    
+    console.error(`❌ [BROADCAST-HANDLER] Failed to get bot username from API:`, data);
+    return 'membifybot'; // Fallback to default
+  } catch (error) {
+    console.error(`❌ [BROADCAST-HANDLER] Error fetching bot username from API:`, error);
+    return 'membifybot'; // Fallback to default
+  }
 }
 
 export async function sendBroadcast(
@@ -103,19 +125,16 @@ export async function sendBroadcast(
     const processedImage = processImageData(image);
     console.log(`📝 [BROADCAST-HANDLER] Image processed: ${!!processedImage}`);
 
-    if (filterType === 'plan') {
-      if (!subscriptionPlanId) {
-        console.error(`❌ [BROADCAST-HANDLER] Plan filter specified but no subscriptionPlanId provided`);
-        throw new Error('Subscription plan ID is required for plan filter type');
-      }
-      console.log(`📝 [BROADCAST-HANDLER] Using subscription plan: ${subscriptionPlanId}`);
+    if (filterType === 'plan' && !subscriptionPlanId) {
+      console.error(`❌ [BROADCAST-HANDLER] Plan filter specified but no subscriptionPlanId provided`);
+      throw new Error('Subscription plan ID is required for plan filter type');
     }
 
     // Get bot token
     console.log(`🔍 [BROADCAST-HANDLER] Fetching bot token`);
     const { data: settings, error: settingsError } = await supabase
       .from('telegram_global_settings')
-      .select('bot_token')
+      .select('bot_token, bot_username')
       .single();
 
     if (settingsError) {
@@ -129,6 +148,13 @@ export async function sendBroadcast(
     }
 
     console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved bot token`);
+    
+    // Get the bot's username either from settings or from the Telegram API
+    let botUsername = settings.bot_username;
+    if (!botUsername) {
+      botUsername = await getBotUsernameFromToken(settings.bot_token);
+    }
+    console.log(`📝 [BROADCAST-HANDLER] Using bot username: ${botUsername}`);
     
     // Get entity details based on type (community or group)
     console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId} (type: ${entityType})`);
@@ -180,14 +206,13 @@ export async function sendBroadcast(
 
     console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details: ${entityName}`);
 
-    // Generate the miniapp URL - either use custom link or generate from the entity ID
-    let miniappUrl = '';
-    if (customLink) {
-      miniappUrl = customLink;
-    } else {
-      miniappUrl = `https://t.me/SubscribelyBot/webapp?startapp=${entityId}`;
-    }
-    console.log(`📝 [BROADCAST-HANDLER] MiniApp URL: ${miniappUrl}`);
+    // Generate the proper mini app URL for Telegram - using t.me format with bot username
+    const baseUrl = `https://t.me/${botUsername}?start=`;
+    // Use either custom link or entity ID (without the prefix for groups)
+    const linkParameter = customLink || (entityType === 'group' ? entityId.replace('group_', '') : entityId);
+    const miniappUrl = `${baseUrl}${linkParameter}`;
+    
+    console.log(`📝 [BROADCAST-HANDLER] Generated MiniApp URL: ${miniappUrl}`);
 
     // Query subscribers
     console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity: ${entityId}`);
@@ -242,21 +267,23 @@ export async function sendBroadcast(
     let failureCount = 0;
 
     // Prepare inline keyboard if button is requested
-    const inlineKeyboard = includeButton ? {
-      inline_keyboard: [[
-        {
-          text: "Join Community🚀",
-          web_app: {
-            url: miniappUrl
-          }
-        }
-      ]]
-    } : undefined;
-
-    console.log(`📝 [BROADCAST-HANDLER] Include button: ${!!inlineKeyboard}`);
-    
-    if (inlineKeyboard) {
-      console.log(`📝 [BROADCAST-HANDLER] Button URL: ${miniappUrl}`);
+    let inlineKeyboard = null;
+    if (includeButton) {
+      // Validate the URL to ensure it's a proper HTTPS URL
+      if (miniappUrl && miniappUrl.startsWith('https://')) {
+        inlineKeyboard = {
+          inline_keyboard: [[
+            {
+              text: "Join Community🚀",
+              url: miniappUrl // Use URL property instead of web_app for external links
+            }
+          ]]
+        };
+        console.log(`📝 [BROADCAST-HANDLER] Created inline keyboard with URL: ${miniappUrl}`);
+      } else {
+        console.warn(`⚠️ [BROADCAST-HANDLER] Invalid URL for inline keyboard (not HTTPS): ${miniappUrl}`);
+        console.warn(`⚠️ [BROADCAST-HANDLER] Button will be omitted from messages`);
+      }
     }
 
     // Send message to each subscriber

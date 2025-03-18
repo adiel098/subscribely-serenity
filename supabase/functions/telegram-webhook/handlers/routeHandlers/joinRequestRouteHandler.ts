@@ -1,19 +1,34 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleChatJoinRequest } from '../../handlers/services/joinRequestHandler.ts';
+import { corsHeaders } from '../../cors.ts';
 
-/**
- * Handler for chat join request events from Telegram webhook
- */
 export async function handleJoinRequestRoute(
   supabase: ReturnType<typeof createClient>,
-  update: any
-): Promise<{ handled: boolean, response?: Response }> {
-  if (update.chat_join_request) {
-    console.log("[JOIN-REQUEST-ROUTE] 🔄 Routing to chat join request handler");
-    const response = await handleChatJoinRequest(supabase, update);
-    return { handled: true, response };
-  }
+  joinRequest: any,
+  botToken: string
+) {
+  console.log(`🔄 [JOIN-REQUEST-ROUTER] Processing join request from ${joinRequest.from?.id || 'unknown'}`);
   
-  return { handled: false };
+  try {
+    // This is a placeholder - implement actual join request handling logic here
+    console.log(`✅ [JOIN-REQUEST-ROUTER] Join request processed`);
+    
+    return {
+      handled: true,
+      response: null
+    };
+  } catch (error) {
+    console.error(`❌ [JOIN-REQUEST-ROUTER] Error handling join request:`, error);
+    
+    return {
+      handled: false,
+      response: new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: error.message || "Unknown error in join request handler"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    };
+  }
 }

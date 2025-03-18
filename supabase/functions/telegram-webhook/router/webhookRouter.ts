@@ -1,6 +1,11 @@
+
 import { corsHeaders } from "../cors.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendBroadcast } from "../handlers/broadcastHandler.ts";
+import { handleMessageRoute } from "../handlers/routeHandlers/messageRouteHandler.ts";
+import { handleMemberRoute } from "../handlers/routeHandlers/memberRouteHandler.ts";
+import { handleJoinRequestRoute } from "../handlers/routeHandlers/joinRequestRouteHandler.ts";
+import { handleCustomActionsRoute } from "../handlers/routeHandlers/customActionsRouteHandler.ts";
 
 export async function routeTelegramWebhook(req: Request, supabase: ReturnType<typeof createClient>, botToken: string) {
   console.log(`🔄 [WEBHOOK-ROUTER] Processing webhook request: ${req.method} ${new URL(req.url).pathname}`);

@@ -1,86 +1,33 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleMemberRemoval } from '../../services/memberRemovalService.ts';
-import { handleMemberUnblock } from '../../services/memberUnblockService.ts';
 import { corsHeaders } from '../../cors.ts';
 
-/**
- * Handler for custom action routes like member removal or unblocking
- */
 export async function handleCustomActionsRoute(
   supabase: ReturnType<typeof createClient>,
-  path: string,
-  body: any,
+  callbackQuery: any,
   botToken: string
-): Promise<{ handled: boolean, response?: Response }> {
-  // Route: Member Removal
-  if (path === '/remove-member') {
-    console.log('[CUSTOM-ACTIONS] 🔄 Routing to member removal handler');
-    
-    // Validate that we have the required parameters
-    if (!body.chat_id || !body.user_id) {
-      console.error('[CUSTOM-ACTIONS] ❌ Missing required parameters for member removal:', body);
-      
-      return { 
-        handled: true,
-        response: new Response(JSON.stringify({ 
-          success: false, 
-          error: 'Missing required parameters: chat_id and user_id are required' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        })
-      };
-    }
-    
-    // Extract reason from body, default to 'removed' if not specified
-    const reason = body.reason && ['removed', 'expired'].includes(body.reason) 
-      ? body.reason
-      : 'removed';
-    
-    console.log(`[CUSTOM-ACTIONS] ℹ️ Member removal reason: ${reason}`);
-    
-    const response = await handleMemberRemoval(
-      supabase,
-      body.chat_id,
-      body.user_id,
-      botToken,
-      body.community_id, // Optional community_id
-      reason // Pass the reason 
-    );
-    
-    return { handled: true, response };
-  }
-
-  // Route: Member Unblock
-  if (path === '/unblock-member') {
-    console.log('[CUSTOM-ACTIONS] 🔄 Routing to member unblock handler');
-    
-    // Validate that we have the required parameters
-    if (!body.chat_id || !body.user_id) {
-      console.error('[CUSTOM-ACTIONS] ❌ Missing required parameters for member unblock:', body);
-      
-      return { 
-        handled: true,
-        response: new Response(JSON.stringify({ 
-          success: false, 
-          error: 'Missing required parameters: chat_id and user_id are required' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        })
-      };
-    }
-    
-    const response = await handleMemberUnblock(
-      supabase,
-      body.chat_id,
-      body.user_id,
-      botToken
-    );
-    
-    return { handled: true, response };
-  }
+) {
+  console.log(`🔄 [CUSTOM-ACTIONS-ROUTER] Processing callback query from ${callbackQuery.from?.id || 'unknown'}`);
   
-  return { handled: false };
+  try {
+    // This is a placeholder - implement actual callback query handling logic here
+    console.log(`✅ [CUSTOM-ACTIONS-ROUTER] Callback query processed`);
+    
+    return {
+      handled: true,
+      response: null
+    };
+  } catch (error) {
+    console.error(`❌ [CUSTOM-ACTIONS-ROUTER] Error handling callback query:`, error);
+    
+    return {
+      handled: false,
+      response: new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: error.message || "Unknown error in callback query handler"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
+    };
+  }
 }

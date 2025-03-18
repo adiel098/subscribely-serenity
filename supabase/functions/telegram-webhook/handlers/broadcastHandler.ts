@@ -1,12 +1,46 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getBotChatMember } from './membershipHandler.ts';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 
 interface BroadcastStatus {
   successCount: number;
   failureCount: number;
   totalRecipients: number;
+}
+
+// Helper function to check if the bot can message a user
+async function getBotChatMember(
+  botToken: string,
+  userId: string | number,
+  chatId: string | number
+): Promise<boolean> {
+  try {
+    console.log(`🔍 [BROADCAST-HANDLER] Checking if bot can message user ${userId}`);
+    
+    const url = `https://api.telegram.org/bot${botToken}/getChat`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chat_id: userId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.ok) {
+      console.log(`✅ [BROADCAST-HANDLER] Bot can message user ${userId}`);
+      return true;
+    } else {
+      console.log(`⚠️ [BROADCAST-HANDLER] Bot cannot message user ${userId}: ${data.description}`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`❌ [BROADCAST-HANDLER] Error checking if bot can message user:`, error);
+    return false;
+  }
 }
 
 export async function sendBroadcast(

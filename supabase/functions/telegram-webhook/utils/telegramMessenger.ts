@@ -1,4 +1,3 @@
-
 /**
  * Utility for sending messages through the Telegram Bot API
  */

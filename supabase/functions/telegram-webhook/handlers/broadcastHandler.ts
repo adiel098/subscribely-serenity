@@ -103,55 +103,66 @@ export async function sendBroadcast(
 
     console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved bot token`);
     
-    // Get entity details
-    console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId}`);
-    let entityResult;
+    // Get entity details based on type (community or group)
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId} (type: ${entityType})`);
+    
+    let entityName = '';
+    let customLink = '';
     
     if (entityType === 'community') {
-      const { data, error } = await supabase
+      // Get community details
+      const { data: community, error: communityError } = await supabase
         .from('communities')
-        .select('miniapp_url, custom_link, name')
+        .select('name, custom_link')
         .eq('id', entityId)
         .single();
         
-      if (error) {
-        console.error(`❌ [BROADCAST-HANDLER] Error fetching community details:`, error);
-        throw new Error(`Failed to get community details: ${error.message}`);
+      if (communityError) {
+        console.error(`❌ [BROADCAST-HANDLER] Error fetching community details:`, communityError);
+        throw new Error(`Failed to get community details: ${communityError.message}`);
       }
       
-      entityResult = { data };
+      if (!community) {
+        console.error(`❌ [BROADCAST-HANDLER] Community not found: ${entityId}`);
+        throw new Error(`Community not found with ID: ${entityId}`);
+      }
+      
+      entityName = community.name || 'Unknown Community';
+      customLink = community.custom_link || '';
     } else {
-      // Entity is a group
-      const { data, error } = await supabase
+      // Get group details
+      const { data: group, error: groupError } = await supabase
         .from('community_groups')
-        .select('id, custom_link, name')
+        .select('name, custom_link')
         .eq('id', entityId)
         .single();
         
-      if (error) {
-        console.error(`❌ [BROADCAST-HANDLER] Error fetching group details:`, error);
-        throw new Error(`Failed to get group details: ${error.message}`);
+      if (groupError) {
+        console.error(`❌ [BROADCAST-HANDLER] Error fetching group details:`, groupError);
+        throw new Error(`Failed to get group details: ${groupError.message}`);
       }
       
-      entityResult = { data };
+      if (!group) {
+        console.error(`❌ [BROADCAST-HANDLER] Group not found: ${entityId}`);
+        throw new Error(`Group not found with ID: ${entityId}`);
+      }
+      
+      entityName = group.name || 'Unknown Group';
+      customLink = group.custom_link || '';
     }
 
-    if (!entityResult?.data) {
-      console.error(`❌ [BROADCAST-HANDLER] Entity details not found for ${entityId}`);
-      throw new Error(`Entity not found with ID: ${entityId}`);
-    }
+    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details: ${entityName}`);
 
-    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details`);
-    console.log(`📝 [BROADCAST-HANDLER] Entity name: ${entityResult.data.name || 'Unknown'}`);
-
-    // Get the appropriate miniapp URL
-    let miniappUrl = entityResult.data.miniapp_url || entityResult.data.custom_link || '';
-    if (!miniappUrl) {
+    // Generate the miniapp URL - either use custom link or generate from the entity ID
+    let miniappUrl = '';
+    if (customLink) {
+      miniappUrl = customLink;
+    } else {
       miniappUrl = `https://t.me/SubscribelyBot/webapp?startapp=${entityId}`;
     }
     console.log(`📝 [BROADCAST-HANDLER] MiniApp URL: ${miniappUrl}`);
 
-    // Query subscribers directly using the entity ID
+    // Query subscribers
     console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity: ${entityId}`);
     let query = supabase
       .from('community_subscribers')

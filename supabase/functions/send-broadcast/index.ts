@@ -113,57 +113,74 @@ serve(async (req) => {
     
     console.log(`📦 [SEND-BROADCAST] Webhook payload:`, JSON.stringify(webhook_payload));
     
-    const response = await supabase.functions.invoke('telegram-webhook', {
-      body: webhook_payload
-    });
+    try {
+      const response = await supabase.functions.invoke('telegram-webhook', {
+        body: webhook_payload
+      });
 
-    console.log(`⬅️ [SEND-BROADCAST] telegram-webhook response received:`, JSON.stringify(response));
+      console.log(`⬅️ [SEND-BROADCAST] telegram-webhook response received:`, JSON.stringify(response));
 
-    if (response.error) {
-      console.error(`❌ [SEND-BROADCAST] Error invoking telegram-webhook function:`, response.error);
-      throw new Error(`Failed to send broadcast: ${response.error.message || 'Unknown error'}`);
+      if (response.error) {
+        console.error(`❌ [SEND-BROADCAST] Error invoking telegram-webhook function:`, response.error);
+        throw new Error(`Failed to send broadcast: ${response.error || 'Unknown error'}`);
+      }
+
+      const result = response.data;
+      console.log(`✅ [SEND-BROADCAST] Broadcast result:`, JSON.stringify(result));
+
+      if (!result || typeof result.successCount === 'undefined') {
+        console.error(`❌ [SEND-BROADCAST] Invalid response from telegram-webhook:`, result);
+        throw new Error('Invalid response format from telegram-webhook function');
+      }
+
+      // Update the broadcast record with the results
+      console.log(`🔄 [SEND-BROADCAST] Updating broadcast record with results`);
+      const { error: updateError } = await supabase
+        .from('broadcast_messages')
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          sent_success: result.successCount || 0,
+          sent_failed: result.failureCount || 0,
+          total_recipients: result.totalRecipients || 0
+        })
+        .eq('id', broadcast_id);
+
+      if (updateError) {
+        console.error(`⚠️ [SEND-BROADCAST] Error updating broadcast record:`, updateError);
+        console.warn(`⚠️ [SEND-BROADCAST] Continuing despite error in updating record`);
+      } else {
+        console.log(`✅ [SEND-BROADCAST] Broadcast record updated successfully`);
+      }
+
+      console.log(`🏁 [SEND-BROADCAST] Broadcast process completed successfully`);
+      console.log(`📊 [SEND-BROADCAST] Stats: ${result.successCount || 0} messages sent, ${result.failureCount || 0} failures, ${result.totalRecipients || 0} total recipients`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          sent_success: result.successCount || 0,
+          sent_failed: result.failureCount || 0,
+          total_recipients: result.totalRecipients || 0
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (webhookError) {
+      console.error(`❌ [SEND-BROADCAST] Error calling telegram-webhook:`, webhookError);
+      
+      // Still update the broadcast record with failure status
+      await supabase
+        .from('broadcast_messages')
+        .update({
+          status: 'failed',
+          sent_at: new Date().toISOString(),
+          error_message: webhookError.message || 'Unknown webhook error'
+        })
+        .eq('id', broadcast_id);
+        
+      throw webhookError;
     }
-
-    const result = response.data;
-    console.log(`✅ [SEND-BROADCAST] Broadcast result:`, JSON.stringify(result));
-
-    if (!result || typeof result.successCount === 'undefined') {
-      console.error(`❌ [SEND-BROADCAST] Invalid response from telegram-webhook:`, result);
-      throw new Error('Invalid response format from telegram-webhook function');
-    }
-
-    // Update the broadcast record with the results
-    console.log(`🔄 [SEND-BROADCAST] Updating broadcast record with results`);
-    const { error: updateError } = await supabase
-      .from('broadcast_messages')
-      .update({
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        sent_success: result.successCount || 0,
-        sent_failed: result.failureCount || 0,
-        total_recipients: result.totalRecipients || 0
-      })
-      .eq('id', broadcast_id);
-
-    if (updateError) {
-      console.error(`⚠️ [SEND-BROADCAST] Error updating broadcast record:`, updateError);
-      console.warn(`⚠️ [SEND-BROADCAST] Continuing despite error in updating record`);
-    } else {
-      console.log(`✅ [SEND-BROADCAST] Broadcast record updated successfully`);
-    }
-
-    console.log(`🏁 [SEND-BROADCAST] Broadcast process completed successfully`);
-    console.log(`📊 [SEND-BROADCAST] Stats: ${result.successCount || 0} messages sent, ${result.failureCount || 0} failures, ${result.totalRecipients || 0} total recipients`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        sent_success: result.successCount || 0,
-        sent_failed: result.failureCount || 0,
-        total_recipients: result.totalRecipients || 0
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     console.error(`❌ [SEND-BROADCAST] Error processing broadcast:`, error);
     console.error(`❌ [SEND-BROADCAST] Stack trace:`, error.stack);

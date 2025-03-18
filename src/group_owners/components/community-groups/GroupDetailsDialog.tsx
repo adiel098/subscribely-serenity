@@ -71,7 +71,7 @@ export const GroupDetailsDialog = ({
   
   // Update selected communities when channels are loaded - only once per dialog opening
   useEffect(() => {
-    if (isOpen && !isLoadingChannels && channelIds.length > 0) {
+    if (isOpen && !isLoadingChannels && channelIds && channelIds.length > 0) {
       logger.log("Setting selected communities from channels:", channelIds);
       setSelectedCommunityIds(channelIds);
     }
@@ -91,16 +91,17 @@ export const GroupDetailsDialog = ({
     invalidateCache();
   };
 
-  // Transform the Community objects to Channel objects
-  const transformedChannels = channels.length > 0 
-    ? communitiesToChannels(channels) 
+  // Transform the Community objects to Channel objects - ensure channels is an array
+  const channelsArray = Array.isArray(channels) ? channels : [];
+  const transformedChannels = channelsArray.length > 0 
+    ? communitiesToChannels(channelsArray) 
     : [];
 
   // Debug logging to help diagnose the issue
   logger.log("Dialog state:", {
     isOpen,
     isEditing,
-    channelsCount: channels.length,
+    channelsCount: channelsArray.length,
     channelIds,
     selectedCommunityIds,
     activeTab
@@ -126,7 +127,7 @@ export const GroupDetailsDialog = ({
             setPhotoUrl={setPhotoUrl}
             customLink={customLink}
             setCustomLink={setCustomLink}
-            allCommunities={allCommunities}
+            allCommunities={allCommunities || []}
             selectedCommunityIds={selectedCommunityIds}
             toggleCommunity={toggleCommunity}
             isLoadingCommunities={isLoadingAllCommunities || isLoadingChannels}

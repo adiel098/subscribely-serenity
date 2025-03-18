@@ -26,14 +26,19 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = m
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Ensure allCommunities is always an array
+  const communitiesArray = Array.isArray(allCommunities) ? allCommunities : [];
+  
   // Filter communities based on search query and ensure we only include non-group communities
-  const filteredCommunities = allCommunities.filter(community => 
+  const filteredCommunities = communitiesArray.filter(community => 
+    community && 
+    community.name && 
     community.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
     !community.is_group
   );
   
   logger.log("Communities for selection:", {
-    total: allCommunities.length,
+    total: communitiesArray.length,
     filtered: filteredCommunities.length,
     selected: selectedCommunityIds.length,
     selectedIds: selectedCommunityIds

@@ -3,6 +3,9 @@ import React, { memo } from "react";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Users } from "lucide-react";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("CommunityList");
 
 interface CommunityListProps {
   communities: Community[];
@@ -15,6 +18,16 @@ export const CommunityList: React.FC<CommunityListProps> = memo(({
   selectedCommunityIds,
   toggleCommunity
 }) => {
+  logger.log("Rendering community list with:", { 
+    communitiesCount: communities.length, 
+    selectedCount: selectedCommunityIds.length 
+  });
+
+  if (!Array.isArray(communities)) {
+    logger.error("Communities is not an array:", communities);
+    return <div className="p-4 text-center text-gray-500">Error loading communities data.</div>;
+  }
+
   return (
     <div className="rounded-md border border-gray-200 divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
       {communities.map(community => (

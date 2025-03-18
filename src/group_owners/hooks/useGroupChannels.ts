@@ -36,8 +36,10 @@ export const useGroupChannels = (groupId: string | null) => {
         
         logger.log(`Retrieved ${data.channels.length} communities from edge function:`, data.channels);
         
-        // Since the edge function now returns complete Community objects, we can use them directly
-        const communities: Community[] = data.channels;
+        // Make sure we have an array of Community objects
+        const communities: Community[] = Array.isArray(data.channels) 
+          ? data.channels 
+          : [data.channels];  // If it's a single object, wrap it in an array
         
         return { 
           channels: communities,

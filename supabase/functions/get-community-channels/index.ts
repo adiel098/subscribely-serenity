@@ -85,7 +85,7 @@ serve(async (req) => {
       );
     }
     
-    // Process relationships into channels format
+    // Process relationships into channels format - ensure we always return an array
     const channels = relationships
       .filter(rel => rel.communities) // Filter out any null communities
       .map(rel => {
@@ -96,7 +96,7 @@ serve(async (req) => {
     console.log(`Found ${channels.length} channels for group ${communityId}:`, channels);
     
     return new Response(
-      JSON.stringify({ isGroup: true, channels }),
+      JSON.stringify({ isGroup: true, channels: channels || [] }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
     

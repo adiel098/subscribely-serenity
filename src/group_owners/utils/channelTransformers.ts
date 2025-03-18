@@ -17,6 +17,15 @@ export interface Channel {
  * Transforms a Community object to a Channel object
  */
 export const communityToChannel = (community: Community): Channel => {
+  if (!community || typeof community !== 'object') {
+    logger.error("Invalid community object:", community);
+    return {
+      id: "error-id",
+      name: "Error: Invalid data",
+      type: "unknown"
+    };
+  }
+  
   return {
     id: community.id,
     name: community.name,
@@ -31,6 +40,13 @@ export const communityToChannel = (community: Community): Channel => {
  * Transforms an array of Community objects to Channel objects
  */
 export const communitiesToChannels = (communities: Community[]): Channel[] => {
+  if (!Array.isArray(communities)) {
+    logger.error("communitiesToChannels received non-array input:", communities);
+    return [];
+  }
+  
   logger.log(`Converting ${communities.length} communities to channels`);
-  return communities.map(communityToChannel);
+  return communities
+    .filter(community => community && typeof community === 'object')
+    .map(communityToChannel);
 };

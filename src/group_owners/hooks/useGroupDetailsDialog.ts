@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CommunityGroup } from "./types/communityGroup.types";
 import { Community } from "./useCommunities";
 import { useUpdateCommunityGroup } from "./useUpdateCommunityGroup";
@@ -79,11 +79,14 @@ export function useGroupDetailsDialog(
     updateGroupMutation, onGroupUpdated, onClose
   ]);
 
-  // Safely update selected community IDs - avoid direct state updates that could cause infinite loops
+  // Safely update selected community IDs using a stable function
   const setSelectedCommunitiesArray = useCallback((ids: string[]) => {
     setSelectedCommunityIds(prevIds => {
       // Only update state if the values are actually different
-      if (JSON.stringify(prevIds.sort()) !== JSON.stringify(ids.sort())) {
+      const currentIds = [...prevIds].sort().join(',');
+      const newIds = [...ids].sort().join(',');
+      
+      if (currentIds !== newIds) {
         logger.log("Updating selected communities:", ids);
         return ids;
       }

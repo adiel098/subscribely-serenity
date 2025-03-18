@@ -43,14 +43,18 @@ export const GroupMiniAppLinkButton = ({
     window.location.reload();
   };
 
+  const handleShowDetails = () => {
+    setIsDetailsOpen(true);
+  };
+
   return (
     <>
       <GroupActionButtons 
         onCopyLink={handleCopyLink}
-        onShowDetails={() => setIsDetailsOpen(true)}
+        onShowDetails={handleShowDetails}
       />
 
-      {/* Group Details Dialog */}
+      {/* Group Edit Dialog with tabs */}
       <GroupDetailsDialog 
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
@@ -59,7 +63,7 @@ export const GroupMiniAppLinkButton = ({
         fullLink={fullLink}
         onCopyLink={handleCopyLink}
         onGroupUpdated={handleGroupUpdated}
-        isEditModeByDefault={false} // Changed to view mode by default
+        isEditModeByDefault={true} // Set to edit mode by default
       />
     </>
   );

@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   try {
     const { broadcast_id, entity_id, entity_type, filter_type, subscription_plan_id } = await req.json();
     
-    if (!broadcast_id || !entity_id || !entity_type) {
+    if (!broadcast_id || !entity_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -43,92 +43,49 @@ Deno.serve(async (req) => {
       );
     }
     
-    // Get the recipients based on filter
-    let recipients: { telegram_user_id: string }[] = [];
+    // Simplified approach: directly query community_subscribers table using entity_id
+    // This works for both communities and groups since we store them in the same column
+    let query = supabase
+      .from('community_subscribers')
+      .select('telegram_user_id')
+      .eq('community_id', entity_id)
+      .eq('is_active', true);
     
-    // If it's a group, we need to fetch recipients from all communities in the group
-    if (entity_type === 'group') {
-      // First get all communities in the group using community_relationships table
-      const { data: groupCommunities, error: groupError } = await supabase
-        .from('community_relationships')
-        .select('member_id')
-        .eq('community_id', entity_id)
-        .eq('relationship_type', 'group');
-      
-      if (groupError) {
-        console.error('Error fetching group communities:', groupError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch group communities', details: groupError }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
-      }
-      
-      if (!groupCommunities || groupCommunities.length === 0) {
-        console.log('No communities found in group');
-        return new Response(
-          JSON.stringify({ error: 'No communities found in group' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-        );
-      }
-      
-      const communityIds = groupCommunities.map(gc => gc.member_id);
-      
-      // Now fetch all members from these communities based on filter
-      const query = supabase
-        .from('community_subscribers')
-        .select('telegram_user_id')
-        .in('community_id', communityIds)
-        .eq('is_active', true);
-      
-      if (filter_type === 'active') {
-        query.eq('subscription_status', 'active');
-      } else if (filter_type === 'expired') {
-        query.eq('subscription_status', 'expired');
-      } else if (filter_type === 'plan' && subscription_plan_id) {
-        query.eq('subscription_plan_id', subscription_plan_id);
-      }
-      
-      const { data: groupMembers, error: membersError } = await query;
-      
-      if (membersError) {
-        console.error('Error fetching group members:', membersError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch group members', details: membersError }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
-      }
-      
-      recipients = groupMembers || [];
-    } else {
-      // Get recipients from a single community
-      const query = supabase
-        .from('community_subscribers')
-        .select('telegram_user_id')
-        .eq('community_id', entity_id)
-        .eq('is_active', true);
-      
-      if (filter_type === 'active') {
-        query.eq('subscription_status', 'active');
-      } else if (filter_type === 'expired') {
-        query.eq('subscription_status', 'expired');
-      } else if (filter_type === 'plan' && subscription_plan_id) {
-        query.eq('subscription_plan_id', subscription_plan_id);
-      }
-      
-      const { data: communityMembers, error: membersError } = await query;
-      
-      if (membersError) {
-        console.error('Error fetching community members:', membersError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch community members', details: membersError }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
-      }
-      
-      recipients = communityMembers || [];
+    // Apply filters as needed
+    if (filter_type === 'active') {
+      query = query.eq('subscription_status', 'active');
+    } else if (filter_type === 'expired') {
+      query = query.eq('subscription_status', 'expired');
+    } else if (filter_type === 'plan' && subscription_plan_id) {
+      query = query.eq('subscription_plan_id', subscription_plan_id);
     }
     
-    // Deduplicate recipients (in case of overlapping communities in a group)
+    const { data: recipients, error: recipientsError } = await query;
+    
+    if (recipientsError) {
+      console.error('Error fetching recipients:', recipientsError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch recipients', details: recipientsError }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+    
+    if (!recipients || recipients.length === 0) {
+      console.log('No recipients found matching the criteria');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          broadcast_id, 
+          message: 'No recipients found matching the criteria',
+          total_recipients: 0,
+          sent_success: 0,
+          sent_failed: 0
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Deduplicate recipients (just in case)
     const uniqueRecipients = [...new Map(recipients.map(item => 
       [item.telegram_user_id, item]
     )).values()];
@@ -167,6 +124,7 @@ Deno.serve(async (req) => {
         
         if (result.ok) {
           sentSuccess++;
+          console.log(`✅ Successfully sent message to ${recipient.telegram_user_id}`);
         } else {
           console.error(`Error sending to ${recipient.telegram_user_id}:`, result.description);
           sentFailed++;

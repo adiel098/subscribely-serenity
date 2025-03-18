@@ -23,7 +23,7 @@ export const useBroadcast = () => {
           message: params.message,
           filter_type: params.filterType,
           subscription_plan_id: params.filterType === 'plan' ? params.subscriptionPlanId : null,
-          community_id: params.entityId, // Always store in community_id regardless of entity type
+          community_id: params.entityId, // We store the entity ID in community_id column regardless of type
           status: 'pending',
           total_recipients: 0,
           sent_success: 0,

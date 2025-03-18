@@ -23,19 +23,25 @@ export async function sendBroadcast(
       throw new Error('Either communityId or groupId must be provided');
     }
     
-    console.log(`Starting broadcast for ${communityId ? 'community' : 'group'}: ${communityId || groupId}`);
+    // For simplicity, we'll work with a single entityId
+    const entityId = communityId || groupId;
+    console.log(`Starting broadcast for entity: ${entityId}`);
     console.log('Filter type:', filterType);
 
     // Get bot token and entity details
     const [settingsResult, entityResult] = await Promise.all([
       supabase.from('telegram_global_settings').select('bot_token').single(),
-      communityId 
-        ? supabase.from('communities').select('miniapp_url').eq('id', communityId).single()
-        : supabase.from('community_groups')
-            .select('id, community_relationships(member_id, communities(miniapp_url))')
-            .eq('id', groupId)
-            .eq('relationship_type', 'group')
-            .single()
+      supabase.from('communities')
+        .select('miniapp_url')
+        .eq('id', entityId)
+        .single()
+        .catch(() => {
+          // If not found as a community, try as a group
+          return supabase.from('community_groups')
+            .select('id, custom_link')
+            .eq('id', entityId)
+            .single();
+        })
     ]);
 
     if (settingsResult.error) {
@@ -56,47 +62,13 @@ export async function sendBroadcast(
     console.log('Successfully retrieved bot token and entity details');
 
     // Get the appropriate miniapp URL
-    let miniappUrl = '';
-    if (communityId && entityResult.data.miniapp_url) {
-      miniappUrl = entityResult.data.miniapp_url;
-    } else if (groupId && entityResult.data.community_relationships && 
-               entityResult.data.community_relationships[0]?.communities?.miniapp_url) {
-      miniappUrl = entityResult.data.community_relationships[0].communities.miniapp_url;
-    }
+    let miniappUrl = entityResult.data.miniapp_url || entityResult.data.custom_link || '';
 
-    // Get all members based on filter
+    // Query subscribers directly using the entity ID
     let query = supabase
       .from('community_subscribers')
-      .select('telegram_user_id, subscription_status');
-      
-    if (communityId) {
-      query = query.eq('community_id', communityId);
-    } else if (groupId) {
-      // For groups, we need to join with community_relationships
-      const { data: groupMembers, error: groupError } = await supabase
-        .from('community_relationships')
-        .select('member_id')
-        .eq('community_id', groupId)
-        .eq('relationship_type', 'group');
-        
-      if (groupError) {
-        console.error('Error fetching group members:', groupError);
-        throw groupError;
-      }
-      
-      if (!groupMembers || groupMembers.length === 0) {
-        console.log('No members found for this group');
-        return {
-          successCount: 0,
-          failureCount: 0,
-          totalRecipients: 0
-        };
-      }
-      
-      // Get all community subscribers from the communities that are in this group
-      const communityIds = groupMembers.map(m => m.member_id);
-      query = query.in('community_id', communityIds);
-    }
+      .select('telegram_user_id, subscription_status')
+      .eq('community_id', entityId);
 
     // Apply filter by subscription status
     switch (filterType) {
@@ -114,17 +86,17 @@ export async function sendBroadcast(
         break;
     }
 
-    const { data: members, error: membersError } = await query;
+    const { data: subscribers, error: subscribersError } = await query;
 
-    if (membersError) {
-      console.error('Error fetching members:', membersError);
-      throw membersError;
+    if (subscribersError) {
+      console.error('Error fetching subscribers:', subscribersError);
+      throw subscribersError;
     }
 
-    console.log(`Found ${members?.length || 0} potential recipients`);
+    console.log(`Found ${subscribers?.length || 0} potential recipients`);
 
-    if (!members || members.length === 0) {
-      console.log('No members found matching the criteria');
+    if (!subscribers || subscribers.length === 0) {
+      console.log('No subscribers found matching the criteria');
       return {
         successCount: 0,
         failureCount: 0,
@@ -141,34 +113,34 @@ export async function sendBroadcast(
         {
           text: "Join Community🚀",
           web_app: {
-            url: `${miniappUrl}?start=${communityId || groupId}`
+            url: `${miniappUrl}?start=${entityId}`
           }
         }
       ]]
     } : undefined;
 
-    // Send message to each member
-    for (let i = 0; i < members.length; i++) {
-      const member = members[i];
+    // Send message to each subscriber
+    for (let i = 0; i < subscribers.length; i++) {
+      const subscriber = subscribers[i];
       try {
-        console.log(`Attempting to send message to user ${member.telegram_user_id}`);
+        console.log(`Attempting to send message to user ${subscriber.telegram_user_id}`);
         
         // Check if user can receive messages
         const canReceiveMessages = await getBotChatMember(
           settingsResult.data.bot_token,
-          member.telegram_user_id,
-          member.telegram_user_id
+          subscriber.telegram_user_id,
+          subscriber.telegram_user_id
         );
 
         if (!canReceiveMessages) {
-          console.log(`User ${member.telegram_user_id} cannot receive messages - skipping`);
+          console.log(`User ${subscriber.telegram_user_id} cannot receive messages - skipping`);
           failureCount++;
           continue;
         }
 
         // Ensure the message content is valid
         if (!message || typeof message !== 'string') {
-          console.error(`Invalid message format for user ${member.telegram_user_id}`);
+          console.error(`Invalid message format for user ${subscriber.telegram_user_id}`);
           failureCount++;
           continue;
         }
@@ -182,23 +154,23 @@ export async function sendBroadcast(
         // Send the message using our telegram messenger
         const result = await sendTelegramMessage(
           settingsResult.data.bot_token,
-          member.telegram_user_id,
+          subscriber.telegram_user_id,
           sanitizedMessage,
           inlineKeyboard
         );
         
         if (result.ok) {
           successCount++;
-          console.log(`✅ Message sent successfully to user ${member.telegram_user_id}`);
+          console.log(`✅ Message sent successfully to user ${subscriber.telegram_user_id}`);
         } else {
           failureCount++;
-          console.log(`❌ Failed to send message to user ${member.telegram_user_id}:`, result.description);
+          console.log(`❌ Failed to send message to user ${subscriber.telegram_user_id}:`, result.description);
         }
 
         // Add small delay to avoid hitting rate limits
         await new Promise(resolve => setTimeout(resolve, 50));
       } catch (error) {
-        console.error(`Error sending message to user ${member.telegram_user_id}:`, error);
+        console.error(`Error sending message to user ${subscriber.telegram_user_id}:`, error);
         failureCount++;
       }
     }
@@ -206,7 +178,7 @@ export async function sendBroadcast(
     const status: BroadcastStatus = {
       successCount,
       failureCount,
-      totalRecipients: members.length
+      totalRecipients: subscribers.length
     };
 
     console.log('Broadcast completed:', status);

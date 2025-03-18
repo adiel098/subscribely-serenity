@@ -85,18 +85,22 @@ serve(async (req) => {
       );
     }
     
-    // Process relationships into channels format - ensure we always return an array
-    const channels = relationships
-      .filter(rel => rel.communities) // Filter out any null communities
-      .map(rel => {
-        // Return the complete community object
-        return rel.communities;
-      });
-      
-    console.log(`Found ${channels.length} channels for group ${communityId}:`, channels);
+    // Process relationships into channels format
+    let channels = [];
+    
+    if (relationships && Array.isArray(relationships)) {
+      channels = relationships
+        .filter(rel => rel.communities) // Filter out any null communities
+        .map(rel => rel.communities); // Return the complete community object
+    }
+    
+    console.log(`Found ${channels.length} channels for group ${communityId}`);
     
     return new Response(
-      JSON.stringify({ isGroup: true, channels: channels || [] }),
+      JSON.stringify({ 
+        isGroup: true, 
+        channels: channels 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
     

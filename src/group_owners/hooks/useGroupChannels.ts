@@ -13,6 +13,7 @@ export const useGroupChannels = (groupId: string | null) => {
     queryKey: ["community-group-members", groupId],
     queryFn: async () => {
       if (!groupId) {
+        logger.log("No group ID provided");
         return { channels: [], channelIds: [] };
       }
       
@@ -29,21 +30,29 @@ export const useGroupChannels = (groupId: string | null) => {
           throw error;
         }
         
-        if (!data || !data.channels) {
-          logger.log("No channels returned from edge function");
+        // Ensure we have valid data
+        if (!data) {
+          logger.error("No data returned from edge function");
           return { channels: [], channelIds: [] };
         }
         
-        logger.log(`Retrieved ${data.channels.length} communities from edge function:`, data.channels);
+        // Check if data has the channels array
+        let channels: Community[] = [];
         
-        // Make sure we have an array of Community objects
-        const communities: Community[] = Array.isArray(data.channels) 
-          ? data.channels 
-          : [data.channels];  // If it's a single object, wrap it in an array
+        if (data.channels && Array.isArray(data.channels)) {
+          logger.log(`Retrieved ${data.channels.length} communities from edge function:`, data.channels);
+          channels = data.channels;
+        } else {
+          logger.error("Invalid channels data format:", data);
+        }
+        
+        // Extract channel IDs
+        const channelIds = channels.map(channel => channel.id);
+        logger.log(`Extracted ${channelIds.length} channel IDs:`, channelIds);
         
         return { 
-          channels: communities,
-          channelIds: communities.map(c => c.id)
+          channels,
+          channelIds
         };
       } catch (error) {
         logger.error("Error in useGroupChannels:", error);

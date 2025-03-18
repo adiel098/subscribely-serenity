@@ -18,26 +18,34 @@ export const CommunityList: React.FC<CommunityListProps> = memo(({
   selectedCommunityIds,
   toggleCommunity
 }) => {
-  logger.log("Rendering community list with:", { 
-    communitiesCount: communities.length, 
-    selectedCount: selectedCommunityIds.length 
-  });
-
+  // Ensure communities is an array
   if (!Array.isArray(communities)) {
     logger.error("Communities is not an array:", communities);
     return <div className="p-4 text-center text-gray-500">Error loading communities data.</div>;
   }
 
+  logger.log("Rendering community list with:", { 
+    communitiesCount: communities.length, 
+    selectedCount: selectedCommunityIds.length 
+  });
+
   return (
     <div className="rounded-md border border-gray-200 divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
-      {communities.map(community => (
-        <CommunityItem
-          key={community.id}
-          community={community}
-          isSelected={selectedCommunityIds.includes(community.id)}
-          onToggle={() => toggleCommunity(community.id)}
-        />
-      ))}
+      {communities.map((community) => {
+        if (!community || typeof community !== 'object' || !community.id) {
+          logger.error("Invalid community object:", community);
+          return null;
+        }
+        
+        return (
+          <CommunityItem
+            key={community.id}
+            community={community}
+            isSelected={selectedCommunityIds.includes(community.id)}
+            onToggle={() => toggleCommunity(community.id)}
+          />
+        );
+      })}
     </div>
   );
 });
@@ -50,6 +58,10 @@ interface CommunityItemProps {
 
 // Separate memoized component for each item to prevent re-renders of all items
 const CommunityItem = memo(({ community, isSelected, onToggle }: CommunityItemProps) => {
+  if (!community || typeof community !== 'object') {
+    return null;
+  }
+
   return (
     <div 
       className={`flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors ${

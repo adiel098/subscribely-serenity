@@ -40,6 +40,11 @@ export const communityToChannel = (community: Community): Channel => {
  * Transforms an array of Community objects to Channel objects
  */
 export const communitiesToChannels = (communities: Community[]): Channel[] => {
+  if (!communities) {
+    logger.error("communitiesToChannels received null input");
+    return [];
+  }
+  
   if (!Array.isArray(communities)) {
     logger.error("communitiesToChannels received non-array input:", communities);
     return [];
@@ -47,6 +52,6 @@ export const communitiesToChannels = (communities: Community[]): Channel[] => {
   
   logger.log(`Converting ${communities.length} communities to channels`);
   return communities
-    .filter(community => community && typeof community === 'object')
+    .filter(community => community && typeof community === 'object' && community.id)
     .map(communityToChannel);
 };

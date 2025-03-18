@@ -26,23 +26,23 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = m
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Ensure allCommunities is always an array
+  // Ensure we always have an array for communities
   const communitiesArray = Array.isArray(allCommunities) ? allCommunities : [];
+  
+  logger.log("Communities for selection:", {
+    total: communitiesArray.length,
+    selected: selectedCommunityIds.length,
+    selectedIds: selectedCommunityIds
+  });
   
   // Filter communities based on search query and ensure we only include non-group communities
   const filteredCommunities = communitiesArray.filter(community => 
     community && 
+    typeof community === 'object' &&
     community.name && 
     community.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
     !community.is_group
   );
-  
-  logger.log("Communities for selection:", {
-    total: communitiesArray.length,
-    filtered: filteredCommunities.length,
-    selected: selectedCommunityIds.length,
-    selectedIds: selectedCommunityIds
-  });
   
   // Handler for clearing all selected communities
   const handleClearSelection = useCallback(() => {

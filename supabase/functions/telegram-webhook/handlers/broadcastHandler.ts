@@ -153,6 +153,22 @@ export async function sendBroadcast(
     let botUsername = settings.bot_username;
     if (!botUsername) {
       botUsername = await getBotUsernameFromToken(settings.bot_token);
+      
+      // Try to save the username for future use
+      try {
+        const { error: updateError } = await supabase
+          .from('telegram_global_settings')
+          .update({ bot_username: botUsername })
+          .eq('bot_token', settings.bot_token);
+        
+        if (updateError) {
+          console.warn(`⚠️ [BROADCAST-HANDLER] Couldn't save bot username to database:`, updateError);
+        } else {
+          console.log(`✅ [BROADCAST-HANDLER] Bot username saved to database: ${botUsername}`);
+        }
+      } catch (e) {
+        console.warn(`⚠️ [BROADCAST-HANDLER] Error saving bot username:`, e);
+      }
     }
     console.log(`📝 [BROADCAST-HANDLER] Using bot username: ${botUsername}`);
     
@@ -185,7 +201,7 @@ export async function sendBroadcast(
     } else {
       // Get group details
       const { data: group, error: groupError } = await supabase
-        .from('community_groups')
+        .from('communities')
         .select('name, custom_link')
         .eq('id', entityId)
         .single();

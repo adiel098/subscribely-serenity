@@ -930,18 +930,21 @@ export type Database = {
       telegram_global_settings: {
         Row: {
           bot_token: string
+          bot_username: string | null
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
           bot_token: string
+          bot_username?: string | null
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
           bot_token?: string
+          bot_username?: string | null
           created_at?: string
           id?: string
           updated_at?: string

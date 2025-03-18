@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Send, Image as ImageIcon, X, Loader2 } from "lucide-react";
+import { Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { FilterTypeSelector } from "./FilterTypeSelector";
 import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
 import { toast } from "sonner";

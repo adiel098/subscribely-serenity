@@ -56,14 +56,22 @@ export async function sendBroadcast(
   try {
     console.log(`🚀 [BROADCAST-HANDLER] Starting broadcast operation`);
     
+    // Validate input parameters
     if (!communityId && !groupId) {
       console.error(`❌ [BROADCAST-HANDLER] No target entity specified`);
       throw new Error('Either communityId or groupId must be provided');
     }
     
+    if (!message || typeof message !== 'string') {
+      console.error(`❌ [BROADCAST-HANDLER] Invalid message content`);
+      throw new Error('Valid message content is required');
+    }
+    
     // For simplicity, we'll work with a single entityId
     const entityId = communityId || groupId;
-    console.log(`📝 [BROADCAST-HANDLER] Target entity: ${entityId} (type: ${communityId ? 'community' : 'group'})`);
+    const entityType = communityId ? 'community' : 'group';
+    
+    console.log(`📝 [BROADCAST-HANDLER] Target entity: ${entityId} (type: ${entityType})`);
     console.log(`📝 [BROADCAST-HANDLER] Filter type: ${filterType}`);
     console.log(`📝 [BROADCAST-HANDLER] Include button: ${includeButton}`);
     console.log(`📝 [BROADCAST-HANDLER] Image included: ${!!image}`);
@@ -76,40 +84,64 @@ export async function sendBroadcast(
       console.log(`📝 [BROADCAST-HANDLER] Using subscription plan: ${subscriptionPlanId}`);
     }
 
-    // Get bot token and entity details
-    console.log(`🔍 [BROADCAST-HANDLER] Fetching bot token and entity details`);
-    const [settingsResult, entityResult] = await Promise.all([
-      supabase.from('telegram_global_settings').select('bot_token').single(),
-      supabase.from('communities')
-        .select('miniapp_url, custom_link, name')
-        .eq('id', entityId)
-        .single()
-        .catch(() => {
-          // If not found as a community, try as a group
-          console.log(`🔍 [BROADCAST-HANDLER] Entity not found as community, trying as group`);
-          return supabase.from('community_groups')
-            .select('id, custom_link, name')
-            .eq('id', entityId)
-            .single();
-        })
-    ]);
+    // Get bot token
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching bot token`);
+    const { data: settings, error: settingsError } = await supabase
+      .from('telegram_global_settings')
+      .select('bot_token')
+      .single();
 
-    if (settingsResult.error) {
-      console.error(`❌ [BROADCAST-HANDLER] Error fetching bot token:`, settingsResult.error);
-      throw new Error(`Failed to get bot token: ${settingsResult.error.message}`);
+    if (settingsError) {
+      console.error(`❌ [BROADCAST-HANDLER] Error fetching bot token:`, settingsError);
+      throw new Error(`Failed to get bot token: ${settingsError.message}`);
     }
 
-    if (entityResult.error) {
-      console.error(`❌ [BROADCAST-HANDLER] Error fetching entity details:`, entityResult.error);
-      throw new Error(`Failed to get entity details: ${entityResult.error.message}`);
-    }
-
-    if (!settingsResult.data?.bot_token) {
+    if (!settings?.bot_token) {
       console.error(`❌ [BROADCAST-HANDLER] Bot token not found in settings`);
       throw new Error('Bot token not found');
     }
 
-    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved bot token and entity details`);
+    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved bot token`);
+    
+    // Get entity details
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId}`);
+    let entityResult;
+    
+    if (entityType === 'community') {
+      const { data, error } = await supabase
+        .from('communities')
+        .select('miniapp_url, custom_link, name')
+        .eq('id', entityId)
+        .single();
+        
+      if (error) {
+        console.error(`❌ [BROADCAST-HANDLER] Error fetching community details:`, error);
+        throw new Error(`Failed to get community details: ${error.message}`);
+      }
+      
+      entityResult = { data };
+    } else {
+      // Entity is a group
+      const { data, error } = await supabase
+        .from('community_groups')
+        .select('id, custom_link, name')
+        .eq('id', entityId)
+        .single();
+        
+      if (error) {
+        console.error(`❌ [BROADCAST-HANDLER] Error fetching group details:`, error);
+        throw new Error(`Failed to get group details: ${error.message}`);
+      }
+      
+      entityResult = { data };
+    }
+
+    if (!entityResult?.data) {
+      console.error(`❌ [BROADCAST-HANDLER] Entity details not found for ${entityId}`);
+      throw new Error(`Entity not found with ID: ${entityId}`);
+    }
+
+    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details`);
     console.log(`📝 [BROADCAST-HANDLER] Entity name: ${entityResult.data.name || 'Unknown'}`);
 
     // Get the appropriate miniapp URL
@@ -123,8 +155,14 @@ export async function sendBroadcast(
     console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity: ${entityId}`);
     let query = supabase
       .from('community_subscribers')
-      .select('telegram_user_id, subscription_status')
-      .eq('community_id', entityId);
+      .select('telegram_user_id, subscription_status');
+      
+    // Apply entity filter
+    if (entityType === 'community') {
+      query = query.eq('community_id', entityId);
+    } else {
+      query = query.eq('group_id', entityId);
+    }
 
     // Apply filter by subscription status
     switch (filterType) {
@@ -194,20 +232,13 @@ export async function sendBroadcast(
         // Check if user can receive messages
         console.log(`🔍 [BROADCAST-HANDLER] Checking if user ${subscriber.telegram_user_id} can receive messages`);
         const canReceiveMessages = await getBotChatMember(
-          settingsResult.data.bot_token,
+          settings.bot_token,
           subscriber.telegram_user_id,
           subscriber.telegram_user_id
         );
 
         if (!canReceiveMessages) {
           console.log(`⚠️ [BROADCAST-HANDLER] User ${subscriber.telegram_user_id} cannot receive messages - skipping`);
-          failureCount++;
-          continue;
-        }
-
-        // Ensure the message content is valid
-        if (!message || typeof message !== 'string') {
-          console.error(`❌ [BROADCAST-HANDLER] Invalid message format for user ${subscriber.telegram_user_id}`);
           failureCount++;
           continue;
         }
@@ -222,7 +253,7 @@ export async function sendBroadcast(
         console.log(`📤 [BROADCAST-HANDLER] Sending ${image ? 'image+text' : 'text'} message to ${subscriber.telegram_user_id}`);
         
         const result = await sendTelegramMessage(
-          settingsResult.data.bot_token,
+          settings.bot_token,
           subscriber.telegram_user_id,
           sanitizedMessage,
           inlineKeyboard,

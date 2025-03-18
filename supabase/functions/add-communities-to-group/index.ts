@@ -59,7 +59,16 @@ serve(async (req) => {
 
     console.log('✅ Verified ownership. Moving to update relationships');
 
-    // First, clear existing relationships to avoid duplicates (make this operation idempotent)
+    // First, get existing relationships to log before deletion
+    const { data: existingRelationships, error: existingError } = await supabase
+      .from('community_relationships')
+      .select('*')
+      .eq('community_id', groupId)
+      .eq('relationship_type', 'group');
+      
+    console.log('🔍 Existing relationships:', existingRelationships || 'none');
+
+    // Clear existing relationships to avoid duplicates (make this operation idempotent)
     const { error: deleteError } = await supabase
       .from('community_relationships')
       .delete()
@@ -74,6 +83,15 @@ serve(async (req) => {
       )
     } else {
       console.log('✅ Cleared existing relationships successfully');
+    }
+
+    // Don't insert if communityIds is empty
+    if (communityIds.length === 0) {
+      console.log('ℹ️ No communities to add - returning with success');
+      return new Response(
+        JSON.stringify({ success: true, data: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Create batch of group relationships
@@ -106,6 +124,15 @@ serve(async (req) => {
     }
 
     console.log('✅ Successfully added communities to group:', data);
+
+    // Verify the insert by querying again
+    const { data: verification, error: verificationError } = await supabase
+      .from('community_relationships')
+      .select('*')
+      .eq('community_id', groupId)
+      .eq('relationship_type', 'group');
+      
+    console.log('🔍 Verification query result:', verification || 'none', verificationError);
 
     return new Response(
       JSON.stringify({ success: true, data }),

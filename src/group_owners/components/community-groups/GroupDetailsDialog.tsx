@@ -12,6 +12,9 @@ import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { GroupCommunitySelection } from "./dialog-sections/GroupCommunitySelection";
 import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupDetailsDialog");
 
 interface GroupDetailsDialogProps {
   isOpen: boolean;
@@ -46,11 +49,11 @@ export const GroupDetailsDialog = ({
   const { data: allCommunities, isLoading: isLoadingAllCommunities } = useCommunities();
   
   // Fetch member communities for the current group
-  const { communities: groupCommunities, isLoading: isLoadingGroupCommunities } = useGroupMemberCommunities(group.id);
+  const { communities: groupCommunities, isLoading: isLoadingGroupCommunities, communityIds: fetchedCommunityIds } = useGroupMemberCommunities(group.id);
   
   const updateGroupMutation = useUpdateCommunityGroup();
   
-  // Reset form state when dialog opens
+  // Reset form state when dialog opens or group changes
   useEffect(() => {
     if (isOpen) {
       setIsEditing(isEditModeByDefault);
@@ -60,21 +63,39 @@ export const GroupDetailsDialog = ({
       setCustomLink(group.custom_link || "");
       setActiveTab('details');
       
-      // Initialize selected communities from current communities
-      if (groupCommunities && groupCommunities.length > 0) {
-        console.log("Using fetched groupCommunities:", groupCommunities.map(c => c.name));
-        setSelectedCommunityIds(groupCommunities.map(c => c.id));
+      logger.log("Dialog opened for group:", group.id);
+      
+      // Set selected communities immediately if we have fetched data
+      if (fetchedCommunityIds.length > 0) {
+        logger.log("Setting selected communities from fetchedCommunityIds:", fetchedCommunityIds);
+        setSelectedCommunityIds(fetchedCommunityIds);
       } else if (communities && communities.length > 0) {
-        console.log("Using prop communities:", communities.map(c => c.name));
+        logger.log("Setting selected communities from props:", communities.map(c => c.id));
         setSelectedCommunityIds(communities.map(c => c.id));
       } else {
-        console.log("No communities found for group");
+        logger.log("No communities found for selection");
         setSelectedCommunityIds([]);
       }
     }
-  }, [isOpen, group, communities, isEditModeByDefault, groupCommunities]);
+  }, [isOpen, group.id, group.name, group.description, group.telegram_photo_url, group.custom_link, communities, isEditModeByDefault, fetchedCommunityIds]);
+  
+  // Update selected communities when groupCommunities change
+  useEffect(() => {
+    if (isOpen && groupCommunities && groupCommunities.length > 0) {
+      const communityIds = groupCommunities.map(c => c.id);
+      logger.log("Updating selected communities from groupCommunities:", communityIds);
+      setSelectedCommunityIds(communityIds);
+    }
+  }, [isOpen, groupCommunities]);
   
   const handleSaveChanges = () => {
+    if (!name.trim()) {
+      toast.error("Group name is required");
+      return;
+    }
+    
+    logger.log("Saving group with communities:", selectedCommunityIds);
+    
     updateGroupMutation.mutate(
       {
         id: group.id,
@@ -86,12 +107,12 @@ export const GroupDetailsDialog = ({
       },
       {
         onSuccess: () => {
-          toast.success("פרטי הקבוצה עודכנו בהצלחה! 🎉");
+          toast.success("Group details updated successfully! 🎉");
           onGroupUpdated();
           onClose();
         },
         onError: (error) => {
-          toast.error(`עדכון פרטי הקבוצה נכשל: ${error.message}`);
+          toast.error(`Failed to update group details: ${error.message}`);
         }
       }
     );
@@ -99,6 +120,7 @@ export const GroupDetailsDialog = ({
 
   // Toggle community selection
   const toggleCommunity = (communityId: string) => {
+    logger.log("Toggling community:", communityId);
     setSelectedCommunityIds(prev => 
       prev.includes(communityId)
         ? prev.filter(id => id !== communityId)
@@ -130,7 +152,7 @@ export const GroupDetailsDialog = ({
                 onClick={() => setActiveTab('details')}
               >
                 <span className="text-lg">✏️</span>
-                פרטי קבוצה
+                Group Details
               </button>
               <button
                 className={`px-4 py-2 flex items-center gap-1.5 ${
@@ -141,7 +163,7 @@ export const GroupDetailsDialog = ({
                 onClick={() => setActiveTab('communities')}
               >
                 <span className="text-lg">📚</span>
-                קהילות
+                Communities
               </button>
             </div>
 

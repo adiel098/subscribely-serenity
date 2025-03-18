@@ -26,8 +26,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
             display_order
           `)
           .eq("community_id", groupId) // Filtering by groupId as community_id to get child communities
-          .eq("relationship_type", "group")
-          .order("display_order");
+          .eq("relationship_type", "group");
         
         if (relError) {
           logger.error("Error fetching group member relationships:", relError);
@@ -41,7 +40,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         
         // Get the actual community details
         const communityIds = relationships.map(rel => rel.member_id);
-        logger.log(`Found ${communityIds.length} member communities for group ${groupId}`);
+        logger.log(`Found ${communityIds.length} member communities for group ${groupId}: ${JSON.stringify(communityIds)}`);
         
         const { data: communities, error: comError } = await supabase
           .from("communities")
@@ -56,6 +55,8 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
           logger.error("Error fetching group member communities:", comError);
           throw comError;
         }
+        
+        logger.log(`Retrieved ${communities?.length || 0} communities from IDs`);
         
         return communities || [];
       } catch (error) {

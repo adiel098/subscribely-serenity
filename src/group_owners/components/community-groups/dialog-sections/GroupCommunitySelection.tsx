@@ -31,10 +31,10 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
       <div className="space-y-2">
         <h3 className="text-sm font-medium flex items-center gap-1.5">
           <Users className="h-4 w-4 text-purple-600" />
-          בחר קהילות לקבוצה זו
+          Select Communities for this Group
         </h3>
         <p className="text-xs text-gray-500">
-          קהילות שנבחרו יופיעו בקבוצה זו ויהיו נגישות למנויים 🔑
+          Selected communities will appear in this group and be accessible to subscribers 🔑
         </p>
       </div>
       
@@ -42,7 +42,7 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
         <Input
-          placeholder="חפש קהילות לפי שם..."
+          placeholder="Search communities by name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 bg-white"
@@ -92,14 +92,14 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
         </div>
       ) : (
         <div className="text-center py-8 bg-gray-50 rounded-md">
-          <p className="text-gray-500">לא נמצאו קהילות התואמות לחיפוש 🔍</p>
+          <p className="text-gray-500">No communities found matching your search 🔍</p>
         </div>
       )}
       
       {/* Selected communities counter */}
       <div className="flex justify-between items-center mt-2 px-1">
         <p className="text-sm text-gray-600">
-          <span className="font-medium">{selectedCommunityIds.length}</span> קהילות נבחרו
+          <span className="font-medium">{selectedCommunityIds.length}</span> communities selected
         </p>
         {selectedCommunityIds.length > 0 && (
           <Button
@@ -108,7 +108,7 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
             onClick={() => selectedCommunityIds.forEach(id => toggleCommunity(id))}
             className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
           >
-            נקה בחירה
+            Clear Selection
           </Button>
         )}
       </div>

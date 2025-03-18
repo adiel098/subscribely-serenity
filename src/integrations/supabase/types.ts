@@ -40,6 +40,8 @@ export type Database = {
           filter_data: Json | null
           filter_type: string | null
           id: string
+          image: string | null
+          include_button: boolean | null
           message: string
           sent_at: string | null
           sent_failed: number | null
@@ -55,6 +57,8 @@ export type Database = {
           filter_data?: Json | null
           filter_type?: string | null
           id?: string
+          image?: string | null
+          include_button?: boolean | null
           message: string
           sent_at?: string | null
           sent_failed?: number | null
@@ -70,6 +74,8 @@ export type Database = {
           filter_data?: Json | null
           filter_type?: string | null
           id?: string
+          image?: string | null
+          include_button?: boolean | null
           message?: string
           sent_at?: string | null
           sent_failed?: number | null

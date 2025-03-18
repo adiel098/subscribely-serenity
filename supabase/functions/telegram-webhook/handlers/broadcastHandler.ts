@@ -43,6 +43,29 @@ async function getBotChatMember(
   }
 }
 
+// Process base64 image data to ensure it's properly formatted
+function processImageData(imageData: string | null): string | null {
+  if (!imageData) return null;
+  
+  console.log(`🖼️ [BROADCAST-HANDLER] Processing image data`);
+  
+  // Return the image as is if it's already a URL
+  if (imageData.startsWith('http')) {
+    console.log(`🖼️ [BROADCAST-HANDLER] Image is already a URL, no processing needed`);
+    return imageData;
+  }
+  
+  // For base64 data URLs, ensure they're properly formatted
+  if (imageData.startsWith('data:image/')) {
+    // The image data is already correctly formatted for our telegramMessenger utility
+    console.log(`🖼️ [BROADCAST-HANDLER] Image is a data URL, properly formatted`);
+    return imageData;
+  }
+  
+  console.log(`⚠️ [BROADCAST-HANDLER] Unrecognized image format, returning null`);
+  return null;
+}
+
 export async function sendBroadcast(
   supabase: ReturnType<typeof createClient>,
   communityId: string | null,
@@ -75,6 +98,10 @@ export async function sendBroadcast(
     console.log(`📝 [BROADCAST-HANDLER] Filter type: ${filterType}`);
     console.log(`📝 [BROADCAST-HANDLER] Include button: ${includeButton}`);
     console.log(`📝 [BROADCAST-HANDLER] Image included: ${!!image}`);
+
+    // Process the image data if present
+    const processedImage = processImageData(image);
+    console.log(`📝 [BROADCAST-HANDLER] Image processed: ${!!processedImage}`);
 
     if (filterType === 'plan') {
       if (!subscriptionPlanId) {
@@ -261,14 +288,14 @@ export async function sendBroadcast(
           .replace(/>/g, '&gt;');
 
         // Send the message using our telegram messenger
-        console.log(`📤 [BROADCAST-HANDLER] Sending ${image ? 'image+text' : 'text'} message to ${subscriber.telegram_user_id}`);
+        console.log(`📤 [BROADCAST-HANDLER] Sending ${processedImage ? 'image+text' : 'text'} message to ${subscriber.telegram_user_id}`);
         
         const result = await sendTelegramMessage(
           settings.bot_token,
           subscriber.telegram_user_id,
           sanitizedMessage,
           inlineKeyboard,
-          image
+          processedImage
         );
         
         if (result.ok) {

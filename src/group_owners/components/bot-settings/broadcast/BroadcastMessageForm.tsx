@@ -56,7 +56,7 @@ export const BroadcastMessageForm = ({
         message,
         filterType,
         includeButton,
-        image,
+        image, // Pass the image exactly as it is - telegramMessenger will handle it
         ...(filterType === 'plan' && { subscriptionPlanId: selectedPlanId })
       }, {
         onSuccess: (data) => {
@@ -65,7 +65,7 @@ export const BroadcastMessageForm = ({
             setMessage("");
             // Don't reset image and button settings to allow for similar follow-up messages
           } else {
-            toast.error(`Failed to send message: ${data.error}`);
+            toast.error(`Failed to send broadcast: ${data.error}`);
           }
           setIsSending(false);
         },

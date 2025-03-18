@@ -10,7 +10,10 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["community-group-members", groupId],
     queryFn: async (): Promise<Community[]> => {
-      if (!groupId) return [];
+      if (!groupId) {
+        logger.log("No group ID provided, returning empty array");
+        return [];
+      }
       
       try {
         logger.log("Fetching member communities for group ID:", groupId);
@@ -61,10 +64,13 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         return communities || [];
       } catch (error) {
         logger.error("Error in useGroupMemberCommunities:", error);
-        throw error;
+        return []; // Return empty array instead of throwing to prevent infinite loops
       }
     },
     enabled: !!groupId,
+    refetchOnWindowFocus: false, // Prevent unexpected refetches
+    staleTime: 30000, // Data stays fresh for 30 seconds
+    retry: 1, // Only retry once to avoid excessive retries
   });
   
   // Extract just the community IDs for convenience

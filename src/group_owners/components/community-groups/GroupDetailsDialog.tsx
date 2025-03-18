@@ -44,49 +44,54 @@ export const GroupDetailsDialog = ({
   const [customLink, setCustomLink] = useState(group.custom_link || "");
   const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'details' | 'communities'>('details');
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Get all communities for selection
   const { data: allCommunities, isLoading: isLoadingAllCommunities } = useCommunities();
   
   // Fetch member communities for the current group
-  const { communities: groupCommunities, isLoading: isLoadingGroupCommunities, communityIds: fetchedCommunityIds } = useGroupMemberCommunities(group.id);
+  const { 
+    communities: groupCommunities, 
+    isLoading: isLoadingGroupCommunities, 
+    communityIds: fetchedCommunityIds,
+    error: groupCommunitiesError
+  } = useGroupMemberCommunities(group.id);
   
   const updateGroupMutation = useUpdateCommunityGroup();
   
-  // Reset form state when dialog opens or group changes
+  // Initialize form state when dialog opens or group changes - only once
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasInitialized) {
       setIsEditing(isEditModeByDefault);
       setName(group.name);
       setDescription(group.description || "");
       setPhotoUrl(group.telegram_photo_url || "");
       setCustomLink(group.custom_link || "");
       setActiveTab('details');
+      setHasInitialized(true);
       
       logger.log("Dialog opened for group:", group.id);
-      
-      // Set selected communities immediately if we have fetched data
-      if (fetchedCommunityIds.length > 0) {
-        logger.log("Setting selected communities from fetchedCommunityIds:", fetchedCommunityIds);
-        setSelectedCommunityIds(fetchedCommunityIds);
-      } else if (communities && communities.length > 0) {
-        logger.log("Setting selected communities from props:", communities.map(c => c.id));
-        setSelectedCommunityIds(communities.map(c => c.id));
-      } else {
-        logger.log("No communities found for selection");
-        setSelectedCommunityIds([]);
-      }
+    } else if (!isOpen) {
+      // Reset initialization state when dialog closes
+      setHasInitialized(false);
     }
-  }, [isOpen, group.id, group.name, group.description, group.telegram_photo_url, group.custom_link, communities, isEditModeByDefault, fetchedCommunityIds]);
+  }, [isOpen, group, isEditModeByDefault, hasInitialized]);
   
-  // Update selected communities when groupCommunities change
+  // Set selected communities when we have data - with safeguards against infinite loops
   useEffect(() => {
-    if (isOpen && groupCommunities && groupCommunities.length > 0) {
-      const communityIds = groupCommunities.map(c => c.id);
-      logger.log("Updating selected communities from groupCommunities:", communityIds);
-      setSelectedCommunityIds(communityIds);
+    if (!isOpen || !hasInitialized) return;
+    
+    if (fetchedCommunityIds.length > 0) {
+      logger.log("Setting selected communities from fetchedCommunityIds:", fetchedCommunityIds);
+      setSelectedCommunityIds(fetchedCommunityIds);
+    } else if (communities && communities.length > 0) {
+      logger.log("Setting selected communities from props:", communities.map(c => c.id));
+      setSelectedCommunityIds(communities.map(c => c.id));
+    } else {
+      // Only log once, not in an infinite loop
+      logger.log("No communities found for selection");
     }
-  }, [isOpen, groupCommunities]);
+  }, [isOpen, hasInitialized, fetchedCommunityIds, communities]);
   
   const handleSaveChanges = () => {
     if (!name.trim()) {

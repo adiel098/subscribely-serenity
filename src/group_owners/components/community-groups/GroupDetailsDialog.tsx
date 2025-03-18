@@ -8,6 +8,10 @@ import { GroupViewModeContent } from "./dialog-sections/GroupViewModeContent";
 import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
 import { GroupEditModeContent } from "./dialog-sections/GroupEditModeContent";
 import { useGroupDetailsDialog } from "@/group_owners/hooks/useGroupDetailsDialog";
+import { useGroupChannels } from "@/group_owners/hooks/useGroupChannels";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupDetailsDialog");
 
 interface GroupDetailsDialogProps {
   isOpen: boolean;
@@ -30,6 +34,9 @@ export const GroupDetailsDialog = ({
   onGroupUpdated,
   isEditModeByDefault = true,
 }: GroupDetailsDialogProps) => {
+  // Get channels (member communities) using the edge function
+  const { channels, isLoading: isLoadingChannels, channelIds } = useGroupChannels(isOpen ? group.id : null);
+  
   const {
     isEditing,
     name,
@@ -39,9 +46,7 @@ export const GroupDetailsDialog = ({
     selectedCommunityIds,
     activeTab,
     allCommunities,
-    groupCommunities,
     isLoadingAllCommunities,
-    isLoadingGroupCommunities,
     isPendingUpdate,
     setIsEditing,
     setName,
@@ -49,6 +54,7 @@ export const GroupDetailsDialog = ({
     setPhotoUrl,
     setCustomLink,
     setActiveTab,
+    setSelectedCommunityIds,
     handleSaveChanges,
     toggleCommunity,
     resetDialogState
@@ -60,15 +66,20 @@ export const GroupDetailsDialog = ({
     isEditModeByDefault
   );
   
+  // Update selected communities when channels are loaded
+  useEffect(() => {
+    if (isOpen && channels.length > 0 && !isLoadingChannels) {
+      logger.log("Setting selected communities from channels:", channelIds);
+      setSelectedCommunityIds(channelIds);
+    }
+  }, [isOpen, channels, channelIds, isLoadingChannels, setSelectedCommunityIds]);
+  
   // Reset dialog state when it closes
   useEffect(() => {
     if (!isOpen) {
       resetDialogState();
     }
   }, [isOpen, resetDialogState]);
-
-  // Determine which communities to display
-  const communitiesForDisplay = groupCommunities?.length > 0 ? groupCommunities : communities;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -93,12 +104,13 @@ export const GroupDetailsDialog = ({
             allCommunities={allCommunities}
             selectedCommunityIds={selectedCommunityIds}
             toggleCommunity={toggleCommunity}
-            isLoadingCommunities={isLoadingAllCommunities || isLoadingGroupCommunities}
+            isLoadingCommunities={isLoadingAllCommunities || isLoadingChannels}
           />
         ) : (
           <GroupViewModeContent 
             group={group}
-            communities={communitiesForDisplay}
+            communities={communities}
+            channels={channels}
             fullLink={fullLink}
             onCopyLink={onCopyLink}
             onEditLink={() => setIsEditing(true)}

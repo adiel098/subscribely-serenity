@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { CommunityGroup } from "./types/communityGroup.types";
 import { Community } from "./useCommunities";
 import { useUpdateCommunityGroup } from "./useUpdateCommunityGroup";
-import { useGroupMemberCommunities } from "./useGroupMemberCommunities";
 import { useCommunities } from "./useCommunities";
 import { toast } from "sonner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
@@ -29,14 +28,6 @@ export function useGroupDetailsDialog(
   // Get all communities for selection
   const { data: allCommunities, isLoading: isLoadingAllCommunities } = useCommunities();
   
-  // Fetch member communities for the current group
-  const { 
-    communities: groupCommunities, 
-    isLoading: isLoadingGroupCommunities, 
-    communityIds: fetchedCommunityIds,
-    error: groupCommunitiesError
-  } = useGroupMemberCommunities(group.id);
-  
   const updateGroupMutation = useUpdateCommunityGroup();
   
   // Initialize form state when dialog opens or group changes - only once
@@ -50,41 +41,10 @@ export function useGroupDetailsDialog(
       setActiveTab('details');
       setHasInitialized(true);
       
+      // We don't set selectedCommunityIds here anymore as we'll get this from useGroupChannels
       logger.log("Dialog opened for group:", group.id);
     }
   }, [group, isEditModeByDefault, hasInitialized]);
-  
-  // Set selected communities when we have data - with safeguards against infinite loops
-  useEffect(() => {
-    if (!hasInitialized) return;
-    
-    if (fetchedCommunityIds.length > 0) {
-      logger.log("Setting selected communities from fetchedCommunityIds:", fetchedCommunityIds);
-      setSelectedCommunityIds(fetchedCommunityIds);
-    } else if (communities && communities.length > 0) {
-      logger.log("Setting selected communities from props:", communities.map(c => c.id));
-      setSelectedCommunityIds(communities.map(c => c.id));
-    } else {
-      // Only log once, not in an infinite loop
-      logger.log("No communities found for selection");
-    }
-  }, [hasInitialized, fetchedCommunityIds, communities]);
-  
-  // Fix: Debug output to track what's happening with communities
-  useEffect(() => {
-    if (groupCommunitiesError) {
-      logger.error("Error fetching group communities:", groupCommunitiesError);
-    }
-    
-    logger.log("Group communities state:", {
-      groupId: group.id,
-      communitiesFromProps: communities?.length || 0,
-      communitiesFromHook: groupCommunities?.length || 0,
-      fetchedIds: fetchedCommunityIds.length,
-      selectedIds: selectedCommunityIds.length,
-      loadingStatus: isLoadingGroupCommunities
-    });
-  }, [group.id, communities, groupCommunities, fetchedCommunityIds, selectedCommunityIds, isLoadingGroupCommunities, groupCommunitiesError]);
   
   const handleSaveChanges = () => {
     if (!name.trim()) {
@@ -139,15 +99,14 @@ export function useGroupDetailsDialog(
     selectedCommunityIds,
     activeTab,
     allCommunities,
-    groupCommunities: groupCommunities || [],
     isLoadingAllCommunities,
-    isLoadingGroupCommunities,
     isPendingUpdate: updateGroupMutation.isPending,
     setIsEditing,
     setName,
     setDescription,
     setPhotoUrl,
     setCustomLink,
+    setSelectedCommunityIds,
     setActiveTab,
     handleSaveChanges,
     toggleCommunity,

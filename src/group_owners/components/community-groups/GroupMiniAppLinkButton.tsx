@@ -4,9 +4,11 @@ import { toast } from "sonner";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
-import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
 import { GroupActionButtons } from "./GroupActionButtons";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupMiniAppLinkButton");
 
 interface GroupMiniAppLinkButtonProps {
   group: CommunityGroup;
@@ -18,9 +20,6 @@ export const GroupMiniAppLinkButton = ({
   communities: initialCommunities 
 }: GroupMiniAppLinkButtonProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  
-  // Use the hook to get and refresh member communities
-  const { communities, isLoading, communityIds } = useGroupMemberCommunities(group.id);
   
   const botUsername = getBotUsername();
   
@@ -34,7 +33,7 @@ export const GroupMiniAppLinkButton = ({
         toast.success("Link copied to clipboard!");
       })
       .catch((error) => {
-        console.error("Failed to copy link:", error);
+        logger.error("Failed to copy link:", error);
         toast.error("Failed to copy link to clipboard");
       });
   };
@@ -56,7 +55,7 @@ export const GroupMiniAppLinkButton = ({
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         group={group}
-        communities={communities}
+        communities={initialCommunities}
         fullLink={fullLink}
         onCopyLink={handleCopyLink}
         onGroupUpdated={handleGroupUpdated}

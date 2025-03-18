@@ -3,12 +3,22 @@ import React from "react";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { Button } from "@/components/ui/button";
-import { Copy, Edit, Users } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Edit, Copy, Link as LinkIcon, Users } from "lucide-react";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupViewModeContent");
+
+interface Channel {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+}
 
 interface GroupViewModeContentProps {
   group: CommunityGroup;
   communities: Community[];
+  channels?: Channel[];
   fullLink: string;
   onCopyLink: () => void;
   onEditLink: () => void;
@@ -18,99 +28,145 @@ interface GroupViewModeContentProps {
 export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
   group,
   communities,
+  channels = [],
   fullLink,
   onCopyLink,
   onEditLink,
   onEditCommunities
 }) => {
+  // Prefer channels from edge function, fall back to communities from props if needed
+  const displayChannels = channels.length > 0 ? channels : communities;
+  
+  logger.log("Group view mode content:", {
+    groupId: group.id,
+    channelsCount: channels.length,
+    communitiesCount: communities.length,
+    displayCount: displayChannels.length
+  });
+  
   return (
     <div className="space-y-6">
-      {/* Group Info Section */}
+      {/* Group details section */}
       <div className="space-y-4">
-        <div className="flex justify-between items-start">
-          <h3 className="text-sm font-medium text-gray-600">Group Information</h3>
-          <Button variant="ghost" size="sm" onClick={onEditLink} className="h-8">
-            <Edit className="h-3.5 w-3.5 mr-1" />
-            Edit
-          </Button>
-        </div>
+        <h3 className="text-lg font-medium">Group Details</h3>
         
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <h4 className="text-xs font-medium text-gray-500 mb-1">Name</h4>
-            <p className="text-sm">{group.name}</p>
+        <div className="grid grid-cols-1 gap-3">
+          {/* Display basic group info */}
+          <div className="flex items-start gap-3">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+              {group.telegram_photo_url ? (
+                <img 
+                  src={group.telegram_photo_url} 
+                  alt={group.name} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-purple-100">
+                  <Users className="h-8 w-8 text-purple-600" />
+                </div>
+              )}
+            </div>
+            <div>
+              <h4 className="font-semibold text-lg">{group.name}</h4>
+              {group.description && (
+                <p className="text-gray-600 mt-1">{group.description}</p>
+              )}
+            </div>
           </div>
           
-          <div>
-            <h4 className="text-xs font-medium text-gray-500 mb-1">Custom Link</h4>
-            <p className="text-sm">{group.custom_link || "None"}</p>
-          </div>
-        </div>
-        
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 mb-1">Description</h4>
-          <p className="text-sm">{group.description || "No description provided"}</p>
-        </div>
-        
-        <div>
-          <h4 className="text-xs font-medium text-gray-500 mb-1">Full Link</h4>
-          <div className="flex items-center mt-1">
-            <div className="flex-1 text-xs bg-gray-50 p-2 rounded border border-gray-200 mr-2 truncate">
-              {fullLink}
+          {/* Display invite link */}
+          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <LinkIcon className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium">Invite Link</span>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onEditLink}
+                  className="h-8"
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+                
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={onCopyLink}
+                  className="h-8"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  Copy
+                </Button>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={onCopyLink} className="h-8 whitespace-nowrap">
-              <Copy className="h-3.5 w-3.5 mr-1" />
-              Copy
-            </Button>
+            
+            <div className="mt-2">
+              <code className="p-2 bg-white rounded border border-gray-200 text-xs block overflow-x-auto">
+                {fullLink}
+              </code>
+            </div>
           </div>
         </div>
       </div>
       
-      {/* Communities Section */}
+      {/* Communities section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
-            <Users className="h-4 w-4 text-purple-600" />
-            Communities in this Group
-          </h3>
-          <Button variant="ghost" size="sm" onClick={onEditCommunities} className="h-8">
+          <h3 className="text-lg font-medium">Communities in this Group</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onEditCommunities}
+          >
             <Edit className="h-3.5 w-3.5 mr-1" />
-            Edit
+            Edit Communities
           </Button>
         </div>
         
-        {communities && communities.length > 0 ? (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {communities.map(community => (
-              <Card key={community.id} className="overflow-hidden">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="flex-shrink-0 h-9 w-9 bg-gray-100 rounded-md overflow-hidden">
-                    {community.telegram_photo_url ? (
-                      <img src={community.telegram_photo_url} alt={community.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <Users className="h-5 w-5 text-gray-400 m-2" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-700 truncate">{community.name}</p>
-                    {community.description && (
-                      <p className="text-xs text-gray-500 truncate">{community.description}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+        {displayChannels.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto">
+            {displayChannels.map((item) => (
+              <div 
+                key={item.id} 
+                className="flex items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50"
+              >
+                <div className="w-8 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0 mr-3">
+                  {('telegram_photo_url' in item && item.telegram_photo_url) ? (
+                    <img 
+                      src={item.telegram_photo_url} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-blue-100">
+                      <Users className="h-4 w-4 text-blue-600" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">{item.name}</h4>
+                  {(item.description || ('description' in item && item.description)) && (
+                    <p className="text-gray-500 text-xs truncate max-w-[300px]">
+                      {item.description || ('description' in item && item.description)}
+                    </p>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="bg-gray-50 p-4 rounded-md text-center">
-            <p className="text-gray-500 text-sm">No communities added to this group yet.</p>
+          <div className="text-center py-6 bg-gray-50 rounded-md">
+            <p className="text-gray-500">No communities added to this group yet.</p>
             <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onEditCommunities} 
+              variant="link" 
+              onClick={onEditCommunities}
               className="mt-2"
             >
-              <Users className="h-3.5 w-3.5 mr-1" />
               Add Communities
             </Button>
           </div>

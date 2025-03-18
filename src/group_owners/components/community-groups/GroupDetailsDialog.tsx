@@ -87,7 +87,7 @@ export const GroupDetailsDialog = ({
       },
       {
         onSuccess: () => {
-          toast.success("Group details updated successfully!");
+          toast.success("Group details updated successfully! 🎉");
           onGroupUpdated();
           onClose();
         },
@@ -109,11 +109,10 @@ export const GroupDetailsDialog = ({
 
   // Determine which communities to display
   const communitiesForDisplay = groupCommunities?.length > 0 ? groupCommunities : communities;
-  console.log("Communities for display:", communitiesForDisplay?.map(c => c.name) || []);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-purple-50">
         <GroupDialogHeader 
           isEditing={isEditing} 
           groupName={group.name} 
@@ -124,15 +123,25 @@ export const GroupDetailsDialog = ({
             {/* Tabs for switching between details and communities */}
             <div className="flex border-b">
               <button
-                className={`px-4 py-2 ${activeTab === 'details' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500'}`}
+                className={`px-4 py-2 flex items-center gap-1.5 ${
+                  activeTab === 'details' 
+                    ? 'text-purple-600 border-b-2 border-purple-600 font-medium' 
+                    : 'text-gray-500 hover:text-purple-500 transition-colors'
+                }`}
                 onClick={() => setActiveTab('details')}
               >
+                <span className="text-lg">✏️</span>
                 Group Details
               </button>
               <button
-                className={`px-4 py-2 ${activeTab === 'communities' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500'}`}
+                className={`px-4 py-2 flex items-center gap-1.5 ${
+                  activeTab === 'communities' 
+                    ? 'text-purple-600 border-b-2 border-purple-600 font-medium' 
+                    : 'text-gray-500 hover:text-purple-500 transition-colors'
+                }`}
                 onClick={() => setActiveTab('communities')}
               >
+                <span className="text-lg">📚</span>
                 Communities
               </button>
             </div>

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, Users, CheckCircle2, PlusCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface GroupCommunitySelectionProps {
@@ -57,18 +57,24 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
         <div className="grid gap-6">
           {/* Selected Communities */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Selected Communities</h3>
+            <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              Selected Communities ({selectedCommunities.length})
+            </h3>
             {selectedCommunities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No communities selected for this group.</p>
+              <p className="text-sm text-muted-foreground p-3 border border-dashed rounded-md bg-gray-50 text-center">
+                No communities selected for this group yet ✨
+              </p>
             ) : (
               <ScrollArea className="h-32 border rounded-md p-2">
                 <div className="space-y-2">
                   {selectedCommunities.map(community => (
-                    <div key={community.id} className="flex items-center space-x-2 p-2 border rounded-md bg-purple-50">
+                    <div key={community.id} className="flex items-center space-x-2 p-2 border rounded-md bg-purple-50 hover:bg-purple-100 transition-colors">
                       <Checkbox 
                         id={`selected-${community.id}`}
                         checked={true}
                         onCheckedChange={() => toggleCommunity(community.id)}
+                        className="text-purple-600 border-purple-400"
                       />
                       <label 
                         htmlFor={`selected-${community.id}`}
@@ -85,16 +91,19 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
           
           {/* Available Communities */}
           <div>
-            <h3 className="text-sm font-medium mb-2">Available Communities</h3>
+            <h3 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+              <PlusCircle className="h-4 w-4 text-blue-500" />
+              Available Communities ({availableCommunities.length})
+            </h3>
             {availableCommunities.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {searchQuery ? "No communities match your search" : "No more communities available"}
+              <p className="text-sm text-muted-foreground p-3 border border-dashed rounded-md bg-gray-50 text-center">
+                {searchQuery ? "No communities match your search 🔍" : "No more communities available 🎉"}
               </p>
             ) : (
               <ScrollArea className="h-32 border rounded-md p-2">
                 <div className="space-y-2">
                   {availableCommunities.map(community => (
-                    <div key={community.id} className="flex items-center space-x-2 p-2 border rounded-md">
+                    <div key={community.id} className="flex items-center space-x-2 p-2 border rounded-md hover:bg-gray-50 transition-colors">
                       <Checkbox 
                         id={`available-${community.id}`}
                         checked={false}

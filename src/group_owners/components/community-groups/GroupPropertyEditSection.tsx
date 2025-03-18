@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Image, Upload, Link } from "lucide-react";
+import { Image, Upload, Link, Type, FileText } from "lucide-react";
 
 interface GroupPropertyEditSectionProps {
   name: string;
@@ -34,16 +34,19 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 py-1">
       {/* Group Photo */}
       <div className="space-y-2">
-        <Label htmlFor="photo">Group Photo</Label>
+        <Label htmlFor="photo" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+          <Image className="h-4 w-4 text-purple-600" />
+          Group Photo
+        </Label>
         <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 rounded-md overflow-hidden h-16 w-16 bg-gray-100 border border-gray-200 flex items-center justify-center">
+          <div className="flex-shrink-0 rounded-md overflow-hidden h-16 w-16 bg-gray-100 border border-gray-200 flex items-center justify-center shadow-sm">
             {photoUrl ? (
               <img src={photoUrl} alt="Group" className="h-full w-full object-cover" />
             ) : (
-              <Image className="h-8 w-8 text-gray-400" />
+              <Users className="h-8 w-8 text-gray-400" />
             )}
           </div>
           <div className="flex-1">
@@ -58,7 +61,7 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
               type="button" 
               variant="outline" 
               size="sm" 
-              className="text-xs gap-1"
+              className="text-xs gap-1 text-purple-600 hover:bg-purple-50"
               onClick={handlePhotoUpload}
             >
               <Upload className="h-3.5 w-3.5" />
@@ -67,13 +70,14 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
           </div>
         </div>
         <p className="text-xs text-gray-500">
-          You can enter a URL to an existing image or upload a new one (coming soon)
+          You can enter a URL to an existing image or upload a new one (coming soon) 📸
         </p>
       </div>
 
       {/* Group Name */}
       <div className="space-y-2">
-        <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+        <Label htmlFor="name" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+          <Type className="h-4 w-4 text-purple-600" />
           Group Name <span className="text-red-500">*</span>
         </Label>
         <Input
@@ -88,7 +92,8 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
 
       {/* Custom Link */}
       <div className="space-y-2">
-        <Label htmlFor="customLink" className="text-sm font-medium text-gray-700">
+        <Label htmlFor="customLink" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+          <Link className="h-4 w-4 text-purple-600" />
           Custom Link Identifier
         </Label>
         <div className="relative">
@@ -104,13 +109,14 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
           />
         </div>
         <p className="text-xs text-gray-500">
-          Leave blank to use the default ID. Custom links make your group easier to share.
+          Leave blank to use the default ID. Custom links make your group easier to share 🔗
         </p>
       </div>
 
       {/* Group Description */}
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+        <Label htmlFor="description" className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+          <FileText className="h-4 w-4 text-purple-600" />
           Description
         </Label>
         <Textarea
@@ -121,6 +127,9 @@ export const GroupPropertyEditSection: React.FC<GroupPropertyEditSectionProps> =
           rows={4}
           className="resize-none w-full"
         />
+        <p className="text-xs text-gray-500">
+          Describe what makes this group special ✨
+        </p>
       </div>
     </div>
   );

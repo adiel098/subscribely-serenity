@@ -6,6 +6,12 @@ import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useGroupChannels");
 
+interface ChannelsResponse {
+  isGroup: boolean;
+  channels: Community[];
+  error?: string;
+}
+
 export const useGroupChannels = (groupId: string | null) => {
   const queryClient = useQueryClient();
 
@@ -36,15 +42,18 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
-        // Check if data has the channels array
-        let channels: Community[] = [];
+        // Process the response (should be in the format { isGroup: boolean, channels: Community[] })
+        const response = data as ChannelsResponse;
         
-        if (data.channels && Array.isArray(data.channels)) {
-          logger.log(`Retrieved ${data.channels.length} communities from edge function:`, data.channels);
-          channels = data.channels;
-        } else {
-          logger.error("Invalid channels data format:", data);
+        if (response.error) {
+          logger.error("Error from edge function:", response.error);
+          return { channels: [], channelIds: [] };
         }
+        
+        // Ensure channels is an array
+        const channels = Array.isArray(response.channels) ? response.channels : [];
+        
+        logger.log(`Retrieved ${channels.length} channels from edge function:`, channels);
         
         // Extract channel IDs
         const channelIds = channels.map(channel => channel.id);

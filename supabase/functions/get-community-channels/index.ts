@@ -56,7 +56,7 @@ serve(async (req) => {
       );
     }
     
-    // Get member communities for this group
+    // Get member communities for this group from community_relationships table
     const { data: relationships, error: relationshipsError } = await supabase
       .from("community_relationships")
       .select(`

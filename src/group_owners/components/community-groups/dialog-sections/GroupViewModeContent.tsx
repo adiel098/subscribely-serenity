@@ -29,12 +29,12 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
   onEditLink,
   onEditCommunities
 }) => {
-  // Prefer channels from edge function, fall back to communities from props if needed
-  const displayChannels = channels.length > 0 ? channels : [];
+  // Ensure channels is always an array
+  const displayChannels = Array.isArray(channels) ? channels : [];
   
   logger.log("Group view mode content:", {
     groupId: group.id,
-    channelsCount: channels.length,
+    channelsCount: channels ? channels.length : 0,
     communitiesCount: communities.length,
     displayCount: displayChannels.length
   });

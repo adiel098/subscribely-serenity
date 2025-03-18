@@ -38,7 +38,7 @@ export function useGroupChannels(groupId: string | null) {
           throw error;
         }
         
-        logger.log(`Retrieved ${data?.channels?.length || 0} channels for group`, data);
+        logger.log(`Retrieved ${data?.channels?.length || 0} channels for group ${groupId}`, data);
         
         return data || { isGroup: false, channels: [] };
       } catch (error) {
@@ -47,7 +47,9 @@ export function useGroupChannels(groupId: string | null) {
       }
     },
     enabled: !!groupId,
-    staleTime: 60000, // Data stays fresh for 1 minute
+    staleTime: 1000 * 60 * 5, // Data stays fresh for 5 minutes to avoid excessive fetching
+    gcTime: 1000 * 60 * 10,   // Cache garbage collection after 10 minutes
+    retry: 1,                  // Only retry once to avoid excessive attempts
   });
   
   // Extract just the community IDs for convenience

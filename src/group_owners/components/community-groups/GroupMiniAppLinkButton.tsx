@@ -50,7 +50,7 @@ export const GroupMiniAppLinkButton = ({
         onShowDetails={() => setIsDetailsOpen(true)}
       />
 
-      {/* Unified Group Details Dialog */}
+      {/* Group Details Dialog */}
       <GroupDetailsDialog 
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
@@ -59,7 +59,7 @@ export const GroupMiniAppLinkButton = ({
         fullLink={fullLink}
         onCopyLink={handleCopyLink}
         onGroupUpdated={handleGroupUpdated}
-        isEditModeByDefault={true} // Open directly in edit mode
+        isEditModeByDefault={false} // Changed to view mode by default
       />
     </>
   );

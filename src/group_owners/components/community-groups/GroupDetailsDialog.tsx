@@ -66,11 +66,14 @@ export const GroupDetailsDialog = ({
     isEditModeByDefault
   );
   
-  // Update selected communities when channels are loaded
+  // Update selected communities when channels are loaded - only once per dialog opening
   useEffect(() => {
-    if (isOpen && channels.length > 0 && !isLoadingChannels) {
-      logger.log("Setting selected communities from channels:", channelIds);
-      setSelectedCommunityIds(channelIds);
+    if (isOpen && channels.length > 0 && !isLoadingChannels && channelIds.length > 0) {
+      // Only update if the IDs are different to avoid infinite loop
+      if (JSON.stringify(selectedCommunityIds.sort()) !== JSON.stringify(channelIds.sort())) {
+        logger.log("Setting selected communities from channels:", channelIds);
+        setSelectedCommunityIds(channelIds);
+      }
     }
   }, [isOpen, channels, channelIds, isLoadingChannels, setSelectedCommunityIds]);
   

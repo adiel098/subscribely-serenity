@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CommunityGroup } from "./types/communityGroup.types";
 import { Community } from "./useCommunities";
 import { useUpdateCommunityGroup } from "./useUpdateCommunityGroup";
@@ -41,12 +41,11 @@ export function useGroupDetailsDialog(
       setActiveTab('details');
       setHasInitialized(true);
       
-      // We don't set selectedCommunityIds here anymore as we'll get this from useGroupChannels
-      logger.log("Dialog opened for group:", group.id);
+      logger.log("Dialog initialized for group:", group.id);
     }
   }, [group, isEditModeByDefault, hasInitialized]);
   
-  const handleSaveChanges = () => {
+  const handleSaveChanges = useCallback(() => {
     if (!name.trim()) {
       toast.error("Group name is required");
       return;
@@ -74,21 +73,39 @@ export function useGroupDetailsDialog(
         }
       }
     );
-  };
+  }, [
+    name, description, photoUrl, customLink, 
+    selectedCommunityIds, group.id, 
+    updateGroupMutation, onGroupUpdated, onClose
+  ]);
+
+  // Safely update selected community IDs - avoid direct state updates that could cause infinite loops
+  const setSelectedCommunitiesArray = useCallback((ids: string[]) => {
+    setSelectedCommunityIds(prevIds => {
+      // Only update state if the values are actually different
+      if (JSON.stringify(prevIds.sort()) !== JSON.stringify(ids.sort())) {
+        logger.log("Updating selected communities:", ids);
+        return ids;
+      }
+      return prevIds;
+    });
+  }, []);
 
   // Toggle community selection
-  const toggleCommunity = (communityId: string) => {
+  const toggleCommunity = useCallback((communityId: string) => {
     logger.log("Toggling community:", communityId);
     setSelectedCommunityIds(prev => 
       prev.includes(communityId)
         ? prev.filter(id => id !== communityId)
         : [...prev, communityId]
     );
-  };
+  }, []);
 
-  const resetDialogState = () => {
+  const resetDialogState = useCallback(() => {
+    logger.log("Resetting dialog state");
     setHasInitialized(false);
-  };
+    setSelectedCommunityIds([]);
+  }, []);
 
   return {
     isEditing,
@@ -106,7 +123,7 @@ export function useGroupDetailsDialog(
     setDescription,
     setPhotoUrl,
     setCustomLink,
-    setSelectedCommunityIds,
+    setSelectedCommunityIds: setSelectedCommunitiesArray,
     setActiveTab,
     handleSaveChanges,
     toggleCommunity,

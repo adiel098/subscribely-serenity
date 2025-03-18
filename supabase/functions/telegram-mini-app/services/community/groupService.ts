@@ -29,6 +29,9 @@ export async function fetchGroupMemberCommunities(
   groupId: string
 ) {
   try {
+    // In community_relationships:
+    // - community_id = the GROUP id
+    // - member_id = the COMMUNITY id that belongs to the group
     const { data: relationships, error: relationshipsError } = await supabase
       .from("community_relationships")
       .select(`
@@ -42,7 +45,7 @@ export async function fetchGroupMemberCommunities(
           custom_link
         )
       `)
-      .eq("community_id", groupId)
+      .eq("community_id", groupId) // This is correct - we're looking for communities where this group is the parent
       .eq("relationship_type", "group");
     
     if (relationshipsError) {

@@ -20,7 +20,7 @@ interface GroupMiniAppLinkButtonProps {
 export const GroupMiniAppLinkButton = ({ 
   group, 
   communities: initialCommunities,
-  showSuccessBanner = false
+  showSuccessBanner = true // Changed default to true to ensure the banner is shown
 }: GroupMiniAppLinkButtonProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
@@ -74,7 +74,7 @@ export const GroupMiniAppLinkButton = ({
         fullLink={fullLink}
         onCopyLink={handleCopyLink}
         onGroupUpdated={handleGroupUpdated}
-        isEditModeByDefault={true} // Set to edit mode by default
+        isEditModeByDefault={false} // Changed to false to start in view mode
       />
     </>
   );

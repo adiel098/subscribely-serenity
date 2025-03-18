@@ -2,6 +2,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleGroupStartCommand } from './group/groupStartHandler.ts';
 import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
+import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
+import { createLogger } from '../services/loggingService.ts';
 
 /**
  * Handle the /start command from a Telegram user
@@ -11,41 +13,43 @@ export async function handleStartCommand(
   message: any,
   botToken: string
 ): Promise<boolean> {
+  const logger = createLogger(supabase, 'START-COMMAND');
+  
   try {
-    console.log("🚀 [START-COMMAND] Handling /start command");
+    await logger.info("🚀 Handling /start command");
     
     // Check if this is a response to the start command
     if (!message?.text || !message.text.startsWith('/start')) {
-      console.log("⏭️ [START-COMMAND] Not a start command, skipping");
+      await logger.info("⏭️ Not a start command, skipping");
       return false;
     }
     
     const userId = message.from.id.toString();
     const username = message.from.username;
     
-    console.log(`👤 [START-COMMAND] User ID: ${userId}, Username: ${username || 'none'}`);
+    await logger.info(`👤 User ID: ${userId}, Username: ${username || 'none'}`);
     
     // Parse start parameters if any
     const startParams = message.text.split(' ');
     const startParam = startParams.length > 1 ? startParams[1] : null;
     
-    console.log(`🔍 [START-COMMAND] Start parameter: ${startParam || 'none'}`);
+    await logger.info(`🔍 Start parameter: ${startParam || 'none'}`);
     
     // Route to the appropriate handler based on the parameter
     if (startParam) {
       if (startParam.startsWith('group_')) {
         // This is a group code
         const groupId = startParam.substring(6);
-        console.log(`👥👥👥 [START-COMMAND] Group parameter detected: ${groupId}`);
+        await logger.info(`👥👥👥 Group parameter detected: ${groupId}`);
         return await handleGroupStartCommand(supabase, message, botToken, groupId);
       } else {
         // This is likely a community code
-        console.log(`🏢 [START-COMMAND] Community parameter detected: ${startParam}`);
+        await logger.info(`🏢 Community parameter detected: ${startParam}`);
         return await handleCommunityStartCommand(supabase, message, botToken, startParam);
       }
     } else {
       // No parameter provided, send general welcome message
-      console.log("👋 [START-COMMAND] No parameter, sending general welcome message");
+      await logger.info("👋 No parameter, sending general welcome message");
       
       const welcomeMessage = `👋 Welcome to Membify! This bot helps you manage paid memberships for your Telegram groups.`;
       
@@ -54,7 +58,7 @@ export async function handleStartCommand(
       return true;
     }
   } catch (error) {
-    console.error("❌ [START-COMMAND] Error handling start command:", error);
+    await logger.error("❌ Error handling start command:", error);
     
     // Log the error
     await supabase.from('telegram_errors').insert({

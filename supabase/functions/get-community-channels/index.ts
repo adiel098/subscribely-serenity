@@ -38,13 +38,22 @@ serve(async (req) => {
       .from("communities")
       .select("id, name, is_group")
       .eq("id", communityId)
-      .single();
+      .maybeSingle();
       
     if (communityError) {
       console.error("Error fetching community:", communityError);
       return new Response(
         JSON.stringify({ error: "Failed to fetch community data", isGroup: false, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+    
+    // If community doesn't exist, return empty array
+    if (!community) {
+      console.log(`Community ${communityId} not found`);
+      return new Response(
+        JSON.stringify({ error: "Community not found", isGroup: false, channels: [] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
       );
     }
     
@@ -106,6 +115,9 @@ serve(async (req) => {
       console.error("Warning: channels is not an array after mapping!", channels);
       channels = []; // Ensure we always return an array
     }
+    
+    // Filter out any null entries
+    channels = channels.filter(channel => channel !== null && typeof channel === 'object');
     
     console.log(`Found ${channels.length} channels for group ${communityId}`);
     console.log("Channels data:", JSON.stringify(channels));

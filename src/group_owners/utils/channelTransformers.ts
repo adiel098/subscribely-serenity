@@ -15,18 +15,25 @@ export interface Channel {
 }
 
 /**
- * Transforms Community objects to Channel objects
+ * Transforms Community objects to Channel objects with robust error handling
  */
 export const communitiesToChannels = (communities: Community[] | undefined): Channel[] => {
   logger.debug("communitiesToChannels input:", {
     communities,
     isArray: Array.isArray(communities),
-    length: communities?.length || 0
+    length: communities?.length || 0,
+    type: typeof communities
   });
   
   // Guard against null/undefined or non-array input
-  if (!communities || !Array.isArray(communities)) {
-    logger.error("Invalid communities input to communitiesToChannels:", communities);
+  if (!communities) {
+    logger.error("Null or undefined communities input to communitiesToChannels");
+    return [];
+  }
+  
+  // Ensure communities is actually an array
+  if (!Array.isArray(communities)) {
+    logger.error("Non-array communities input to communitiesToChannels:", communities);
     return [];
   }
   

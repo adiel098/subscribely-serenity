@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 
@@ -222,11 +221,14 @@ export async function sendBroadcast(
 
     console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details: ${entityName}`);
 
-    // Generate the proper mini app URL for Telegram - using t.me format with bot username
-    const baseUrl = `https://t.me/${botUsername}?start=`;
+    // Instead of using t.me bot URL, use the mini app URL for the platform
+    const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
+    const TELEGRAM_MINI_APP_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
+    
     // Use either custom link or entity ID (without the prefix for groups)
     const linkParameter = customLink || (entityType === 'group' ? entityId.replace('group_', '') : entityId);
-    const miniappUrl = `${baseUrl}${linkParameter}`;
+    // Create the mini app URL to use in the button
+    const miniappUrl = `${TELEGRAM_MINI_APP_URL}?start=${linkParameter}`;
     
     console.log(`📝 [BROADCAST-HANDLER] Generated MiniApp URL: ${miniappUrl}`);
 
@@ -282,24 +284,18 @@ export async function sendBroadcast(
     let successCount = 0;
     let failureCount = 0;
 
-    // Prepare inline keyboard if button is requested
+    // Prepare inline keyboard if button is requested with proper web_app format
     let inlineKeyboard = null;
     if (includeButton) {
-      // Validate the URL to ensure it's a proper HTTPS URL
-      if (miniappUrl && miniappUrl.startsWith('https://')) {
-        inlineKeyboard = {
-          inline_keyboard: [[
-            {
-              text: "Join Community🚀",
-              url: miniappUrl // Use URL property instead of web_app for external links
-            }
-          ]]
-        };
-        console.log(`📝 [BROADCAST-HANDLER] Created inline keyboard with URL: ${miniappUrl}`);
-      } else {
-        console.warn(`⚠️ [BROADCAST-HANDLER] Invalid URL for inline keyboard (not HTTPS): ${miniappUrl}`);
-        console.warn(`⚠️ [BROADCAST-HANDLER] Button will be omitted from messages`);
-      }
+      inlineKeyboard = {
+        inline_keyboard: [[
+          {
+            text: "Join Community🚀",
+            web_app: { url: miniappUrl } // Use web_app property for Telegram mini apps
+          }
+        ]]
+      };
+      console.log(`📝 [BROADCAST-HANDLER] Created inline keyboard with web_app URL: ${miniappUrl}`);
     }
 
     // Send message to each subscriber

@@ -10,6 +10,7 @@ import { GroupEditModeContent } from "./dialog-sections/GroupEditModeContent";
 import { useGroupDetailsDialog } from "@/group_owners/hooks/useGroupDetailsDialog";
 import { useGroupChannels } from "@/group_owners/hooks/useGroupChannels";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { communitiesToChannels } from "@/group_owners/utils/channelTransformers";
 
 const logger = createLogger("GroupDetailsDialog");
 
@@ -87,6 +88,11 @@ export const GroupDetailsDialog = ({
     }
   }, [isOpen, resetDialogState]);
 
+  // Transform the Community objects to Channel objects
+  const transformedChannels = channels.length > 0 
+    ? communitiesToChannels(channels) 
+    : [];
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-purple-50">
@@ -116,7 +122,7 @@ export const GroupDetailsDialog = ({
           <GroupViewModeContent 
             group={group}
             communities={communities}
-            channels={channels}
+            channels={transformedChannels}
             fullLink={fullLink}
             onCopyLink={onCopyLink}
             onEditLink={() => setIsEditing(true)}

@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Community } from "./useCommunities";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
@@ -7,7 +7,9 @@ import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 const logger = createLogger("useGroupChannels");
 
 export const useGroupChannels = (groupId: string | null) => {
-  const { data: result, isLoading } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: result, isLoading, error } = useQuery({
     queryKey: ["community-group-members", groupId],
     queryFn: async () => {
       if (!groupId) {
@@ -57,14 +59,24 @@ export const useGroupChannels = (groupId: string | null) => {
       }
     },
     enabled: !!groupId,
-    staleTime: 60000, // 1 minute cache to reduce unnecessary fetches
+    staleTime: 30000, // 30 second cache to reduce unnecessary fetches but still get updated data relatively quickly
     gcTime: 300000, // 5 minutes garbage collection time
     refetchOnWindowFocus: false
   });
   
+  // This function can be called after successful updates to the group communities
+  const invalidateCache = () => {
+    if (groupId) {
+      logger.log(`Invalidating cache for group: ${groupId}`);
+      queryClient.invalidateQueries({ queryKey: ["community-group-members", groupId] });
+    }
+  };
+  
   return {
     channels: result?.channels || [],
     channelIds: result?.channelIds || [],
-    isLoading
+    isLoading,
+    error,
+    invalidateCache
   };
 };

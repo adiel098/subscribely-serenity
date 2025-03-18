@@ -6,15 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Edit, Users } from "lucide-react";
 import { GroupSuccessBanner } from "../group-success/GroupSuccessBanner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { Channel } from "@/group_owners/utils/channelTransformers";
 
 const logger = createLogger("GroupViewModeContent");
-
-interface Channel {
-  id: string;
-  name: string;
-  type: string;
-  description?: string;
-}
 
 interface GroupViewModeContentProps {
   group: CommunityGroup;
@@ -36,7 +30,7 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
   onEditCommunities
 }) => {
   // Prefer channels from edge function, fall back to communities from props if needed
-  const displayChannels = channels.length > 0 ? channels : communities;
+  const displayChannels = channels.length > 0 ? channels : [];
   
   logger.log("Group view mode content:", {
     groupId: group.id,
@@ -108,7 +102,7 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
                 className="flex items-center p-2 border border-gray-100 rounded-md bg-white hover:bg-gray-50"
               >
                 <div className="w-8 h-8 rounded overflow-hidden bg-gray-100 flex-shrink-0 mr-3">
-                  {('telegram_photo_url' in item && item.telegram_photo_url) ? (
+                  {item.telegram_photo_url ? (
                     <img 
                       src={item.telegram_photo_url} 
                       alt={item.name} 
@@ -122,9 +116,9 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
                 </div>
                 <div>
                   <h4 className="font-medium text-sm">{item.name}</h4>
-                  {(item.description || ('description' in item && item.description)) && (
+                  {item.description && (
                     <p className="text-gray-500 text-xs truncate max-w-[300px]">
-                      {item.description || ('description' in item && item.description)}
+                      {item.description}
                     </p>
                   )}
                 </div>

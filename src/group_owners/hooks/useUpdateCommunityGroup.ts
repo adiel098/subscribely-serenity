@@ -93,9 +93,20 @@ export const useUpdateCommunityGroup = () => {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate all relevant queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["community-groups"] });
-      queryClient.invalidateQueries({ queryKey: ["community-group-members"] });
+      
+      // Invalidate specific group members query to refresh channels
+      queryClient.invalidateQueries({ 
+        queryKey: ["community-group-members", data.id]
+      });
+      
+      // Also invalidate the general community-group-members query to update all lists
+      queryClient.invalidateQueries({ 
+        queryKey: ["community-group-members"]
+      });
+      
       toast.success("Community group updated successfully!");
     },
     onError: (error: any) => {

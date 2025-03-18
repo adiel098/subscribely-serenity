@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, memo, useCallback } from "react";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { SectionHeader } from "./community-selection/SectionHeader";
 import { SearchBar } from "./community-selection/SearchBar";
@@ -18,7 +18,7 @@ interface GroupCommunitySelectionProps {
   isLoading: boolean;
 }
 
-export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = ({
+export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = memo(({
   allCommunities,
   selectedCommunityIds,
   toggleCommunity,
@@ -38,9 +38,9 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
   });
   
   // Handler for clearing all selected communities
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     selectedCommunityIds.forEach(id => toggleCommunity(id));
-  };
+  }, [selectedCommunityIds, toggleCommunity]);
   
   return (
     <div className="space-y-4">
@@ -72,4 +72,6 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
       />
     </div>
   );
-};
+});
+
+GroupCommunitySelection.displayName = "GroupCommunitySelection";

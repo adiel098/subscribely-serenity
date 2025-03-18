@@ -1,65 +1,70 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Community } from "./useCommunities";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useGroupChannels");
 
-interface Channel {
-  id: string;
-  name: string;
-  type: string;
-  description?: string;
-}
-
-interface ChannelsResponse {
-  isGroup: boolean;
-  channels: Channel[];
-}
-
-export function useGroupChannels(groupId: string | null) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["group-channels", groupId],
-    queryFn: async (): Promise<ChannelsResponse> => {
+export const useGroupChannels = (groupId: string | null) => {
+  const { data: result, isLoading } = useQuery({
+    queryKey: ["community-group-members", groupId],
+    queryFn: async () => {
       if (!groupId) {
-        logger.log("No group ID provided, returning empty channels list");
-        return { isGroup: false, channels: [] };
+        return { channels: [], channelIds: [] };
       }
       
       try {
-        logger.log("Fetching channels for group ID:", groupId);
+        logger.log(`Fetching channels for group: ${groupId}`);
         
-        const { data, error } = await supabase.functions.invoke("get-community-channels", {
-          body: { communityId: groupId }
-        });
-        
+        // Use community_relationships table to get all members of this group
+        const { data: relationships, error } = await supabase
+          .from("community_relationships")
+          .select("member_id")
+          .eq("community_id", groupId)
+          .eq("relationship_type", "group");
+          
         if (error) {
-          logger.error("Error fetching group channels:", error);
+          logger.error("Error fetching group members:", error);
           throw error;
         }
         
-        logger.log(`Retrieved ${data?.channels?.length || 0} channels for group ${groupId}`);
+        if (!relationships || relationships.length === 0) {
+          return { channels: [], channelIds: [] };
+        }
         
-        return data || { isGroup: false, channels: [] };
+        // Extract community IDs from relationships
+        const communityIds = relationships.map(rel => rel.member_id);
+        
+        // Fetch the actual community details
+        const { data: communities, error: communitiesError } = await supabase
+          .from("communities")
+          .select("*")
+          .in("id", communityIds);
+          
+        if (communitiesError) {
+          logger.error("Error fetching group member communities:", communitiesError);
+          throw communitiesError;
+        }
+        
+        return { 
+          channels: communities as Community[] || [],
+          channelIds: communityIds
+        };
       } catch (error) {
         logger.error("Error in useGroupChannels:", error);
-        return { isGroup: false, channels: [] };
+        return { channels: [], channelIds: [] };
       }
     },
     enabled: !!groupId,
-    staleTime: 1000 * 60 * 10, // Data stays fresh for 10 minutes
-    gcTime: 1000 * 60 * 15,   // Cache garbage collection after 15 minutes
-    retry: 1,                  // Only retry once to avoid excessive attempts
+    staleTime: 60000, // 1 minute cache to reduce unnecessary fetches
+    gcTime: 300000, // 5 minutes garbage collection time
+    refetchOnWindowFocus: false
   });
   
-  // Extract just the community IDs for convenience
-  const channelIds = data?.channels ? data.channels.map(channel => channel.id) : [];
-  
   return {
-    isGroup: data?.isGroup || false,
-    channels: data?.channels || [],
-    isLoading,
-    error,
-    channelIds
+    channels: result?.channels || [],
+    channelIds: result?.channelIds || [],
+    isLoading
   };
-}
+};

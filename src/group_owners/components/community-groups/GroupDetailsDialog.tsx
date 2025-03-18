@@ -69,11 +69,11 @@ export const GroupDetailsDialog = ({
   // Update selected communities when channels are loaded - only once per dialog opening
   useEffect(() => {
     if (isOpen && channels.length > 0 && !isLoadingChannels && channelIds.length > 0) {
-      // Check if arrays are different before updating to prevent infinite loops
-      const currentIds = [...selectedCommunityIds].sort().join(',');
-      const newIds = [...channelIds].sort().join(',');
+      // Use JSON.stringify for deep comparison of arrays to prevent infinite loops
+      const currentIdsSet = JSON.stringify([...selectedCommunityIds].sort());
+      const newIdsSet = JSON.stringify([...channelIds].sort());
       
-      if (currentIds !== newIds) {
+      if (currentIdsSet !== newIdsSet) {
         logger.log("Setting selected communities from channels:", channelIds);
         setSelectedCommunityIds(channelIds);
       }

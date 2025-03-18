@@ -79,14 +79,14 @@ export function useGroupDetailsDialog(
     updateGroupMutation, onGroupUpdated, onClose
   ]);
 
-  // Safely update selected community IDs using a stable function
+  // Safely update selected community IDs using a stable function with proper equality check
   const setSelectedCommunitiesArray = useCallback((ids: string[]) => {
     setSelectedCommunityIds(prevIds => {
-      // Only update state if the values are actually different
-      const currentIds = [...prevIds].sort().join(',');
-      const newIds = [...ids].sort().join(',');
+      // Use JSON.stringify for deep comparison of arrays to prevent infinite loops
+      const currentIdsJson = JSON.stringify([...prevIds].sort());
+      const newIdsJson = JSON.stringify([...ids].sort());
       
-      if (currentIds !== newIds) {
+      if (currentIdsJson !== newIdsJson) {
         logger.log("Updating selected communities:", ids);
         return ids;
       }
@@ -94,16 +94,22 @@ export function useGroupDetailsDialog(
     });
   }, []);
 
-  // Toggle community selection
+  // Toggle community selection with memoized function to prevent re-renders
   const toggleCommunity = useCallback((communityId: string) => {
     logger.log("Toggling community:", communityId);
-    setSelectedCommunityIds(prev => 
-      prev.includes(communityId)
-        ? prev.filter(id => id !== communityId)
-        : [...prev, communityId]
-    );
+    setSelectedCommunityIds(prev => {
+      // Check if the community is already in the array
+      if (prev.includes(communityId)) {
+        // If it is, create a new array without it
+        return prev.filter(id => id !== communityId);
+      } else {
+        // If it's not, add it to the array
+        return [...prev, communityId];
+      }
+    });
   }, []);
 
+  // Reset dialog state with a memoized function
   const resetDialogState = useCallback(() => {
     logger.log("Resetting dialog state");
     setHasInitialized(false);

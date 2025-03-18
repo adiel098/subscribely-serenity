@@ -24,6 +24,7 @@ serve(async (req) => {
     const { communityId } = await req.json();
     
     if (!communityId) {
+      console.log("Error: Missing community ID");
       return new Response(
         JSON.stringify({ error: "Missing community ID", isGroup: false, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -85,6 +86,8 @@ serve(async (req) => {
       );
     }
     
+    console.log("Raw relationships data:", JSON.stringify(relationships));
+    
     // Process relationships into channels format
     let channels = [];
     
@@ -92,9 +95,20 @@ serve(async (req) => {
       channels = relationships
         .filter(rel => rel.communities) // Filter out any null communities
         .map(rel => rel.communities); // Return the complete community object
+      
+      console.log(`Mapped ${channels.length} channels from relationships`);
+    } else {
+      console.error("Relationships is not an array or is null:", relationships);
+    }
+    
+    // Double check that channels is an array
+    if (!Array.isArray(channels)) {
+      console.error("Warning: channels is not an array after mapping!", channels);
+      channels = []; // Ensure we always return an array
     }
     
     console.log(`Found ${channels.length} channels for group ${communityId}`);
+    console.log("Channels data:", JSON.stringify(channels));
     
     return new Response(
       JSON.stringify({ 

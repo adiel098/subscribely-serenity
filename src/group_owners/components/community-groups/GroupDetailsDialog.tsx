@@ -34,10 +34,27 @@ export const GroupDetailsDialog = ({
   onGroupUpdated,
   isEditModeByDefault = true,
 }: GroupDetailsDialogProps) => {
+  // Log the dialog props
+  logger.log("Dialog opened with props:", { 
+    isOpen, 
+    groupId: group?.id, 
+    communitiesCount: communities?.length,
+    isEditModeByDefault 
+  });
+  
   // Get channels (member communities) using the edge function
   const { channels, isLoading: isLoadingChannels, channelIds, invalidateCache } = useGroupChannels(
     isOpen ? group.id : null
   );
+  
+  // Log the channels data
+  logger.debug("Channels data in GroupDetailsDialog:", {
+    channels,
+    isArray: Array.isArray(channels),
+    channelsLength: channels?.length || 0,
+    channelIds,
+    isLoadingChannels
+  });
   
   const {
     isEditing,
@@ -91,9 +108,19 @@ export const GroupDetailsDialog = ({
 
   // Make sure channels is an array
   const safeChannels = Array.isArray(channels) ? channels : [];
+  logger.debug("Safe channels before transform:", {
+    safeChannels,
+    isArray: Array.isArray(safeChannels),
+    length: safeChannels.length
+  });
   
   // Transform the Community objects to Channel objects
   const transformedChannels = communitiesToChannels(safeChannels);
+  logger.debug("Transformed channels:", {
+    transformedChannels,
+    isArray: Array.isArray(transformedChannels),
+    length: transformedChannels.length
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

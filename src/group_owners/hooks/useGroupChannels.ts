@@ -36,6 +36,9 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
+        // Debug the raw response data
+        logger.debug("Raw response from edge function:", data);
+        
         // Ensure we have valid data
         if (!data) {
           logger.error("No data returned from edge function");
@@ -50,10 +53,28 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
+        // Check if channels exists and is actually an array
+        if (!response.channels) {
+          logger.error("No channels property in response", response);
+          return { channels: [], channelIds: [] };
+        }
+        
+        if (!Array.isArray(response.channels)) {
+          logger.error("Channels is not an array! Actual value:", response.channels);
+          // Return empty arrays to prevent mapping errors
+          return { channels: [], channelIds: [] };
+        }
+        
         // Ensure channels is an array and not null/undefined
         const channels = Array.isArray(response.channels) ? response.channels : [];
         
         logger.log(`Retrieved ${channels.length} channels from edge function:`, channels);
+        
+        // Add additional safety check before mapping
+        if (!channels || !Array.isArray(channels)) {
+          logger.error("Channels is still not an array after validation:", channels);
+          return { channels: [], channelIds: [] };
+        }
         
         // Extract channel IDs only if channels is valid
         const channelIds = channels.map(channel => channel.id);
@@ -72,6 +93,17 @@ export const useGroupChannels = (groupId: string | null) => {
     staleTime: 0, // Set to 0 to always fetch fresh data
     gcTime: 300000, // 5 minutes garbage collection time
     refetchOnWindowFocus: false
+  });
+  
+  // Log the result every time it changes
+  logger.debug("Current useGroupChannels result:", {
+    hasResult: !!result,
+    channels: result?.channels,
+    isArray: result?.channels ? Array.isArray(result.channels) : false,
+    length: result?.channels?.length || 0,
+    channelIds: result?.channelIds,
+    isLoading,
+    error
   });
   
   // This function can be called after successful updates to the group communities

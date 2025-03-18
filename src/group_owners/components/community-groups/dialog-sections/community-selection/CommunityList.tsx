@@ -18,6 +18,15 @@ export const CommunityList: React.FC<CommunityListProps> = memo(({
   selectedCommunityIds,
   toggleCommunity
 }) => {
+  // Log the received props
+  logger.debug("CommunityList props:", {
+    communities,
+    isArray: Array.isArray(communities),
+    communitiesLength: communities?.length,
+    selectedCount: selectedCommunityIds?.length,
+    isSelectedArray: Array.isArray(selectedCommunityIds)
+  });
+  
   // Ensure communities is an array
   const communitiesArray = Array.isArray(communities) ? communities : [];
   
@@ -61,6 +70,7 @@ interface CommunityItemProps {
 // Separate memoized component for each item to prevent re-renders of all items
 const CommunityItem = memo(({ community, isSelected, onToggle }: CommunityItemProps) => {
   if (!community || typeof community !== 'object') {
+    logger.error("Invalid community in CommunityItem:", community);
     return null;
   }
 

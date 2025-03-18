@@ -1,20 +1,13 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
-import { GroupPropertyEditSection } from "./GroupPropertyEditSection";
-import { useUpdateCommunityGroup } from "@/group_owners/hooks/useUpdateCommunityGroup";
-import { toast } from "sonner";
 import { GroupDialogHeader } from "./dialog-sections/GroupDialogHeader";
 import { GroupViewModeContent } from "./dialog-sections/GroupViewModeContent";
 import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
-import { GroupCommunitySelection } from "./dialog-sections/GroupCommunitySelection";
-import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
-import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
-
-const logger = createLogger("GroupDetailsDialog");
+import { GroupEditModeContent } from "./dialog-sections/GroupEditModeContent";
+import { useGroupDetailsDialog } from "@/group_owners/hooks/useGroupDetailsDialog";
 
 interface GroupDetailsDialogProps {
   isOpen: boolean;
@@ -37,101 +30,42 @@ export const GroupDetailsDialog = ({
   onGroupUpdated,
   isEditModeByDefault = true,
 }: GroupDetailsDialogProps) => {
-  const [isEditing, setIsEditing] = useState(isEditModeByDefault);
-  const [name, setName] = useState(group.name);
-  const [description, setDescription] = useState(group.description || "");
-  const [photoUrl, setPhotoUrl] = useState(group.telegram_photo_url || "");
-  const [customLink, setCustomLink] = useState(group.custom_link || "");
-  const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'details' | 'communities'>('details');
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const {
+    isEditing,
+    name,
+    description,
+    photoUrl,
+    customLink,
+    selectedCommunityIds,
+    activeTab,
+    allCommunities,
+    groupCommunities,
+    isLoadingAllCommunities,
+    isLoadingGroupCommunities,
+    isPendingUpdate,
+    setIsEditing,
+    setName,
+    setDescription,
+    setPhotoUrl,
+    setCustomLink,
+    setActiveTab,
+    handleSaveChanges,
+    toggleCommunity,
+    resetDialogState
+  } = useGroupDetailsDialog(
+    group,
+    communities,
+    onGroupUpdated,
+    onClose,
+    isEditModeByDefault
+  );
   
-  // Get all communities for selection
-  const { data: allCommunities, isLoading: isLoadingAllCommunities } = useCommunities();
-  
-  // Fetch member communities for the current group
-  const { 
-    communities: groupCommunities, 
-    isLoading: isLoadingGroupCommunities, 
-    communityIds: fetchedCommunityIds,
-    error: groupCommunitiesError
-  } = useGroupMemberCommunities(group.id);
-  
-  const updateGroupMutation = useUpdateCommunityGroup();
-  
-  // Initialize form state when dialog opens or group changes - only once
+  // Reset dialog state when it closes
   useEffect(() => {
-    if (isOpen && !hasInitialized) {
-      setIsEditing(isEditModeByDefault);
-      setName(group.name);
-      setDescription(group.description || "");
-      setPhotoUrl(group.telegram_photo_url || "");
-      setCustomLink(group.custom_link || "");
-      setActiveTab('details');
-      setHasInitialized(true);
-      
-      logger.log("Dialog opened for group:", group.id);
-    } else if (!isOpen) {
-      // Reset initialization state when dialog closes
-      setHasInitialized(false);
+    if (!isOpen) {
+      resetDialogState();
     }
-  }, [isOpen, group, isEditModeByDefault, hasInitialized]);
-  
-  // Set selected communities when we have data - with safeguards against infinite loops
-  useEffect(() => {
-    if (!isOpen || !hasInitialized) return;
-    
-    if (fetchedCommunityIds.length > 0) {
-      logger.log("Setting selected communities from fetchedCommunityIds:", fetchedCommunityIds);
-      setSelectedCommunityIds(fetchedCommunityIds);
-    } else if (communities && communities.length > 0) {
-      logger.log("Setting selected communities from props:", communities.map(c => c.id));
-      setSelectedCommunityIds(communities.map(c => c.id));
-    } else {
-      // Only log once, not in an infinite loop
-      logger.log("No communities found for selection");
-    }
-  }, [isOpen, hasInitialized, fetchedCommunityIds, communities]);
-  
-  const handleSaveChanges = () => {
-    if (!name.trim()) {
-      toast.error("Group name is required");
-      return;
-    }
-    
-    logger.log("Saving group with communities:", selectedCommunityIds);
-    
-    updateGroupMutation.mutate(
-      {
-        id: group.id,
-        name,
-        description: description || null,
-        photo_url: photoUrl || null,
-        custom_link: customLink || null,
-        communities: selectedCommunityIds
-      },
-      {
-        onSuccess: () => {
-          toast.success("Group details updated successfully! 🎉");
-          onGroupUpdated();
-          onClose();
-        },
-        onError: (error) => {
-          toast.error(`Failed to update group details: ${error.message}`);
-        }
-      }
-    );
-  };
-
-  // Toggle community selection
-  const toggleCommunity = (communityId: string) => {
-    logger.log("Toggling community:", communityId);
-    setSelectedCommunityIds(prev => 
-      prev.includes(communityId)
-        ? prev.filter(id => id !== communityId)
-        : [...prev, communityId]
-    );
-  };
+  }, [isOpen, resetDialogState]);
 
   // Determine which communities to display
   const communitiesForDisplay = groupCommunities?.length > 0 ? groupCommunities : communities;
@@ -145,53 +79,22 @@ export const GroupDetailsDialog = ({
         />
 
         {isEditing ? (
-          <div className="space-y-4">
-            {/* Tabs for switching between details and communities */}
-            <div className="flex border-b">
-              <button
-                className={`px-4 py-2 flex items-center gap-1.5 ${
-                  activeTab === 'details' 
-                    ? 'text-purple-600 border-b-2 border-purple-600 font-medium' 
-                    : 'text-gray-500 hover:text-purple-500 transition-colors'
-                }`}
-                onClick={() => setActiveTab('details')}
-              >
-                <span className="text-lg">✏️</span>
-                Group Details
-              </button>
-              <button
-                className={`px-4 py-2 flex items-center gap-1.5 ${
-                  activeTab === 'communities' 
-                    ? 'text-purple-600 border-b-2 border-purple-600 font-medium' 
-                    : 'text-gray-500 hover:text-purple-500 transition-colors'
-                }`}
-                onClick={() => setActiveTab('communities')}
-              >
-                <span className="text-lg">📚</span>
-                Communities
-              </button>
-            </div>
-
-            {activeTab === 'details' ? (
-              <GroupPropertyEditSection 
-                name={name}
-                setName={setName}
-                description={description}
-                setDescription={setDescription}
-                photoUrl={photoUrl}
-                setPhotoUrl={setPhotoUrl}
-                customLink={customLink}
-                setCustomLink={setCustomLink}
-              />
-            ) : (
-              <GroupCommunitySelection
-                allCommunities={allCommunities?.filter(c => !c.is_group) || []}
-                selectedCommunityIds={selectedCommunityIds}
-                toggleCommunity={toggleCommunity}
-                isLoading={isLoadingAllCommunities || isLoadingGroupCommunities}
-              />
-            )}
-          </div>
+          <GroupEditModeContent
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            name={name}
+            setName={setName}
+            description={description}
+            setDescription={setDescription}
+            photoUrl={photoUrl}
+            setPhotoUrl={setPhotoUrl}
+            customLink={customLink}
+            setCustomLink={setCustomLink}
+            allCommunities={allCommunities}
+            selectedCommunityIds={selectedCommunityIds}
+            toggleCommunity={toggleCommunity}
+            isLoadingCommunities={isLoadingAllCommunities || isLoadingGroupCommunities}
+          />
         ) : (
           <GroupViewModeContent 
             group={group}
@@ -208,7 +111,7 @@ export const GroupDetailsDialog = ({
 
         <GroupDialogFooter 
           isEditing={isEditing}
-          isPending={updateGroupMutation.isPending}
+          isPending={isPendingUpdate}
           isFormValid={!!name.trim()}
           onClose={onClose}
           onEdit={() => setIsEditing(true)}

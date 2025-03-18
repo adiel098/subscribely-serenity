@@ -70,6 +70,22 @@ export function useGroupDetailsDialog(
     }
   }, [hasInitialized, fetchedCommunityIds, communities]);
   
+  // Fix: Debug output to track what's happening with communities
+  useEffect(() => {
+    if (groupCommunitiesError) {
+      logger.error("Error fetching group communities:", groupCommunitiesError);
+    }
+    
+    logger.log("Group communities state:", {
+      groupId: group.id,
+      communitiesFromProps: communities?.length || 0,
+      communitiesFromHook: groupCommunities?.length || 0,
+      fetchedIds: fetchedCommunityIds.length,
+      selectedIds: selectedCommunityIds.length,
+      loadingStatus: isLoadingGroupCommunities
+    });
+  }, [group.id, communities, groupCommunities, fetchedCommunityIds, selectedCommunityIds, isLoadingGroupCommunities, groupCommunitiesError]);
+  
   const handleSaveChanges = () => {
     if (!name.trim()) {
       toast.error("Group name is required");

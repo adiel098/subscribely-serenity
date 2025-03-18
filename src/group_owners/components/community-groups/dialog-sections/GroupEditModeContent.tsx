@@ -4,6 +4,9 @@ import { GroupPropertyEditSection } from "../GroupPropertyEditSection";
 import { GroupCommunitySelection } from "./GroupCommunitySelection";
 import { GroupDialogTabs } from "./GroupDialogTabs";
 import { Community } from "@/group_owners/hooks/useCommunities";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupEditModeContent");
 
 interface GroupEditModeContentProps {
   activeTab: 'details' | 'communities';
@@ -38,6 +41,14 @@ export const GroupEditModeContent: React.FC<GroupEditModeContentProps> = ({
   toggleCommunity,
   isLoadingCommunities
 }) => {
+  // Log the community information for debugging
+  logger.log("Group edit mode content:", {
+    activeTab,
+    communitiesCount: allCommunities?.length || 0,
+    selectedCount: selectedCommunityIds.length,
+    isLoading: isLoadingCommunities
+  });
+
   return (
     <div className="space-y-4">
       <GroupDialogTabs activeTab={activeTab} setActiveTab={setActiveTab} />

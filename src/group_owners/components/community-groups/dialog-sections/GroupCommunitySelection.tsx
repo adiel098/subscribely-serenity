@@ -7,6 +7,9 @@ import { LoadingState } from "./community-selection/LoadingState";
 import { CommunityList } from "./community-selection/CommunityList";
 import { EmptyState } from "./community-selection/EmptyState";
 import { SelectedCounter } from "./community-selection/SelectedCounter";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+
+const logger = createLogger("GroupCommunitySelection");
 
 interface GroupCommunitySelectionProps {
   allCommunities: Community[];
@@ -23,10 +26,16 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = (
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Filter communities based on search query
+  // Filter communities based on search query and ensure we only include non-group communities
   const filteredCommunities = allCommunities.filter(community => 
     community.name.toLowerCase().includes(searchQuery.toLowerCase()) && !community.is_group
   );
+  
+  logger.log("Communities for selection:", {
+    total: allCommunities.length,
+    filtered: filteredCommunities.length,
+    selected: selectedCommunityIds.length
+  });
   
   // Handler for clearing all selected communities
   const handleClearSelection = () => {

@@ -6,6 +6,7 @@ import { Community } from "@/group_owners/hooks/useCommunities";
 import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 import { GroupActionButtons } from "./GroupActionButtons";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
+import { GroupSuccessBanner } from "./group-success/GroupSuccessBanner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("GroupMiniAppLinkButton");
@@ -13,11 +14,13 @@ const logger = createLogger("GroupMiniAppLinkButton");
 interface GroupMiniAppLinkButtonProps {
   group: CommunityGroup;
   communities: Community[];
+  showSuccessBanner?: boolean;
 }
 
 export const GroupMiniAppLinkButton = ({ 
   group, 
-  communities: initialCommunities 
+  communities: initialCommunities,
+  showSuccessBanner = false
 }: GroupMiniAppLinkButtonProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
@@ -49,10 +52,18 @@ export const GroupMiniAppLinkButton = ({
 
   return (
     <>
-      <GroupActionButtons 
-        onCopyLink={handleCopyLink}
-        onShowDetails={handleShowDetails}
-      />
+      {showSuccessBanner ? (
+        <GroupSuccessBanner
+          groupId={group.id}
+          customLink={group.custom_link || null}
+          onOpenEditDialog={handleShowDetails}
+        />
+      ) : (
+        <GroupActionButtons 
+          onCopyLink={handleCopyLink}
+          onShowDetails={handleShowDetails}
+        />
+      )}
 
       {/* Group Edit Dialog with tabs */}
       <GroupDetailsDialog 

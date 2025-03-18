@@ -3,7 +3,8 @@ import React from "react";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
 import { Button } from "@/components/ui/button";
-import { Edit, Copy, Link as LinkIcon, Users } from "lucide-react";
+import { Edit, Users } from "lucide-react";
+import { GroupSuccessBanner } from "../group-success/GroupSuccessBanner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("GroupViewModeContent");
@@ -74,42 +75,13 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
             </div>
           </div>
           
-          {/* Display invite link */}
-          <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <LinkIcon className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium">Invite Link</span>
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={onEditLink}
-                  className="h-8"
-                >
-                  <Edit className="h-3.5 w-3.5 mr-1" />
-                  Edit
-                </Button>
-                
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={onCopyLink}
-                  className="h-8"
-                >
-                  <Copy className="h-3.5 w-3.5 mr-1" />
-                  Copy
-                </Button>
-              </div>
-            </div>
-            
-            <div className="mt-2">
-              <code className="p-2 bg-white rounded border border-gray-200 text-xs block overflow-x-auto">
-                {fullLink}
-              </code>
-            </div>
+          {/* Display invite link with success banner design */}
+          <div className="mt-2">
+            <GroupSuccessBanner 
+              groupId={group.id}
+              customLink={group.custom_link || null}
+              onOpenEditDialog={onEditLink}
+            />
           </div>
         </div>
       </div>

@@ -48,16 +48,17 @@ Deno.serve(async (req) => {
     
     // If it's a group, we need to fetch recipients from all communities in the group
     if (entity_type === 'group') {
-      // First get all communities in the group
+      // First get all communities in the group using community_relationships table
       const { data: groupCommunities, error: groupError } = await supabase
-        .from('community_group_members')
-        .select('community_id')
-        .eq('group_id', entity_id);
+        .from('community_relationships')
+        .select('member_id')
+        .eq('community_id', entity_id)
+        .eq('relationship_type', 'group');
       
       if (groupError) {
         console.error('Error fetching group communities:', groupError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch group communities' }),
+          JSON.stringify({ error: 'Failed to fetch group communities', details: groupError }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
         );
       }
       
-      const communityIds = groupCommunities.map(gc => gc.community_id);
+      const communityIds = groupCommunities.map(gc => gc.member_id);
       
       // Now fetch all members from these communities based on filter
       const query = supabase
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
       if (membersError) {
         console.error('Error fetching group members:', membersError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch group members' }),
+          JSON.stringify({ error: 'Failed to fetch group members', details: membersError }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
       if (membersError) {
         console.error('Error fetching community members:', membersError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch community members' }),
+          JSON.stringify({ error: 'Failed to fetch community members', details: membersError }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }

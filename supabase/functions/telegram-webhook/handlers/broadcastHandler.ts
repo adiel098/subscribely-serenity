@@ -32,8 +32,9 @@ export async function sendBroadcast(
       communityId 
         ? supabase.from('communities').select('miniapp_url').eq('id', communityId).single()
         : supabase.from('community_groups')
-            .select('id, community_members(community_id, communities(miniapp_url))')
+            .select('id, community_relationships(member_id, communities(miniapp_url))')
             .eq('id', groupId)
+            .eq('relationship_type', 'group')
             .single()
     ]);
 
@@ -58,24 +59,25 @@ export async function sendBroadcast(
     let miniappUrl = '';
     if (communityId && entityResult.data.miniapp_url) {
       miniappUrl = entityResult.data.miniapp_url;
-    } else if (groupId && entityResult.data.community_members && 
-               entityResult.data.community_members[0]?.communities?.miniapp_url) {
-      miniappUrl = entityResult.data.community_members[0].communities.miniapp_url;
+    } else if (groupId && entityResult.data.community_relationships && 
+               entityResult.data.community_relationships[0]?.communities?.miniapp_url) {
+      miniappUrl = entityResult.data.community_relationships[0].communities.miniapp_url;
     }
 
     // Get all members based on filter
     let query = supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers')
       .select('telegram_user_id, subscription_status');
       
     if (communityId) {
       query = query.eq('community_id', communityId);
     } else if (groupId) {
-      // For groups, we need to join with community_group_members
+      // For groups, we need to join with community_relationships
       const { data: groupMembers, error: groupError } = await supabase
-        .from('community_group_members')
-        .select('telegram_user_id')
-        .eq('group_id', groupId);
+        .from('community_relationships')
+        .select('member_id')
+        .eq('community_id', groupId)
+        .eq('relationship_type', 'group');
         
       if (groupError) {
         console.error('Error fetching group members:', groupError);
@@ -91,8 +93,9 @@ export async function sendBroadcast(
         };
       }
       
-      const telegramUserIds = groupMembers.map(m => m.telegram_user_id);
-      query = query.in('telegram_user_id', telegramUserIds);
+      // Get all community subscribers from the communities that are in this group
+      const communityIds = groupMembers.map(m => m.member_id);
+      query = query.in('community_id', communityIds);
     }
 
     // Apply filter by subscription status

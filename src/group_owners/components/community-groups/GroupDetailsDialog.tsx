@@ -3,14 +3,13 @@ import React, { useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
 import { Community } from "@/group_owners/hooks/useCommunities";
-import { GroupDialogHeader } from "./dialog-sections/GroupDialogHeader";
-import { GroupViewModeContent } from "./dialog-sections/GroupViewModeContent";
-import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
-import { GroupEditModeContent } from "./dialog-sections/GroupEditModeContent";
 import { useGroupDetailsDialog } from "@/group_owners/hooks/useGroupDetailsDialog";
 import { useGroupChannels } from "@/group_owners/hooks/useGroupChannels";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { communitiesToChannels } from "@/group_owners/utils/channelTransformers";
+import { SingleTabGroupContent } from "./dialog-sections/SingleTabGroupContent";
+import { GroupDialogHeader } from "./dialog-sections/GroupDialogHeader";
+import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
 
 const logger = createLogger("GroupDetailsDialog");
 
@@ -47,7 +46,6 @@ export const GroupDetailsDialog = ({
     photoUrl,
     customLink,
     selectedCommunityIds,
-    activeTab,
     allCommunities,
     isLoadingAllCommunities,
     isPendingUpdate,
@@ -56,7 +54,6 @@ export const GroupDetailsDialog = ({
     setDescription,
     setPhotoUrl,
     setCustomLink,
-    setActiveTab,
     setSelectedCommunityIds,
     handleSaveChanges,
     toggleCommunity,
@@ -98,16 +95,6 @@ export const GroupDetailsDialog = ({
   // Transform the Community objects to Channel objects
   const transformedChannels = communitiesToChannels(safeChannels);
 
-  // Debug logging to help diagnose the issue
-  logger.log("Dialog state:", {
-    isOpen,
-    isEditing,
-    channelsCount: safeChannels.length,
-    channelIds: channelIds || [],
-    selectedCommunityIds,
-    activeTab
-  });
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-purple-50">
@@ -116,37 +103,26 @@ export const GroupDetailsDialog = ({
           groupName={group.name} 
         />
 
-        {isEditing ? (
-          <GroupEditModeContent
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            name={name}
-            setName={setName}
-            description={description}
-            setDescription={setDescription}
-            photoUrl={photoUrl}
-            setPhotoUrl={setPhotoUrl}
-            customLink={customLink}
-            setCustomLink={setCustomLink}
-            allCommunities={allCommunities || []}
-            selectedCommunityIds={selectedCommunityIds}
-            toggleCommunity={toggleCommunity}
-            isLoadingCommunities={isLoadingAllCommunities || isLoadingChannels}
-          />
-        ) : (
-          <GroupViewModeContent 
-            group={group}
-            communities={communities}
-            channels={transformedChannels}
-            fullLink={fullLink}
-            onCopyLink={onCopyLink}
-            onEditLink={() => setIsEditing(true)}
-            onEditCommunities={() => {
-              setActiveTab('communities');
-              setIsEditing(true);
-            }}
-          />
-        )}
+        <SingleTabGroupContent 
+          group={group}
+          isEditing={isEditing}
+          name={name}
+          setName={setName}
+          description={description}
+          setDescription={setDescription}
+          photoUrl={photoUrl}
+          setPhotoUrl={setPhotoUrl}
+          customLink={customLink}
+          setCustomLink={setCustomLink}
+          allCommunities={allCommunities || []}
+          selectedCommunityIds={selectedCommunityIds}
+          toggleCommunity={toggleCommunity}
+          isLoadingCommunities={isLoadingAllCommunities || isLoadingChannels}
+          channels={transformedChannels}
+          fullLink={fullLink}
+          onCopyLink={onCopyLink}
+          onEditLink={() => setIsEditing(true)}
+        />
 
         <GroupDialogFooter 
           isEditing={isEditing}

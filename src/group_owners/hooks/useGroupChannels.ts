@@ -33,7 +33,7 @@ export const useGroupChannels = (groupId: string | null) => {
         
         if (error) {
           logger.error("Error fetching group channels from edge function:", error);
-          throw error;
+          return { channels: [], channelIds: [] };
         }
         
         // Ensure we have valid data
@@ -42,7 +42,7 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
-        // Process the response (should be in the format { isGroup: boolean, channels: Community[] })
+        // Process the response
         const response = data as ChannelsResponse;
         
         if (response.error) {
@@ -50,12 +50,12 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
-        // Ensure channels is an array
+        // Ensure channels is an array and not null/undefined
         const channels = Array.isArray(response.channels) ? response.channels : [];
         
         logger.log(`Retrieved ${channels.length} channels from edge function:`, channels);
         
-        // Extract channel IDs
+        // Extract channel IDs only if channels is valid
         const channelIds = channels.map(channel => channel.id);
         logger.log(`Extracted ${channelIds.length} channel IDs:`, channelIds);
         

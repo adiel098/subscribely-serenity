@@ -25,7 +25,7 @@ serve(async (req) => {
     
     if (!communityId) {
       return new Response(
-        JSON.stringify({ error: "Missing community ID" }),
+        JSON.stringify({ error: "Missing community ID", isGroup: false, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
@@ -42,7 +42,7 @@ serve(async (req) => {
     if (communityError) {
       console.error("Error fetching community:", communityError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch community data" }),
+        JSON.stringify({ error: "Failed to fetch community data", isGroup: false, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
@@ -80,7 +80,7 @@ serve(async (req) => {
     if (relationshipsError) {
       console.error("Error fetching relationships:", relationshipsError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch group relationships" }),
+        JSON.stringify({ error: "Failed to fetch group relationships", isGroup: true, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
@@ -107,7 +107,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: "Internal server error", isGroup: false, channels: [] }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }

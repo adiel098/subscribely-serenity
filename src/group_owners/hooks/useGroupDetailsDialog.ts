@@ -22,7 +22,6 @@ export function useGroupDetailsDialog(
   const [photoUrl, setPhotoUrl] = useState(group.telegram_photo_url || "");
   const [customLink, setCustomLink] = useState(group.custom_link || "");
   const [selectedCommunityIds, setSelectedCommunityIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'details' | 'communities'>('details');
   const [hasInitialized, setHasInitialized] = useState(false);
   
   // Get all communities for selection
@@ -38,7 +37,6 @@ export function useGroupDetailsDialog(
       setDescription(group.description || "");
       setPhotoUrl(group.telegram_photo_url || "");
       setCustomLink(group.custom_link || "");
-      setActiveTab('details');
       setHasInitialized(true);
       
       logger.log("Dialog initialized for group:", group.id);
@@ -123,7 +121,6 @@ export function useGroupDetailsDialog(
     photoUrl,
     customLink,
     selectedCommunityIds,
-    activeTab,
     allCommunities,
     isLoadingAllCommunities,
     isPendingUpdate: updateGroupMutation.isPending,
@@ -133,7 +130,6 @@ export function useGroupDetailsDialog(
     setPhotoUrl,
     setCustomLink,
     setSelectedCommunityIds: setSelectedCommunitiesArray,
-    setActiveTab,
     handleSaveChanges,
     toggleCommunity,
     resetDialogState

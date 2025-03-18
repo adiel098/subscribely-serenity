@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 
@@ -113,9 +114,7 @@ export async function sendBroadcast(
     
     // For simplicity, we'll work with a single entityId
     const entityId = communityId || groupId;
-    const entityType = communityId ? 'community' : 'group';
-    
-    console.log(`📝 [BROADCAST-HANDLER] Target entity: ${entityId} (type: ${entityType})`);
+    console.log(`📝 [BROADCAST-HANDLER] Target entity ID: ${entityId}`);
     console.log(`📝 [BROADCAST-HANDLER] Filter type: ${filterType}`);
     console.log(`📝 [BROADCAST-HANDLER] Include button: ${includeButton}`);
     console.log(`📝 [BROADCAST-HANDLER] Image included: ${!!image}`);
@@ -171,53 +170,27 @@ export async function sendBroadcast(
     }
     console.log(`📝 [BROADCAST-HANDLER] Using bot username: ${botUsername}`);
     
-    // Get entity details based on type (community or group)
-    console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId} (type: ${entityType})`);
+    // Get entity details
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching entity details for ${entityId}`);
     
-    let entityName = '';
-    let customLink = '';
-    
-    if (entityType === 'community') {
-      // Get community details
-      const { data: community, error: communityError } = await supabase
-        .from('communities')
-        .select('name, custom_link')
-        .eq('id', entityId)
-        .single();
-        
-      if (communityError) {
-        console.error(`❌ [BROADCAST-HANDLER] Error fetching community details:`, communityError);
-        throw new Error(`Failed to get community details: ${communityError.message}`);
-      }
+    const { data: entityDetails, error: entityError } = await supabase
+      .from('communities')
+      .select('name, custom_link')
+      .eq('id', entityId)
+      .single();
       
-      if (!community) {
-        console.error(`❌ [BROADCAST-HANDLER] Community not found: ${entityId}`);
-        throw new Error(`Community not found with ID: ${entityId}`);
-      }
-      
-      entityName = community.name || 'Unknown Community';
-      customLink = community.custom_link || '';
-    } else {
-      // Get group details
-      const { data: group, error: groupError } = await supabase
-        .from('communities')
-        .select('name, custom_link')
-        .eq('id', entityId)
-        .single();
-        
-      if (groupError) {
-        console.error(`❌ [BROADCAST-HANDLER] Error fetching group details:`, groupError);
-        throw new Error(`Failed to get group details: ${groupError.message}`);
-      }
-      
-      if (!group) {
-        console.error(`❌ [BROADCAST-HANDLER] Group not found: ${entityId}`);
-        throw new Error(`Group not found with ID: ${entityId}`);
-      }
-      
-      entityName = group.name || 'Unknown Group';
-      customLink = group.custom_link || '';
+    if (entityError) {
+      console.error(`❌ [BROADCAST-HANDLER] Error fetching entity details:`, entityError);
+      throw new Error(`Failed to get entity details: ${entityError.message}`);
     }
+    
+    if (!entityDetails) {
+      console.error(`❌ [BROADCAST-HANDLER] Entity not found: ${entityId}`);
+      throw new Error(`Entity not found with ID: ${entityId}`);
+    }
+    
+    const entityName = entityDetails.name || 'Unknown Entity';
+    const customLink = entityDetails.custom_link || '';
 
     console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved entity details: ${entityName}`);
 
@@ -225,25 +198,20 @@ export async function sendBroadcast(
     const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
     const TELEGRAM_MINI_APP_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
     
-    // Use either custom link or entity ID (without the prefix for groups)
-    const linkParameter = customLink || (entityType === 'group' ? entityId.replace('group_', '') : entityId);
+    // Use either custom link or entity ID
+    const linkParameter = customLink || entityId;
     // Create the mini app URL to use in the button
     const miniappUrl = `${TELEGRAM_MINI_APP_URL}?start=${linkParameter}`;
     
     console.log(`📝 [BROADCAST-HANDLER] Generated MiniApp URL: ${miniappUrl}`);
 
-    // Query subscribers
-    console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity: ${entityId}`);
+    // Query subscribers specifically for this entity ID
+    console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity ID: ${entityId}`);
+    
     let query = supabase
       .from('community_subscribers')
-      .select('telegram_user_id, subscription_status');
-      
-    // Apply entity filter
-    if (entityType === 'community') {
-      query = query.eq('community_id', entityId);
-    } else {
-      query = query.eq('group_id', entityId);
-    }
+      .select('telegram_user_id, subscription_status')
+      .eq('community_id', entityId);  // Critical: only subscribers for the specific entity
 
     // Apply filter by subscription status
     switch (filterType) {
@@ -270,7 +238,7 @@ export async function sendBroadcast(
       throw new Error(`Failed to fetch subscribers: ${subscribersError.message}`);
     }
 
-    console.log(`📊 [BROADCAST-HANDLER] Found ${subscribers?.length || 0} potential recipients`);
+    console.log(`📊 [BROADCAST-HANDLER] Found ${subscribers?.length || 0} subscribers matching the criteria`);
 
     if (!subscribers || subscribers.length === 0) {
       console.log(`⚠️ [BROADCAST-HANDLER] No subscribers found matching the criteria`);

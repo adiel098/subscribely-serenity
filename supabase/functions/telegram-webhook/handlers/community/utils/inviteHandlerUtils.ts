@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
@@ -27,6 +28,17 @@ export async function handleCommunityJoinRequest(
       return false;
     }
     
+    // Log welcome image details for debugging
+    await logger.info(`🖼️ Welcome image status for community ${community.id}: ${botSettings?.welcome_image ? 'PRESENT' : 'NOT SET'}`);
+    if (botSettings?.welcome_image) {
+      const imageType = botSettings.welcome_image.startsWith('data:') 
+        ? 'base64' 
+        : botSettings.welcome_image.startsWith('https://') 
+          ? 'URL' 
+          : 'unknown format';
+      await logger.info(`🖼️ Image type: ${imageType}, length: ${botSettings.welcome_image.length} chars`);
+    }
+    
     const customLinkOrId = community.custom_link || community.id;
     const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${customLinkOrId}`;
     
@@ -49,6 +61,8 @@ export async function handleCommunityJoinRequest(
       
       try {
         // Send welcome message with image if available
+        await logger.info(`📤 Attempting to send welcome message with image: ${botSettings?.welcome_image ? 'YES' : 'NO'}`);
+        
         await sendTelegramMessage(
           botToken,
           message.chat.id,
@@ -63,6 +77,7 @@ export async function handleCommunityJoinRequest(
         
         // Try sending a plain text message as fallback
         try {
+          await logger.info(`🔄 Trying fallback: plain text message without image`);
           await sendTelegramMessage(
             botToken,
             message.chat.id,

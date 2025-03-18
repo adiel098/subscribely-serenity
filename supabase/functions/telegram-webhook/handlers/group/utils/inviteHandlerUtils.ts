@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
@@ -27,6 +28,17 @@ export async function handleGroupJoinRequest(
       // Continue with default welcome message if settings not found
     }
     
+    // Log welcome image details for debugging
+    await logger.info(`🖼️ Welcome image status for group ${group.id}: ${botSettings?.welcome_image ? 'PRESENT' : 'NOT SET'}`);
+    if (botSettings?.welcome_image) {
+      const imageType = botSettings.welcome_image.startsWith('data:') 
+        ? 'base64' 
+        : botSettings.welcome_image.startsWith('https://') 
+          ? 'URL' 
+          : 'unknown format';
+      await logger.info(`🖼️ Image type: ${imageType}, length: ${botSettings.welcome_image.length} chars`);
+    }
+    
     // Use bot settings welcome message if available, otherwise use default
     const welcomeMessage = botSettings?.welcome_message || 
       `✅ Thanks for your interest in ${group.name}!\n\n` +
@@ -49,6 +61,8 @@ export async function handleGroupJoinRequest(
     
     try {
       // Send welcome message with image if available
+      await logger.info(`📤 Attempting to send welcome message with image: ${botSettings?.welcome_image ? 'YES' : 'NO'}`);
+      
       await sendTelegramMessage(
         botToken,
         message.chat.id,
@@ -63,6 +77,7 @@ export async function handleGroupJoinRequest(
       
       // Try sending a plain text message as fallback
       try {
+        await logger.info(`🔄 Trying fallback: plain text message without image`);
         await sendTelegramMessage(
           botToken,
           message.chat.id,

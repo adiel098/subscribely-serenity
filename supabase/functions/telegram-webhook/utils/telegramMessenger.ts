@@ -1,4 +1,3 @@
-
 /**
  * Utility for sending messages through the Telegram Bot API
  */
@@ -40,7 +39,7 @@ export async function sendTelegramMessage(
   console.log(`[TELEGRAM-MESSENGER] ⌨️ Reply markup: ${replyMarkup ? JSON.stringify(replyMarkup) : 'None'}`);
   
   try {
-    // Validate photoUrl if provided
+    // Enhanced validation for photoUrl if provided
     if (photoUrl) {
       // Check if it's a valid URL or base64 image
       if (!isValidImageUrl(photoUrl)) {
@@ -51,7 +50,13 @@ export async function sendTelegramMessage(
     
     // If photo is provided and valid, send a photo message
     if (photoUrl) {
-      return await sendPhotoMessage(botToken, chatId, photoUrl, text, replyMarkup);
+      try {
+        return await sendPhotoMessage(botToken, chatId, photoUrl, text, replyMarkup);
+      } catch (photoError) {
+        console.error(`[TELEGRAM-MESSENGER] ❌ Error sending photo message:`, photoError);
+        console.log(`[TELEGRAM-MESSENGER] 🔄 Automatically falling back to text-only message after photo error`);
+        // Continue with text-only message below
+      }
     }
     
     // Otherwise send a text message
@@ -126,22 +131,28 @@ async function sendPhotoMessage(
       throw new Error(`Invalid photo URL format`);
     }
     
-    // Handle base64 image data differently - use FormData for multipart upload
+    // Handle base64 image data - use FormData for multipart upload
     if (photoUrl.startsWith('data:image/')) {
       console.log(`[TELEGRAM-MESSENGER] 🔄 Detected base64 image, converting to multipart form data`);
       
-      // Extract base64 data and mime type
-      const matches = photoUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-      
-      if (!matches || matches.length !== 3) {
-        console.error(`[TELEGRAM-MESSENGER] ❌ Invalid base64 image format`);
-        throw new Error('Invalid base64 image format');
-      }
-      
-      const contentType = matches[1];
-      const base64Data = matches[2];
-      
       try {
+        // Extract base64 data and mime type
+        const matches = photoUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+        
+        if (!matches || matches.length !== 3) {
+          console.error(`[TELEGRAM-MESSENGER] ❌ Invalid base64 image format`);
+          throw new Error('Invalid base64 image format');
+        }
+        
+        const contentType = matches[1];
+        const base64Data = matches[2];
+        
+        // Check for valid base64 padding
+        if (base64Data.length % 4 !== 0) {
+          console.error(`[TELEGRAM-MESSENGER] ❌ Base64 data has incorrect padding length`);
+          throw new Error('Base64 data has incorrect padding length');
+        }
+        
         // Convert base64 to binary
         const binaryString = atob(base64Data);
         const bytes = new Uint8Array(binaryString.length);
@@ -192,6 +203,18 @@ async function sendPhotoMessage(
         throw new Error(`Error processing base64 image: ${error.message}`);
       }
     } else {
+      // For URL-based images, verify it's a valid HTTPS URL
+      try {
+        new URL(photoUrl);
+        if (!photoUrl.startsWith('https://')) {
+          console.error(`[TELEGRAM-MESSENGER] ❌ Image URL must use HTTPS: ${photoUrl}`);
+          throw new Error('Image URL must use HTTPS');
+        }
+      } catch (e) {
+        console.error(`[TELEGRAM-MESSENGER] ❌ Invalid image URL: ${photoUrl}`);
+        throw new Error('Invalid image URL');
+      }
+      
       // Handle URL-based images using the standard API
       // Prepare the payload
       const payload: any = {
@@ -235,7 +258,7 @@ async function sendPhotoMessage(
         // If there's an error with the photo, fall back to text-only message
         if (result.description && (
           result.description.includes("wrong remote file identifier") || 
-          result.description.includes("Wrong character") ||
+          result.description.includes("Wrong padding") ||
           result.description.includes("Bad Request") ||
           result.description.includes("PHOTO_INVALID_DIMENSIONS")
         )) {
@@ -306,7 +329,7 @@ function isValidImageUrl(url: string): boolean {
   
   // Check if it's a base64 data URL for an image
   if (url.startsWith('data:image/')) {
-    console.log(`[TELEGRAM-MESSENGER] ✅ Valid base64 image format detected`);
+    console.log(`[TELEGRAM-MESSENGER] ✅ Base64 image format detected`);
     
     // Validate that it has the correct structure
     const matches = url.match(/^data:image\/[a-zA-Z+]+;base64,/);
@@ -315,13 +338,26 @@ function isValidImageUrl(url: string): boolean {
       return false;
     }
     
+    // Check base64 data part
+    const base64Data = url.split(',')[1];
+    if (!base64Data || base64Data.trim() === '') {
+      console.log(`[TELEGRAM-MESSENGER] ⚠️ Base64 data is empty`);
+      return false;
+    }
+    
+    // Check if the base64 data has valid padding
+    if (base64Data.length % 4 !== 0) {
+      console.log(`[TELEGRAM-MESSENGER] ⚠️ Base64 data has incorrect padding length`);
+      return false;
+    }
+    
     return true;
   }
   
-  // Check if it's a URL (very basic validation)
+  // Check if it's a URL (validate more strictly)
   try {
     // Check if it's a valid URL format
-    new URL(url);
+    const urlObj = new URL(url);
     
     // Must be HTTPS for Telegram API
     if (!url.startsWith('https://')) {
@@ -333,6 +369,7 @@ function isValidImageUrl(url: string): boolean {
     const validPatterns = [
       /\.(jpeg|jpg|png|gif|webp)$/i, // Common image extensions
       /api\.telegram\.org\/file\/bot/i, // Telegram file URL pattern
+      /t\.me\//, // Telegram URL patterns
     ];
     
     const isValidPattern = validPatterns.some(pattern => pattern.test(url));

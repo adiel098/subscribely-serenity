@@ -37,6 +37,13 @@ export async function handleCommunityJoinRequest(
           ? 'URL' 
           : 'unknown format';
       await logger.info(`🖼️ Image type: ${imageType}, length: ${botSettings.welcome_image.length} chars`);
+      
+      // Validate the image format and log potential issues
+      if (imageType === 'base64' && botSettings.welcome_image.split(',')[1]?.length % 4 !== 0) {
+        await logger.warn(`⚠️ Base64 image has incorrect padding length - may cause errors`);
+      } else if (imageType === 'URL' && !botSettings.welcome_image.startsWith('https://')) {
+        await logger.warn(`⚠️ Image URL should use HTTPS protocol for Telegram API compatibility`);
+      }
     }
     
     const customLinkOrId = community.custom_link || community.id;
@@ -68,7 +75,7 @@ export async function handleCommunityJoinRequest(
           message.chat.id,
           welcomeMessage,
           inlineKeyboardMarkup,
-          botSettings.welcome_image
+          botSettings?.welcome_image
         );
         
         await logger.success(`✅ Sent welcome message to user ${userId}`);

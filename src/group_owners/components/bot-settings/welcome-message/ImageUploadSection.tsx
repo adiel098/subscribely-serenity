@@ -60,16 +60,41 @@ export const ImageUploadSection = ({
       const img = new Image();
       img.onload = () => {
         // Image loaded successfully
-        setImage(result);
-        
-        // Save image immediately after upload
-        const updateObj: any = {};
-        updateObj[settingsKey] = result;
-        updateSettings.mutate(updateObj);
-        
-        console.log(`Image uploaded for ${settingsKey}:`, result.substring(0, 30) + "...");
-        toast.success(`${label} uploaded successfully`);
-        setIsUploading(false);
+        // Ensure the base64 data is valid (correct padding)
+        try {
+          // Extract the base64 data part without the prefix
+          const base64Data = result.split(',')[1];
+          // Check if the data length is valid for base64 (multiple of 4)
+          if (base64Data.length % 4 !== 0) {
+            // Fix padding if needed
+            const paddedData = base64Data + '='.repeat((4 - base64Data.length % 4) % 4);
+            // Reconstruct the data URL with proper padding
+            const fixedResult = result.split(',')[0] + ',' + paddedData;
+            setImage(fixedResult);
+            console.log(`Fixed base64 padding for ${settingsKey} image`);
+            
+            // Save fixed image immediately after upload
+            const updateObj: any = {};
+            updateObj[settingsKey] = fixedResult;
+            updateSettings.mutate(updateObj);
+          } else {
+            // Base64 data already has correct padding
+            setImage(result);
+            
+            // Save image immediately after upload
+            const updateObj: any = {};
+            updateObj[settingsKey] = result;
+            updateSettings.mutate(updateObj);
+          }
+          
+          console.log(`Image uploaded for ${settingsKey}:`, result.substring(0, 30) + "...");
+          toast.success(`${label} uploaded successfully`);
+          setIsUploading(false);
+        } catch (error) {
+          console.error("Error processing image:", error);
+          setImageError("Error processing the image data");
+          setIsUploading(false);
+        }
       };
       
       img.onerror = () => {

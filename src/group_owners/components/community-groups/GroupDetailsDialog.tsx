@@ -36,7 +36,9 @@ export const GroupDetailsDialog = ({
   isEditModeByDefault = true,
 }: GroupDetailsDialogProps) => {
   // Get channels (member communities) using the edge function
-  const { channels, isLoading: isLoadingChannels, channelIds } = useGroupChannels(isOpen ? group.id : null);
+  const { channels, isLoading: isLoadingChannels, channelIds, invalidateCache } = useGroupChannels(
+    isOpen ? group.id : null
+  );
   
   const {
     isEditing,
@@ -87,6 +89,13 @@ export const GroupDetailsDialog = ({
       resetDialogState();
     }
   }, [isOpen, resetDialogState]);
+
+  // After save is complete, invalidate the cache to refresh the channels list
+  const handleSaveWithInvalidation = async () => {
+    await handleSaveChanges();
+    // Invalidate the cache to refresh the channels list
+    invalidateCache();
+  };
 
   // Transform the Community objects to Channel objects
   const transformedChannels = channels.length > 0 
@@ -139,7 +148,7 @@ export const GroupDetailsDialog = ({
           isFormValid={!!name.trim()}
           onClose={onClose}
           onEdit={() => setIsEditing(true)}
-          onSave={handleSaveChanges}
+          onSave={handleSaveWithInvalidation}
           onCancel={() => setIsEditing(false)}
         />
       </DialogContent>

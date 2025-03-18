@@ -91,7 +91,9 @@ serve(async (req) => {
           id: community.id,
           name: community.name,
           type: community.telegram_chat_id ? "channel" : "group", // Default to channel if has telegram_chat_id
-          description: community.description || `${community.name} channel`
+          description: community.description || `${community.name} channel`,
+          telegram_photo_url: community.telegram_photo_url, // Add photo URL
+          custom_link: community.custom_link // Add custom link
         };
       });
       

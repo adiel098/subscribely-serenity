@@ -10,6 +10,7 @@ export interface Channel {
   type: string;
   description?: string;
   telegram_photo_url?: string;
+  custom_link?: string;
 }
 
 /**
@@ -21,7 +22,8 @@ export const communityToChannel = (community: Community): Channel => {
     name: community.name,
     type: "channel", // Default type for all communities
     description: community.description || undefined,
-    telegram_photo_url: community.telegram_photo_url || undefined
+    telegram_photo_url: community.telegram_photo_url || undefined,
+    custom_link: community.custom_link || undefined
   };
 };
 

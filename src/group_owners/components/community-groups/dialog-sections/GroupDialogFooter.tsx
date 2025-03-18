@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, X, Edit, Check } from "lucide-react";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 interface GroupDialogFooterProps {
   isEditing: boolean;
@@ -22,57 +23,41 @@ export const GroupDialogFooter: React.FC<GroupDialogFooterProps> = ({
   onSave,
   onCancel
 }) => {
-  if (isEditing) {
-    return (
-      <div className="flex justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          className="text-gray-600"
-        >
-          <X className="h-4 w-4 mr-1" />
-          Cancel
-        </Button>
-        
-        <Button
-          onClick={onSave}
-          disabled={isPending || !isFormValid}
-          className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-1" />
-              Save Changes
-            </>
-          )}
-        </Button>
-      </div>
-    );
-  }
-  
   return (
-    <div className="flex justify-end gap-2">
-      <Button
-        variant="outline"
-        onClick={onClose}
-        className="text-gray-600"
-      >
-        <X className="h-4 w-4 mr-1" />
-        Close
-      </Button>
-      
-      <Button
-        onClick={onEdit}
-        className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
-      >
-        <Edit className="h-4 w-4 mr-1" />
-        Edit Group
-      </Button>
-    </div>
+    <DialogFooter className="gap-2 sm:gap-0">
+      {isEditing ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onSave}
+            disabled={!isFormValid || isPending}
+            className="min-w-[100px]"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button onClick={onEdit}>Edit Group</Button>
+        </>
+      )}
+    </DialogFooter>
   );
 };

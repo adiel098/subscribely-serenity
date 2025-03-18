@@ -43,7 +43,7 @@ export const useUpdateCommunityGroup = () => {
           }
           
           const { error } = await supabase
-            .from("communities") // Using the correct table
+            .from("communities") 
             .update(updateData)
             .eq("id", data.id);
           

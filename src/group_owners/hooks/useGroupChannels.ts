@@ -17,41 +17,41 @@ export const useGroupChannels = (groupId: string | null) => {
       }
       
       try {
-        logger.log(`Fetching channels for group: ${groupId}`);
+        logger.log(`Fetching channels for group: ${groupId} using edge function`);
         
-        // Use community_relationships table to get all members of this group
-        const { data: relationships, error } = await supabase
-          .from("community_relationships")
-          .select("member_id")
-          .eq("community_id", groupId)
-          .eq("relationship_type", "group");
-          
+        // Call the edge function to get communities in this group
+        const { data, error } = await supabase.functions.invoke("get-community-channels", {
+          body: { communityId: groupId }
+        });
+        
         if (error) {
-          logger.error("Error fetching group members:", error);
+          logger.error("Error fetching group channels from edge function:", error);
           throw error;
         }
         
-        if (!relationships || relationships.length === 0) {
+        if (!data || !data.channels) {
+          logger.log("No channels returned from edge function");
           return { channels: [], channelIds: [] };
         }
         
-        // Extract community IDs from relationships
-        const communityIds = relationships.map(rel => rel.member_id);
+        // Transform the edge function response to Community objects
+        const communities: Community[] = data.channels.map(channel => ({
+          id: channel.id,
+          name: channel.name,
+          description: channel.description || null,
+          telegram_photo_url: null, // The edge function doesn't return this currently
+          telegram_chat_id: null,   // The edge function doesn't return this currently
+          custom_link: null,
+          owner_id: "", // This field isn't used in the current context
+          created_at: "",
+          updated_at: ""
+        }));
         
-        // Fetch the actual community details
-        const { data: communities, error: communitiesError } = await supabase
-          .from("communities")
-          .select("*")
-          .in("id", communityIds);
-          
-        if (communitiesError) {
-          logger.error("Error fetching group member communities:", communitiesError);
-          throw communitiesError;
-        }
+        logger.log(`Retrieved ${communities.length} communities from edge function`);
         
         return { 
-          channels: communities as Community[] || [],
-          channelIds: communityIds
+          channels: communities,
+          channelIds: communities.map(c => c.id)
         };
       } catch (error) {
         logger.error("Error in useGroupChannels:", error);
@@ -59,7 +59,7 @@ export const useGroupChannels = (groupId: string | null) => {
       }
     },
     enabled: !!groupId,
-    staleTime: 30000, // 30 second cache to reduce unnecessary fetches but still get updated data relatively quickly
+    staleTime: 30000, // 30 second cache
     gcTime: 300000, // 5 minutes garbage collection time
     refetchOnWindowFocus: false
   });

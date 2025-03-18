@@ -67,7 +67,11 @@ serve(async (req) => {
           description,
           telegram_chat_id,
           telegram_photo_url,
-          custom_link
+          custom_link,
+          owner_id,
+          created_at,
+          updated_at,
+          is_group
         )
       `)
       .eq("community_id", communityId)
@@ -85,16 +89,8 @@ serve(async (req) => {
     const channels = relationships
       .filter(rel => rel.communities) // Filter out any null communities
       .map(rel => {
-        const community = rel.communities;
-        // Transform community data to channel format
-        return {
-          id: community.id,
-          name: community.name,
-          type: community.telegram_chat_id ? "channel" : "group", // Default to channel if has telegram_chat_id
-          description: community.description || `${community.name} channel`,
-          telegram_photo_url: community.telegram_photo_url, // Add photo URL
-          custom_link: community.custom_link // Add custom link
-        };
+        // Return the complete community object
+        return rel.communities;
       });
       
     console.log(`Found ${channels.length} channels for group ${communityId}:`, channels);

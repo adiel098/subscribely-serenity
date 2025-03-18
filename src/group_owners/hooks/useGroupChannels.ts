@@ -34,20 +34,10 @@ export const useGroupChannels = (groupId: string | null) => {
           return { channels: [], channelIds: [] };
         }
         
-        // Transform the edge function response to Community objects
-        const communities: Community[] = data.channels.map(channel => ({
-          id: channel.id,
-          name: channel.name,
-          description: channel.description || null,
-          telegram_photo_url: channel.telegram_photo_url || null,
-          telegram_chat_id: null,   // The edge function doesn't return this currently
-          custom_link: channel.custom_link || null,
-          owner_id: "", // This field isn't used in the current context
-          created_at: "",
-          updated_at: ""
-        }));
+        logger.log(`Retrieved ${data.channels.length} communities from edge function:`, data.channels);
         
-        logger.log(`Retrieved ${communities.length} communities from edge function:`, communities);
+        // Since the edge function now returns complete Community objects, we can use them directly
+        const communities: Community[] = data.channels;
         
         return { 
           channels: communities,
@@ -59,7 +49,7 @@ export const useGroupChannels = (groupId: string | null) => {
       }
     },
     enabled: !!groupId,
-    staleTime: 30000, // 30 second cache
+    staleTime: 0, // Set to 0 to always fetch fresh data
     gcTime: 300000, // 5 minutes garbage collection time
     refetchOnWindowFocus: false
   });

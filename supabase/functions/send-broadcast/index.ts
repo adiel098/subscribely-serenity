@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       
       // Now fetch all members from these communities based on filter
       const query = supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers')
         .select('telegram_user_id')
         .in('community_id', communityIds)
         .eq('is_active', true);
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     } else {
       // Get recipients from a single community
       const query = supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers')
         .select('telegram_user_id')
         .eq('community_id', entity_id)
         .eq('is_active', true);

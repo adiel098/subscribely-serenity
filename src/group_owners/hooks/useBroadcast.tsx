@@ -23,9 +23,7 @@ export const useBroadcast = () => {
           message: params.message,
           filter_type: params.filterType,
           subscription_plan_id: params.filterType === 'plan' ? params.subscriptionPlanId : null,
-          ...(params.entityType === 'community' 
-            ? { community_id: params.entityId } 
-            : { group_id: params.entityId }),
+          community_id: params.entityId, // Always store in community_id regardless of entity type
           status: 'pending',
           total_recipients: 0,
           sent_success: 0,

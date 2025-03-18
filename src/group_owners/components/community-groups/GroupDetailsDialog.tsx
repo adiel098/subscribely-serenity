@@ -71,17 +71,11 @@ export const GroupDetailsDialog = ({
   
   // Update selected communities when channels are loaded - only once per dialog opening
   useEffect(() => {
-    if (isOpen && channels.length > 0 && !isLoadingChannels && channelIds.length > 0) {
-      // Use JSON.stringify for deep comparison of arrays to prevent infinite loops
-      const currentIdsSet = JSON.stringify([...selectedCommunityIds].sort());
-      const newIdsSet = JSON.stringify([...channelIds].sort());
-      
-      if (currentIdsSet !== newIdsSet) {
-        logger.log("Setting selected communities from channels:", channelIds);
-        setSelectedCommunityIds(channelIds);
-      }
+    if (isOpen && !isLoadingChannels && channelIds.length > 0) {
+      logger.log("Setting selected communities from channels:", channelIds);
+      setSelectedCommunityIds(channelIds);
     }
-  }, [isOpen, channels, channelIds, isLoadingChannels, selectedCommunityIds, setSelectedCommunityIds]);
+  }, [isOpen, channelIds, isLoadingChannels, setSelectedCommunityIds]);
   
   // Reset dialog state when it closes
   useEffect(() => {
@@ -101,6 +95,16 @@ export const GroupDetailsDialog = ({
   const transformedChannels = channels.length > 0 
     ? communitiesToChannels(channels) 
     : [];
+
+  // Debug logging to help diagnose the issue
+  logger.log("Dialog state:", {
+    isOpen,
+    isEditing,
+    channelsCount: channels.length,
+    channelIds,
+    selectedCommunityIds,
+    activeTab
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

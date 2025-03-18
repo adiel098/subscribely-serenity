@@ -28,18 +28,22 @@ export const GroupCommunitySelection: React.FC<GroupCommunitySelectionProps> = m
   
   // Filter communities based on search query and ensure we only include non-group communities
   const filteredCommunities = allCommunities.filter(community => 
-    community.name.toLowerCase().includes(searchQuery.toLowerCase()) && !community.is_group
+    community.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
+    !community.is_group
   );
   
   logger.log("Communities for selection:", {
     total: allCommunities.length,
     filtered: filteredCommunities.length,
-    selected: selectedCommunityIds.length
+    selected: selectedCommunityIds.length,
+    selectedIds: selectedCommunityIds
   });
   
   // Handler for clearing all selected communities
   const handleClearSelection = useCallback(() => {
-    selectedCommunityIds.forEach(id => toggleCommunity(id));
+    if (selectedCommunityIds.length > 0) {
+      selectedCommunityIds.forEach(id => toggleCommunity(id));
+    }
   }, [selectedCommunityIds, toggleCommunity]);
   
   return (

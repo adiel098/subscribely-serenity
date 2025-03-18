@@ -97,7 +97,7 @@ serve(async (req) => {
         };
       });
       
-    console.log(`Found ${channels.length} channels for group ${communityId}`);
+    console.log(`Found ${channels.length} channels for group ${communityId}:`, channels);
     
     return new Response(
       JSON.stringify({ isGroup: true, channels }),

@@ -39,15 +39,15 @@ export const useGroupChannels = (groupId: string | null) => {
           id: channel.id,
           name: channel.name,
           description: channel.description || null,
-          telegram_photo_url: null, // The edge function doesn't return this currently
+          telegram_photo_url: channel.telegram_photo_url || null,
           telegram_chat_id: null,   // The edge function doesn't return this currently
-          custom_link: null,
+          custom_link: channel.custom_link || null,
           owner_id: "", // This field isn't used in the current context
           created_at: "",
           updated_at: ""
         }));
         
-        logger.log(`Retrieved ${communities.length} communities from edge function`);
+        logger.log(`Retrieved ${communities.length} communities from edge function:`, communities);
         
         return { 
           channels: communities,

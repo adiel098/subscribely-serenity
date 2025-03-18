@@ -11,6 +11,7 @@ import { GroupViewModeContent } from "./dialog-sections/GroupViewModeContent";
 import { GroupDialogFooter } from "./dialog-sections/GroupDialogFooter";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { GroupCommunitySelection } from "./dialog-sections/GroupCommunitySelection";
+import { useGroupMemberCommunities } from "@/group_owners/hooks/useGroupMemberCommunities";
 
 interface GroupDetailsDialogProps {
   isOpen: boolean;
@@ -44,6 +45,9 @@ export const GroupDetailsDialog = ({
   // Get all communities for selection
   const { data: allCommunities, isLoading: isLoadingAllCommunities } = useCommunities();
   
+  // Fetch member communities for the current group
+  const { communities: groupCommunities, isLoading: isLoadingGroupCommunities } = useGroupMemberCommunities(group.id);
+  
   const updateGroupMutation = useUpdateCommunityGroup();
   
   // Reset form state when dialog opens
@@ -57,13 +61,19 @@ export const GroupDetailsDialog = ({
       setActiveTab('details');
       
       // Initialize selected communities from current communities
-      if (communities && communities.length > 0) {
+      // We prioritize communities fetched by useGroupMemberCommunities over props
+      if (groupCommunities && groupCommunities.length > 0) {
+        console.log("Using fetched groupCommunities:", groupCommunities.map(c => c.name));
+        setSelectedCommunityIds(groupCommunities.map(c => c.id));
+      } else if (communities && communities.length > 0) {
+        console.log("Using prop communities:", communities.map(c => c.name));
         setSelectedCommunityIds(communities.map(c => c.id));
       } else {
+        console.log("No communities found for group");
         setSelectedCommunityIds([]);
       }
     }
-  }, [isOpen, group, communities, isEditModeByDefault]);
+  }, [isOpen, group, communities, isEditModeByDefault, groupCommunities]);
   
   const handleSaveChanges = () => {
     updateGroupMutation.mutate(
@@ -96,6 +106,10 @@ export const GroupDetailsDialog = ({
         : [...prev, communityId]
     );
   };
+
+  // Determine which communities to display
+  const communitiesForDisplay = groupCommunities?.length > 0 ? groupCommunities : communities;
+  console.log("Communities for display:", communitiesForDisplay?.map(c => c.name) || []);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -139,14 +153,14 @@ export const GroupDetailsDialog = ({
                 allCommunities={allCommunities || []}
                 selectedCommunityIds={selectedCommunityIds}
                 toggleCommunity={toggleCommunity}
-                isLoading={isLoadingAllCommunities}
+                isLoading={isLoadingAllCommunities || isLoadingGroupCommunities}
               />
             )}
           </div>
         ) : (
           <GroupViewModeContent 
             group={group}
-            communities={communities}
+            communities={communitiesForDisplay}
             fullLink={fullLink}
             onCopyLink={onCopyLink}
             onEditLink={() => setIsEditing(true)}

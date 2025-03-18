@@ -77,6 +77,8 @@ serve(async (req) => {
     }
 
     // Create batch of group relationships
+    // community_id = the GROUP ID
+    // member_id = the COMMUNITY ID that belongs to the group
     const groupRelationships = communityIds.map((communityId, index) => ({
       community_id: groupId,
       member_id: communityId,

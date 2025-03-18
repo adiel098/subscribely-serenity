@@ -16,15 +16,16 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         logger.log("Fetching member communities for group ID:", groupId);
         
         // Fetch the communities that are members of this group
-        // The critical fix is here: we need to use "community_id" for filtering, not "member_id"
-        // In the community_relationships table, community_id is the GROUP and member_id is the COMMUNITY
+        // The relationship is:
+        // - community_id = the GROUP ID 
+        // - member_id = the COMMUNITY ID that belongs to the group
         const { data: relationships, error: relError } = await supabase
           .from("community_relationships")
           .select(`
             member_id,
             display_order
           `)
-          .eq("community_id", groupId) // This is correct - we're looking for communities where this group is the parent
+          .eq("community_id", groupId) // Filtering by groupId as community_id to get child communities
           .eq("relationship_type", "group")
           .order("display_order");
         
@@ -38,7 +39,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
           return [];
         }
         
-        // Get the actual community details - this is where the fix is
+        // Get the actual community details
         const communityIds = relationships.map(rel => rel.member_id);
         logger.log(`Found ${communityIds.length} member communities for group ${groupId}`);
         

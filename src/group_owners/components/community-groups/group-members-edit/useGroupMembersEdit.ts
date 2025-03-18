@@ -54,6 +54,7 @@ export const useGroupMembersEdit = (
       });
       
       // Use the edge function to handle the update
+      // This uses community_id for the GROUP and member_id for the COMMUNITIES
       const response = await supabase.functions.invoke("add-communities-to-group", {
         body: {
           groupId: group.id,

@@ -9,6 +9,8 @@ interface BroadcastMessageParams {
   message: string;
   filterType: 'all' | 'active' | 'expired' | 'plan';
   subscriptionPlanId?: string;
+  includeButton?: boolean;
+  image?: string | null;
 }
 
 export const useBroadcast = () => {
@@ -27,7 +29,9 @@ export const useBroadcast = () => {
           status: 'pending',
           total_recipients: 0,
           sent_success: 0,
-          sent_failed: 0
+          sent_failed: 0,
+          include_button: params.includeButton || false,
+          image: params.image || null
         })
         .select()
         .single();
@@ -44,7 +48,9 @@ export const useBroadcast = () => {
           entity_id: params.entityId,
           entity_type: params.entityType,
           filter_type: params.filterType,
-          subscription_plan_id: params.subscriptionPlanId
+          subscription_plan_id: params.subscriptionPlanId,
+          include_button: params.includeButton || false,
+          image: params.image || null
         }
       });
       

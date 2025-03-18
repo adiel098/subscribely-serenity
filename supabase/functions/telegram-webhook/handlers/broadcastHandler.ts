@@ -16,7 +16,8 @@ export async function sendBroadcast(
   message: string,
   filterType: 'all' | 'active' | 'expired' | 'plan' = 'all',
   subscriptionPlanId?: string,
-  includeButton?: boolean
+  includeButton: boolean = false,
+  image: string | null = null
 ): Promise<BroadcastStatus> {
   try {
     if (!communityId && !groupId) {
@@ -27,12 +28,14 @@ export async function sendBroadcast(
     const entityId = communityId || groupId;
     console.log(`Starting broadcast for entity: ${entityId}`);
     console.log('Filter type:', filterType);
+    console.log('Include button:', includeButton);
+    console.log('Image included:', !!image);
 
     // Get bot token and entity details
     const [settingsResult, entityResult] = await Promise.all([
       supabase.from('telegram_global_settings').select('bot_token').single(),
       supabase.from('communities')
-        .select('miniapp_url')
+        .select('miniapp_url, custom_link')
         .eq('id', entityId)
         .single()
         .catch(() => {
@@ -63,6 +66,9 @@ export async function sendBroadcast(
 
     // Get the appropriate miniapp URL
     let miniappUrl = entityResult.data.miniapp_url || entityResult.data.custom_link || '';
+    if (!miniappUrl) {
+      miniappUrl = `https://t.me/SubscribelyBot/webapp?startapp=${entityId}`;
+    }
 
     // Query subscribers directly using the entity ID
     let query = supabase
@@ -108,12 +114,12 @@ export async function sendBroadcast(
     let failureCount = 0;
 
     // Prepare inline keyboard if button is requested
-    const inlineKeyboard = includeButton && miniappUrl ? {
+    const inlineKeyboard = includeButton ? {
       inline_keyboard: [[
         {
           text: "Join Community🚀",
           web_app: {
-            url: `${miniappUrl}?start=${entityId}`
+            url: miniappUrl
           }
         }
       ]]
@@ -156,7 +162,8 @@ export async function sendBroadcast(
           settingsResult.data.bot_token,
           subscriber.telegram_user_id,
           sanitizedMessage,
-          inlineKeyboard
+          inlineKeyboard,
+          image
         );
         
         if (result.ok) {

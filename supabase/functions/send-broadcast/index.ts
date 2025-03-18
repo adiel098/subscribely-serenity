@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
@@ -16,7 +15,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { broadcast_id, entity_id, entity_type, filter_type, subscription_plan_id } = await req.json();
+    const { broadcast_id, entity_id, entity_type, filter_type, subscription_plan_id, include_button, image } = await req.json();
     
     if (!broadcast_id || !entity_id) {
       return new Response(
@@ -27,6 +26,8 @@ Deno.serve(async (req) => {
 
     console.log(`🚀 Processing broadcast ${broadcast_id} for ${entity_type} ${entity_id}`);
     console.log('Filter type:', filter_type);
+    console.log('Include button:', include_button);
+    console.log('Image included:', !!image);
 
     // Get the broadcast message
     const { data: broadcast, error: broadcastError } = await supabase
@@ -102,23 +103,64 @@ Deno.serve(async (req) => {
       })
       .eq('id', broadcast_id);
     
+    // Fetch entity details for button linking
+    const { data: entityDetails } = await supabase
+      .from('communities')
+      .select('custom_link, id')
+      .eq('id', entity_id)
+      .single();
+    
+    const miniAppUrl = entityDetails?.custom_link || 
+      `https://t.me/SubscribelyBot/webapp?startapp=${entity_id}`;
+    
+    // Prepare the join button if requested
+    const inlineKeyboard = include_button ? {
+      inline_keyboard: [[
+        {
+          text: "Join Community🚀",
+          web_app: { url: miniAppUrl }
+        }
+      ]]
+    } : undefined;
+    
     let sentSuccess = 0;
     let sentFailed = 0;
     
     // Send messages
     for (const recipient of uniqueRecipients) {
       try {
-        const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: recipient.telegram_user_id,
-            text: broadcast.message,
-            parse_mode: 'HTML'
-          })
-        });
+        let response;
+        
+        // If we have an image, send as photo with caption
+        if (image) {
+          response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              chat_id: recipient.telegram_user_id,
+              photo: image,
+              caption: broadcast.message,
+              parse_mode: 'HTML',
+              reply_markup: inlineKeyboard ? JSON.stringify(inlineKeyboard) : undefined
+            })
+          });
+        } else {
+          // Otherwise send as text message
+          response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              chat_id: recipient.telegram_user_id,
+              text: broadcast.message,
+              parse_mode: 'HTML',
+              reply_markup: inlineKeyboard ? JSON.stringify(inlineKeyboard) : undefined
+            })
+          });
+        }
         
         const result = await response.json();
         
@@ -127,6 +169,36 @@ Deno.serve(async (req) => {
           console.log(`✅ Successfully sent message to ${recipient.telegram_user_id}`);
         } else {
           console.error(`Error sending to ${recipient.telegram_user_id}:`, result.description);
+          
+          // If image sending fails, attempt fallback to text-only message
+          if (image && result.description) {
+            try {
+              console.log(`🔄 Attempting fallback to text-only message for ${recipient.telegram_user_id}`);
+              const fallbackResponse = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  chat_id: recipient.telegram_user_id,
+                  text: broadcast.message,
+                  parse_mode: 'HTML',
+                  reply_markup: inlineKeyboard ? JSON.stringify(inlineKeyboard) : undefined
+                })
+              });
+              
+              const fallbackResult = await fallbackResponse.json();
+              
+              if (fallbackResult.ok) {
+                sentSuccess++;
+                console.log(`✅ Successfully sent fallback text message to ${recipient.telegram_user_id}`);
+                continue; // Skip counting as failed
+              }
+            } catch (fallbackError) {
+              console.error(`Failed even with fallback for ${recipient.telegram_user_id}:`, fallbackError);
+            }
+          }
+          
           sentFailed++;
         }
       } catch (error) {

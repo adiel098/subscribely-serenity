@@ -61,7 +61,6 @@ export const GroupDetailsDialog = ({
       setActiveTab('details');
       
       // Initialize selected communities from current communities
-      // We prioritize communities fetched by useGroupMemberCommunities over props
       if (groupCommunities && groupCommunities.length > 0) {
         console.log("Using fetched groupCommunities:", groupCommunities.map(c => c.name));
         setSelectedCommunityIds(groupCommunities.map(c => c.id));
@@ -87,12 +86,12 @@ export const GroupDetailsDialog = ({
       },
       {
         onSuccess: () => {
-          toast.success("Group details updated successfully! 🎉");
+          toast.success("פרטי הקבוצה עודכנו בהצלחה! 🎉");
           onGroupUpdated();
           onClose();
         },
         onError: (error) => {
-          toast.error(`Failed to update group: ${error.message}`);
+          toast.error(`עדכון פרטי הקבוצה נכשל: ${error.message}`);
         }
       }
     );
@@ -131,7 +130,7 @@ export const GroupDetailsDialog = ({
                 onClick={() => setActiveTab('details')}
               >
                 <span className="text-lg">✏️</span>
-                Group Details
+                פרטי קבוצה
               </button>
               <button
                 className={`px-4 py-2 flex items-center gap-1.5 ${
@@ -142,7 +141,7 @@ export const GroupDetailsDialog = ({
                 onClick={() => setActiveTab('communities')}
               >
                 <span className="text-lg">📚</span>
-                Communities
+                קהילות
               </button>
             </div>
 
@@ -159,7 +158,7 @@ export const GroupDetailsDialog = ({
               />
             ) : (
               <GroupCommunitySelection
-                allCommunities={allCommunities || []}
+                allCommunities={allCommunities?.filter(c => !c.is_group) || []}
                 selectedCommunityIds={selectedCommunityIds}
                 toggleCommunity={toggleCommunity}
                 isLoading={isLoadingAllCommunities || isLoadingGroupCommunities}

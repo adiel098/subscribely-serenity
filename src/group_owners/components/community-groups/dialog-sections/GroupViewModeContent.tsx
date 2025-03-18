@@ -1,10 +1,10 @@
 
 import React from "react";
-import { Community } from "@/group_owners/hooks/useCommunities";
-import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clipboard, Link, Edit, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
+import { Community } from "@/group_owners/hooks/useCommunities";
+import { Copy, FolderKanban, Link, Pencil, Users } from "lucide-react";
 
 interface GroupViewModeContentProps {
   group: CommunityGroup;
@@ -21,117 +21,106 @@ export const GroupViewModeContent: React.FC<GroupViewModeContentProps> = ({
   fullLink,
   onCopyLink,
   onEditLink,
-  onEditCommunities,
+  onEditCommunities
 }) => {
   return (
-    <div className="space-y-6 py-2">
-      {/* Group Photo and Name */}
+    <div className="space-y-5 py-1">
+      {/* Group Photo */}
       <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-md bg-purple-100 border border-purple-200 overflow-hidden flex-shrink-0 shadow-sm">
+        <div className="flex-shrink-0 rounded-md overflow-hidden h-16 w-16 bg-gray-100 border border-gray-200 flex items-center justify-center shadow-sm">
           {group.telegram_photo_url ? (
-            <img
-              src={group.telegram_photo_url}
-              alt={group.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={group.telegram_photo_url} alt={group.name} className="h-full w-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-indigo-100">
-              <Users className="h-8 w-8 text-purple-500" />
-            </div>
+            <FolderKanban className="h-8 w-8 text-purple-400" />
           )}
         </div>
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{group.name}</h3>
-          {group.description && (
-            <p className="text-sm text-gray-600 line-clamp-2">{group.description}</p>
-          )}
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-800">{group.name}</h3>
+          <p className="text-sm text-gray-600">{group.description || "אין תיאור לקבוצה זו"}</p>
         </div>
       </div>
 
-      {/* Link section */}
-      <div className="space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between">
+      {/* Group Link */}
+      <div className="p-3 bg-purple-50 border border-purple-100 rounded-md">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
             <Link className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium">Group Link</span>
+            <span className="text-sm font-medium text-gray-700">קישור שיתוף</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs gap-1 hover:bg-purple-50 text-purple-600"
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100"
             onClick={onEditLink}
           >
-            <Edit className="h-3.5 w-3.5" />
-            Edit
+            <Pencil className="h-3 w-3 mr-1" />
+            ערוך
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <code className="px-2 py-1 bg-white rounded border flex-1 text-xs truncate">{fullLink}</code>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 shrink-0"
+          <div className="bg-white border border-purple-200 rounded px-2 py-1.5 text-xs font-mono flex-1 truncate">
+            {fullLink}
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 text-xs border-purple-200 text-purple-700 hover:bg-purple-50"
             onClick={onCopyLink}
           >
-            <Clipboard className="h-3.5 w-3.5 mr-1" />
-            Copy
+            <Copy className="h-3 w-3 mr-1" />
+            העתק
           </Button>
         </div>
       </div>
 
-      {/* Communities section */}
-      <div className="space-y-3">
+      {/* Communities in group */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Users className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium">Communities in this Group</span>
+            <span className="text-sm font-medium text-gray-700">קהילות בקבוצה</span>
+            <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-700 text-xs">
+              {communities?.length || 0}
+            </Badge>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs gap-1 hover:bg-purple-50 text-purple-600"
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100"
             onClick={onEditCommunities}
           >
-            <Edit className="h-3.5 w-3.5" />
-            Edit
+            <Pencil className="h-3 w-3 mr-1" />
+            ערוך
           </Button>
         </div>
-
+        
         {communities && communities.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {communities.map((community) => (
-              <div
+          <div className="space-y-2 max-h-40 overflow-y-auto p-1">
+            {communities.map(community => (
+              <div 
                 key={community.id}
-                className="flex items-center gap-2 p-2 border rounded-md hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 p-2 bg-white rounded-md border border-gray-100 hover:border-purple-200 transition-colors"
               >
-                <div className="h-8 w-8 rounded bg-purple-100 border border-purple-200 overflow-hidden flex-shrink-0">
+                <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-md overflow-hidden">
                   {community.telegram_photo_url ? (
-                    <img
-                      src={community.telegram_photo_url}
-                      alt={community.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={community.telegram_photo_url} alt={community.name} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Users className="h-4 w-4 text-purple-500" />
-                    </div>
+                    <Users className="h-5 w-5 text-gray-400 m-1.5" />
                   )}
                 </div>
-                <span className="text-sm font-medium truncate">{community.name}</span>
+                <span className="text-sm truncate">{community.name}</span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center p-4 border border-dashed rounded-md bg-gray-50">
-            <p className="text-sm text-gray-500">No communities in this group yet</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 text-xs gap-1 hover:bg-purple-50 text-purple-600"
+          <div className="text-center py-3 bg-gray-50 rounded-md">
+            <p className="text-sm text-gray-500">אין קהילות בקבוצה זו עדיין 📭</p>
+            <Button 
+              variant="link" 
+              className="text-xs text-purple-600 p-0 h-auto mt-1"
               onClick={onEditCommunities}
             >
-              <Users className="h-3.5 w-3.5 mr-1" />
-              Add Communities
+              הוסף קהילות לקבוצה
             </Button>
           </div>
         )}

@@ -20,57 +20,73 @@ export async function sendBroadcast(
   image: string | null = null
 ): Promise<BroadcastStatus> {
   try {
+    console.log(`🚀 [BROADCAST-HANDLER] Starting broadcast operation`);
+    
     if (!communityId && !groupId) {
+      console.error(`❌ [BROADCAST-HANDLER] No target entity specified`);
       throw new Error('Either communityId or groupId must be provided');
     }
     
     // For simplicity, we'll work with a single entityId
     const entityId = communityId || groupId;
-    console.log(`Starting broadcast for entity: ${entityId}`);
-    console.log('Filter type:', filterType);
-    console.log('Include button:', includeButton);
-    console.log('Image included:', !!image);
+    console.log(`📝 [BROADCAST-HANDLER] Target entity: ${entityId} (type: ${communityId ? 'community' : 'group'})`);
+    console.log(`📝 [BROADCAST-HANDLER] Filter type: ${filterType}`);
+    console.log(`📝 [BROADCAST-HANDLER] Include button: ${includeButton}`);
+    console.log(`📝 [BROADCAST-HANDLER] Image included: ${!!image}`);
+
+    if (filterType === 'plan') {
+      if (!subscriptionPlanId) {
+        console.error(`❌ [BROADCAST-HANDLER] Plan filter specified but no subscriptionPlanId provided`);
+        throw new Error('Subscription plan ID is required for plan filter type');
+      }
+      console.log(`📝 [BROADCAST-HANDLER] Using subscription plan: ${subscriptionPlanId}`);
+    }
 
     // Get bot token and entity details
+    console.log(`🔍 [BROADCAST-HANDLER] Fetching bot token and entity details`);
     const [settingsResult, entityResult] = await Promise.all([
       supabase.from('telegram_global_settings').select('bot_token').single(),
       supabase.from('communities')
-        .select('miniapp_url, custom_link')
+        .select('miniapp_url, custom_link, name')
         .eq('id', entityId)
         .single()
         .catch(() => {
           // If not found as a community, try as a group
+          console.log(`🔍 [BROADCAST-HANDLER] Entity not found as community, trying as group`);
           return supabase.from('community_groups')
-            .select('id, custom_link')
+            .select('id, custom_link, name')
             .eq('id', entityId)
             .single();
         })
     ]);
 
     if (settingsResult.error) {
-      console.error('Error fetching bot token:', settingsResult.error);
-      throw settingsResult.error;
+      console.error(`❌ [BROADCAST-HANDLER] Error fetching bot token:`, settingsResult.error);
+      throw new Error(`Failed to get bot token: ${settingsResult.error.message}`);
     }
 
     if (entityResult.error) {
-      console.error('Error fetching entity details:', entityResult.error);
-      throw entityResult.error;
+      console.error(`❌ [BROADCAST-HANDLER] Error fetching entity details:`, entityResult.error);
+      throw new Error(`Failed to get entity details: ${entityResult.error.message}`);
     }
 
     if (!settingsResult.data?.bot_token) {
-      console.error('Bot token not found in settings');
+      console.error(`❌ [BROADCAST-HANDLER] Bot token not found in settings`);
       throw new Error('Bot token not found');
     }
 
-    console.log('Successfully retrieved bot token and entity details');
+    console.log(`✅ [BROADCAST-HANDLER] Successfully retrieved bot token and entity details`);
+    console.log(`📝 [BROADCAST-HANDLER] Entity name: ${entityResult.data.name || 'Unknown'}`);
 
     // Get the appropriate miniapp URL
     let miniappUrl = entityResult.data.miniapp_url || entityResult.data.custom_link || '';
     if (!miniappUrl) {
       miniappUrl = `https://t.me/SubscribelyBot/webapp?startapp=${entityId}`;
     }
+    console.log(`📝 [BROADCAST-HANDLER] MiniApp URL: ${miniappUrl}`);
 
     // Query subscribers directly using the entity ID
+    console.log(`🔍 [BROADCAST-HANDLER] Querying subscribers for entity: ${entityId}`);
     let query = supabase
       .from('community_subscribers')
       .select('telegram_user_id, subscription_status')
@@ -79,30 +95,32 @@ export async function sendBroadcast(
     // Apply filter by subscription status
     switch (filterType) {
       case 'active':
+        console.log(`📝 [BROADCAST-HANDLER] Filtering by active subscription status`);
         query = query.eq('subscription_status', 'active');
         break;
       case 'expired':
+        console.log(`📝 [BROADCAST-HANDLER] Filtering by expired subscription status`);
         query = query.eq('subscription_status', 'expired');
         break;
       case 'plan':
-        if (!subscriptionPlanId) {
-          throw new Error('Subscription plan ID is required for plan filter type');
-        }
+        console.log(`📝 [BROADCAST-HANDLER] Filtering by subscription plan: ${subscriptionPlanId}`);
         query = query.eq('subscription_plan_id', subscriptionPlanId);
         break;
+      default:
+        console.log(`📝 [BROADCAST-HANDLER] No filters applied, targeting all subscribers`);
     }
 
     const { data: subscribers, error: subscribersError } = await query;
 
     if (subscribersError) {
-      console.error('Error fetching subscribers:', subscribersError);
-      throw subscribersError;
+      console.error(`❌ [BROADCAST-HANDLER] Error fetching subscribers:`, subscribersError);
+      throw new Error(`Failed to fetch subscribers: ${subscribersError.message}`);
     }
 
-    console.log(`Found ${subscribers?.length || 0} potential recipients`);
+    console.log(`📊 [BROADCAST-HANDLER] Found ${subscribers?.length || 0} potential recipients`);
 
     if (!subscribers || subscribers.length === 0) {
-      console.log('No subscribers found matching the criteria');
+      console.log(`⚠️ [BROADCAST-HANDLER] No subscribers found matching the criteria`);
       return {
         successCount: 0,
         failureCount: 0,
@@ -125,13 +143,22 @@ export async function sendBroadcast(
       ]]
     } : undefined;
 
+    console.log(`📝 [BROADCAST-HANDLER] Include button: ${!!inlineKeyboard}`);
+    
+    if (inlineKeyboard) {
+      console.log(`📝 [BROADCAST-HANDLER] Button URL: ${miniappUrl}`);
+    }
+
     // Send message to each subscriber
+    console.log(`🔄 [BROADCAST-HANDLER] Beginning to send messages to ${subscribers.length} subscribers`);
+    
     for (let i = 0; i < subscribers.length; i++) {
       const subscriber = subscribers[i];
       try {
-        console.log(`Attempting to send message to user ${subscriber.telegram_user_id}`);
+        console.log(`📤 [BROADCAST-HANDLER] Processing subscriber ${i+1}/${subscribers.length}: ${subscriber.telegram_user_id}`);
         
         // Check if user can receive messages
+        console.log(`🔍 [BROADCAST-HANDLER] Checking if user ${subscriber.telegram_user_id} can receive messages`);
         const canReceiveMessages = await getBotChatMember(
           settingsResult.data.bot_token,
           subscriber.telegram_user_id,
@@ -139,14 +166,14 @@ export async function sendBroadcast(
         );
 
         if (!canReceiveMessages) {
-          console.log(`User ${subscriber.telegram_user_id} cannot receive messages - skipping`);
+          console.log(`⚠️ [BROADCAST-HANDLER] User ${subscriber.telegram_user_id} cannot receive messages - skipping`);
           failureCount++;
           continue;
         }
 
         // Ensure the message content is valid
         if (!message || typeof message !== 'string') {
-          console.error(`Invalid message format for user ${subscriber.telegram_user_id}`);
+          console.error(`❌ [BROADCAST-HANDLER] Invalid message format for user ${subscriber.telegram_user_id}`);
           failureCount++;
           continue;
         }
@@ -158,6 +185,8 @@ export async function sendBroadcast(
           .replace(/>/g, '&gt;');
 
         // Send the message using our telegram messenger
+        console.log(`📤 [BROADCAST-HANDLER] Sending ${image ? 'image+text' : 'text'} message to ${subscriber.telegram_user_id}`);
+        
         const result = await sendTelegramMessage(
           settingsResult.data.bot_token,
           subscriber.telegram_user_id,
@@ -168,16 +197,16 @@ export async function sendBroadcast(
         
         if (result.ok) {
           successCount++;
-          console.log(`✅ Message sent successfully to user ${subscriber.telegram_user_id}`);
+          console.log(`✅ [BROADCAST-HANDLER] Message sent successfully to user ${subscriber.telegram_user_id}`);
         } else {
           failureCount++;
-          console.log(`❌ Failed to send message to user ${subscriber.telegram_user_id}:`, result.description);
+          console.log(`❌ [BROADCAST-HANDLER] Failed to send message to user ${subscriber.telegram_user_id}: ${result.description}`);
         }
 
         // Add small delay to avoid hitting rate limits
         await new Promise(resolve => setTimeout(resolve, 50));
       } catch (error) {
-        console.error(`Error sending message to user ${subscriber.telegram_user_id}:`, error);
+        console.error(`❌ [BROADCAST-HANDLER] Error sending message to user ${subscriber.telegram_user_id}:`, error);
         failureCount++;
       }
     }
@@ -188,10 +217,15 @@ export async function sendBroadcast(
       totalRecipients: subscribers.length
     };
 
-    console.log('Broadcast completed:', status);
+    console.log(`🏁 [BROADCAST-HANDLER] Broadcast completed with results:`);
+    console.log(`📊 [BROADCAST-HANDLER] Total recipients: ${status.totalRecipients}`);
+    console.log(`📊 [BROADCAST-HANDLER] Success count: ${status.successCount}`);
+    console.log(`📊 [BROADCAST-HANDLER] Failure count: ${status.failureCount}`);
+    
     return status;
   } catch (error) {
-    console.error('Error in broadcast:', error);
+    console.error(`❌ [BROADCAST-HANDLER] Error in broadcast operation:`, error);
+    console.error(`❌ [BROADCAST-HANDLER] Stack trace:`, error.stack);
     throw error;
   }
 }

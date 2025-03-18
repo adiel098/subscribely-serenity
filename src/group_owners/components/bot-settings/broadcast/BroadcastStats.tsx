@@ -13,17 +13,13 @@ export const BroadcastStats = ({ entityId, entityType }: BroadcastStatsProps) =>
   const { data: stats, isLoading } = useQuery({
     queryKey: ['broadcast-stats', entityId, entityType],
     queryFn: async () => {
-      let query = supabase
+      // For both communities and groups, query by community_id
+      const query = supabase
         .from('broadcast_messages')
         .select('id, status, sent_success, sent_failed, total_recipients, created_at')
+        .eq('community_id', entityId)
         .order('created_at', { ascending: false })
         .limit(5);
-      
-      if (entityType === 'community') {
-        query = query.eq('community_id', entityId);
-      } else if (entityType === 'group') {
-        query = query.eq('community_id', entityId);
-      }
       
       const { data, error } = await query;
       
@@ -36,18 +32,11 @@ export const BroadcastStats = ({ entityId, entityType }: BroadcastStatsProps) =>
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      let recentCountQuery = supabase
+      const recentCount = await supabase
         .from('broadcast_messages')
         .select('id', { count: 'exact' })
-        .gte('created_at', thirtyDaysAgo.toISOString());
-        
-      if (entityType === 'community') {
-        recentCountQuery = recentCountQuery.eq('community_id', entityId);
-      } else if (entityType === 'group') {
-        recentCountQuery = recentCountQuery.eq('community_id', entityId);
-      }
-      
-      const recentCount = await recentCountQuery;
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .eq('community_id', entityId);
       
       return { 
         recentMessages: data || [],

@@ -102,8 +102,8 @@ serve(async (req) => {
     console.log(`🔄 [SEND-BROADCAST] Invoking telegram-webhook function`);
     const webhook_payload = {
       action: 'broadcast',
-      community_id: entity_type === 'community' ? entity_id : null,
-      group_id: entity_type === 'group' ? entity_id : null,
+      community_id: entity_id, // Use entity_id directly since we now store everything in community_id
+      entity_type: entity_type, // Still pass the entity_type so the webhook knows what kind of entity it is
       message: broadcast.message,
       filter_type: filter_type || 'all',
       subscription_plan_id: subscription_plan_id,

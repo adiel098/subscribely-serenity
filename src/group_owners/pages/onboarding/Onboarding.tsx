@@ -7,7 +7,6 @@ import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
-import { PlatformPlanStep } from "./steps/PlatformPlanStep";
 import CreatePlansStep from "./steps/CreatePlansStep";
 import { PaymentMethodStep } from "./steps/PaymentMethodStep";
 import CompletionStep from "./steps/CompletionStep";
@@ -17,7 +16,6 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
-  const [hasPlatformPlan, setHasPlatformPlan] = useState(false);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,18 +49,6 @@ const Onboarding = () => {
           }
         }
         
-        // Check if the user has a platform plan
-        const { data: platformSubscription, error: subscriptionError } = await supabase
-          .from('platform_subscriptions')
-          .select('id')
-          .eq('owner_id', user.id)
-          .eq('status', 'active')
-          .limit(1);
-          
-        if (subscriptionError) throw subscriptionError;
-        
-        setHasPlatformPlan(platformSubscription && platformSubscription.length > 0);
-
         // Check if user has payment methods
         const { data: paymentMethods, error: paymentMethodsError } = await supabase
           .from('payment_methods')
@@ -110,15 +96,6 @@ const Onboarding = () => {
           onComplete={() => goToNextStep('connect-telegram')} 
           activeStep={currentStep === "connect-telegram"}
           goToPreviousStep={() => goToPreviousStep('connect-telegram')}
-        />
-      )}
-      
-      {currentStep === "platform-plan" && (
-        <PlatformPlanStep 
-          goToNextStep={() => goToNextStep('platform-plan')} 
-          goToPreviousStep={() => goToPreviousStep('platform-plan')}
-          hasPlatformPlan={hasPlatformPlan}
-          saveCurrentStep={saveCurrentStep}
         />
       )}
       

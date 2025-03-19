@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, Rocket, Users, CreditCard, Zap, FileText } from "lucide-react";
+import { Check, Rocket, Users, CreditCard, FileText } from "lucide-react";
 import { OnboardingStep, ONBOARDING_STEPS } from "@/group_owners/hooks/useOnboarding";
 
 interface StepProgressProps {
@@ -21,10 +21,6 @@ const STEP_INFO: Record<OnboardingStep, StepInfo> = {
   'connect-telegram': {
     title: 'Connect Telegram',
     icon: <Users className="h-4 w-4" />
-  },
-  'platform-plan': {
-    title: 'Choose Plan',
-    icon: <Zap className="h-4 w-4" />
   },
   'create-plans': {
     title: 'Create Plans',

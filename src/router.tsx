@@ -29,6 +29,15 @@ export const router = createBrowserRouter([
         path: "connect/telegram",
         element: <TelegramConnect />,
       },
+      // Add onboarding as a child of AppLayout
+      {
+        path: "onboarding",
+        element: <Onboarding />,
+      },
+      {
+        path: "onboarding/:step",
+        element: <Onboarding />,
+      },
       // Add more app routes here
     ],
   },
@@ -57,24 +66,6 @@ export const router = createBrowserRouter([
         element: <ResetPassword />,
       },
     ],
-  },
-  // Improved onboarding route structure
-  {
-    path: "/onboarding",
-    element: <Onboarding />,
-    children: [],
-  },
-  {
-    path: "/onboarding/welcome",
-    element: <Onboarding />,
-  },
-  {
-    path: "/onboarding/connect-telegram",
-    element: <Onboarding />,
-  },
-  {
-    path: "/onboarding/complete",
-    element: <Onboarding />,
   },
   {
     path: "*",

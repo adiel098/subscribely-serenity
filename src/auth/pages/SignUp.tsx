@@ -20,8 +20,8 @@ export const SignUp = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-indigo-50">
-      <Card className="w-full max-w-md p-6">
+    <div className="w-full max-w-md">
+      <Card className="w-full p-6">
         <h2 className="text-2xl font-bold text-center mb-6">Create an Account</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

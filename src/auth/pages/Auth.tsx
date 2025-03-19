@@ -13,11 +13,9 @@ const Auth = () => {
   useAuthRedirect();
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-xl flex flex-col items-center space-y-10">
-        <AuthHeader isSignUp={isSignUp} />
-        <AuthCard isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
-      </div>
+    <div className="w-full max-w-xl flex flex-col items-center space-y-10">
+      <AuthHeader isSignUp={isSignUp} />
+      <AuthCard isSignUp={isSignUp} setIsSignUp={setIsSignUp} />
     </div>
   );
 };

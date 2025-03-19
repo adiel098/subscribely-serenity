@@ -22,7 +22,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   showProgress = true
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-3xl">
         {showProgress && (
           <div className="mb-8">

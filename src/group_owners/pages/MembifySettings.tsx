@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,8 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { MembifySettingsHeader } from "../components/membify-settings/MembifySettingsHeader";
 import { ProfileTabContent } from "../components/membify-settings/profile/ProfileTabContent";
 import { PlansTabContent } from "../components/membify-settings/PlansTabContent";
-import { CombinedProfileAndPlansContent } from "../components/membify-settings/CombinedProfileAndPlansContent";
+import { PurchaseHistoryTable } from "../components/membify-settings/PurchaseHistoryTable";
+import { Card } from "@/components/ui/card";
 
 const MembifySettings = () => {
   const { user } = useAuth();
@@ -69,6 +69,7 @@ const MembifySettings = () => {
         <MembifySettingsHeader />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Profile Panel */}
           <ProfileTabContent 
             profileData={profileData}
             setProfileData={setProfileData}
@@ -76,14 +77,13 @@ const MembifySettings = () => {
             userId={user?.id}
           />
           
+          {/* Subscription Plan Panel */}
           <PlansTabContent />
           
-          <CombinedProfileAndPlansContent 
-            profileData={profileData}
-            setProfileData={setProfileData}
-            isLoading={isLoading}
-            userId={user?.id}
-          />
+          {/* Billing Information Panel */}
+          <Card className="shadow-md border border-indigo-100">
+            <PurchaseHistoryTable />
+          </Card>
         </div>
       </motion.div>
     </div>

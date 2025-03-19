@@ -35,7 +35,10 @@ const ConnectTelegramStep = ({
 
   // Go to dashboard and complete onboarding
   const handleGoToDashboard = () => {
+    console.log("Navigating to dashboard and completing onboarding");
+    // Mark onboarding as complete
     onComplete();
+    // Navigate to dashboard
     navigate('/dashboard', { replace: true });
   };
 

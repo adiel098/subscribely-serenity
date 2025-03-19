@@ -1,4 +1,3 @@
-
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -48,7 +47,7 @@ const AppRoutes = () => {
       <Route path="/auth/*" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
 
-      {/* Onboarding Route */}
+      {/* Onboarding Route - simplified to a single route that handles all steps internally */}
       <Route path="/onboarding/*" element={
         <ProtectedRoute>
           <Onboarding />

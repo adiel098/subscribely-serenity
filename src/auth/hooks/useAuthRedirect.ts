@@ -62,14 +62,8 @@ export function useAuthRedirect() {
         if (!profile.onboarding_completed) {
           console.log("Onboarding not completed, redirecting to onboarding flow");
           
-          // If user has a specific step in progress, redirect to that step
-          if (profile.onboarding_step && profile.onboarding_step !== 'welcome') {
-            console.log(`Redirecting to onboarding step: ${profile.onboarding_step}`);
-            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
-          } else {
-            console.log("Redirecting to welcome step");
-            navigate('/onboarding/welcome', { replace: true });
-          }
+          // Redirect to the main onboarding path, the component will handle which step to show
+          navigate('/onboarding', { replace: true });
         } else if (location.pathname.startsWith('/auth')) {
           // If onboarding is completed and user is on auth page, redirect to dashboard
           console.log("Onboarding completed, redirecting from auth to dashboard");

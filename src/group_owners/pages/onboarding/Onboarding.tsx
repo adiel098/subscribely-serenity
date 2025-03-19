@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
@@ -10,10 +10,12 @@ import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import CreatePlansStep from "./steps/CreatePlansStep";
 import { PaymentMethodStep } from "./steps/PaymentMethodStep";
 import CompletionStep from "./steps/CompletionStep";
+import { Loader2 } from "lucide-react";
 
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
@@ -25,6 +27,22 @@ const Onboarding = () => {
     goToPreviousStep,
     completeOnboarding
   } = useOnboardingNavigation(currentStep, setCurrentStep, setIsCompleted);
+
+  // Determine which step to show based on URL path
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes('/onboarding/connect-telegram')) {
+      setCurrentStep('connect-telegram');
+    } else if (path.includes('/onboarding/create-plans')) {
+      setCurrentStep('create-plans');
+    } else if (path.includes('/onboarding/payment-method')) {
+      setCurrentStep('payment-method');
+    } else if (path.includes('/onboarding/complete')) {
+      setCurrentStep('complete');
+    } else {
+      setCurrentStep('welcome');
+    }
+  }, [location.pathname]);
 
   // Fetch onboarding state
   useEffect(() => {
@@ -79,50 +97,70 @@ const Onboarding = () => {
   }, [isCompleted, isLoading, navigate]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+      </div>
+    );
   }
+
+  const renderCurrentStep = () => {
+    console.log("Rendering current step:", currentStep);
+    
+    switch(currentStep) {
+      case "welcome":
+        return (
+          <WelcomeStep 
+            onComplete={() => goToNextStep('welcome')} 
+            activeStep={true}
+          />
+        );
+      
+      case "connect-telegram":
+        return (
+          <ConnectTelegramStep 
+            onComplete={() => goToNextStep('connect-telegram')} 
+            activeStep={true}
+            goToPreviousStep={() => goToPreviousStep('connect-telegram')}
+          />
+        );
+      
+      case "create-plans":
+        return (
+          <CreatePlansStep 
+            goToNextStep={() => goToNextStep('create-plans')} 
+            goToPreviousStep={() => goToPreviousStep('create-plans')}
+            saveCurrentStep={saveCurrentStep}
+          />
+        );
+      
+      case "payment-method":
+        return (
+          <PaymentMethodStep 
+            goToNextStep={() => goToNextStep('payment-method')} 
+            goToPreviousStep={() => goToPreviousStep('payment-method')}
+            saveCurrentStep={saveCurrentStep}
+            hasPaymentMethod={hasPaymentMethod}
+          />
+        );
+      
+      case "complete":
+        return (
+          <CompletionStep 
+            onComplete={completeOnboarding} 
+            activeStep={true}
+            goToPreviousStep={() => goToPreviousStep('complete')}
+          />
+        );
+      
+      default:
+        return <div>Unknown step</div>;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
-      {currentStep === "welcome" && (
-        <WelcomeStep 
-          onComplete={() => goToNextStep('welcome')} 
-          activeStep={currentStep === "welcome"}
-        />
-      )}
-      
-      {currentStep === "connect-telegram" && (
-        <ConnectTelegramStep 
-          onComplete={() => goToNextStep('connect-telegram')} 
-          activeStep={currentStep === "connect-telegram"}
-          goToPreviousStep={() => goToPreviousStep('connect-telegram')}
-        />
-      )}
-      
-      {currentStep === "create-plans" && (
-        <CreatePlansStep 
-          goToNextStep={() => goToNextStep('create-plans')} 
-          goToPreviousStep={() => goToPreviousStep('create-plans')}
-          saveCurrentStep={saveCurrentStep}
-        />
-      )}
-      
-      {currentStep === "payment-method" && (
-        <PaymentMethodStep 
-          goToNextStep={() => goToNextStep('payment-method')} 
-          goToPreviousStep={() => goToPreviousStep('payment-method')}
-          saveCurrentStep={saveCurrentStep}
-          hasPaymentMethod={hasPaymentMethod}
-        />
-      )}
-      
-      {currentStep === "complete" && (
-        <CompletionStep 
-          onComplete={completeOnboarding} 
-          activeStep={currentStep === "complete"}
-          goToPreviousStep={() => goToPreviousStep('complete')}
-        />
-      )}
+      {renderCurrentStep()}
     </div>
   );
 };

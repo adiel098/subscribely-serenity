@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle } from "lucide-react";
+import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle, ArrowLeft } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -80,16 +80,24 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
         </Card>
         
         <div className="pt-4 flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={goToPreviousStep}
+            className="gap-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+          
           {isTelegramConnected ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex justify-end w-full"
             >
               <Button 
                 onClick={goToNextStep}
                 size="lg" 
-                className="gap-2 ml-auto bg-indigo-600 hover:bg-indigo-700"
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
               >
                 Continue to Platform Plan
                 <ArrowRight size={16} />
@@ -99,7 +107,7 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
             <Button 
               onClick={handleConnectTelegram}
               size="lg" 
-              className="gap-2 ml-auto bg-indigo-600 hover:bg-indigo-700"
+              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
               disabled={isConnecting}
             >
               {isConnecting ? (

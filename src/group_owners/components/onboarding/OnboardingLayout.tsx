@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { StepProgress } from "./StepProgress";
 import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface OnboardingLayoutProps {
@@ -36,12 +36,12 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 relative">
-      {/* Logout Button in the top-right corner */}
+      {/* Logout Button in the top-right corner with red text */}
       <Button
         variant="ghost"
         size="sm"
         onClick={handleLogout}
-        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 flex items-center gap-1"
+        className="absolute top-4 right-4 text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
       >
         <LogOut size={16} />
         <span>Logout</span>
@@ -73,18 +73,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
             {children}
           </div>
 
-          {showBackButton && onBack && (
-            <div className="px-8 pb-6">
-              <Button
-                variant="outline"
-                onClick={onBack}
-                className="text-gray-600"
-                size="sm"
-              >
-                Back
-              </Button>
-            </div>
-          )}
+          {/* We're removing this because we'll integrate back buttons directly into each step's button row */}
         </motion.div>
         
         <motion.div 

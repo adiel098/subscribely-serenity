@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle, ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { useNavigate } from "react-router-dom";
 import confetti from 'canvas-confetti';
@@ -116,7 +116,16 @@ export const CompleteStep: React.FC<CompleteStepProps> = ({
           </ul>
         </div>
         
-        <div className="pt-6 flex justify-center">
+        <div className="pt-6 flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={goToPreviousStep}
+            className="gap-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

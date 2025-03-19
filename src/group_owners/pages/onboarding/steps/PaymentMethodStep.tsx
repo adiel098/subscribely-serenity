@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CreditCard, ArrowRight, Check, Loader2 } from "lucide-react";
+import { CreditCard, ArrowRight, Check, Loader2, ArrowLeft } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaymentMethodConfig } from "@/group_owners/components/payments/PaymentMethodConfig";
@@ -122,7 +122,16 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
           </Tabs>
         )}
         
-        <div className="pt-4 flex justify-end">
+        <div className="pt-4 flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={goToPreviousStep}
+            className="gap-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+          
           <Button 
             onClick={handleContinue}
             size="lg" 

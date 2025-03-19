@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Zap, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Zap, ArrowRight, Check, Loader2, ArrowLeft } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -217,7 +217,16 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
           </div>
         )}
         
-        <div className="pt-4 flex justify-end">
+        <div className="pt-4 flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={goToPreviousStep}
+            className="gap-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Button>
+          
           <Button 
             onClick={handleContinue}
             size="lg" 

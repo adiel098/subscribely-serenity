@@ -161,6 +161,8 @@ const ConnectTelegramStep = ({
           onVerify={verifyConnection}
           onBack={goToPreviousStep}
           showBackButton={true}
+          hasExistingCommunities={connectedCommunities.length > 0}
+          onContinueWithExisting={handleContinueToNextStep}
         />
       )}
       

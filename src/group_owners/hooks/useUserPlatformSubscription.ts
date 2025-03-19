@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
+import { SubscriptionStatus } from "@/telegram-mini-app/types/database.types";
 
 export type PlatformSubscription = {
   id: string;
@@ -54,17 +55,24 @@ export const useUserPlatformSubscription = () => {
         setError(error.message);
         setSubscription(null);
       } else if (data) {
-        // Fix: Access platform_plans as an object, not an array
+        // Access platform_plans correctly as an object
+        const planData = data.platform_plans as {
+          name: string;
+          price: number;
+          interval: string;
+          features: string[];
+        };
+        
         setSubscription({
           id: data.id,
           status: data.status,
           subscription_start_date: data.subscription_start_date,
           subscription_end_date: data.subscription_end_date,
           plan_id: data.plan_id,
-          plan_name: data.platform_plans.name,  // Fixed property access
-          plan_price: data.platform_plans.price, // Fixed property access
-          plan_interval: data.platform_plans.interval, // Fixed property access
-          plan_features: data.platform_plans.features || [], // Fixed property access
+          plan_name: planData.name,
+          plan_price: planData.price,
+          plan_interval: planData.interval,
+          plan_features: planData.features || [],
           auto_renew: data.auto_renew
         });
       } else {

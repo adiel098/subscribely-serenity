@@ -55,15 +55,19 @@ export const PurchaseHistoryTable = () => {
       if (error) {
         console.error("Error fetching payments:", error);
       } else if (data) {
-        const formattedPayments = data.map(item => ({
-          id: item.id,
-          amount: item.amount,
-          payment_method: item.payment_method,
-          payment_status: item.payment_status,
-          // Fix: Access the name property from the platform_plans object
-          plan_name: item.platform_plans?.name || 'Unknown Plan',
-          created_at: item.created_at
-        }));
+        const formattedPayments = data.map(item => {
+          // Access platform_plans correctly as an object
+          const planData = item.platform_plans as { name: string } | null;
+          
+          return {
+            id: item.id,
+            amount: item.amount,
+            payment_method: item.payment_method,
+            payment_status: item.payment_status,
+            plan_name: planData?.name || 'Unknown Plan',
+            created_at: item.created_at
+          };
+        });
         
         setPayments(formattedPayments);
       }

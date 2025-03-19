@@ -43,6 +43,8 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
                 community={community as any}
                 size="sm"
                 showRefreshButton={false}
+                isRefreshing={isRefreshingPhoto}
+                onRefresh={onRefreshPhoto}
               />
             </div>
             <div className="flex-1 min-w-0">

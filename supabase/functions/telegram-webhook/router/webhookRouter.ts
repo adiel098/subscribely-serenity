@@ -1,8 +1,7 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../cors.ts';
 import { getLogger, logToDatabase } from '../services/loggerService.ts';
-import { handleVerificationMessage } from '../handlers/verificationHandler.ts';
+import { handleVerificationMessage } from '../handlers/verification/verificationHandler.ts';
 import { handleChannelPost } from '../handlers/channelPost.ts';
 import { sendBroadcast } from '../handlers/broadcastHandler.ts';
 

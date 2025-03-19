@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { supabase } from "@/integrations/supabase/client";
 import { format } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
 
 export interface PlatformPaymentHistory {
   id: string;
@@ -35,21 +36,45 @@ export const usePlatformPaymentHistory = () => {
             amount, 
             payment_method, 
             payment_status,
-            platform_plans(name)
+            plan_id,
+            platform_plans (name)
           `)
           .eq('owner_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        const formattedPayments = data.map(payment => ({
-          id: payment.id,
-          date: format(new Date(payment.created_at), 'MMM d, yyyy'),
-          planName: payment.platform_plans?.name || 'Unknown Plan',
-          amount: payment.amount,
-          formattedAmount: formatCurrency(payment.amount),
-          paymentMethod: payment.payment_method || 'Unknown',
-          status: payment.payment_status || 'Unknown'
+        // Fetch plan names separately if needed
+        const formattedPayments = await Promise.all(data.map(async (payment) => {
+          let planName = 'Unknown Plan';
+          
+          // Check if platform_plans has data and extract the name
+          if (payment.platform_plans && Array.isArray(payment.platform_plans) && payment.platform_plans.length > 0) {
+            planName = payment.platform_plans[0].name;
+          } else if (payment.platform_plans && typeof payment.platform_plans === 'object' && 'name' in payment.platform_plans) {
+            planName = payment.platform_plans.name;
+          } else if (payment.plan_id) {
+            // Fetch the plan name directly if needed
+            const { data: planData } = await supabase
+              .from('platform_plans')
+              .select('name')
+              .eq('id', payment.plan_id)
+              .single();
+            
+            if (planData) {
+              planName = planData.name;
+            }
+          }
+          
+          return {
+            id: payment.id,
+            date: format(new Date(payment.created_at), 'MMM d, yyyy'),
+            planName,
+            amount: payment.amount,
+            formattedAmount: formatCurrency(payment.amount),
+            paymentMethod: payment.payment_method || 'Unknown',
+            status: payment.payment_status || 'Unknown'
+          };
         }));
 
         setPayments(formattedPayments);
@@ -65,12 +90,4 @@ export const usePlatformPaymentHistory = () => {
   }, [user?.id]);
 
   return { payments, isLoading, error };
-};
-
-// Helper function to format currency
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
 };

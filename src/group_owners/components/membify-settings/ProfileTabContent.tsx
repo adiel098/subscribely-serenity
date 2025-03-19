@@ -55,25 +55,19 @@ export const ProfileTabContent = ({
         .eq('id', userId);
 
       if (error) {
-        toast({
-          title: "Error saving profile",
-          description: error.message,
-          variant: "destructive"
+        toast.error("Error saving profile", {
+          description: error.message
         });
       } else {
-        toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully",
-          variant: "default"
+        toast.success("Profile updated", {
+          description: "Your profile has been updated successfully"
         });
         setIsEditing(false);
       }
     } catch (error) {
       console.error('Error:', error);
-      toast({
-        title: "Error saving profile",
-        description: "An unexpected error occurred",
-        variant: "destructive"
+      toast.error("Error saving profile", {
+        description: "An unexpected error occurred"
       });
     } finally {
       setIsSaving(false);

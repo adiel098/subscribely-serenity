@@ -11,7 +11,15 @@ import { useTelegramVerification } from "@/group_owners/hooks/onboarding/useTele
 import { useTelegramCommunities } from "@/group_owners/hooks/onboarding/useTelegramCommunities";
 import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificationCodeUtils";
 
-const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => void, activeStep: boolean }) => {
+const ConnectTelegramStep = ({ 
+  onComplete, 
+  activeStep, 
+  goToPreviousStep 
+}: { 
+  onComplete: () => void, 
+  activeStep: boolean,
+  goToPreviousStep: () => void
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -78,6 +86,8 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
       title="Connect Your Telegram Channel"
       description="Link your Telegram channel or group to enable subscription management"
       icon={<MessageCircle className="w-6 h-6" />}
+      showBackButton={true}
+      onBack={goToPreviousStep}
     >
       {isVerified && lastConnectedCommunity ? (
         <>

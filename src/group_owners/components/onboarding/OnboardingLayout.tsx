@@ -54,6 +54,26 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         </Button>
       </motion.div>
 
+      {/* Back Button in the top-left corner */}
+      {showBackButton && onBack && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="absolute top-4 left-4"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 flex items-center gap-1"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </Button>
+        </motion.div>
+      )}
+
       <div className="w-full max-w-3xl">
         {showProgress && (
           <motion.div 

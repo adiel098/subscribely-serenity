@@ -1,295 +1,120 @@
 
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
+import React from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import confetti from 'canvas-confetti';
-import { useToast } from "@/components/ui/use-toast";
 
 interface CompleteStepProps {
   completeOnboarding: () => Promise<void>;
   goToPreviousStep: () => void;
-  state: any; // Using any type for simplicity
+  state: any;
 }
 
 const CompleteStep: React.FC<CompleteStepProps> = ({ 
-  completeOnboarding,
+  completeOnboarding, 
   goToPreviousStep,
   state 
 }) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    // Trigger confetti when component mounts
-    const duration = 5 * 1000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#4F46E5', '#10B981', '#6366F1', '#EC4899']
-      });
-      
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#4F46E5', '#10B981', '#6366F1', '#EC4899']
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-    
-    frame();
-  }, []);
-
-  const handleGoToDashboard = async () => {
+  const handleCompleteOnboarding = async () => {
     try {
-      console.log("Completing onboarding and navigating to dashboard");
-      // Mark onboarding as complete in database
       await completeOnboarding();
-      
-      // Show success toast
-      toast({
-        title: "Onboarding Complete!",
-        description: "Welcome to your new dashboard",
-        variant: "default",
-      });
-      
-      // Navigate to dashboard with a short delay to ensure state is updated
-      setTimeout(() => {
-        console.log("Navigating to dashboard");
-        navigate('/dashboard', { replace: true });
-      }, 100);
+      navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error("Error completing onboarding:", error);
-      toast({
-        title: "Error",
-        description: "Failed to complete onboarding. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Failed to complete onboarding:", error);
     }
   };
 
-  // Animation variants for staggered children
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+  // Calculate the number of steps completed
+  const getTotalStepsCompleted = () => {
+    let count = 0;
+    if (state.isTelegramConnected) count++;
+    if (state.hasPlatformPlan) count++;
+    if (state.hasPaymentMethod) count++;
+    return count;
   };
 
   return (
-    <OnboardingLayout 
+    <OnboardingLayout
       currentStep="complete"
-      title="Setup Complete! 🎉"
-      description="You're all set to start managing your Telegram communities"
-      icon={<CheckCircle size={24} />}
-      showProgress={false}
-      onBack={goToPreviousStep}
+      title="You're All Set!"
+      description="Your Telegram community is ready to accept paid memberships"
+      icon={<CheckCircle className="w-6 h-6 text-green-500" />}
       showBackButton={true}
+      onBack={goToPreviousStep}
     >
-      <motion.div 
-        className="space-y-8 text-center"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
+      <div className="space-y-6">
         <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ 
-            duration: 0.8, 
-            type: "spring", 
-            stiffness: 200,
-            damping: 15
-          }}
-          className="flex justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-xl p-6"
         >
-          <motion.div 
-            className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center"
-            animate={{ 
-              boxShadow: [
-                "0px 0px 0px 0px rgba(16, 185, 129, 0.1)", 
-                "0px 0px 0px 15px rgba(16, 185, 129, 0.1)", 
-                "0px 0px 0px 0px rgba(16, 185, 129, 0.1)"
-              ]
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 2
-            }}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.2, 1], rotate: [0, 10, 0, -10, 0] }}
-              transition={{ duration: 1, delay: 0.5 }}
-            >
-              <CheckCircle size={48} className="text-green-600" />
-            </motion.div>
-          </motion.div>
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+              <CheckCircle className="w-10 h-10 text-white" />
+            </div>
+          </div>
+          
+          <h2 className="text-xl font-semibold text-center text-green-800 mb-2">
+            Onboarding Complete!
+          </h2>
+          
+          <p className="text-center text-green-700 mb-4">
+            You've completed {getTotalStepsCompleted()} out of 3 essential steps.
+          </p>
+          
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.isTelegramConnected ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+                {state.isTelegramConnected ? "✓" : "1"}
+              </div>
+              <p className={`${state.isTelegramConnected ? "text-green-700" : "text-gray-500"}`}>
+                {state.isTelegramConnected ? "Telegram channel connected" : "Connect Telegram channel"}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.hasPlatformPlan ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+                {state.hasPlatformPlan ? "✓" : "2"}
+              </div>
+              <p className={`${state.hasPlatformPlan ? "text-green-700" : "text-gray-500"}`}>
+                {state.hasPlatformPlan ? "Platform plan selected" : "Select platform plan"}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.hasPaymentMethod ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
+                {state.hasPaymentMethod ? "✓" : "3"}
+              </div>
+              <p className={`${state.hasPaymentMethod ? "text-green-700" : "text-gray-500"}`}>
+                {state.hasPaymentMethod ? "Payment methods configured" : "Configure payment methods"}
+              </p>
+            </div>
+          </div>
+          
+          <p className="text-center text-sm text-green-600 italic mb-4">
+            Don't worry! You can always update these settings later from your dashboard.
+          </p>
         </motion.div>
         
-        <motion.div className="space-y-4" variants={item}>
-          <motion.h2 
-            className="text-2xl font-bold text-gray-900"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <Button 
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-md"
+            onClick={handleCompleteOnboarding}
           >
-            Your Membify Account is Ready!
-          </motion.h2>
-          
-          <motion.p 
-            className="text-gray-600 max-w-md mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-          >
-            You've successfully completed the setup process. Here's what you've accomplished:
-          </motion.p>
-          
-          <motion.ul className="space-y-3 max-w-md mx-auto text-left">
-            <motion.li 
-              className="flex items-start gap-2 text-gray-700"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.0, duration: 0.5 }}
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 10, 0, -10, 0] 
-                }}
-                transition={{ delay: 1.2, duration: 0.5 }}
-              >
-                <CheckCircle size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
-              </motion.div>
-              <span>
-                {state.isTelegramConnected 
-                  ? "Connected your Telegram group to Membify" 
-                  : "Prepared for Telegram group connection"}
-              </span>
-            </motion.li>
-            <motion.li 
-              className="flex items-start gap-2 text-gray-700"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.1, duration: 0.5 }}
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 10, 0, -10, 0] 
-                }}
-                transition={{ delay: 1.3, duration: 0.5 }}
-              >
-                <CheckCircle size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
-              </motion.div>
-              <span>
-                {state.hasPlatformPlan 
-                  ? "Selected a platform subscription plan" 
-                  : "Set up your platform subscription"}
-              </span>
-            </motion.li>
-            <motion.li 
-              className="flex items-start gap-2 text-gray-700"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.2, duration: 0.5 }}
-            >
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 10, 0, -10, 0] 
-                }}
-                transition={{ delay: 1.4, duration: 0.5 }}
-              >
-                <CheckCircle size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
-              </motion.div>
-              <span>
-                {state.hasPaymentMethod 
-                  ? "Set up payment method(s) for your subscribers" 
-                  : "Added payment options for your subscribers"}
-              </span>
-            </motion.li>
-          </motion.ul>
+            Go to Dashboard
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </motion.div>
-        
-        <div className="pt-6 flex justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.3 }}
-            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-          >
-            <Button 
-              variant="outline" 
-              onClick={goToPreviousStep}
-              className="gap-2"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </Button>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ 
-              delay: 1.5, 
-              duration: 0.5,
-              type: "spring",
-              stiffness: 200
-            }}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: "0px 5px 15px rgba(79, 70, 229, 0.2)"
-            }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button 
-              onClick={handleGoToDashboard}
-              size="lg" 
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            >
-              <motion.div
-                animate={{ 
-                  rotate: [0, 20, 0, -20, 0],
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  delay: 2, 
-                  duration: 0.7,
-                  repeat: Infinity,
-                  repeatDelay: 3
-                }}
-              >
-                <Sparkles size={16} className="text-yellow-300" />
-              </motion.div>
-              Go to Dashboard
-              <ArrowRight size={16} />
-            </Button>
-          </motion.div>
-        </div>
-      </motion.div>
+      </div>
     </OnboardingLayout>
   );
 };

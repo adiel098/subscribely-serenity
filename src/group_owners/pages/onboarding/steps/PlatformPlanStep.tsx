@@ -94,7 +94,7 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
     setIsProcessing(true);
     try {
       await processPayment(selectedPlan!, 'card');
-      saveCurrentStep('create-plans'); // Updated from 'platform-plan' to 'create-plans'
+      saveCurrentStep('create-plans');
       goToNextStep();
     } catch (error) {
       console.error("Error processing plan selection:", error);
@@ -136,7 +136,7 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
 
   return (
     <OnboardingLayout 
-      currentStep="create-plans" // Updated from 'platform-plan' to 'create-plans'
+      currentStep="create-plans"
       title="Choose Your Platform Plan"
       description="Select a subscription plan that fits your community needs"
       icon={<Zap size={24} />}

@@ -175,23 +175,35 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
               <p className="mt-2 text-gray-600">
                 After adding the bot and sending the verification code, click below to verify the connection
               </p>
-              <Button 
-                className="mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
-                onClick={onVerify}
-                disabled={isVerifying || !verificationCode || isLoading}
-              >
-                {isVerifying ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    Verify Connection
-                  </>
+              <div className="mt-4 flex flex-row gap-3 items-center">
+                {showBackButton && (
+                  <Button 
+                    variant="outline"
+                    onClick={onBack}
+                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                    Back
+                  </Button>
                 )}
-              </Button>
+                <Button 
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
+                  onClick={onVerify}
+                  disabled={isVerifying || !verificationCode || isLoading}
+                >
+                  {isVerifying ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="mr-2 h-5 w-5" />
+                      Verify Connection
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </motion.div>
         </div>

@@ -1,6 +1,5 @@
-
-import React from "react";
-import { Clipboard, Info, ArrowLeft, ArrowRight, Copy, Bot, Send, CheckCircle, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { Clipboard, Info, ArrowLeft, ArrowRight, Copy, Bot, Send, CheckCircle, ShieldCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -30,16 +29,23 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
   showBackButton = false
 }) => {
   const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
   
   const copyCodeToClipboard = async () => {
     if (!verificationCode) return;
     
     try {
       await navigator.clipboard.writeText(verificationCode);
+      setCopied(true);
+      
       toast({
         title: "Code copied!",
         description: "Verification code copied to clipboard"
       });
+      
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch (err) {
       console.error("Failed to copy code:", err);
       toast({
@@ -141,11 +147,20 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
                 </code>
                 <Button
                   onClick={copyCodeToClipboard}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white shadow-md w-full sm:w-auto"
+                  className={`${copied ? 'bg-green-500 hover:bg-green-600' : 'bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600'} text-white shadow-md w-full sm:w-auto transition-colors duration-300`}
                   disabled={!verificationCode || isLoading}
                 >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy Code
+                  {copied ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Code
+                    </>
+                  )}
                 </Button>
               </div>
               <p className="mt-3 text-sm text-gray-500 flex items-center">

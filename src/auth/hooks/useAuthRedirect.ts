@@ -9,6 +9,7 @@ export function useAuthRedirect() {
   const location = useLocation();
   const isRedirectingRef = useRef(false);
   const checkCompletedRef = useRef(false);
+  const initialCheckDoneRef = useRef(false);
 
   const checkOnboardingStatus = useCallback(async () => {
     if (!user || isRedirectingRef.current) return;
@@ -19,7 +20,7 @@ export function useAuthRedirect() {
       return;
     }
     
-    // Prevent checking more than once in the same render cycle
+    // Skip if we've already checked in this session
     if (checkCompletedRef.current) {
       return;
     }
@@ -30,7 +31,7 @@ export function useAuthRedirect() {
     try {
       console.log("Checking onboarding status for user:", user.id);
       
-      // First check profile to see if onboarding_step is "complete"
+      // Check profile to see if onboarding_step is "complete"
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('onboarding_completed, onboarding_step')
@@ -44,28 +45,29 @@ export function useAuthRedirect() {
       
       console.log("Profile onboarding status:", profile);
       
-      // If onboarding_step is "complete", redirect to dashboard if needed
+      // If onboarding is complete, redirect to dashboard if needed
       if (profile.onboarding_step === "complete" || profile.onboarding_completed) {
-        console.log("Onboarding is marked as complete, ensuring correct page");
+        console.log("Onboarding is marked as complete");
         
-        // If on login page or onboarding page, redirect to dashboard
-        if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')) {
+        // Only redirect to dashboard if currently on a non-dashboard page
+        if (location.pathname.startsWith('/auth') || 
+            (location.pathname.startsWith('/onboarding') && !initialCheckDoneRef.current)) {
+          console.log("Redirecting from auth/onboarding to dashboard");
           navigate('/dashboard', { replace: true });
         }
-        
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      // If onboarding is not complete, redirect to onboarding
-      console.log("Onboarding not completed, redirecting to onboarding flow");
-      
-      // If there's a saved step, redirect to that step
-      if (profile.onboarding_step) {
-        navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
       } else {
-        // Otherwise, start at the beginning
-        navigate('/onboarding/welcome', { replace: true });
+        // If onboarding is not complete and not already in onboarding flow
+        console.log("Onboarding not completed, redirecting to onboarding flow");
+        
+        if (!location.pathname.startsWith('/onboarding')) {
+          // If there's a saved step, redirect to that step
+          if (profile.onboarding_step) {
+            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
+          } else {
+            // Otherwise, start at the beginning
+            navigate('/onboarding/welcome', { replace: true });
+          }
+        }
       }
       
     } catch (error) {
@@ -74,14 +76,15 @@ export function useAuthRedirect() {
       // Reset the redirecting flag
       setTimeout(() => {
         isRedirectingRef.current = false;
-        checkCompletedRef.current = false;
       }, 500);
+      
+      initialCheckDoneRef.current = true;
     }
   }, [user, navigate, location.pathname]);
 
   useEffect(() => {
-    // Reset tracking when location changes
-    if (location.pathname.startsWith('/onboarding')) {
+    // Reset tracking when location changes to a non-onboarding page
+    if (!location.pathname.startsWith('/onboarding')) {
       checkCompletedRef.current = false;
     }
     

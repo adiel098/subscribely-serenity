@@ -7,9 +7,6 @@ import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
-import CreatePlansStep from "./steps/CreatePlansStep";
-import { PaymentMethodStep } from "./steps/PaymentMethodStep";
-import CompletionStep from "./steps/CompletionStep";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -20,7 +17,6 @@ const Onboarding = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
-  const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const { 
@@ -39,12 +35,16 @@ const Onboarding = () => {
       setCurrentStep('welcome');
     } else if (path.includes('/onboarding/connect-telegram')) {
       setCurrentStep('connect-telegram');
-    } else if (path.includes('/onboarding/create-plans')) {
-      setCurrentStep('create-plans');
-    } else if (path.includes('/onboarding/payment-method')) {
-      setCurrentStep('payment-method');
     } else if (path.includes('/onboarding/complete')) {
       setCurrentStep('complete');
+      // Complete onboarding and redirect to dashboard
+      if (user) {
+        completeOnboarding().then(() => {
+          navigate('/dashboard', { replace: true });
+        }).catch(err => {
+          console.error("Error completing onboarding:", err);
+        });
+      }
     } else if (path === '/onboarding' || path === '/onboarding/') {
       // Default to welcome step if just on /onboarding
       setCurrentStep('welcome');
@@ -79,19 +79,6 @@ const Onboarding = () => {
             navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
           }
         }
-        
-        // Check if user has payment methods
-        const { data: paymentMethods, error: paymentMethodsError } = await supabase
-          .from('payment_methods')
-          .select('id')
-          .eq('owner_id', user.id)
-          .eq('is_active', true)
-          .limit(1);
-
-        if (paymentMethodsError) throw paymentMethodsError;
-        
-        setHasPaymentMethod(paymentMethods && paymentMethods.length > 0);
-        
       } catch (error) {
         console.error("Error fetching onboarding state:", error);
         toast({
@@ -122,6 +109,15 @@ const Onboarding = () => {
     );
   }
 
+  const handleCompleteOnboarding = async () => {
+    try {
+      await completeOnboarding();
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+    }
+  };
+
   const renderCurrentStep = () => {
     console.log("Rendering current step:", currentStep);
     
@@ -137,37 +133,9 @@ const Onboarding = () => {
       case "connect-telegram":
         return (
           <ConnectTelegramStep 
-            onComplete={() => goToNextStep('connect-telegram')} 
+            onComplete={handleCompleteOnboarding} 
             activeStep={true}
             goToPreviousStep={() => goToPreviousStep('connect-telegram')}
-          />
-        );
-      
-      case "create-plans":
-        return (
-          <CreatePlansStep 
-            goToNextStep={() => goToNextStep('create-plans')} 
-            goToPreviousStep={() => goToPreviousStep('create-plans')}
-            saveCurrentStep={saveCurrentStep}
-          />
-        );
-      
-      case "payment-method":
-        return (
-          <PaymentMethodStep 
-            goToNextStep={() => goToNextStep('payment-method')} 
-            goToPreviousStep={() => goToPreviousStep('payment-method')}
-            saveCurrentStep={saveCurrentStep}
-            hasPaymentMethod={hasPaymentMethod}
-          />
-        );
-      
-      case "complete":
-        return (
-          <CompletionStep 
-            onComplete={completeOnboarding} 
-            activeStep={true}
-            goToPreviousStep={() => goToPreviousStep('complete')}
           />
         );
       

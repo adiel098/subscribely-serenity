@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Onboarding routes - make it a top-level route with child routes for steps
+  // Onboarding routes - simplified to just welcome, connect-telegram and complete
   {
     path: "/onboarding",
     element: <Onboarding />,
@@ -66,14 +66,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "/onboarding/connect-telegram",
-    element: <Onboarding />,
-  },
-  {
-    path: "/onboarding/create-plans",
-    element: <Onboarding />,
-  },
-  {
-    path: "/onboarding/payment-method",
     element: <Onboarding />,
   },
   {

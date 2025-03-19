@@ -105,10 +105,10 @@ export const ConnectedChannelDisplay: React.FC<ConnectedChannelDisplayProps> = (
 
             <div className="flex justify-end mt-2">
               <Button 
-                className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600 shadow-md"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-md"
                 onClick={onContinue}
               >
-                Continue to Next Step
+                Go to Dashboard
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

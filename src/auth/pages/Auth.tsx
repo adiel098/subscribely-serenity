@@ -10,7 +10,7 @@ const Auth = () => {
   const { user } = useAuth();
   
   // Handle redirect logic when user is already authenticated
-  useAuthRedirect(user);
+  useAuthRedirect();
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">

@@ -11,6 +11,7 @@ import { handleSignOut } from "../utils/authActions";
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isLoading: true, // Add isLoading property
   signOut: async () => {},
 });
 
@@ -179,7 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isLoading: loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

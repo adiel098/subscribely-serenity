@@ -7,7 +7,6 @@ import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 
@@ -82,16 +81,7 @@ const Onboarding = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
-          <p className="text-indigo-800 font-medium">Loading your onboarding progress...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed the loading screen display condition
 
   const renderCurrentStep = () => {
     console.log("Rendering current step:", onboardingState.currentStep);

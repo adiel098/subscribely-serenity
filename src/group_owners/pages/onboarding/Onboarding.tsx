@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -16,22 +15,53 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   const initialLoadRef = useRef(true);
   const [isUrlProcessed, setIsUrlProcessed] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   
-  // Use the centralized onboarding hook instead of local state
+  // Use the centralized onboarding hook
   const { 
     state: onboardingState, 
-    isLoading, 
+    isLoading: onboardingHookLoading, 
     goToNextStep, 
     goToPreviousStep,
     completeOnboarding
   } = useOnboarding();
 
+  // Check onboarding status on initial load
+  useEffect(() => {
+    const checkCompletionStatus = async () => {
+      if (!user) return;
+      
+      try {
+        // Check if onboarding is already complete
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed, onboarding_step')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        // If onboarding is complete, redirect to dashboard
+        if (profile.onboarding_completed || profile.onboarding_step === 'complete') {
+          console.log("Onboarding already complete, redirecting to dashboard");
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkCompletionStatus();
+  }, [user, navigate]);
+
   // Determine which step to show based on URL path - only once on initial load
   useEffect(() => {
-    if (!isUrlProcessed && initialLoadRef.current) {
+    if (!isUrlProcessed && initialLoadRef.current && !isLoading) {
       console.log("Processing URL path:", location.pathname);
       const path = location.pathname;
       
@@ -42,42 +72,34 @@ const Onboarding = () => {
       
       setIsUrlProcessed(true);
       initialLoadRef.current = false;
-      
-      // Short delay to ensure smooth UI rendering
-      setTimeout(() => {
-        setIsReady(true);
-      }, 100);
     }
-  }, [location.pathname, navigate, isUrlProcessed]);
+  }, [location.pathname, navigate, isUrlProcessed, isLoading]);
 
   // Handle completion redirect - only when isCompleted changes
   useEffect(() => {
-    if (onboardingState.isCompleted && !isLoading) {
+    if (onboardingState.isCompleted && !onboardingHookLoading) {
       // Redirect to dashboard if onboarding is complete
       navigate('/dashboard', { replace: true });
     }
-  }, [onboardingState.isCompleted, isLoading, navigate]);
+  }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
 
-  // Handle URL updates when currentStep changes - with circuit breaker to prevent infinite loops
+  // Handle URL updates when currentStep changes
   useEffect(() => {
     const currentPath = location.pathname;
     const targetPath = `/onboarding/${onboardingState.currentStep}`;
     
-    // Only update URL if:
-    // 1. We have processed the initial URL
-    // 2. The current URL doesn't match the current step
-    // 3. We're not submitting a change
-    // 4. We're not in the initial load
+    // Only update URL if we've processed the initial URL and the path doesn't match current step
     if (
       isUrlProcessed && 
       !currentPath.includes(onboardingState.currentStep) && 
-      !isLoading &&
-      !initialLoadRef.current
+      !onboardingHookLoading &&
+      !initialLoadRef.current &&
+      !isLoading
     ) {
       console.log(`Updating URL to match current step: ${onboardingState.currentStep}`);
       navigate(targetPath, { replace: true });
     }
-  }, [onboardingState.currentStep, navigate, location.pathname, isUrlProcessed, isLoading]);
+  }, [onboardingState.currentStep, navigate, location.pathname, isUrlProcessed, onboardingHookLoading, isLoading]);
 
   const handleCompleteOnboarding = async () => {
     try {
@@ -88,7 +110,7 @@ const Onboarding = () => {
     }
   };
 
-  if (isLoading || !isReady) {
+  if (isLoading || onboardingHookLoading || !isUrlProcessed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-50">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />

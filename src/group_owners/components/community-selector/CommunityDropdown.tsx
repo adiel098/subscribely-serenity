@@ -80,10 +80,10 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   };
   
   return (
-    <div className="w-[260px]">
+    <div className="w-[300px]">
       <Select value={selectedValue} onValueChange={handleValueChange}>
         <SelectTrigger className="h-8 text-xs">
-          <SelectValue>
+          <SelectValue placeholder="Select a community or group">
             {selectedType === 'community' && selectedCommunity ? (
               <CommunitySelectedDisplay
                 key={`selected-${selectedCommunity.id}-${lastUpdate}`}

@@ -36,7 +36,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-50 p-4 relative">
-      {/* Logout Button in the top-right corner with red text */}
+      {/* Enhanced Logout Button in the top-right corner */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,13 +44,13 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         className="absolute top-4 right-4"
       >
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={handleLogout}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
+          className="group bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200 hover:border-red-200 transition-all duration-300 shadow-sm hover:shadow flex items-center gap-2"
         >
-          <LogOut size={16} />
-          <span>Logout</span>
+          <LogOut size={16} className="group-hover:rotate-12 transition-transform duration-300" />
+          <span className="font-medium">Logout</span>
         </Button>
       </motion.div>
 

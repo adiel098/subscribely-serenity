@@ -3,14 +3,26 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from './loggingService.ts';
 import { TelegramApiClient } from '../utils/telegramApiClient.ts';
 import { JoinRequestService } from './joinRequestService.ts';
+import { SubscriptionProcessor } from './subscription/subscriptionProcessor.ts';
+import { InviteLinkService } from './invite/inviteLinkService.ts';
+import { PaymentRecordService } from './payment/paymentRecordService.ts';
+import { UserNotificationService } from './notification/userNotificationService.ts';
 
 export class PaymentSuccessService {
   private supabase: ReturnType<typeof createClient>;
   private logger: ReturnType<typeof createLogger>;
+  private subscriptionProcessor: SubscriptionProcessor;
+  private inviteLinkService: InviteLinkService;
+  private paymentRecordService: PaymentRecordService;
+  private userNotificationService: UserNotificationService;
   
   constructor(supabase: ReturnType<typeof createClient>) {
     this.supabase = supabase;
     this.logger = createLogger(supabase, 'PAYMENT-SUCCESS-SERVICE');
+    this.subscriptionProcessor = new SubscriptionProcessor(supabase);
+    this.inviteLinkService = new InviteLinkService(supabase);
+    this.paymentRecordService = new PaymentRecordService(supabase);
+    this.userNotificationService = new UserNotificationService(supabase);
   }
   
   /**
@@ -29,44 +41,17 @@ export class PaymentSuccessService {
         payload = { communityId: payment.invoice_payload };
       }
       
-      // Log the successful payment
-      await this.supabase
-        .from('telegram_activity_logs')
-        .insert({
-          telegram_user_id: message.from.id.toString(),
-          activity_type: 'successful_payment',
-          details: `Successful payment of ${payment.total_amount / 100} ${payment.currency}`,
-          metadata: {
-            ...payload,
-            payment_id: payment.telegram_payment_charge_id,
-            provider_payment_id: payment.provider_payment_charge_id,
-            shipping_option_id: payment.shipping_option_id,
-            order_info: payment.order_info
-          }
-        });
-      
-      // Record the payment in the database
-      const { data: paymentRecord, error: paymentError } = await this.supabase
-        .from('subscription_payments')
-        .insert({
-          telegram_user_id: message.from.id.toString(),
-          telegram_payment_id: payment.telegram_payment_charge_id,
-          amount: payment.total_amount / 100,
-          payment_method: 'telegram',
-          status: 'successful',
-          community_id: payload.communityId,
-          plan_id: payload.planId,
-          telegram_username: message.from.username || null,
-          first_name: message.from.first_name || null,
-          last_name: message.from.last_name || null
-        })
-        .select()
-        .single();
+      // Log and record the payment
+      await this.paymentRecordService.logPaymentActivity(message.from.id.toString(), payment, payload);
+      const { paymentRecord, error: paymentError } = await this.paymentRecordService.recordPayment(
+        message.from.id.toString(), 
+        message.from, 
+        payment, 
+        payload
+      );
       
       if (paymentError) {
-        await this.logger.error(`Error recording payment in database: ${paymentError.message}`);
-      } else {
-        await this.logger.success('Payment recorded successfully');
+        await this.logger.error(`Error recording payment: ${paymentError.message}`);
       }
       
       // Get bot token from settings
@@ -84,79 +69,42 @@ export class PaymentSuccessService {
       const telegramApi = new TelegramApiClient(botToken);
       
       // Process membership and subscription
-      await this.processSubscription(message.from.id.toString(), payload, message.from, telegramApi);
+      await this.subscriptionProcessor.processSubscription(
+        message.from.id.toString(), 
+        payload, 
+        message.from, 
+        telegramApi
+      );
       
-      // Get community information and invite link
+      // Get or create invite link
+      const inviteLink = await this.inviteLinkService.getOrCreateInviteLink(
+        payload.communityId,
+        telegramApi,
+        message.from.username || message.from.id,
+        paymentRecord?.id
+      );
+      
+      // Get community info for better user message
       const { data: community } = await this.supabase
         .from('communities')
-        .select('telegram_invite_link, telegram_chat_id, name')
+        .select('name')
         .eq('id', payload.communityId)
         .single();
-        
-      // Get or generate an invite link if needed
-      let inviteLink = community?.telegram_invite_link;
-      
-      if (!inviteLink && community?.telegram_chat_id) {
-        try {
-          // Try to create a new invite link
-          const inviteResult = await telegramApi.createChatInviteLink(
-            community.telegram_chat_id, 
-            `Invite for ${message.from.username || message.from.id} (${new Date().toISOString()})`
-          );
-          
-          if (inviteResult.ok && inviteResult.result?.invite_link) {
-            inviteLink = inviteResult.result.invite_link;
-            
-            // Update community with the new invite link
-            await this.supabase
-              .from('communities')
-              .update({ telegram_invite_link: inviteLink })
-              .eq('id', payload.communityId);
-              
-            // Also update the payment record with the invite link
-            if (paymentRecord?.id) {
-              await this.supabase
-                .from('subscription_payments')
-                .update({ invite_link: inviteLink })
-                .eq('id', paymentRecord.id);
-            }
-            
-            await this.logger.info(`Created and stored new invite link: ${inviteLink}`);
-          }
-        } catch (inviteError) {
-          await this.logger.error(`Error creating invite link: ${inviteError.message}`);
-        }
-      }
       
       // Send thank you message to the user
-      let thankYouMessage = "Thank you for your payment! Your subscription has been activated.";
-      
-      if (inviteLink) {
-        thankYouMessage += `\n\nYou can join the community using this link: ${inviteLink}`;
-      } else {
-        thankYouMessage += "\n\nYou can now join the community by sending a join request to the group.";
-      }
-      
-      await telegramApi.sendMessage(message.from.id.toString(), thankYouMessage);
-      
-      await this.logger.success('Sent thank you message to user');
+      await this.userNotificationService.sendThankYouMessage(
+        message.from.id.toString(),
+        telegramApi,
+        inviteLink,
+        community?.name
+      );
       
       // Try to approve any pending join requests for this user
-      if (community?.telegram_chat_id) {
-        const joinRequestService = new JoinRequestService(this.supabase, botToken);
-        
-        // Try to approve any pending join request
-        const approveResult = await joinRequestService.approveJoinRequest(
-          community.telegram_chat_id,
-          message.from.id.toString(),
-          message.from.username,
-          'Payment received'
-        );
-        
-        if (approveResult) {
-          await this.logger.success(`Auto-approved join request for user ${message.from.id} after payment`);
-        }
-      }
+      await this.handleJoinRequestApproval(
+        payload.communityId,
+        message.from,
+        botToken
+      );
       
       return true;
     } catch (error) {
@@ -166,105 +114,38 @@ export class PaymentSuccessService {
   }
 
   /**
-   * Process subscription for a user
+   * Handle join request approval after payment
    */
-  private async processSubscription(
-    userId: string,
-    payload: any,
+  private async handleJoinRequestApproval(
+    communityId: string,
     userInfo: any,
-    telegramApi: TelegramApiClient
+    botToken: string
   ): Promise<void> {
     try {
-      // Check if the user is already a member
-      const { data: existingMember } = await this.supabase
-        .from('telegram_chat_members')
-        .select('*')
-        .eq('telegram_user_id', userId)
-        .eq('community_id', payload.communityId)
+      // Get community chat ID
+      const { data: community } = await this.supabase
+        .from('communities')
+        .select('telegram_chat_id')
+        .eq('id', communityId)
         .single();
-      
-      // Calculate subscription end date based on plan
-      let subscriptionEndDate = new Date();
-      
-      // Get plan details
-      const { data: planData, error: planError } = await this.supabase
-        .from('subscription_plans')
-        .select('interval')
-        .eq('id', payload.planId)
-        .maybeSingle();
         
-      if (planError) {
-        await this.logger.error(`Error getting plan details: ${planError.message}`);
-      } else if (planData?.interval) {
-        await this.logger.info(`Using plan interval: ${planData.interval}`);
+      if (community?.telegram_chat_id) {
+        const joinRequestService = new JoinRequestService(this.supabase, botToken);
         
-        const interval = planData.interval;
-        if (interval === 'monthly') {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-        } else if (interval === 'quarterly') {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 3);
-        } else if (interval === 'half-yearly') {
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 6);
-        } else if (interval === 'yearly') {
-          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
-        } else if (interval === 'lifetime') {
-          // Set to a very far future date for lifetime
-          subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 100);
-        } else {
-          // Default to 1 month for unknown intervals
-          subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+        // Try to approve any pending join request
+        const approveResult = await joinRequestService.approveJoinRequest(
+          community.telegram_chat_id,
+          userInfo.id.toString(),
+          userInfo.username,
+          'Payment received'
+        );
+        
+        if (approveResult) {
+          await this.logger.success(`Auto-approved join request for user ${userInfo.id} after payment`);
         }
-      } else {
-        // Default to 1 month if no plan found
-        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-        await this.logger.warn('No plan found, defaulting to 1 month subscription');
       }
-      
-      if (existingMember) {
-        // Update existing member
-        await this.supabase
-          .from('telegram_chat_members')
-          .update({
-            subscription_status: 'active',
-            is_active: true,
-            subscription_start_date: new Date().toISOString(),
-            subscription_end_date: subscriptionEndDate.toISOString(),
-            subscription_plan_id: payload.planId
-          })
-          .eq('id', existingMember.id);
-        
-        await this.logger.info(`Updated existing member ${userId} in community ${payload.communityId}`);
-      } else {
-        // Add new member
-        await this.supabase
-          .from('telegram_chat_members')
-          .insert({
-            telegram_user_id: userId,
-            telegram_username: userInfo.username || null,
-            community_id: payload.communityId,
-            subscription_status: 'active',
-            is_active: true,
-            subscription_start_date: new Date().toISOString(),
-            subscription_end_date: subscriptionEndDate.toISOString(),
-            subscription_plan_id: payload.planId
-          });
-        
-        await this.logger.info(`Added new member ${userId} to community ${payload.communityId}`);
-      }
-      
-      // Log the subscription activity
-      await this.supabase
-        .from('subscription_activity_logs')
-        .insert({
-          telegram_user_id: userId,
-          community_id: payload.communityId,
-          activity_type: 'payment_received',
-          details: `Payment received via Telegram`,
-          status: 'active'
-        });
     } catch (error) {
-      await this.logger.error(`Error processing subscription: ${error.message}`);
-      throw error;
+      await this.logger.error(`Error handling join request approval: ${error.message}`);
     }
   }
 }

@@ -14,15 +14,24 @@ export const useOnboardingNavigation = (
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const saveCurrentStep = async (step: OnboardingStep) => {
+  // Allow any step string to be passed, but save only valid OnboardingStep values
+  const saveCurrentStep = async (step: string) => {
     if (!user) return;
     
     try {
       console.log("Saving current step:", step);
       setIsSubmitting(true);
       
-      await saveOnboardingStep(user.id, step);
-      setCurrentStep(step);
+      // Map any incoming step to a valid OnboardingStep
+      let validStep: OnboardingStep = "welcome";
+      
+      // Only use the step if it's a valid OnboardingStep
+      if (["welcome", "connect-telegram", "complete"].includes(step)) {
+        validStep = step as OnboardingStep;
+      }
+      
+      await saveOnboardingStep(user.id, validStep);
+      setCurrentStep(validStep);
       
       console.log("Step saved successfully");
     } catch (error) {
@@ -62,7 +71,7 @@ export const useOnboardingNavigation = (
     }
   };
 
-  const goToNextStep = (currentStep: OnboardingStep) => {
+  const goToNextStep = (currentStep: OnboardingStep = "welcome") => {
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
     
@@ -72,7 +81,7 @@ export const useOnboardingNavigation = (
     }
   };
 
-  const goToPreviousStep = (currentStep: OnboardingStep) => {
+  const goToPreviousStep = (currentStep: OnboardingStep = "welcome") => {
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     
     if (currentIndex > 0) {

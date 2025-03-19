@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +8,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-
 export function GroupOwnerHeader() {
   const {
     signOut,
@@ -17,12 +15,10 @@ export function GroupOwnerHeader() {
   } = useAuth();
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
-  
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
-  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -31,11 +27,9 @@ export function GroupOwnerHeader() {
       console.error("Error signing out:", error);
     }
   };
-  
   const navigateToAccountSettings = () => {
     navigate('/membify-settings');
   };
-
   return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
       <motion.div initial={{
       opacity: 0,
@@ -81,7 +75,7 @@ export function GroupOwnerHeader() {
           }}>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg" alt="Profile" />
+                  <AvatarImage alt="Profile" src="/lovable-uploads/fe0652ed-b292-4987-b51f-3706d2bdd013.png" />
                   <AvatarFallback className="bg-gradient-to-br from-blue-400 to-indigo-600 text-white font-bold">
                     {getInitials()}
                   </AvatarFallback>

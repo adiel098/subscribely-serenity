@@ -25,7 +25,7 @@ interface OnboardingState {
 export const useOnboarding = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [state, setState] = useState<OnboardingState>({
     currentStep: "welcome",
     isCompleted: false,
@@ -146,28 +146,20 @@ export const useOnboarding = () => {
   };
 
   const goToNextStep = (currentStep: OnboardingStep) => {
-    console.log(`Moving from ${currentStep} to next step`);
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
     
     if (nextStep) {
-      console.log(`Next step will be: ${nextStep}`);
       saveCurrentStep(nextStep);
-    } else {
-      console.log('No next step found in the sequence');
     }
   };
 
   const goToPreviousStep = (currentStep: OnboardingStep) => {
-    console.log(`Moving from ${currentStep} to previous step`);
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     
     if (currentIndex > 0) {
       const previousStep = ONBOARDING_STEPS[currentIndex - 1];
-      console.log(`Previous step will be: ${previousStep}`);
       saveCurrentStep(previousStep);
-    } else {
-      console.log('Already at the first step');
     }
   };
 

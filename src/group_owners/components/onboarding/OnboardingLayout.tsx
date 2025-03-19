@@ -55,10 +55,10 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         )}
         
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 1, y: 0 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.2 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
           <div className="p-8 border-b border-gray-100">
@@ -72,14 +72,12 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           <div className="p-8">
             {children}
           </div>
-
-          {/* We're removing this because we'll integrate back buttons directly into each step's button row */}
         </motion.div>
         
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.3 }}
           className="mt-4 text-center text-sm text-gray-500"
         >
           <p>Need help? Contact support at support@membify.app</p>

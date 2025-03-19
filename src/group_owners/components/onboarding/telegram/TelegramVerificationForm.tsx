@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, MessageCircle, Bot, ShieldCheck, Send, RefreshCw } from "lucide-react";
+import { Check, Copy, MessageCircle, Bot, ShieldCheck, Send, RefreshCw, ArrowLeft } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,8 @@ interface TelegramVerificationFormProps {
   isVerifying: boolean;
   attemptCount: number;
   onVerify: () => void;
+  onBack?: () => void;
+  showBackButton?: boolean;
 }
 
 export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> = ({
@@ -21,7 +22,9 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
   isLoading,
   isVerifying,
   attemptCount,
-  onVerify
+  onVerify,
+  onBack,
+  showBackButton = false
 }) => {
   const { toast } = useToast();
   const [copied, setCopied] = React.useState(false);
@@ -177,25 +180,38 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
                   </Alert>
                 )}
                 
-                <Button 
-                  className="mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
-                  onClick={onVerify}
-                  disabled={isLoading || isVerifying || !verificationCode}
-                >
-                  {isVerifying ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : attemptCount > 0 ? (
-                    'Verify Again'
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-5 w-5" />
-                      Verify Connection
-                    </>
+                <div className="mt-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-between">
+                  {showBackButton && onBack && (
+                    <Button 
+                      variant="outline"
+                      onClick={onBack}
+                      className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Back
+                    </Button>
                   )}
-                </Button>
+                  
+                  <Button 
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
+                    onClick={onVerify}
+                    disabled={isLoading || isVerifying || !verificationCode}
+                  >
+                    {isVerifying ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : attemptCount > 0 ? (
+                      'Verify Again'
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-5 w-5" />
+                        Verify Connection
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </div>

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { StepProgress } from "./StepProgress";
 import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
 import { Button } from "@/components/ui/button";
-import { LogOut, ArrowLeft } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface OnboardingLayoutProps {
@@ -54,7 +54,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         </Button>
       </motion.div>
 
-      {/* Removed the back button from the top-left corner */}
+      {/* Removed the back button from the top of the content */}
 
       <div className="w-full max-w-3xl">
         {showProgress && (
@@ -75,26 +75,6 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
-          {/* Added the back button inside the content area, before the header */}
-          {showBackButton && onBack && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-              className="px-8 pt-6"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBack}
-                className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
-              >
-                <ArrowLeft size={16} />
-                <span>Back</span>
-              </Button>
-            </motion.div>
-          )}
-
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

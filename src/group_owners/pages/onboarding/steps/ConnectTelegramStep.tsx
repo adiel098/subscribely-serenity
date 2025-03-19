@@ -86,8 +86,7 @@ const ConnectTelegramStep = ({
       title="Connect Your Telegram Channel"
       description="Link your Telegram channel or group to enable subscription management"
       icon={<MessageCircle className="w-6 h-6" />}
-      showBackButton={true}
-      onBack={goToPreviousStep}
+      showBackButton={false}
     >
       {isVerified && lastConnectedCommunity ? (
         <>
@@ -114,6 +113,8 @@ const ConnectTelegramStep = ({
           isVerifying={isVerifying}
           attemptCount={attemptCount}
           onVerify={verifyConnection}
+          onBack={goToPreviousStep}
+          showBackButton={true}
         />
       )}
       

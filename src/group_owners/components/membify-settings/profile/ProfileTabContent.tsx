@@ -74,7 +74,7 @@ export const ProfileTabContent = ({
   };
 
   return (
-    <Card className="max-w-3xl mx-auto shadow-md border border-indigo-100">
+    <Card className="h-full shadow-md border border-indigo-100">
       <ProfileHeaderSection 
         isEditing={isEditing} 
         setIsEditing={setIsEditing} 

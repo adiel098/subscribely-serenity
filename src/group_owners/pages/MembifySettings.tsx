@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +8,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { MembifySettingsHeader } from "../components/membify-settings/MembifySettingsHeader";
 import { ProfileTabContent } from "../components/membify-settings/profile/ProfileTabContent";
 import { PlansTabContent } from "../components/membify-settings/PlansTabContent";
+import { CombinedProfileAndPlansContent } from "../components/membify-settings/CombinedProfileAndPlansContent";
 
 const MembifySettings = () => {
   const { user } = useAuth();
@@ -67,25 +67,27 @@ const MembifySettings = () => {
       >
         <MembifySettingsHeader />
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue="combined" className="space-y-6">
           <TabsList className="bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-xl shadow-sm">
             <TabsTrigger 
-              value="profile" 
+              value="combined" 
               className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
             >
               <User className="h-4 w-4" />
-              <span>Profile</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="plans" 
-              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
-            >
-              <CreditCard className="h-4 w-4" />
-              <span>Plans</span>
+              <span>Profile & Plans</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile">
+          <TabsContent value="combined">
+            <CombinedProfileAndPlansContent 
+              profileData={profileData}
+              setProfileData={setProfileData}
+              isLoading={isLoading}
+              userId={user?.id}
+            />
+          </TabsContent>
+
+          <TabsContent value="profile" className="hidden">
             <ProfileTabContent 
               profileData={profileData}
               setProfileData={setProfileData}
@@ -94,7 +96,7 @@ const MembifySettings = () => {
             />
           </TabsContent>
 
-          <TabsContent value="plans">
+          <TabsContent value="plans" className="hidden">
             <PlansTabContent />
           </TabsContent>
         </Tabs>

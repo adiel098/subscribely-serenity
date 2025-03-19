@@ -5,7 +5,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
-import WelcomeStep from "./steps/WelcomeStep";
+import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import { PlatformPlanStep } from "./steps/PlatformPlanStep";
 import CreatePlansStep from "./steps/CreatePlansStep";
@@ -18,6 +18,7 @@ const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
   const [hasPlatformPlan, setHasPlatformPlan] = useState(false);
+  const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const { 
@@ -61,6 +62,18 @@ const Onboarding = () => {
         if (subscriptionError) throw subscriptionError;
         
         setHasPlatformPlan(platformSubscription && platformSubscription.length > 0);
+
+        // Check if user has payment methods
+        const { data: paymentMethods, error: paymentMethodsError } = await supabase
+          .from('payment_methods')
+          .select('id')
+          .eq('owner_id', user.id)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (paymentMethodsError) throw paymentMethodsError;
+        
+        setHasPaymentMethod(paymentMethods && paymentMethods.length > 0);
         
       } catch (error) {
         console.error("Error fetching onboarding state:", error);
@@ -122,6 +135,7 @@ const Onboarding = () => {
           goToNextStep={() => goToNextStep('payment-method')} 
           goToPreviousStep={() => goToPreviousStep('payment-method')}
           saveCurrentStep={saveCurrentStep}
+          hasPaymentMethod={hasPaymentMethod}
         />
       )}
       

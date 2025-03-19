@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,11 +63,7 @@ const PaymentMethods = () => {
       </motion.div>
 
       <Tabs defaultValue="all" className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <TabsList>
-            
-          </TabsList>
-        </div>
+        {/* Removed the unnecessary div with flex justify-between items-center mb-6 class */}
         
         <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden">
           <CardHeader className="pb-3 pt-6">

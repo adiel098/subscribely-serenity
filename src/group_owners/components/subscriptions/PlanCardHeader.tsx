@@ -1,14 +1,11 @@
-
 import { StarIcon, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-
 interface PlanCardHeaderProps {
   name: string;
   price: number;
   interval: string;
   intervalLabel: string;
 }
-
 export const PlanCardHeader = ({
   name,
   price,
@@ -32,7 +29,6 @@ export const PlanCardHeader = ({
         return '⏱️';
     }
   };
-  
   return <div className="space-y-2">
       <h3 className="text-base font-bold text-gray-900 flex items-center gap-1.5">
         {name}
@@ -46,17 +42,10 @@ export const PlanCardHeader = ({
           {interval === "one-time" || interval === "lifetime" ? "" : `/ ${intervalLabel}`}
         </span>
       </div>
-      {interval !== "one-time" && interval !== "lifetime" && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
-          <Clock className="h-3.5 w-3.5 text-indigo-500" />
-          <span>{getIntervalEmoji(interval)} {intervalLabel} plan</span>
-        </div>
-      )}
-      {interval === "lifetime" && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
+      {interval !== "one-time" && interval !== "lifetime"}
+      {interval === "lifetime" && <div className="flex items-center gap-1.5 text-sm text-gray-600 mt-1">
           <Clock className="h-3.5 w-3.5 text-indigo-500" />
           <span>{getIntervalEmoji(interval)} {intervalLabel} access</span>
-        </div>
-      )}
+        </div>}
     </div>;
 };

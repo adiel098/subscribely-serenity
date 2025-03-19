@@ -1,12 +1,13 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Pencil, Save } from "lucide-react";
+import { Loader2, Pencil, Save, User, Mail, Phone, Shield, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 
 interface ProfileTabContentProps {
   profileData: {
@@ -75,21 +76,30 @@ export const ProfileTabContent = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="max-w-3xl mx-auto shadow-md border border-indigo-100">
+      <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-indigo-100">
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>User Profile</CardTitle>
-            <CardDescription>Manage your personal information</CardDescription>
+          <div className="flex items-center gap-2">
+            <div className="bg-indigo-100 p-2 rounded-full">
+              <User className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-indigo-700">
+                Personal Information ✨
+              </CardTitle>
+              <CardDescription className="text-indigo-500">
+                Manage your profile details
+              </CardDescription>
+            </div>
           </div>
           {!isEditing ? (
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 border-indigo-200 hover:bg-indigo-100 text-indigo-700"
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-3.5 w-3.5" />
               Edit Profile
             </Button>
           ) : (
@@ -97,76 +107,104 @@ export const ProfileTabContent = ({
               variant="outline" 
               size="sm" 
               onClick={() => setIsEditing(false)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 border-indigo-200 hover:bg-indigo-100 text-indigo-700"
             >
               Cancel
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
+          <div className="space-y-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2 max-w-xs">
+                <Label htmlFor="first_name" className="flex items-center gap-1.5 text-indigo-700">
+                  <User className="h-3.5 w-3.5" />
+                  First Name
+                </Label>
                 <Input 
                   id="first_name"
                   name="first_name"
                   value={profileData.first_name}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={!isEditing ? "bg-gray-50" : ""}
+                  className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
+                  placeholder="Your first name"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
+              <div className="space-y-2 max-w-xs">
+                <Label htmlFor="last_name" className="flex items-center gap-1.5 text-indigo-700">
+                  <User className="h-3.5 w-3.5" />
+                  Last Name
+                </Label>
                 <Input 
                   id="last_name"
                   name="last_name"
                   value={profileData.last_name}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  className={!isEditing ? "bg-gray-50" : ""}
+                  className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
+                  placeholder="Your last name"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input 
-                id="email"
-                type="email"
-                name="email"
-                value={profileData.email}
-                disabled={true}
-                className="bg-gray-50"
-              />
-              <p className="text-xs text-muted-foreground">Your email is managed by your authentication provider and cannot be changed here.</p>
+            <div className="space-y-2 max-w-md">
+              <Label htmlFor="email" className="flex items-center gap-1.5 text-indigo-700">
+                <Mail className="h-3.5 w-3.5" />
+                Email Address
+              </Label>
+              <div className="relative">
+                <Input 
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={profileData.email}
+                  disabled={true}
+                  className="bg-gray-50 pr-9 max-w-md border-indigo-200"
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Shield className="h-4 w-4 text-indigo-400" />
+                </div>
+              </div>
+              <p className="text-xs text-indigo-400 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Your email is managed by your authentication provider
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+            <div className="space-y-2 max-w-xs">
+              <Label htmlFor="phone" className="flex items-center gap-1.5 text-indigo-700">
+                <Phone className="h-3.5 w-3.5" />
+                Phone Number 📱
+              </Label>
               <Input 
                 id="phone"
                 name="phone"
                 value={profileData.phone}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className={!isEditing ? "bg-gray-50" : ""}
+                className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
+                placeholder="+1 (555) 123-4567"
               />
             </div>
 
             {isEditing && (
-              <div className="pt-4">
+              <motion.div 
+                className="pt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 <Button 
                   onClick={handleSaveProfile} 
                   disabled={isSaving}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
                 >
                   {isSaving ? (
                     <>
@@ -180,7 +218,7 @@ export const ProfileTabContent = ({
                     </>
                   )}
                 </Button>
-              </div>
+              </motion.div>
             )}
           </div>
         )}

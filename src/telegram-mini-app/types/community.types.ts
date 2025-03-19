@@ -1,3 +1,4 @@
+
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 
 export interface Community {

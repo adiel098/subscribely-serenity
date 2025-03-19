@@ -1,4 +1,3 @@
-
 import React from "react";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { CreditCard, Wallet, Bitcoin, LucideIcon } from "lucide-react";
@@ -90,7 +89,6 @@ export const PaymentMethodsGrid = ({
               'Payment method'
             }
             isActive={method.is_active || false}
-            isDefault={method.is_default || false}
             onToggle={(active) => onTogglePaymentMethod(method.id, active)}
             isConfigured={isPaymentMethodConfigured(method)}
             onConfigure={() => {}}

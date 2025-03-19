@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OnboardingStep, ONBOARDING_STEPS, OnboardingState } from "./onboarding/types";
 import { useOnboardingStatus } from "./onboarding/useOnboardingStatus";
 import { useOnboardingNavigation } from "./onboarding/useOnboardingNavigation";
@@ -9,10 +9,26 @@ export type { OnboardingStep, OnboardingState };
 export { ONBOARDING_STEPS };
 
 export const useOnboarding = () => {
-  const { state, isLoading, refreshStatus } = useOnboardingStatus();
+  const { state: remoteState, isLoading: isRemoteLoading, refreshStatus } = useOnboardingStatus();
   
-  // Create a setter function to update state locally with proper typing
-  const [localState, setLocalState] = useState<OnboardingState>(state);
+  // Create a local state that starts with remote values but can be updated locally
+  const [localState, setLocalState] = useState<OnboardingState>({
+    currentStep: "welcome",
+    isCompleted: false,
+    isTelegramConnected: false,
+    hasPlatformPlan: false,
+    hasPaymentMethod: false
+  });
+  
+  // Sync remote state to local state once when loaded
+  useEffect(() => {
+    if (!isRemoteLoading) {
+      setLocalState(prevState => ({
+        ...prevState,
+        ...remoteState
+      }));
+    }
+  }, [remoteState, isRemoteLoading]);
   
   // Create properly typed setter functions
   const setCurrentStep = (step: OnboardingStep) => {
@@ -31,16 +47,9 @@ export const useOnboarding = () => {
     goToPreviousStep 
   } = useOnboardingNavigation(localState.currentStep, setCurrentStep, setIsCompleted);
 
-  // Use the combined state (remote state from useOnboardingStatus and local updates)
-  const combinedState = {
-    ...state,
-    currentStep: localState.currentStep,
-    isCompleted: localState.isCompleted
-  };
-
   return {
-    state: combinedState,
-    isLoading: isLoading || isSubmitting,
+    state: localState,
+    isLoading: isRemoteLoading || isSubmitting,
     saveCurrentStep,
     completeOnboarding,
     goToNextStep,

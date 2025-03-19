@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,12 @@ export function useAuthRedirect() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isRedirectingRef = useRef(false);
 
   useEffect(() => {
+    // Skip if already handling a redirect
+    if (isRedirectingRef.current) return;
+    
     const checkOnboardingStatus = async () => {
       if (!user) return;
       
@@ -38,6 +42,7 @@ export function useAuthRedirect() {
           console.log("User has communities, no onboarding needed");
           // If on login page, redirect to dashboard
           if (location.pathname.startsWith('/auth')) {
+            isRedirectingRef.current = true;
             navigate('/dashboard', { replace: true });
           }
           return;
@@ -63,18 +68,26 @@ export function useAuthRedirect() {
           
           // If there's a saved step, redirect to that step
           if (profile.onboarding_step) {
+            isRedirectingRef.current = true;
             navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
           } else {
             // Otherwise, start at the beginning
+            isRedirectingRef.current = true;
             navigate('/onboarding/welcome', { replace: true });
           }
         } else if (location.pathname.startsWith('/auth')) {
           // If onboarding is completed and user is on auth page, redirect to dashboard
           console.log("Onboarding completed, redirecting from auth to dashboard");
+          isRedirectingRef.current = true;
           navigate('/dashboard', { replace: true });
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);
+      } finally {
+        // Reset the redirecting flag after a short delay
+        setTimeout(() => {
+          isRedirectingRef.current = false;
+        }, 500);
       }
     };
     
@@ -82,6 +95,7 @@ export function useAuthRedirect() {
       // If user is not logged in and tries to access protected routes
       if (!user && !location.pathname.startsWith('/auth')) {
         console.log("User not logged in, redirecting to login");
+        isRedirectingRef.current = true;
         navigate('/auth/login', { replace: true });
       } 
       // If user is logged in
@@ -93,6 +107,7 @@ export function useAuthRedirect() {
         // If user tries to access auth pages while logged in
         if (location.pathname.startsWith('/auth')) {
           console.log("User already logged in, redirecting from auth to dashboard");
+          isRedirectingRef.current = true;
           navigate('/dashboard', { replace: true });
         }
       }

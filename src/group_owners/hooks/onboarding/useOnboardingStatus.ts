@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { OnboardingState } from "./types";
@@ -14,6 +14,7 @@ export const useOnboardingStatus = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const hasFetchedRef = useRef(false);
   const [state, setState] = useState<OnboardingState>({
     currentStep: "welcome",
     isCompleted: false,
@@ -24,6 +25,9 @@ export const useOnboardingStatus = () => {
 
   const fetchOnboardingStatus = async () => {
     if (!user) return;
+    
+    // Prevent multiple fetches
+    if (isLoading) return;
     
     setIsLoading(true);
     try {
@@ -60,6 +64,8 @@ export const useOnboardingStatus = () => {
         hasPlatformPlan: !!subscription,
         hasPaymentMethod: paymentMethods && paymentMethods.length > 0
       });
+      
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error("Error fetching onboarding status:", error);
       toast({
@@ -73,7 +79,7 @@ export const useOnboardingStatus = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasFetchedRef.current) {
       fetchOnboardingStatus();
     }
   }, [user]);

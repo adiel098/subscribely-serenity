@@ -13,10 +13,17 @@ export const useOnboardingNavigation = (
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSavedStep, setLastSavedStep] = useState<OnboardingStep | null>(null);
 
   // Allow any step string to be passed, but save only valid OnboardingStep values
   const saveCurrentStep = async (step: string) => {
     if (!user) return;
+    
+    // Prevent duplicate save operations for the same step
+    if (step === lastSavedStep) {
+      console.log("Step already saved, skipping duplicate save:", step);
+      return;
+    }
     
     try {
       console.log("Saving current step:", step);
@@ -34,6 +41,7 @@ export const useOnboardingNavigation = (
       
       await saveOnboardingStep(user.id, validStep);
       setCurrentStep(validStep);
+      setLastSavedStep(validStep);
       
       console.log("Step saved successfully");
     } catch (error) {
@@ -79,7 +87,12 @@ export const useOnboardingNavigation = (
     
     if (nextStep) {
       console.log("Moving to next step:", nextStep);
-      saveCurrentStep(nextStep);
+      if (nextStep !== lastSavedStep) {
+        saveCurrentStep(nextStep);
+      } else {
+        // Just update the UI without saving to the database
+        setCurrentStep(nextStep);
+      }
     } else {
       console.warn("No next step available from:", currentStep);
     }
@@ -91,7 +104,12 @@ export const useOnboardingNavigation = (
     if (currentIndex > 0) {
       const previousStep = ONBOARDING_STEPS[currentIndex - 1];
       console.log("Moving to previous step:", previousStep);
-      saveCurrentStep(previousStep);
+      if (previousStep !== lastSavedStep) {
+        saveCurrentStep(previousStep);
+      } else {
+        // Just update the UI without saving to the database
+        setCurrentStep(previousStep);
+      }
     } else {
       console.warn("No previous step available from:", currentStep);
     }

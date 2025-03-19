@@ -18,17 +18,21 @@ const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUrlProcessed, setIsUrlProcessed] = useState(false);
 
   const { 
     saveCurrentStep, 
     goToNextStep, 
     goToPreviousStep,
-    completeOnboarding
+    completeOnboarding,
+    isSubmitting
   } = useOnboardingNavigation(currentStep, setCurrentStep, setIsCompleted);
 
-  // Determine which step to show based on URL path
+  // Determine which step to show based on URL path - only once on initial load
   useEffect(() => {
-    console.log("Current path:", location.pathname);
+    if (isUrlProcessed) return;
+    
+    console.log("Processing URL path:", location.pathname);
     const path = location.pathname;
     
     if (path.includes('/onboarding/welcome')) {
@@ -37,32 +41,23 @@ const Onboarding = () => {
       setCurrentStep('connect-telegram');
     } else if (path.includes('/onboarding/complete')) {
       setCurrentStep('complete');
-      // Complete onboarding and redirect to dashboard
-      if (user) {
-        completeOnboarding().then(() => {
-          navigate('/dashboard', { replace: true });
-        }).catch(err => {
-          console.error("Error completing onboarding:", err);
-        });
-      }
     } else if (path === '/onboarding' || path === '/onboarding/') {
       // Default to welcome step if just on /onboarding
-      setCurrentStep('welcome');
-      // Update the URL to show the welcome step
       navigate('/onboarding/welcome', { replace: true });
     } else {
       // Handle unknown paths - redirect to welcome step
       console.error("Unknown step in path:", path);
-      setCurrentStep('welcome');
       navigate('/onboarding/welcome', { replace: true });
     }
-  }, [location.pathname, navigate, user, completeOnboarding]);
+    
+    setIsUrlProcessed(true);
+  }, [location.pathname, navigate]);
 
-  // Fetch onboarding state
+  // Fetch onboarding state - only once
   useEffect(() => {
+    if (!user || !isUrlProcessed) return;
+    
     const fetchOnboardingState = async () => {
-      if (!user) return;
-      
       try {
         // Get user profile to check onboarding status
         const { data: profile, error: profileError } = await supabase
@@ -76,10 +71,11 @@ const Onboarding = () => {
         if (profile) {
           setIsCompleted(profile.onboarding_completed || false);
           
-          // Only use step if it's a valid OnboardingStep
+          // Only use step if it's a valid OnboardingStep and different from current
           if (profile.onboarding_step && 
               ["welcome", "connect-telegram", "complete"].includes(profile.onboarding_step) && 
-              profile.onboarding_step !== currentStep) {
+              profile.onboarding_step !== currentStep && 
+              !location.pathname.includes(profile.onboarding_step)) {
             console.log("Setting step from profile:", profile.onboarding_step);
             setCurrentStep(profile.onboarding_step as OnboardingStep);
             
@@ -89,7 +85,6 @@ const Onboarding = () => {
             // Invalid step stored in profile, set to welcome
             console.warn("Invalid step in profile:", profile.onboarding_step);
             saveCurrentStep("welcome");
-            navigate('/onboarding/welcome', { replace: true });
           }
         }
       } catch (error) {
@@ -105,16 +100,34 @@ const Onboarding = () => {
     };
     
     fetchOnboardingState();
-  }, [user, currentStep, navigate, toast, saveCurrentStep]);
+  }, [user, isUrlProcessed, currentStep, navigate, toast, saveCurrentStep, location.pathname]);
 
+  // Handle completion redirect - only when isCompleted changes
   useEffect(() => {
     if (isCompleted && !isLoading) {
       // Redirect to dashboard if onboarding is complete
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [isCompleted, isLoading, navigate]);
 
-  if (isLoading) {
+  // Handle URL updates when currentStep changes
+  useEffect(() => {
+    if (isUrlProcessed && !location.pathname.includes(currentStep) && !isSubmitting) {
+      console.log(`Updating URL to match current step: ${currentStep}`);
+      navigate(`/onboarding/${currentStep}`, { replace: true });
+    }
+  }, [currentStep, navigate, location.pathname, isUrlProcessed, isSubmitting]);
+
+  const handleCompleteOnboarding = async () => {
+    try {
+      await completeOnboarding();
+      // The redirect will happen via the useEffect that watches isCompleted
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+    }
+  };
+
+  if (isLoading || isSubmitting) {
     return (
       <div className="flex justify-center items-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50">
         <div className="flex flex-col items-center space-y-4">
@@ -124,15 +137,6 @@ const Onboarding = () => {
       </div>
     );
   }
-
-  const handleCompleteOnboarding = async () => {
-    try {
-      await completeOnboarding();
-      navigate('/dashboard', { replace: true });
-    } catch (error) {
-      console.error("Error completing onboarding:", error);
-    }
-  };
 
   const renderCurrentStep = () => {
     console.log("Rendering current step:", currentStep);
@@ -154,6 +158,10 @@ const Onboarding = () => {
             goToPreviousStep={() => goToPreviousStep('connect-telegram')}
           />
         );
+      
+      case "complete":
+        // Redirect to dashboard via useEffect when completed
+        return null;
       
       default:
         console.error("Unknown step:", currentStep);

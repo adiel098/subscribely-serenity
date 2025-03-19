@@ -120,44 +120,43 @@ export const ProfileTabContent = ({
             <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
           </div>
         ) : (
-          <div className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="space-y-2 max-w-xs">
-                <Label htmlFor="first_name" className="flex items-center gap-1.5 text-indigo-700">
-                  <User className="h-3.5 w-3.5" />
-                  First Name
-                </Label>
-                <Input 
-                  id="first_name"
-                  name="first_name"
-                  value={profileData.first_name}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
-                  placeholder="Your first name"
-                />
-              </div>
-              <div className="space-y-2 max-w-xs">
-                <Label htmlFor="last_name" className="flex items-center gap-1.5 text-indigo-700">
-                  <User className="h-3.5 w-3.5" />
-                  Last Name
-                </Label>
-                <Input 
-                  id="last_name"
-                  name="last_name"
-                  value={profileData.last_name}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
-                  placeholder="Your last name"
-                />
-              </div>
+          <div className="space-y-5 max-w-md mx-auto">
+            <div className="space-y-2">
+              <Label htmlFor="first_name" className="flex items-center gap-1.5 text-indigo-700">
+                <User className="h-3.5 w-3.5" />
+                First Name 👤
+              </Label>
+              <Input 
+                id="first_name"
+                name="first_name"
+                value={profileData.first_name}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className={`${!isEditing ? "bg-gray-50" : ""} w-full border-indigo-200 focus-visible:ring-indigo-400`}
+                placeholder="Your first name"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="last_name" className="flex items-center gap-1.5 text-indigo-700">
+                <User className="h-3.5 w-3.5" />
+                Last Name 👤
+              </Label>
+              <Input 
+                id="last_name"
+                name="last_name"
+                value={profileData.last_name}
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                className={`${!isEditing ? "bg-gray-50" : ""} w-full border-indigo-200 focus-visible:ring-indigo-400`}
+                placeholder="Your last name"
+              />
             </div>
 
-            <div className="space-y-2 max-w-md">
+            <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-1.5 text-indigo-700">
                 <Mail className="h-3.5 w-3.5" />
-                Email Address
+                Email Address ✉️
               </Label>
               <div className="relative">
                 <Input 
@@ -166,7 +165,7 @@ export const ProfileTabContent = ({
                   name="email"
                   value={profileData.email}
                   disabled={true}
-                  className="bg-gray-50 pr-9 max-w-md border-indigo-200"
+                  className="bg-gray-50 pr-9 w-full border-indigo-200"
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <Shield className="h-4 w-4 text-indigo-400" />
@@ -178,7 +177,7 @@ export const ProfileTabContent = ({
               </p>
             </div>
 
-            <div className="space-y-2 max-w-xs">
+            <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-1.5 text-indigo-700">
                 <Phone className="h-3.5 w-3.5" />
                 Phone Number 📱
@@ -189,7 +188,7 @@ export const ProfileTabContent = ({
                 value={profileData.phone}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className={`${!isEditing ? "bg-gray-50" : ""} max-w-xs border-indigo-200 focus-visible:ring-indigo-400`}
+                className={`${!isEditing ? "bg-gray-50" : ""} w-full border-indigo-200 focus-visible:ring-indigo-400`}
                 placeholder="+1 (555) 123-4567"
               />
             </div>
@@ -204,7 +203,7 @@ export const ProfileTabContent = ({
                 <Button 
                   onClick={handleSaveProfile} 
                   disabled={isSaving}
-                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
+                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
                 >
                   {isSaving ? (
                     <>

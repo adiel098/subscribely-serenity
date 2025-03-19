@@ -137,6 +137,7 @@ const ConnectTelegramStep = ({
                 .then(code => setVerificationCode(code));
             }
           }}
+          showError={true}
         />
       ) : (
         // Show the verification form

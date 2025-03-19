@@ -60,7 +60,16 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
         <CardContent className="p-0">
           <div className="space-y-10">
             {/* Display error message if verification has been attempted and failed */}
-            <TelegramVerificationError showError={showError} errorCount={attemptCount} />
+            <TelegramVerificationError 
+              showError={showError} 
+              errorCount={attemptCount}
+              description="Make sure you've added the bot as an admin and posted the code in the channel."
+              troubleshootingSteps={[
+                "You've added the @MembifyBot as an admin with delete messages and ban users permissions",
+                "You've posted the exact verification code shown above in your group",
+                "The message with the code hasn't been deleted"
+              ]}
+            />
             
             {/* Step 1 */}
             <motion.div className="flex flex-col md:flex-row gap-6" initial={{
@@ -96,10 +105,6 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
                   <li className="flex items-center text-gray-700">
                     <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                     <span>Ban users</span>
-                  </li>
-                  <li className="flex items-center text-gray-700">
-                    
-                    
                   </li>
                 </ul>
               </div>

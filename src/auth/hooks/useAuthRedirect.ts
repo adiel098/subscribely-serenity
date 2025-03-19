@@ -31,7 +31,34 @@ export function useAuthRedirect() {
     try {
       console.log("Checking onboarding status for user:", user.id);
       
-      // First check if user has any communities
+      // First check profile to see if onboarding is already marked as completed
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, onboarding_step')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error("Error checking profile:", profileError);
+        throw profileError;
+      }
+      
+      console.log("Profile onboarding status:", profile);
+      
+      // If onboarding is explicitly marked as completed, respect that setting
+      if (profile.onboarding_completed) {
+        console.log("Onboarding explicitly marked as completed, ensuring correct page");
+        
+        // If on login page or onboarding page, redirect to dashboard
+        if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')) {
+          navigate('/dashboard', { replace: true });
+        }
+        
+        isRedirectingRef.current = false;
+        return;
+      }
+      
+      // If onboarding is not completed, check if user has any communities
       const { data: communities, error: communitiesError } = await supabase
         .from('communities')
         .select('id')
@@ -43,7 +70,8 @@ export function useAuthRedirect() {
         throw communitiesError;
       }
       
-      // If user has communities, mark onboarding as completed and stay on current page
+      // If user has communities but onboarding isn't marked as completed,
+      // mark it as completed to prevent future redirects
       if (communities && communities.length > 0) {
         console.log("User has communities, ensuring onboarding is marked as completed");
         
@@ -60,35 +88,8 @@ export function useAuthRedirect() {
           console.error("Error updating onboarding status:", updateError);
         }
         
-        // If on login page, redirect to dashboard
-        if (location.pathname.startsWith('/auth')) {
-          navigate('/dashboard', { replace: true });
-        }
-        
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      // If user has no communities, check profile to see if onboarding was explicitly completed
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, onboarding_step')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileError) {
-        console.error("Error checking profile:", profileError);
-        throw profileError;
-      }
-      
-      console.log("Profile onboarding status:", profile);
-      
-      // If onboarding is explicitly marked as completed despite no communities, respect that setting
-      if (profile.onboarding_completed) {
-        console.log("Onboarding explicitly marked as completed, staying on current page");
-        
-        // If on login page, redirect to dashboard
-        if (location.pathname.startsWith('/auth')) {
+        // If on login page or onboarding page, redirect to dashboard
+        if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')) {
           navigate('/dashboard', { replace: true });
         }
         

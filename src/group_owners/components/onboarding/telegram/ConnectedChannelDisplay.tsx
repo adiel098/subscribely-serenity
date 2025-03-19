@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MessageCircle, Plus, PartyPopper } from "lucide-react";
+import { ArrowRight, MessageCircle, PartyPopper } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTelegramChannelInfo } from "@/telegram-mini-app/hooks/useTelegramChannelInfo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,6 @@ interface ConnectedChannelDisplayProps {
     telegram_chat_id: string | null;
     telegram_photo_url?: string | null;
   };
-  onAddAnotherGroup: () => void;
   onContinue: () => void;
   onRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
   isRefreshingPhoto: boolean;
@@ -23,7 +22,6 @@ interface ConnectedChannelDisplayProps {
 
 export const ConnectedChannelDisplay: React.FC<ConnectedChannelDisplayProps> = ({
   community,
-  onAddAnotherGroup,
   onContinue,
   onRefreshPhoto,
   isRefreshingPhoto
@@ -105,18 +103,9 @@ export const ConnectedChannelDisplay: React.FC<ConnectedChannelDisplayProps> = (
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
+            <div className="flex justify-end mt-2">
               <Button 
-                variant="outline" 
-                className="flex-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-                onClick={onAddAnotherGroup}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Another Group
-              </Button>
-              
-              <Button 
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600 shadow-md"
+                className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600 shadow-md"
                 onClick={onContinue}
               >
                 Continue to Next Step

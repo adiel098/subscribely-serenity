@@ -17,8 +17,6 @@ interface TelegramVerificationFormProps {
   onVerify: () => void;
   onBack?: () => void;
   showBackButton?: boolean;
-  hasExistingCommunities?: boolean;
-  onContinueWithExisting?: () => void;
 }
 
 export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> = ({
@@ -28,9 +26,7 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
   attemptCount,
   onVerify,
   onBack,
-  showBackButton = false,
-  hasExistingCommunities = false,
-  onContinueWithExisting
+  showBackButton = false
 }) => {
   const { toast } = useToast();
   
@@ -155,18 +151,6 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
           >
             {isVerifying ? "Verifying..." : "Verify Connection"}
           </Button>
-          
-          {hasExistingCommunities && onContinueWithExisting && (
-            <Button 
-              variant="outline"
-              onClick={onContinueWithExisting}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-              size="lg"
-            >
-              Continue with Existing Communities
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
         </div>
       </div>
     </motion.div>

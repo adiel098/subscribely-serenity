@@ -1,8 +1,12 @@
 
+import { getLogger } from './services/loggerService.ts';
+
+const logger = getLogger('webhook-manager');
+
 export async function setupWebhook(botToken: string, webhookUrl: string) {
   try {
-    console.log('Setting up webhook...'); 
-    console.log('Using webhook URL:', webhookUrl);
+    logger.info('Setting up webhook...');
+    logger.info(`Using webhook URL: ${webhookUrl}`);
     
     const allowedUpdates = [
       "message",
@@ -28,26 +32,26 @@ export async function setupWebhook(botToken: string, webhookUrl: string) {
       }
     );
     const result = await response.json();
-    console.log('Webhook setup result:', result);
+    logger.info(`Webhook setup result: ${JSON.stringify(result)}`);
     return result;
   } catch (error) {
-    console.error('Error in setupWebhook:', error);
+    logger.error(`Error in setupWebhook: ${error.message}`, error);
     throw error;
   }
 }
 
 export async function getWebhookInfo(botToken: string) {
   try {
-    console.log('Getting webhook info...'); 
+    logger.info('Getting webhook info...');
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
       { method: 'GET' }
     );
     const result = await response.json();
-    console.log('Webhook info result:', result);
+    logger.info(`Webhook info result: ${JSON.stringify(result)}`);
     return result;
   } catch (error) {
-    console.error('Error in getWebhookInfo:', error);
+    logger.error(`Error in getWebhookInfo: ${error.message}`, error);
     throw error;
   }
 }

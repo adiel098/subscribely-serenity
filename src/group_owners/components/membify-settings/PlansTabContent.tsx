@@ -7,7 +7,7 @@ import { PurchaseHistoryTable } from "./PurchaseHistoryTable";
 
 export const PlansTabContent = () => {
   return (
-    <>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <CardTitle>Subscription Plan</CardTitle>
@@ -18,7 +18,7 @@ export const PlansTabContent = () => {
         </CardContent>
       </Card>
       
-      <Card className="mt-6">
+      <Card>
         <CardHeader>
           <CardTitle>Billing Information</CardTitle>
           <CardDescription>View your billing history and payment information</CardDescription>
@@ -37,6 +37,6 @@ export const PlansTabContent = () => {
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };

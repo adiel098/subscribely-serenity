@@ -1,17 +1,11 @@
 
-import { useState, useEffect } from 'react';
-import { MessageCircle, CheckCircle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
-import { TelegramVerificationForm } from "@/group_owners/components/onboarding/telegram/TelegramVerificationForm";
-import { TelegramVerificationError } from "@/group_owners/components/onboarding/telegram/TelegramVerificationError";
-import { useTelegramVerification } from "@/group_owners/hooks/onboarding/useTelegramVerification";
-import { useTelegramCommunities } from "@/group_owners/hooks/onboarding/useTelegramCommunities";
-import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificationCodeUtils";
-import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { useTelegramVerificationState } from "@/group_owners/hooks/onboarding/useTelegramVerificationState";
+import { VerificationSuccess } from "@/group_owners/components/onboarding/telegram/states/VerificationSuccess";
+import { DuplicateChannelError } from "@/group_owners/components/onboarding/telegram/states/DuplicateChannelError";
+import { VerificationInProgress } from "@/group_owners/components/onboarding/telegram/states/VerificationInProgress";
 
 const ConnectTelegramStep = ({ 
   onComplete, 
@@ -22,64 +16,22 @@ const ConnectTelegramStep = ({
   activeStep: boolean,
   goToPreviousStep: () => void
 }) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [verificationCode, setVerificationCode] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Use our hooks
   const {
+    verificationCode,
+    isLoading,
     isVerifying,
     isVerified,
     attemptCount,
     duplicateChatId,
-    lastVerifiedCommunity,
-    verifyConnection,
-    checkVerificationStatus
-  } = useTelegramVerification(user?.id, verificationCode);
-
-  const {
-    lastConnectedCommunity,
+    displayedCommunity,
     isRefreshingPhoto,
-    fetchConnectedCommunities,
-    handleRefreshPhoto
-  } = useTelegramCommunities(user?.id);
-  
-  // Initialize verification code and check existing communities
-  useEffect(() => {
-    if (!user) return;
-    
-    const initialize = async () => {
-      setIsLoading(true);
-      
-      // Get or generate verification code
-      const code = await fetchOrGenerateVerificationCode(user.id, toast);
-      setVerificationCode(code);
-      
-      // Fetch existing communities
-      await fetchConnectedCommunities();
-      
-      // Check if already verified
-      await checkVerificationStatus();
-      
-      setIsLoading(false);
-    };
-    
-    initialize();
-  }, [user]);
-  
-  // Refresh communities when lastVerifiedCommunity changes
-  useEffect(() => {
-    if (lastVerifiedCommunity) {
-      console.log('Detected new verified community, refreshing community list');
-      fetchConnectedCommunities();
-    }
-  }, [lastVerifiedCommunity]);
-  
-  // If there is a lastVerifiedCommunity but no lastConnectedCommunity, use the verified one
-  const displayedCommunity = lastConnectedCommunity || lastVerifiedCommunity;
+    handleRefreshPhoto,
+    verifyConnection,
+    handleCodeRetry,
+    userId
+  } = useTelegramVerificationState();
 
   // Go to dashboard and complete onboarding
   const handleGoToDashboard = () => {
@@ -99,53 +51,27 @@ const ConnectTelegramStep = ({
       <div className="w-full max-w-4xl mx-auto">
         {isVerified && displayedCommunity ? (
           // Show the successfully connected channel with go to dashboard button
-          <div className="flex flex-col items-center space-y-6">
-            <div className="w-full">
-              <ConnectedChannelDisplay 
-                community={displayedCommunity}
-                onContinue={handleGoToDashboard}
-                onRefreshPhoto={handleRefreshPhoto}
-                isRefreshingPhoto={isRefreshingPhoto}
-              />
-            </div>
-            
-            <Button 
-              onClick={handleGoToDashboard}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 mt-4"
-              size="lg"
-            >
-              Go to Dashboard
-              <CheckCircle className="w-4 h-4" />
-            </Button>
-          </div>
+          <VerificationSuccess 
+            community={displayedCommunity}
+            handleGoToDashboard={handleGoToDashboard}
+            handleRefreshPhoto={handleRefreshPhoto}
+            isRefreshingPhoto={isRefreshingPhoto}
+          />
         ) : duplicateChatId ? (
           // Show duplicate error message
-          <TelegramVerificationError 
-            title="Duplicate Telegram Channel Detected"
-            description="This Telegram channel is already connected to another account."
-            troubleshootingSteps={[
-              "Use a different Telegram channel or group.",
-              "If you believe this is an error, please contact support."
-            ]}
-            onBack={() => {
-              // Reset the verification state and try again
-              if (user) {
-                fetchOrGenerateVerificationCode(user.id, toast)
-                  .then(code => setVerificationCode(code));
-              }
-            }}
-            showError={true}
+          <DuplicateChannelError 
+            userId={userId || ""}
+            onRetry={handleCodeRetry}
           />
         ) : (
           // Show the verification steps
-          <TelegramVerificationForm
+          <VerificationInProgress
             verificationCode={verificationCode}
             isLoading={isLoading}
             isVerifying={isVerifying}
             attemptCount={attemptCount}
-            onVerify={verifyConnection}
-            onBack={goToPreviousStep}
-            showBackButton={true}
+            verifyConnection={verifyConnection}
+            goToPreviousStep={goToPreviousStep}
           />
         )}
       </div>

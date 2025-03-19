@@ -12,13 +12,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, CheckCircle2, Calendar, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, Calendar, AlertCircle, Package, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PlatformSubscription } from "../../hooks/useUserPlatformSubscription";
 import { useUserPlatformSubscription } from "../../hooks/useUserPlatformSubscription";
+import { useNavigate } from "react-router-dom";
 
 export const CurrentPlanCard = () => {
   const { subscription, isLoading, error, toggleAutoRenew } = useUserPlatformSubscription();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -30,24 +32,45 @@ export const CurrentPlanCard = () => {
 
   if (error || !subscription) {
     return (
-      <Card className="border-dashed border-gray-300">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl">No Active Plan</CardTitle>
-          <CardDescription>
-            You don't have an active platform subscription
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-6">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground text-center">
-              Subscribe to a plan to unlock all platform features
-            </p>
+      <Card className="border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white h-full">
+        <CardHeader className="pb-3 border-b border-indigo-100">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl font-bold text-indigo-700">
+                No Active Plan
+              </CardTitle>
+              <CardDescription className="text-indigo-700/70">
+                Upgrade to unlock all platform features
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+              Inactive
+            </Badge>
           </div>
+        </CardHeader>
+        <CardContent className="pt-6 flex flex-col items-center justify-center">
+          <div className="bg-indigo-100 rounded-full p-5 mb-4">
+            <Package className="h-10 w-10 text-indigo-600" />
+          </div>
+          <p className="text-gray-600 text-center mb-6">
+            Subscribe to a platform plan to unlock advanced features and manage multiple communities
+          </p>
+          <ul className="space-y-2 self-start w-full mb-6">
+            {["Manage multiple communities", "Create subscription groups", "Access advanced analytics"].map((feature, index) => (
+              <li key={index} className="text-sm flex items-start">
+                <CheckCircle2 className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-600">{feature}</span>
+              </li>
+            ))}
+          </ul>
         </CardContent>
-        <CardFooter>
-          <Button className="w-full" variant="default">
+        <CardFooter className="pt-2 pb-6 flex-col">
+          <Button 
+            onClick={() => navigate('/platform-plans')}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-2"
+          >
             View Available Plans
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </CardFooter>
       </Card>

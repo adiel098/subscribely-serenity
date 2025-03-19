@@ -10,6 +10,9 @@ import { TelegramVerificationForm } from "@/group_owners/components/onboarding/t
 import { useTelegramVerification } from "@/group_owners/hooks/onboarding/useTelegramVerification";
 import { useTelegramCommunities } from "@/group_owners/hooks/onboarding/useTelegramCommunities";
 import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificationCodeUtils";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 const ConnectTelegramStep = ({ 
   onComplete, 
@@ -25,8 +28,9 @@ const ConnectTelegramStep = ({
   
   const [verificationCode, setVerificationCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddingAnotherGroup, setIsAddingAnotherGroup] = useState(false);
   
-  // Use our new hooks
+  // Use our hooks
   const {
     isVerifying,
     isVerified,
@@ -68,17 +72,32 @@ const ConnectTelegramStep = ({
     initialize();
   }, [user]);
   
-  const resetToAddAnother = () => {
+  // Function to handle adding another group
+  const handleAddAnotherGroup = () => {
     setIsVerified(false);
+    setIsAddingAnotherGroup(true);
+    // Reset verification code to get a fresh one
+    if (user) {
+      fetchOrGenerateVerificationCode(user.id, toast)
+        .then(code => setVerificationCode(code));
+    }
   };
   
-  // If already verified, move to next step
+  // Function to continue to next step
+  const handleContinueToNextStep = () => {
+    onComplete();
+  };
+  
+  // Automatically switch to "add another group" mode when verification succeeds
   useEffect(() => {
-    // Only auto-move if there's no telegram connection yet
-    if (isVerified && activeStep && !lastConnectedCommunity) {
-      onComplete();
+    if (isVerified && lastConnectedCommunity && isAddingAnotherGroup) {
+      // Refresh the list of communities after adding a new one
+      fetchConnectedCommunities();
+      // Reset the verification process to allow adding more communities
+      setIsVerified(false);
+      setIsAddingAnotherGroup(false);
     }
-  }, [isVerified, activeStep, lastConnectedCommunity]);
+  }, [isVerified, lastConnectedCommunity]);
   
   return (
     <OnboardingLayout
@@ -89,24 +108,18 @@ const ConnectTelegramStep = ({
       showBackButton={false}
     >
       {isVerified && lastConnectedCommunity ? (
+        // Show the successfully connected channel with options to add more or continue
         <>
           <ConnectedChannelDisplay 
             community={lastConnectedCommunity}
-            onAddAnotherGroup={resetToAddAnother}
-            onContinue={onComplete}
+            onAddAnotherGroup={handleAddAnotherGroup}
+            onContinue={handleContinueToNextStep}
             onRefreshPhoto={handleRefreshPhoto}
             isRefreshingPhoto={isRefreshingPhoto}
           />
-          
-          {connectedCommunities.length > 1 && (
-            <ConnectedCommunitiesList 
-              communities={connectedCommunities.slice(1)} // Skip the first one (last connected)
-              onRefreshPhoto={handleRefreshPhoto}
-              isRefreshingPhoto={isRefreshingPhoto}
-            />
-          )}
         </>
       ) : (
+        // Show the verification form
         <TelegramVerificationForm
           verificationCode={verificationCode}
           isLoading={isLoading}
@@ -118,13 +131,33 @@ const ConnectTelegramStep = ({
         />
       )}
       
-      {/* Display existing communities if there are any */}
-      {!isVerified && connectedCommunities.length > 0 && (
+      {/* Always display connected communities if there are any */}
+      {connectedCommunities.length > 0 && (
         <ConnectedCommunitiesList 
-          communities={connectedCommunities}
+          communities={isVerified && lastConnectedCommunity ? connectedCommunities.slice(1) : connectedCommunities}
           onRefreshPhoto={handleRefreshPhoto}
           isRefreshingPhoto={isRefreshingPhoto}
+          showAddMoreButton={!isVerified && connectedCommunities.length > 0}
+          onAddMoreClick={handleContinueToNextStep}
         />
+      )}
+      
+      {/* Show a continue button if we have communities but are in verification mode */}
+      {!isVerified && connectedCommunities.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="mt-6 flex justify-end"
+        >
+          <Button
+            onClick={handleContinueToNextStep}
+            className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600"
+          >
+            Continue to Next Step
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </motion.div>
       )}
     </OnboardingLayout>
   );

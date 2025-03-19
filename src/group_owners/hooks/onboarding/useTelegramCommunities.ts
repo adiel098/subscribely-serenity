@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
 export function useTelegramCommunities(userId: string | undefined) {
@@ -7,7 +7,7 @@ export function useTelegramCommunities(userId: string | undefined) {
   const [connectedCommunities, setConnectedCommunities] = useState<any[]>([]);
   const [lastConnectedCommunity, setLastConnectedCommunity] = useState<any>(null);
 
-  const fetchConnectedCommunities = async () => {
+  const fetchConnectedCommunities = useCallback(async () => {
     if (!userId) return;
     
     try {
@@ -29,11 +29,15 @@ export function useTelegramCommunities(userId: string | undefined) {
         
         // Set all connected communities
         setConnectedCommunities(data);
+      } else {
+        // If no communities found, reset states
+        setLastConnectedCommunity(null);
+        setConnectedCommunities([]);
       }
     } catch (err) {
       console.error('Error fetching communities:', err);
     }
-  };
+  }, [userId]);
 
   const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.preventDefault();
@@ -52,6 +56,13 @@ export function useTelegramCommunities(userId: string | undefined) {
       setIsRefreshingPhoto(false);
     });
   };
+
+  // Initial fetch
+  useEffect(() => {
+    if (userId) {
+      fetchConnectedCommunities();
+    }
+  }, [userId, fetchConnectedCommunities]);
 
   return {
     connectedCommunities,

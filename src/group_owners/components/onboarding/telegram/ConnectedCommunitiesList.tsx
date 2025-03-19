@@ -1,7 +1,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Plus, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CommunityAvatar } from "@/group_owners/components/community-selector/photo-handling/CommunityAvatar";
 
 interface ConnectedCommunitiesListProps {
@@ -13,12 +14,16 @@ interface ConnectedCommunitiesListProps {
   }>;
   onRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
   isRefreshingPhoto: boolean;
+  showAddMoreButton?: boolean;
+  onAddMoreClick?: () => void;
 }
 
 export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> = ({
   communities,
   onRefreshPhoto,
-  isRefreshingPhoto
+  isRefreshingPhoto,
+  showAddMoreButton = false,
+  onAddMoreClick
 }) => {
   if (!communities || communities.length === 0) {
     return null;
@@ -31,11 +36,32 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
       transition={{ duration: 0.5, delay: 0.2 }}
       className="mt-6 space-y-4"
     >
-      <h3 className="text-base font-medium text-gray-800">Previously Connected Communities:</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-base font-medium text-gray-800">
+          {communities.length > 1 
+            ? `${communities.length} Connected Communities:`
+            : "Previously Connected Community:"}
+        </h3>
+        
+        {showAddMoreButton && onAddMoreClick && (
+          <Button 
+            onClick={onAddMoreClick}
+            className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600 text-sm"
+            size="sm"
+          >
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {communities.map(community => (
-          <div 
+        {communities.map((community, index) => (
+          <motion.div 
             key={community.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 * index }}
             className="flex items-center gap-3 p-3 rounded-lg border border-indigo-100 bg-white shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center">
@@ -58,7 +84,7 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
                 </span>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </motion.div>

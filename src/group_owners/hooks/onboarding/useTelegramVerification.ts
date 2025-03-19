@@ -10,6 +10,11 @@ export function useTelegramVerification(userId: string | undefined, verification
   const [attemptCount, setAttemptCount] = useState(0);
   const [hasTelegram, setHasTelegram] = useState(false);
 
+  // Reset attempt count when verification code changes
+  useEffect(() => {
+    setAttemptCount(0);
+  }, [verificationCode]);
+
   // Check verification status
   const checkVerificationStatus = async () => {
     if (!userId || !verificationCode) return false;

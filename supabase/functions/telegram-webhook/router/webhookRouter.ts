@@ -18,6 +18,15 @@ export async function routeTelegramWebhook(req: Request, supabase: ReturnType<ty
       logger.info(`📢 Processing broadcast action for community ${update.community_id}`);
       
       try {
+        // Validate required parameters
+        if (!update.community_id && !update.group_id) {
+          throw new Error('Either community_id or group_id is required for broadcast');
+        }
+        
+        if (!update.message) {
+          throw new Error('Message content is required for broadcast');
+        }
+        
         const broadcastResult = await sendBroadcast(
           supabase,
           update.community_id || null,

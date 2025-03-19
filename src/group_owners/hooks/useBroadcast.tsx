@@ -57,9 +57,9 @@ export const useBroadcast = () => {
       // Call the telegram-webhook function directly with the broadcast action
       const response = await supabase.functions.invoke('telegram-webhook', {
         body: {
-          action: 'broadcast',
-          community_id: params.entityId,
-          entity_type: params.entityType,
+          action: 'broadcast', // Essential for identifying broadcast action
+          community_id: params.entityType === 'community' ? params.entityId : null,
+          group_id: params.entityType === 'group' ? params.entityId : null,
           message: params.message,
           filter_type: params.filterType,
           subscription_plan_id: params.subscriptionPlanId,

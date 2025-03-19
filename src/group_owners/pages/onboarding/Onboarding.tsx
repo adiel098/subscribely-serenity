@@ -11,11 +11,13 @@ import CreatePlansStep from "./steps/CreatePlansStep";
 import { PaymentMethodStep } from "./steps/PaymentMethodStep";
 import CompletionStep from "./steps/CompletionStep";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isCompleted, setIsCompleted] = useState(false);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
@@ -30,8 +32,12 @@ const Onboarding = () => {
 
   // Determine which step to show based on URL path
   useEffect(() => {
+    console.log("Current path:", location.pathname);
     const path = location.pathname;
-    if (path.includes('/onboarding/connect-telegram')) {
+    
+    if (path.includes('/onboarding/welcome')) {
+      setCurrentStep('welcome');
+    } else if (path.includes('/onboarding/connect-telegram')) {
       setCurrentStep('connect-telegram');
     } else if (path.includes('/onboarding/create-plans')) {
       setCurrentStep('create-plans');
@@ -39,10 +45,13 @@ const Onboarding = () => {
       setCurrentStep('payment-method');
     } else if (path.includes('/onboarding/complete')) {
       setCurrentStep('complete');
-    } else {
+    } else if (path === '/onboarding' || path === '/onboarding/') {
+      // Default to welcome step if just on /onboarding
       setCurrentStep('welcome');
+      // Update the URL to show the welcome step
+      navigate('/onboarding/welcome', { replace: true });
     }
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
   // Fetch onboarding state
   useEffect(() => {
@@ -62,8 +71,12 @@ const Onboarding = () => {
         if (profile) {
           setIsCompleted(profile.onboarding_completed || false);
           
-          if (profile.onboarding_step) {
+          if (profile.onboarding_step && profile.onboarding_step !== currentStep) {
+            console.log("Setting step from profile:", profile.onboarding_step);
             setCurrentStep(profile.onboarding_step as OnboardingStep);
+            
+            // Update URL to match the current step
+            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
           }
         }
         
@@ -81,13 +94,18 @@ const Onboarding = () => {
         
       } catch (error) {
         console.error("Error fetching onboarding state:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load your onboarding progress"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchOnboardingState();
-  }, [user]);
+  }, [user, currentStep, navigate, toast]);
 
   useEffect(() => {
     if (isCompleted && !isLoading) {
@@ -154,7 +172,21 @@ const Onboarding = () => {
         );
       
       default:
-        return <div>Unknown step</div>;
+        console.error("Unknown step:", currentStep);
+        // Redirect to welcome step if we have an unknown step
+        navigate('/onboarding/welcome', { replace: true });
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+            <h1 className="text-2xl font-bold mb-4">Step not found</h1>
+            <p className="mb-4">We couldn't find the onboarding step you're looking for.</p>
+            <button 
+              onClick={() => navigate('/onboarding/welcome', { replace: true })}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md"
+            >
+              Go to Start
+            </button>
+          </div>
+        );
     }
   };
 

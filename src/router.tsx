@@ -54,9 +54,30 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Onboarding route - make it a top-level route, not nested
+  // Onboarding routes - make it a top-level route with child routes for steps
   {
     path: "/onboarding",
+    element: <Onboarding />,
+    children: [],
+  },
+  {
+    path: "/onboarding/welcome",
+    element: <Onboarding />,
+  },
+  {
+    path: "/onboarding/connect-telegram",
+    element: <Onboarding />,
+  },
+  {
+    path: "/onboarding/create-plans",
+    element: <Onboarding />,
+  },
+  {
+    path: "/onboarding/payment-method",
+    element: <Onboarding />,
+  },
+  {
+    path: "/onboarding/complete",
     element: <Onboarding />,
   },
   {

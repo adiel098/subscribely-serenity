@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -62,8 +61,13 @@ export function useAuthRedirect() {
         if (!profile.onboarding_completed) {
           console.log("Onboarding not completed, redirecting to onboarding flow");
           
-          // Redirect to the main onboarding path, the component will handle which step to show
-          navigate('/onboarding', { replace: true });
+          // If there's a saved step, redirect to that step
+          if (profile.onboarding_step) {
+            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
+          } else {
+            // Otherwise, start at the beginning
+            navigate('/onboarding/welcome', { replace: true });
+          }
         } else if (location.pathname.startsWith('/auth')) {
           // If onboarding is completed and user is on auth page, redirect to dashboard
           console.log("Onboarding completed, redirecting from auth to dashboard");

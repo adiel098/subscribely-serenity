@@ -9,6 +9,7 @@ import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import { useToast } from "@/components/ui/use-toast";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
+import { Loader2 } from "lucide-react";
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ const Onboarding = () => {
   const { toast } = useToast();
   const initialLoadRef = useRef(true);
   const [isUrlProcessed, setIsUrlProcessed] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   
   // Use the centralized onboarding hook instead of local state
   const { 
@@ -40,6 +42,11 @@ const Onboarding = () => {
       
       setIsUrlProcessed(true);
       initialLoadRef.current = false;
+      
+      // Short delay to ensure smooth UI rendering
+      setTimeout(() => {
+        setIsReady(true);
+      }, 100);
     }
   }, [location.pathname, navigate, isUrlProcessed]);
 
@@ -81,7 +88,13 @@ const Onboarding = () => {
     }
   };
 
-  // Removed the loading screen display condition
+  if (isLoading || !isReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-50">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   const renderCurrentStep = () => {
     console.log("Rendering current step:", onboardingState.currentStep);

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -10,6 +11,21 @@ export function useAuthRedirect() {
   const isRedirectingRef = useRef(false);
   const checkCompletedRef = useRef(false);
   const initialCheckDoneRef = useRef(false);
+  
+  // Store redirect destination in sessionStorage to prevent flashes
+  const setRedirectDestination = useCallback((path: string) => {
+    if (path) {
+      sessionStorage.setItem('redirectDestination', path);
+    }
+  }, []);
+  
+  const getRedirectDestination = useCallback(() => {
+    return sessionStorage.getItem('redirectDestination');
+  }, []);
+  
+  const clearRedirectDestination = useCallback(() => {
+    sessionStorage.removeItem('redirectDestination');
+  }, []);
 
   const checkOnboardingStatus = useCallback(async () => {
     if (!user || isRedirectingRef.current) return;
@@ -49,10 +65,11 @@ export function useAuthRedirect() {
       if (profile.onboarding_step === "complete" || profile.onboarding_completed) {
         console.log("Onboarding is marked as complete");
         
-        // Only redirect to dashboard if currently on a non-dashboard page
+        // Set the redirect destination first (this prevents flashing)
         if (location.pathname.startsWith('/auth') || 
-            (location.pathname.startsWith('/onboarding') && !initialCheckDoneRef.current)) {
-          console.log("Redirecting from auth/onboarding to dashboard");
+            location.pathname.startsWith('/onboarding')) {
+          console.log("Setting redirect destination to dashboard");
+          setRedirectDestination('/dashboard');
           navigate('/dashboard', { replace: true });
         }
       } else {
@@ -60,13 +77,15 @@ export function useAuthRedirect() {
         console.log("Onboarding not completed, redirecting to onboarding flow");
         
         if (!location.pathname.startsWith('/onboarding')) {
-          // If there's a saved step, redirect to that step
+          // Set the redirect destination first
+          let targetPath = '/onboarding/welcome';
           if (profile.onboarding_step) {
-            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
-          } else {
-            // Otherwise, start at the beginning
-            navigate('/onboarding/welcome', { replace: true });
+            targetPath = `/onboarding/${profile.onboarding_step}`;
           }
+          
+          console.log(`Setting redirect destination to ${targetPath}`);
+          setRedirectDestination(targetPath);
+          navigate(targetPath, { replace: true });
         }
       }
       
@@ -80,12 +99,25 @@ export function useAuthRedirect() {
       
       initialCheckDoneRef.current = true;
     }
-  }, [user, navigate, location.pathname]);
+  }, [user, navigate, location.pathname, setRedirectDestination]);
 
   useEffect(() => {
     // Reset tracking when location changes to a non-onboarding page
     if (!location.pathname.startsWith('/onboarding')) {
       checkCompletedRef.current = false;
+    }
+    
+    // If finished loading and has planned redirect, execute it
+    const redirectPath = getRedirectDestination();
+    if (redirectPath && !isLoading && !isRedirectingRef.current) {
+      console.log(`Executing planned redirect to ${redirectPath}`);
+      isRedirectingRef.current = true;
+      navigate(redirectPath, { replace: true });
+      clearRedirectDestination();
+      setTimeout(() => {
+        isRedirectingRef.current = false;
+      }, 500);
+      return;
     }
     
     if (!isLoading) {
@@ -115,5 +147,9 @@ export function useAuthRedirect() {
         }
       }
     }
-  }, [user, isLoading, navigate, location.pathname, checkOnboardingStatus]);
+  }, [user, isLoading, navigate, location.pathname, checkOnboardingStatus, getRedirectDestination, clearRedirectDestination]);
+  
+  return {
+    isCheckingAuth: isLoading || isRedirectingRef.current
+  };
 }

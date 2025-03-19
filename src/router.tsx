@@ -37,6 +37,10 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       {
+        index: true,
+        element: <Login />,
+      },
+      {
         path: "login",
         element: <Login />,
       },
@@ -54,7 +58,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Onboarding routes - simplified to just welcome, connect-telegram and complete
+  // Improved onboarding route structure
   {
     path: "/onboarding",
     element: <Onboarding />,

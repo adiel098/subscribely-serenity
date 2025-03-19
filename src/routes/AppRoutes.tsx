@@ -1,4 +1,3 @@
-
 import { Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -27,6 +26,9 @@ import PlatformPayment from "@/group_owners/pages/PlatformPayment";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import MembifySettings from "@/group_owners/pages/MembifySettings";
 
+// Onboarding Pages
+import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
+
 // Layouts
 import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { AdminLayout } from "@/admin/components/AdminLayout";
@@ -44,6 +46,13 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
+
+      {/* Onboarding Route */}
+      <Route path="/onboarding/*" element={
+        <ProtectedRoute>
+          <Onboarding />
+        </ProtectedRoute>
+      } />
 
       {/* Group Owner Routes */}
       <Route path="/dashboard" element={

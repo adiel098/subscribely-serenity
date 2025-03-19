@@ -16,6 +16,9 @@ export async function routeTelegramWebhook(req: Request, supabase: ReturnType<ty
     // Get request body
     const update = await req.json();
     
+    // Enhanced logging: Log the entire update for debugging
+    logger.info(`📩 RECEIVED WEBHOOK: ${JSON.stringify(update)}`);
+    
     // Check if this is a broadcast action (handled separately)
     if (update.action === 'broadcast') {
       logger.info(`📢 Processing broadcast action for community ${update.community_id}`);
@@ -88,7 +91,15 @@ export async function routeTelegramWebhook(req: Request, supabase: ReturnType<ty
     // Process different types of updates using specialized handlers
     if (update.message) {
       logger.info(`💬 Routing message update to message handler`);
+      // Enhanced logging for message content
+      if (update.message.text) {
+        logger.info(`📨 Message text: "${update.message.text}"`);
+        if (update.message.text.startsWith('/')) {
+          logger.info(`🤖 COMMAND DETECTED: ${update.message.text}`);
+        }
+      }
       const { handled, response } = await handleMessageRoute(supabase, update.message, botToken);
+      logger.info(`Message handler result: handled=${handled}, has response=${!!response}`);
       if (response) return response;
       if (handled) result = { success: true };
     } 
@@ -134,6 +145,9 @@ export async function routeTelegramWebhook(req: Request, supabase: ReturnType<ty
       
       result = { success: true, message: 'Unhandled update type' };
     }
+    
+    // Log the outgoing response
+    logger.info(`✅ Webhook handled successfully: ${JSON.stringify(result)}`);
     
     // Return success response
     return new Response(

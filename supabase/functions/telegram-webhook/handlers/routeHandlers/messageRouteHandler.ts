@@ -15,6 +15,11 @@ export async function handleMessageRoute(
   try {
     await logger.info(`🔄 Processing message from ${message.from?.id || 'unknown'}`);
     
+    // Enhanced logging for message content
+    if (message.text) {
+      await logger.info(`📨 Message content: "${message.text}"`);
+    }
+    
     // First check if it's a verification message (starting with MBF_)
     if (message.text?.startsWith('MBF_')) {
       await logger.info(`🔑 Detected verification code message: ${message.text}`);
@@ -30,6 +35,14 @@ export async function handleMessageRoute(
     // If not a verification message, check if it's a command
     if (message.text && message.text.startsWith('/')) {
       await logger.info(`💬 Detected command: ${message.text}`);
+      
+      // Special logging for start command
+      if (message.text.startsWith('/start')) {
+        await logger.info(`🚀🚀🚀 START COMMAND DETECTED from user ${message.from?.id}, chat ${message.chat?.id}`);
+        // Log the full message object for debugging
+        await logger.info(`Start command full message: ${JSON.stringify(message)}`);
+      }
+      
       const handled = await handleCommand(supabase, message, botToken);
       
       await logger.info(`Command ${handled ? 'handled successfully' : 'not handled'}`);

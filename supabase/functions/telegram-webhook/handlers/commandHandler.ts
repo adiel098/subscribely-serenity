@@ -20,10 +20,28 @@ export async function handleCommand(
       return false;
     }
     
+    // Enhanced logging for all commands
+    await logger.info(`Processing command: ${message.text}`);
+    
     // Check if it's a start command
     if (message.text.startsWith('/start')) {
-      await logger.info('🚀 Forwarding /start command to handler');
-      return await handleStartCommand(supabase, message, botToken);
+      await logger.info('🚀 Forwarding /start command to handleStartCommand()');
+      
+      // Log all parameters of the start command
+      const startParams = message.text.split(' ');
+      const param = startParams.length > 1 ? startParams[1] : 'no-parameter';
+      await logger.info(`/start command with parameter: ${param}`);
+      
+      // Log user and chat details
+      await logger.info(`User ID: ${message.from.id}, Chat ID: ${message.chat.id}, Username: ${message.from.username || 'none'}`);
+      
+      // Forward to start command handler
+      const result = await handleStartCommand(supabase, message, botToken);
+      
+      // Log result
+      await logger.info(`/start command handling result: ${result ? 'SUCCESS' : 'FAILED'}`);
+      
+      return result;
     }
     
     // Handle other commands here as needed
@@ -34,6 +52,15 @@ export async function handleCommand(
     return false;
   } catch (error) {
     await logger.error('Error in handleCommand:', error);
+    
+    // Log specific details about the error
+    if (error instanceof Error) {
+      await logger.error(`Error type: ${error.name}, Message: ${error.message}`);
+      if (error.stack) {
+        await logger.error(`Stack trace: ${error.stack}`);
+      }
+    }
+    
     return false;
   }
 }

@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from './cors.ts';
 import { getLogger } from './services/loggerService.ts';
 import { routeTelegramWebhook } from './router/webhookRouter.ts';
+import { getWebhookInfo, setupWebhook } from './webhookManager.ts';
 
 // Initialize logger for the main entrypoint
 const logger = getLogger('webhook-main');
@@ -38,6 +39,49 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
     logger.info('Supabase client initialized');
+    
+    // Check if this is a diagnostic request
+    const url = new URL(req.url);
+    if (url.searchParams.has('diagnostics')) {
+      logger.info('Handling diagnostics request');
+      
+      // Get webhook info for diagnostics
+      const webhookInfo = await getWebhookInfo(botToken);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Diagnostics completed',
+          webhook_info: webhookInfo,
+          timestamp: new Date().toISOString(),
+          environment: {
+            supabase_url_set: !!supabaseUrl,
+            bot_token_set: !!botToken
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If this is a webhook setup request
+    if (url.searchParams.has('setup_webhook')) {
+      logger.info('Setting up webhook');
+      
+      const webhookUrl = url.searchParams.get('webhook_url');
+      if (!webhookUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Missing webhook_url parameter', success: false }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+      
+      const result = await setupWebhook(botToken, webhookUrl);
+      
+      return new Response(
+        JSON.stringify({ success: true, result }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Route the webhook to the appropriate handler
     return await routeTelegramWebhook(req, supabase, botToken);

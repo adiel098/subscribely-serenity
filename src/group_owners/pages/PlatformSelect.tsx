@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 const PlatformSelect = () => {
   const navigate = useNavigate();
@@ -26,16 +27,31 @@ const PlatformSelect = () => {
     }
   ];
 
+  const goBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Choose Your Platform
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Select the platform where you want to manage your community
-          </p>
+        <div>
+          <Button 
+            onClick={goBack} 
+            variant="outline" 
+            className="mb-4 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
+          </Button>
+          
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+              Choose Your Platform
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Select the platform where you want to manage your community
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4">

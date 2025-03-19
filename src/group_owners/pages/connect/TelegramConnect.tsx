@@ -195,14 +195,7 @@ const TelegramConnect = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl">
-        <Button 
-          onClick={goBack} 
-          variant="ghost" 
-          className="mb-6 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Dashboard</span>
-        </Button>
+        {/* Removed the button from here (top of page) */}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -228,6 +221,16 @@ const TelegramConnect = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
+          {/* Added the back button here (inside the card) */}
+          <Button 
+            onClick={goBack} 
+            variant="outline" 
+            className="mb-4 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Dashboard</span>
+          </Button>
+          
           <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
             <div className="space-y-10">
               {/* Step 1 */}

@@ -7,6 +7,7 @@ import { OnboardingLayout } from "@/group_owners/components/onboarding/Onboardin
 import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
 import { ConnectedCommunitiesList } from "@/group_owners/components/onboarding/telegram/ConnectedCommunitiesList";
 import { TelegramVerificationForm } from "@/group_owners/components/onboarding/telegram/TelegramVerificationForm";
+import { TelegramVerificationError } from "@/group_owners/components/onboarding/telegram/TelegramVerificationError";
 import { useTelegramVerification } from "@/group_owners/hooks/onboarding/useTelegramVerification";
 import { useTelegramCommunities } from "@/group_owners/hooks/onboarding/useTelegramCommunities";
 import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificationCodeUtils";
@@ -36,6 +37,7 @@ const ConnectTelegramStep = ({
     isVerified,
     attemptCount,
     hasTelegram,
+    duplicateChatId,
     setIsVerified,
     verifyConnection,
     checkVerificationStatus
@@ -118,6 +120,24 @@ const ConnectTelegramStep = ({
             isRefreshingPhoto={isRefreshingPhoto}
           />
         </>
+      ) : duplicateChatId ? (
+        // Show duplicate error message
+        <TelegramVerificationError 
+          title="Duplicate Telegram Channel Detected"
+          description="This Telegram channel is already connected to another account."
+          troubleshootingSteps={[
+            "Use a different Telegram channel or group.",
+            "If you believe this is an error, please contact support."
+          ]}
+          onBack={() => {
+            // Reset the verification state and try again
+            setIsVerified(false);
+            if (user) {
+              fetchOrGenerateVerificationCode(user.id, toast)
+                .then(code => setVerificationCode(code));
+            }
+          }}
+        />
       ) : (
         // Show the verification form
         <TelegramVerificationForm

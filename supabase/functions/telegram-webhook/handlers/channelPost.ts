@@ -21,6 +21,17 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
         code: verificationCode,
         chatId: chatId
       });
+      
+      // בדיקה אם הצ'אט כבר קיים במערכת
+      const { data: existingChatCommunity, error: chatCheckError } = await supabase
+        .from('communities')
+        .select('id, owner_id, name')
+        .eq('telegram_chat_id', chatId)
+        .maybeSingle();
+        
+      if (chatCheckError) {
+        console.error('[CHANNEL] Error checking existing chat:', chatCheckError);
+      }
 
       // בדיקה האם קיים קוד אימות תקף בטבלת telegram_bot_settings
       console.log('[CHANNEL] Checking verification code in telegram_bot_settings...');
@@ -54,6 +65,27 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
         }
 
         console.log('[CHANNEL] Found matching profile:', profile.id);
+        
+        // אם הצ'אט כבר קיים ושייך למשתמש אחר, זו התנגשות
+        if (existingChatCommunity && existingChatCommunity.owner_id !== profile.id) {
+          console.warn(`[CHANNEL] Chat ID ${chatId} already belongs to user ${existingChatCommunity.owner_id}, but requesting user is ${profile.id}`);
+          
+          // רישום לוג
+          await supabase
+            .from('system_logs')
+            .insert({
+              event_type: 'TELEGRAM_WEBHOOK_DUPLICATE',
+              details: `Duplicate chat connection attempt for chat ID ${chatId}`,
+              metadata: {
+                chat_id: chatId,
+                requesting_user_id: profile.id,
+                existing_owner_id: existingChatCommunity.owner_id,
+                verification_code: verificationCode
+              }
+            });
+            
+          return false;
+        }
 
         // בדיקה האם יש כבר קהילה עם chatId זה
         const { data: existingCommunity } = await supabase
@@ -129,6 +161,26 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
           }
         }
       } else {
+        // אם הצ'אט כבר קיים ושייך לקהילה אחרת, זו התנגשות
+        if (existingChatCommunity && existingChatCommunity.id !== botSettings.community_id) {
+          console.warn(`[CHANNEL] Chat ID ${chatId} already belongs to community ${existingChatCommunity.id}, but requesting community is ${botSettings.community_id}`);
+          
+          await supabase
+            .from('system_logs')
+            .insert({
+              event_type: 'TELEGRAM_WEBHOOK_DUPLICATE',
+              details: `Duplicate chat connection attempt for chat ID ${chatId}`,
+              metadata: {
+                chat_id: chatId,
+                existing_community_id: existingChatCommunity.id,
+                requesting_community_id: botSettings.community_id,
+                verification_code: verificationCode
+              }
+            });
+            
+          return false;
+        }
+        
         // נמצא בטבלת telegram_bot_settings
         console.log('[CHANNEL] Found bot settings:', botSettings);
 

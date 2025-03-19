@@ -89,6 +89,44 @@ serve(async (req) => {
           if (chatId) {
             console.log(`Attempting to process verification for chat_id: ${chatId}`);
             
+            // Check if this chat_id already exists in any community
+            const { data: existingCommunityByChat, error: existingChatError } = await supabase
+              .from('communities')
+              .select('id, owner_id')
+              .eq('telegram_chat_id', chatId)
+              .maybeSingle();
+            
+            if (existingChatError) {
+              console.error('Error checking existing community by chat ID:', existingChatError);
+            }
+            
+            // If this chat is already connected to a different user's community
+            if (existingCommunityByChat && existingCommunityByChat.owner_id !== userId) {
+              console.log(`Chat ID ${chatId} already exists for a different owner!`);
+              await supabase
+                .from('system_logs')
+                .insert({
+                  event_type: 'MANUAL_VERIFICATION_DUPLICATE',
+                  details: `Duplicate chat ID ${chatId} detected for user ${userId}`,
+                  metadata: { 
+                    userId, 
+                    chatId, 
+                    verificationCode,
+                    existingOwnerId: existingCommunityByChat.owner_id 
+                  }
+                });
+              
+              return new Response(
+                JSON.stringify({ 
+                  success: true, 
+                  verified: false,
+                  duplicate: true,
+                  communities: []
+                }),
+                { headers: { ...corsHeadersWithAuth, 'Content-Type': 'application/json' } }
+              );
+            }
+            
             // Try to create/update community with this chat_id
             const { data: existingCommunity, error: existingError } = await supabase
               .from('communities')

@@ -9,6 +9,7 @@ export function useTelegramVerification(userId: string | undefined, verification
   const [isVerified, setIsVerified] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
   const [hasTelegram, setHasTelegram] = useState(false);
+  const [duplicateChatId, setDuplicateChatId] = useState<string | null>(null);
 
   // Reset attempt count when verification code changes
   useEffect(() => {
@@ -36,6 +37,31 @@ export function useTelegramVerification(userId: string | undefined, verification
       console.log('Verification status response:', data);
       
       if (data?.verified) {
+        // Check if any communities were returned from the function
+        if (data.communities && data.communities.length > 0) {
+          // Get the most recently created community
+          const latestCommunity = data.communities[0];
+          
+          // Check if this chat ID already exists for a different owner
+          if (latestCommunity.telegram_chat_id) {
+            const { data: existingCommunities, error: duplicateError } = await supabase
+              .from('communities')
+              .select('id, name, owner_id')
+              .eq('telegram_chat_id', latestCommunity.telegram_chat_id)
+              .neq('owner_id', userId);
+              
+            if (duplicateError) {
+              console.error('Error checking for duplicate communities:', duplicateError);
+            }
+            
+            if (existingCommunities && existingCommunities.length > 0) {
+              // Found a duplicate!
+              setDuplicateChatId(latestCommunity.telegram_chat_id);
+              return false;
+            }
+          }
+        }
+        
         setIsVerified(true);
         setHasTelegram(true);
         return true;
@@ -54,6 +80,7 @@ export function useTelegramVerification(userId: string | undefined, verification
     
     setIsVerifying(true);
     setAttemptCount(prev => prev + 1);
+    setDuplicateChatId(null); // Reset duplicate status
     
     try {
       // Check verification status through dedicated function
@@ -63,6 +90,13 @@ export function useTelegramVerification(userId: string | undefined, verification
         toast({
           title: 'Success!',
           description: 'Telegram channel connected successfully.',
+        });
+      } else if (duplicateChatId) {
+        // Show error for duplicate channel
+        toast({
+          title: 'Channel already connected',
+          description: 'This Telegram channel is already connected to another account.',
+          variant: 'destructive'
         });
       } else {
         // If not verified, and this is not the first attempt, show warning
@@ -99,6 +133,7 @@ export function useTelegramVerification(userId: string | undefined, verification
     isVerified,
     attemptCount,
     hasTelegram,
+    duplicateChatId,
     setIsVerified,
     verifyConnection,
     checkVerificationStatus

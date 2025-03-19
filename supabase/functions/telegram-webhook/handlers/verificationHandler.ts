@@ -40,6 +40,48 @@ export async function handleVerificationMessage(supabase: ReturnType<typeof crea
 
     logger.info(`Bot settings query result: ${JSON.stringify(botSettings)}`);
 
+    // בדיקה אם הצ'אט כבר קיים בשיוך לקהילה אחרת
+    const { data: existingChatCommunity, error: chatCheckError } = await supabase
+      .from('communities')
+      .select('id, owner_id, name')
+      .eq('telegram_chat_id', chatId)
+      .maybeSingle();
+      
+    if (chatCheckError) {
+      logger.error(`Error checking existing chat: ${chatCheckError.message}`, chatCheckError);
+      await logToDatabase(supabase, 'VERIFICATION', 'ERROR', 'Error checking existing chat', { error: chatCheckError, chat_id: chatId });
+    }
+    
+    // אם הצ'אט כבר קיים במערכת, אבל זה לא אותו משתמש
+    if (existingChatCommunity) {
+      logger.warn(`[Verification] Chat ID ${chatId} already exists in the system for community ${existingChatCommunity.id}`);
+      
+      // בדיקה האם יש לנו פרופיל משתמש שמחכה לאימות עם קוד זה
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, current_telegram_code')
+        .eq('current_telegram_code', verificationCode)
+        .maybeSingle();
+        
+      if (profileError) {
+        logger.error(`Error checking profile: ${profileError.message}`, profileError);
+      }
+      
+      // אם נמצא פרופיל והוא לא בעל הקהילה הקיימת, מדובר בניסיון לחיבור כפול
+      if (profile && profile.id !== existingChatCommunity.owner_id) {
+        logger.warn(`[Verification] Duplicate attempt: User ${profile.id} trying to connect chat ${chatId} but it's already owned by ${existingChatCommunity.owner_id}`);
+        
+        await logToDatabase(supabase, 'VERIFICATION', 'WARN', 'Duplicate chat connection attempt', {
+          requesting_user_id: profile.id,
+          chat_id: chatId,
+          existing_owner_id: existingChatCommunity.owner_id,
+          verification_code: verificationCode
+        });
+        
+        return false;
+      }
+    }
+
     // 2. אם לא נמצא, בודקים בטבלת profiles (לתמיכה בשיטת האימות הישנה)
     if (!botSettings) {
       logger.info('[Verification] Code not found in bot_settings, checking profiles');
@@ -59,6 +101,39 @@ export async function handleVerificationMessage(supabase: ReturnType<typeof crea
 
       if (profile) {
         logger.info(`[Verification] Found matching profile: ${profile.id}`);
+        
+        // בדיקה האם יש כבר קהילה בעלת אותו chat_id
+        if (existingChatCommunity) {
+          // אם הקהילה הקיימת שייכת לאותו משתמש, זה בסדר
+          if (existingChatCommunity.owner_id === profile.id) {
+            logger.info(`[Verification] Chat ID ${chatId} already owned by this user, updating settings`);
+            
+            // Update the existing community's bot settings
+            const { error: settingsError } = await supabase
+              .from('telegram_bot_settings')
+              .upsert({
+                community_id: existingChatCommunity.id,
+                chat_id: chatId,
+                verification_code: verificationCode,
+                verified_at: new Date().toISOString()
+              });
+              
+            if (settingsError) {
+              logger.error(`Error updating bot settings: ${settingsError.message}`, settingsError);
+            }
+            
+            return true;
+          } else {
+            // אם הקהילה שייכת למשתמש אחר, זו התנגשות
+            logger.warn(`[Verification] Chat ID ${chatId} already belongs to a different user, rejecting`);
+            await logToDatabase(supabase, 'VERIFICATION', 'WARN', 'Chat ID already in use by another user', {
+              chat_id: chatId,
+              requesting_user_id: profile.id,
+              existing_owner_id: existingChatCommunity.owner_id
+            });
+            return false;
+          }
+        }
         
         // יצירת קהילה חדשה למשתמש
         const { data: community, error: communityError } = await supabase
@@ -165,6 +240,17 @@ export async function handleVerificationMessage(supabase: ReturnType<typeof crea
       }
     } else {
       logger.info(`[Verification] Found bot settings: ${botSettings.id} for community: ${botSettings.community_id}`);
+
+      // בדיקה האם הצ'אט כבר שייך לקהילה אחרת
+      if (existingChatCommunity && existingChatCommunity.id !== botSettings.community_id) {
+        logger.warn(`[Verification] Chat ID ${chatId} already connected to a different community: ${existingChatCommunity.id}`);
+        await logToDatabase(supabase, 'VERIFICATION', 'WARN', 'Chat ID already connected to a different community', {
+          chat_id: chatId,
+          existing_community_id: existingChatCommunity.id,
+          requested_community_id: botSettings.community_id
+        });
+        return false;
+      }
 
       // עדכון הגדרות הבוט
       const { error: updateError } = await supabase

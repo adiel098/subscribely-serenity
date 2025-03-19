@@ -81,15 +81,9 @@ export function GroupOwnerHeader() {
             </motion.div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 border-blue-100 shadow-xl">
-            <DropdownMenuLabel className="flex items-center gap-2 pb-2">
-              <Crown className="h-4 w-4 text-yellow-500" />
-              <span className="text-blue-700 font-medium">Community Manager</span>
-            </DropdownMenuLabel>
+            
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center cursor-pointer py-2">
-              <User className="mr-2 h-4 w-4 text-blue-600" />
-              <span>My Profile</span>
-            </DropdownMenuItem>
+            
             <DropdownMenuItem className="flex items-center cursor-pointer py-2">
               <Settings className="mr-2 h-4 w-4 text-blue-600" />
               <span>Account Settings</span>

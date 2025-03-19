@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { OnboardingStep, ONBOARDING_STEPS } from "./types";
@@ -13,14 +13,14 @@ export const useOnboardingNavigation = (
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lastSavedStep, setLastSavedStep] = useState<OnboardingStep | null>(null);
+  const lastSavedStepRef = useRef<OnboardingStep | null>(null);
 
   // Allow any step string to be passed, but save only valid OnboardingStep values
-  const saveCurrentStep = async (step: string) => {
+  const saveCurrentStep = useCallback(async (step: string) => {
     if (!user) return;
     
     // Prevent duplicate save operations for the same step
-    if (step === lastSavedStep) {
+    if (step === lastSavedStepRef.current) {
       console.log("Step already saved, skipping duplicate save:", step);
       return;
     }
@@ -41,7 +41,7 @@ export const useOnboardingNavigation = (
       
       await saveOnboardingStep(user.id, validStep);
       setCurrentStep(validStep);
-      setLastSavedStep(validStep);
+      lastSavedStepRef.current = validStep;
       
       console.log("Step saved successfully");
     } catch (error) {
@@ -54,9 +54,9 @@ export const useOnboardingNavigation = (
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [user, setCurrentStep, toast]);
 
-  const completeOnboarding = async (): Promise<void> => {
+  const completeOnboarding = useCallback(async (): Promise<void> => {
     if (!user) return;
     
     try {
@@ -79,15 +79,17 @@ export const useOnboardingNavigation = (
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [user, setCurrentStep, setIsCompleted, toast]);
 
-  const goToNextStep = (currentStep: OnboardingStep = "welcome") => {
+  const goToNextStep = useCallback((currentStep: OnboardingStep = "welcome") => {
+    if (!user) return;
+    
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
     
     if (nextStep) {
       console.log("Moving to next step:", nextStep);
-      if (nextStep !== lastSavedStep) {
+      if (nextStep !== lastSavedStepRef.current) {
         saveCurrentStep(nextStep);
       } else {
         // Just update the UI without saving to the database
@@ -96,15 +98,17 @@ export const useOnboardingNavigation = (
     } else {
       console.warn("No next step available from:", currentStep);
     }
-  };
+  }, [user, saveCurrentStep, setCurrentStep]);
 
-  const goToPreviousStep = (currentStep: OnboardingStep = "welcome") => {
+  const goToPreviousStep = useCallback((currentStep: OnboardingStep = "welcome") => {
+    if (!user) return;
+    
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     
     if (currentIndex > 0) {
       const previousStep = ONBOARDING_STEPS[currentIndex - 1];
       console.log("Moving to previous step:", previousStep);
-      if (previousStep !== lastSavedStep) {
+      if (previousStep !== lastSavedStepRef.current) {
         saveCurrentStep(previousStep);
       } else {
         // Just update the UI without saving to the database
@@ -113,7 +117,7 @@ export const useOnboardingNavigation = (
     } else {
       console.warn("No previous step available from:", currentStep);
     }
-  };
+  }, [user, saveCurrentStep, setCurrentStep]);
 
   return {
     isSubmitting,

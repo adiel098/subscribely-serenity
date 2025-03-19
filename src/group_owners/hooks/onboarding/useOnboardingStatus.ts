@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { OnboardingState } from "./types";
@@ -23,7 +23,7 @@ export const useOnboardingStatus = () => {
     hasPaymentMethod: false,
   });
 
-  const fetchOnboardingStatus = async () => {
+  const fetchOnboardingStatus = useCallback(async () => {
     if (!user) return;
     
     // Prevent multiple fetches
@@ -76,13 +76,13 @@ export const useOnboardingStatus = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, toast, isLoading]);
 
   useEffect(() => {
     if (user && !hasFetchedRef.current) {
       fetchOnboardingStatus();
     }
-  }, [user]);
+  }, [user, fetchOnboardingStatus]);
 
   return {
     state,

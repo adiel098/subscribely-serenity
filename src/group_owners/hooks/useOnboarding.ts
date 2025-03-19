@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { OnboardingStep, ONBOARDING_STEPS, OnboardingState } from "./onboarding/types";
 import { useOnboardingStatus } from "./onboarding/useOnboardingStatus";
 import { useOnboardingNavigation } from "./onboarding/useOnboardingNavigation";
@@ -10,8 +10,9 @@ export { ONBOARDING_STEPS };
 
 export const useOnboarding = () => {
   const { state: remoteState, isLoading: isRemoteLoading, refreshStatus } = useOnboardingStatus();
+  const initialLoadDone = useRef(false);
   
-  // Create a local state that starts with remote values but can be updated locally
+  // Create a local state that starts with default values but will be updated with remote values
   const [localState, setLocalState] = useState<OnboardingState>({
     currentStep: "welcome",
     isCompleted: false,
@@ -20,24 +21,26 @@ export const useOnboarding = () => {
     hasPaymentMethod: false
   });
   
-  // Sync remote state to local state once when loaded
+  // Sync remote state to local state once when loaded and prevent further auto-syncing
   useEffect(() => {
-    if (!isRemoteLoading) {
+    if (!isRemoteLoading && remoteState && !initialLoadDone.current) {
+      console.log("Syncing remote state to local:", remoteState);
       setLocalState(prevState => ({
         ...prevState,
         ...remoteState
       }));
+      initialLoadDone.current = true;
     }
   }, [remoteState, isRemoteLoading]);
   
   // Create properly typed setter functions
-  const setCurrentStep = (step: OnboardingStep) => {
+  const setCurrentStep = useCallback((step: OnboardingStep) => {
     setLocalState(prev => ({ ...prev, currentStep: step }));
-  };
+  }, []);
   
-  const setIsCompleted = (completed: boolean) => {
+  const setIsCompleted = useCallback((completed: boolean) => {
     setLocalState(prev => ({ ...prev, isCompleted: completed }));
-  };
+  }, []);
   
   const { 
     isSubmitting,

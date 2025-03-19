@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,114 +9,69 @@ import { WelcomeStep } from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const initialLoadRef = useRef(true);
   const [isUrlProcessed, setIsUrlProcessed] = useState(false);
-
+  
+  // Use the centralized onboarding hook instead of local state
   const { 
-    saveCurrentStep, 
+    state: onboardingState, 
+    isLoading, 
     goToNextStep, 
     goToPreviousStep,
-    completeOnboarding,
-    isSubmitting
-  } = useOnboardingNavigation(currentStep, setCurrentStep, setIsCompleted);
+    completeOnboarding
+  } = useOnboarding();
 
   // Determine which step to show based on URL path - only once on initial load
   useEffect(() => {
-    if (isUrlProcessed) return;
-    
-    console.log("Processing URL path:", location.pathname);
-    const path = location.pathname;
-    
-    if (path.includes('/onboarding/welcome')) {
-      setCurrentStep('welcome');
-    } else if (path.includes('/onboarding/connect-telegram')) {
-      setCurrentStep('connect-telegram');
-    } else if (path.includes('/onboarding/complete')) {
-      setCurrentStep('complete');
-    } else if (path === '/onboarding' || path === '/onboarding/') {
+    if (!isUrlProcessed && initialLoadRef.current) {
+      console.log("Processing URL path:", location.pathname);
+      const path = location.pathname;
+      
       // Default to welcome step if just on /onboarding
-      navigate('/onboarding/welcome', { replace: true });
-    } else {
-      // Handle unknown paths - redirect to welcome step
-      console.error("Unknown step in path:", path);
-      navigate('/onboarding/welcome', { replace: true });
-    }
-    
-    setIsUrlProcessed(true);
-  }, [location.pathname, navigate]);
-
-  // Fetch onboarding state - only once
-  useEffect(() => {
-    if (!user || !isUrlProcessed) return;
-    
-    const fetchOnboardingState = async () => {
-      try {
-        // Get user profile to check onboarding status
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('onboarding_completed, onboarding_step')
-          .eq('id', user.id)
-          .single();
-          
-        if (profileError) throw profileError;
-        
-        if (profile) {
-          setIsCompleted(profile.onboarding_completed || false);
-          
-          // Only use step if it's a valid OnboardingStep and different from current
-          if (profile.onboarding_step && 
-              ["welcome", "connect-telegram", "complete"].includes(profile.onboarding_step) && 
-              profile.onboarding_step !== currentStep && 
-              !location.pathname.includes(profile.onboarding_step)) {
-            console.log("Setting step from profile:", profile.onboarding_step);
-            setCurrentStep(profile.onboarding_step as OnboardingStep);
-            
-            // Update URL to match the current step
-            navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
-          } else if (profile.onboarding_step && !["welcome", "connect-telegram", "complete"].includes(profile.onboarding_step)) {
-            // Invalid step stored in profile, set to welcome
-            console.warn("Invalid step in profile:", profile.onboarding_step);
-            saveCurrentStep("welcome");
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching onboarding state:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load your onboarding progress"
-        });
-      } finally {
-        setIsLoading(false);
+      if (path === '/onboarding' || path === '/onboarding/') {
+        navigate('/onboarding/welcome', { replace: true });
       }
-    };
-    
-    fetchOnboardingState();
-  }, [user, isUrlProcessed, currentStep, navigate, toast, saveCurrentStep, location.pathname]);
+      
+      setIsUrlProcessed(true);
+      initialLoadRef.current = false;
+    }
+  }, [location.pathname, navigate, isUrlProcessed]);
 
   // Handle completion redirect - only when isCompleted changes
   useEffect(() => {
-    if (isCompleted && !isLoading) {
+    if (onboardingState.isCompleted && !isLoading) {
       // Redirect to dashboard if onboarding is complete
       navigate('/dashboard', { replace: true });
     }
-  }, [isCompleted, isLoading, navigate]);
+  }, [onboardingState.isCompleted, isLoading, navigate]);
 
-  // Handle URL updates when currentStep changes
+  // Handle URL updates when currentStep changes - with circuit breaker to prevent infinite loops
   useEffect(() => {
-    if (isUrlProcessed && !location.pathname.includes(currentStep) && !isSubmitting) {
-      console.log(`Updating URL to match current step: ${currentStep}`);
-      navigate(`/onboarding/${currentStep}`, { replace: true });
+    const currentPath = location.pathname;
+    const targetPath = `/onboarding/${onboardingState.currentStep}`;
+    
+    // Only update URL if:
+    // 1. We have processed the initial URL
+    // 2. The current URL doesn't match the current step
+    // 3. We're not submitting a change
+    // 4. We're not in the initial load
+    if (
+      isUrlProcessed && 
+      !currentPath.includes(onboardingState.currentStep) && 
+      !isLoading &&
+      !initialLoadRef.current
+    ) {
+      console.log(`Updating URL to match current step: ${onboardingState.currentStep}`);
+      navigate(targetPath, { replace: true });
     }
-  }, [currentStep, navigate, location.pathname, isUrlProcessed, isSubmitting]);
+  }, [onboardingState.currentStep, navigate, location.pathname, isUrlProcessed, isLoading]);
 
   const handleCompleteOnboarding = async () => {
     try {
@@ -127,7 +82,7 @@ const Onboarding = () => {
     }
   };
 
-  if (isLoading || isSubmitting) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50">
         <div className="flex flex-col items-center space-y-4">
@@ -139,9 +94,9 @@ const Onboarding = () => {
   }
 
   const renderCurrentStep = () => {
-    console.log("Rendering current step:", currentStep);
+    console.log("Rendering current step:", onboardingState.currentStep);
     
-    switch(currentStep) {
+    switch(onboardingState.currentStep) {
       case "welcome":
         return (
           <WelcomeStep 
@@ -164,7 +119,7 @@ const Onboarding = () => {
         return null;
       
       default:
-        console.error("Unknown step:", currentStep);
+        console.error("Unknown step:", onboardingState.currentStep);
         // Redirect to welcome step if we have an unknown step
         navigate('/onboarding/welcome', { replace: true });
         return (

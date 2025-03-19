@@ -17,7 +17,26 @@ export function useAuthRedirect() {
       if (location.pathname.startsWith('/onboarding')) return;
       
       try {
-        // Check if user has completed onboarding
+        // First check if user has any communities
+        const { data: communities, error: communitiesError } = await supabase
+          .from('communities')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1);
+        
+        if (communitiesError) throw communitiesError;
+        
+        // If user has communities, no need for onboarding
+        if (communities && communities.length > 0) {
+          console.log("User has communities, no onboarding needed");
+          // If on login page, redirect to dashboard
+          if (location.pathname.startsWith('/auth')) {
+            navigate('/dashboard');
+          }
+          return;
+        }
+        
+        // Check onboarding status only if user has no communities
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('onboarding_completed, onboarding_step')
@@ -34,6 +53,9 @@ export function useAuthRedirect() {
           } else {
             navigate('/onboarding/welcome');
           }
+        } else if (location.pathname.startsWith('/auth')) {
+          // If onboarding is completed and user is on auth page, redirect to dashboard
+          navigate('/dashboard');
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);

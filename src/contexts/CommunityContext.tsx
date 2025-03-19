@@ -74,7 +74,7 @@ export const CommunityProvider = ({
     }
   }, [selectedGroupId, selectedCommunityId]);
 
-  // Redirect to onboarding if no communities exist
+  // Handle community selection and onboarding redirection
   useEffect(() => {
     const isDataLoaded = !isCommunitiesLoading && !isGroupsLoading;
     const hasCommunities = communities && communities.length > 0;
@@ -86,8 +86,11 @@ export const CommunityProvider = ({
     // redirect them to the onboarding flow
     if (!hasCommunities && !hasGroups && location.pathname === '/dashboard') {
       console.log("No communities or groups found - redirecting to onboarding");
-      navigate('/onboarding', { replace: true });
-      return;
+      // Don't redirect if they're already in the onboarding flow
+      if (!location.pathname.startsWith('/onboarding')) {
+        navigate('/onboarding', { replace: true });
+        return;
+      }
     }
 
     // If coming from Telegram connect page, select the latest community

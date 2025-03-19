@@ -31,12 +31,12 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
       transition={{ duration: 0.5, delay: 0.2 }}
       className="mt-6 space-y-4"
     >
-      <h3 className="text-base font-medium">Previously Connected Communities:</h3>
+      <h3 className="text-base font-medium text-gray-800">Previously Connected Communities:</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {communities.map(community => (
           <div 
             key={community.id}
-            className="flex items-center gap-3 p-3 rounded-lg border border-indigo-100 bg-white shadow-sm"
+            className="flex items-center gap-3 p-3 rounded-lg border border-indigo-100 bg-white shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center">
               <CommunityAvatar

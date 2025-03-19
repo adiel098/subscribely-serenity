@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,8 @@ const Subscriptions = () => {
     );
   }
 
+  const hasPlans = plans && plans.length > 0;
+
   return (
     <div className="space-y-6 py-6">
       <motion.div 
@@ -94,19 +97,21 @@ const Subscriptions = () => {
             Manage your {isGroupSelected ? "group" : "community"} subscription plans
           </p>
         </div>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button 
-            onClick={handleCreatePlan} 
-            className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
-            type="button"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create Plan
-          </Button>
-        </motion.div>
+        {hasPlans && (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button 
+              onClick={handleCreatePlan} 
+              className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
+              type="button"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Create Plan
+            </Button>
+          </motion.div>
+        )}
       </motion.div>
 
-      {!plans || plans.length === 0 ? (
+      {!hasPlans ? (
         <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
       ) : (
         <motion.div 

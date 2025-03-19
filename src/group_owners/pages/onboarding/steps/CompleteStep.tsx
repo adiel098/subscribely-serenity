@@ -6,19 +6,21 @@ import { CheckCircle, ArrowRight, Sparkles, ArrowLeft } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { useNavigate } from "react-router-dom";
 import confetti from 'canvas-confetti';
+import { useToast } from "@/components/ui/use-toast";
 
 interface CompleteStepProps {
-  completeOnboarding: () => void;
+  completeOnboarding: () => Promise<void>;
   goToPreviousStep: () => void;
   state: any; // Using any type for simplicity
 }
 
-export const CompleteStep: React.FC<CompleteStepProps> = ({ 
+const CompleteStep: React.FC<CompleteStepProps> = ({ 
   completeOnboarding,
   goToPreviousStep,
   state 
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Trigger confetti when component mounts
@@ -51,10 +53,31 @@ export const CompleteStep: React.FC<CompleteStepProps> = ({
   }, []);
 
   const handleGoToDashboard = async () => {
-    // Mark onboarding as complete in database
-    await completeOnboarding();
-    // Navigate to dashboard
-    navigate('/dashboard');
+    try {
+      console.log("Completing onboarding and navigating to dashboard");
+      // Mark onboarding as complete in database
+      await completeOnboarding();
+      
+      // Show success toast
+      toast({
+        title: "Onboarding Complete!",
+        description: "Welcome to your new dashboard",
+        variant: "default",
+      });
+      
+      // Navigate to dashboard with a short delay to ensure state is updated
+      setTimeout(() => {
+        console.log("Navigating to dashboard");
+        navigate('/dashboard', { replace: true });
+      }, 100);
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete onboarding. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Animation variants for staggered children
@@ -270,3 +293,5 @@ export const CompleteStep: React.FC<CompleteStepProps> = ({
     </OnboardingLayout>
   );
 };
+
+export default CompleteStep;

@@ -43,6 +43,7 @@ export const useOnboarding = () => {
   const fetchOnboardingStatus = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching onboarding status for user:", user?.id);
       // Fetch profile data to get onboarding status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -50,7 +51,12 @@ export const useOnboarding = () => {
         .eq('id', user?.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        throw profileError;
+      }
+
+      console.log("Profile data:", profile);
 
       // Check if user has connected a Telegram group
       const { data: communities, error: communitiesError } = await supabase
@@ -58,7 +64,12 @@ export const useOnboarding = () => {
         .select('id, telegram_chat_id')
         .eq('owner_id', user?.id);
 
-      if (communitiesError) throw communitiesError;
+      if (communitiesError) {
+        console.error("Error fetching communities:", communitiesError);
+        throw communitiesError;
+      }
+
+      console.log("Communities data:", communities);
 
       // Check if user has a platform subscription
       const { data: subscription, error: subscriptionError } = await supabase
@@ -68,7 +79,12 @@ export const useOnboarding = () => {
         .eq('status', 'active')
         .maybeSingle();
 
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        console.error("Error fetching subscription:", subscriptionError);
+        throw subscriptionError;
+      }
+
+      console.log("Subscription data:", subscription);
 
       // Check if user has set up payment methods
       const { data: paymentMethods, error: paymentMethodsError } = await supabase
@@ -77,9 +93,22 @@ export const useOnboarding = () => {
         .eq('owner_id', user?.id)
         .limit(1);
 
-      if (paymentMethodsError) throw paymentMethodsError;
+      if (paymentMethodsError) {
+        console.error("Error fetching payment methods:", paymentMethodsError);
+        throw paymentMethodsError;
+      }
+
+      console.log("Payment methods data:", paymentMethods);
 
       setState({
+        currentStep: (profile?.onboarding_step as OnboardingStep) || "welcome",
+        isCompleted: profile?.onboarding_completed || false,
+        isTelegramConnected: communities && communities.length > 0 && communities.some(c => c.telegram_chat_id),
+        hasPlatformPlan: !!subscription,
+        hasPaymentMethod: paymentMethods && paymentMethods.length > 0
+      });
+
+      console.log("Onboarding state updated:", {
         currentStep: (profile?.onboarding_step as OnboardingStep) || "welcome",
         isCompleted: profile?.onboarding_completed || false,
         isTelegramConnected: communities && communities.length > 0 && communities.some(c => c.telegram_chat_id),
@@ -100,14 +129,19 @@ export const useOnboarding = () => {
 
   const saveCurrentStep = async (step: OnboardingStep) => {
     try {
+      console.log("Saving current step:", step);
       const { error } = await supabase
         .from('profiles')
         .update({ onboarding_step: step })
         .eq('id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving step:", error);
+        throw error;
+      }
 
       setState(prev => ({ ...prev, currentStep: step }));
+      console.log("Step saved successfully");
     } catch (error) {
       console.error("Error saving onboarding step:", error);
       toast({
@@ -118,8 +152,9 @@ export const useOnboarding = () => {
     }
   };
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = async (): Promise<void> => {
     try {
+      console.log("Completing onboarding for user:", user?.id);
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -128,8 +163,12 @@ export const useOnboarding = () => {
         })
         .eq('id', user?.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error completing onboarding:", error);
+        throw error;
+      }
 
+      console.log("Onboarding completed successfully");
       setState(prev => ({ 
         ...prev, 
         isCompleted: true,
@@ -142,6 +181,7 @@ export const useOnboarding = () => {
         title: "Error",
         description: "Failed to complete onboarding"
       });
+      throw error; // Re-throw the error to handle it in the component
     }
   };
 
@@ -150,6 +190,7 @@ export const useOnboarding = () => {
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
     
     if (nextStep) {
+      console.log("Moving to next step:", nextStep);
       saveCurrentStep(nextStep);
     }
   };
@@ -159,6 +200,7 @@ export const useOnboarding = () => {
     
     if (currentIndex > 0) {
       const previousStep = ONBOARDING_STEPS[currentIndex - 1];
+      console.log("Moving to previous step:", previousStep);
       saveCurrentStep(previousStep);
     }
   };

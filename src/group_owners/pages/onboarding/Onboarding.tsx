@@ -1,11 +1,11 @@
 
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
-import { WelcomeStep } from "./steps/WelcomeStep";
-import { ConnectTelegramStep } from "./steps/ConnectTelegramStep";
-import { PlatformPlanStep } from "./steps/PlatformPlanStep";
-import { PaymentMethodStep } from "./steps/PaymentMethodStep";
-import { CompleteStep } from "./steps/CompleteStep";
+import WelcomeStep from "./steps/WelcomeStep";
+import ConnectTelegramStep from "./steps/ConnectTelegramStep";
+import PlatformPlanStep from "./steps/PlatformPlanStep";
+import PaymentMethodStep from "./steps/PaymentMethodStep";
+import CompleteStep from "./steps/CompleteStep";
 import { useEffect } from "react";
 
 const Onboarding = () => {
@@ -20,9 +20,12 @@ const Onboarding = () => {
   }, [state.currentStep, navigate]);
   
   // If onboarding is completed, redirect to dashboard
-  if (state.isCompleted) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  useEffect(() => {
+    if (state.isCompleted) {
+      console.log("Onboarding is completed, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [state.isCompleted, navigate]);
   
   const handleStepNavigation = (currentStep) => {
     goToNextStep(currentStep);

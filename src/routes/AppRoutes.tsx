@@ -1,4 +1,5 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+
+import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
 import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
@@ -43,8 +44,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Main Routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/auth/*" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
 
       {/* Onboarding Route */}

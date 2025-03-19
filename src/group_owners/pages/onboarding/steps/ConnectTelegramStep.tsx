@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Check, CheckCircle, Copy, RefreshCw } from "lucide-react";
@@ -7,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
+import { ConnectedCommunitiesList } from "@/group_owners/components/onboarding/telegram/ConnectedCommunitiesList";
 
 const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => void, activeStep: boolean }) => {
   const { user } = useAuth();
@@ -19,6 +22,11 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
   const [isVerified, setIsVerified] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
   const [hasTelegram, setHasTelegram] = useState(false);
+  const [isRefreshingPhoto, setIsRefreshingPhoto] = useState(false);
+  
+  // State for connected communities
+  const [connectedCommunities, setConnectedCommunities] = useState<any[]>([]);
+  const [lastConnectedCommunity, setLastConnectedCommunity] = useState<any>(null);
   
   // Generate or fetch the verification code
   useEffect(() => {
@@ -68,6 +76,9 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
           setVerificationCode(newCode);
         }
         
+        // Fetch existing communities
+        await fetchConnectedCommunities();
+        
         // Check if already verified
         await checkVerificationStatus();
       } catch (err) {
@@ -107,6 +118,34 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
     setTimeout(() => setCopied(false), 3000);
   };
   
+  const fetchConnectedCommunities = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('communities')
+        .select('id, name, telegram_chat_id, telegram_photo_url')
+        .eq('owner_id', user.id)
+        .eq('is_group', false)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching communities:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Set the last connected community
+        setLastConnectedCommunity(data[0]);
+        
+        // Set all connected communities
+        setConnectedCommunities(data);
+      }
+    } catch (err) {
+      console.error('Error fetching communities:', err);
+    }
+  };
+  
   const checkVerificationStatus = async () => {
     if (!user || !verificationCode) return;
     
@@ -127,6 +166,7 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
       console.log('Verification status response:', data);
       
       if (data?.verified) {
+        await fetchConnectedCommunities();
         setIsVerified(true);
         setHasTelegram(true);
         return true;
@@ -155,9 +195,7 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
           description: 'Telegram channel connected successfully.',
         });
         
-        setTimeout(() => {
-          onComplete();
-        }, 1500);
+        // Don't complete onboarding yet - show the success state with last connected community
       } else {
         // If not verified, and this is not the first attempt, show warning
         if (attemptCount > 0) {
@@ -188,12 +226,35 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
     }
   };
   
+  const resetToAddAnother = () => {
+    setIsVerified(false);
+  };
+  
+  const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsRefreshingPhoto(true);
+    
+    // Call the function to refresh the photo
+    supabase.functions.invoke('check-community-photo', {
+      body: { communityId, forceRefresh: true }
+    }).then(() => {
+      fetchConnectedCommunities();
+      setIsRefreshingPhoto(false);
+    }).catch(err => {
+      console.error('Error refreshing photo:', err);
+      setIsRefreshingPhoto(false);
+    });
+  };
+  
   // If already verified, move to next step
   useEffect(() => {
-    if (isVerified && activeStep) {
+    // Only auto-move if there's no telegram connection yet
+    if (isVerified && activeStep && !lastConnectedCommunity) {
       onComplete();
     }
-  }, [isVerified, activeStep]);
+  }, [isVerified, activeStep, lastConnectedCommunity]);
   
   return (
     <div className="space-y-6 py-6">
@@ -204,84 +265,83 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
         </CardDescription>
       </CardHeader>
       
-      <Card>
-        <CardContent className="pt-6 pb-4">
-          {isVerified ? (
-            <div className="flex flex-col items-center justify-center py-6 space-y-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
-              <h3 className="text-xl font-medium text-center">Telegram Channel Connected!</h3>
-              <p className="text-center text-muted-foreground">
-                Your Telegram channel has been successfully connected.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-5">
-                <div>
-                  <h3 className="text-base font-medium mb-1">1. Add our bot to your Telegram channel</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Invite <span className="font-medium">@MembifyBot</span> and make it an admin with post messages permission
-                  </p>
-                </div>
+      {isVerified && lastConnectedCommunity ? (
+        <>
+          <ConnectedChannelDisplay 
+            community={lastConnectedCommunity}
+            onAddAnotherGroup={resetToAddAnother}
+            onContinue={onComplete}
+            onRefreshPhoto={handleRefreshPhoto}
+            isRefreshingPhoto={isRefreshingPhoto}
+          />
+          
+          {connectedCommunities.length > 1 && (
+            <ConnectedCommunitiesList 
+              communities={connectedCommunities.slice(1)} // Skip the first one (last connected)
+              onRefreshPhoto={handleRefreshPhoto}
+              isRefreshingPhoto={isRefreshingPhoto}
+            />
+          )}
+        </>
+      ) : (
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-base font-medium mb-1">1. Add our bot to your Telegram channel</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Invite <span className="font-medium">@MembifyBot</span> and make it an admin with post messages permission
+                </p>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-base font-medium mb-1">2. Post verification code in your channel</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Copy and post this exact code as a message in your channel:
+                </p>
                 
-                <Separator />
-                
-                <div>
-                  <h3 className="text-base font-medium mb-1">2. Post verification code in your channel</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Copy and post this exact code as a message in your channel:
-                  </p>
-                  
-                  <div className="flex items-center gap-2 mt-3">
-                    <div className="bg-secondary p-3 rounded-md flex-1 font-mono text-sm overflow-x-auto">
-                      {isLoading ? "Loading..." : verificationCode}
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={copyToClipboard}
-                      disabled={isLoading || !verificationCode}
-                    >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
+                <div className="flex items-center gap-2 mt-3">
+                  <div className="bg-secondary p-3 rounded-md flex-1 font-mono text-sm overflow-x-auto">
+                    {isLoading ? "Loading..." : verificationCode}
                   </div>
-                </div>
-                
-                <Separator />
-                
-                <div>
-                  <h3 className="text-base font-medium mb-1">3. Verify connection</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    After posting the code, click the verify button below
-                  </p>
-                  
-                  {attemptCount > 1 && (
-                    <Alert className="mt-3 mb-2">
-                      <AlertTitle>Verification Tips</AlertTitle>
-                      <AlertDescription className="text-sm">
-                        Make sure:
-                        <ul className="list-disc pl-5 mt-1 space-y-1">
-                          <li>The bot is added as an admin with post permission</li>
-                          <li>You posted the exact verification code</li>
-                          <li>The verification code was posted as a regular message in the channel</li>
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={copyToClipboard}
+                    disabled={isLoading || !verificationCode}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
               </div>
-            </>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between border-t px-6 py-4">
-          {isVerified ? (
-            <Button 
-              onClick={onComplete} 
-              className="w-full"
-            >
-              Continue
-            </Button>
-          ) : (
+              
+              <Separator />
+              
+              <div>
+                <h3 className="text-base font-medium mb-1">3. Verify connection</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  After posting the code, click the verify button below
+                </p>
+                
+                {attemptCount > 1 && (
+                  <Alert className="mt-3 mb-2">
+                    <AlertTitle>Verification Tips</AlertTitle>
+                    <AlertDescription className="text-sm">
+                      Make sure:
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        <li>The bot is added as an admin with post permission</li>
+                        <li>You posted the exact verification code</li>
+                        <li>The verification code was posted as a regular message in the channel</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between border-t px-6 py-4">
             <Button 
               onClick={verifyConnection} 
               className="w-full"
@@ -298,9 +358,18 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
                 'Verify Connection'
               )}
             </Button>
-          )}
-        </CardFooter>
-      </Card>
+          </CardFooter>
+        </Card>
+      )}
+      
+      {/* Display existing communities if there are any */}
+      {!isVerified && connectedCommunities.length > 0 && (
+        <ConnectedCommunitiesList 
+          communities={connectedCommunities}
+          onRefreshPhoto={handleRefreshPhoto}
+          isRefreshingPhoto={isRefreshingPhoto}
+        />
+      )}
     </div>
   );
 };

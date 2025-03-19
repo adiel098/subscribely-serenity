@@ -56,8 +56,11 @@ export const PurchaseHistoryTable = () => {
         console.error("Error fetching payments:", error);
       } else if (data) {
         const formattedPayments = data.map(item => {
-          // Access platform_plans correctly as an object
-          const planData = item.platform_plans as { name: string } | null;
+          // First, convert to unknown then to the proper type to avoid TypeScript errors
+          // This handles the nested object from the Supabase join
+          const planData = (item.platform_plans as unknown) as { 
+            name: string 
+          } | null;
           
           return {
             id: item.id,
@@ -146,3 +149,28 @@ export const PurchaseHistoryTable = () => {
     </Table>
   );
 };
+
+function getStatusBadge(status: string | null) {
+  if (!status) return null;
+  
+  switch(status.toLowerCase()) {
+    case 'completed':
+      return <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+    case 'pending':
+      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+    case 'failed':
+      return <Badge className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
+function formatPaymentMethod(method: string | null) {
+  if (!method) return 'Unknown';
+  
+  // Capitalize first letter of each word
+  return method
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}

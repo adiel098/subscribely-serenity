@@ -55,8 +55,9 @@ export const useUserPlatformSubscription = () => {
         setError(error.message);
         setSubscription(null);
       } else if (data) {
-        // Access platform_plans correctly as an object
-        const planData = data.platform_plans as {
+        // First, convert the nested object to unknown, then to the proper type
+        // This is needed because Supabase returns a nested object, but TypeScript sees it as an array
+        const planData = (data.platform_plans as unknown) as {
           name: string;
           price: number;
           interval: string;

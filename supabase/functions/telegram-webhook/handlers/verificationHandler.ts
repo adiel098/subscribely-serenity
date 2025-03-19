@@ -66,9 +66,7 @@ export async function handleVerificationMessage(supabase: ReturnType<typeof crea
           .insert({
             name: message.chat.title || 'Telegram Community',
             owner_id: profile.id,
-            platform: 'telegram',
-            telegram_chat_id: chatId,
-            platform_id: chatId
+            telegram_chat_id: chatId
           })
           .select()
           .single();

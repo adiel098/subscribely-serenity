@@ -84,9 +84,7 @@ export async function handleChannelPost(supabase: ReturnType<typeof createClient
             .insert({
               name: channelPost.chat.title || 'Telegram Community',
               owner_id: profile.id,
-              platform: 'telegram',
-              telegram_chat_id: chatId,
-              platform_id: chatId
+              telegram_chat_id: chatId
             })
             .select()
             .single();

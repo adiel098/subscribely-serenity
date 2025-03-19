@@ -1,635 +1,308 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle, ArrowLeft, Copy, CheckCircle, ShieldCheck, Send, PartyPopper } from "lucide-react";
-import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { Check, CheckCircle, Copy, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-interface ConnectTelegramStepProps {
-  goToNextStep: () => void;
-  goToPreviousStep: () => void;
-  isTelegramConnected: boolean;
-  saveCurrentStep: (step: string) => void;
-}
-
-export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
-  goToNextStep,
-  goToPreviousStep,
-  isTelegramConnected,
-  saveCurrentStep
-}) => {
+const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => void, activeStep: boolean }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationCode, setVerificationCode] = useState<string>('');
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  
+  const [verificationCode, setVerificationCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'error' | 'success'>('idle');
-  const [verificationAttempted, setVerificationAttempted] = useState(false);
-  const [connectedCommunity, setConnectedCommunity] = useState<any>(null);
-  const [isRefreshingPhoto, setIsRefreshingPhoto] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [hasTelegram, setHasTelegram] = useState(false);
+  
+  // Generate or fetch the verification code
   useEffect(() => {
-    if (user) {
-      initializeVerificationCode();
-      checkForConnectedCommunity();
-    }
-  }, [user]);
-
-  const generateNewCode = () => {
-    return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-  };
-
-  const initializeVerificationCode = async () => {
-    setIsLoading(true);
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('initial_telegram_code, current_telegram_code')
-        .eq('id', user?.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return;
-      }
-
-      if (profile.current_telegram_code) {
-        setVerificationCode(profile.current_telegram_code);
-      } else {
-        const newCode = generateNewCode();
-        const { error: updateError } = await supabase
+    if (!user) return;
+    
+    const fetchOrGenerateCode = async () => {
+      setIsLoading(true);
+      try {
+        // Check if user already has a code
+        const { data: profile, error } = await supabase
           .from('profiles')
-          .update({
-            initial_telegram_code: profile.initial_telegram_code || newCode,
-            current_telegram_code: newCode
-          })
-          .eq('id', user?.id);
-
-        if (updateError) {
-          console.error('Error updating codes:', updateError);
+          .select('current_telegram_code')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to fetch verification code. Please try again.',
+            variant: 'destructive'
+          });
           return;
         }
-
-        setVerificationCode(newCode);
+        
+        // If code exists, use it
+        if (profile.current_telegram_code) {
+          setVerificationCode(profile.current_telegram_code);
+        } else {
+          // Generate new code
+          const newCode = `MBF_${generateRandomCode(7)}`;
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ current_telegram_code: newCode })
+            .eq('id', user.id);
+          
+          if (updateError) {
+            console.error('Error updating profile with new code:', updateError);
+            toast({
+              title: 'Error',
+              description: 'Failed to generate verification code. Please try again.',
+              variant: 'destructive'
+            });
+            return;
+          }
+          
+          setVerificationCode(newCode);
+        }
+        
+        // Check if already verified
+        await checkVerificationStatus();
+      } catch (err) {
+        console.error('Error:', err);
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred. Please try again.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error in initializeVerificationCode:', error);
-    } finally {
-      setIsLoading(false);
+    };
+    
+    fetchOrGenerateCode();
+  }, [user]);
+  
+  const generateRandomCode = (length: number) => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
     }
+    return result;
   };
-
-  const checkForConnectedCommunity = async () => {
-    try {
-      if (!user) return;
-      
-      const { data: recentCommunity, error: communityError } = await supabase
-        .from('communities')
-        .select('*')
-        .eq('owner_id', user.id)
-        .not('telegram_chat_id', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (communityError) {
-        console.error('Error checking recent community:', communityError);
-        return;
-      }
-
-      if (recentCommunity) {
-        console.log('Found connected community:', recentCommunity);
-        setConnectedCommunity(recentCommunity);
-        setVerificationStatus('success');
-      } else {
-        console.log('No connected community found');
-      }
-    } catch (error) {
-      console.error('Error checking connected community:', error);
-    }
+  
+  const copyToClipboard = () => {
+    if (!verificationCode) return;
+    
+    navigator.clipboard.writeText(verificationCode);
+    setCopied(true);
+    toast({
+      title: 'Copied!',
+      description: 'Verification code copied to clipboard.',
+    });
+    
+    setTimeout(() => setCopied(false), 3000);
   };
-
-  const copyToClipboard = async (text: string) => {
+  
+  const checkVerificationStatus = async () => {
+    if (!user || !verificationCode) return;
+    
     try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "✅ Copied Successfully!",
-        description: "Verification code copied to clipboard",
-        className: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800"
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const verifyConnection = async () => {
-    try {
-      if (!user || !verificationCode) return;
-      setIsVerifying(true);
-      setVerificationAttempted(true);
-      setVerificationStatus('idle');
-
-      toast({
-        title: "🔄 Processing Verification",
-        description: "Checking your Telegram connection...",
-        className: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800"
-      });
-
-      setRetryCount(prev => prev + 1);
-
-      const { data: verificationResult, error: verificationError } = await supabase.functions.invoke("check-verification-status", {
-        body: { 
+      // Call the edge function to check verification status
+      const { data, error } = await supabase.functions.invoke('check-verification-status', {
+        body: {
           userId: user.id,
           verificationCode: verificationCode
         }
       });
-
-      if (verificationError) {
-        console.error('Error calling verification function:', verificationError);
+      
+      if (error) {
+        console.error('Error checking verification status:', error);
+        return false;
       }
       
-      console.log('Verification result:', verificationResult);
-
-      let isVerified = false;
-      let attempts = 0;
-      const maxAttempts = 5;
-
-      while (!attempts < maxAttempts) {
-        attempts++;
-        console.log(`Verification attempt ${attempts} of ${maxAttempts}`);
-        
-        const { data: recentCommunity, error: communityError } = await supabase
-          .from('communities')
-          .select('*')
-          .eq('owner_id', user.id)
-          .not('telegram_chat_id', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (recentCommunity?.telegram_chat_id) {
-          console.log('Found community with telegram_chat_id:', recentCommunity);
-          isVerified = true;
-          setConnectedCommunity(recentCommunity);
-          break;
-        }
-        
-        if (!isVerified && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 4000));
-        }
+      console.log('Verification status response:', data);
+      
+      if (data?.verified) {
+        setIsVerified(true);
+        setHasTelegram(true);
+        return true;
       }
-
+      
+      return false;
+    } catch (err) {
+      console.error('Error in verification check:', err);
+      return false;
+    }
+  };
+  
+  const verifyConnection = async () => {
+    if (!user || !verificationCode) return;
+    
+    setIsVerifying(true);
+    setAttemptCount(prev => prev + 1);
+    
+    try {
+      // Check verification status through dedicated function
+      const isVerified = await checkVerificationStatus();
+      
       if (isVerified) {
-        const newCode = generateNewCode();
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            current_telegram_code: newCode
-          })
-          .eq('id', user?.id);
-
-        if (updateError) {
-          console.error('Error updating verification code:', updateError);
-        } else {
-          setVerificationCode(newCode);
-        }
-
-        setVerificationStatus('success');
-        
-        await checkForConnectedCommunity();
-        
-        if (!connectedCommunity) {
-          setShowSuccessDialog(true);
-        }
-        
-        saveCurrentStep('connect-telegram');
-
         toast({
-          title: "🎉 Connection Successful!",
-          description: "Your Telegram group has been successfully connected to Membify",
-          className: "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800"
+          title: 'Success!',
+          description: 'Telegram channel connected successfully.',
         });
+        
+        setTimeout(() => {
+          onComplete();
+        }, 1500);
       } else {
-        setVerificationStatus('error');
-
-        toast({
-          title: "⚠️ Verification Failed",
-          description: "Please check the following: 1) Bot is added as admin 2) Verification code was sent in the group 3) Wait a few seconds and try again",
-          variant: "destructive",
-          duration: 6000
-        });
+        // If not verified, and this is not the first attempt, show warning
+        if (attemptCount > 0) {
+          toast({
+            title: 'Verification pending',
+            description: 'Make sure you\'ve added the bot as an admin and posted the code in the channel.',
+            variant: 'destructive'
+          });
+        } else {
+          toast({
+            title: 'Checking verification',
+            description: 'Verifying your Telegram channel connection...',
+          });
+          
+          // Try again after delay (webhook might need time to process)
+          setTimeout(checkVerificationStatus, 5000);
+        }
       }
-    } catch (error) {
-      console.error('Verification error:', error);
-      setVerificationStatus('error');
+    } catch (err) {
+      console.error('Error during verification:', err);
       toast({
-        title: "❌ Technical Error",
-        description: "There was a problem processing your request. Please try again or contact support.",
-        variant: "destructive",
-        duration: 5000
+        title: 'Error',
+        description: 'Failed to verify connection. Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setIsVerifying(false);
     }
   };
-
-  const resetVerification = () => {
-    setVerificationAttempted(false);
-    setVerificationStatus('idle');
-  };
-
-  const handleCloseSuccessDialog = () => {
-    setShowSuccessDialog(false);
-  };
-
-  const handleRefreshPhoto = async (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!chatId) return;
-    
-    setIsRefreshingPhoto(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("check-community-photo", {
-        body: { 
-          communityId, 
-          telegramChatId: chatId,
-          forceFetch: true
-        }
-      });
-      
-      if (error) {
-        console.error("Error refreshing photo:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to refresh community photo"
-        });
-        return;
-      }
-      
-      toast({
-        title: "Photo Refreshed",
-        description: "Community photo has been updated"
-      });
-      
-      checkForConnectedCommunity();
-    } catch (err) {
-      console.error("Error in handleRefreshPhoto:", err);
-    } finally {
-      setIsRefreshingPhoto(false);
+  
+  // If already verified, move to next step
+  useEffect(() => {
+    if (isVerified && activeStep) {
+      onComplete();
     }
-  };
-
-  const handleAddAnotherGroup = () => {
-    setVerificationStatus('idle');
-    setVerificationAttempted(false);
-    initializeVerificationCode();
-  };
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
+  }, [isVerified, activeStep]);
+  
   return (
-    <OnboardingLayout 
-      currentStep="connect-telegram" 
-      title="Connect Your Telegram Group" 
-      description="Link your Telegram group to enable membership management" 
-      icon={<MessageCircle size={24} />} 
-      onBack={goToPreviousStep} 
-      showBackButton={true}
-    >
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-          <span className="ml-2 text-indigo-600">Loading...</span>
-        </div>
-      ) : (
-        <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
-          {verificationStatus === 'success' && connectedCommunity && (
-            <ConnectedChannelDisplay
-              community={connectedCommunity}
-              onAddAnotherGroup={handleAddAnotherGroup}
-              onContinue={goToNextStep}
-              onRefreshPhoto={handleRefreshPhoto}
-              isRefreshingPhoto={isRefreshingPhoto}
-            />
-          )}
-
-          {verificationStatus !== 'success' && (
+    <div className="space-y-6 py-6">
+      <CardHeader className="px-0 pb-6">
+        <CardTitle className="text-2xl">Connect Your Telegram Channel</CardTitle>
+        <CardDescription>
+          Link your Telegram channel or group to enable subscription management
+        </CardDescription>
+      </CardHeader>
+      
+      <Card>
+        <CardContent className="pt-6 pb-4">
+          {isVerified ? (
+            <div className="flex flex-col items-center justify-center py-6 space-y-4">
+              <CheckCircle className="h-16 w-16 text-green-500" />
+              <h3 className="text-xl font-medium text-center">Telegram Channel Connected!</h3>
+              <p className="text-center text-muted-foreground">
+                Your Telegram channel has been successfully connected.
+              </p>
+            </div>
+          ) : (
             <>
-              {isTelegramConnected ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                >
-                  <Alert className="bg-green-50 border-green-200">
-                    <motion.div
-                      initial={{ rotate: 0 }}
-                      animate={{ rotate: [0, 15, 0, -15, 0] }}
-                      transition={{ delay: 0.4, duration: 0.6 }}
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-base font-medium mb-1">1. Add our bot to your Telegram channel</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Invite <span className="font-medium">@MembifyBot</span> and make it an admin with post messages permission
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h3 className="text-base font-medium mb-1">2. Post verification code in your channel</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Copy and post this exact code as a message in your channel:
+                  </p>
+                  
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="bg-secondary p-3 rounded-md flex-1 font-mono text-sm overflow-x-auto">
+                      {isLoading ? "Loading..." : verificationCode}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={copyToClipboard}
+                      disabled={isLoading || !verificationCode}
                     >
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    </motion.div>
-                    <AlertTitle className="text-green-800">Group Connected!</AlertTitle>
-                    <AlertDescription className="text-green-700">
-                      Your Telegram group has been successfully connected to Membify.
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              ) : (
-                <motion.div variants={item}>
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <AlertTitle className="text-blue-800">Connection Required</AlertTitle>
-                    <AlertDescription className="text-blue-700">
-                      You need to connect at least one Telegram group to continue.
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              {verificationAttempted && verificationStatus === 'error' && !isTelegramConnected && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4"
-                >
-                  <Alert className="bg-red-50 border-red-200">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertTitle className="text-red-800">Verification Failed</AlertTitle>
-                    <AlertDescription className="text-red-700">
-                      <ul className="list-disc pl-5 mt-1 space-y-1">
-                        <li>Make sure the bot is added as an administrator to your group</li>
-                        <li>Copy the code again and send it in your Telegram group</li>
-                        <li>Wait a few seconds for Telegram to process your message</li>
-                        <li>Make sure the bot has permission to delete messages and manage members</li>
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              <motion.div variants={item}>
-                <Card className="p-6 bg-white shadow-md border border-indigo-100 overflow-hidden">
-                  <div className="space-y-8">
-                    <motion.div
-                      className="flex gap-4"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                          1
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                          <Bot className="h-5 w-5 text-indigo-600" />
-                          Add our bot to your group
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          Add <a
-                            href="https://t.me/membifybot"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-indigo-600 font-medium hover:text-indigo-800 underline decoration-2 decoration-indigo-300 underline-offset-2"
-                          >
-                            @MembifyBot
-                          </a> to your Telegram group or channel and make it an administrator with these permissions:
-                        </p>
-                        <motion.ul
-                          className="mt-3 space-y-2"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                        >
-                          <motion.li className="flex items-center text-gray-700" initial={{
-                            x: -10,
-                            opacity: 0
-                          }} animate={{
-                            x: 0,
-                            opacity: 1
-                          }} transition={{
-                            delay: 0.6
-                          }}>
-                            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Delete messages</span>
-                          </motion.li>
-                          <motion.li className="flex items-center text-gray-700" initial={{
-                            x: -10,
-                            opacity: 0
-                          }} animate={{
-                            x: 0,
-                            opacity: 1
-                          }} transition={{
-                            delay: 0.7
-                          }}>
-                            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Ban users</span>
-                          </motion.li>
-                          <motion.li className="flex items-center text-gray-700" initial={{
-                            x: -10,
-                            opacity: 0
-                          }} animate={{
-                            x: 0,
-                            opacity: 1
-                          }} transition={{
-                            delay: 0.8
-                          }}>
-                            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                            <span>Add new admins</span>
-                          </motion.li>
-                        </motion.ul>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      className="flex gap-4"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                          2
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                          <Copy className="h-5 w-5 text-indigo-600" />
-                          Copy Verification Code
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          Copy this verification code and paste it in your Telegram group or channel
-                        </p>
-                        <motion.div
-                          className="mt-4 flex flex-col sm:flex-row items-center gap-3"
-                          initial={{ y: 10, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: 0.6 }}
-                        >
-                          <code className="px-6 py-3 bg-indigo-50 rounded-lg text-lg font-mono border border-indigo-100 text-indigo-700 w-full sm:w-auto text-center">
-                            {verificationCode}
-                          </code>
-                          <Button
-                            onClick={() => copyToClipboard(verificationCode)}
-                            className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white shadow-md w-full sm:w-auto"
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Code
-                          </Button>
-                        </motion.div>
-                        <motion.p
-                          className="mt-3 text-sm text-gray-500 flex items-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.7 }}
-                        >
-                          <span className="bg-amber-100 text-amber-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">Note</span>
-                          The message will be automatically deleted once verified
-                        </motion.p>
-                      </div>
-                    </motion.div>
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
                   </div>
-                </Card>
-              </motion.div>
-
-              <div className="pt-6 flex justify-between items-center">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 }}
-                  whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                >
-                  <Button variant="outline" onClick={goToPreviousStep} className="gap-2">
-                    <ArrowLeft size={16} />
-                    Back
-                  </Button>
-                </motion.div>
-
-                {!isTelegramConnected && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                  >
-                    <Button
-                      className={`${verificationStatus === 'error' ? 'bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'} text-white shadow-md`}
-                      onClick={verifyConnection}
-                      disabled={isVerifying}
-                    >
-                      {isVerifying ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Verifying...
-                        </>
-                      ) : verificationStatus === 'error' ? (
-                        <>
-                          <CheckCircle className="mr-2 h-5 w-5" />
-                          Try Again
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-2 h-5 w-5" />
-                          Verify Connection
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-                )}
-
-                {isTelegramConnected && !connectedCommunity && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                    whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                  >
-                    <Button onClick={goToNextStep} size="lg" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-                      Continue to Platform Plan
-                      <ArrowRight size={16} />
-                    </Button>
-                  </motion.div>
-                )}
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h3 className="text-base font-medium mb-1">3. Verify connection</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    After posting the code, click the verify button below
+                  </p>
+                  
+                  {attemptCount > 1 && (
+                    <Alert className="mt-3 mb-2">
+                      <AlertTitle>Verification Tips</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        Make sure:
+                        <ul className="list-disc pl-5 mt-1 space-y-1">
+                          <li>The bot is added as an admin with post permission</li>
+                          <li>You posted the exact verification code</li>
+                          <li>The verification code was posted as a regular message in the channel</li>
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               </div>
             </>
           )}
-        </motion.div>
-      )}
-
-      <Dialog open={showSuccessDialog} onOpenChange={handleCloseSuccessDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center flex flex-col items-center gap-4">
-              <motion.div
-                className="flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 shadow-lg"
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <PartyPopper className="h-10 w-10 text-white" />
-              </motion.div>
-              <motion.div
-                className="space-y-2"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <h3 className="text-2xl font-bold text-gray-900 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  Successfully Connected! 🎉
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Your Telegram community is now connected to Membify 🤖 <br />
-                  Click below to continue to the next step.
-                </p>
-                <motion.div
-                  className="pt-4"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.3 }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <Button onClick={handleCloseSuccessDialog} className="w-full bg-gradient-to-r from-indigo-500 to-blue-500">
-                    Continue to Next Step
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </motion.div>
-              </motion.div>
-            </DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </OnboardingLayout>
+        </CardContent>
+        <CardFooter className="flex justify-between border-t px-6 py-4">
+          {isVerified ? (
+            <Button 
+              onClick={onComplete} 
+              className="w-full"
+            >
+              Continue
+            </Button>
+          ) : (
+            <Button 
+              onClick={verifyConnection} 
+              className="w-full"
+              disabled={isLoading || isVerifying || !verificationCode}
+            >
+              {isVerifying ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : attemptCount > 0 ? (
+                'Verify Again'
+              ) : (
+                'Verify Connection'
+              )}
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
+
+export default ConnectTelegramStep;

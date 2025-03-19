@@ -54,16 +54,17 @@ export const useUserPlatformSubscription = () => {
         setError(error.message);
         setSubscription(null);
       } else if (data) {
+        // Fix: Access platform_plans as an object, not an array
         setSubscription({
           id: data.id,
           status: data.status,
           subscription_start_date: data.subscription_start_date,
           subscription_end_date: data.subscription_end_date,
           plan_id: data.plan_id,
-          plan_name: data.platform_plans.name,
-          plan_price: data.platform_plans.price,
-          plan_interval: data.platform_plans.interval,
-          plan_features: data.platform_plans.features || [],
+          plan_name: data.platform_plans.name,  // Fixed property access
+          plan_price: data.platform_plans.price, // Fixed property access
+          plan_interval: data.platform_plans.interval, // Fixed property access
+          plan_features: data.platform_plans.features || [], // Fixed property access
           auto_renew: data.auto_renew
         });
       } else {

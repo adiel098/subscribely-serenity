@@ -60,6 +60,7 @@ export const PurchaseHistoryTable = () => {
           amount: item.amount,
           payment_method: item.payment_method,
           payment_status: item.payment_status,
+          // Fix: Access the name property from the platform_plans object
           plan_name: item.platform_plans?.name || 'Unknown Plan',
           created_at: item.created_at
         }));

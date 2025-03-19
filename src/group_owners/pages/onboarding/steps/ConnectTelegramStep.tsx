@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
 import { ConnectedCommunitiesList } from "@/group_owners/components/onboarding/telegram/ConnectedCommunitiesList";
+import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { MessageCircle } from "lucide-react";
 
 const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => void, activeStep: boolean }) => {
   const { user } = useAuth();
@@ -257,14 +259,12 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
   }, [isVerified, activeStep, lastConnectedCommunity]);
   
   return (
-    <div className="space-y-6 py-6">
-      <CardHeader className="px-0 pb-6">
-        <CardTitle className="text-2xl">Connect Your Telegram Channel</CardTitle>
-        <CardDescription>
-          Link your Telegram channel or group to enable subscription management
-        </CardDescription>
-      </CardHeader>
-      
+    <OnboardingLayout
+      currentStep="connect-telegram"
+      title="Connect Your Telegram Channel"
+      description="Link your Telegram channel or group to enable subscription management"
+      icon={<MessageCircle className="w-6 h-6" />}
+    >
       {isVerified && lastConnectedCommunity ? (
         <>
           <ConnectedChannelDisplay 
@@ -370,7 +370,7 @@ const ConnectTelegramStep = ({ onComplete, activeStep }: { onComplete: () => voi
           isRefreshingPhoto={isRefreshingPhoto}
         />
       )}
-    </div>
+    </OnboardingLayout>
   );
 };
 

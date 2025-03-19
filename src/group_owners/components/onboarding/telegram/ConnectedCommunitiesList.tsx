@@ -36,7 +36,7 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
         {communities.map(community => (
           <div 
             key={community.id}
-            className="flex items-center gap-3 p-3 rounded-lg border border-indigo-100 bg-white/90 shadow-sm"
+            className="flex items-center gap-3 p-3 rounded-lg border border-indigo-100 bg-white shadow-sm"
           >
             <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center">
               <CommunityAvatar

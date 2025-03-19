@@ -2,9 +2,8 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MessageCircle, RefreshCw, Plus } from "lucide-react";
+import { ArrowRight, MessageCircle, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { useTelegramChatPhoto } from "@/telegram-mini-app/hooks/useTelegramChatPhoto";
 import { useTelegramChannelInfo } from "@/telegram-mini-app/hooks/useTelegramChannelInfo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommunityAvatar } from "@/group_owners/components/community-selector/photo-handling/CommunityAvatar";
@@ -29,12 +28,6 @@ export const ConnectedChannelDisplay: React.FC<ConnectedChannelDisplayProps> = (
   onRefreshPhoto,
   isRefreshingPhoto
 }) => {
-  const { photoUrl, loading: photoLoading } = useTelegramChatPhoto({
-    communityId: community.id,
-    telegramChatId: community.telegram_chat_id,
-    existingPhotoUrl: community.telegram_photo_url
-  });
-
   const { description, loading: descriptionLoading } = useTelegramChannelInfo({
     communityId: community.id,
     telegramChatId: community.telegram_chat_id
@@ -47,27 +40,22 @@ export const ConnectedChannelDisplay: React.FC<ConnectedChannelDisplayProps> = (
       transition={{ duration: 0.5 }}
       className="mb-6"
     >
-      <Card className="overflow-hidden border border-indigo-100 bg-white/90 backdrop-blur-sm shadow-md">
+      <Card className="overflow-hidden border border-indigo-100 bg-white shadow-md">
         <CardContent className="p-6">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
-                {photoLoading ? (
-                  <Skeleton className="h-16 w-16 rounded-full" />
-                ) : (
-                  <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center">
-                    {community && (
-                      <CommunityAvatar
-                        community={community as any}
-                        photoUrl={photoUrl || undefined}
-                        isRefreshing={isRefreshingPhoto}
-                        onRefresh={onRefreshPhoto}
-                        size="lg"
-                        showRefreshButton={true}
-                      />
-                    )}
-                  </div>
-                )}
+                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-indigo-100 bg-indigo-50 flex items-center justify-center">
+                  {community && (
+                    <CommunityAvatar
+                      community={community as any}
+                      isRefreshing={isRefreshingPhoto}
+                      onRefresh={onRefreshPhoto}
+                      size="lg"
+                      showRefreshButton={true}
+                    />
+                  )}
+                </div>
                 <motion.div
                   className="absolute -bottom-1 -right-1 bg-green-500 text-white rounded-full p-1"
                   initial={{ scale: 0 }}

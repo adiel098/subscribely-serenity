@@ -1,116 +1,138 @@
 
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
-import { useEffect, useState } from "react";
-import { WelcomeStep } from "./steps/WelcomeStep";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
+import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
+import WelcomeStep from "./steps/WelcomeStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import { PlatformPlanStep } from "./steps/PlatformPlanStep";
+import CreatePlansStep from "./steps/CreatePlansStep";
 import { PaymentMethodStep } from "./steps/PaymentMethodStep";
-import CompleteStep from "./steps/CompleteStep";
+import CompletionStep from "./steps/CompletionStep";
 
 const Onboarding = () => {
-  const { state, goToNextStep, goToPreviousStep, saveCurrentStep, completeOnboarding, refreshStatus } = useOnboarding();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // On initial load, get the current pathname and navigate directly to it
-  // This prevents the "flashing" of welcome page before redirecting
-  useEffect(() => {
-    if (isInitialLoad) {
-      const currentPath = location.pathname.split('/').pop();
-      
-      // If we have a valid step in the URL and it's not already the current step in state
-      if (currentPath && currentPath !== 'onboarding' && currentPath !== state.currentStep) {
-        // Only save if it's a valid onboarding step
-        if (['welcome', 'connect-telegram', 'platform-plan', 'payment-method', 'complete'].includes(currentPath)) {
-          console.log(`Direct navigation to ${currentPath}, updating state`);
-          saveCurrentStep(currentPath as any);
-        }
-      }
-      setIsInitialLoad(false);
-    }
-  }, [isInitialLoad, location.pathname, state.currentStep]);
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [hasPlatformPlan, setHasPlatformPlan] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // When the current step changes in the state, navigate to the corresponding route
-  // But only after initial load to prevent redundant navigations
+  const { 
+    saveCurrentStep, 
+    goToNextStep, 
+    goToPreviousStep,
+    completeOnboarding
+  } = useOnboardingNavigation(currentStep, setCurrentStep, setIsCompleted);
+
+  // Fetch onboarding state
   useEffect(() => {
-    if (!isInitialLoad && state.currentStep) {
-      navigate(`/onboarding/${state.currentStep}`, { replace: true });
-    }
-  }, [state.currentStep, navigate, isInitialLoad]);
-  
-  // If onboarding is completed, redirect to dashboard
+    const fetchOnboardingState = async () => {
+      if (!user) return;
+      
+      try {
+        // Get user profile to check onboarding status
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('onboarding_completed, onboarding_step')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        if (profile) {
+          setIsCompleted(profile.onboarding_completed || false);
+          
+          if (profile.onboarding_step) {
+            setCurrentStep(profile.onboarding_step as OnboardingStep);
+          }
+        }
+        
+        // Check if the user has a platform plan
+        const { data: platformSubscription, error: subscriptionError } = await supabase
+          .from('platform_subscriptions')
+          .select('id')
+          .eq('owner_id', user.id)
+          .eq('status', 'active')
+          .limit(1);
+          
+        if (subscriptionError) throw subscriptionError;
+        
+        setHasPlatformPlan(platformSubscription && platformSubscription.length > 0);
+        
+      } catch (error) {
+        console.error("Error fetching onboarding state:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOnboardingState();
+  }, [user]);
+
   useEffect(() => {
-    if (state.isCompleted) {
-      console.log("Onboarding is completed, redirecting to dashboard");
-      navigate("/dashboard", { replace: true });
+    if (isCompleted && !isLoading) {
+      // Redirect to dashboard if onboarding is complete
+      navigate('/dashboard');
     }
-  }, [state.isCompleted, navigate]);
-  
-  const handleStepNavigation = (currentStep) => {
-    goToNextStep(currentStep);
-  };
-  
-  const handleBackNavigation = (currentStep) => {
-    goToPreviousStep(currentStep);
-  };
-  
+  }, [isCompleted, isLoading, navigate]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/onboarding/welcome" replace />} />
-      <Route 
-        path="/welcome" 
-        element={
-          <WelcomeStep 
-            goToNextStep={() => handleStepNavigation('welcome')} 
-          />
-        } 
-      />
-      <Route 
-        path="/connect-telegram" 
-        element={
-          <ConnectTelegramStep 
-            onComplete={() => handleStepNavigation('connect-telegram')}
-            activeStep={state.currentStep === 'connect-telegram'} 
-            goToPreviousStep={() => handleBackNavigation('connect-telegram')}
-          />
-        } 
-      />
-      <Route 
-        path="/platform-plan" 
-        element={
-          <PlatformPlanStep 
-            goToNextStep={() => handleStepNavigation('platform-plan')} 
-            goToPreviousStep={() => handleBackNavigation('platform-plan')}
-            hasPlatformPlan={state.hasPlatformPlan}
-            saveCurrentStep={saveCurrentStep}
-          />
-        } 
-      />
-      <Route 
-        path="/payment-method" 
-        element={
-          <PaymentMethodStep 
-            goToNextStep={() => handleStepNavigation('payment-method')} 
-            goToPreviousStep={() => handleBackNavigation('payment-method')}
-            hasPaymentMethod={state.hasPaymentMethod}
-            saveCurrentStep={saveCurrentStep}
-          />
-        } 
-      />
-      <Route 
-        path="/complete" 
-        element={
-          <CompleteStep 
-            completeOnboarding={completeOnboarding}
-            goToPreviousStep={() => handleBackNavigation('complete')}
-            state={state}
-          />
-        } 
-      />
-      <Route path="*" element={<Navigate to="/onboarding/welcome" replace />} />
-    </Routes>
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {currentStep === "welcome" && (
+        <WelcomeStep 
+          onComplete={() => goToNextStep('welcome')} 
+          activeStep={currentStep === "welcome"}
+        />
+      )}
+      
+      {currentStep === "connect-telegram" && (
+        <ConnectTelegramStep 
+          onComplete={() => goToNextStep('connect-telegram')} 
+          activeStep={currentStep === "connect-telegram"}
+          goToPreviousStep={() => goToPreviousStep('connect-telegram')}
+        />
+      )}
+      
+      {currentStep === "platform-plan" && (
+        <PlatformPlanStep 
+          goToNextStep={() => goToNextStep('platform-plan')} 
+          goToPreviousStep={() => goToPreviousStep('platform-plan')}
+          hasPlatformPlan={hasPlatformPlan}
+          saveCurrentStep={saveCurrentStep}
+        />
+      )}
+      
+      {currentStep === "create-plans" && (
+        <CreatePlansStep 
+          goToNextStep={() => goToNextStep('create-plans')} 
+          goToPreviousStep={() => goToPreviousStep('create-plans')}
+          saveCurrentStep={saveCurrentStep}
+        />
+      )}
+      
+      {currentStep === "payment-method" && (
+        <PaymentMethodStep 
+          goToNextStep={() => goToNextStep('payment-method')} 
+          goToPreviousStep={() => goToPreviousStep('payment-method')}
+          saveCurrentStep={saveCurrentStep}
+        />
+      )}
+      
+      {currentStep === "complete" && (
+        <CompletionStep 
+          onComplete={completeOnboarding} 
+          activeStep={currentStep === "complete"}
+          goToPreviousStep={() => goToPreviousStep('complete')}
+        />
+      )}
+    </div>
   );
 };
 

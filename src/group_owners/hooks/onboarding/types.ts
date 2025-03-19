@@ -1,10 +1,11 @@
 
-export type OnboardingStep = "welcome" | "connect-telegram" | "platform-plan" | "payment-method" | "complete";
+export type OnboardingStep = "welcome" | "connect-telegram" | "platform-plan" | "create-plans" | "payment-method" | "complete";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "connect-telegram",
   "platform-plan",
+  "create-plans",
   "payment-method",
   "complete"
 ];

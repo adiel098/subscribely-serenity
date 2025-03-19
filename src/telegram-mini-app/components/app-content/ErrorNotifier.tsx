@@ -1,7 +1,9 @@
 
 import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { motion } from "framer-motion";
 
 interface ErrorNotifierProps {
   errorState: string | null;
@@ -22,18 +24,27 @@ export const ErrorNotifier: React.FC<ErrorNotifierProps> = ({ errorState }) => {
     }
   }, [errorState, toast]);
 
-  // If there's an error, we also show it on screen for development purposes
+  // If there's an error, we also show it on screen
   if (errorState) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white p-3 text-sm">
-        <div className="flex items-center">
-          <AlertCircle className="mr-2 h-4 w-4" />
-          <span>Error: {errorState}</span>
-        </div>
-        <div className="mt-1 text-xs opacity-80">
-          Check the console logs for more details
-        </div>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed top-0 left-0 right-0 z-50 p-4"
+      >
+        <Alert className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50 text-red-800 shadow-lg">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertTitle className="text-red-800 font-semibold flex items-center gap-2">
+            Error Detected
+          </AlertTitle>
+          <AlertDescription className="text-red-700">
+            <p>{errorState}</p>
+            <p className="mt-1 text-xs opacity-80">
+              Please check the console logs for more details or try refreshing the page.
+            </p>
+          </AlertDescription>
+        </Alert>
+      </motion.div>
     );
   }
 

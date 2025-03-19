@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { TelegramVerificationError } from './TelegramVerificationError';
+
 interface TelegramVerificationFormProps {
   verificationCode: string | null;
   isLoading: boolean;
@@ -15,6 +18,7 @@ interface TelegramVerificationFormProps {
   onBack?: () => void;
   showBackButton?: boolean;
 }
+
 export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> = ({
   verificationCode,
   isLoading,
@@ -39,6 +43,10 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
     });
     setTimeout(() => setCopied(false), 3000);
   };
+  
+  // Show error message if verification attempts have been made and failed
+  const showError = attemptCount > 0;
+  
   return <motion.div initial={{
     opacity: 0,
     y: 20
@@ -51,6 +59,9 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
       <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
         <CardContent className="p-0">
           <div className="space-y-10">
+            {/* Display error message if verification has been attempted and failed */}
+            <TelegramVerificationError showError={showError} errorCount={attemptCount} />
+            
             {/* Step 1 */}
             <motion.div className="flex flex-col md:flex-row gap-6" initial={{
             opacity: 0,
@@ -154,20 +165,6 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
                 
               </div>
               <div className="flex-1">
-                
-                
-
-                {attemptCount > 1 && <Alert className="mt-3 mb-3 border-amber-100 bg-amber-50">
-                    <AlertTitle className="text-amber-800">Verification Tips</AlertTitle>
-                    <AlertDescription className="text-amber-700 text-sm">
-                      Make sure:
-                      <ul className="list-disc pl-5 mt-1 space-y-1">
-                        <li>The bot is added as an admin with proper permissions</li>
-                        <li>You posted the exact verification code</li>
-                        <li>The verification code was posted as a regular message in the channel</li>
-                      </ul>
-                    </AlertDescription>
-                  </Alert>}
                 
                 <div className="mt-4 flex flex-col-reverse sm:flex-row gap-3 sm:justify-between">
                   {showBackButton && onBack && <Button variant="outline" onClick={onBack} className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all">

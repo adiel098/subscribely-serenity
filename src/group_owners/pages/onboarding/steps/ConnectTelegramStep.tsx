@@ -38,6 +38,7 @@ const ConnectTelegramStep = ({
     attemptCount,
     hasTelegram,
     duplicateChatId,
+    lastVerifiedCommunity,
     setIsVerified,
     verifyConnection,
     checkVerificationStatus
@@ -92,14 +93,25 @@ const ConnectTelegramStep = ({
   
   // Automatically switch to "add another group" mode when verification succeeds
   useEffect(() => {
-    if (isVerified && lastConnectedCommunity && isAddingAnotherGroup) {
+    if (isVerified && (lastConnectedCommunity || lastVerifiedCommunity) && isAddingAnotherGroup) {
       // Refresh the list of communities after adding a new one
       fetchConnectedCommunities();
       // Reset the verification process to allow adding more communities
       setIsVerified(false);
       setIsAddingAnotherGroup(false);
     }
-  }, [isVerified, lastConnectedCommunity]);
+  }, [isVerified, lastConnectedCommunity, lastVerifiedCommunity]);
+  
+  // Refresh communities when lastVerifiedCommunity changes
+  useEffect(() => {
+    if (lastVerifiedCommunity) {
+      console.log('Detected new verified community, refreshing community list');
+      fetchConnectedCommunities();
+    }
+  }, [lastVerifiedCommunity]);
+  
+  // If there is a lastVerifiedCommunity but no lastConnectedCommunity, use the verified one
+  const displayedCommunity = lastConnectedCommunity || lastVerifiedCommunity;
   
   return (
     <OnboardingLayout
@@ -109,11 +121,11 @@ const ConnectTelegramStep = ({
       icon={<MessageCircle className="w-6 h-6" />}
       showBackButton={false}
     >
-      {isVerified && lastConnectedCommunity ? (
+      {isVerified && displayedCommunity ? (
         // Show the successfully connected channel with options to add more or continue
         <>
           <ConnectedChannelDisplay 
-            community={lastConnectedCommunity}
+            community={displayedCommunity}
             onAddAnotherGroup={handleAddAnotherGroup}
             onContinue={handleContinueToNextStep}
             onRefreshPhoto={handleRefreshPhoto}
@@ -155,7 +167,7 @@ const ConnectTelegramStep = ({
       {/* Always display connected communities if there are any */}
       {connectedCommunities.length > 0 && (
         <ConnectedCommunitiesList 
-          communities={isVerified && lastConnectedCommunity ? connectedCommunities.slice(1) : connectedCommunities}
+          communities={isVerified && displayedCommunity ? connectedCommunities.slice(1) : connectedCommunities}
           onRefreshPhoto={handleRefreshPhoto}
           isRefreshingPhoto={isRefreshingPhoto}
           showAddMoreButton={!isVerified && connectedCommunities.length > 0}

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-interface TelegramVerificationErrorProps {
+export interface TelegramVerificationErrorProps {
   title?: string;
   description?: string;
   troubleshootingSteps?: string[];

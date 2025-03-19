@@ -10,6 +10,7 @@ export function useTelegramVerification(userId: string | undefined, verification
   const [attemptCount, setAttemptCount] = useState(0);
   const [hasTelegram, setHasTelegram] = useState(false);
   const [duplicateChatId, setDuplicateChatId] = useState<string | null>(null);
+  const [lastVerifiedCommunity, setLastVerifiedCommunity] = useState<any>(null);
 
   // Reset attempt count when verification code changes
   useEffect(() => {
@@ -21,6 +22,8 @@ export function useTelegramVerification(userId: string | undefined, verification
     if (!userId || !verificationCode) return false;
     
     try {
+      console.log('Checking verification status for user:', userId, 'with code:', verificationCode);
+      
       // Call the edge function to check verification status
       const { data, error } = await supabase.functions.invoke('check-verification-status', {
         body: {
@@ -41,6 +44,7 @@ export function useTelegramVerification(userId: string | undefined, verification
         if (data.communities && data.communities.length > 0) {
           // Get the most recently created community
           const latestCommunity = data.communities[0];
+          setLastVerifiedCommunity(latestCommunity);
           
           // Check if this chat ID already exists for a different owner
           if (latestCommunity.telegram_chat_id) {
@@ -83,6 +87,8 @@ export function useTelegramVerification(userId: string | undefined, verification
     setDuplicateChatId(null); // Reset duplicate status
     
     try {
+      console.log('Attempting to verify connection with code:', verificationCode);
+      
       // Check verification status through dedicated function
       const isVerified = await checkVerificationStatus();
       
@@ -99,6 +105,42 @@ export function useTelegramVerification(userId: string | undefined, verification
           variant: 'destructive'
         });
       } else {
+        // Try to check existing communities for this user that might have been created
+        // This handles cases where the webhook processed successfully but frontend didn't catch it
+        const { data: recentCommunities, error: commError } = await supabase
+          .from('communities')
+          .select('id, name, telegram_chat_id, created_at, telegram_photo_url')
+          .eq('owner_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (commError) {
+          console.error('Error fetching recent communities:', commError);
+        } else if (recentCommunities && recentCommunities.length > 0) {
+          // Check if any recent community was created in last 60 seconds
+          const now = new Date();
+          const recentTime = new Date(now.getTime() - 60 * 1000); // 60 seconds ago
+          
+          const veryRecentCommunity = recentCommunities.find(comm => {
+            const commCreated = new Date(comm.created_at);
+            return commCreated > recentTime;
+          });
+          
+          if (veryRecentCommunity) {
+            console.log('Found recently created community:', veryRecentCommunity);
+            setLastVerifiedCommunity(veryRecentCommunity);
+            setIsVerified(true);
+            setHasTelegram(true);
+            
+            toast({
+              title: 'Success!',
+              description: 'Telegram channel connected successfully.',
+            });
+            
+            return;
+          }
+        }
+        
         // If not verified, and this is not the first attempt, show warning
         if (attemptCount > 0) {
           toast({
@@ -113,7 +155,15 @@ export function useTelegramVerification(userId: string | undefined, verification
           });
           
           // Try again after delay (webhook might need time to process)
-          setTimeout(checkVerificationStatus, 5000);
+          setTimeout(async () => {
+            const isVerified = await checkVerificationStatus();
+            if (isVerified) {
+              toast({
+                title: 'Success!',
+                description: 'Telegram channel connected successfully.',
+              });
+            }
+          }, 5000);
         }
       }
     } catch (err) {
@@ -134,6 +184,7 @@ export function useTelegramVerification(userId: string | undefined, verification
     attemptCount,
     hasTelegram,
     duplicateChatId,
+    lastVerifiedCommunity,
     setIsVerified,
     verifyConnection,
     checkVerificationStatus

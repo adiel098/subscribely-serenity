@@ -1,12 +1,12 @@
 
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
-import WelcomeStep from "./steps/WelcomeStep";
-import ConnectTelegramStep from "./steps/ConnectTelegramStep";
-import PlatformPlanStep from "./steps/PlatformPlanStep";
-import PaymentMethodStep from "./steps/PaymentMethodStep";
-import CompleteStep from "./steps/CompleteStep";
 import { useEffect } from "react";
+import { WelcomeStep } from "./steps/WelcomeStep";
+import ConnectTelegramStep from "./steps/ConnectTelegramStep";
+import { PlatformPlanStep } from "./steps/PlatformPlanStep";
+import { PaymentMethodStep } from "./steps/PaymentMethodStep";
+import CompleteStep from "./steps/CompleteStep";
 
 const Onboarding = () => {
   const { state, goToNextStep, goToPreviousStep, saveCurrentStep, completeOnboarding, refreshStatus } = useOnboarding();
@@ -50,10 +50,8 @@ const Onboarding = () => {
         path="/connect-telegram" 
         element={
           <ConnectTelegramStep 
-            goToNextStep={() => handleStepNavigation('connect-telegram')} 
-            goToPreviousStep={() => handleBackNavigation('connect-telegram')}
-            isTelegramConnected={state.isTelegramConnected}
-            saveCurrentStep={saveCurrentStep}
+            onComplete={() => handleStepNavigation('connect-telegram')}
+            activeStep={state.currentStep === 'connect-telegram'} 
           />
         } 
       />

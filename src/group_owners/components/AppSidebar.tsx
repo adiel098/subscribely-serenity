@@ -1,5 +1,4 @@
-
-import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, TrendingUp, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
+import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -27,11 +26,6 @@ const menuItems = [
     title: "Payment Methods",
     icon: Wallet,
     path: "/payment-methods"
-  },
-  {
-    title: "Analytics",
-    icon: TrendingUp,
-    path: "/analytics"
   },
   {
     title: "Bot Settings",

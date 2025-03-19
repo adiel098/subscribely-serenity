@@ -1,3 +1,4 @@
+
 import { Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -20,7 +21,6 @@ import OwnerDashboard from "@/group_owners/pages/Dashboard";
 import Subscribers from "@/group_owners/pages/Subscribers";
 import Subscriptions from "@/group_owners/pages/Subscriptions";
 import PaymentMethods from "@/group_owners/pages/PaymentMethods";
-import Analytics from "@/group_owners/pages/Analytics";
 import BotSettings from "@/group_owners/pages/BotSettings";
 import PlatformPlans from "@/group_owners/pages/PlatformPlans";
 import PlatformPayment from "@/group_owners/pages/PlatformPayment";
@@ -78,13 +78,6 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <DashboardLayout>
             <PaymentMethods />
-          </DashboardLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="/analytics" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <Analytics />
           </DashboardLayout>
         </ProtectedRoute>
       } />

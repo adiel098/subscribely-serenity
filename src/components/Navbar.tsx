@@ -11,7 +11,6 @@ const Navbar = () => {
                             location.pathname.includes('/subscribers') ||
                             location.pathname.includes('/subscriptions') ||
                             location.pathname.includes('/messages') ||
-                            location.pathname.includes('/analytics') ||
                             location.pathname.includes('/bot-settings');
   
   // Determine which header to render based on the route

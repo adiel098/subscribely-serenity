@@ -2,15 +2,15 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock } from "lucide-react";
-import { Plan } from "@/telegram-mini-app/types/community.types";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 import { motion } from "framer-motion";
-import { Subscription } from "../services/memberService";
+import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { isSubscriptionActive } from "./subscriptions/utils";
 
 interface SubscriptionPlansProps {
-  plans: Plan[];
-  selectedPlan: Plan | null;
-  onPlanSelect: (plan: Plan) => void;
+  plans: SubscriptionPlan[];
+  selectedPlan: SubscriptionPlan | null;
+  onPlanSelect: (plan: SubscriptionPlan) => void;
   userSubscriptions?: Subscription[];
 }
 

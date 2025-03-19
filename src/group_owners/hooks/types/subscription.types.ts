@@ -1,5 +1,6 @@
 
 // If this file doesn't exist, we'll create it with the necessary types
+export type SubscriptionStatus = 'active' | 'expired' | 'canceled' | 'inactive';
 
 export interface PaymentMethod {
   id: string;
@@ -14,12 +15,14 @@ export interface PaymentMethod {
 
 export type PaymentProvider = 'stripe' | 'paypal' | 'crypto';
 
+export type SubscriptionInterval = 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
+
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  interval: 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
+  interval: SubscriptionInterval;
   is_active: boolean;
   community_id: string;
   features?: string[];
@@ -31,11 +34,20 @@ export interface Subscription {
   id: string;
   user_id: string;
   plan_id: string;
-  status: 'active' | 'canceled' | 'expired';
+  status: SubscriptionStatus;
   start_date: string;
   end_date: string;
   payment_method?: string;
   auto_renew?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CreateSubscriptionPlanData {
+  community_id: string;
+  name: string;
+  description?: string;
+  price: number;
+  interval: SubscriptionInterval;
+  features?: string[];
 }

@@ -1,7 +1,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreateSubscriptionPlanData } from "../types/subscription.types";
+import { CreateSubscriptionPlanData } from "@/group_owners/hooks/types/subscription.types";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 
 export const useCreateSubscriptionPlan = (communityId: string) => {

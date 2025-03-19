@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Plan } from "@/telegram-mini-app/types/community.types";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 import { Calendar, Sparkle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 interface SubscriptionDurationProps {
-  selectedPlan: Plan;
+  selectedPlan: SubscriptionPlan;
   activeSubscription?: Subscription | null;
 }
 
@@ -20,7 +20,7 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
   // Calculate how many days would be added from existing subscription
   const remainingDays = activeSubscription ? getDaysRemaining(activeSubscription) : 0;
   
-  const getEndDate = (plan: Plan) => {
+  const getEndDate = (plan: SubscriptionPlan) => {
     const startDate = new Date();
     const endDate = new Date(startDate);
     
@@ -55,7 +55,7 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
     return `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear()}`;
   };
 
-  const getDurationText = (plan: Plan) => {
+  const getDurationText = (plan: SubscriptionPlan) => {
     let baseDuration = "";
     
     switch (plan.interval) {

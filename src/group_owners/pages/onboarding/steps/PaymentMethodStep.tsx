@@ -10,12 +10,14 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentMethodStepProps {
   goToNextStep: () => void;
+  goToPreviousStep: () => void;
   hasPaymentMethod: boolean;
   saveCurrentStep: (step: string) => void;
 }
 
 export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({ 
   goToNextStep, 
+  goToPreviousStep,
   hasPaymentMethod,
   saveCurrentStep
 }) => {
@@ -65,6 +67,8 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
       title="Set Up Payment Methods"
       description="Add payment options for your subscribers"
       icon={<CreditCard size={24} />}
+      onBack={goToPreviousStep}
+      showBackButton={true}
     >
       <div className="space-y-6">
         <p className="text-gray-600">

@@ -158,10 +158,24 @@ export const useOnboarding = () => {
     }
   };
 
+  const goToPreviousStep = (currentStep: OnboardingStep) => {
+    console.log(`Moving from ${currentStep} to previous step`);
+    const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
+    
+    if (currentIndex > 0) {
+      const previousStep = ONBOARDING_STEPS[currentIndex - 1];
+      console.log(`Previous step will be: ${previousStep}`);
+      saveCurrentStep(previousStep);
+    } else {
+      console.log('Already at the first step');
+    }
+  };
+
   return {
     state,
     isLoading,
     goToNextStep,
+    goToPreviousStep,
     saveCurrentStep,
     completeOnboarding,
     refreshStatus: fetchOnboardingStatus

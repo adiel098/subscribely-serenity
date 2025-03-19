@@ -3,6 +3,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import { StepProgress } from "./StepProgress";
 import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -11,6 +14,8 @@ interface OnboardingLayoutProps {
   description: string;
   icon?: React.ReactNode;
   showProgress?: boolean;
+  onBack?: () => void;
+  showBackButton?: boolean;
 }
 
 export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
@@ -19,10 +24,29 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   title,
   description,
   icon,
-  showProgress = true
+  showProgress = true,
+  onBack,
+  showBackButton = false
 }) => {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 relative">
+      {/* Logout Button in the top-right corner */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleLogout}
+        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 flex items-center gap-1"
+      >
+        <LogOut size={16} />
+        <span>Logout</span>
+      </Button>
+
       <div className="w-full max-w-3xl">
         {showProgress && (
           <div className="mb-8">
@@ -48,6 +72,19 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           <div className="p-8">
             {children}
           </div>
+
+          {showBackButton && onBack && (
+            <div className="px-8 pb-6">
+              <Button
+                variant="outline"
+                onClick={onBack}
+                className="text-gray-600"
+                size="sm"
+              >
+                Back
+              </Button>
+            </div>
+          )}
         </motion.div>
         
         <motion.div 

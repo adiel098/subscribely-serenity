@@ -17,6 +17,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ goToNextStep }) => {
       title="Welcome to Membify! 🚀"
       description="Let's get you set up to manage your Telegram communities with paid memberships."
       icon={<Rocket size={24} />}
+      showBackButton={false}
     >
       <div className="space-y-6">
         <p className="text-gray-600">

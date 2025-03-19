@@ -9,11 +9,13 @@ import confetti from 'canvas-confetti';
 
 interface CompleteStepProps {
   completeOnboarding: () => void;
+  goToPreviousStep: () => void;
   state: any; // Using any type for simplicity
 }
 
 export const CompleteStep: React.FC<CompleteStepProps> = ({ 
   completeOnboarding,
+  goToPreviousStep,
   state 
 }) => {
   const navigate = useNavigate();
@@ -62,6 +64,8 @@ export const CompleteStep: React.FC<CompleteStepProps> = ({
       description="You're all set to start managing your Telegram communities"
       icon={<CheckCircle size={24} />}
       showProgress={false}
+      onBack={goToPreviousStep}
+      showBackButton={true}
     >
       <div className="space-y-8 text-center">
         <motion.div

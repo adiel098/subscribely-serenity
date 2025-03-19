@@ -7,15 +7,18 @@ import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle } from "lucide-rea
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircleIcon } from "lucide-react";
 
 interface ConnectTelegramStepProps {
   goToNextStep: () => void;
+  goToPreviousStep: () => void;
   isTelegramConnected: boolean;
   saveCurrentStep: (step: string) => void;
 }
 
 export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({ 
   goToNextStep, 
+  goToPreviousStep,
   isTelegramConnected,
   saveCurrentStep
 }) => {
@@ -36,6 +39,8 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       title="Connect Your Telegram Group"
       description="Link your Telegram group to enable membership management"
       icon={<MessageCircle size={24} />}
+      onBack={goToPreviousStep}
+      showBackButton={true}
     >
       <div className="space-y-6">
         {isTelegramConnected ? (
@@ -115,6 +120,3 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
     </OnboardingLayout>
   );
 };
-
-// This was missing from the imports
-import { CheckCircleIcon } from "lucide-react";

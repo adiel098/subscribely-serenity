@@ -22,12 +22,14 @@ interface PlatformPlan {
 
 interface PlatformPlanStepProps {
   goToNextStep: () => void;
+  goToPreviousStep: () => void;
   hasPlatformPlan: boolean;
   saveCurrentStep: (step: string) => void;
 }
 
 export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({ 
   goToNextStep, 
+  goToPreviousStep,
   hasPlatformPlan,
   saveCurrentStep
 }) => {
@@ -127,6 +129,8 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
       title="Choose Your Platform Plan"
       description="Select a subscription plan that fits your community needs"
       icon={<Zap size={24} />}
+      onBack={goToPreviousStep}
+      showBackButton={true}
     >
       <div className="space-y-6">
         {isLoading ? (

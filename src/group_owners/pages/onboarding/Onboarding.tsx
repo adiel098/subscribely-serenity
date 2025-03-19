@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 const Onboarding = () => {
-  const { state, isLoading, goToNextStep, saveCurrentStep, completeOnboarding, refreshStatus } = useOnboarding();
+  const { state, isLoading, goToNextStep, goToPreviousStep, saveCurrentStep, completeOnboarding, refreshStatus } = useOnboarding();
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -40,6 +40,10 @@ const Onboarding = () => {
     goToNextStep(currentStep);
   };
   
+  const handleBackNavigation = (currentStep) => {
+    goToPreviousStep(currentStep);
+  };
+  
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/onboarding/welcome" replace />} />
@@ -56,6 +60,7 @@ const Onboarding = () => {
         element={
           <ConnectTelegramStep 
             goToNextStep={() => handleStepNavigation('connect-telegram')} 
+            goToPreviousStep={() => handleBackNavigation('connect-telegram')}
             isTelegramConnected={state.isTelegramConnected}
             saveCurrentStep={saveCurrentStep}
           />
@@ -66,6 +71,7 @@ const Onboarding = () => {
         element={
           <PlatformPlanStep 
             goToNextStep={() => handleStepNavigation('platform-plan')} 
+            goToPreviousStep={() => handleBackNavigation('platform-plan')}
             hasPlatformPlan={state.hasPlatformPlan}
             saveCurrentStep={saveCurrentStep}
           />
@@ -76,6 +82,7 @@ const Onboarding = () => {
         element={
           <PaymentMethodStep 
             goToNextStep={() => handleStepNavigation('payment-method')} 
+            goToPreviousStep={() => handleBackNavigation('payment-method')}
             hasPaymentMethod={state.hasPaymentMethod}
             saveCurrentStep={saveCurrentStep}
           />
@@ -85,7 +92,8 @@ const Onboarding = () => {
         path="/complete" 
         element={
           <CompleteStep 
-            completeOnboarding={completeOnboarding} 
+            completeOnboarding={completeOnboarding}
+            goToPreviousStep={() => handleBackNavigation('complete')}
             state={state}
           />
         } 

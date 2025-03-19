@@ -1,37 +1,67 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeaderSection } from "./ProfileHeaderSection";
 import { ProfileForm } from "./ProfileForm";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
-interface ProfileTabContentProps {
-  profileData: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-  };
-  setProfileData: React.Dispatch<React.SetStateAction<{
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-  }>>;
-  isLoading: boolean;
-  userId: string | undefined;
-}
-
-export const ProfileTabContent = ({ 
-  profileData,
-  setProfileData,
-  isLoading,
-  userId
-}: ProfileTabContentProps) => {
+export const ProfileTabContent = () => {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [profileData, setProfileData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
+  });
+
+  // Fetch profile data when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    setIsLoading(true);
+    try {
+      // First try to get data from the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile data:', profileError);
+        
+        // If there's an error, fallback to user auth data
+        setProfileData({
+          first_name: '',
+          last_name: '',
+          email: user?.email || '',
+          phone: ''
+        });
+      } else if (profileData) {
+        setProfileData({
+          first_name: profileData.first_name || '',
+          last_name: profileData.last_name || '',
+          email: profileData.email || user?.email || '',
+          phone: profileData.phone || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetch profile operation:', error);
+      toast.error("Failed to load profile data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,7 +81,7 @@ export const ProfileTabContent = ({
           last_name: profileData.last_name,
           phone: profileData.phone
         })
-        .eq('id', userId);
+        .eq('id', user?.id);
 
       if (error) {
         toast.error("Error saving profile", {

@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityGroups } from "@/group_owners/hooks/useCommunityGroups";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type CommunityContextType = {
   selectedCommunityId: string | null;
@@ -32,6 +32,7 @@ export const CommunityProvider = ({
 }) => {
   const { data: allCommunities, isLoading: isCommunitiesLoading } = useCommunities();
   const { data: groups, isLoading: isGroupsLoading } = useCommunityGroups();
+  const navigate = useNavigate();
   
   const communities = allCommunities?.filter(community => !community.is_group);
   
@@ -73,12 +74,21 @@ export const CommunityProvider = ({
     }
   }, [selectedGroupId, selectedCommunityId]);
 
+  // Redirect to onboarding if no communities exist
   useEffect(() => {
     const isDataLoaded = !isCommunitiesLoading && !isGroupsLoading;
     const hasCommunities = communities && communities.length > 0;
     const hasGroups = groups?.length > 0;
     
     if (!isDataLoaded) return;
+
+    // If user has no communities and no groups, and they're trying to access the dashboard,
+    // redirect them to the onboarding flow
+    if (!hasCommunities && !hasGroups && location.pathname === '/dashboard') {
+      console.log("No communities or groups found - redirecting to onboarding");
+      navigate('/onboarding', { replace: true });
+      return;
+    }
 
     // If coming from Telegram connect page, select the latest community
     if (location.pathname === '/dashboard' && location.state?.from === '/connect/telegram') {
@@ -122,7 +132,7 @@ export const CommunityProvider = ({
       setSelectedGroupId(groups[0].id);
       return;
     }
-  }, [communities, groups, selectedCommunityId, selectedGroupId, isCommunitiesLoading, isGroupsLoading, location]);
+  }, [communities, groups, selectedCommunityId, selectedGroupId, isCommunitiesLoading, isGroupsLoading, location, navigate]);
 
   return (
     <CommunityContext.Provider value={{

@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MessageCircle, PartyPopper } from "lucide-react";
+import { ArrowRight, MessageCircle, PartyPopper, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTelegramChannelInfo } from "@/telegram-mini-app/hooks/useTelegramChannelInfo";
 import { Skeleton } from "@/components/ui/skeleton";

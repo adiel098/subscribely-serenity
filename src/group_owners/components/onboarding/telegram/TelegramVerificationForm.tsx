@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Clipboard, Info, ArrowLeft, ArrowRight } from "lucide-react";
+import { Clipboard, Info, ArrowLeft, ArrowRight, Copy, Bot, Send, CheckCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TelegramVerificationError } from "./TelegramVerificationError";
 import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
 
 interface TelegramVerificationFormProps {
   verificationCode: string | null;
@@ -68,91 +69,133 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
         />
       )}
       
-      <div className="bg-white rounded-xl border border-indigo-100 shadow-sm p-6 space-y-5">
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-gray-900">Connect Your Telegram Channel</h3>
-          <p className="text-sm text-gray-600">
-            Follow these steps to connect your channel or group:
-          </p>
-        </div>
-        
-        <ol className="space-y-4 text-sm">
-          <li className="flex gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-medium text-xs">
-              1
-            </div>
-            <div>
-              <p className="text-gray-700">Add <Badge variant="outline" className="font-mono ml-1 text-xs bg-gray-50">@MembifyBot</Badge> as an <strong>admin</strong> to your Telegram channel or group</p>
-            </div>
-          </li>
-          
-          <li className="flex gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-medium text-xs">
-              2
+      <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
+        <div className="space-y-10">
+          {/* Step 1 */}
+          <motion.div 
+            className="flex flex-col md:flex-row gap-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div className="flex-shrink-0 flex items-start">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                1
+              </div>
             </div>
             <div className="flex-1">
-              <p className="text-gray-700">Post this verification code in your channel:</p>
-              
-              {isLoading ? (
-                <Skeleton className="h-10 w-full mt-2" />
-              ) : (
-                <div className="flex items-center mt-2">
-                  <code className="flex-1 bg-indigo-50 text-indigo-800 p-2 rounded border border-indigo-100 font-mono text-sm break-all">
-                    {verificationCode || "Loading verification code..."}
-                  </code>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="ml-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 h-full"
-                    onClick={copyCodeToClipboard}
-                  >
-                    <Clipboard className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Bot className="h-5 w-5 text-indigo-600" />
+                Add our bot to your group
+              </h3>
+              <p className="mt-2 text-gray-600">
+                Add <a 
+                  href="https://t.me/membifybot" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 font-medium hover:text-indigo-800 underline decoration-2 decoration-indigo-300 underline-offset-2"
+                >
+                  @MembifyBot
+                </a> to your Telegram group or channel and make it an administrator with these permissions:
+              </p>
+              <ul className="mt-3 space-y-2">
+                <li className="flex items-center text-gray-700">
+                  <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  <span>Delete messages</span>
+                </li>
+                <li className="flex items-center text-gray-700">
+                  <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  <span>Ban users</span>
+                </li>
+                <li className="flex items-center text-gray-700">
+                  <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                  <span>Add new admins</span>
+                </li>
+              </ul>
             </div>
-          </li>
-          
-          <li className="flex gap-2">
-            <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-medium text-xs">
-              3
-            </div>
-            <div>
-              <p className="text-gray-700">Click "Verify Connection" after posting the code in your channel</p>
-            </div>
-          </li>
-        </ol>
-        
-        <Alert className="bg-blue-50 border-blue-100 text-blue-800">
-          <Info className="h-4 w-4 text-blue-500" />
-          <AlertDescription className="text-xs text-blue-700">
-            This verification step ensures that you are the admin of the channel you're connecting. Your channel remains private and secure.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="pt-2 flex flex-col sm:flex-row gap-3">
-          {showBackButton && onBack && (
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="border-gray-200 text-gray-700"
-              size="lg"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          )}
-          
-          <Button 
-            onClick={onVerify} 
-            className="bg-gradient-to-r from-indigo-500 to-blue-500 text-white hover:from-indigo-600 hover:to-blue-600"
-            disabled={isVerifying || !verificationCode}
-            size="lg"
+          </motion.div>
+
+          {/* Step 2 */}
+          <motion.div 
+            className="flex flex-col md:flex-row gap-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
-            {isVerifying ? "Verifying..." : "Verify Connection"}
-          </Button>
+            <div className="flex-shrink-0 flex items-start">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                2
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Copy className="h-5 w-5 text-indigo-600" />
+                Copy Verification Code
+              </h3>
+              <p className="mt-2 text-gray-600">
+                Copy this verification code and paste it in your Telegram group or channel
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                <code className="px-6 py-3 bg-indigo-50 rounded-lg text-lg font-mono border border-indigo-100 text-indigo-700 w-full sm:w-auto text-center">
+                  {verificationCode || "Loading..."}
+                </code>
+                <Button
+                  onClick={copyCodeToClipboard}
+                  className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white shadow-md w-full sm:w-auto"
+                  disabled={!verificationCode || isLoading}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Code
+                </Button>
+              </div>
+              <p className="mt-3 text-sm text-gray-500 flex items-center">
+                <span className="bg-amber-100 text-amber-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">Note</span>
+                The message will be automatically deleted once verified
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Step 3 */}
+          <motion.div 
+            className="flex flex-col md:flex-row gap-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <div className="flex-shrink-0 flex items-start">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                3
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Send className="h-5 w-5 text-indigo-600" />
+                Verify Connection
+              </h3>
+              <p className="mt-2 text-gray-600">
+                After adding the bot and sending the verification code, click below to verify the connection
+              </p>
+              <Button 
+                className="mt-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md"
+                onClick={onVerify}
+                disabled={isVerifying || !verificationCode || isLoading}
+              >
+                {isVerifying ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Verify Connection
+                  </>
+                )}
+              </Button>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </Card>
     </motion.div>
   );
 };

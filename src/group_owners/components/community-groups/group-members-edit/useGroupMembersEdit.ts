@@ -11,8 +11,8 @@ export const useGroupMembersEdit = (
   onCommunitiesUpdated: () => void,
   onClose: () => void
 ) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
   
   // Initialize selected communities when component mounts

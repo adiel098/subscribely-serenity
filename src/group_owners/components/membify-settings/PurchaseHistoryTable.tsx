@@ -1,112 +1,121 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
-interface PurchaseHistoryItem {
+type Payment = {
   id: string;
-  created_at: string;
   amount: number;
-  payment_method: string;
-  payment_status: string;
-  plan: {
-    name: string;
-    interval: string;
-  } | null;
-}
+  payment_method: string | null;
+  payment_status: string | null;
+  plan_name: string;
+  created_at: string;
+};
 
-export function PurchaseHistoryTable() {
-  const [purchases, setPurchases] = React.useState<PurchaseHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+export const PurchaseHistoryTable = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    const fetchPurchaseHistory = async () => {
-      if (!user?.id) return;
+  useEffect(() => {
+    if (user) {
+      fetchPayments();
+    }
+  }, [user]);
+
+  const fetchPayments = async () => {
+    try {
+      setIsLoading(true);
       
-      try {
-        const { data, error } = await supabase
-          .from('platform_payments')
-          .select(`
-            *,
-            plan:platform_plans(name, interval)
-          `)
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('platform_payments')
+        .select(`
+          id, 
+          amount, 
+          payment_method,
+          payment_status,
+          created_at,
+          platform_plans(name)
+        `)
+        .eq('owner_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-        if (error) throw error;
-        setPurchases(data || []);
-      } catch (error) {
-        console.error('Error fetching purchase history:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load purchase history."
-        });
-      } finally {
-        setIsLoading(false);
+      if (error) {
+        console.error("Error fetching payments:", error);
+      } else if (data) {
+        const formattedPayments = data.map(item => ({
+          id: item.id,
+          amount: item.amount,
+          payment_method: item.payment_method,
+          payment_status: item.payment_status,
+          plan_name: item.platform_plans?.name || 'Unknown Plan',
+          created_at: item.created_at
+        }));
+        
+        setPayments(formattedPayments);
       }
-    };
-
-    fetchPurchaseHistory();
-  }, [user, toast]);
-
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500 hover:bg-yellow-600">Pending</Badge>;
-      case 'failed':
-        return <Badge className="bg-red-500 hover:bg-red-600">Failed</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const formatDatetime = (datetimeStr: string) => {
-    try {
-      return format(new Date(datetimeStr), 'dd MMM yyyy, HH:mm');
-    } catch (e) {
-      return datetimeStr || 'N/A';
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return null;
+    
+    switch(status.toLowerCase()) {
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const formatPaymentMethod = (method: string | null) => {
+    if (!method) return 'Unknown';
+    
+    // Capitalize first letter of each word
+    return method
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-40">
-        <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-        <span className="ml-2">Loading purchase history...</span>
+      <div className="flex justify-center items-center h-20">
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
       </div>
     );
   }
 
-  if (purchases.length === 0) {
+  if (payments.length === 0) {
     return (
-      <div className="text-center p-8 border rounded-lg bg-muted/20">
-        <h3 className="font-medium text-gray-700 mb-1">No purchases yet</h3>
-        <p className="text-sm text-gray-500">Your purchase history will appear here</p>
+      <div className="text-center py-6">
+        <p className="text-muted-foreground">No payment history found</p>
       </div>
     );
   }
 
   return (
     <Table>
-      <TableCaption>Your purchase history</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead>Date</TableHead>
@@ -117,16 +126,18 @@ export function PurchaseHistoryTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {purchases.map((purchase) => (
-          <TableRow key={purchase.id}>
-            <TableCell>{formatDatetime(purchase.created_at)}</TableCell>
-            <TableCell>{purchase.plan?.name || 'Unknown Plan'}</TableCell>
-            <TableCell>${purchase.amount.toFixed(2)}</TableCell>
-            <TableCell className="capitalize">{purchase.payment_method?.replace('_', ' ') || 'N/A'}</TableCell>
-            <TableCell>{getStatusBadge(purchase.payment_status)}</TableCell>
+        {payments.map((payment) => (
+          <TableRow key={payment.id}>
+            <TableCell className="font-medium">
+              {payment.created_at ? format(new Date(payment.created_at), "MMM d, yyyy") : "N/A"}
+            </TableCell>
+            <TableCell>{payment.plan_name}</TableCell>
+            <TableCell>${payment.amount.toFixed(2)}</TableCell>
+            <TableCell>{formatPaymentMethod(payment.payment_method)}</TableCell>
+            <TableCell>{getStatusBadge(payment.payment_status)}</TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
   );
-}
+};

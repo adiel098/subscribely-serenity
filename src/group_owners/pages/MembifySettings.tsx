@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, CreditCard, Crown, User, AlertCircle, Pencil, Save, Loader2 } from "lucide-react";
+import { User, CreditCard, Loader2, Pencil, Save } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,6 @@ const MembifySettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [profileData, setProfileData] = useState({
-    full_name: '',
     first_name: '',
     last_name: '',
     email: '',
@@ -53,7 +52,6 @@ const MembifySettings = () => {
         });
       } else if (data) {
         setProfileData({
-          full_name: data.full_name || '',
           first_name: data.first_name || '',
           last_name: data.last_name || '',
           email: data.email || user?.email || '',
@@ -81,7 +79,6 @@ const MembifySettings = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: profileData.full_name,
           first_name: profileData.first_name,
           last_name: profileData.last_name,
           phone: profileData.phone
@@ -143,15 +140,8 @@ const MembifySettings = () => {
               value="plans" 
               className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
             >
-              <Crown className="h-4 w-4" />
-              <span>Plans</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="billing" 
-              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
-            >
               <CreditCard className="h-4 w-4" />
-              <span>Billing</span>
+              <span>Plans</span>
             </TabsTrigger>
           </TabsList>
 
@@ -216,18 +206,6 @@ const MembifySettings = () => {
                         />
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name</Label>
-                      <Input 
-                        id="full_name"
-                        name="full_name"
-                        value={profileData.full_name}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className={!isEditing ? "bg-gray-50" : ""}
-                      />
-                    </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
@@ -291,28 +269,14 @@ const MembifySettings = () => {
                 <CurrentPlanCard />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="billing">
-            <Card>
+            
+            <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Billing Information</CardTitle>
                 <CardDescription>View your billing history and payment information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-6">
-                  <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-green-700">Active Subscription</h4>
-                        <p className="text-sm text-green-600">
-                          Your platform subscription is active and will renew automatically
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                     <h3 className="font-medium text-blue-700 mb-2 flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />

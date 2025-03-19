@@ -2,7 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { StepProgress } from "./StepProgress";
-import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
+import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -35,7 +35,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 relative">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-50 p-4 relative">
       {/* Logout Button in the top-right corner with red text */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -54,9 +54,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         </Button>
       </motion.div>
 
-      {/* Removed the back button from the top of the content */}
-
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-3xl mx-auto">
         {showProgress && (
           <motion.div 
             initial={{ opacity: 0, y: -20 }}

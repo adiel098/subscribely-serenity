@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { MessageCircle, Copy, CheckCircle, PartyPopper, Bot, ShieldCheck, ArrowRight, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { MessageCircle, CheckCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { ConnectedChannelDisplay } from "@/group_owners/components/onboarding/telegram/ConnectedChannelDisplay";
@@ -10,9 +10,8 @@ import { TelegramVerificationError } from "@/group_owners/components/onboarding/
 import { useTelegramVerification } from "@/group_owners/hooks/onboarding/useTelegramVerification";
 import { useTelegramCommunities } from "@/group_owners/hooks/onboarding/useTelegramCommunities";
 import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificationCodeUtils";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const ConnectTelegramStep = ({ 
   onComplete, 
@@ -25,6 +24,7 @@ const ConnectTelegramStep = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [verificationCode, setVerificationCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,11 +70,6 @@ const ConnectTelegramStep = ({
     initialize();
   }, [user]);
   
-  // Function to continue to next step
-  const handleContinueToNextStep = () => {
-    onComplete();
-  };
-  
   // Refresh communities when lastVerifiedCommunity changes
   useEffect(() => {
     if (lastVerifiedCommunity) {
@@ -85,24 +80,11 @@ const ConnectTelegramStep = ({
   
   // If there is a lastVerifiedCommunity but no lastConnectedCommunity, use the verified one
   const displayedCommunity = lastConnectedCommunity || lastVerifiedCommunity;
-  
-  const copyToClipboard = async (text: string) => {
-    if (!text) return;
-    
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "✅ Copied Successfully!",
-        description: "Verification code copied to clipboard",
-        className: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800",
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
-      });
-    }
+
+  // Go to dashboard and complete onboarding
+  const handleGoToDashboard = () => {
+    onComplete();
+    navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -116,13 +98,26 @@ const ConnectTelegramStep = ({
     >
       <div className="w-full max-w-4xl mx-auto">
         {isVerified && displayedCommunity ? (
-          // Show the successfully connected channel with continue button
-          <ConnectedChannelDisplay 
-            community={displayedCommunity}
-            onContinue={handleContinueToNextStep}
-            onRefreshPhoto={handleRefreshPhoto}
-            isRefreshingPhoto={isRefreshingPhoto}
-          />
+          // Show the successfully connected channel with go to dashboard button
+          <div className="flex flex-col items-center space-y-6">
+            <div className="w-full">
+              <ConnectedChannelDisplay 
+                community={displayedCommunity}
+                onContinue={handleGoToDashboard}
+                onRefreshPhoto={handleRefreshPhoto}
+                isRefreshingPhoto={isRefreshingPhoto}
+              />
+            </div>
+            
+            <Button 
+              onClick={handleGoToDashboard}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 mt-4"
+              size="lg"
+            >
+              Go to Dashboard
+              <CheckCircle className="w-4 h-4" />
+            </Button>
+          </div>
         ) : duplicateChatId ? (
           // Show duplicate error message
           <TelegramVerificationError 

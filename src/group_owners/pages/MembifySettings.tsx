@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { MembifySettingsHeader } from "../components/membify-settings/MembifySettingsHeader";
-import { ProfileTabContent } from "../components/membify-settings/ProfileTabContent";
+import { ProfileTabContent } from "../components/membify-settings/profile/ProfileTabContent";
 import { PlansTabContent } from "../components/membify-settings/PlansTabContent";
 
 const MembifySettings = () => {

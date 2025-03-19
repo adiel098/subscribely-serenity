@@ -10,14 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
 interface ConnectTelegramStepProps {
   goToNextStep: () => void;
   goToPreviousStep: () => void;
   isTelegramConnected: boolean;
   saveCurrentStep: (step: string) => void;
 }
-
 export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
   goToNextStep,
   goToPreviousStep,
@@ -34,17 +32,14 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     if (user) {
       initializeVerificationCode();
     }
   }, [user]);
-
   const generateNewCode = () => {
     return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
   };
-
   const initializeVerificationCode = async () => {
     setIsLoading(true);
     try {
@@ -78,7 +73,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       setIsLoading(false);
     }
   };
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -95,12 +89,10 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       });
     }
   };
-
   const verifyConnection = async () => {
     try {
       if (!user || !verificationCode) return;
       setIsVerifying(true);
-
       const {
         data: botSettings,
         error: settingsError
@@ -118,7 +110,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
         console.error('Error checking bot settings:', settingsError);
         throw settingsError;
       }
-
       const {
         data: recentCommunity,
         error: communityError
@@ -161,12 +152,10 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       setIsVerifying(false);
     }
   };
-
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false);
     goToNextStep();
   };
-
   const container = {
     hidden: {
       opacity: 0
@@ -179,7 +168,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       }
     }
   };
-
   const item = {
     hidden: {
       opacity: 0,
@@ -190,7 +178,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       y: 0
     }
   };
-
   return <OnboardingLayout currentStep="connect-telegram" title="Connect Your Telegram Group" description="Link your Telegram group to enable membership management" icon={<MessageCircle size={24} />} onBack={goToPreviousStep} showBackButton={true}>
       {isLoading ? <div className="flex justify-center items-center py-12">
           <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -361,31 +348,7 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
                   </div>
                 </motion.div>
 
-                <motion.div className="flex gap-4" initial={{
-              opacity: 0,
-              x: -20
-            }} animate={{
-              opacity: 1,
-              x: 0
-            }} transition={{
-              duration: 0.5,
-              delay: 0.5
-            }}>
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                      3
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <Send className="h-5 w-5 text-indigo-600" />
-                      Verify Your Connection
-                    </h3>
-                    <p className="mt-2 text-gray-600">
-                      After adding the bot and sending the verification code, click the "Verify Connection" button below to complete the process.
-                    </p>
-                  </div>
-                </motion.div>
+                
               </div>
             </Card>
           </motion.div>
@@ -411,26 +374,21 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
               </Button>
             </motion.div>
             
-            {!isTelegramConnected && (
-              <motion.div initial={{
-                opacity: 0,
-                y: 20
-              }} animate={{
-                opacity: 1,
-                y: 0
-              }} transition={{
-                delay: 0.8
-              }} whileHover={{
-                scale: 1.05,
-                transition: {
-                  duration: 0.2
-                }
-              }}>
-                <Button 
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md" 
-                  onClick={verifyConnection} 
-                  disabled={isVerifying}
-                >
+            {!isTelegramConnected && <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          delay: 0.8
+        }} whileHover={{
+          scale: 1.05,
+          transition: {
+            duration: 0.2
+          }
+        }}>
+                <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-md" onClick={verifyConnection} disabled={isVerifying}>
                   {isVerifying ? <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Verifying...
@@ -439,8 +397,7 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
                     Verify Connection
                   </>}
                 </Button>
-              </motion.div>
-            )}
+              </motion.div>}
             
             {isTelegramConnected ? <motion.div initial={{
           opacity: 0,

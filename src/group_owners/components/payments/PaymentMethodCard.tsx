@@ -56,11 +56,11 @@ export const PaymentMethodCard = ({
         isActive ? "border-indigo-300 shadow-sm hover:shadow-md" : "hover:border-gray-300"
       )}>
         {imageSrc && (
-          <div className="relative h-36 overflow-hidden border-b">
+          <div className="relative h-24 overflow-hidden border-b flex items-center justify-center">
             <img 
               src={imageSrc} 
               alt={title} 
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              className="max-h-20 w-auto object-contain transition-transform duration-300 hover:scale-105"
             />
           </div>
         )}

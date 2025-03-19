@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  // Add onboarding route outside of the main app layout
+  // Onboarding route with nested routes for each step
   {
     path: "/onboarding/*",
     element: <Onboarding />,

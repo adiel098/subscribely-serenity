@@ -1,5 +1,5 @@
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import { ConnectTelegramStep } from "./steps/ConnectTelegramStep";
@@ -7,9 +7,18 @@ import { PlatformPlanStep } from "./steps/PlatformPlanStep";
 import { PaymentMethodStep } from "./steps/PaymentMethodStep";
 import { CompleteStep } from "./steps/CompleteStep";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 const Onboarding = () => {
-  const { state, isLoading, goToNextStep, saveCurrentStep, completeOnboarding } = useOnboarding();
+  const { state, isLoading, goToNextStep, saveCurrentStep, completeOnboarding, refreshStatus } = useOnboarding();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // When the current step changes in the state, navigate to the corresponding route
+    if (!isLoading && state.currentStep) {
+      navigate(`/onboarding/${state.currentStep}`, { replace: true });
+    }
+  }, [state.currentStep, isLoading, navigate]);
   
   if (isLoading) {
     return (
@@ -27,15 +36,26 @@ const Onboarding = () => {
     return <Navigate to="/dashboard" replace />;
   }
   
+  const handleStepNavigation = (currentStep) => {
+    goToNextStep(currentStep);
+  };
+  
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/onboarding/welcome" replace />} />
-      <Route path="/welcome" element={<WelcomeStep goToNextStep={() => goToNextStep('welcome')} />} />
+      <Route 
+        path="/welcome" 
+        element={
+          <WelcomeStep 
+            goToNextStep={() => handleStepNavigation('welcome')} 
+          />
+        } 
+      />
       <Route 
         path="/connect-telegram" 
         element={
           <ConnectTelegramStep 
-            goToNextStep={() => goToNextStep('connect-telegram')} 
+            goToNextStep={() => handleStepNavigation('connect-telegram')} 
             isTelegramConnected={state.isTelegramConnected}
             saveCurrentStep={saveCurrentStep}
           />
@@ -45,7 +65,7 @@ const Onboarding = () => {
         path="/platform-plan" 
         element={
           <PlatformPlanStep 
-            goToNextStep={() => goToNextStep('platform-plan')} 
+            goToNextStep={() => handleStepNavigation('platform-plan')} 
             hasPlatformPlan={state.hasPlatformPlan}
             saveCurrentStep={saveCurrentStep}
           />
@@ -55,7 +75,7 @@ const Onboarding = () => {
         path="/payment-method" 
         element={
           <PaymentMethodStep 
-            goToNextStep={() => goToNextStep('payment-method')} 
+            goToNextStep={() => handleStepNavigation('payment-method')} 
             hasPaymentMethod={state.hasPaymentMethod}
             saveCurrentStep={saveCurrentStep}
           />

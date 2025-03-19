@@ -146,11 +146,15 @@ export const useOnboarding = () => {
   };
 
   const goToNextStep = (currentStep: OnboardingStep) => {
+    console.log(`Moving from ${currentStep} to next step`);
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
     
     if (nextStep) {
+      console.log(`Next step will be: ${nextStep}`);
       saveCurrentStep(nextStep);
+    } else {
+      console.log('No next step found in the sequence');
     }
   };
 

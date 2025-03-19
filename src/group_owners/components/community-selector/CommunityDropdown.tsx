@@ -104,7 +104,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           </SelectValue>
         </SelectTrigger>
         
-        <SelectContent className="max-h-[300px]">
+        <SelectContent className="max-h-[260px]">
           {groups && groups.length > 0 && (
             <div className="px-2 py-1">
               <h3 className="text-xs font-medium text-gray-500 mb-1">Groups</h3>

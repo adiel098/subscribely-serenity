@@ -141,14 +141,15 @@ export function useTelegramVerification(userId: string | undefined, verification
           }
         }
         
-        // If not verified, and this is not the first attempt, show warning
-        if (attemptCount > 0) {
-          toast({
-            title: 'Verification pending',
-            description: 'Make sure you\'ve added the bot as an admin and posted the code in the channel.',
-            variant: 'destructive'
-          });
-        } else {
+        // Show verification pending message on every attempt, not just after first attempt
+        toast({
+          title: 'Verification pending',
+          description: 'Make sure you\'ve added the bot as an admin and posted the code in the channel.',
+          variant: 'destructive'
+        });
+        
+        // On first attempt, also try again after delay (webhook might need time to process)
+        if (attemptCount === 0) {
           toast({
             title: 'Checking verification',
             description: 'Verifying your Telegram channel connection...',
@@ -161,6 +162,13 @@ export function useTelegramVerification(userId: string | undefined, verification
               toast({
                 title: 'Success!',
                 description: 'Telegram channel connected successfully.',
+              });
+            } else {
+              // Show failure message if automatic verification fails
+              toast({
+                title: 'Verification failed',
+                description: 'Please make sure the bot is an admin and the code is posted correctly.',
+                variant: 'destructive'
               });
             }
           }, 5000);

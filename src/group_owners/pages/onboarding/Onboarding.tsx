@@ -50,8 +50,13 @@ const Onboarding = () => {
       setCurrentStep('welcome');
       // Update the URL to show the welcome step
       navigate('/onboarding/welcome', { replace: true });
+    } else {
+      // Handle unknown paths - redirect to welcome step
+      console.error("Unknown step in path:", path);
+      setCurrentStep('welcome');
+      navigate('/onboarding/welcome', { replace: true });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, user, completeOnboarding]);
 
   // Fetch onboarding state
   useEffect(() => {
@@ -71,12 +76,20 @@ const Onboarding = () => {
         if (profile) {
           setIsCompleted(profile.onboarding_completed || false);
           
-          if (profile.onboarding_step && profile.onboarding_step !== currentStep) {
+          // Only use step if it's a valid OnboardingStep
+          if (profile.onboarding_step && 
+              ["welcome", "connect-telegram", "complete"].includes(profile.onboarding_step) && 
+              profile.onboarding_step !== currentStep) {
             console.log("Setting step from profile:", profile.onboarding_step);
             setCurrentStep(profile.onboarding_step as OnboardingStep);
             
             // Update URL to match the current step
             navigate(`/onboarding/${profile.onboarding_step}`, { replace: true });
+          } else if (profile.onboarding_step && !["welcome", "connect-telegram", "complete"].includes(profile.onboarding_step)) {
+            // Invalid step stored in profile, set to welcome
+            console.warn("Invalid step in profile:", profile.onboarding_step);
+            saveCurrentStep("welcome");
+            navigate('/onboarding/welcome', { replace: true });
           }
         }
       } catch (error) {
@@ -92,7 +105,7 @@ const Onboarding = () => {
     };
     
     fetchOnboardingState();
-  }, [user, currentStep, navigate, toast]);
+  }, [user, currentStep, navigate, toast, saveCurrentStep]);
 
   useEffect(() => {
     if (isCompleted && !isLoading) {

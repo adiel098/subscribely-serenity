@@ -28,6 +28,8 @@ export const useOnboardingNavigation = (
       // Only use the step if it's a valid OnboardingStep
       if (["welcome", "connect-telegram", "complete"].includes(step)) {
         validStep = step as OnboardingStep;
+      } else {
+        console.warn(`Invalid step "${step}" provided, defaulting to "welcome"`);
       }
       
       await saveOnboardingStep(user.id, validStep);
@@ -78,6 +80,8 @@ export const useOnboardingNavigation = (
     if (nextStep) {
       console.log("Moving to next step:", nextStep);
       saveCurrentStep(nextStep);
+    } else {
+      console.warn("No next step available from:", currentStep);
     }
   };
 
@@ -88,6 +92,8 @@ export const useOnboardingNavigation = (
       const previousStep = ONBOARDING_STEPS[currentIndex - 1];
       console.log("Moving to previous step:", previousStep);
       saveCurrentStep(previousStep);
+    } else {
+      console.warn("No previous step available from:", currentStep);
     }
   };
 

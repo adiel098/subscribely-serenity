@@ -1,16 +1,17 @@
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/card";
-import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { SendIcon, ArrowRight, MessageCircle, Loader2 } from "lucide-react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
-import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle } from "lucide-react";
+import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ConnectTelegramStepProps {
   goToNextStep: () => void;
   isTelegramConnected: boolean;
-  saveCurrentStep: (step: OnboardingStep) => Promise<void>;
+  saveCurrentStep: (step: string) => void;
 }
 
 export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({ 
@@ -18,107 +19,93 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
   isTelegramConnected,
   saveCurrentStep
 }) => {
-  const { data: communities, isLoading, refetch } = useCommunities();
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Check if the user has connected their Telegram account
-  useEffect(() => {
-    if (isTelegramConnected || (communities && communities.length > 0)) {
-      setIsConnecting(false);
-    }
-  }, [isTelegramConnected, communities]);
-  
+  const navigate = useNavigate();
+
   const handleConnectTelegram = () => {
     setIsConnecting(true);
+    // Store the current onboarding step before navigating away
     saveCurrentStep('connect-telegram');
-    window.location.href = "/connect/telegram";
+    // Navigate to the Telegram connection page
+    navigate('/connect/telegram', { state: { fromOnboarding: true } });
   };
-  
+
   return (
-    <OnboardingLayout
+    <OnboardingLayout 
       currentStep="connect-telegram"
       title="Connect Your Telegram Group"
-      description="Link your Telegram community to Membify"
-      icon={<MessageCircle className="h-6 w-6" />}
+      description="Link your Telegram group to enable membership management"
+      icon={<MessageCircle size={24} />}
     >
-      <div className="space-y-8">
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          </div>
-        ) : communities && communities.length > 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-5"
-          >
-            <div className="flex items-center gap-3 text-green-700">
-              <div className="bg-green-500 text-white p-2 rounded-full">
-                <SendIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Telegram Group Connected!</h3>
-                <p>Your community "{communities[0].name}" is successfully linked to Membify</p>
-              </div>
-            </div>
-          </motion.div>
+      <div className="space-y-6">
+        {isTelegramConnected ? (
+          <Alert className="bg-green-50 border-green-200">
+            <CheckCircleIcon className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">Group Connected!</AlertTitle>
+            <AlertDescription className="text-green-700">
+              Your Telegram group has been successfully connected to Membify.
+            </AlertDescription>
+          </Alert>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-50 border border-blue-100 rounded-lg p-5"
-          >
-            <h3 className="font-semibold text-lg mb-3 text-blue-800">How to connect your Telegram group:</h3>
-            <ol className="space-y-4 text-blue-700">
-              <li className="flex items-start gap-2">
-                <div className="flex-shrink-0 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center mt-0.5">1</div>
-                <div>
-                  <span className="font-medium">Add our bot to your group</span>
-                  <p className="text-sm mt-1">Invite @MembifyBot to your Telegram group and make it an admin</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="flex-shrink-0 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center mt-0.5">2</div>
-                <div>
-                  <span className="font-medium">Click "Connect Telegram"</span>
-                  <p className="text-sm mt-1">You'll be redirected to our bot to link your account</p>
-                </div>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="flex-shrink-0 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center mt-0.5">3</div>
-                <div>
-                  <span className="font-medium">Verify your group</span>
-                  <p className="text-sm mt-1">Follow the instructions to verify and connect your group</p>
-                </div>
-              </li>
-            </ol>
-          </motion.div>
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-800">Connection Required</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              You need to connect at least one Telegram group to continue.
+            </AlertDescription>
+          </Alert>
         )}
+
+        <Card className="p-5 border border-indigo-100">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-800 flex items-center gap-2">
+              <Bot className="text-indigo-600" size={20} />
+              How to connect your Telegram group
+            </h3>
+            <ol className="space-y-3 list-decimal list-inside text-gray-600">
+              <li>Add our bot <span className="font-semibold">@MembifyBot</span> to your Telegram group</li>
+              <li>Make the bot an admin with the required permissions</li>
+              <li>Send a verification code in your group chat</li>
+              <li>Complete the verification process</li>
+            </ol>
+            <p className="text-sm text-gray-500">
+              Our tutorial will guide you through this process step by step.
+            </p>
+          </div>
+        </Card>
         
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-          {isTelegramConnected || (communities && communities.length > 0) ? (
-            <Button 
-              onClick={goToNextStep}
-              size="lg"
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+        <div className="pt-4 flex justify-between">
+          {isTelegramConnected ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex justify-end w-full"
             >
-              Continue <ArrowRight className="h-5 w-5" />
-            </Button>
+              <Button 
+                onClick={goToNextStep}
+                size="lg" 
+                className="gap-2 ml-auto bg-indigo-600 hover:bg-indigo-700"
+              >
+                Continue to Platform Plan
+                <ArrowRight size={16} />
+              </Button>
+            </motion.div>
           ) : (
             <Button 
               onClick={handleConnectTelegram}
-              size="lg"
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+              size="lg" 
+              className="gap-2 ml-auto bg-indigo-600 hover:bg-indigo-700"
               disabled={isConnecting}
             >
               {isConnecting ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                   Connecting...
                 </>
               ) : (
                 <>
-                  Connect Telegram <SendIcon className="h-5 w-5" />
+                  Connect Telegram Group
+                  <ArrowRight size={16} />
                 </>
               )}
             </Button>
@@ -128,3 +115,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
     </OnboardingLayout>
   );
 };
+
+// This was missing from the imports
+import { CheckCircleIcon } from "lucide-react";

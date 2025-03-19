@@ -519,6 +519,8 @@ export type Database = {
           is_suspended: boolean | null
           last_login: string | null
           last_name: string | null
+          onboarding_completed: boolean | null
+          onboarding_step: string | null
           phone: string | null
           registration_date: string | null
           status: string | null
@@ -535,6 +537,8 @@ export type Database = {
           is_suspended?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: string | null
           phone?: string | null
           registration_date?: string | null
           status?: string | null
@@ -551,6 +555,8 @@ export type Database = {
           is_suspended?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: string | null
           phone?: string | null
           registration_date?: string | null
           status?: string | null

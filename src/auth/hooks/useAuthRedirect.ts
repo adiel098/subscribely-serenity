@@ -1,84 +1,60 @@
+
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { User } from "@supabase/supabase-js";
-import { useCheckAdminStatus } from "./useCheckAdminStatus";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useAuthRedirect = (user: User | null) => {
+export function useAuthRedirect() {
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { checkAdminStatus } = useCheckAdminStatus();
+  const location = useLocation();
 
   useEffect(() => {
-    if (user) {
-      console.log("✅ Auth page: User detected, preparing to redirect", user.email);
+    const checkOnboardingStatus = async () => {
+      if (!user) return;
       
-      const redirectTimer = setTimeout(async () => {
-        try {
-          console.log("🔍 Auth page: Checking admin status for", user.id);
-          const { data: adminData, error: adminError } = await checkAdminStatus(user.id);
-          
-          if (adminError) {
-            console.error("❌ Auth page: Error checking admin status:", adminError);
-            return navigate('/dashboard', { replace: true });
+      // Skip onboarding check if already in the onboarding flow
+      if (location.pathname.startsWith('/onboarding')) return;
+      
+      try {
+        // Check if user has completed onboarding
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed, onboarding_step')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        // If onboarding isn't completed, redirect to onboarding
+        if (!profile.onboarding_completed) {
+          // If user has a specific step in progress, redirect to that step
+          if (profile.onboarding_step && profile.onboarding_step !== 'welcome') {
+            navigate(`/onboarding/${profile.onboarding_step}`);
+          } else {
+            navigate('/onboarding/welcome');
           }
-          
-          console.log("✅ Auth page: Admin check result:", adminData);
-          
-          // Parse the admin check result properly
-          let isAdmin = false;
-          let adminRole = null;
-          
-          if (Array.isArray(adminData) && adminData.length > 0) {
-            isAdmin = adminData[0]?.is_admin === true;
-            adminRole = adminData[0]?.admin_role;
-          } else if (adminData) {
-            isAdmin = adminData?.is_admin === true;
-            adminRole = adminData?.admin_role;
-          }
-          
-          if (isAdmin) {
-            console.log("✅ Auth page: Admin user confirmed, redirecting to admin dashboard");
-            return navigate('/admin/dashboard', { replace: true });
-          } 
-          
-          // Check if the user has completed onboarding
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('onboarding_completed, onboarding_step')
-            .eq('id', user.id)
-            .single();
-            
-          if (profileError) {
-            console.error("❌ Auth page: Error checking onboarding status:", profileError);
-            return navigate('/dashboard', { replace: true });
-          }
-          
-          console.log("✅ Auth page: Onboarding status:", profileData);
-          
-          // If user hasn't completed onboarding, redirect to onboarding flow
-          if (!profileData.onboarding_completed) {
-            console.log("🚀 Auth page: User hasn't completed onboarding, redirecting to onboarding flow");
-            
-            // If they have a saved step, go to that step
-            if (profileData.onboarding_step) {
-              return navigate(`/onboarding/${profileData.onboarding_step}`, { replace: true });
-            }
-            
-            // Otherwise, start at the beginning
-            return navigate('/onboarding/welcome', { replace: true });
-          }
-          
-          console.log("ℹ️ Auth page: Regular user confirmed, redirecting to dashboard");
-          return navigate('/dashboard', { replace: true });
-          
-        } catch (err) {
-          console.error("❌ Auth page: Exception in auth checks:", err);
-          console.log("🚀 Auth page: Redirecting to dashboard due to exception");
-          return navigate('/dashboard', { replace: true });
         }
-      }, 300);
-      
-      return () => clearTimeout(redirectTimer);
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      }
+    };
+    
+    if (!isLoading) {
+      // If user is not logged in and tries to access protected routes
+      if (!user && !location.pathname.startsWith('/auth')) {
+        navigate('/auth/login');
+      } 
+      // If user is logged in
+      else if (user) {
+        // Check onboarding status when user logs in or navigates to a new page
+        checkOnboardingStatus();
+        
+        // If user tries to access auth pages while logged in
+        if (location.pathname.startsWith('/auth')) {
+          navigate('/dashboard');
+        }
+      }
     }
-  }, [user, navigate, checkAdminStatus]);
-};
+  }, [user, isLoading, navigate, location.pathname]);
+}

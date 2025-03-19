@@ -1,154 +1,239 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/ui/button";
-import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { Zap, ArrowRight, Check, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { usePlatformPlans } from "@/admin/hooks/usePlatformPlans";
-import { OnboardingStep } from "@/group_owners/hooks/useOnboarding";
-import { PlatformPlan } from "@/admin/hooks/types/platformPlans.types";
-import { PlatformSubscriptionDialog } from "@/group_owners/components/platform-subscription/PlatformSubscriptionDialog";
+import { Button } from "@/components/ui/button";
+import { Zap, ArrowRight, Check, Loader2 } from "lucide-react";
+import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { processPayment } from "@/group_owners/services/platformPaymentService";
+import { useToast } from "@/components/ui/use-toast";
+
+interface PlatformPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: string;
+  features: string[];
+  is_active: boolean;
+}
 
 interface PlatformPlanStepProps {
   goToNextStep: () => void;
   hasPlatformPlan: boolean;
-  saveCurrentStep: (step: OnboardingStep) => Promise<void>;
+  saveCurrentStep: (step: string) => void;
 }
 
-export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
-  goToNextStep,
+export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({ 
+  goToNextStep, 
   hasPlatformPlan,
   saveCurrentStep
 }) => {
-  const { plans, isLoading } = usePlatformPlans();
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [plans, setPlans] = useState<PlatformPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<PlatformPlan | null>(null);
-  
-  // Auto check for plan changes after subscription dialog closes
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+
   useEffect(() => {
-    if (!isSubscriptionDialogOpen) {
-      saveCurrentStep('platform-plan');
-    }
-  }, [isSubscriptionDialogOpen, saveCurrentStep]);
-  
-  const formatInterval = (interval: string) => {
-    switch (interval) {
-      case 'monthly': return 'month';
-      case 'quarterly': return 'quarter';
-      case 'yearly': return 'year';
-      case 'lifetime': return 'lifetime';
-      default: return interval;
+    fetchPlatformPlans();
+  }, []);
+
+  const fetchPlatformPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('platform_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      
+      setPlans(data || []);
+      
+      // If user already has a plan, we can proceed to the next step
+      if (hasPlatformPlan) {
+        // Just select the first plan for display purposes
+        if (data && data.length > 0) {
+          setSelectedPlan(data[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching platform plans:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load platform plans"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const handlePlanSelect = (plan: PlatformPlan) => {
+    setSelectedPlan(plan);
+  };
+
+  const handleContinue = async () => {
+    if (!selectedPlan && !hasPlatformPlan) {
+      toast({
+        variant: "destructive",
+        title: "No Plan Selected",
+        description: "Please select a plan to continue"
+      });
+      return;
+    }
+
+    if (hasPlatformPlan) {
+      // If user already has a plan, just go to the next step
+      goToNextStep();
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // We'll use a simplified payment process for the onboarding
+      // The actual payment will be handled in the PaymentMethodStep
+      await processPayment(selectedPlan!, 'card');
+      saveCurrentStep('platform-plan');
+      goToNextStep();
+    } catch (error) {
+      console.error("Error processing plan selection:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process plan selection"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getIntervalText = (interval: string) => {
+    switch (interval) {
+      case 'monthly': return '/month';
+      case 'quarterly': return '/quarter';
+      case 'yearly': return '/year';
+      case 'lifetime': return ' one-time';
+      default: return `/${interval}`;
+    }
+  };
+
   return (
-    <OnboardingLayout
+    <OnboardingLayout 
       currentStep="platform-plan"
       title="Choose Your Platform Plan"
-      description="Select a subscription plan that fits your needs"
-      icon={<Zap className="h-6 w-6" />}
+      description="Select a subscription plan that fits your community needs"
+      icon={<Zap size={24} />}
     >
-      <div className="space-y-8">
+      <div className="space-y-6">
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          </div>
-        ) : hasPlatformPlan ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-green-50 border border-green-200 rounded-lg p-5"
-          >
-            <div className="flex items-center gap-3 text-green-700">
-              <div className="bg-green-500 text-white p-2 rounded-full">
-                <Check className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Platform Plan Selected!</h3>
-                <p>You've successfully subscribed to a Membify plan</p>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-6"
-          >
-            <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 text-amber-800">
-              <p className="font-medium flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                Select a plan to unlock all Membify features
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {plans.slice(0, 2).map((plan) => (
-                <motion.div
-                  key={plan.id}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
-                  className="border rounded-xl shadow-sm hover:shadow-md transition-shadow p-5 bg-white relative"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-bold">{plan.name}</h3>
-                      <div className="flex items-baseline mt-1">
-                        <span className="text-2xl font-bold">${plan.price}</span>
-                        <span className="text-gray-600 ml-1">/{formatInterval(plan.interval)}</span>
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border border-gray-200">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-24 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-10 w-28 mb-4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
                   </div>
-                  
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <Button
-                    onClick={() => {
-                      setSelectedPlan(plan);
-                      setIsSubscriptionDialogOpen(true);
-                    }}
-                    className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Select Plan
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-9 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {plans.map((plan) => (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card 
+                  className={`border ${
+                    selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) 
+                      ? 'border-indigo-500 ring-2 ring-indigo-500/20' 
+                      : 'border-gray-200 hover:border-indigo-300'
+                  } transition-all cursor-pointer h-full flex flex-col`}
+                  onClick={() => handlePlanSelect(plan)}
+                >
+                  <CardHeader className="pb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                    <p className="text-sm text-gray-500">{plan.description}</p>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <div className="flex items-end gap-1 mb-4">
+                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                      <span className="text-gray-500 mb-1">{getIntervalText(plan.interval)}</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {plan.features && Array.isArray(plan.features) && plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2 text-gray-700">
+                          <Check size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      variant={selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? "default" : "outline"} 
+                      className={`w-full ${
+                        selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id)
+                          ? "bg-indigo-600 hover:bg-indigo-700" 
+                          : ""
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlanSelect(plan);
+                      }}
+                    >
+                      {selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? (
+                        <span className="flex items-center gap-2">
+                          <Check size={16} />
+                          Selected
+                        </span>
+                      ) : "Select Plan"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         )}
         
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-          {hasPlatformPlan ? (
-            <Button 
-              onClick={goToNextStep}
-              size="lg"
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            >
-              Continue <ArrowRight className="h-5 w-5" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => setIsSubscriptionDialogOpen(true)}
-              size="lg"
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            >
-              View All Plans <Zap className="h-5 w-5" />
-            </Button>
-          )}
+        <div className="pt-4 flex justify-end">
+          <Button 
+            onClick={handleContinue}
+            size="lg" 
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+            disabled={(!selectedPlan && !hasPlatformPlan) || isProcessing}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                {hasPlatformPlan ? 'Continue' : 'Select Plan & Continue'}
+                <ArrowRight size={16} />
+              </>
+            )}
+          </Button>
         </div>
       </div>
-      
-      <PlatformSubscriptionDialog
-        open={isSubscriptionDialogOpen}
-        onOpenChange={setIsSubscriptionDialogOpen}
-      />
     </OnboardingLayout>
   );
 };

@@ -16,7 +16,7 @@ export interface SubscriptionPlan {
   name: string;
   description: string | null;
   price: number;
-  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
+  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
   is_active: boolean;
   features: string[];
   created_at: string;
@@ -28,6 +28,6 @@ export interface CreateSubscriptionPlanData {
   name: string;
   description?: string;
   price: number;
-  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time';
+  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
   features?: string[];
 }

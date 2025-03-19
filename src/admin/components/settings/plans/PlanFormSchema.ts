@@ -6,7 +6,7 @@ export const planFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Price must be 0 or greater"),
-  interval: z.enum(["monthly", "quarterly", "yearly", "lifetime"]),
+  interval: z.enum(["monthly", "quarterly", "yearly", "half-yearly", "one-time", "lifetime"]),
   features: z.array(z.string()).default([]).or(
     z.string().transform(val => 
       val.split('\n')

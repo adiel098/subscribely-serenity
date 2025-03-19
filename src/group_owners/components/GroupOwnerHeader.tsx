@@ -1,39 +1,24 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Bell, 
-  Crown, 
-  User, 
-  Settings, 
-  LogOut, 
-  HelpCircle
-} from 'lucide-react';
+import { Bell, Crown, User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-
 export function GroupOwnerHeader() {
-  const { signOut, user } = useAuth();
+  const {
+    signOut,
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
-  
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
-  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -42,15 +27,17 @@ export function GroupOwnerHeader() {
       console.error("Error signing out:", error);
     }
   };
-  
-  return (
-    <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="flex items-center gap-3"
-      >
+  return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
+      <motion.div initial={{
+      opacity: 0,
+      x: -20
+    }} animate={{
+      opacity: 1,
+      x: 0
+    }} transition={{
+      duration: 0.4,
+      ease: "easeOut"
+    }} className="flex items-center gap-3">
         <Link to="/dashboard" className="text-xl font-bold flex items-center gap-2">
           <Crown className="h-6 w-6 text-amber-500 drop-shadow-sm" /> 
           <span className="font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-500 bg-clip-text text-transparent">
@@ -60,43 +47,29 @@ export function GroupOwnerHeader() {
       </motion.div>
       
       <div className="flex items-center space-x-3">
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative text-indigo-700 hover:bg-indigo-200/50 rounded-full"
-            onClick={() => setShowHelp(!showHelp)}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
+        <motion.div whileHover={{
+        scale: 1.05
+      }} whileTap={{
+        scale: 0.95
+      }}>
+          
         </motion.div>
         
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative text-indigo-700 hover:bg-indigo-200/50 rounded-full" 
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-orange-500 border-2 border-white">
-              2
-            </Badge>
-          </Button>
+        <motion.div whileHover={{
+        scale: 1.05
+      }} whileTap={{
+        scale: 0.95
+      }}>
+          
         </motion.div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} whileTap={{
+            scale: 0.95
+          }}>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/placeholder.svg" alt="Profile" />
@@ -122,10 +95,7 @@ export function GroupOwnerHeader() {
               <span>Account Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="flex items-center text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 py-2" 
-              onClick={handleSignOut}
-            >
+            <DropdownMenuItem className="flex items-center text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 py-2" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sign Out</span>
             </DropdownMenuItem>
@@ -133,13 +103,16 @@ export function GroupOwnerHeader() {
         </DropdownMenu>
       </div>
       
-      {showHelp && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          className="absolute top-16 right-6 bg-white rounded-lg shadow-xl p-4 w-72 border border-blue-100 z-50"
-        >
+      {showHelp && <motion.div initial={{
+      opacity: 0,
+      y: 10
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} exit={{
+      opacity: 0,
+      y: 10
+    }} className="absolute top-16 right-6 bg-white rounded-lg shadow-xl p-4 w-72 border border-blue-100 z-50">
           <h3 className="text-lg font-bold text-blue-700 mb-2 flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-blue-500" />
             Need Help?
@@ -150,8 +123,6 @@ export function GroupOwnerHeader() {
           <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
             Contact Support
           </Button>
-        </motion.div>
-      )}
-    </header>
-  );
+        </motion.div>}
+    </header>;
 }

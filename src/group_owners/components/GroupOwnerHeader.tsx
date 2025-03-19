@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+
 export function GroupOwnerHeader() {
   const {
     signOut,
@@ -15,10 +17,12 @@ export function GroupOwnerHeader() {
   } = useAuth();
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
+  
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
+  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -27,6 +31,11 @@ export function GroupOwnerHeader() {
       console.error("Error signing out:", error);
     }
   };
+  
+  const navigateToAccountSettings = () => {
+    navigate('/membify-settings');
+  };
+
   return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
       <motion.div initial={{
       opacity: 0,
@@ -84,7 +93,7 @@ export function GroupOwnerHeader() {
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuItem className="flex items-center cursor-pointer py-2">
+            <DropdownMenuItem className="flex items-center cursor-pointer py-2" onClick={navigateToAccountSettings}>
               <Settings className="mr-2 h-4 w-4 text-blue-600" />
               <span>Account Settings</span>
             </DropdownMenuItem>

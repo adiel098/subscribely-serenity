@@ -54,28 +54,46 @@ export const useBroadcast = () => {
         throw new Error('Failed to create broadcast record: No data returned');
       }
       
-      // Call the edge function to send the broadcast
-      const response = await supabase.functions.invoke('send-broadcast', {
+      // Call the telegram-webhook function directly with the broadcast action
+      const response = await supabase.functions.invoke('telegram-webhook', {
         body: {
-          broadcast_id: broadcastRecord.id,
-          entity_id: params.entityId,
+          action: 'broadcast',
+          community_id: params.entityId,
           entity_type: params.entityType,
+          message: params.message,
           filter_type: params.filterType,
           subscription_plan_id: params.subscriptionPlanId,
           include_button: params.includeButton || false,
-          image: params.image || null
+          image: params.image || null,
+          broadcast_id: broadcastRecord.id
         }
       });
       
       if (response.error) {
-        console.error('Error invoking send-broadcast function:', response.error);
+        console.error('Error invoking telegram-webhook function:', response.error);
         throw new Error(`Failed to send broadcast: ${response.error}`);
+      }
+      
+      // Update the broadcast record with the results
+      if (response.data) {
+        await supabase
+          .from('broadcast_messages')
+          .update({
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            sent_success: response.data.successCount || 0,
+            sent_failed: response.data.failureCount || 0,
+            total_recipients: response.data.totalRecipients || 0
+          })
+          .eq('id', broadcastRecord.id);
       }
       
       return {
         success: true,
         broadcast_id: broadcastRecord.id,
-        ...response.data
+        sent_success: response.data?.successCount || 0,
+        sent_failed: response.data?.failureCount || 0,
+        total_recipients: response.data?.totalRecipients || 0
       };
     } catch (error) {
       console.error('Error in sendBroadcastMessage:', error);

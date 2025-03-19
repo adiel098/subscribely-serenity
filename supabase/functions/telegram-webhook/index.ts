@@ -1,76 +1,61 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { routeTelegramWebhook } from "./router/webhookRouter.ts";
-import { corsHeaders } from "./cors.ts";
-import { createLogger } from "./services/loggingService.ts";
-import { handlePaymentCallback } from "./handlers/paymentCallbackHandler.ts";
-import { handleUpdate } from "./handlers/updateHandler.ts";
-import { getLogger, logToDatabase } from "./services/loggerService.ts";
+import { corsHeaders } from './cors.ts';
+import { getLogger } from './services/loggerService.ts';
+import { routeTelegramWebhook } from './router/webhookRouter.ts';
 
+// Initialize logger for the main entrypoint
 const logger = getLogger('webhook-main');
 
+// Handle all incoming requests to the function
 serve(async (req) => {
-  // Log all request details
-  logger.info(`Received ${req.method} request to ${req.url}`);
-  logger.debug(`Headers: ${JSON.stringify(Object.fromEntries(req.headers.entries()))}`);
+  logger.info(`Received ${req.method} request to telegram-webhook`);
   
-  // Handle CORS preflight requests
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
-    logger.debug('Handling CORS preflight request');
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
+    logger.info('Handling CORS preflight request');
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    // Get environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
     
-    // Log environment variables (but not their full values for security)
-    logger.info(`Environment variables: 
-      SUPABASE_URL: ${supabaseUrl ? '✅ Set' : '❌ Missing'}, 
-      SUPABASE_SERVICE_ROLE_KEY: ${supabaseKey ? '✅ Set' : '❌ Missing'}, 
-      TELEGRAM_BOT_TOKEN: ${botToken ? '✅ Set' : '❌ Missing'}`);
-    
-    if (!supabaseUrl || !supabaseKey || !botToken) {
-      throw new Error('Missing required environment variables');
+    // Validate required environment variables
+    if (!supabaseUrl || !supabaseKey) {
+      logger.error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+      throw new Error('Server configuration error: Missing Supabase credentials');
     }
     
+    if (!botToken) {
+      logger.error('Missing required environment variable: TELEGRAM_BOT_TOKEN');
+      throw new Error('Server configuration error: Missing Telegram bot token');
+    }
+
+    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
+    logger.info('Supabase client initialized');
     
-    // Extract and log request body if it exists
-    let requestBody = null;
-    try {
-      const contentType = req.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const clonedReq = req.clone();
-        requestBody = await clonedReq.json();
-        logger.debug(`Request body: ${JSON.stringify(requestBody)}`);
-        await logToDatabase(supabase, 'WEBHOOK', 'INFO', 'Received webhook request', {
-          url: req.url,
-          method: req.method,
-          body: requestBody
-        });
-      }
-    } catch (e) {
-      logger.warn(`Failed to parse request body: ${e.message}`);
-    }
-    
+    // Route the webhook to the appropriate handler
     return await routeTelegramWebhook(req, supabase, botToken);
   } catch (error) {
-    logger.error(`Error processing request: ${error.message}`);
-    logger.error(`Stack trace: ${error.stack}`);
+    logger.error(`Uncaught error in webhook handler: ${error.message}`, error);
     
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false,
-      location: 'webhook entry point'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    // Return error response
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        success: false
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });
+
+logger.info('Telegram webhook edge function initialized');

@@ -4,6 +4,7 @@ import { corsHeaders } from '../cors.ts';
 import { getLogger, logToDatabase } from '../services/loggerService.ts';
 import { handleVerificationMessage } from '../handlers/verificationHandler.ts';
 import { handleChannelPost } from '../handlers/channelPost.ts';
+import { sendBroadcast } from '../handlers/broadcastHandler.ts';
 
 const logger = getLogger('webhook-router');
 
@@ -11,6 +12,51 @@ export async function routeTelegramWebhook(req: Request, supabase: ReturnType<ty
   try {
     // Get request body
     const update = await req.json();
+    
+    // Check if this is a broadcast action
+    if (update.action === 'broadcast') {
+      logger.info(`📢 Processing broadcast action for community ${update.community_id}`);
+      
+      try {
+        const broadcastResult = await sendBroadcast(
+          supabase,
+          update.community_id || null,
+          update.group_id || null,
+          update.message || '',
+          update.filter_type || 'all',
+          update.subscription_plan_id,
+          update.include_button || false,
+          update.image || null
+        );
+        
+        logger.info(`📊 Broadcast completed with results: ${JSON.stringify(broadcastResult)}`);
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            successCount: broadcastResult.successCount,
+            failureCount: broadcastResult.failureCount,
+            totalRecipients: broadcastResult.totalRecipients
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (broadcastError) {
+        logger.error(`❌ Error in broadcast operation: ${broadcastError.message}`, broadcastError);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: broadcastError.message, 
+            success: false
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500
+          }
+        );
+      }
+    }
+    
+    // If not a broadcast, proceed with regular webhook handling
     logger.info(`Processing webhook update: ${JSON.stringify(update).substring(0, 200)}...`);
     
     // Log basic information about the update

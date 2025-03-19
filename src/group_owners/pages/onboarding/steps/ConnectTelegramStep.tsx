@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MessageCircle, ArrowRight, Loader2, Bot, AlertCircle, ArrowLeft, Copy, CheckCircle, ShieldCheck, Send, PartyPopper } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +35,7 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
   const [verificationAttempted, setVerificationAttempted] = useState(false);
   const [connectedCommunity, setConnectedCommunity] = useState<any>(null);
   const [isRefreshingPhoto, setIsRefreshingPhoto] = useState(false);
-  const [retryCount, setRetryCount] = useState(0); // מונה ניסיונות לבדיקת חיבור
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -142,68 +142,57 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
       setVerificationAttempted(true);
       setVerificationStatus('idle');
 
-      // Show processing toast to let user know verification is in progress
       toast({
         title: "🔄 Processing Verification",
         description: "Checking your Telegram connection...",
         className: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800"
       });
 
-      // Set retry count that will be used for multiple checks
       setRetryCount(prev => prev + 1);
 
-      // Check for connected community - multiple approaches
+      const { data: verificationResult, error: verificationError } = await supabase.functions.invoke("check-verification-status", {
+        body: { 
+          userId: user.id,
+          verificationCode: verificationCode
+        }
+      });
+
+      if (verificationError) {
+        console.error('Error calling verification function:', verificationError);
+      }
+      
+      console.log('Verification result:', verificationResult);
+
       let isVerified = false;
       let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (!isVerified && attempts < maxAttempts) {
+      const maxAttempts = 5;
+
+      while (!attempts < maxAttempts) {
         attempts++;
         console.log(`Verification attempt ${attempts} of ${maxAttempts}`);
         
-        // 1. Check if there's a telegram_bot_settings with our verification code
-        const { data: botSettings, error: settingsError } = await supabase
-          .from('telegram_bot_settings')
-          .select('*, communities(*)')
-          .eq('verification_code', verificationCode)
-          .not('verified_at', 'is', null)
+        const { data: recentCommunity, error: communityError } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('owner_id', user.id)
+          .not('telegram_chat_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
-          
-        if (settingsError) {
-          console.error('Error checking bot settings:', settingsError);
-        } else if (botSettings?.verified_at) {
-          console.log('Found verified bot settings:', botSettings);
-          isVerified = true;
-        }
-        
-        // 2. Check if there's a community with telegram_chat_id that belongs to the user
-        if (!isVerified) {
-          const { data: recentCommunity, error: communityError } = await supabase
-            .from('communities')
-            .select('*')
-            .eq('owner_id', user.id)
-            .not('telegram_chat_id', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
 
-          if (communityError) {
-            console.error('Error checking recent community:', communityError);
-          } else if (recentCommunity?.telegram_chat_id) {
-            console.log('Found community with telegram_chat_id:', recentCommunity);
-            isVerified = true;
-            setConnectedCommunity(recentCommunity);
-          }
+        if (recentCommunity?.telegram_chat_id) {
+          console.log('Found community with telegram_chat_id:', recentCommunity);
+          isVerified = true;
+          setConnectedCommunity(recentCommunity);
+          break;
         }
         
         if (!isVerified && attempts < maxAttempts) {
-          // Wait before next attempt
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 4000));
         }
       }
 
       if (isVerified) {
-        // Success case
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')
@@ -218,32 +207,24 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
           setVerificationCode(newCode);
         }
 
-        // Set success state
         setVerificationStatus('success');
         
-        // Refresh to get the latest community data if we don't already have it
-        if (!connectedCommunity) {
-          await checkForConnectedCommunity();
-        }
+        await checkForConnectedCommunity();
         
-        // Only show success dialog if we don't have a connected community to display
         if (!connectedCommunity) {
           setShowSuccessDialog(true);
         }
         
         saveCurrentStep('connect-telegram');
 
-        // Show success toast
         toast({
           title: "🎉 Connection Successful!",
           description: "Your Telegram group has been successfully connected to Membify",
           className: "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-800"
         });
       } else {
-        // Failure case
         setVerificationStatus('error');
 
-        // Show detailed error message with troubleshooting steps
         toast({
           title: "⚠️ Verification Failed",
           description: "Please check the following: 1) Bot is added as admin 2) Verification code was sent in the group 3) Wait a few seconds and try again",
@@ -252,7 +233,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
         });
       }
     } catch (error) {
-      // Technical error handling
       console.error('Verification error:', error);
       setVerificationStatus('error');
       toast({
@@ -284,7 +264,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
     setIsRefreshingPhoto(true);
     
     try {
-      // Call the function to refresh the photo
       const { data, error } = await supabase.functions.invoke("check-community-photo", {
         body: { 
           communityId, 
@@ -308,7 +287,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
         description: "Community photo has been updated"
       });
       
-      // Refresh the community data
       checkForConnectedCommunity();
     } catch (err) {
       console.error("Error in handleRefreshPhoto:", err);
@@ -318,7 +296,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
   };
 
   const handleAddAnotherGroup = () => {
-    // Reset verification status to allow adding another group
     setVerificationStatus('idle');
     setVerificationAttempted(false);
     initializeVerificationCode();
@@ -356,7 +333,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
         </div>
       ) : (
         <motion.div className="space-y-6" variants={container} initial="hidden" animate="show">
-          {/* Show already connected community if available */}
           {verificationStatus === 'success' && connectedCommunity && (
             <ConnectedChannelDisplay
               community={connectedCommunity}
@@ -367,7 +343,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
             />
           )}
 
-          {/* Only show connection UI if not verified or adding another group */}
           {verificationStatus !== 'success' && (
             <>
               {isTelegramConnected ? (
@@ -426,7 +401,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
               <motion.div variants={item}>
                 <Card className="p-6 bg-white shadow-md border border-indigo-100 overflow-hidden">
                   <div className="space-y-8">
-                    {/* Step 1 - Add bot to group */}
                     <motion.div
                       className="flex gap-4"
                       initial={{ opacity: 0, x: -20 }}
@@ -499,7 +473,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
                       </div>
                     </motion.div>
 
-                    {/* Step 2 - Copy verification code */}
                     <motion.div
                       className="flex gap-4"
                       initial={{ opacity: 0, x: -20 }}
@@ -596,7 +569,6 @@ export const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
                   </motion.div>
                 )}
 
-                {/* Keep Continue button for already connected users */}
                 {isTelegramConnected && !connectedCommunity && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}

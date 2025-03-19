@@ -4,6 +4,9 @@ import { getLogger } from '../../services/loggerService.ts';
 
 const logger = getLogger('photo-handler');
 
+/**
+ * Fetches the group/channel photo from Telegram and updates the community record
+ */
 export async function fetchAndUpdateCommunityPhoto(
   supabase: ReturnType<typeof createClient>,
   botToken: string,
@@ -11,76 +14,75 @@ export async function fetchAndUpdateCommunityPhoto(
   chatId: string
 ): Promise<string | null> {
   try {
-    logger.info(`Fetching photo for chat ID: ${chatId}, community ID: ${communityId}`);
-    
-    // Get chat info including photo
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/getChat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      logger.error(`Telegram API error: ${JSON.stringify(errorData)}`);
+    logger.info(`Fetching photo for community ${communityId} (chat: ${chatId})`);
+
+    // Get chat photo file_id from Telegram
+    const chatResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/getChat`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId })
+      }
+    );
+
+    if (!chatResponse.ok) {
+      const errorText = await chatResponse.text();
+      logger.error(`Telegram API error: ${errorText}`);
       return null;
     }
-    
-    const chatData = await response.json();
-    logger.info(`Chat data received: ${JSON.stringify(chatData, null, 2)}`);
-    
+
+    const chatData = await chatResponse.json();
+    logger.info(`Chat response: ${JSON.stringify(chatData)}`);
+
     if (!chatData.ok || !chatData.result.photo) {
-      logger.info(`No photo available for chat ID: ${chatId}`);
+      logger.info(`No photo available for chat ${chatId}`);
       return null;
     }
-    
-    // Get the photo file path
-    const photoId = chatData.result.photo.big_file_id || chatData.result.photo.small_file_id;
-    if (!photoId) {
-      logger.error(`No photo file ID found in response`);
-      return null;
-    }
-    
-    logger.info(`Photo file ID: ${photoId}`);
-    
-    // Get file info
-    const fileResponse = await fetch(`https://api.telegram.org/bot${botToken}/getFile`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file_id: photoId })
-    });
-    
+
+    // Get the file path from the file_id
+    const fileResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/getFile`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: chatData.result.photo.small_file_id })
+      }
+    );
+
     if (!fileResponse.ok) {
-      const errorData = await fileResponse.json();
-      logger.error(`Error getting file info: ${JSON.stringify(errorData)}`);
+      const errorText = await fileResponse.text();
+      logger.error(`Telegram API error (getFile): ${errorText}`);
       return null;
     }
-    
+
     const fileData = await fileResponse.json();
+    logger.info(`File data: ${JSON.stringify(fileData)}`);
+
     if (!fileData.ok || !fileData.result.file_path) {
-      logger.error(`No file path in response: ${JSON.stringify(fileData)}`);
+      logger.error(`File path not found in response: ${JSON.stringify(fileData)}`);
       return null;
     }
-    
-    // Construct the photo URL
+
+    // Download the file from Telegram
     const photoUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
     logger.info(`Photo URL: ${photoUrl}`);
-    
+
     // Update the community with the photo URL
     const { error: updateError } = await supabase
       .from('communities')
-      .update({ telegram_photo_url: photoUrl })
+      .update({ profile_image_url: photoUrl })
       .eq('id', communityId);
-      
+
     if (updateError) {
-      logger.error(`Error updating community with photo URL: ${updateError.message}`);
+      logger.error(`Failed to update community with photo: ${updateError.message}`);
       return null;
     }
-    
-    logger.info(`Successfully updated photo for community ID: ${communityId}`);
+
+    logger.info(`Successfully updated photo for community ${communityId}`);
     return photoUrl;
   } catch (error) {
-    logger.error(`Error fetching and updating community photo: ${error.message}`);
+    logger.error(`Error in fetchAndUpdateCommunityPhoto: ${error.message}`, error);
     return null;
   }
 }

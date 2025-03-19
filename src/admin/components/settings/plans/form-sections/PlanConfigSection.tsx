@@ -29,8 +29,10 @@ export const PlanConfigSection = ({ form }: PlanConfigSectionProps) => {
                 <SelectContent>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="half-yearly">Half-Yearly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="lifetime">Lifetime (One-time)</SelectItem>
+                  <SelectItem value="one-time">One-Time</SelectItem>
+                  <SelectItem value="lifetime">Lifetime</SelectItem>
                 </SelectContent>
               </Select>
             </FormControl>

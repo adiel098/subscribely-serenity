@@ -1,5 +1,5 @@
 
-export type PlatformPlanInterval = 'monthly' | 'quarterly' | 'yearly' | 'lifetime';
+export type PlatformPlanInterval = 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
 
 export interface PlatformPlan {
   id: string;

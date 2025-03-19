@@ -41,41 +41,8 @@ export const usePaymentMethodsPage = () => {
     }
   };
 
-  const handleToggleDefault = async (id: string, isDefault: boolean) => {
-    try {
-      console.log(`Setting payment method ${id} default status to ${isDefault}`);
-      
-      const { error } = await supabase
-        .from('payment_methods')
-        .update({ is_default: isDefault })
-        .eq('id', id);
-
-      if (error) {
-        console.error("Error toggling default status:", error);
-        throw error;
-      }
-
-      await refetch();
-      
-      toast({
-        title: "Success",
-        description: isDefault 
-          ? "Payment method set as default for all your communities"
-          : "Payment method is no longer a default",
-      });
-    } catch (error) {
-      console.error("Failed to toggle default status", error);
-      toast({
-        title: "Error",
-        description: "Failed to update payment method default status",
-        variant: "destructive",
-      });
-    }
-  };
-
   const filteredPaymentMethods = paymentMethods?.filter((method: PaymentMethod) => {
     if (filter === "all") return true;
-    if (filter === "default") return method.is_default;
     return true;
   });
 
@@ -88,6 +55,5 @@ export const usePaymentMethodsPage = () => {
     filter,
     setFilter,
     handleTogglePaymentMethod,
-    handleToggleDefault,
   };
 };

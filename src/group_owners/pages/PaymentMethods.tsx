@@ -14,7 +14,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid, Star } from "lucide-react";
+import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid } from "lucide-react";
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { usePaymentMethodsPage } from "@/group_owners/hooks/usePaymentMethodsPage";
@@ -27,8 +27,7 @@ const PaymentMethods = () => {
     isLoading, 
     filter, 
     setFilter,
-    handleTogglePaymentMethod,
-    handleToggleDefault
+    handleTogglePaymentMethod
   } = usePaymentMethodsPage();
 
   // Animation variants
@@ -67,14 +66,8 @@ const PaymentMethods = () => {
 
       <Tabs defaultValue="all" className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <TabsList className="grid grid-cols-2 w-40">
-            <TabsTrigger value="all" onClick={() => setFilter("all")}>All</TabsTrigger>
-            <TabsTrigger value="default" onClick={() => setFilter("default")}>
-              <div className="flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                Default
-              </div>
-            </TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="all" onClick={() => setFilter("all")}>All Payment Methods</TabsTrigger>
           </TabsList>
         </div>
         
@@ -108,8 +101,6 @@ const PaymentMethods = () => {
                       onConfigure={() => {}}
                       imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png"
                       provider="stripe"
-                      isDefault={paymentMethods?.find(m => m.provider === 'stripe')?.is_default ?? false}
-                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', isDefault)}
                     />
                   </motion.div>
                 ) : null}
@@ -126,8 +117,6 @@ const PaymentMethods = () => {
                       onConfigure={() => {}}
                       imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png"
                       provider="paypal"
-                      isDefault={paymentMethods?.find(m => m.provider === 'paypal')?.is_default ?? false}
-                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', isDefault)}
                     />
                   </motion.div>
                 ) : null}
@@ -144,8 +133,6 @@ const PaymentMethods = () => {
                       onConfigure={() => {}}
                       imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
                       provider="crypto"
-                      isDefault={paymentMethods?.find(m => m.provider === 'crypto')?.is_default ?? false}
-                      onDefaultToggle={(isDefault) => handleToggleDefault(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', isDefault)}
                     />
                   </motion.div>
                 ) : null}
@@ -153,51 +140,6 @@ const PaymentMethods = () => {
                 {paymentMethods?.length === 0 && (
                   <div className="col-span-3 p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
                     No payment methods configured yet
-                  </div>
-                )}
-              </motion.div>
-            </TabsContent>
-            
-            <TabsContent value="default" className="mt-0">
-              <motion.div 
-                className="grid gap-8 sm:grid-cols-1 md:grid-cols-3 mx-auto"
-                variants={container}
-                initial="hidden"
-                animate="show"
-              >
-                {paymentMethods?.filter(m => m.is_default).length > 0 ? (
-                  paymentMethods.filter(m => m.is_default).map((method) => (
-                    <motion.div key={method.provider} variants={item} className="h-full w-full">
-                      <PaymentMethodCard
-                        title={method.provider.charAt(0).toUpperCase() + method.provider.slice(1)}
-                        description={
-                          method.provider === 'stripe' ? "Accept credit card payments securely with Stripe 💳" :
-                          method.provider === 'paypal' ? "Accept PayPal payments easily and securely 🔄" :
-                          "Accept cryptocurrency payments for your groups 🪙"
-                        }
-                        icon={
-                          method.provider === 'stripe' ? CreditCard :
-                          method.provider === 'paypal' ? Wallet :
-                          Bitcoin
-                        }
-                        isActive={method.is_active}
-                        onToggle={(active) => handleTogglePaymentMethod(method.id, active)}
-                        isConfigured={Object.keys(method.config || {}).length > 0}
-                        onConfigure={() => {}}
-                        imageSrc={
-                          method.provider === 'stripe' ? "/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png" :
-                          method.provider === 'paypal' ? "/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png" :
-                          "/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png"
-                        }
-                        provider={method.provider}
-                        isDefault={method.is_default}
-                        onDefaultToggle={(isDefault) => handleToggleDefault(method.id, isDefault)}
-                      />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-span-3 p-6 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
-                    No default payment methods have been set
                   </div>
                 )}
               </motion.div>

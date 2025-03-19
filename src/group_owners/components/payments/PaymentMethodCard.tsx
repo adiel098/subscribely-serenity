@@ -15,9 +15,7 @@ interface PaymentMethodCardProps {
   icon: LucideIcon;
   isActive: boolean;
   isConfigured: boolean;
-  isDefault?: boolean;
   onToggle: (active: boolean) => void;
-  onDefaultToggle?: (isDefault: boolean) => void;
   onConfigure: () => void;
   imageSrc?: string;
   provider: string;
@@ -30,9 +28,7 @@ export const PaymentMethodCard = ({
   icon: Icon,
   isActive,
   isConfigured,
-  isDefault = false,
   onToggle,
-  onDefaultToggle,
   onConfigure,
   imageSrc,
   provider,
@@ -106,21 +102,6 @@ export const PaymentMethodCard = ({
               </>
             )}
           </div>
-          
-          {onDefaultToggle && (
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-gray-600">Set as default</span>
-              <Switch 
-                checked={isDefault} 
-                onCheckedChange={onDefaultToggle}
-                disabled={!isConfigured}
-                className={cn(
-                  "data-[state=checked]:bg-amber-500",
-                  !isConfigured && "cursor-not-allowed opacity-50"
-                )}
-              />
-            </div>
-          )}
         </CardContent>
         
         <CardFooter className="pt-4">

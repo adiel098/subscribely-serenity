@@ -1085,7 +1085,6 @@ export type Database = {
           id: string
           provider: string
           is_active: boolean
-          is_default: boolean
           config: Json
           community_id: string
           created_at: string
@@ -1122,7 +1121,6 @@ export type Database = {
           id: string
           provider: string
           is_active: boolean
-          is_default: boolean
           config: Json
           owner_id: string
           community_id: string

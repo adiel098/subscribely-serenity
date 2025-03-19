@@ -1,16 +1,119 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Shield, CreditCard, Settings, Bell, Crown } from "lucide-react";
+import { CheckCircle, CreditCard, Crown, User, AlertCircle, Pencil, Save, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { PurchaseHistoryTable } from "../components/membify-settings/PurchaseHistoryTable";
 import { CurrentPlanCard } from "../components/membify-settings/CurrentPlanCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 const MembifySettings = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [profileData, setProfileData] = useState({
+    full_name: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error fetching profile",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else if (data) {
+        setProfileData({
+          full_name: data.full_name || '',
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          email: data.email || user?.email || '',
+          phone: data.phone || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileData.full_name,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
+          phone: profileData.phone
+        })
+        .eq('id', user?.id);
+
+      if (error) {
+        toast({
+          title: "Error saving profile",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated successfully",
+          variant: "default"
+        });
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error saving profile",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="h-full space-y-6 py-[5px] px-[14px]">
       <motion.div
@@ -27,28 +130,14 @@ const MembifySettings = () => {
           </p>
         </header>
 
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-white/90 backdrop-blur-sm border border-indigo-100 rounded-xl shadow-sm">
             <TabsTrigger 
-              value="general" 
+              value="profile" 
               className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
             >
-              <Settings className="h-4 w-4" />
-              <span>General</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
-              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
-            >
-              <Bell className="h-4 w-4" />
-              <span>Notifications</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="flex items-center gap-1.5 data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700"
-            >
-              <Shield className="h-4 w-4" />
-              <span>Security</span>
+              <User className="h-4 w-4" />
+              <span>Profile</span>
             </TabsTrigger>
             <TabsTrigger 
               value="plans" 
@@ -66,118 +155,128 @@ const MembifySettings = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general">
+          <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle>General Settings</CardTitle>
-                <CardDescription>Manage your general platform preferences</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>User Profile</CardTitle>
+                    <CardDescription>Manage your personal information</CardDescription>
+                  </div>
+                  {!isEditing ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-1"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setIsEditing(false)}
+                      className="flex items-center gap-1"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Community Visibility</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Allow your community to be discovered by other users
-                      </p>
-                    </div>
-                    <Switch id="community-visibility" defaultChecked />
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
                   </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Dark Mode</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Enable dark mode for your dashboard
-                      </p>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="first_name">First Name</Label>
+                        <Input 
+                          id="first_name"
+                          name="first_name"
+                          value={profileData.first_name}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                          className={!isEditing ? "bg-gray-50" : ""}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="last_name">Last Name</Label>
+                        <Input 
+                          id="last_name"
+                          name="last_name"
+                          value={profileData.last_name}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                          className={!isEditing ? "bg-gray-50" : ""}
+                        />
+                      </div>
                     </div>
-                    <Switch id="dark-mode" />
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Email Notifications</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Receive email notifications for important events
-                      </p>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Full Name</Label>
+                      <Input 
+                        id="full_name"
+                        name="full_name"
+                        value={profileData.full_name}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className={!isEditing ? "bg-gray-50" : ""}
+                      />
                     </div>
-                    <Switch id="email-notifications" defaultChecked />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Settings</CardTitle>
-                <CardDescription>Manage how and when you receive notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">New Subscribers</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified when someone subscribes to your community
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input 
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={profileData.email}
+                        disabled={true}
+                        className="bg-gray-50"
+                      />
+                      <p className="text-xs text-muted-foreground">Your email is managed by your authentication provider and cannot be changed here.</p>
                     </div>
-                    <Switch id="new-subscribers" defaultChecked />
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Payment Notifications</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified about payment events
-                      </p>
-                    </div>
-                    <Switch id="payment-notifications" defaultChecked />
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Platform Updates</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Receive notifications about platform updates and changes
-                      </p>
-                    </div>
-                    <Switch id="platform-updates" defaultChecked />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
-                <CardDescription>Manage your account security options</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Two-Factor Authentication</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security to your account
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input 
+                        id="phone"
+                        name="phone"
+                        value={profileData.phone}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className={!isEditing ? "bg-gray-50" : ""}
+                      />
                     </div>
-                    <Switch id="two-factor" />
+
+                    {isEditing && (
+                      <div className="pt-4">
+                        <Button 
+                          onClick={handleSaveProfile} 
+                          disabled={isSaving}
+                          className="w-full sm:w-auto"
+                        >
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">Session Timeout</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically log out after period of inactivity
-                      </p>
-                    </div>
-                    <Switch id="session-timeout" defaultChecked />
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

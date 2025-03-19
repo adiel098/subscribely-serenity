@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -31,7 +30,7 @@ export function useAuthRedirect() {
     try {
       console.log("Checking onboarding status for user:", user.id);
       
-      // First check profile to see if onboarding is already marked as completed
+      // First check profile to see if onboarding_step is "complete"
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('onboarding_completed, onboarding_step')
@@ -45,9 +44,9 @@ export function useAuthRedirect() {
       
       console.log("Profile onboarding status:", profile);
       
-      // If onboarding is explicitly marked as completed, respect that setting
-      if (profile.onboarding_completed) {
-        console.log("Onboarding explicitly marked as completed, ensuring correct page");
+      // If onboarding_step is "complete", redirect to dashboard if needed
+      if (profile.onboarding_step === "complete" || profile.onboarding_completed) {
+        console.log("Onboarding is marked as complete, ensuring correct page");
         
         // If on login page or onboarding page, redirect to dashboard
         if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')) {
@@ -58,47 +57,8 @@ export function useAuthRedirect() {
         return;
       }
       
-      // If onboarding is not completed, check if user has any communities
-      const { data: communities, error: communitiesError } = await supabase
-        .from('communities')
-        .select('id')
-        .eq('owner_id', user.id)
-        .limit(1);
-      
-      if (communitiesError) {
-        console.error("Error checking communities:", communitiesError);
-        throw communitiesError;
-      }
-      
-      // If user has communities but onboarding isn't marked as completed,
-      // mark it as completed to prevent future redirects
-      if (communities && communities.length > 0) {
-        console.log("User has communities, ensuring onboarding is marked as completed");
-        
-        // Update the profile to mark onboarding as completed to prevent future redirects
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            onboarding_completed: true,
-            onboarding_step: "complete"
-          })
-          .eq('id', user.id);
-          
-        if (updateError) {
-          console.error("Error updating onboarding status:", updateError);
-        }
-        
-        // If on login page or onboarding page, redirect to dashboard
-        if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')) {
-          navigate('/dashboard', { replace: true });
-        }
-        
-        isRedirectingRef.current = false;
-        return;
-      }
-      
-      // If user has no communities and onboarding isn't completed, redirect to onboarding
-      console.log("No communities and onboarding not completed, redirecting to onboarding flow");
+      // If onboarding is not complete, redirect to onboarding
+      console.log("Onboarding not completed, redirecting to onboarding flow");
       
       // If there's a saved step, redirect to that step
       if (profile.onboarding_step) {

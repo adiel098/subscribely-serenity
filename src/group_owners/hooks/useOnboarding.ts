@@ -1,62 +1,69 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { OnboardingStep, ONBOARDING_STEPS, OnboardingState } from "./onboarding/types";
-import { useOnboardingStatus } from "./onboarding/useOnboardingStatus";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { OnboardingStep, ONBOARDING_STEPS } from "./onboarding/types";
 import { useOnboardingNavigation } from "./onboarding/useOnboardingNavigation";
-
-// Use export type for re-exporting types when isolatedModules is enabled
-export type { OnboardingStep, OnboardingState };
-export { ONBOARDING_STEPS };
+import { useOnboardingStatus } from "./onboarding/useOnboardingStatus";
+import { toast } from "sonner";
 
 export const useOnboarding = () => {
-  const { state: remoteState, isLoading: isRemoteLoading, refreshStatus } = useOnboardingStatus();
-  const initialLoadDone = useRef(false);
-  
-  // Create a local state that starts with default values but will be updated with remote values
-  const [localState, setLocalState] = useState<OnboardingState>({
-    currentStep: "welcome",
-    isCompleted: false,
-    isTelegramConnected: false,
-    hasPlatformPlan: false,
-    hasPaymentMethod: false
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState({
+    currentStep: "welcome" as OnboardingStep,
+    isCompleted: false
   });
-  
-  // Sync remote state to local state once when loaded and prevent further auto-syncing
-  useEffect(() => {
-    if (!isRemoteLoading && remoteState && !initialLoadDone.current) {
-      console.log("Syncing remote state to local:", remoteState);
-      setLocalState(prevState => ({
-        ...prevState,
-        ...remoteState
-      }));
-      initialLoadDone.current = true;
-    }
-  }, [remoteState, isRemoteLoading]);
-  
-  // Create properly typed setter functions
-  const setCurrentStep = useCallback((step: OnboardingStep) => {
-    setLocalState(prev => ({ ...prev, currentStep: step }));
-  }, []);
-  
-  const setIsCompleted = useCallback((completed: boolean) => {
-    setLocalState(prev => ({ ...prev, isCompleted: completed }));
-  }, []);
-  
+
+  // Use the status hook to fetch the initial status
+  const { state: statusState, isLoading: statusIsLoading, refreshStatus } = useOnboardingStatus();
+
+  // Initialize the navigation functions with the current state
   const { 
     isSubmitting,
-    saveCurrentStep, 
-    completeOnboarding, 
-    goToNextStep, 
-    goToPreviousStep 
-  } = useOnboardingNavigation(localState.currentStep, setCurrentStep, setIsCompleted);
-
-  return {
-    state: localState,
-    isLoading: isRemoteLoading || isSubmitting,
     saveCurrentStep,
     completeOnboarding,
     goToNextStep,
-    goToPreviousStep,
-    refreshStatus
+    goToPreviousStep
+  } = useOnboardingNavigation(
+    state.currentStep,
+    (step) => setState(prev => ({ ...prev, currentStep: step })),
+    (completed) => setState(prev => ({ ...prev, isCompleted: completed }))
+  );
+
+  // Update local state when status is loaded
+  useEffect(() => {
+    if (!statusIsLoading) {
+      setState({
+        currentStep: statusState.currentStep,
+        isCompleted: statusState.isCompleted
+      });
+      setIsLoading(false);
+    }
+  }, [statusState, statusIsLoading]);
+
+  // Complete onboarding function that sets the step to "complete"
+  const handleCompleteOnboarding = async () => {
+    try {
+      await completeOnboarding();
+      
+      // Force refresh status after completion
+      await refreshStatus();
+      
+      return true;
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      toast.error("Failed to complete onboarding");
+      return false;
+    }
+  };
+
+  return {
+    state,
+    isLoading: isLoading || statusIsLoading || isSubmitting,
+    saveCurrentStep,
+    completeOnboarding: handleCompleteOnboarding,
+    goToNextStep,
+    goToPreviousStep
   };
 };

@@ -50,9 +50,11 @@ export const usePlatformPaymentHistory = () => {
           
           // Check if platform_plans has data and extract the name
           if (payment.platform_plans && Array.isArray(payment.platform_plans) && payment.platform_plans.length > 0) {
-            planName = payment.platform_plans[0].name;
+            // Type assertion to ensure name is treated as a string
+            planName = String(payment.platform_plans[0]?.name || 'Unknown Plan');
           } else if (payment.platform_plans && typeof payment.platform_plans === 'object' && 'name' in payment.platform_plans) {
-            planName = payment.platform_plans.name;
+            // Type assertion to ensure name is treated as a string
+            planName = String(payment.platform_plans.name || 'Unknown Plan');
           } else if (payment.plan_id) {
             // Fetch the plan name directly if needed
             const { data: planData } = await supabase
@@ -61,8 +63,8 @@ export const usePlatformPaymentHistory = () => {
               .eq('id', payment.plan_id)
               .single();
             
-            if (planData) {
-              planName = planData.name;
+            if (planData && planData.name) {
+              planName = String(planData.name);
             }
           }
           

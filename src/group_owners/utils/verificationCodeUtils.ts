@@ -1,67 +1,63 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast as toastFunction } from "@/components/ui/use-toast";
 
-export const generateRandomCode = (length: number): string => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
-export const fetchOrGenerateVerificationCode = async (userId: string | undefined, toast: ReturnType<typeof useToast>['toast']) => {
-  if (!userId) return null;
-  
+/**
+ * Fetches an existing verification code or generates a new one for the user
+ */
+export async function fetchOrGenerateVerificationCode(userId: string, toast: any): Promise<string | null> {
   try {
-    // Check if user already has a code
-    const { data: profile, error } = await supabase
+    console.log('Fetching or generating verification code for user:', userId);
+    
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('current_telegram_code')
+      .select('initial_telegram_code, current_telegram_code')
       .eq('id', userId)
       .single();
-    
-    if (error) {
-      console.error('Error fetching profile:', error);
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch verification code. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to fetch profile information",
+        variant: "destructive",
       });
       return null;
     }
-    
-    // If code exists, use it
+
     if (profile.current_telegram_code) {
       return profile.current_telegram_code;
     } else {
-      // Generate new code
-      const newCode = `MBF_${generateRandomCode(7)}`;
+      // Generate a new code
+      const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ current_telegram_code: newCode })
+        .update({ 
+          initial_telegram_code: profile.initial_telegram_code || newCode,
+          current_telegram_code: newCode
+        })
         .eq('id', userId);
-      
+
       if (updateError) {
-        console.error('Error updating profile with new code:', updateError);
+        console.error('Error updating codes:', updateError);
         toast({
-          title: 'Error',
-          description: 'Failed to generate verification code. Please try again.',
-          variant: 'destructive'
+          title: "Error", 
+          description: "Failed to update verification code",
+          variant: "destructive",
         });
         return null;
       }
-      
+
       return newCode;
     }
-  } catch (err) {
-    console.error('Error:', err);
+  } catch (error) {
+    console.error('Error in fetchOrGenerateVerificationCode:', error);
     toast({
-      title: 'Error',
-      description: 'An unexpected error occurred. Please try again.',
-      variant: 'destructive'
+      title: "Error",
+      description: "An unexpected error occurred",
+      variant: "destructive",
     });
     return null;
   }
-};
+}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -118,14 +119,14 @@ const TelegramConnect = () => {
       
       setIsVerifying(true);
 
-      // Fix: Don't use foreign key reference in the select, use a join instead
+      // Fix: Explicitly specify which foreign key to use
       const { data: botSettings, error: settingsError } = await supabase
         .from('telegram_bot_settings')
         .select(`
           verified_at,
           chat_id,
           community_id,
-          communities:communities(
+          communities!telegram_bot_settings_community_id_fkey(
             name,
             telegram_chat_id,
             owner_id

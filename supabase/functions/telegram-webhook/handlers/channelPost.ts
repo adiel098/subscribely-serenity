@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { fetchAndUpdateCommunityPhoto } from './utils/photoHandler.ts';
 

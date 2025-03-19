@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -55,9 +54,7 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
       
       setPlans(data || []);
       
-      // If user already has a plan, we can proceed to the next step
       if (hasPlatformPlan) {
-        // Just select the first plan for display purposes
         if (data && data.length > 0) {
           setSelectedPlan(data[0]);
         }
@@ -89,15 +86,12 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
     }
 
     if (hasPlatformPlan) {
-      // If user already has a plan, just go to the next step
       goToNextStep();
       return;
     }
 
     setIsProcessing(true);
     try {
-      // We'll use a simplified payment process for the onboarding
-      // The actual payment will be handled in the PaymentMethodStep
       await processPayment(selectedPlan!, 'card');
       saveCurrentStep('platform-plan');
       goToNextStep();
@@ -123,6 +117,22 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
     }
   };
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <OnboardingLayout 
       currentStep="platform-plan"
@@ -132,37 +142,58 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
       onBack={goToPreviousStep}
       showBackButton={true}
     >
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="border border-gray-200">
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-6 w-24 mb-2" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-10 w-28 mb-4" />
-                  <div className="space-y-2">
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.1 }}
+              >
+                <Card className="border border-gray-200">
+                  <CardHeader className="pb-2">
+                    <Skeleton className="h-6 w-24 mb-2" />
                     <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-9 w-full" />
-                </CardFooter>
-              </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-10 w-28 mb-4" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Skeleton className="h-9 w-full" />
+                  </CardFooter>
+                </Card>
+              </motion.div>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {plans.map((plan) => (
+            {plans.map((plan, index) => (
               <motion.div
                 key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: index * 0.15,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ 
+                  y: -5, 
+                  transition: { duration: 0.2 } 
+                }}
               >
                 <Card 
                   className={`border ${
@@ -173,43 +204,99 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
                   onClick={() => handlePlanSelect(plan)}
                 >
                   <CardHeader className="pb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-                    <p className="text-sm text-gray-500">{plan.description}</p>
+                    <motion.h3 
+                      className="text-lg font-semibold text-gray-900"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                    >
+                      {plan.name}
+                    </motion.h3>
+                    <motion.p 
+                      className="text-sm text-gray-500"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      {plan.description}
+                    </motion.p>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <div className="flex items-end gap-1 mb-4">
-                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                      <span className="text-gray-500 mb-1">{getIntervalText(plan.interval)}</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {plan.features && Array.isArray(plan.features) && plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-gray-700">
-                          <Check size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant={selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? "default" : "outline"} 
-                      className={`w-full ${
-                        selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id)
-                          ? "bg-indigo-600 hover:bg-indigo-700" 
-                          : ""
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlanSelect(plan);
+                    <motion.div 
+                      className="flex items-end gap-1 mb-4"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ 
+                        delay: 0.5 + index * 0.1,
+                        type: "spring",
+                        stiffness: 200
                       }}
                     >
-                      {selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? (
-                        <span className="flex items-center gap-2">
-                          <Check size={16} />
-                          Selected
-                        </span>
-                      ) : "Select Plan"}
-                    </Button>
+                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                      <span className="text-gray-500 mb-1">{getIntervalText(plan.interval)}</span>
+                    </motion.div>
+                    <motion.ul 
+                      className="space-y-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 + index * 0.1 }}
+                    >
+                      {plan.features && Array.isArray(plan.features) && plan.features.map((feature, featureIndex) => (
+                        <motion.li 
+                          key={featureIndex} 
+                          className="flex items-start gap-2 text-gray-700"
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.7 + index * 0.05 + featureIndex * 0.05 }}
+                        >
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ 
+                              delay: 0.7 + index * 0.05 + featureIndex * 0.05,
+                              type: "spring",
+                              stiffness: 300
+                            }}
+                          >
+                            <Check size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
+                          </motion.div>
+                          <span>{feature}</span>
+                        </motion.li>
+                      ))}
+                    </motion.ul>
+                  </CardContent>
+                  <CardFooter>
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full"
+                    >
+                      <Button 
+                        variant={selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? "default" : "outline"} 
+                        className={`w-full ${
+                          selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id)
+                            ? "bg-indigo-600 hover:bg-indigo-700" 
+                            : ""
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlanSelect(plan);
+                        }}
+                      >
+                        {selectedPlan?.id === plan.id || (hasPlatformPlan && plans[0]?.id === plan.id) ? (
+                          <span className="flex items-center gap-2">
+                            <motion.div
+                              initial={{ rotate: 0 }}
+                              animate={{ rotate: [0, 360] }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <Check size={16} />
+                            </motion.div>
+                            Selected
+                          </span>
+                        ) : "Select Plan"}
+                      </Button>
+                    </motion.div>
                   </CardFooter>
                 </Card>
               </motion.div>
@@ -218,35 +305,49 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
         )}
         
         <div className="pt-4 flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={goToPreviousStep}
-            className="gap-2"
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.9 }}
+            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
           >
-            <ArrowLeft size={16} />
-            Back
-          </Button>
+            <Button 
+              variant="outline" 
+              onClick={goToPreviousStep}
+              className="gap-2"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </Button>
+          </motion.div>
           
-          <Button 
-            onClick={handleContinue}
-            size="lg" 
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-            disabled={(!selectedPlan && !hasPlatformPlan) || isProcessing}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.0 }}
+            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
           >
-            {isProcessing ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                {hasPlatformPlan ? 'Continue' : 'Select Plan & Continue'}
-                <ArrowRight size={16} />
-              </>
-            )}
-          </Button>
+            <Button 
+              onClick={handleContinue}
+              size="lg" 
+              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+              disabled={(!selectedPlan && !hasPlatformPlan) || isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {hasPlatformPlan ? 'Continue' : 'Select Plan & Continue'}
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </OnboardingLayout>
   );
 };

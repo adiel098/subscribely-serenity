@@ -37,37 +37,66 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 relative">
       {/* Logout Button in the top-right corner with red text */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleLogout}
-        className="absolute top-4 right-4 text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+        className="absolute top-4 right-4"
       >
-        <LogOut size={16} />
-        <span>Logout</span>
-      </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
+        >
+          <LogOut size={16} />
+          <span>Logout</span>
+        </Button>
+      </motion.div>
 
       <div className="w-full max-w-3xl">
         {showProgress && (
-          <div className="mb-8">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-8"
+          >
             <StepProgress currentStep={currentStep} />
-          </div>
+          </motion.div>
         )}
         
         <motion.div
-          initial={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
-          <div className="p-8 border-b border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="p-8 border-b border-gray-100"
+          >
+            <motion.div 
+              className="flex items-center gap-3 mb-2"
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
               {icon && <div className="text-indigo-600">{icon}</div>}
               <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            </div>
-            <p className="text-gray-600">{description}</p>
-          </div>
+            </motion.div>
+            <motion.p 
+              className="text-gray-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              {description}
+            </motion.p>
+          </motion.div>
           
           <div className="p-8">
             {children}
@@ -77,7 +106,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
           className="mt-4 text-center text-sm text-gray-500"
         >
           <p>Need help? Contact support at support@membify.app</p>

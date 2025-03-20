@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useInviteLink } from "./useInviteLink";
+import { useInviteLink } from "./hooks/useInviteLink";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";

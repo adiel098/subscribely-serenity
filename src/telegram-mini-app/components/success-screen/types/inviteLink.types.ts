@@ -2,7 +2,7 @@
 export interface ChannelLink {
   id: string;
   name: string;
-  inviteLink: string;
+  inviteLink: string | null;
   description?: string;
   isMiniApp?: boolean;
   error?: string;

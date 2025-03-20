@@ -1,7 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { getBotToken } from "../services/botService.ts";
-import { getCommunityById, updateCommunityInviteLink, getGroupChannels } from "../services/communityService.ts";
+import { getCommunityById, getLatestInviteLink, storeInviteLink, getGroupChannels } from "../services/communityService.ts";
 import { createTelegramInviteLink } from "../services/telegramService.ts";
 import { corsHeaders } from "../utils/corsHeaders.ts";
 
@@ -60,8 +60,10 @@ export const handleInviteLink = async (req: Request) => {
       const community = await getCommunityById(supabase, communityId);
       
       // If we already have an invite link and forceNew is false, return it
-      if (!forceNew && community.telegram_invite_link) {
-        console.log(`Using existing invite link: ${community.telegram_invite_link}`);
+      const existingInviteLink = await getLatestInviteLink(supabase, communityId);
+      
+      if (!forceNew && existingInviteLink) {
+        console.log(`Using existing invite link: ${existingInviteLink}`);
         
         // If this is a group, also fetch its channels
         if (community.is_group) {
@@ -70,7 +72,7 @@ export const handleInviteLink = async (req: Request) => {
           
           return new Response(
             JSON.stringify({
-              inviteLink: community.telegram_invite_link,
+              inviteLink: existingInviteLink,
               isGroup: true,
               groupName: community.name,
               channels: channels
@@ -80,7 +82,7 @@ export const handleInviteLink = async (req: Request) => {
         }
         
         return new Response(
-          JSON.stringify({ inviteLink: community.telegram_invite_link, isGroup: false }),
+          JSON.stringify({ inviteLink: existingInviteLink, isGroup: false }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -102,9 +104,9 @@ export const handleInviteLink = async (req: Request) => {
         `Auto-generated link for ${community.name}`
       );
       
-      // Update the community with the new invite link
-      console.log(`Created link: ${inviteLink}, updating community record`);
-      await updateCommunityInviteLink(supabase, communityId, inviteLink);
+      // Store the invite link in the subscription_payments table
+      console.log(`Created link: ${inviteLink}, storing in subscription_payments`);
+      await storeInviteLink(supabase, communityId, inviteLink);
       
       // If this is a group, also fetch its channels
       if (community.is_group) {

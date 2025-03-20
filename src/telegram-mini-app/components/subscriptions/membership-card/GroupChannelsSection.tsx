@@ -46,6 +46,18 @@ export const GroupChannelsSection: React.FC<GroupChannelsSectionProps> = ({
     }
   }, [communityId, communityInviteLink]);
 
+  // Debug logging
+  useEffect(() => {
+    logger.log(`GroupChannelsSection rendered with:`, {
+      communityId,
+      communityName,
+      communityInviteLink,
+      generatedInviteLink: inviteLink,
+      isGroup,
+      channelsCount: formattedChannels?.length || 0
+    });
+  }, [communityId, communityName, communityInviteLink, inviteLink, isGroup, formattedChannels]);
+
   if (isGroup && formattedChannels && formattedChannels.length > 0) {
     return (
       <div className="mt-4">

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -41,7 +41,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   const formattedChannels = channels?.map(channel => ({
     id: channel.id,
     name: channel.name,
-    inviteLink: channel.telegram_invite_link || subscription.community.telegram_invite_link || '',
+    inviteLink: channel.telegram_invite_link || '',
     isMiniApp: channel.type === 'bot',
     type: channel.type
   }));
@@ -67,8 +67,9 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   };
 
   // Debug log to check for invite links
-  React.useEffect(() => {
+  useEffect(() => {
     logger.log("[MembershipCard] Subscription community:", subscription.community);
+    logger.log("[MembershipCard] Community ID:", subscription.community_id);
     logger.log("[MembershipCard] Community invite link:", subscription.community.telegram_invite_link);
     if (isGroup && channels?.length > 0) {
       logger.log("[MembershipCard] Group channels:", channels);

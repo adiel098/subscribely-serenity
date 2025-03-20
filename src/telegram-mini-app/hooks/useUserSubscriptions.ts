@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserSubscriptions, Subscription } from "../services/memberService";
+import { createLogger } from "../utils/debugUtils";
+
+const logger = createLogger("useUserSubscriptions");
 
 export const useUserSubscriptions = (telegramUserId: string | undefined) => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -19,12 +22,29 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
     setError(null);
 
     try {
-      console.log(`[useUserSubscriptions] Fetching subscriptions for user ${telegramUserId}`);
+      logger.log(`Fetching subscriptions for user ${telegramUserId}`);
       const data = await getUserSubscriptions(telegramUserId);
-      console.log(`[useUserSubscriptions] Received ${data.length} subscriptions`, data);
-      setSubscriptions(data);
+      logger.log(`Received ${data.length} subscriptions`, data);
+
+      // Ensure each subscription has the community property with needed fields
+      const processedSubscriptions = data.map(sub => {
+        // Log community details for debugging
+        if (sub.community) {
+          logger.log(`Subscription ${sub.id} community:`, {
+            id: sub.community.id,
+            name: sub.community.name,
+            inviteLink: sub.community.telegram_invite_link
+          });
+        } else {
+          logger.warn(`Subscription ${sub.id} has no community data`);
+        }
+        
+        return sub;
+      });
+      
+      setSubscriptions(processedSubscriptions);
     } catch (err) {
-      console.error("Error fetching subscriptions:", err);
+      logger.error("Error fetching subscriptions:", err);
       setError("Failed to fetch your subscriptions");
       toast({
         title: "Error",
@@ -48,7 +68,7 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
     }
 
     try {
-      console.log(`[useUserSubscriptions] Renewing subscription for plan:`, subscription.plan);
+      logger.log(`Renewing subscription for plan:`, subscription.plan);
       
       // The actual renewal process is handled in the parent component
       // This function serves as a logging point and could be expanded 
@@ -61,7 +81,7 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
       
       return subscription;
     } catch (err) {
-      console.error("Error in renewal preparation:", err);
+      logger.error("Error in renewal preparation:", err);
       toast({
         title: "Error",
         description: "There was a problem preparing your renewal. Please try again.",

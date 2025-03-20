@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createLogger } from "../../utils/debugUtils";
 
@@ -12,6 +12,14 @@ export const useChannelInviteLink = (initialInviteLink?: string | null) => {
   const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Set initial link if provided
+  useEffect(() => {
+    if (initialInviteLink) {
+      logger.log(`Setting initial invite link: ${initialInviteLink}`);
+      setInviteLink(initialInviteLink);
+    }
+  }, [initialInviteLink]);
 
   /**
    * Fetches or creates an invite link for a community

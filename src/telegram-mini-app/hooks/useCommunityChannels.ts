@@ -14,6 +14,9 @@ interface ChannelInfo {
   telegram_photo_url?: string;
 }
 
+// Export the type for use in other components
+export type ChannelType = ChannelInfo;
+
 interface CommunityChannelsHookResult {
   channels: ChannelInfo[];
   isGroup: boolean;

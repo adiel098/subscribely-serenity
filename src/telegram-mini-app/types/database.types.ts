@@ -13,7 +13,7 @@ export interface TelegramMiniAppUser {
   is_suspended?: boolean | null;
 }
 
-export type SubscriptionStatus = 'active' | 'expired' | 'removed' | 'inactive';
+export type SubscriptionStatus = 'active' | 'expired' | 'removed' | 'inactive' | 'trial';
 
 export interface Database {
   public: {

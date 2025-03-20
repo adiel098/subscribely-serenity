@@ -1,12 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { logServiceAction, validateTelegramId, invokeSupabaseFunction } from "./utils/serviceUtils";
+import { SubscriptionStatus } from "../types/database.types";
 
 export interface CreateMemberParams {
   telegram_id: string;
   community_id: string;
   subscription_plan_id: string;
-  status?: 'active' | 'inactive' | 'expired' | 'removed';
+  status?: SubscriptionStatus;
   payment_id?: string;
   username?: string;
   subscription_start_date?: string;
@@ -21,7 +22,7 @@ export interface Subscription {
   last_active: string | null;
   subscription_start_date: string | null;
   subscription_end_date: string | null;
-  subscription_status: 'active' | 'inactive' | 'expired' | 'removed';
+  subscription_status: SubscriptionStatus;
   is_active: boolean;
   community_id: string;
   expiry_date?: string | null;  // For backward compatibility

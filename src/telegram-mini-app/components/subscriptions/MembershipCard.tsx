@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Accordion,
@@ -8,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 import { Subscription } from "../../services/memberService";
 import { isSubscriptionActive, getDaysRemaining } from "./utils";
-import { useCommunityChannels, ChannelType } from "../../hooks/useCommunityChannels";
+import { useCommunityChannels } from "../../hooks/useCommunityChannels";
 import { MembershipHeader } from "./membership-card/MembershipHeader";
 import { MembershipTimeInfo } from "./membership-card/MembershipTimeInfo";
 import { GroupChannelsSection } from "./membership-card/GroupChannelsSection";

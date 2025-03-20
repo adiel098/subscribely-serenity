@@ -26,7 +26,7 @@ export const CommunitySelectedDisplay: React.FC<CommunitySelectedDisplayProps> =
         onRefresh={onRefreshPhoto}
         size="sm"
       />
-      <span className="font-medium text-gray-800 text-xs truncate flex-1">{community.name}</span>
+      <span className="font-medium text-gray-800 text-xs truncate max-w-[160px]">{community.name}</span>
       <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0 ml-auto" />
     </div>
   );

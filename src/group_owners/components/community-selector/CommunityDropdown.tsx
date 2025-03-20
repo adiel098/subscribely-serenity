@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePhotos } from "@/group_owners/hooks/usePhotos";
@@ -73,7 +74,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   };
   
   return (
-    <div className="w-[300px]">
+    <div className="w-[240px]">
       <Select value={selectedValue} onValueChange={handleValueChange}>
         <SelectTrigger className="h-8 text-xs">
           <SelectValue>

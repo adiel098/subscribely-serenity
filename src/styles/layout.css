@@ -16,4 +16,16 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+  
+  /* Community dropdown text truncation */
+  .community-dropdown-text {
+    @apply truncate;
+    max-width: 160px;
+  }
+  
+  @media (max-width: 640px) {
+    .community-dropdown-text {
+      max-width: 120px;
+    }
+  }
 }

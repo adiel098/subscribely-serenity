@@ -1,0 +1,11 @@
+
+/* Main CSS entry point that imports all modular CSS files */
+@import './base.css';
+@import './telegram-mini-app.css';
+@import './card-styles.css';
+@import './tab-styles.css';
+@import './text-gradient.css';
+@import './shimmer.css';
+@import './layout.css';
+@import './animations.css';
+@import './safari-fixes.css';

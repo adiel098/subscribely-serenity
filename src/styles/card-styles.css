@@ -1,0 +1,65 @@
+
+@layer components {
+  /* Card styles for the application */
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl rounded-xl;
+  }
+
+  .translucent-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/30 shadow-sm rounded-xl;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  .fade-in {
+    @apply animate-fade-in;
+  }
+  
+  /* Glassmorphism style to match the reference design */
+  .glassmorphism {
+    @apply bg-white/80 backdrop-blur-lg border border-white/30 shadow-lg rounded-xl;
+  }
+  
+  .tabs-glassmorphism {
+    @apply bg-white/60 backdrop-blur-md border border-indigo-100/40 shadow-sm rounded-xl;
+  }
+  
+  /* Mini-app specific card styles */
+  .mini-app-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl shadow-sm;
+  }
+  
+  .mini-app-content-card {
+    @apply bg-white/90 backdrop-blur-md border border-white/40 rounded-3xl shadow-md p-4;
+  }
+
+  /* Gradient borders for floating elements */
+  .gradient-border {
+    position: relative;
+    border-radius: 16px;
+    background-clip: padding-box;
+  }
+  
+  .gradient-border::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    bottom: -1px;
+    left: -1px;
+    z-index: -1;
+    border-radius: 17px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.5),
+      rgba(255, 255, 255, 0.1),
+      rgba(74, 47, 189, 0.3)
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: source-out;
+  }
+}

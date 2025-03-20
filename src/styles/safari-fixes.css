@@ -1,0 +1,13 @@
+
+@layer base {
+  /* Fix for Safari minimum font size */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      font-size: 16px;
+    }
+    
+    .text-xs {
+      font-size: 12px;
+    }
+  }
+}

@@ -1,0 +1,22 @@
+
+@layer components {
+  /* Floating tab styles */
+  .floating-tab-active {
+    @apply bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg;
+    box-shadow: 0 8px 16px -2px rgba(104, 58, 237, 0.25);
+  }
+  
+  .floating-tab-inactive {
+    @apply text-gray-500 hover:text-gray-700;
+  }
+  
+  /* Tab indicator animation */
+  .tab-indicator {
+    @apply absolute bottom-0 left-0 h-1 bg-indigo-500 rounded-full transition-all duration-300 ease-spring;
+  }
+  
+  /* Spring animation for tabs */
+  .ease-spring {
+    transition-timing-function: cubic-bezier(0.5, 0, 0.15, 1.4);
+  }
+}

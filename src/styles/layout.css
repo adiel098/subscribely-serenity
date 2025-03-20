@@ -1,0 +1,19 @@
+
+@layer components {
+  /* Fixed community card grid for mini app */
+  .community-card-grid {
+    @apply grid grid-cols-1 gap-3 w-full max-w-full px-2;
+  }
+
+  /* Smooth iOS scrolling */
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+
+  /* Fix for mobile touch */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}

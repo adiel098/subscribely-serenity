@@ -74,6 +74,13 @@ export async function createInviteLink(
     }
 
     console.log(`✅ [INVITE-LINK] Successfully created invite link:`, result.result.invite_link);
+    
+    // Update the community with the new invite link
+    await supabase
+      .from('communities')
+      .update({ telegram_invite_link: result.result.invite_link })
+      .eq('id', communityId);
+      
     return result.result;
 
   } catch (error) {
@@ -102,8 +109,20 @@ export async function createGroupInviteLink(
       .single();
 
     if (groupError || !group || !group.telegram_chat_id) {
-      console.error(`❌ [GROUP-INVITE-LINK] Error fetching group or no chat ID: ${groupError?.message || 'No chat ID'}`);
-      return null;
+      // Try looking in communities table instead
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('telegram_chat_id')
+        .eq('id', groupId)
+        .single();
+        
+      if (communityError || !community || !community.telegram_chat_id) {
+        console.error(`❌ [GROUP-INVITE-LINK] Error fetching group chat ID: ${groupError?.message || communityError?.message || 'No chat ID'}`);
+        return null;
+      }
+      
+      // Use the community chat ID
+      group = community;
     }
 
     console.log(`✅ [GROUP-INVITE-LINK] Found chat ID: ${group.telegram_chat_id} for group ${groupId}`);
@@ -149,11 +168,13 @@ export async function createGroupInviteLink(
 
     console.log(`✅ [GROUP-INVITE-LINK] Successfully created invite link:`, result.result.invite_link);
     
-    // Update the group's invite link in the database
-    await supabase
-      .from('community_groups')
+    // Update the community's invite link in the database
+    const updateResult = await supabase
+      .from('communities')
       .update({ telegram_invite_link: result.result.invite_link })
       .eq('id', groupId);
+      
+    console.log(`🔄 Updated invite link in database:`, updateResult);
       
     return result.result;
 

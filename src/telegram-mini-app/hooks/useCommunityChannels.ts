@@ -10,6 +10,8 @@ interface ChannelInfo {
   name: string;
   type: "channel" | "group" | "bot" | "supergroup";
   description?: string;
+  telegram_invite_link?: string;
+  telegram_photo_url?: string;
 }
 
 interface CommunityChannelsHookResult {
@@ -55,6 +57,11 @@ export const useCommunityChannels = (communityId: string | null): CommunityChann
             setIsGroup(true);
             setChannels(data.channels);
             logger.log(`Set ${data.channels.length} channels for group ${communityId}`);
+            
+            // Log the channels and their invite links for debugging
+            data.channels.forEach((channel, index) => {
+              logger.log(`Channel ${index + 1}: ${channel.name}, Invite Link: ${channel.telegram_invite_link || 'None'}`);
+            });
           } else {
             setIsGroup(false);
             setChannels([]);

@@ -77,6 +77,7 @@ serve(async (req) => {
           description,
           telegram_chat_id,
           telegram_photo_url,
+          telegram_invite_link,
           custom_link,
           owner_id,
           created_at,

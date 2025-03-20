@@ -38,7 +38,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   const formattedChannels = channels?.map(channel => ({
     id: channel.id,
     name: channel.name,
-    inviteLink: subscription.community.telegram_invite_link || '',
+    inviteLink: channel.telegram_invite_link || subscription.community.telegram_invite_link || '',
     isMiniApp: channel.type === 'bot',
     type: channel.type
   }));
@@ -57,6 +57,15 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
       console.error("[MembershipCard] Cannot renew: No plan found in subscription");
     }
   };
+
+  // Debug log to check for invite links
+  React.useEffect(() => {
+    console.log("[MembershipCard] Subscription community:", subscription.community);
+    console.log("[MembershipCard] Community invite link:", subscription.community.telegram_invite_link);
+    if (isGroup && channels?.length > 0) {
+      console.log("[MembershipCard] Group channels:", channels);
+    }
+  }, [subscription, channels, isGroup]);
 
   return (
     <>

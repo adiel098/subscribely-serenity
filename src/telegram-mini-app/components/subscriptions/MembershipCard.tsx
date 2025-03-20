@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Accordion,
@@ -13,6 +14,9 @@ import { MembershipTimeInfo } from "./membership-card/MembershipTimeInfo";
 import { GroupChannelsSection } from "./membership-card/GroupChannelsSection";
 import { MembershipActionButtons } from "./membership-card/MembershipActionButtons";
 import { CancelSubscriptionConfirmation } from "./membership-card/CancelSubscriptionConfirmation";
+import { createLogger } from "../../utils/debugUtils";
+
+const logger = createLogger("MembershipCard");
 
 interface MembershipCardProps {
   subscription: Subscription;
@@ -49,11 +53,11 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   };
 
   const handleRenew = () => {
-    console.log("[MembershipCard] Renewing subscription:", subscription.id);
+    logger.log("[MembershipCard] Renewing subscription:", subscription.id);
     if (subscription.plan) {
       onRenew(subscription);
     } else {
-      console.error("[MembershipCard] Cannot renew: No plan found in subscription");
+      logger.error("[MembershipCard] Cannot renew: No plan found in subscription");
     }
   };
 
@@ -64,10 +68,10 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
 
   // Debug log to check for invite links
   React.useEffect(() => {
-    console.log("[MembershipCard] Subscription community:", subscription.community);
-    console.log("[MembershipCard] Community invite link:", subscription.community.telegram_invite_link);
+    logger.log("[MembershipCard] Subscription community:", subscription.community);
+    logger.log("[MembershipCard] Community invite link:", subscription.community.telegram_invite_link);
     if (isGroup && channels?.length > 0) {
-      console.log("[MembershipCard] Group channels:", channels);
+      logger.log("[MembershipCard] Group channels:", channels);
     }
   }, [subscription, channels, isGroup]);
 
@@ -96,6 +100,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 isGroup={isGroup} 
                 formattedChannels={formattedChannels}
                 communityName={subscription.community.name}
+                communityId={subscription.community_id}
                 communityInviteLink={subscription.community.telegram_invite_link}
                 onCommunityLinkClick={handleCommunityLink}
               />

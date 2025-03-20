@@ -51,6 +51,14 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
     }
   }, [community, selectedCommunity]);
   
+  // Set default active tab to "discover" if no community is specified
+  useEffect(() => {
+    if (!initialCommunityId || initialCommunityId === "") {
+      console.log('📱 No community ID provided, defaulting to discover tab');
+      setActiveTab("discover");
+    }
+  }, [initialCommunityId]);
+  
   // Reset selected plan when community changes
   useEffect(() => {
     if (selectedCommunity) {

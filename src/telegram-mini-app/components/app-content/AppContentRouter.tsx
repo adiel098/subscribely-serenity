@@ -24,15 +24,13 @@ export const AppContentRouter = ({
     return null;
   }
   
-  // No community found
-  if (!community) {
-    return <ErrorDisplay message="Community not found" onRetry={() => {}} />;
-  }
-  
   // No user found
   if (!telegramUser) {
     return <ErrorDisplay message="Could not retrieve user data" onRetry={() => {}} />;
   }
+  
+  // When no community is found, we'll still show the app but default to discover tab
+  const effectiveTab = !community && activeTab === "subscribe" ? "discover" : activeTab;
   
   return (
     <div className="telegram-mini-app-container">
@@ -43,7 +41,7 @@ export const AppContentRouter = ({
         showPaymentMethods={showPaymentMethods}
         showSuccess={showSuccess}
         subscriptions={subscriptions}
-        activeTab={activeTab}
+        activeTab={effectiveTab}
         handleTabChange={handleTabChange}
         handlePlanSelect={handlePlanSelect}
         handleCompletePurchase={handleCompletePurchase}

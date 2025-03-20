@@ -43,21 +43,23 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   const handleCommunitySelect = (community: Community) => {
     // Call the parent's onSelectCommunity function
     onSelectCommunity(community);
-    
-    // Automatically switch to the subscribe tab
-    handleTabChange("subscribe");
   };
+  
+  // Show different tabs based on whether we have a community or not
+  const showSubscribeTab = !!community;
   
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-4 mb-6 bg-transparent border border-indigo-200 rounded-xl shadow-sm backdrop-blur-sm">
-        <TabsTrigger 
-          value="subscribe" 
-          className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">Subscribe</span>
-        </TabsTrigger>
+      <TabsList className={`grid ${showSubscribeTab ? 'grid-cols-4' : 'grid-cols-3'} mb-6 bg-transparent border border-indigo-200 rounded-xl shadow-sm backdrop-blur-sm`}>
+        {showSubscribeTab && (
+          <TabsTrigger 
+            value="subscribe" 
+            className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Subscribe</span>
+          </TabsTrigger>
+        )}
         <TabsTrigger 
           value="mySubscriptions" 
           className="flex items-center gap-1.5 font-medium text-indigo-700 data-[state=active]:bg-indigo-50/80 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm rounded-lg"
@@ -81,19 +83,21 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="subscribe" className="mt-0">
-        <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
-          <SubscriptionPlanSection
-            plans={communitySubscriptionPlans}
-            selectedPlan={selectedPlan}
-            onPlanSelect={onPlanSelect}
-            showPaymentMethods={showPaymentMethods}
-            userSubscriptions={subscriptions}
-            communityId={community?.id}
-            communityName={community?.name}
-          />
-        </div>
-      </TabsContent>
+      {showSubscribeTab && (
+        <TabsContent value="subscribe" className="mt-0">
+          <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">
+            <SubscriptionPlanSection
+              plans={communitySubscriptionPlans}
+              selectedPlan={selectedPlan}
+              onPlanSelect={onPlanSelect}
+              showPaymentMethods={showPaymentMethods}
+              userSubscriptions={subscriptions}
+              communityId={community?.id}
+              communityName={community?.name}
+            />
+          </div>
+        </TabsContent>
+      )}
       
       <TabsContent value="mySubscriptions" className="mt-0">
         <div className="bg-white rounded-lg border border-primary/10 shadow-sm p-4 md:p-6">

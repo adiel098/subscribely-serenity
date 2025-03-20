@@ -35,6 +35,14 @@ export async function handleStartCommand(
     
     await logger.info(`🔍 Start parameter: ${startParam || 'none'}`);
     
+    // Get the web app URL
+    const { data: settings } = await supabase
+      .from('telegram_global_settings')
+      .select('mini_app_url')
+      .single();
+      
+    const webAppBaseUrl = settings?.mini_app_url || 'https://app.membify.io';
+    
     // Route to the appropriate handler based on the parameter
     if (startParam) {
       if (startParam.startsWith('group_')) {
@@ -48,12 +56,30 @@ export async function handleStartCommand(
         return await handleCommunityStartCommand(supabase, message, botToken, startParam);
       }
     } else {
-      // No parameter provided, send general welcome message
-      await logger.info("👋 No parameter, sending general welcome message");
+      // No parameter provided, send welcome message with Mini App button
+      await logger.info("👋 No parameter, sending discovery welcome message");
       
-      const welcomeMessage = `👋 Welcome to Membify! This bot helps you manage paid memberships for your Telegram groups.`;
+      const welcomeMessage = `
+👋 <b>Welcome to Membify!</b>
+
+Discover and join premium Telegram communities, manage your subscriptions, and track your membership payments - all in one place!
+
+Press the button below to explore communities:
+      `;
       
-      await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+      // Create inline keyboard with web_app button
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "🔍 Discover Communities",
+              web_app: { url: webAppBaseUrl }
+            }
+          ]
+        ]
+      };
+      
+      await sendTelegramMessage(botToken, message.chat.id, welcomeMessage, inlineKeyboard);
       
       return true;
     }

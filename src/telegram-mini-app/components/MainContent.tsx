@@ -21,7 +21,7 @@ export const MainContent = ({
   handleSelectCommunity,
   subscriptionsLoading
 }) => {
-  const activeSubscription = subscriptions?.find(sub => 
+  const activeSubscription = community && subscriptions?.find(sub => 
     isSubscriptionActive(sub) && sub.community_id === community.id
   );
   
@@ -30,18 +30,19 @@ export const MainContent = ({
     console.log("[MainContent] Selected plan:", selectedPlan);
     console.log("[MainContent] Show payment methods:", showPaymentMethods);
     console.log("[MainContent] Show success:", showSuccess);
+    console.log("[MainContent] Community:", community ? community.name : "No community selected");
     
     if (telegramUser) {
       console.log("[MainContent] Telegram user ID:", telegramUser.id);
       console.log("[MainContent] Telegram username:", telegramUser.username);
     }
-  }, [telegramUser, selectedPlan, showPaymentMethods, showSuccess]);
+  }, [telegramUser, selectedPlan, showPaymentMethods, showSuccess, community]);
   
   const handleRenew = (subscription) => {
     console.log("[MainContent] Processing renewal for subscription:", subscription);
     
     if (subscription && subscription.community) {
-      if (subscription.community.id !== community.id) {
+      if (subscription.community.id !== (community?.id || '')) {
         console.log("[MainContent] Switching community for renewal");
         handleSelectCommunity(subscription.community);
       }
@@ -49,7 +50,7 @@ export const MainContent = ({
       if (subscription.plan) {
         console.log("[MainContent] Setting plan for renewal:", subscription.plan);
         
-        const fullPlan = community.subscription_plans?.find(p => p.id === subscription.plan.id) || 
+        const fullPlan = community?.subscription_plans?.find(p => p.id === subscription.plan.id) || 
                         (subscription.community.subscription_plans?.find(p => p.id === subscription.plan.id));
         
         if (fullPlan) {
@@ -79,12 +80,12 @@ export const MainContent = ({
   return (
     <div className="telegram-mini-app-container mx-auto py-4 max-w-3xl">
       <div className="flex flex-col gap-4">
-        <CommunityHeader community={community} />
+        {community && <CommunityHeader community={community} />}
         
         <ContentTabs
           activeTab={activeTab}
           handleTabChange={handleTabChange}
-          communitySubscriptionPlans={community.subscription_plans || []}
+          communitySubscriptionPlans={community?.subscription_plans || []}
           selectedPlan={selectedPlan}
           onPlanSelect={handlePlanSelect}
           showPaymentMethods={showPaymentMethods}
@@ -96,16 +97,18 @@ export const MainContent = ({
           community={community}
         />
         
-        <PaymentWrapper
-          selectedPlan={selectedPlan}
-          showPaymentMethods={showPaymentMethods}
-          showSuccess={showSuccess}
-          telegramUser={telegramUser}
-          communityId={community.id}
-          activeSubscription={activeSubscription}
-          communityInviteLink={community.telegram_invite_link}
-          onCompletePurchase={handleCompletePurchase}
-        />
+        {community && showPaymentMethods && (
+          <PaymentWrapper
+            selectedPlan={selectedPlan}
+            showPaymentMethods={showPaymentMethods}
+            showSuccess={showSuccess}
+            telegramUser={telegramUser}
+            communityId={community.id}
+            activeSubscription={activeSubscription}
+            communityInviteLink={community.telegram_invite_link}
+            onCompletePurchase={handleCompletePurchase}
+          />
+        )}
         
         <DebugWrapper
           telegramUser={telegramUser}

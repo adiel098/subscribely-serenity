@@ -96,11 +96,12 @@ const TelegramMiniApp = () => {
     ensureFullScreen();
   };
 
-  // Set effective start parameter (use a valid community ID in dev mode)
-  // Using a valid UUID for development mode that matches a real community in your database
+  // Set effective start parameter 
+  // When no start parameter is provided, we'll pass an empty string to show the discovery view
   const effectiveStartParam = isDevelopmentMode && !startParam 
-    ? "27052464-6e68-4116-bd79-6af069fe67cd" // Replace with a real community ID from your database
-    : startParam;
+    ? "27052464-6e68-4116-bd79-6af069fe67cd" // Use this only in dev mode for testing
+    : startParam || "";
+    
   console.log('📌 Effective startParam:', effectiveStartParam);
 
   // Fetch data using hooks

@@ -7,6 +7,7 @@ import { SearchBar } from "./search/SearchBar";
 import { CommunityCard } from "./search/CommunityCard";
 import { LoadingState } from "./search/LoadingState";
 import { EmptyState } from "./search/EmptyState";
+import { SearchPageHeader } from "./search/SearchPageHeader";
 import { useCommunitiesWithDescriptions } from "../hooks/useCommunitiesWithDescriptions";
 
 interface CommunitySearchProps {
@@ -53,6 +54,9 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
 
   return (
     <div className="space-y-5">
+      {/* Add the beautiful header at the top */}
+      <SearchPageHeader />
+      
       <div className="space-y-2">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Search className="h-5 w-5 text-primary" />

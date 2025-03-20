@@ -93,6 +93,15 @@
     animation: shimmer 2s infinite;
     content: '';
   }
+  
+  /* Gradient text utility classes */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent;
+  }
 }
 
 /* Fixed community card grid for mini app */

@@ -16,6 +16,7 @@ export interface Community {
   communities?: Community[]; // For groups, contains the included communities
   platform_url?: string; // Added missing property
   miniapp_url?: string; // Added missing property
+  telegram_invite_link?: string | null; // Added for backward compatibility
 }
 
 // Add the Plan type that was missing and causing errors
@@ -32,4 +33,5 @@ export interface Subscription {
   expires_at: string | null;
   plan?: Plan;
   community?: Community;
+  invite_link?: string | null; // Added the missing invite_link property
 }

@@ -4,6 +4,7 @@ import { ChannelLink } from "./types/inviteLink.types";
 import { Link, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createLogger } from "../../utils/debugUtils";
+import { toast } from "@/components/ui/use-toast";
 
 const logger = createLogger("GroupChannelsLinks");
 
@@ -14,6 +15,20 @@ interface GroupChannelsLinksProps {
 
 export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksProps) => {
   logger.log(`Rendering channels for group ${groupName}:`, channels);
+  
+  const handleOpenLink = (link: string | null, channelName: string) => {
+    if (!link) {
+      toast({
+        title: "No link available",
+        description: `No invite link is available for ${channelName}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    logger.log(`Opening channel link: ${link.substring(0, 30)}...`);
+    window.open(link, "_blank");
+  };
   
   if (!channels || channels.length === 0) {
     return (
@@ -50,7 +65,7 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
                   size="sm"
                   variant="outline"
                   className="text-xs flex items-center gap-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-                  onClick={() => window.open(channel.inviteLink!, "_blank")}
+                  onClick={() => handleOpenLink(channel.inviteLink, channel.name)}
                 >
                   <ExternalLink className="h-3 w-3" />
                   Join

@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { GroupChannelsLinks } from "../../success-screen/GroupChannelsLinks";
 import { useChannelInviteLink } from "../../../hooks/channel-invitation/useChannelInviteLink";
 import { createLogger } from "../../../utils/debugUtils";
+import { toast } from "@/components/ui/use-toast";
 
 const logger = createLogger("GroupChannelsSection");
 
@@ -43,7 +44,7 @@ export const GroupChannelsSection: React.FC<GroupChannelsSectionProps> = ({
       logger.log(`No invite link provided for ${communityId}, generating one...`);
       fetchOrCreateInviteLink(communityId);
     }
-  }, [communityId, communityInviteLink]);
+  }, [communityId, communityInviteLink, fetchOrCreateInviteLink]);
 
   // Debug logging
   useEffect(() => {
@@ -69,7 +70,7 @@ export const GroupChannelsSection: React.FC<GroupChannelsSectionProps> = ({
   } 
   
   const finalInviteLink = communityInviteLink || inviteLink;
-  
+
   if (finalInviteLink) {
     return (
       <Button 

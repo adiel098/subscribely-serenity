@@ -15,6 +15,7 @@ import { GroupChannelsSection } from "./membership-card/GroupChannelsSection";
 import { MembershipActionButtons } from "./membership-card/MembershipActionButtons";
 import { CancelSubscriptionConfirmation } from "./membership-card/CancelSubscriptionConfirmation";
 import { createLogger } from "../../utils/debugUtils";
+import { toast } from "@/components/ui/use-toast";
 
 const logger = createLogger("MembershipCard");
 
@@ -47,10 +48,28 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   }));
 
   const handleCommunityLink = () => {
-    if (subscription.community?.telegram_invite_link) {
-      window.open(subscription.community.telegram_invite_link, "_blank");
-    } else if (subscription.invite_link) {
-      window.open(subscription.invite_link, "_blank");
+    try {
+      const inviteLink = subscription.community?.telegram_invite_link || 
+                         subscription.invite_link || 
+                         null;
+                         
+      if (inviteLink) {
+        logger.log(`Opening community link: ${inviteLink.substring(0, 30)}...`);
+        window.open(inviteLink, "_blank");
+      } else {
+        toast({
+          title: "No invite link",
+          description: "No invite link is available for this community",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      logger.error("Error opening community link:", error);
+      toast({
+        title: "Error opening link",
+        description: "There was a problem opening the community link",
+        variant: "destructive"
+      });
     }
   };
 
@@ -60,6 +79,11 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
       onRenew(subscription);
     } else {
       logger.error("[MembershipCard] Cannot renew: No plan found in subscription");
+      toast({
+        title: "Renewal error",
+        description: "Cannot renew subscription: No plan information found",
+        variant: "destructive"
+      });
     }
   };
 

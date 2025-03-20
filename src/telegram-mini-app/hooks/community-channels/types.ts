@@ -1,22 +1,20 @@
 
 /**
- * Types for community channels functionality
- */
-
-/**
- * Information about a Telegram channel
+ * Channel information interface
  */
 export interface ChannelInfo {
   id: string;
   name: string;
-  type: "channel" | "group" | "bot" | "supergroup";
-  description?: string;
-  telegram_invite_link?: string;
-  telegram_photo_url?: string;
+  description?: string | null;
+  telegram_chat_id?: string | null;
+  telegram_invite_link?: string | null;
+  telegram_photo_url?: string | null;
+  type?: string;
+  is_group?: boolean;
 }
 
 /**
- * Result returned by the useCommunityChannels hook
+ * Hook result interface for useCommunityChannels
  */
 export interface CommunityChannelsHookResult {
   channels: ChannelInfo[];

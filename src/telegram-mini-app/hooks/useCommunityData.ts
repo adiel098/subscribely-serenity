@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { fetchCommunityByIdOrLink } from "@/telegram-mini-app/services/communityService";

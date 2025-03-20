@@ -57,14 +57,14 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="fixed bottom-2 left-0 right-0 z-50 mx-auto flex justify-center px-2 md:px-0"
+          className="fixed bottom-4 left-0 right-0 z-50 mx-auto flex justify-center px-2 md:px-0"
         >
           <TabsList 
             className={`
               glassmorphism shadow-xl border border-white/40 
               backdrop-blur-xl bg-white/70 dark:bg-black/40
-              ${showSubscribeTab ? 'w-[160px]' : 'w-[130px]'}
-              overflow-hidden rounded-full p-1 h-11
+              ${showSubscribeTab ? 'w-[180px]' : 'w-[150px]'}
+              overflow-hidden rounded-full p-1.5 h-14
               flex items-center justify-between
               bg-gradient-to-br from-white/80 to-white/40
               dark:from-gray-900/90 dark:to-gray-900/70
@@ -74,31 +74,31 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             {showSubscribeTab && (
               <TabsTrigger 
                 value="subscribe" 
-                className="h-8 w-8 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+                className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
               >
-                <UserPlus className="h-4 w-4" />
+                <UserPlus className="h-5 w-5" />
               </TabsTrigger>
             )}
             
             <TabsTrigger 
               value="mySubscriptions" 
-              className="h-8 w-8 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <LayoutGrid className="h-4 w-4" />
+              <LayoutGrid className="h-5 w-5" />
             </TabsTrigger>
             
             <TabsTrigger 
               value="paymentHistory" 
-              className="h-8 w-8 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <Receipt className="h-4 w-4" />
+              <Receipt className="h-5 w-5" />
             </TabsTrigger>
             
             <TabsTrigger 
               value="discover" 
-              className="h-8 w-8 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <Search className="h-4 w-4" />
+              <Search className="h-5 w-5" />
             </TabsTrigger>
           </TabsList>
         </motion.div>

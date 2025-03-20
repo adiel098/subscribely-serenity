@@ -4,6 +4,7 @@ import { handleGroupStartCommand } from './group/groupStartHandler.ts';
 import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
+import { TELEGRAM_MINI_APP_URL } from '../utils/botUtils.ts';
 
 /**
  * Handle the /start command from a Telegram user
@@ -35,14 +36,6 @@ export async function handleStartCommand(
     
     await logger.info(`🔍 Start parameter: ${startParam || 'none'}`);
     
-    // Get the web app URL
-    const { data: settings } = await supabase
-      .from('telegram_global_settings')
-      .select('mini_app_url')
-      .single();
-      
-    const webAppBaseUrl = settings?.mini_app_url || 'https://app.membify.io';
-    
     // Route to the appropriate handler based on the parameter
     if (startParam) {
       if (startParam.startsWith('group_')) {
@@ -59,6 +52,10 @@ export async function handleStartCommand(
       // No parameter provided, send welcome message with Mini App button
       await logger.info("👋 No parameter, sending discovery welcome message");
       
+      // Get the mini app URL from our utility file instead of database
+      const miniAppUrl = TELEGRAM_MINI_APP_URL;
+      await logger.info(`Using Mini App URL: ${miniAppUrl}`);
+      
       const welcomeMessage = `
 👋 <b>Welcome to Membify!</b>
 
@@ -73,7 +70,7 @@ Press the button below to explore communities:
           [
             {
               text: "🔍 Discover Communities",
-              web_app: { url: webAppBaseUrl }
+              web_app: { url: miniAppUrl }
             }
           ]
         ]

@@ -1,6 +1,9 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Import the TELEGRAM_MINI_APP_URL from our config
+export { TELEGRAM_MINI_APP_URL } from '../../../src/telegram-mini-app/utils/config.ts';
+
 /**
  * Get the bot username from global settings
  */

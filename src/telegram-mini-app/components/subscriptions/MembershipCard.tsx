@@ -55,7 +55,12 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                          
       if (inviteLink) {
         logger.log(`Opening community link: ${inviteLink.substring(0, 30)}...`);
-        window.open(inviteLink, "_blank");
+        
+        // Fix: Directly open the link in a new tab
+        window.open(inviteLink, "_blank", "noopener,noreferrer");
+        
+        // Log success for debugging
+        logger.log(`Successfully opened link: ${inviteLink}`);
       } else {
         toast({
           title: "No invite link",

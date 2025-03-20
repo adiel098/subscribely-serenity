@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, LayoutGrid, Search, Receipt } from "lucide-react";
@@ -63,7 +62,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             className={`
               glassmorphism shadow-xl border border-white/40 
               backdrop-blur-xl bg-white/70 dark:bg-black/40
-              ${showSubscribeTab ? 'w-[320px]' : 'w-[240px]'}
+              ${showSubscribeTab ? 'w-[240px]' : 'w-[190px]'}
               overflow-hidden rounded-full p-1 h-14
               flex items-center justify-between
               bg-gradient-to-br from-white/80 to-white/40
@@ -74,43 +73,31 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             {showSubscribeTab && (
               <TabsTrigger 
                 value="subscribe" 
-                className="h-10 rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+                className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
               >
-                <div className="flex items-center justify-center w-full h-full px-3">
-                  <UserPlus className="h-4 w-4" />
-                  <span className="ml-1.5 text-xs font-medium">Join</span>
-                </div>
+                <UserPlus className="h-5 w-5" />
               </TabsTrigger>
             )}
             
             <TabsTrigger 
               value="mySubscriptions" 
-              className="h-10 rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <div className="flex items-center justify-center w-full h-full px-3">
-                <LayoutGrid className="h-4 w-4" />
-                <span className="ml-1.5 text-xs font-medium">My&nbsp;Subs</span>
-              </div>
+              <LayoutGrid className="h-5 w-5" />
             </TabsTrigger>
             
             <TabsTrigger 
               value="paymentHistory" 
-              className="h-10 rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <div className="flex items-center justify-center w-full h-full px-3">
-                <Receipt className="h-4 w-4" />
-                <span className="ml-1.5 text-xs font-medium">Payments</span>
-              </div>
+              <Receipt className="h-5 w-5" />
             </TabsTrigger>
             
             <TabsTrigger 
               value="discover" 
-              className="h-10 rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="h-10 w-10 flex items-center justify-center rounded-full data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
-              <div className="flex items-center justify-center w-full h-full px-3">
-                <Search className="h-4 w-4" />
-                <span className="ml-1.5 text-xs font-medium">Discover</span>
-              </div>
+              <Search className="h-5 w-5" />
             </TabsTrigger>
           </TabsList>
         </motion.div>

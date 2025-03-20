@@ -1,7 +1,6 @@
 
 import React from "react";
 import { useInviteLink } from "./hooks/useInviteLink";
-import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -46,13 +45,13 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
       transition={{ duration: 0.5 }}
       className="flex flex-col items-center justify-center px-4 py-10"
     >
-      <Card className="w-full max-w-md p-8 bg-white dark:bg-gray-800 shadow-lg rounded-xl">
+      <div className="translucent-card w-full max-w-md p-8 shadow-lg">
         <div className="flex flex-col items-center text-center space-y-6">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full"
+            className="bg-green-100/80 dark:bg-green-900/30 p-4 rounded-full"
           >
             <CheckCircle2 size={60} className="text-green-600 dark:text-green-400" />
           </motion.div>
@@ -74,7 +73,7 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
           ) : inviteLink ? (
             <InviteLinkSection inviteLink={inviteLink} />
           ) : (
-            <div className="w-full p-6 bg-gray-50 dark:bg-gray-700/30 rounded-lg text-center">
+            <div className="w-full p-6 bg-white/50 backdrop-blur-sm rounded-lg text-center border border-white/40">
               <p className="text-gray-500 dark:text-gray-400">
                 No invite link available. Please contact support if you need assistance.
               </p>
@@ -85,7 +84,7 @@ export const SuccessScreen = ({ communityInviteLink }: { communityInviteLink: st
             If you have any issues, please contact support.
           </p>
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 };

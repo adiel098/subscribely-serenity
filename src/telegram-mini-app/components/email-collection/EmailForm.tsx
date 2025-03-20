@@ -42,7 +42,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
 
   return (
     <motion.div 
-      className="p-8 bg-white/90 backdrop-blur-lg rounded-xl shadow-xl max-w-md mx-auto border border-purple-100"
+      className="p-8 translucent-card max-w-md mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

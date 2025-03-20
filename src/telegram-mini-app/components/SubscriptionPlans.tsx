@@ -95,12 +95,12 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+            className={`group relative p-4 rounded-xl transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
-                ? 'border-indigo-500 shadow-md bg-indigo-50/50'
+                ? 'translucent-card border-indigo-500/50 shadow-md'
                 : isPremium 
-                  ? 'border-indigo-200 hover:border-indigo-400 hover:shadow-sm' 
-                  : 'border-gray-200 hover:border-indigo-300 hover:shadow-sm'
+                  ? 'translucent-card border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
+                  : 'translucent-card border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
             }`}
             onClick={() => onPlanSelect(plan)}
           >
@@ -148,7 +148,7 @@ export const SubscriptionPlans = ({
             
             {plan.features && plan.features.length > 0 && (
               <motion.ul 
-                className="mt-4 space-y-2 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 p-3 rounded-lg border border-indigo-100/50"
+                className="mt-4 space-y-2 bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-white/50"
                 initial="hidden"
                 animate="show"
                 variants={{
@@ -168,7 +168,7 @@ export const SubscriptionPlans = ({
                 {plan.features.map((feature, index) => (
                   <motion.li 
                     key={index} 
-                    className="flex items-center text-gray-700 text-xs bg-white/60 p-2 rounded-md border border-indigo-100/30 shadow-sm"
+                    className="flex items-center text-gray-700 text-xs bg-white/70 p-2 rounded-md border border-indigo-100/30 shadow-sm"
                     variants={{
                       hidden: { opacity: 0, x: -10 },
                       show: { 

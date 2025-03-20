@@ -1,69 +1,33 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { logPaymentAction } from "./utils";
-import { createLogger } from "../../utils/debugUtils";
+import { useState } from "react";
+import { createInviteLink } from "../../services/paymentService";
 
-const logger = createLogger("payment-useInviteLink");
+export const useInviteLink = (initialInviteLink?: string | null) => {
+  const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink || null);
 
-/**
- * Hook to manage invite link fetching and creation
- */
-export const useInviteLink = (initialInviteLink: string | null) => {
-  const [inviteLink, setInviteLink] = useState<string | null>(initialInviteLink);
-  const [isGroup, setIsGroup] = useState<boolean>(false);
-  const [groupName, setGroupName] = useState<string>("");
-  const [channels, setChannels] = useState<any[]>([]);
-
-  // Log the invite link for debugging
-  useEffect(() => {
-    logPaymentAction('Initial community invite link', initialInviteLink);
-    if (initialInviteLink) {
-      setInviteLink(initialInviteLink);
-    }
-  }, [initialInviteLink]);
-
-  /**
-   * Function to fetch or create an invite link
-   */
-  const fetchOrCreateInviteLink = async (communityId: string, forceNew = false) => {
-    logPaymentAction('Attempting to fetch or create invite link', { communityId, forceNew });
-    
+  const fetchOrCreateInviteLink = async (communityId: string, forceRefresh: boolean = false) => {
     try {
-      // Call the edge function to create an invite link
-      logPaymentAction('Calling create-invite-link function', { communityId, forceNew });
-      const { data, error } = await supabase.functions.invoke('create-invite-link', {
-        body: { communityId, forceNew }
-      });
-      
-      if (error) {
-        logger.error('Error calling create-invite-link function:', error);
-        throw new Error(`Failed to create invite link: ${error.message}`);
+      // If we already have an invite link and don't need to refresh, return it
+      if (inviteLink && !forceRefresh) {
+        console.log("[useInviteLink] Using existing invite link:", inviteLink);
+        return inviteLink;
       }
+
+      console.log("[useInviteLink] Fetching or creating new invite link for community:", communityId);
       
-      if (data) {
-        // Check if this is a group response
-        if (data.isGroup) {
-          logger.log('Received group data:', data);
-          setIsGroup(true);
-          setGroupName(data.groupName || "Group");
-          setChannels(data.channels || []);
-        }
-        
-        if (data.inviteLink) {
-          logPaymentAction('Successfully created invite link', data.inviteLink);
-          setInviteLink(data.inviteLink);
-          return data.inviteLink;
-        } else {
-          logger.error('No invite link returned from function:', data);
-          throw new Error('No invite link returned from function');
-        }
+      // Generate a new invite link
+      const newInviteLink = await createInviteLink(communityId);
+      
+      if (newInviteLink) {
+        console.log("[useInviteLink] Successfully created invite link:", newInviteLink);
+        setInviteLink(newInviteLink);
+        return newInviteLink;
       } else {
-        logger.error('No data returned from create-invite-link function');
-        throw new Error('No data returned from create-invite-link function');
+        console.error("[useInviteLink] Failed to create invite link");
+        return null;
       }
     } catch (err) {
-      logger.error('Error in fetchOrCreateInviteLink:', err);
+      console.error("[useInviteLink] Error creating invite link:", err);
       return null;
     }
   };
@@ -71,9 +35,6 @@ export const useInviteLink = (initialInviteLink: string | null) => {
   return {
     inviteLink,
     setInviteLink,
-    fetchOrCreateInviteLink,
-    isGroup,
-    groupName,
-    channels
+    fetchOrCreateInviteLink
   };
 };

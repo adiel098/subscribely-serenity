@@ -2,25 +2,16 @@
 import { useState } from "react";
 import { usePaymentRecord } from "./usePaymentRecord";
 import { useInviteLink } from "./useInviteLink";
-import { Subscription } from "../../services/memberService";
-import { createOrUpdateMember } from "../../services/memberService";
+import { useMemberCreation } from "./useMemberCreation";
+import { usePaymentInviteLink } from "./usePaymentInviteLink";
+import { PaymentProcessingParams } from "./types/paymentProcessing.types";
 import { toast } from "sonner";
-
-interface PaymentProcessingParams {
-  communityId: string;
-  planId: string;
-  planPrice: number;
-  planInterval?: string;
-  communityInviteLink?: string | null;
-  telegramUserId?: string;
-  telegramUsername?: string;
-  firstName?: string;
-  lastName?: string;
-  onSuccess?: () => void;
-  onError?: (error: string) => void;
-  onStart?: () => void;
-  activeSubscription?: Subscription | null;
-}
+import { 
+  resetPaymentState,
+  setPaymentLoadingState,
+  setPaymentSuccessState,
+  setPaymentErrorState 
+} from "./utils/payment-state.utils";
 
 export const usePaymentProcessing = ({
   communityId,
@@ -40,16 +31,15 @@ export const usePaymentProcessing = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
   
   const { recordPayment } = usePaymentRecord();
   const { fetchOrCreateInviteLink } = useInviteLink(communityInviteLink);
+  const { createMember } = useMemberCreation();
+  const { inviteLink, setInviteLink, processInviteLink } = usePaymentInviteLink();
 
   // Reset processing state
   const resetState = () => {
-    setIsLoading(false);
-    setIsSuccess(false);
-    setError(null);
+    resetPaymentState(setIsLoading, setIsSuccess, setError);
   };
   
   // Process payment with the selected method
@@ -69,35 +59,15 @@ export const usePaymentProcessing = ({
       if (!planId) throw new Error("Plan ID is required");
       if (!telegramUserId) throw new Error("User ID is required");
       
-      setIsLoading(true);
-      setError(null);
-      
-      // Notify that payment processing has started
-      if (onStart) {
-        onStart();
-      }
+      // Set loading state and notify start
+      setPaymentLoadingState(setIsLoading, setError, onStart);
       
       // Get an invite link if we don't have one yet or generate a new one
-      let finalInviteLink = communityInviteLink;
-      
-      if (!communityInviteLink) {
-        console.log("[usePaymentProcessing] No invite link provided, generating a new one");
-        const generatedLink = await fetchOrCreateInviteLink(communityId);
-        
-        if (generatedLink) {
-          finalInviteLink = generatedLink;
-          console.log("[usePaymentProcessing] Successfully generated invite link:", finalInviteLink);
-        } else {
-          console.warn("[usePaymentProcessing] Could not generate invite link, proceeding without one");
-        }
-      }
-      
-      // Check if the invite link is for a group (begins with { for JSON)
-      let isGroupSubscription = false;
-      if (finalInviteLink && (finalInviteLink.startsWith('{') || finalInviteLink.includes('"isGroup":true'))) {
-        isGroupSubscription = true;
-        console.log("[usePaymentProcessing] Detected a group subscription with JSON invite links");
-      }
+      let finalInviteLink = await processInviteLink(
+        communityInviteLink,
+        fetchOrCreateInviteLink,
+        communityId
+      );
       
       // Record the payment in the database, including the plan interval
       const { success, paymentData, error: paymentError, inviteLink: paymentInviteLink } = await recordPayment({
@@ -122,88 +92,39 @@ export const usePaymentProcessing = ({
       console.log("[usePaymentProcessing] Payment recorded successfully:", paymentData);
       
       // IMMEDIATE MEMBER CREATION: Create or update the member record right after payment
-      // Calculate start and end dates for subscription
-      const startDate = new Date();
-      let endDate = new Date(startDate);
-      
-      // Add time based on plan interval
-      if (planInterval) {
-        switch (planInterval) {
-          case "monthly":
-            endDate.setMonth(endDate.getMonth() + 1);
-            break;
-          case "yearly":
-            endDate.setFullYear(endDate.getFullYear() + 1);
-            break;
-          case "half-yearly":
-            endDate.setMonth(endDate.getMonth() + 6);
-            break;
-          case "quarterly":
-            endDate.setMonth(endDate.getMonth() + 3);
-            break;
-          case "one-time":
-          case "one_time":
-            endDate.setFullYear(endDate.getFullYear() + 1);
-            break;
-          case "lifetime":
-            endDate.setFullYear(endDate.getFullYear() + 100);
-            break;
-          default:
-            // Default to 30 days if interval not recognized
-            endDate.setDate(endDate.getDate() + 30);
-        }
-        console.log(`[usePaymentProcessing] Calculated subscription dates: Start=${startDate.toISOString()}, End=${endDate.toISOString()}`);
-      }
-      
-      const memberResult = await createOrUpdateMember({
-        telegram_id: telegramUserId,
-        community_id: communityId,
-        subscription_plan_id: planId,
-        status: 'active',
-        payment_id: paymentData?.id,
-        username: telegramUsername,
-        subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString()
+      const memberCreated = await createMember({
+        telegramUserId,
+        communityId,
+        planId,
+        planInterval,
+        paymentId: paymentData?.id,
+        telegramUsername
       });
       
-      if (!memberResult) {
+      if (!memberCreated) {
         console.error("[usePaymentProcessing] Failed to create/update member record");
         toast.error("Payment processed but membership record creation failed");
       } else {
         console.log("[usePaymentProcessing] Member record created/updated successfully");
       }
       
-      // Use the invite link from the payment record if available
+      // Update the invite link if needed
       if (paymentInviteLink) {
         setInviteLink(paymentInviteLink);
-        console.log("[usePaymentProcessing] Using invite link from payment record:", paymentInviteLink);
-      } else if (finalInviteLink) {
-        setInviteLink(finalInviteLink);
-        console.log("[usePaymentProcessing] Using original invite link:", finalInviteLink);
       }
       
-      setIsSuccess(true);
-      
-      // Call the success callback if provided
-      if (onSuccess) {
-        console.log("[usePaymentProcessing] Calling onSuccess callback");
-        onSuccess();
-      }
+      // Set success state and notify completion
+      setPaymentSuccessState(setIsLoading, setIsSuccess, onSuccess);
       
       return true;
     } catch (err) {
       console.error("[usePaymentProcessing] Error processing payment:", err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
-      setError(errorMessage);
       
-      // Call the error callback if provided
-      if (onError) {
-        onError(errorMessage);
-      }
+      // Set error state and notify
+      setPaymentErrorState(setIsLoading, setError, errorMessage, onError);
       
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   

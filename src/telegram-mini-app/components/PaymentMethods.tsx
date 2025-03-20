@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -10,7 +9,6 @@ import { PaymentButton } from "./payment/PaymentButton";
 import { toast } from "@/components/ui/use-toast";
 import { Subscription } from "../services/memberService";
 
-// For development, set this to true to bypass real payment processing
 const TEST_MODE = true;
 
 interface PaymentMethodsProps {
@@ -53,14 +51,16 @@ export const PaymentMethods = ({
     communityId: communityId || selectedPlan.community_id,
     planId: selectedPlan.id,
     planPrice: selectedPlan.price,
-    planInterval: selectedPlan.interval, // Pass the interval to the payment processing hook
+    planInterval: selectedPlan.interval,
     communityInviteLink,
     telegramUserId,
     telegramUsername,
     firstName,
     lastName,
     onSuccess: onCompletePurchase,
-    activeSubscription
+    activeSubscription,
+    onStart: onPaymentStart,
+    onError: onPaymentError
   });
 
   useEffect(() => {

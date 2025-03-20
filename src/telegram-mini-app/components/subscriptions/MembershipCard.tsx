@@ -16,6 +16,7 @@ import { MembershipActionButtons } from "./membership-card/MembershipActionButto
 import { CancelSubscriptionConfirmation } from "./membership-card/CancelSubscriptionConfirmation";
 import { createLogger } from "../../utils/debugUtils";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const logger = createLogger("MembershipCard");
 
@@ -31,6 +32,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   onRenew,
 }) => {
   const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [communityInviteLink, setCommunityInviteLink] = React.useState<string | null>(null);
   const active = isSubscriptionActive(subscription);
   const daysRemaining = getDaysRemaining(subscription);
   const isExpiringSoon = active && daysRemaining <= 3;
@@ -47,16 +49,58 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
     type: channel.type
   }));
 
+  // Fetch invite link from subscription_payments if not available in subscription
+  useEffect(() => {
+    const fetchInviteLink = async () => {
+      // Check if we already have an invite link from the subscription or community
+      if (subscription.community?.telegram_invite_link || subscription.invite_link) {
+        setCommunityInviteLink(subscription.community?.telegram_invite_link || subscription.invite_link);
+        return;
+      }
+
+      try {
+        logger.log(`Fetching invite link for community: ${subscription.community_id}`);
+        
+        // Try to get the invite link from subscription_payments
+        const { data: payments, error } = await supabase
+          .from('subscription_payments')
+          .select('invite_link')
+          .eq('community_id', subscription.community_id)
+          .eq('telegram_user_id', subscription.telegram_user_id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (error) {
+          logger.error("Error fetching invite link from payments:", error);
+          return;
+        }
+        
+        if (payments && payments.length > 0 && payments[0].invite_link) {
+          logger.log(`Found invite link in payment: ${payments[0].invite_link}`);
+          setCommunityInviteLink(payments[0].invite_link);
+        } else {
+          logger.warn("No invite link found in payments");
+        }
+      } catch (error) {
+        logger.error("Error in fetchInviteLink:", error);
+      }
+    };
+    
+    fetchInviteLink();
+  }, [subscription]);
+
   const handleCommunityLink = () => {
     try {
-      const inviteLink = subscription.community?.telegram_invite_link || 
+      // Use the fetched invite link, or fallback to subscription data
+      const inviteLink = communityInviteLink || 
+                         subscription.community?.telegram_invite_link || 
                          subscription.invite_link || 
                          null;
                          
       if (inviteLink) {
         logger.log(`Opening community link: ${inviteLink.substring(0, 30)}...`);
         
-        // Fix: Directly open the link in a new tab
+        // Open the link in a new tab
         window.open(inviteLink, "_blank", "noopener,noreferrer");
         
         // Log success for debugging
@@ -104,11 +148,12 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
     logger.log("[MembershipCard] Community:", subscription.community);
     logger.log("[MembershipCard] Community invite link:", subscription.community?.telegram_invite_link);
     logger.log("[MembershipCard] Subscription invite link:", subscription.invite_link);
+    logger.log("[MembershipCard] Fetched community invite link:", communityInviteLink);
     
     if (isGroup && channels?.length > 0) {
       logger.log("[MembershipCard] Group channels:", channels);
     }
-  }, [subscription, channels, isGroup]);
+  }, [subscription, channels, isGroup, communityInviteLink]);
 
   return (
     <>
@@ -136,7 +181,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
                 formattedChannels={formattedChannels}
                 communityName={subscription.community?.name || "Community"}
                 communityId={subscription.community_id}
-                communityInviteLink={subscription.community?.telegram_invite_link || subscription.invite_link}
+                communityInviteLink={communityInviteLink || subscription.community?.telegram_invite_link || subscription.invite_link}
                 onCommunityLinkClick={handleCommunityLink}
               />
               

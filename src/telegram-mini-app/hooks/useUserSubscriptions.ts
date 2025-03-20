@@ -26,8 +26,8 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
       const data = await getUserSubscriptions(telegramUserId);
       logger.log(`Received ${data.length} subscriptions`, data);
 
-      // Ensure each subscription has the community property with needed fields
-      const processedSubscriptions = data.map(sub => {
+      // Process each subscription to ensure invite links are available
+      const processedSubscriptions = await Promise.all(data.map(async (sub) => {
         // Log community details for debugging
         if (sub.community) {
           logger.log(`Subscription ${sub.id} community:`, {
@@ -39,8 +39,29 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
           logger.warn(`Subscription ${sub.id} has no community data`);
         }
         
+        // If no invite link is available on the community, try to fetch it from subscription_payments
+        if ((!sub.community?.telegram_invite_link && !sub.invite_link) && sub.community_id) {
+          logger.log(`No invite link found for subscription ${sub.id}, checking subscription_payments`);
+          
+          // Query subscription_payments for the latest invite link
+          const { data: payments, error: paymentsError } = await supabase
+            .from('subscription_payments')
+            .select('invite_link, created_at')
+            .eq('community_id', sub.community_id)
+            .eq('telegram_user_id', telegramUserId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (paymentsError) {
+            logger.error(`Error fetching payment with invite link: ${paymentsError.message}`);
+          } else if (payments && payments.length > 0 && payments[0].invite_link) {
+            logger.log(`Found invite link in payment record: ${payments[0].invite_link}`);
+            sub.invite_link = payments[0].invite_link;
+          }
+        }
+        
         return sub;
-      });
+      }));
       
       setSubscriptions(processedSubscriptions);
     } catch (err) {

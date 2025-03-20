@@ -16,6 +16,9 @@ export const MembershipHeader: React.FC<MembershipHeaderProps> = ({
   const daysRemaining = getDaysRemaining(subscription);
   const isExpiringSoon = active && daysRemaining <= 3;
   const timeRemainingText = getTimeRemainingText(subscription);
+  
+  // Use subscription_status instead of status
+  const status = subscription.subscription_status || 'unknown';
 
   return (
     <div className="flex items-start justify-between w-full text-left">
@@ -34,7 +37,7 @@ export const MembershipHeader: React.FC<MembershipHeaderProps> = ({
         <div>
           <h3 className="font-semibold text-base">{subscription.community.name}</h3>
           <div className="flex items-center space-x-2 mt-1">
-            <MembershipStatusBadge subscription={subscription} />
+            <MembershipStatusBadge status={status} />
             {subscription.plan && (
               <span className="text-xs text-gray-500">
                 {subscription.plan.name} · {subscription.plan.interval}

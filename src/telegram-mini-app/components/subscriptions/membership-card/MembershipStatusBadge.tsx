@@ -2,6 +2,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, AlertCircle, Sparkles } from "lucide-react";
+import { Subscription } from "../../../services/memberService";
 
 interface MembershipStatusBadgeProps {
   status: string;

@@ -37,14 +37,14 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
 
   // Show stats if we have subscriptions
   const activeCount = subscriptions.filter(sub => 
-    sub.status === 'active' || sub.status === 'trial'
+    sub.subscription_status === 'active' || sub.subscription_status === 'trial'
   ).length;
   
   const expiringCount = subscriptions.filter(sub => {
     const expiryDate = new Date(sub.expiry_date);
     const now = new Date();
     const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return sub.status === 'active' && daysUntilExpiry <= 7;
+    return sub.subscription_status === 'active' && daysUntilExpiry <= 7;
   }).length;
 
   if (subscriptions.length === 0) {

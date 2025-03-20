@@ -21,7 +21,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onRenew,
 }) => {
   const isExpired = new Date(subscription.expiry_date) < new Date();
-  const isActive = subscription.status === "active" || subscription.status === "trial";
+  const isActive = subscription.subscription_status === "active" || subscription.subscription_status === "trial";
 
   // Calculate time until expiry
   const expiryDate = new Date(subscription.expiry_date);
@@ -55,7 +55,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             </h3>
             
             <div className="flex gap-2 mt-1.5">
-              <MembershipStatusBadge status={subscription.status} />
+              <MembershipStatusBadge status={subscription.subscription_status} />
               
               {subscription.plan && (
                 <Badge variant="outline" className="text-xs bg-indigo-50 border-indigo-100 text-indigo-600">

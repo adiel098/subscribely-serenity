@@ -29,7 +29,8 @@ export const AppContentRouter = ({
     return <ErrorDisplay message="Could not retrieve user data" onRetry={() => {}} />;
   }
   
-  // When no community is found, we'll still show the app but default to discover tab
+  // When no community is found, we'll default to discover tab
+  // This is the key change that enables discovery mode without a community ID
   const effectiveTab = !community && activeTab === "subscribe" ? "discover" : activeTab;
   
   return (

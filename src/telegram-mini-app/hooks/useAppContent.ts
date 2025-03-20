@@ -11,7 +11,8 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [errorState, setErrorState] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("subscribe");
+  // Default to "discover" tab when no community ID is provided
+  const [activeTab, setActiveTab] = useState<string>(initialCommunityId ? "subscribe" : "discover");
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
@@ -50,14 +51,6 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
       setSelectedCommunity(community);
     }
   }, [community, selectedCommunity]);
-  
-  // Set default active tab to "discover" if no community is specified
-  useEffect(() => {
-    if (!initialCommunityId || initialCommunityId === "") {
-      console.log('📱 No community ID provided, defaulting to discover tab');
-      setActiveTab("discover");
-    }
-  }, [initialCommunityId]);
   
   // Reset selected plan when community changes
   useEffect(() => {

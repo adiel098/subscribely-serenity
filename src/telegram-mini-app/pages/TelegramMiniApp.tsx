@@ -96,18 +96,22 @@ const TelegramMiniApp = () => {
     ensureFullScreen();
   };
 
-  // Set effective start parameter 
-  // When no start parameter is provided, we'll pass an empty string to show the discovery view
-  const effectiveStartParam = isDevelopmentMode && !startParam 
+  // Set effective start parameter - important change here!
+  // When no start parameter is provided, we'll default to empty string
+  // which will trigger the discovery view instead of showing an error
+  const effectiveStartParam = startParam || "";
+  
+  // For development mode, we can still use a test community ID
+  const finalStartParam = isDevelopmentMode && !effectiveStartParam 
     ? "27052464-6e68-4116-bd79-6af069fe67cd" // Use this only in dev mode for testing
-    : startParam || "";
+    : effectiveStartParam;
     
-  console.log('📌 Effective startParam:', effectiveStartParam);
+  console.log('📌 Effective startParam:', finalStartParam);
 
-  // Fetch data using hooks
-  const { community, loading: communityLoading } = useCommunityData(effectiveStartParam || "");
+  // Fetch data using hooks - we pass the empty string to trigger the discovery view
+  const { community, loading: communityLoading } = useCommunityData(finalStartParam);
   const { user: telegramUser, loading: userLoading, error: userError, refetch: refetchUser } = 
-    useTelegramUser(effectiveStartParam || "", telegramUserId);
+    useTelegramUser(finalStartParam, telegramUserId);
 
   // Log hook results for debugging
   console.log('📡 Hook Results:');
@@ -181,7 +185,7 @@ const TelegramMiniApp = () => {
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
       
       <AppContent
-        communityId={effectiveStartParam || ""}
+        communityId={finalStartParam}
         telegramUserId={telegramUserId}
       />
     </>

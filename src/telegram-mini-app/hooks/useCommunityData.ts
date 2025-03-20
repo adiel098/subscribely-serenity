@@ -18,9 +18,13 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
   useEffect(() => {
     const fetchCommunityData = async () => {
       try {
-        if (!communityIdOrLink) {
-          logger.warn("No community ID or link provided");
-          throw new Error("No community ID or link provided");
+        // If no community ID is provided, we're in discovery mode
+        // Just set loading to false and return without an error
+        if (!communityIdOrLink || communityIdOrLink === "") {
+          logger.log("📱 No community ID provided - entering discovery mode");
+          setLoading(false);
+          setCommunity(null);
+          return;
         }
         
         logger.log(`🔄 Fetching community data with ID or link: ${communityIdOrLink}`);
@@ -79,22 +83,21 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         logger.error("❌ Error fetching community data:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to load community data";
         setError(errorMessage);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage
-        });
+        
+        // Only show error toast if we were actually trying to load a specific community
+        if (communityIdOrLink && communityIdOrLink !== "") {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: errorMessage
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    if (communityIdOrLink) {
-      fetchCommunityData();
-    } else {
-      logger.error("No community ID or link provided");
-      setLoading(false);
-    }
+    fetchCommunityData();
   }, [communityIdOrLink, toast]);
 
   return { loading, community, error };

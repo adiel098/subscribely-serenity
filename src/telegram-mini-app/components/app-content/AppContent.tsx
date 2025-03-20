@@ -8,7 +8,6 @@ import { LoadingIndicator } from "./LoadingIndicator";
 import { AppContentRouter } from "./AppContentRouter";
 import { EmailCollectionWrapper } from "../EmailCollectionWrapper";
 import { ErrorDisplay } from "../ErrorDisplay";
-import { CommunityNotFound } from "../CommunityNotFound";
 
 interface AppContentProps {
   communityId: string;
@@ -59,7 +58,7 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     />;
   }
   
-  // Check for errors
+  // Check for user errors
   if (userError) {
     return <ErrorDisplay 
       message={`Failed to load user data: ${userError}`} 
@@ -68,7 +67,8 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     />;
   }
   
-  if (communityError) {
+  // Community error shouldn't be shown if we're in discovery mode (empty communityId)
+  if (communityError && communityId !== "") {
     return <ErrorDisplay 
       message={`Failed to load community data: ${communityError}`} 
       telegramUserId={telegramUserId}
@@ -76,9 +76,14 @@ const AppContent: React.FC<AppContentProps> = ({ communityId, telegramUserId }) 
     />;
   }
   
-  // No community found
-  if (!community && !displayCommunity) {
-    return <CommunityNotFound communityId={communityId} />;
+  // No community found - only show error if we expected to find one
+  // If communityId is empty, we're in discovery mode and this is expected
+  if (!community && !displayCommunity && communityId !== "") {
+    return <ErrorDisplay 
+      message={`Community not found: ${communityId}`}
+      telegramUserId={telegramUserId}
+      onRetry={handleRetry} 
+    />;
   }
 
   // Show email collection form if needed

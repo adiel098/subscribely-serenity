@@ -1,8 +1,9 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Import the TELEGRAM_MINI_APP_URL from our config
-export { TELEGRAM_MINI_APP_URL } from '../../../src/telegram-mini-app/utils/config.ts';
+// Define the TELEGRAM_MINI_APP_URL directly in this file
+// This way we don't rely on importing from frontend code which isn't available in edge functions
+export const TELEGRAM_MINI_APP_URL = "https://preview--subscribely-serenity.lovable.app/telegram-mini-app";
 
 /**
  * Get the bot username from global settings

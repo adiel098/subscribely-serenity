@@ -38,9 +38,6 @@ verify_jwt = false
 [functions.create-stripe-payment-intent]
 verify_jwt = false
 
-[functions.create-stripe-session]
-verify_jwt = false
-
 [functions.update-community-counts]
 verify_jwt = false
 
@@ -50,8 +47,23 @@ verify_jwt = false
 [functions.check-community-photo]
 verify_jwt = false
 
-[functions.get-telegram-chat-photo]
-verify_jwt = false
-
 [functions.create-invite-link]
 verify_jwt = false
+
+[functions.create-stripe-session]
+verify_jwt = false
+
+[functions.telegram-user-manager]
+verify_jwt = false
+
+[functions.telegram-community-data]
+verify_jwt = false
+
+[functions.telegram-mini-app]
+verify_jwt = false
+
+[functions.send-broadcast]
+verify_jwt = false
+
+[global.env]
+DATABASE_URL = "DATABASE_URL"

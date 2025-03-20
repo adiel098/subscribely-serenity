@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Receipt, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Loader2, Receipt, ChevronDown, ChevronUp, AlertCircle, Calendar, CreditCard } from "lucide-react";
 import { formatCurrency } from "@/telegram-mini-app/utils/formatUtils";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { SectionHeader } from "../ui/SectionHeader";
 
 interface PaymentHistoryTabProps {
   telegramUserId: string | undefined;
@@ -123,16 +125,22 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
 
   return (
     <div className="space-y-4">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold">Payment History</h3>
-      </div>
+      <SectionHeader
+        icon={<Receipt className="h-5 w-5" />}
+        title="Payment History"
+        description="Track your past transactions"
+        gradient="blue"
+      />
       
       <ScrollArea className="h-[400px] pr-3">
         <div className="space-y-4">
-          {payments.map((payment) => (
-            <div
+          {payments.map((payment, index) => (
+            <motion.div
               key={payment.id}
-              className="bg-white border rounded-lg shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              className="bg-white border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
             >
               {/* Payment Card Header - Always visible */}
               <div 
@@ -141,30 +149,46 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="font-medium">{payment.community?.name || "Community"}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-medium flex items-center gap-1.5">
+                      {payment.community?.name || "Community"}
+                      <Badge 
+                        variant={getStatusBadgeVariant(payment.status)}
+                        className="ml-2 text-xs"
+                      >
+                        {payment.status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      <Calendar className="h-3.5 w-3.5 text-gray-400" />
                       {format(new Date(payment.created_at), 'MMM d, yyyy')}
                     </div>
                   </div>
                   
                   <div className="flex flex-col items-end">
-                    <div className="font-semibold">{formatCurrency(payment.amount)}</div>
-                    <Badge variant={getStatusBadgeVariant(payment.status)}>
-                      {payment.status}
-                    </Badge>
+                    <div className="font-semibold text-indigo-600">{formatCurrency(payment.amount)}</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                      <CreditCard className="h-3 w-3" />
+                      {payment.payment_method || "Unknown method"}
+                    </div>
                   </div>
                   
-                  <div className="ml-2">
+                  <div className="ml-2 flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
                     {expandedPaymentId === payment.id ? 
-                      <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                      <ChevronDown className="h-5 w-5 text-gray-400" />}
+                      <ChevronUp className="h-4 w-4 text-gray-500" /> : 
+                      <ChevronDown className="h-4 w-4 text-gray-500" />}
                   </div>
                 </div>
               </div>
               
               {/* Expanded Details Section */}
               {expandedPaymentId === payment.id && (
-                <div className="px-4 pb-4 pt-1 border-t border-gray-100 bg-gray-50">
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="px-4 pb-4 pt-1 border-t border-gray-100 bg-gray-50"
+                >
                   <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div>
                       <p className="text-muted-foreground">Plan</p>
@@ -183,9 +207,9 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
                       <p>{format(new Date(payment.created_at), 'PPp')}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       </ScrollArea>

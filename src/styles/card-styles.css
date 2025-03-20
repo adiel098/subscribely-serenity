@@ -1,65 +1,65 @@
 
 @layer components {
   /* Card styles for the application */
-  .glass-card {
-    @apply bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl rounded-xl;
+  .card {
+    @apply bg-white rounded-lg shadow-sm p-4 md:p-6 border;
   }
-
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md;
+  }
+  
+  .card-title {
+    @apply text-lg font-semibold mb-2;
+  }
+  
+  .card-subtitle {
+    @apply text-sm text-gray-500 mb-4;
+  }
+  
+  /* Translucent card styling */
   .translucent-card {
-    @apply bg-white/80 backdrop-blur-sm border border-white/30 shadow-sm rounded-xl;
-  }
-
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-105;
-  }
-
-  .fade-in {
-    @apply animate-fade-in;
+    @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-white/40;
   }
   
-  /* Glassmorphism style to match the reference design */
+  /* Glassmorphism card styling for elegant overlay effects */
   .glassmorphism {
-    @apply bg-white/80 backdrop-blur-lg border border-white/30 shadow-lg rounded-xl;
+    @apply backdrop-blur-xl bg-white/80 border border-white/40 
+           shadow-[0_8px_32px_0_rgba(0,0,0,0.05)];
   }
   
-  .tabs-glassmorphism {
-    @apply bg-white/60 backdrop-blur-md border border-indigo-100/40 shadow-sm rounded-xl;
+  /* Gradient border cards */
+  .gradient-border-card {
+    @apply relative p-5 rounded-xl bg-white;
+    
+    /* Using a pseudo-element for the gradient border */
+    &::before {
+      content: '';
+      @apply absolute inset-0 rounded-xl p-[1px] -z-10;
+      background: linear-gradient(to right, #8B5CF6, #D946EF);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
   }
   
-  /* Mini-app specific card styles */
-  .mini-app-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl shadow-sm;
+  /* Paper card with subtle shadow and border */
+  .paper-card {
+    @apply bg-white rounded-xl p-4 shadow-sm border border-gray-100;
   }
   
-  .mini-app-content-card {
-    @apply bg-white/90 backdrop-blur-md border border-white/40 rounded-3xl shadow-md p-4;
-  }
-
-  /* Gradient borders for floating elements */
-  .gradient-border {
-    position: relative;
-    border-radius: 16px;
-    background-clip: padding-box;
+  /* Stats card */
+  .stats-card {
+    @apply bg-white rounded-xl p-3 border shadow-sm transition-all duration-300 hover:shadow-md;
   }
   
-  .gradient-border::after {
-    content: '';
-    position: absolute;
-    top: -1px;
-    right: -1px;
-    bottom: -1px;
-    left: -1px;
-    z-index: -1;
-    border-radius: 17px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.5),
-      rgba(255, 255, 255, 0.1),
-      rgba(74, 47, 189, 0.3)
-    );
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: source-out;
+  /* Payment history card */
+  .payment-card {
+    @apply bg-white border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300;
+  }
+  
+  /* Subscription card */
+  .subscription-card {
+    @apply bg-white border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300;
   }
 }

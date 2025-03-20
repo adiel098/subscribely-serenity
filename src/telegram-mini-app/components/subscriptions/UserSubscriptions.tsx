@@ -1,11 +1,13 @@
 
 import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Crown } from "lucide-react";
+import { Crown, Shield, Clock } from "lucide-react";
 import { Subscription } from "../../services/memberService";
 import { SubscriptionsList } from "./SubscriptionsList";
 import { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 import { EmptySubscriptionsState } from "./EmptySubscriptionsState";
+import { motion } from "framer-motion";
+import { SectionHeader } from "../ui/SectionHeader";
 
 interface UserSubscriptionsProps {
   subscriptions: Subscription[];
@@ -33,16 +35,55 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
     onRenew(subscription);
   };
 
+  // Show stats if we have subscriptions
+  const activeCount = subscriptions.filter(sub => 
+    sub.status === 'active' || sub.status === 'trial'
+  ).length;
+  
+  const expiringCount = subscriptions.filter(sub => {
+    const expiryDate = new Date(sub.expiry_date);
+    const now = new Date();
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return sub.status === 'active' && daysUntilExpiry <= 7;
+  }).length;
+
   if (subscriptions.length === 0) {
     return <EmptySubscriptionsState />;
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold flex items-center gap-2">
-        <Crown className="h-5 w-5 text-primary" />
-        My Subscriptions
-      </h2>
+      <SectionHeader
+        icon={<Crown className="h-5 w-5" />}
+        title="My Subscriptions"
+        description="Manage your active memberships"
+        gradient="purple"
+      />
+      
+      {subscriptions.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="grid grid-cols-2 gap-3 mb-4"
+        >
+          <div className="bg-white rounded-xl p-3 border shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="h-4 w-4 text-emerald-500" />
+              <span className="text-sm font-medium text-gray-700">Active</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{activeCount}</p>
+          </div>
+          
+          <div className="bg-white rounded-xl p-3 border shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium text-gray-700">Expiring Soon</span>
+            </div>
+            <p className="text-2xl font-bold text-amber-600">{expiringCount}</p>
+          </div>
+        </motion.div>
+      )}
       
       <SubscriptionsList 
         subscriptions={subscriptions} 

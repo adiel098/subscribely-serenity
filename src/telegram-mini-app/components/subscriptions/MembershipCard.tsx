@@ -34,6 +34,7 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
   // Fetch channels for groups
   const { channels, isGroup, isLoading } = useCommunityChannels(subscription.community_id);
   
+  // Transform ChannelInfo to the format expected by GroupChannelsSection
   const formattedChannels = channels?.map(channel => ({
     id: channel.id,
     name: channel.name,

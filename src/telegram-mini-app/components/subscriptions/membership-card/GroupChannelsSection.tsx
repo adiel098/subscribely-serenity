@@ -7,7 +7,13 @@ import { ChannelType } from "../../../hooks/useCommunityChannels";
 
 interface GroupChannelsSectionProps {
   isGroup: boolean;
-  formattedChannels: ChannelType[] | undefined;
+  formattedChannels: {
+    id: string;
+    name: string;
+    inviteLink: string;
+    isMiniApp?: boolean;
+    type?: string;
+  }[] | undefined;
   communityName: string;
   communityInviteLink: string | null | undefined;
   onCommunityLinkClick: () => void;

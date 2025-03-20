@@ -67,6 +67,9 @@ serve(async (req) => {
     }
     
     // Get member communities for this group from community_relationships table
+    // In this table, community_id is the GROUP ID, and member_id is the COMMUNITY ID
+    console.log(`Querying community_relationships where community_id = ${communityId} and relationship_type = 'group'`);
+    
     const { data: relationships, error: relationshipsError } = await supabase
       .from("community_relationships")
       .select(`
@@ -77,7 +80,6 @@ serve(async (req) => {
           description,
           telegram_chat_id,
           telegram_photo_url,
-          telegram_invite_link,
           custom_link,
           owner_id,
           created_at,
@@ -97,6 +99,14 @@ serve(async (req) => {
     }
     
     console.log("Raw relationships data:", JSON.stringify(relationships));
+    
+    if (!relationships || !Array.isArray(relationships)) {
+      console.error("Relationships is not an array or null:", relationships);
+      return new Response(
+        JSON.stringify({ isGroup: true, channels: [] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     // Process relationships into channels format
     let channels = [];
@@ -120,13 +130,34 @@ serve(async (req) => {
     // Filter out any null entries
     channels = channels.filter(channel => channel !== null && typeof channel === 'object');
     
-    console.log(`Found ${channels.length} channels for group ${communityId}`);
-    console.log("Channels data:", JSON.stringify(channels));
+    // Now get invite links from subscription_payments table for each channel
+    const enrichedChannels = await Promise.all(channels.map(async (channel) => {
+      // Get the most recent invite link for this community
+      const { data: payment, error: linkError } = await supabase
+        .from('subscription_payments')
+        .select('invite_link')
+        .eq('community_id', channel.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (linkError) {
+        console.warn(`Error fetching invite link for channel ${channel.id}:`, linkError);
+      }
+      
+      return {
+        ...channel,
+        telegram_invite_link: payment?.invite_link || null
+      };
+    }));
+    
+    console.log(`Found ${enrichedChannels.length} channels for group ${communityId}`);
+    console.log("Enriched channels data:", JSON.stringify(enrichedChannels));
     
     return new Response(
       JSON.stringify({ 
         isGroup: true, 
-        channels: channels 
+        channels: enrichedChannels 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

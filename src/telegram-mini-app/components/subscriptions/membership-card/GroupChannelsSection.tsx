@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { GroupChannelsLinks } from "../../success-screen/GroupChannelsLinks";
-import { ChannelType } from "../../../hooks/useCommunityChannels";
 import { useChannelInviteLink } from "../../../hooks/channel-invitation/useChannelInviteLink";
 import { createLogger } from "../../../utils/debugUtils";
 
@@ -69,7 +68,9 @@ export const GroupChannelsSection: React.FC<GroupChannelsSectionProps> = ({
     );
   } 
   
-  if (inviteLink || communityInviteLink) {
+  const finalInviteLink = communityInviteLink || inviteLink;
+  
+  if (finalInviteLink) {
     return (
       <Button 
         variant="outline" 

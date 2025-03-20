@@ -49,7 +49,7 @@ export const GroupChannelsLinks = ({ groupName, channels }: GroupChannelsLinksPr
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs flex items-center gap-1"
+                  className="text-xs flex items-center gap-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
                   onClick={() => window.open(channel.inviteLink!, "_blank")}
                 >
                   <ExternalLink className="h-3 w-3" />

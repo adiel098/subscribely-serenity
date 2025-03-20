@@ -60,17 +60,17 @@ export const useCheckGroupLink = () => {
           }));
           
           setChannels(channelLinks);
+          
+          setIsLoadingLink(false);
+          return { 
+            isGroup: true, 
+            groupName: response.data.groupName,
+            channels: channelLinks 
+          };
         } else {
           logger.warn('No channels array in response or invalid format');
           setChannels([]);
         }
-        
-        setIsLoadingLink(false);
-        return { 
-          isGroup: true, 
-          groupName: response.data.groupName,
-          channels: channelLinks 
-        };
       }
       
       setIsLoadingLink(false);

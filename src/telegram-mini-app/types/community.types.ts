@@ -33,5 +33,5 @@ export interface Subscription {
   expires_at: string | null;
   plan?: Plan;
   community?: Community;
-  invite_link?: string | null; // Added the missing invite_link property
+  invite_link: string | null; // Updated to be required (non-optional) property
 }

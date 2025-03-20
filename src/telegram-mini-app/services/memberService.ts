@@ -25,6 +25,7 @@ export interface Subscription {
   is_active: boolean;
   community_id: string;
   expiry_date?: string | null;  // For backward compatibility
+  invite_link: string | null;  // Added missing property
   community: {
     id: string;
     name: string;

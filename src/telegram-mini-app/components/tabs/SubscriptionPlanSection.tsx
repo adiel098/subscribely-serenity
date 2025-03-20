@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { AvailableChannelsPreview } from "../channel-access/AvailableChannelsPreview";
 import { useCommunityChannels } from "@/telegram-mini-app/hooks/useCommunityChannels";
+import { ChannelInfo as ChannelInfoType } from "@/telegram-mini-app/hooks/community-channels/types";
 
 const logger = createLogger("SubscriptionPlanSection");
 
@@ -70,7 +71,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       {isGroup && channels.length > 0 && (
         <AvailableChannelsPreview 
           communityName={communityName}
-          channels={channels}
+          channels={channels as any}
           isGroup={isGroup}
         />
       )}

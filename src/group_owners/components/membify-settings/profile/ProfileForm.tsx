@@ -78,7 +78,7 @@ export const ProfileForm = ({
         disabled={!isEditing}
         icon={Phone}
         emoji="📱"
-        placeholder="+1 (555) 123-4567"
+        placeholder="Enter phone number"
       />
 
       {isEditing && (

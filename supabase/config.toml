@@ -64,6 +64,3 @@ verify_jwt = false
 
 [functions.send-broadcast]
 verify_jwt = false
-
-[global.env]
-DATABASE_URL = "DATABASE_URL"

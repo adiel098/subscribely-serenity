@@ -62,5 +62,5 @@ verify_jwt = false
 [functions.telegram-mini-app]
 verify_jwt = false
 
-[global.env]
-DATABASE_URL = "DATABASE_URL"
+[functions.send-broadcast]
+verify_jwt = false

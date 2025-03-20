@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePhotos } from "@/group_owners/hooks/usePhotos";
@@ -33,10 +32,8 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
   
-  // Get the photo URL for the selected community
   const communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
   
-  // When prop values change, update internal state
   useEffect(() => {
     if (selectedCommunityId) {
       setSelectedValue(`community-${selectedCommunityId}`);
@@ -50,10 +47,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
     }
   }, [selectedCommunityId, selectedGroupId]);
   
-  // Force render when photos are updated
   useEffect(() => {
-    // This is intentionally empty but the dependency on lastUpdate 
-    // will trigger a re-render when photos change
     console.log("Photos lastUpdate:", lastUpdate);
   }, [lastUpdate]);
   
@@ -73,14 +67,13 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
     }
   };
   
-  // This function handles the photo refresh, properly forwarding arguments
   const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
     e.stopPropagation();
     refreshPhoto(communityId, chatId);
   };
   
   return (
-    <div className="w-[220px]">
+    <div className="w-[300px]">
       <Select value={selectedValue} onValueChange={handleValueChange}>
         <SelectTrigger className="h-8 text-xs">
           <SelectValue>

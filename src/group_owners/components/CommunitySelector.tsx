@@ -86,7 +86,7 @@ export const CommunitySelector = () => {
             <Button 
               variant="outline" 
               onClick={handleCreateGroup}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8"
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 w-[130px]"
               size="sm"
             >
               <FolderPlus className="h-3.5 w-3.5" />
@@ -101,7 +101,7 @@ export const CommunitySelector = () => {
             <Button 
               variant="default" 
               onClick={handleCreateCommunity}
-              className="bg-gradient-to-r from-[#26A5E4] to-[#0088CC] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8"
+              className="bg-gradient-to-r from-[#26A5E4] to-[#0088CC] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8 w-[150px]"
               size="sm"
             >
               <PlusCircle className="h-3 w-3" />

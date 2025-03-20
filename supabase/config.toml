@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.get-telegram-chat-photo]
 verify_jwt = false
+
+[functions.create-invite-link]
+verify_jwt = false

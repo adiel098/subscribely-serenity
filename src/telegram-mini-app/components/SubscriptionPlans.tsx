@@ -113,7 +113,7 @@ export const SubscriptionPlans = ({
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="flex flex-wrap gap-1 mb-1">
-                  <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-0.5 text-xs py-0 px-1.5">
+                  <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-0.5 text-xs py-0 px-1.5 bg-transparent backdrop-blur-sm border border-indigo-100/50">
                     {intervalDisplay.icon} 
                     <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
                   </Badge>

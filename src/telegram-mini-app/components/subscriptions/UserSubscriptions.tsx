@@ -13,12 +13,14 @@ interface UserSubscriptionsProps {
   subscriptions: Subscription[];
   onRefresh: () => void;
   onRenew: (subscription: Subscription) => void;
+  onDiscoverClick?: () => void;
 }
 
 export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
   subscriptions,
   onRefresh,
   onRenew,
+  onDiscoverClick
 }) => {
   const { toast } = useToast();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -48,7 +50,17 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
   }).length;
 
   if (subscriptions.length === 0) {
-    return <EmptySubscriptionsState />;
+    return (
+      <div>
+        <SectionHeader
+          icon={<Crown className="h-5 w-5" />}
+          title="My Subscriptions"
+          description="Manage your active memberships"
+          gradient="purple"
+        />
+        <EmptySubscriptionsState onDiscoverClick={onDiscoverClick} />
+      </div>
+    );
   }
 
   return (

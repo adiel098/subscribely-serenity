@@ -1,16 +1,16 @@
 
 import React from "react";
-import { Crown, Package } from "lucide-react";
+import { Receipt, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 
-interface EmptySubscriptionsStateProps {
+interface EmptyPaymentHistoryProps {
   onDiscoverClick?: () => void;
 }
 
-export const EmptySubscriptionsState: React.FC<EmptySubscriptionsStateProps> = ({ 
-  onDiscoverClick 
+export const EmptyPaymentHistory: React.FC<EmptyPaymentHistoryProps> = ({
+  onDiscoverClick
 }) => {
   return (
     <motion.div
@@ -20,17 +20,17 @@ export const EmptySubscriptionsState: React.FC<EmptySubscriptionsStateProps> = (
       className="py-6"
     >
       <EmptyState
-        icon={<Crown className="h-10 w-10 text-primary/70" />}
-        title="No Active Subscriptions"
-        description="You don't have any active subscriptions yet. Explore available communities to find groups that interest you."
+        icon={<Receipt className="h-10 w-10 text-primary/70" />}
+        title="No Payment History"
+        description="You haven't made any payments yet. Subscribe to communities to start tracking your payment history."
         action={
           onDiscoverClick && (
             <Button 
               onClick={onDiscoverClick}
-              className="mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className="mt-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             >
-              <Package className="h-4 w-4 mr-2" />
-              Discover Communities
+              <CreditCard className="h-4 w-4 mr-2" />
+              Browse Communities
             </Button>
           )
         }

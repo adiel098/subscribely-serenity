@@ -46,6 +46,11 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
     onSelectCommunity(community);
   };
   
+  // Function to navigate to the discover tab
+  const navigateToDiscover = () => {
+    handleTabChange("discover");
+  };
+  
   // Show different tabs based on whether we have a community or not
   const showSubscribeTab = !!community;
   
@@ -126,13 +131,17 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
             onRenew={onRenewSubscription}
+            onDiscoverClick={navigateToDiscover}
           />
         </div>
       </TabsContent>
       
       <TabsContent value="paymentHistory" className="mt-0">
         <div className="translucent-card p-4 md:p-6 mb-16">
-          <PaymentHistoryTab telegramUserId={telegramUserId} />
+          <PaymentHistoryTab 
+            telegramUserId={telegramUserId} 
+            onDiscoverClick={navigateToDiscover}
+          />
         </div>
       </TabsContent>
       

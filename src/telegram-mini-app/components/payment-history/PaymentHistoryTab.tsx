@@ -8,12 +8,17 @@ import { formatCurrency } from "@/telegram-mini-app/utils/formatUtils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { SectionHeader } from "../ui/SectionHeader";
+import { EmptyPaymentHistory } from "./EmptyPaymentHistory";
 
 interface PaymentHistoryTabProps {
   telegramUserId: string | undefined;
+  onDiscoverClick?: () => void;
 }
 
-export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUserId }) => {
+export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ 
+  telegramUserId, 
+  onDiscoverClick 
+}) => {
   const { payments, isLoading, error } = usePaymentHistory(telegramUserId);
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
 
@@ -113,12 +118,14 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({ telegramUs
 
   if (!payments || payments.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium">No Payment History</h3>
-        <p className="text-muted-foreground mt-2 mb-4">
-          You haven't made any payments yet.
-        </p>
+      <div>
+        <SectionHeader
+          icon={<Receipt className="h-5 w-5" />}
+          title="Payment History"
+          description="Track your past transactions"
+          gradient="blue"
+        />
+        <EmptyPaymentHistory onDiscoverClick={onDiscoverClick} />
       </div>
     );
   }

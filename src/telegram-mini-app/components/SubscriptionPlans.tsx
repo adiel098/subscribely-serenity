@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock } from "lucide-react";
@@ -95,14 +94,14 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer ${
+            className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer translucent-card ${
               selectedPlan?.id === plan.id
                 ? 'border-indigo-500/50 shadow-md'
                 : isPremium 
                   ? 'border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
                   : 'border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
             }`}
-            style={{ height: "auto" }} // Changed from "fit-content" to "auto" for better sizing
+            style={{ height: "auto" }}
             onClick={() => onPlanSelect(plan)}
           >
             {isActive && (

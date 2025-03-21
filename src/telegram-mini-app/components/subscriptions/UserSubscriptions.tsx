@@ -51,20 +51,22 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
 
   if (subscriptions.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-120px)]">
+      <div className="min-h-[calc(100vh-120px)] flex flex-col">
         <SectionHeader
           icon={<Crown className="h-5 w-5" />}
           title="My Subscriptions"
           description="Manage your active memberships"
           gradient="purple"
         />
-        <EmptySubscriptionsState onDiscoverClick={onDiscoverClick} />
+        <div className="flex-grow">
+          <EmptySubscriptionsState onDiscoverClick={onDiscoverClick} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 min-h-[calc(100vh-120px)]">
+    <div className="space-y-4 min-h-[calc(100vh-92px)] flex flex-col pb-2">
       <SectionHeader
         icon={<Crown className="h-5 w-5" />}
         title="My Subscriptions"
@@ -97,11 +99,13 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
         </motion.div>
       )}
       
-      <SubscriptionsList 
-        subscriptions={subscriptions} 
-        onCancelClick={handleCancelClick} 
-        onRenew={handleRenewClick} 
-      />
+      <div className="flex-grow">
+        <SubscriptionsList 
+          subscriptions={subscriptions} 
+          onCancelClick={handleCancelClick} 
+          onRenew={handleRenewClick} 
+        />
+      </div>
       
       <CancelSubscriptionDialog
         open={cancelDialogOpen}

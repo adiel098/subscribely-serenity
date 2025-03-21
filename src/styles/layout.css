@@ -33,9 +33,9 @@
     flex-direction: column;
   }
   
-  /* Card that extends all the way to the bottom */
+  /* Card that extends all the way to the bottom with minimal spacing */
   .full-height-card {
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 70px);
   }
   
   @media (max-width: 640px) {

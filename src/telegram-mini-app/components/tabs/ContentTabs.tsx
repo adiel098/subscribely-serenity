@@ -62,7 +62,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="fixed bottom-4 left-0 right-0 z-50 mx-auto flex justify-center px-2 md:px-0"
+          className="fixed bottom-2 left-0 right-0 z-50 mx-auto flex justify-center px-2 md:px-0"
         >
           <TabsList 
             className={`
@@ -111,7 +111,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       
       {showSubscribeTab && (
         <TabsContent value="subscribe" className="mt-0">
-          <div className="translucent-card p-4 md:p-6 mb-16">
+          <div className="translucent-card p-4 md:p-6 mb-10">
             <SubscriptionPlanSection
               plans={communitySubscriptionPlans}
               selectedPlan={selectedPlan}
@@ -126,7 +126,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       )}
       
       <TabsContent value="mySubscriptions" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-10">
           <UserSubscriptions 
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
@@ -137,7 +137,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="paymentHistory" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-10">
           <PaymentHistoryTab 
             telegramUserId={telegramUserId} 
             onDiscoverClick={navigateToDiscover}
@@ -146,7 +146,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="discover" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-10">
           <CommunitySearch onSelectCommunity={handleCommunitySelect} />
         </div>
       </TabsContent>

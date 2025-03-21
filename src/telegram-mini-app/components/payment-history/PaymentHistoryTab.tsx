@@ -3,12 +3,13 @@ import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Receipt, ChevronDown, ChevronUp, AlertCircle, Calendar, CreditCard } from "lucide-react";
+import { Loader2, Receipt, ChevronDown, ChevronUp, AlertCircle, Calendar, CreditCard, Copy, Check } from "lucide-react";
 import { formatCurrency } from "@/telegram-mini-app/utils/formatUtils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { SectionHeader } from "../ui/SectionHeader";
 import { EmptyPaymentHistory } from "./EmptyPaymentHistory";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentHistoryTabProps {
   telegramUserId: string | undefined;
@@ -21,6 +22,8 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
 }) => {
   const { payments, isLoading, error } = usePaymentHistory(telegramUserId);
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   console.log("[PaymentHistoryTab] Rendering with:", {
     telegramUserId,
@@ -52,6 +55,27 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
     } else {
       setExpandedPaymentId(paymentId);
     }
+  };
+
+  const copyToClipboard = (id: string) => {
+    navigator.clipboard.writeText(id)
+      .then(() => {
+        setCopiedId(id);
+        toast({
+          title: "Copied to clipboard",
+          description: "Transaction ID has been copied",
+          duration: 2000,
+        });
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        toast({
+          title: "Failed to copy",
+          description: "Could not copy to clipboard",
+          variant: "destructive",
+        });
+      });
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -207,7 +231,21 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
                     </div>
                     <div>
                       <p className="text-muted-foreground">Transaction ID</p>
-                      <p className="font-mono text-xs overflow-hidden text-ellipsis">{payment.id.substring(0, 8)}...</p>
+                      <div className="flex items-center gap-1">
+                        <p className="font-mono text-xs overflow-hidden text-ellipsis">{payment.id.substring(0, 8)}...</p>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(payment.id);
+                          }}
+                          className="ml-1 p-1 rounded-full hover:bg-gray-200 transition-colors"
+                          aria-label="Copy transaction ID"
+                        >
+                          {copiedId === payment.id ? 
+                            <Check className="h-3.5 w-3.5 text-green-500" /> : 
+                            <Copy className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Date & Time</p>

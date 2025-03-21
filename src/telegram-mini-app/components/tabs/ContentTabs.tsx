@@ -66,12 +66,12 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
         >
           <TabsList 
             className={`
-              glassmorphism shadow-xl border border-white/40 
-              backdrop-blur-xl bg-white/70 dark:bg-black/40
+              glassmorphism shadow-xl border border-white/50 
+              backdrop-blur-xl bg-white/85 dark:bg-black/40
               ${showSubscribeTab ? 'w-[180px]' : 'w-[150px]'}
               overflow-hidden rounded-full p-1.5 h-14
               flex items-center justify-between
-              bg-gradient-to-br from-white/80 to-white/40
+              bg-gradient-to-br from-white/90 to-white/70
               dark:from-gray-900/90 dark:to-gray-900/70
               shadow-[0_8px_32px_0_rgba(0,0,0,0.10)]
             `}

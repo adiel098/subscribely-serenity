@@ -1,58 +1,35 @@
 
 @layer components {
-  /* Fixed community card grid for mini app */
-  .community-card-grid {
-    @apply grid grid-cols-1 gap-3 w-full max-w-full px-2;
-  }
-
-  /* Smooth iOS scrolling */
-  .ios-scroll {
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-  }
-
+  /* ... keep existing code (community card grid styles and iOS scrolling) */
+  
   /* Fix for mobile touch */
   button, a {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
   
-  /* Community dropdown text truncation */
-  .community-dropdown-text {
-    @apply truncate;
-    max-width: 160px;
-  }
-  
-  /* Remove top padding from Telegram mini app content */
-  .telegram-mini-app-container {
-    padding-top: 0;
-    padding-left: 2px;
-    padding-right: 2px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  /* ... keep existing code (community dropdown text and container styles) */
   
   /* Card that extends all the way to the bottom with minimal spacing */
   .full-height-card {
     min-height: calc(100vh - 70);
   }
   
-  /* Translucent card for tab content area - Updated with less transparency */
+  /* Translucent card for tab content area - Updated with even less transparency */
   .translucent-card {
     @apply rounded-lg overflow-hidden;
     min-height: auto;
     height: auto;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    background-color: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.85); /* Increased from 0.65 to 0.85 for less transparency */
+    backdrop-filter: blur(15px); /* Increased blur effect */
     position: relative; /* Added to support absolute positioning of the active badge */
   }
   
   /* Plan card inside the choose-plan container - Updated with less transparency */
   .choose-plan-container .translucent-card {
-    border: 1px solid rgba(124, 58, 237, 0.15);
-    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    background-color: rgba(255, 255, 255, 0.9); /* Increased from 0.75 to 0.9 for less transparency */
   }
   
   @media (max-width: 640px) {

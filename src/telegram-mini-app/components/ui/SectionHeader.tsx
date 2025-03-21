@@ -34,7 +34,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         className
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-r opacity-10" />
+      <div className="absolute inset-0 bg-gradient-to-r opacity-15" />
       
       <div className="relative z-10 flex items-start gap-3">
         <div className={`rounded-full bg-gradient-to-br ${gradientClasses[gradient]} p-2.5 text-white shadow-lg`}>
@@ -47,13 +47,13 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
           </h2>
           
           {description && (
-            <p className="mt-1 text-sm text-gray-600">{description}</p>
+            <p className="mt-1 text-sm text-gray-700">{description}</p>
           )}
         </div>
       </div>
       
       <div
-        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-80"
+        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r opacity-90"
         style={{ 
           backgroundImage: `linear-gradient(to right, transparent, 
             var(--gradient-start, #8B5CF6), 

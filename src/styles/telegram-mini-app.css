@@ -17,8 +17,8 @@
   /* Additional styles for glassmorphism effect */
   .glassmorphism {
     border: 1px solid rgba(255, 255, 255, 0.3);
-    background-color: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    background-color: rgba(255, 255, 255, 0.8); /* Increased from 0.65 to 0.8 for less transparency */
+    backdrop-filter: blur(10px); /* Increased blur for better readability */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }

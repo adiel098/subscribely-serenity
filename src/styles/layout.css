@@ -28,6 +28,12 @@
     padding-top: 0;
     padding-left: 2px;
     padding-right: 2px;
+    min-height: calc(100vh - 80px);
+  }
+  
+  /* Card that extends all the way to the bottom */
+  .full-height-card {
+    min-height: calc(100vh - 120px);
   }
   
   @media (max-width: 640px) {

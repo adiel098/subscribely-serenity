@@ -51,7 +51,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
 
   if (subscriptions.length === 0) {
     return (
-      <div>
+      <div className="min-h-[calc(100vh-120px)]">
         <SectionHeader
           icon={<Crown className="h-5 w-5" />}
           title="My Subscriptions"
@@ -64,7 +64,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-h-[calc(100vh-120px)]">
       <SectionHeader
         icon={<Crown className="h-5 w-5" />}
         title="My Subscriptions"

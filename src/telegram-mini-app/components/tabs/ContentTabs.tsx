@@ -111,7 +111,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       
       {showSubscribeTab && (
         <TabsContent value="subscribe" className="mt-0">
-          <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
+          <div className="translucent-card p-4 md:p-6 mb-16">
             <SubscriptionPlanSection
               plans={communitySubscriptionPlans}
               selectedPlan={selectedPlan}
@@ -126,7 +126,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       )}
       
       <TabsContent value="mySubscriptions" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
+        <div className="translucent-card p-4 md:p-6 mb-16">
           <UserSubscriptions 
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
@@ -137,7 +137,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="paymentHistory" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
+        <div className="translucent-card p-4 md:p-6 mb-16">
           <PaymentHistoryTab 
             telegramUserId={telegramUserId} 
             onDiscoverClick={navigateToDiscover}
@@ -146,7 +146,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="discover" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
+        <div className="translucent-card p-4 md:p-6 mb-16">
           <CommunitySearch onSelectCommunity={handleCommunitySelect} />
         </div>
       </TabsContent>

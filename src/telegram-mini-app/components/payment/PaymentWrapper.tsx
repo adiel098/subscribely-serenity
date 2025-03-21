@@ -1,7 +1,6 @@
 
 import React from "react";
 import { PaymentSection } from "./PaymentSection";
-import { SubscriptionDuration } from "../subscriptions/SubscriptionDuration";
 import { Subscription } from "../../services/memberService";
 import { Plan } from "../../types/community.types";
 import { toast } from "sonner";
@@ -61,15 +60,6 @@ export const PaymentWrapper: React.FC<PaymentWrapperProps> = ({
 
   return (
     <>
-      {showPaymentMethods && selectedPlan && !showSuccess && (
-        <div id="payment-methods">
-          <SubscriptionDuration 
-            selectedPlan={selectedPlan} 
-            activeSubscription={activeSubscription}
-          />
-        </div>
-      )}
-      
       {(showPaymentMethods || showSuccess) && selectedPlan && (
         <PaymentSection
           selectedPlan={selectedPlan}

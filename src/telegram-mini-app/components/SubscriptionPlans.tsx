@@ -6,6 +6,7 @@ import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types"
 import { motion } from "framer-motion";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { isSubscriptionActive } from "./subscriptions/utils";
+import { SubscriptionDuration } from "./subscriptions/SubscriptionDuration";
 
 interface SubscriptionPlansProps {
   plans: SubscriptionPlan[];
@@ -58,6 +59,14 @@ export const SubscriptionPlans = ({
       subscription.plan?.id === planId && 
       isSubscriptionActive(subscription)
     );
+  };
+
+  // Find the active subscription for the selected plan
+  const getActiveSubscription = () => {
+    if (!selectedPlan) return null;
+    return userSubscriptions.find(subscription => 
+      subscription.plan?.id === selectedPlan.id && isSubscriptionActive(subscription)
+    ) || null;
   };
 
   // Animation variants for container
@@ -169,6 +178,14 @@ export const SubscriptionPlans = ({
           </motion.div>
         );
       })}
+      
+      {/* Subscription Duration component that shows only when a plan is selected */}
+      {selectedPlan && (
+        <SubscriptionDuration 
+          selectedPlan={selectedPlan} 
+          activeSubscription={getActiveSubscription()}
+        />
+      )}
     </motion.div>
   );
 };

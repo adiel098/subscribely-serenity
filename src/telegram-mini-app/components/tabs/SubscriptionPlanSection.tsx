@@ -40,7 +40,6 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   
   logger.log('SubscriptionPlanSection received plans:', validPlans);
   logger.log('Community channels:', channels);
-  logger.log('Community channels:', channels);
   logger.log('Is group:', isGroup);
   
   // Validate that plans have all necessary data

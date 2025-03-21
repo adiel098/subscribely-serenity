@@ -92,48 +92,48 @@ export const SubscriptionDuration: React.FC<SubscriptionDurationProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="my-4"
+      className="my-3"
     >
-      <Card className="border border-indigo-100 bg-white shadow-sm overflow-hidden">
-        <div className="p-4 relative">
+      <div className="border border-indigo-100 bg-white/90 shadow-sm overflow-hidden rounded-lg">
+        <div className="p-3 relative">
           {/* Header with icon */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
-              <span className="text-indigo-600 bg-indigo-100 p-2 rounded-full">
-                <Calendar className="h-5 w-5" />
+              <span className="text-indigo-600 bg-indigo-100 p-1.5 rounded-full">
+                <Calendar className="h-4 w-4" />
               </span>
               <div>
-                <h3 className="font-semibold text-indigo-700 flex items-center">
-                  Subscription Details <Sparkle className="h-3.5 w-3.5 ml-1 text-indigo-500" />
+                <h3 className="font-semibold text-indigo-700 flex items-center text-sm">
+                  Subscription Details <Sparkle className="h-3 w-3 ml-1 text-indigo-500" />
                 </h3>
               </div>
             </div>
             
             {/* End date with special background */}
-            <div className="text-right bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm">
+            <div className="text-right bg-indigo-500 text-white px-2 py-1 rounded-lg shadow-sm">
               <p className="text-xs font-medium text-indigo-100">End Date:</p>
-              <p className="text-sm font-bold">{getEndDate(selectedPlan)}</p>
+              <p className="text-xs font-bold">{getEndDate(selectedPlan)}</p>
             </div>
           </div>
           
           {/* Subscription details */}
-          <p className="text-sm text-indigo-700 mt-1">
+          <p className="text-xs text-indigo-700 mt-1">
             Your subscription will be valid for <span className="font-medium">{getDurationText(selectedPlan)}</span>
           </p>
           
           {/* Remaining days badge */}
           {remainingDays > 0 && (
-            <div className="mt-3">
-              <Badge variant="outline" className="bg-indigo-100/80 text-indigo-700 border-indigo-200 py-1 px-2">
+            <div className="mt-2">
+              <Badge variant="outline" className="bg-indigo-100/80 text-indigo-700 border-indigo-200 py-0.5 px-1.5 text-xs">
                 +{remainingDays} days
               </Badge>
-              <span className="ml-2 text-xs text-indigo-600">
+              <span className="ml-1 text-xs text-indigo-600">
                 from your current subscription will be added
               </span>
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </motion.div>
   );
 };

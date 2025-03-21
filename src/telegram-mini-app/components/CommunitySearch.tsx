@@ -53,8 +53,8 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   }, [debouncedQuery]);
 
   return (
-    <div className="space-y-5">
-      {/* Add the beautiful header at the top */}
+    <div className="space-y-4">
+      {/* Add the beautiful header at the top with reduced margin */}
       <SearchPageHeader />
       
       <div className="space-y-2">
@@ -67,7 +67,7 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
       
       <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       
-      <div className="space-y-4 pt-2">
+      <div className="space-y-4">
         {isLoading ? (
           <LoadingState />
         ) : communities.length === 0 ? (

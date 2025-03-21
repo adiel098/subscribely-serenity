@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,7 +32,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
     errorMessage: error
   });
 
-  // Detailed plan info debug logging
   if (payments?.length) {
     console.log("[PaymentHistoryTab] All payment plans info:", 
       payments.map(p => ({
@@ -93,7 +91,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
     }
   };
 
-  // Enhanced plan name handling with better debugging
   const getPlanName = (payment) => {
     console.log(`[PaymentHistoryTab] Getting plan name for payment ${payment.id.substring(0, 8)}:`, {
       plan_object: payment.plan,
@@ -101,19 +98,16 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
       amount: payment.amount
     });
     
-    // Direct access to plan name if available - primary option
     if (payment.plan?.name) {
       console.log(`[PaymentHistoryTab] Using direct plan name: "${payment.plan.name}" for payment ${payment.id.substring(0, 8)}`);
-      return payment.plan.name; // Use the plan name directly from the plan object
+      return payment.plan.name;
     }
     
-    // Fallback option using amount
     if (payment.amount) {
       console.log(`[PaymentHistoryTab] FALLBACK: Using amount as plan name: ${payment.amount} for payment ${payment.id.substring(0, 8)}`);
       return `Plan (${formatCurrency(payment.amount)})`;
     }
     
-    // Last resort fallback
     console.log(`[PaymentHistoryTab] FALLBACK: Using "Unknown Plan" for payment ${payment.id.substring(0, 8)}`);
     return "Unknown Plan";
   };
@@ -129,7 +123,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-6">
         <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-3" />
         <p className="text-red-500 mb-2 font-medium">Failed to load payment history</p>
         <p className="text-gray-500 text-sm mb-4">Error: {error}</p>
@@ -173,7 +167,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-white border rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
             >
-              {/* Payment Card Header - Always visible */}
               <div 
                 className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => toggleExpand(payment.id)}
@@ -211,7 +204,6 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
                 </div>
               </div>
               
-              {/* Expanded Details Section */}
               {expandedPaymentId === payment.id && (
                 <motion.div 
                   initial={{ opacity: 0, height: 0 }}

@@ -78,7 +78,7 @@ export const MainContent = ({
   };
   
   return (
-    <div className="telegram-mini-app-container mx-auto py-4 max-w-3xl">
+    <div className="telegram-mini-app-container mx-auto max-w-3xl">
       <div className="flex flex-col gap-4">
         {/* Only show the community header on the subscribe tab */}
         {community && activeTab === "subscribe" && <CommunityHeader community={community} />}

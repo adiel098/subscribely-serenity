@@ -23,6 +23,13 @@
     max-width: 160px;
   }
   
+  /* Remove top padding from Telegram mini app content */
+  .telegram-mini-app-container {
+    padding-top: 0;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  
   @media (max-width: 640px) {
     .community-dropdown-text {
       max-width: 120px;

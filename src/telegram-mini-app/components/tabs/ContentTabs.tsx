@@ -56,7 +56,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
   
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-      <div className="relative w-full flex justify-center mb-8">
+      <div className="relative w-full flex justify-center mb-4">
         {/* Floating tab bar with shadows, backdrop blur and gradient border - positioned closer to bottom */}
         <motion.div 
           initial={{ y: 10, opacity: 0 }}
@@ -111,7 +111,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       
       {showSubscribeTab && (
         <TabsContent value="subscribe" className="mt-0">
-          <div className="translucent-card p-4 md:p-6 mb-16">
+          <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
             <SubscriptionPlanSection
               plans={communitySubscriptionPlans}
               selectedPlan={selectedPlan}
@@ -126,7 +126,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       )}
       
       <TabsContent value="mySubscriptions" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
           <UserSubscriptions 
             subscriptions={subscriptions} 
             onRefresh={onRefreshSubscriptions}
@@ -137,7 +137,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="paymentHistory" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
           <PaymentHistoryTab 
             telegramUserId={telegramUserId} 
             onDiscoverClick={navigateToDiscover}
@@ -146,7 +146,7 @@ export const ContentTabs: React.FC<ContentTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="discover" className="mt-0">
-        <div className="translucent-card p-4 md:p-6 mb-16">
+        <div className="translucent-card p-4 md:p-6 mb-16 pt-0">
           <CommunitySearch onSelectCommunity={handleCommunitySelect} />
         </div>
       </TabsContent>

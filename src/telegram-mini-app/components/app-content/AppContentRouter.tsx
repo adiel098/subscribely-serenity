@@ -34,7 +34,7 @@ export const AppContentRouter = ({
   const effectiveTab = !community && activeTab === "subscribe" ? "discover" : activeTab;
   
   return (
-    <div className="telegram-mini-app-container pt-4">
+    <div className="telegram-mini-app-container">
       <MainContent
         community={community}
         telegramUser={telegramUser}

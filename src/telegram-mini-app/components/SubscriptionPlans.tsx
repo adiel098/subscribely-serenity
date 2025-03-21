@@ -106,7 +106,7 @@ export const SubscriptionPlans = ({
             onClick={() => onPlanSelect(plan)}
           >
             {isActive && (
-              <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1">
+              <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 shadow-sm z-10">
                 <CheckCircle2 className="h-3 w-3" />
               </div>
             )}

@@ -48,23 +48,31 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
         <div className="bg-white rounded-lg border shadow-sm overflow-hidden flex-grow">
           <div className="min-w-full divide-y">
             <div className="bg-gray-50">
-              <div className="grid grid-cols-3 py-3 text-xs font-medium text-gray-500">
-                <div className="px-4">Date</div>
-                <div className="px-4">Amount</div>
-                <div className="px-4">ID</div>
+              <div className="grid grid-cols-5 py-2 text-xs font-medium text-gray-500">
+                <div className="px-2">Date</div>
+                <div className="px-2">Amount</div>
+                <div className="px-2">Plan</div>
+                <div className="px-2">Method</div>
+                <div className="px-2">ID</div>
               </div>
             </div>
             <div className="divide-y divide-gray-200">
               {payments.map((payment) => (
-                <div key={payment.id} className="grid grid-cols-3 py-3 text-sm">
-                  <div className="px-4 font-medium text-gray-900">
+                <div key={payment.id} className="grid grid-cols-5 py-2 text-xs">
+                  <div className="px-2 font-medium text-gray-900">
                     {new Date(payment.created_at).toLocaleDateString()}
                   </div>
-                  <div className="px-4 text-gray-500">
+                  <div className="px-2 text-gray-500">
                     ${payment.amount?.toFixed(2) || "N/A"}
                   </div>
-                  <div className="px-4 text-gray-500 flex items-center">
-                    <span className="truncate max-w-[80px]">{payment.id.substring(0, 8)}</span>
+                  <div className="px-2 text-gray-500 truncate" title={payment.plan?.name || "N/A"}>
+                    {payment.plan?.name || "N/A"}
+                  </div>
+                  <div className="px-2 text-gray-500 truncate" title={payment.payment_method || "N/A"}>
+                    {payment.payment_method || "N/A"}
+                  </div>
+                  <div className="px-2 text-gray-500 flex items-center">
+                    <span className="truncate max-w-[60px]">{payment.id.substring(0, 6)}</span>
                     <TransactionCopyButton transactionId={payment.id} />
                   </div>
                 </div>

@@ -97,6 +97,7 @@ export const SubscriptionPlans = ({
         const isActive = isSubscribedToPlan(plan.id);
         const intervalDisplay = getIntervalDisplay(plan.interval);
         const isPremium = planIndex === 0 || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('pro');
+        const isSelected = selectedPlan?.id === plan.id;
         
         return (
           <motion.div
@@ -105,8 +106,8 @@ export const SubscriptionPlans = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer translucent-card ${
-              selectedPlan?.id === plan.id
-                ? 'border-indigo-500/50 shadow-md'
+              isSelected
+                ? 'border-indigo-500 border-2 shadow-md bg-indigo-50/50 ring-2 ring-indigo-300/30 ring-offset-1'
                 : isPremium 
                   ? 'border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
                   : 'border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
@@ -136,8 +137,13 @@ export const SubscriptionPlans = ({
                       Recommended
                     </Badge>
                   )}
+                  {isSelected && !isActive && (
+                    <Badge variant="outline" className="text-xs py-0 px-1.5 border-indigo-400 text-indigo-700 bg-indigo-100/50">
+                      Selected
+                    </Badge>
+                  )}
                 </div>
-                <h3 className="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">
+                <h3 className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-gray-900 group-hover:text-indigo-700'} transition-colors line-clamp-1`}>
                   {plan.name}
                 </h3>
                 {plan.description && (
@@ -145,7 +151,7 @@ export const SubscriptionPlans = ({
                 )}
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <p className={`text-lg font-bold ${isSelected ? 'text-indigo-600' : 'bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
                   ${plan.price}
                 </p>
                 <p className="text-xs text-gray-500">

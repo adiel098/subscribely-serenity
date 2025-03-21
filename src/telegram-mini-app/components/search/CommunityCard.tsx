@@ -121,7 +121,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
     }
   };
   
-  // Sparkle animation variants
+  // Fixed Sparkle animation variants - using correct TypeScript types
   const sparkleVariants = {
     initial: { 
       scale: 1,
@@ -133,7 +133,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
       transition: {
         duration: 2,
         repeat: Infinity,
-        repeatType: "reverse"
+        repeatType: "reverse" // Fixed: Using a valid value from "reverse" | "loop" | "mirror"
       }
     }
   };

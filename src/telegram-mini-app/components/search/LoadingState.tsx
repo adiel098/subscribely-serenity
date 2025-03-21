@@ -116,9 +116,10 @@ export const LoadingState: React.FC = () => {
                 animate="animate"
                 style={{
                   backgroundImage: "linear-gradient(90deg, rgba(238,238,238,0) 0%, rgba(238,238,238,0.8) 50%, rgba(238,238,238,0) 100%)",
-                  backgroundSize: "200% 100%",
-                  delay: 0.2
+                  backgroundSize: "200% 100%"
                 }}
+                // Removed the delay property from the style object
+                // It needs to be in the transition property of the animation
               >
                 <Skeleton className="h-4 w-4/5 bg-purple-100/60" />
               </motion.div>

@@ -3,20 +3,21 @@ import React, { useState } from "react";
 import { useDatabaseDiagnostics } from "@/telegram-mini-app/hooks/useDatabaseDiagnostics";
 import { Button } from "@/components/ui/button";
 import { Loader2, Database, Bug, RefreshCw, FileText } from "lucide-react";
-import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
+import { PaymentHistoryItem } from "@/telegram-mini-app/hooks/usePaymentHistory";
 
 interface PaymentDiagnosticsProps {
   telegramUserId: string | undefined;
-  onClose: () => void;
+  payments?: PaymentHistoryItem[];
+  onClose?: () => void;
 }
 
 export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
   telegramUserId,
+  payments = [],
   onClose
 }) => {
   const { runDiagnostics, isLoading, results, error } = useDatabaseDiagnostics();
   const [diagnosticsRun, setDiagnosticsRun] = useState(false);
-  const { payments } = usePaymentHistory(telegramUserId);
   
   const handleRunDiagnostics = async () => {
     if (!telegramUserId) return;
@@ -73,9 +74,11 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
           <Bug className="h-5 w-5 text-red-500 mr-2" />
           <h3 className="font-medium text-red-700">Payment History Diagnostics</h3>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        )}
       </div>
       
       <div className="space-y-3 mb-4">
@@ -151,6 +154,9 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
       
       <div className="mt-4 text-xs text-gray-500 border-t pt-3">
         <p>Telegram User ID: {telegramUserId || "Not available"}</p>
+        {payments && payments.length > 0 && (
+          <p>Payment Records: {payments.length}</p>
+        )}
       </div>
     </div>
   );

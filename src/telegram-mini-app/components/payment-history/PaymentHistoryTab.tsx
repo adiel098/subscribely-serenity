@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Receipt } from "lucide-react";
 import { usePaymentHistory } from "@/telegram-mini-app/hooks/usePaymentHistory";
 import { EmptyPaymentHistory } from "./EmptyPaymentHistory";
@@ -17,6 +17,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
   onDiscoverClick
 }) => {
   const { payments, isLoading, error } = usePaymentHistory(telegramUserId);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   return (
     <div className="space-y-4 min-h-[calc(100vh-120px)]">
@@ -77,7 +78,24 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
       
       {/* Optional: Payment diagnostics for debugging */}
       {process.env.NODE_ENV === 'development' && (
-        <PaymentDiagnostics telegramUserId={telegramUserId} payments={payments} />
+        <>
+          {showDiagnostics ? (
+            <PaymentDiagnostics 
+              telegramUserId={telegramUserId} 
+              payments={payments}
+              onClose={() => setShowDiagnostics(false)}
+            />
+          ) : (
+            <div className="mt-6 mb-2">
+              <button 
+                onClick={() => setShowDiagnostics(true)} 
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Show diagnostics
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

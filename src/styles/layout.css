@@ -28,12 +28,14 @@
     padding-top: 0;
     padding-left: 2px;
     padding-right: 2px;
-    min-height: calc(100vh - 80px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
   
   /* Card that extends all the way to the bottom */
   .full-height-card {
-    min-height: calc(100vh - 120px);
+    min-height: calc(100vh - 80px);
   }
   
   @media (max-width: 640px) {

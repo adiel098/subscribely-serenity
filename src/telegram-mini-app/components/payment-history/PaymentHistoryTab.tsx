@@ -20,7 +20,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   return (
-    <div className="space-y-4 min-h-[calc(100vh-120px)]">
+    <div className="space-y-4 min-h-[calc(100vh-80px)] flex flex-col pb-16">
       <SectionHeader
         icon={<Receipt className="h-5 w-5" />}
         title="Payment History"
@@ -45,7 +45,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
           An error occurred while loading your payment history
         </div>
       ) : payments && payments.length > 0 ? (
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden mb-16">
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden flex-grow">
           <div className="min-w-full divide-y">
             <div className="bg-gray-50">
               <div className="grid grid-cols-3 py-3 text-xs font-medium text-gray-500">
@@ -73,7 +73,9 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
           </div>
         </div>
       ) : (
-        <EmptyPaymentHistory onDiscoverClick={onDiscoverClick} />
+        <div className="flex-grow">
+          <EmptyPaymentHistory onDiscoverClick={onDiscoverClick} />
+        </div>
       )}
       
       {/* Optional: Payment diagnostics for debugging */}
@@ -86,7 +88,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
               onClose={() => setShowDiagnostics(false)}
             />
           ) : (
-            <div className="mt-6 mb-2">
+            <div className="mt-auto mb-2">
               <button 
                 onClick={() => setShowDiagnostics(true)} 
                 className="text-xs text-gray-500 hover:text-gray-700"

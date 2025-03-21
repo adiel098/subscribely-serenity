@@ -66,7 +66,7 @@ export const UserSubscriptions: React.FC<UserSubscriptionsProps> = ({
   }
 
   return (
-    <div className="space-y-4 min-h-[calc(100vh-92px)] flex flex-col pb-2">
+    <div className="space-y-4 min-h-[calc(100vh-92px)] flex flex-col px-4 pb-4">
       <SectionHeader
         icon={<Crown className="h-5 w-5" />}
         title="My Subscriptions"

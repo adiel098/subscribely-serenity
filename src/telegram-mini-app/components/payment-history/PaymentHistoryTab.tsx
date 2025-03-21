@@ -20,7 +20,7 @@ export const PaymentHistoryTab: React.FC<PaymentHistoryTabProps> = ({
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   return (
-    <div className="space-y-4 min-h-[calc(100vh-80px)] flex flex-col pb-16">
+    <div className="space-y-4 min-h-[calc(100vh-80px)] flex flex-col px-4 pb-4">
       <SectionHeader
         icon={<Receipt className="h-5 w-5" />}
         title="Payment History"

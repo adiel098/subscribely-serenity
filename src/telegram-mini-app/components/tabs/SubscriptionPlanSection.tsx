@@ -77,9 +77,9 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       )}
       
       <div id="subscription-plans" className="scroll-mt-4">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-2 rounded-lg mb-2 max-w-sm mx-auto">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-0 max-w-sm mx-auto">
           <motion.div 
-            className="text-center space-y-1"
+            className="text-center space-y-1 mb-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -90,14 +90,14 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
             </Badge>
             <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
           </motion.div>
+          
+          <SubscriptionPlans
+            plans={validPlans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={onPlanSelect}
+            userSubscriptions={userSubscriptions}
+          />
         </div>
-        
-        <SubscriptionPlans
-          plans={validPlans}
-          selectedPlan={selectedPlan}
-          onPlanSelect={onPlanSelect}
-          userSubscriptions={userSubscriptions}
-        />
       </div>
 
       {!selectedPlan && !showPaymentMethods && (

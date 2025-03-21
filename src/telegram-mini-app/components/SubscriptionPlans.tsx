@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock } from "lucide-react";
@@ -78,7 +79,7 @@ export const SubscriptionPlans = ({
 
   return (
     <motion.div 
-      className="grid gap-3 max-w-sm mx-auto"
+      className="grid gap-2 max-w-sm mx-auto choose-plan-container"
       variants={containerVariants}
       initial="hidden"
       animate="show"

@@ -51,7 +51,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   if (validPlans.length === 0) {
     logger.warn("No subscription plans available");
     return (
-      <div className="text-center p-6 max-w-sm mx-auto">
+      <div className="text-center p-4 max-w-sm mx-auto">
         <Alert variant="destructive" className="bg-amber-50 border-amber-200">
           <AlertTriangle className="h-5 w-5 text-amber-500" />
           <AlertTitle className="text-amber-800 font-semibold">No subscription plans available</AlertTitle>
@@ -76,14 +76,14 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       )}
       
       <div id="subscription-plans" className="scroll-mt-4">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-3 max-w-sm mx-auto">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-2.5 rounded-lg mb-2.5 max-w-sm mx-auto">
           <motion.div 
             className="text-center space-y-1"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="secondary" className="px-3 py-1 text-sm font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
               <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
               Choose Your Plan ✨
             </Badge>
@@ -100,7 +100,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       </div>
 
       {!selectedPlan && !showPaymentMethods && (
-        <div className="flex justify-center py-4 animate-bounce">
+        <div className="flex justify-center py-3 animate-bounce">
           <ChevronDown className="h-4 w-4 text-primary/50" />
         </div>
       )}

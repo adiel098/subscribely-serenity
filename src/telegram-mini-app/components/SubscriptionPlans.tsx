@@ -79,7 +79,7 @@ export const SubscriptionPlans = ({
 
   return (
     <motion.div 
-      className="grid gap-4 max-w-sm mx-auto"
+      className="grid gap-3 max-w-sm mx-auto"
       variants={containerVariants}
       initial="hidden"
       animate="show"
@@ -95,7 +95,7 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative p-3 rounded-lg transition-all duration-300 cursor-pointer ${
+            className={`group relative p-2.5 rounded-lg transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
                 ? 'translucent-card border-indigo-500/50 shadow-md'
                 : isPremium 
@@ -109,20 +109,20 @@ export const SubscriptionPlans = ({
                 <CheckCircle2 className="h-3 w-3" />
               </div>
             )}
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex justify-between items-start mb-1.5">
               <div>
-                <div className="flex flex-wrap gap-1.5 mb-1.5">
-                  <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-1 text-xs">
+                <div className="flex flex-wrap gap-1 mb-1">
+                  <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-0.5 text-xs py-0 px-1.5">
                     {intervalDisplay.icon} 
                     <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
                   </Badge>
                   {isActive && (
-                    <Badge variant="success" className="text-xs animate-pulse">
+                    <Badge variant="success" className="text-xs py-0 px-1.5 animate-pulse">
                       Active
                     </Badge>
                   )}
                   {isPremium && !isActive && (
-                    <Badge variant="secondary" className="text-xs bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
+                    <Badge variant="secondary" className="text-xs py-0 px-1.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
                       Recommended
                     </Badge>
                   )}
@@ -147,7 +147,7 @@ export const SubscriptionPlans = ({
             </div>
             
             {plan.features && plan.features.length > 0 && (
-              <div className="mt-2 bg-white/50 backdrop-blur-sm p-2 rounded-lg border border-white/50">
+              <div className="mt-1.5 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
                 <h4 className="text-xs font-medium text-indigo-700 mb-1 flex items-center">
                   <Star className="h-3 w-3 text-amber-500 mr-1" />
                   Features:
@@ -156,7 +156,7 @@ export const SubscriptionPlans = ({
                   {plan.features.map((feature, index) => (
                     <li 
                       key={index} 
-                      className="flex items-center text-gray-700 text-xs p-1.5 rounded-md border border-indigo-100/30 shadow-sm bg-white/70"
+                      className="flex items-center text-gray-700 text-xs p-1 rounded-md border border-indigo-100/30 shadow-sm bg-white/70"
                     >
                       {getFeatureIcon(index)}
                       <span className="line-clamp-1">{feature}</span>

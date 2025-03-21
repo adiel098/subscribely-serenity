@@ -97,13 +97,13 @@ export const SubscriptionPlans = ({
             whileTap={{ scale: 0.98 }}
             className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
-                ? 'translucent-card border-indigo-500/50 shadow-md'
+                ? 'border-indigo-500/50 shadow-md'
                 : isPremium 
-                  ? 'translucent-card border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
-                  : 'translucent-card border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
+                  ? 'border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
+                  : 'border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
             }`}
+            style={{ height: "auto" }} // Changed from "fit-content" to "auto" for better sizing
             onClick={() => onPlanSelect(plan)}
-            style={{ height: "fit-content" }} /* Ensure the card only takes necessary height */
           >
             {isActive && (
               <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1">

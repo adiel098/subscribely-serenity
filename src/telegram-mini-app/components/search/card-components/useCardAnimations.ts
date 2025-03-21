@@ -10,18 +10,18 @@ export const useCardAnimations = (animationDelay = 0) => {
       y: 0, 
       scale: 1,
       transition: { 
-        duration: 0.4,
+        duration: 0.3, // Faster animation
         delay: animationDelay,
         ease: "easeOut" 
       }
     },
     hover: { 
-      scale: 1.02,
-      boxShadow: "0 8px 20px -5px rgba(124, 58, 237, 0.15)",
+      scale: 1.01, // Reduce hover scale
+      boxShadow: "0 4px 12px -2px rgba(124, 58, 237, 0.12)",
       transition: { duration: 0.2 }
     },
     tap: { 
-      scale: 0.98,
+      scale: 0.99, // Less dramatic tap scale
       transition: { duration: 0.1 }
     }
   }), [animationDelay]);
@@ -29,7 +29,7 @@ export const useCardAnimations = (animationDelay = 0) => {
   const buttonVariants: Variants = {
     initial: { scale: 1 },
     hover: { 
-      scale: 1.03,
+      scale: 1.02, // Smaller scale for buttons
       transition: { 
         yoyo: Infinity,
         duration: 0.6,
@@ -44,8 +44,8 @@ export const useCardAnimations = (animationDelay = 0) => {
       rotate: 0 
     },
     animate: { 
-      scale: [1, 1.1, 1],
-      rotate: [0, 5, -5, 0],
+      scale: [1, 1.05, 1], // Reduce scale range
+      rotate: [0, 3, -3, 0], // Reduce rotation range
       transition: {
         duration: 1.5,
         repeat: Infinity,

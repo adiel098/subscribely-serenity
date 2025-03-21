@@ -41,7 +41,11 @@
   /* Translucent card for tab content area */
   .translucent-card {
     @apply rounded-lg overflow-hidden;
-    min-height: calc(100vh - 70px);
+    min-height: auto;
+    height: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
   }
   
   @media (max-width: 640px) {

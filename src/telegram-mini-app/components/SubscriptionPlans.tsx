@@ -95,7 +95,7 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative p-4 rounded-xl transition-all duration-300 cursor-pointer ${
+            className={`group relative p-3 rounded-lg transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
                 ? 'translucent-card border-indigo-500/50 shadow-md'
                 : isPremium 
@@ -109,8 +109,8 @@ export const SubscriptionPlans = ({
                 <CheckCircle2 className="h-3 w-3" />
               </div>
             )}
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
+            <div className="flex justify-between items-start mb-2">
+              <div>
                 <div className="flex flex-wrap gap-1.5 mb-1.5">
                   <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-1 text-xs">
                     {intervalDisplay.icon} 
@@ -127,62 +127,43 @@ export const SubscriptionPlans = ({
                     </Badge>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
+                <h3 className="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
                   {plan.name}
                 </h3>
-                <p className="text-xs text-gray-600 font-light">{plan.description}</p>
+                {plan.description && (
+                  <p className="text-xs text-gray-600 font-light line-clamp-1">{plan.description}</p>
+                )}
               </div>
               <div className="text-right">
-                <div className="relative">
-                  <p className="text-xl font-bold bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    ${plan.price}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {plan.interval === 'lifetime' || plan.interval === 'one-time' 
-                      ? 'one-time' 
-                      : `per ${plan.interval.replace('ly', '')}`}
-                  </p>
-                </div>
+                <p className="text-lg font-bold bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  ${plan.price}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {plan.interval === 'lifetime' || plan.interval === 'one-time' 
+                    ? 'one-time' 
+                    : `per ${plan.interval.replace('ly', '')}`}
+                </p>
               </div>
             </div>
             
             {plan.features && plan.features.length > 0 && (
-              <motion.ul 
-                className="mt-4 space-y-2 bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-white/50"
-                initial="hidden"
-                animate="show"
-                variants={{
-                  hidden: {},
-                  show: {
-                    transition: {
-                      staggerChildren: 0.1,
-                      delayChildren: 0.2
-                    }
-                  }
-                }}
-              >
-                <h4 className="text-xs font-medium text-indigo-700 mb-2 flex items-center">
-                  <Star className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
-                  Features Included:
+              <div className="mt-2 bg-white/50 backdrop-blur-sm p-2 rounded-lg border border-white/50">
+                <h4 className="text-xs font-medium text-indigo-700 mb-1 flex items-center">
+                  <Star className="h-3 w-3 text-amber-500 mr-1" />
+                  Features:
                 </h4>
-                {plan.features.map((feature, index) => (
-                  <motion.li 
-                    key={index} 
-                    className="flex items-center text-gray-700 text-xs bg-white/70 p-2 rounded-md border border-indigo-100/30 shadow-sm"
-                    variants={{
-                      hidden: { opacity: 0, x: -10 },
-                      show: { 
-                        opacity: 1, 
-                        x: 0,
-                        transition: { duration: 0.4 }
-                      }
-                    }}
-                  >
-                    {getFeatureIcon(index)}
-                    <span>{feature}</span>
-                  </motion.li>
-                ))}
-              </motion.ul>
+                <ul className="space-y-1">
+                  {plan.features.map((feature, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-center text-gray-700 text-xs p-1.5 rounded-md border border-indigo-100/30 shadow-sm bg-white/70"
+                    >
+                      {getFeatureIcon(index)}
+                      <span className="line-clamp-1">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </motion.div>
         );

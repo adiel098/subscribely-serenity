@@ -10,7 +10,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { AvailableChannelsPreview } from "../channel-access/AvailableChannelsPreview";
 import { useCommunityChannels } from "@/telegram-mini-app/hooks/useCommunityChannels";
-import { ChannelInfo as ChannelInfoType } from "@/telegram-mini-app/hooks/community-channels/types";
 
 const logger = createLogger("SubscriptionPlanSection");
 
@@ -77,15 +76,15 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       )}
       
       <div id="subscription-plans" className="scroll-mt-4">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl mb-5 max-w-sm mx-auto">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-3 max-w-sm mx-auto">
           <motion.div 
-            className="text-center space-y-2"
+            className="text-center space-y-1"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="secondary" className="px-4 py-1.5 text-base font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
-              <Sparkles className="h-4 w-4 mr-1.5 text-purple-500" />
+            <Badge variant="secondary" className="px-3 py-1 text-sm font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+              <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
               Choose Your Plan ✨
             </Badge>
             <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
@@ -101,8 +100,8 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       </div>
 
       {!selectedPlan && !showPaymentMethods && (
-        <div className="flex justify-center py-6 animate-bounce">
-          <ChevronDown className="h-5 w-5 text-primary/50" />
+        <div className="flex justify-center py-4 animate-bounce">
+          <ChevronDown className="h-4 w-4 text-primary/50" />
         </div>
       )}
     </>

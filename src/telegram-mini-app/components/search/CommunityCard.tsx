@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -26,29 +25,24 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
-  // Get the lowest price plan if available
   const lowestPricePlan = subscription_plans && subscription_plans.length > 0
     ? [...subscription_plans].sort((a, b) => a.price - b.price)[0]
     : null;
   
-  // Prepare avatar fallback (first letter of community name)
   const avatarFallback = name ? name.charAt(0).toUpperCase() : "C";
   
   const handleSubscribe = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation();
     
     try {
       console.log("🔍 Selected community:", name);
       
-      // Provide haptic feedback if available
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
       
-      // Select this community in the parent component
       onSelect(community);
       
-      // Show toast notification
       toast({
         title: "Community selected",
         description: `Viewing subscription options for ${name}`,
@@ -64,27 +58,21 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
     }
   };
   
-  // Don't use default description text anymore - only show if description exists
   const descriptionText = description || "";
   
-  // Check if description is long (more than 100 characters)
   const isLongDescription = descriptionText.length > 100;
   
-  // Create short and full versions of the description
   const shortDescription = isLongDescription ? `${descriptionText.substring(0, 100)}...` : descriptionText;
   
-  // Toggle description expansion
   const toggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setIsExpanded(!isExpanded);
     
-    // Add haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
   };
 
-  // Card animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { 
@@ -108,7 +96,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
     }
   };
 
-  // Button animation variants
   const buttonVariants = {
     initial: { scale: 1 },
     hover: { 
@@ -121,7 +108,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
     }
   };
   
-  // Fixed Sparkle animation variants - using correct TypeScript types
   const sparkleVariants = {
     initial: { 
       scale: 1,
@@ -133,7 +119,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
       transition: {
         duration: 2,
         repeat: Infinity,
-        repeatType: "reverse" // Fixed: Using a valid value from "reverse" | "loop" | "mirror"
+        repeatType: "reverse" as const
       }
     }
   };
@@ -154,7 +140,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
         onClick={() => onSelect(community)}
       >
         <CardHeader className="pb-2 relative">
-          {/* Animated gradient corner accent */}
           <motion.div 
             className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-purple-100/80 to-transparent rounded-bl-3xl -z-0"
             animate={{
@@ -181,7 +166,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
                 )}
               </Avatar>
               
-              {/* Animated corner sparkle */}
               <motion.span 
                 className="absolute -top-1 -right-1 text-amber-400"
                 variants={sparkleVariants}
@@ -291,7 +275,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
                   transition={{ 
                     duration: 1.5,
                     repeat: Infinity,
-                    repeatType: "reverse"
+                    repeatType: "reverse" as const
                   }}
                 >✨</motion.span>
               </motion.span>

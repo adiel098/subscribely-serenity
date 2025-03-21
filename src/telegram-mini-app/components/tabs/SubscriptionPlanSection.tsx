@@ -40,6 +40,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   
   logger.log('SubscriptionPlanSection received plans:', validPlans);
   logger.log('Community channels:', channels);
+  logger.log('Community channels:', channels);
   logger.log('Is group:', isGroup);
   
   // Validate that plans have all necessary data
@@ -76,14 +77,14 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       )}
       
       <div id="subscription-plans" className="scroll-mt-4">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-2.5 rounded-lg mb-2.5 max-w-sm mx-auto">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-2 rounded-lg mb-2 max-w-sm mx-auto">
           <motion.div 
             className="text-center space-y-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="secondary" className="px-2.5 py-0.5 text-xs font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
               <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
               Choose Your Plan ✨
             </Badge>
@@ -100,7 +101,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       </div>
 
       {!selectedPlan && !showPaymentMethods && (
-        <div className="flex justify-center py-3 animate-bounce">
+        <div className="flex justify-center py-2 animate-bounce">
           <ChevronDown className="h-4 w-4 text-primary/50" />
         </div>
       )}

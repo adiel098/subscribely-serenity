@@ -10,15 +10,15 @@ export const useCardAnimations = (animationDelay = 0) => {
       y: 0, 
       scale: 1,
       transition: { 
-        duration: 0.5,
+        duration: 0.4,
         delay: animationDelay,
         ease: "easeOut" 
       }
     },
     hover: { 
-      scale: 1.03,
-      boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.15)",
-      transition: { duration: 0.3 }
+      scale: 1.02,
+      boxShadow: "0 8px 20px -5px rgba(124, 58, 237, 0.15)",
+      transition: { duration: 0.2 }
     },
     tap: { 
       scale: 0.98,
@@ -29,10 +29,10 @@ export const useCardAnimations = (animationDelay = 0) => {
   const buttonVariants: Variants = {
     initial: { scale: 1 },
     hover: { 
-      scale: 1.05,
+      scale: 1.03,
       transition: { 
         yoyo: Infinity,
-        duration: 0.8,
+        duration: 0.6,
         ease: "easeInOut"
       }
     }
@@ -44,10 +44,10 @@ export const useCardAnimations = (animationDelay = 0) => {
       rotate: 0 
     },
     animate: { 
-      scale: [1, 1.2, 1],
-      rotate: [0, 10, -10, 0],
+      scale: [1, 1.1, 1],
+      rotate: [0, 5, -5, 0],
       transition: {
-        duration: 2,
+        duration: 1.5,
         repeat: Infinity,
         repeatType: "reverse" as const
       }

@@ -95,7 +95,7 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative p-2.5 rounded-lg transition-all duration-300 cursor-pointer ${
+            className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer ${
               selectedPlan?.id === plan.id
                 ? 'translucent-card border-indigo-500/50 shadow-md'
                 : isPremium 
@@ -103,13 +103,14 @@ export const SubscriptionPlans = ({
                   : 'translucent-card border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
             }`}
             onClick={() => onPlanSelect(plan)}
+            style={{ height: "fit-content" }} /* Ensure the card only takes necessary height */
           >
             {isActive && (
               <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1">
                 <CheckCircle2 className="h-3 w-3" />
               </div>
             )}
-            <div className="flex justify-between items-start mb-1.5">
+            <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="flex flex-wrap gap-1 mb-1">
                   <Badge variant={isPremium ? "default" : "outline"} className="flex items-center gap-0.5 text-xs py-0 px-1.5">
@@ -127,7 +128,7 @@ export const SubscriptionPlans = ({
                     </Badge>
                   )}
                 </div>
-                <h3 className="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
+                <h3 className="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors line-clamp-1">
                   {plan.name}
                 </h3>
                 {plan.description && (
@@ -147,7 +148,7 @@ export const SubscriptionPlans = ({
             </div>
             
             {plan.features && plan.features.length > 0 && (
-              <div className="mt-1.5 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
+              <div className="mt-1 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
                 <h4 className="text-xs font-medium text-indigo-700 mb-1 flex items-center">
                   <Star className="h-3 w-3 text-amber-500 mr-1" />
                   Features:

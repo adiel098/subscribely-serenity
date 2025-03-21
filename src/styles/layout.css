@@ -35,13 +35,13 @@
   
   /* Card that extends all the way to the bottom with minimal spacing */
   .full-height-card {
-    min-height: calc(100vh - 50px);
+    min-height: calc(100vh - 70);
   }
   
   /* Translucent card for tab content area */
   .translucent-card {
     @apply rounded-lg overflow-hidden;
-    min-height: calc(100vh - 50px);
+    min-height: calc(100vh - 70px);
   }
   
   @media (max-width: 640px) {

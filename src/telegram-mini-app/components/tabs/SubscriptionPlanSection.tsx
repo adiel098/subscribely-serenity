@@ -87,6 +87,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
               <Sparkles className="h-3 w-3 mr-1 text-purple-500" />
               Choose Your Plan ✨
             </Badge>
+            <h2 className="text-xl font-semibold text-gray-800">Choose Your Plan</h2>
             <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
           </motion.div>
           
@@ -107,3 +108,4 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
     </>
   );
 };
+

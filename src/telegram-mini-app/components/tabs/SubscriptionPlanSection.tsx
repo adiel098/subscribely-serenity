@@ -108,4 +108,3 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
     </>
   );
 };
-

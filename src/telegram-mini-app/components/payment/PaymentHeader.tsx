@@ -4,7 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { CreditCard, Sparkles } from "lucide-react";
 
-export const PaymentHeader = () => {
+interface PaymentHeaderProps {
+  children?: React.ReactNode;
+}
+
+export const PaymentHeader: React.FC<PaymentHeaderProps> = ({ children }) => {
   return (
     <motion.div
       className="text-center space-y-3"
@@ -16,7 +20,10 @@ export const PaymentHeader = () => {
         <CreditCard className="h-5 w-5 mr-2 text-indigo-600" />
         Choose Payment Method <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
       </Badge>
-      <p className="text-sm text-gray-600">Select your preferred payment option below to continue</p>
+      <p className="text-sm text-gray-600 mb-4">Select your preferred payment option below to continue</p>
+      
+      {/* Children will be the payment methods grid */}
+      {children}
     </motion.div>
   );
 };

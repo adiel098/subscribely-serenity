@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -128,20 +129,20 @@ export const PaymentMethods = ({
   return (
     <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl mb-6">
-        <PaymentHeader />
+        <PaymentHeader>
+          <PaymentOptions
+            selectedPaymentMethod={selectedPaymentMethod}
+            onPaymentMethodSelect={(method) => {
+              console.log(`[PaymentMethods] Payment method selected: ${method}`);
+              onPaymentMethodSelect(method);
+            }}
+            stripeConfig={stripeConfig}
+            communityId={selectedPlan.community_id}
+            price={selectedPlan.price}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        </PaymentHeader>
       </div>
-      
-      <PaymentOptions
-        selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={(method) => {
-          console.log(`[PaymentMethods] Payment method selected: ${method}`);
-          onPaymentMethodSelect(method);
-        }}
-        stripeConfig={stripeConfig}
-        communityId={selectedPlan.community_id}
-        price={selectedPlan.price}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
 
       {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
         <div className="mt-8">

@@ -52,7 +52,7 @@ export const PaymentOptions = ({
   return (
     <div className="space-y-8">
       <motion.div
-        className="grid grid-cols-3 gap-4 px-2"
+        className="grid grid-cols-3 gap-4"
         variants={container}
         initial="hidden"
         animate="show"

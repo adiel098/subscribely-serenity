@@ -15,21 +15,21 @@
     min-height: calc(100vh - 70);
   }
   
-  /* Translucent card for tab content area - Updated to be almost completely white */
+  /* Translucent card for tab content area - Updated to be more transparent */
   .translucent-card {
     @apply rounded-lg overflow-hidden;
     min-height: auto;
     height: auto;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    background-color: rgba(255, 255, 255, 0.95); /* Increased opacity to 0.95 for almost white background */
+    background-color: rgba(255, 255, 255, 0.75); /* Decreased opacity from 0.95 to 0.75 for more transparency */
     backdrop-filter: blur(15px);
     position: relative;
   }
   
-  /* Plan card inside the choose-plan container - Updated with less transparency */
+  /* Plan card inside the choose-plan container - Updated with more transparency */
   .choose-plan-container .translucent-card {
     border: 1px solid rgba(124, 58, 237, 0.2);
-    background-color: rgba(255, 255, 255, 0.9); /* Increased from 0.75 to 0.9 for less transparency */
+    background-color: rgba(255, 255, 255, 0.7); /* Decreased from 0.9 to 0.7 for more transparency */
   }
   
   @media (max-width: 640px) {

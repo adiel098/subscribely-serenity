@@ -14,11 +14,11 @@
     @apply w-full max-w-full;
   }
 
-  /* Additional styles for glassmorphism effect */
+  /* Additional styles for glassmorphism effect - Now more transparent */
   .glassmorphism {
     border: 1px solid rgba(255, 255, 255, 0.3);
-    background-color: rgba(255, 255, 255, 0.8); /* Increased from 0.65 to 0.8 for less transparency */
-    backdrop-filter: blur(10px); /* Increased blur for better readability */
+    background-color: rgba(255, 255, 255, 0.65); /* Decreased from 0.8 to 0.65 for more transparency */
+    backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }

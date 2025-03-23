@@ -4,12 +4,10 @@ import { Users, CalendarClock, TrendingUp, BadgeCheck, Clock } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-
 interface BotStatsHeaderProps {
   entityId: string;
   entityType: 'community' | 'group';
 }
-
 export const BotStatsHeader = ({
   entityId,
   entityType
@@ -20,7 +18,6 @@ export const BotStatsHeader = ({
     expiringSubscriptions: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-
   useEffect(() => {
     const fetchStats = async () => {
       if (!entityId) return;
@@ -51,7 +48,6 @@ export const BotStatsHeader = ({
         const now = new Date();
         const inSevenDays = new Date();
         inSevenDays.setDate(now.getDate() + 7);
-
         const totalMembers = members.length;
         const activeSubscriptions = members.filter(m => m.subscription_status === 'active').length;
         const expiringSubscriptions = members.filter(m => m.subscription_status === 'active' && m.subscription_end_date && new Date(m.subscription_end_date) < inSevenDays).length;
@@ -68,7 +64,6 @@ export const BotStatsHeader = ({
     };
     fetchStats();
   }, [entityId, entityType]);
-
   const statsItems = [{
     title: "Total Members",
     value: stats.totalMembers,
@@ -88,39 +83,10 @@ export const BotStatsHeader = ({
     bgClass: "bg-amber-50",
     textClass: "text-amber-700"
   }];
-
   if (isLoading) {
     return <div className="grid gap-4 md:grid-cols-3 mb-6">
         {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full" />)}
       </div>;
   }
-
-  return <div className="grid gap-4 md:grid-cols-3 mb-6">
-      {statsItems.map((item, index) => (
-        <motion.div 
-          key={index} 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.1 }}
-        >
-          <Card className={`${item.bgClass} border-0 shadow-sm hover:shadow transition-shadow duration-200`}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div className="bg-white/60 p-2 rounded-full">
-                  {item.icon}
-                </div>
-                <span className={`text-xs font-medium ${item.textClass} bg-white/60 px-2.5 py-1 rounded-full`}>
-                  {item.title}
-                </span>
-              </div>
-              <div className="mt-3">
-                <span className={`text-2xl font-bold ${item.textClass}`}>
-                  {item.value}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </div>;
+  return;
 };

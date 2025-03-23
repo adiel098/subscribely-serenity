@@ -20,12 +20,30 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
   const [rawCommunities, setRawCommunities] = useState<Community[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   
   // Use our custom hook to enhance communities with descriptions
-  const { communities, loading: isLoadingDescriptions } = useCommunitiesWithDescriptions(rawCommunities);
+  const { communities: allCommunities, loading: isLoadingDescriptions } = useCommunitiesWithDescriptions(rawCommunities);
   
   // Combine the loading states
   const isLoading = isSearching || isLoadingDescriptions;
+
+  // Apply price filter
+  const communities = priceRange 
+    ? allCommunities.filter(community => {
+        // Find the minimum price plan of the community
+        const minPrice = community.subscription_plans.reduce((min, plan) => {
+          const price = plan.price || 0;
+          return price < min ? price : min;
+        }, Number.MAX_SAFE_INTEGER);
+        
+        // If there are no plans, show it in all price ranges
+        if (minPrice === Number.MAX_SAFE_INTEGER) return true;
+        
+        // Check if the price is within the selected range
+        return minPrice >= priceRange[0] && minPrice <= priceRange[1];
+      })
+    : allCommunities;
 
   // Debounce search input
   useEffect(() => {
@@ -106,7 +124,12 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
         </motion.p>
       </motion.div>
       
-      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <SearchBar 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+      />
       
       <AnimatePresence mode="wait">
         {isLoading ? (

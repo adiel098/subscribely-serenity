@@ -33,7 +33,7 @@ export const useOnboardingNavigation = (
       let validStep: OnboardingStep = "welcome";
       
       // Only use the step if it's a valid OnboardingStep
-      if (["welcome", "bot-selection", "custom-bot-setup", "connect-telegram", "complete"].includes(step)) {
+      if (["welcome", "bot-selection", "custom-bot-setup", "official-bot-setup", "connect-telegram", "complete"].includes(step)) {
         validStep = step as OnboardingStep;
       } else {
         console.warn(`Invalid step "${step}" provided, defaulting to "welcome"`);

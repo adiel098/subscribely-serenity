@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 interface BotSelectionStepProps {
   onComplete: () => void;
   activeStep: boolean;
-  goToPreviousStep: () => void; // Changed from goToNextStep to match how it's used in Onboarding.tsx
+  goToPreviousStep: () => void;
 }
 
 const BotSelectionStep = ({ 
@@ -32,8 +32,7 @@ const BotSelectionStep = ({
 
     setIsLoading(true);
     try {
-      // First, create a community if needed (this would be handled in the next step)
-      // For now, just save the user's bot preference to the profile
+      console.log(`Saving bot selection: ${selected}`);
       
       // Set the custom bot preference in the global settings for this user
       await supabase.rpc('set_bot_preference', { 
@@ -59,7 +58,7 @@ const BotSelectionStep = ({
       description="Select which Telegram bot you want to use for your communities"
       icon={<Bot className="w-6 h-6" />}
       showBackButton={true}
-      onBack={goToPreviousStep} // Changed from onBackButtonClick to onBack
+      onBack={goToPreviousStep}
     >
       <div className="grid gap-6 max-w-4xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6">
@@ -191,7 +190,7 @@ const BotSelectionStep = ({
             disabled={!selected || isLoading}
             className="min-w-[200px] gap-2"
           >
-            Continue
+            {isLoading ? "Saving..." : "Continue"}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

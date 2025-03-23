@@ -144,6 +144,17 @@ const CustomBotSetupStep = ({
                   Open BotFather <ExternalLink className="h-3 w-3" />
                 </Button>
               </div>
+              
+              <div className="flex justify-between mt-6">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToPreviousStep}
+                  className="gap-1"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back to Bot Selection
+                </Button>
+              </div>
             </div>
           </Card>
         </motion.div>

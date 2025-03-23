@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Bot, Check, ArrowRight, Shield, Star, Sparkles } from "lucide-react";
+import { Bot, Check, ArrowRight, ArrowLeft, Shield, Star, Sparkles } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -191,7 +191,16 @@ const BotSelectionStep = ({
           </motion.div>
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-between mt-8">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={goToPreviousStep}
+            className="gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+          
           <Button 
             onClick={saveBotSelection} 
             size="lg" 

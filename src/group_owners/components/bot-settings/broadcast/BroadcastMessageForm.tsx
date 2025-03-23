@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Send, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Send, Image as ImageIcon, Loader2, Users, Filter, ArrowRight } from "lucide-react";
 import { FilterTypeSelector } from "./FilterTypeSelector";
 import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
 import { toast } from "sonner";
@@ -61,7 +61,7 @@ export const BroadcastMessageForm = ({
       }, {
         onSuccess: (data) => {
           if (data.success) {
-            toast.success(`Message sent to ${data.sent_success || 0} recipients`);
+            toast.success(`Message sent to ${data.sent_success || 0} recipients 🎉`);
             setMessage("");
             // Don't reset image and button settings to allow for similar follow-up messages
           } else {
@@ -83,37 +83,52 @@ export const BroadcastMessageForm = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="filter-type">Select Recipients</Label>
-        <FilterTypeSelector 
-          value={filterType}
-          onChange={setFilterType}
-          entityId={entityId}
-          entityType={entityType}
-          selectedPlanId={selectedPlanId}
-          setSelectedPlanId={setSelectedPlanId}
-        />
+        <Label htmlFor="filter-type" className="text-indigo-700 flex items-center font-medium">
+          <Users className="h-4 w-4 mr-1.5" />
+          Select Recipients
+        </Label>
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <FilterTypeSelector 
+            value={filterType}
+            onChange={setFilterType}
+            entityId={entityId}
+            entityType={entityType}
+            selectedPlanId={selectedPlanId}
+            setSelectedPlanId={setSelectedPlanId}
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message">Message</Label>
+        <Label htmlFor="message" className="text-indigo-700 flex items-center font-medium">
+          <ArrowRight className="h-4 w-4 mr-1.5" />
+          Message
+        </Label>
         <Textarea
           id="message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your broadcast message here..."
-          className="min-h-[100px]"
+          className="min-h-[120px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200"
         />
-        <p className="text-xs text-muted-foreground">
-          {message.length}/1000 characters
-        </p>
+        <div className="flex justify-between">
+          <p className="text-xs text-muted-foreground">
+            {message.length}/1000 characters
+          </p>
+          {message.length > 800 && (
+            <p className="text-xs text-amber-600">
+              Getting close to the limit! 📏
+            </p>
+          )}
+        </div>
       </div>
       
       <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <ImageIcon className="h-4 w-4" />
-          Broadcast Image
+        <Label className="flex items-center text-indigo-700 font-medium">
+          <ImageIcon className="h-4 w-4 mr-1.5" />
+          Add Image (Optional)
         </Label>
         <ImageUploadSection 
           image={image}
@@ -124,27 +139,34 @@ export const BroadcastMessageForm = ({
           setIsUploading={setIsUploading}
           imageError={imageError}
           setImageError={setImageError}
-          label="Upload Image"
+          label="Upload Image 🖼️"
         />
+        <p className="text-xs text-muted-foreground">
+          Images increase engagement by up to 80%! 📈
+        </p>
       </div>
       
-      <div className="flex items-center space-x-2 py-2">
+      <div className="flex items-center space-x-2 py-2 px-3 bg-violet-50 rounded-lg border border-violet-100">
         <Switch
           id="include-button"
           checked={includeButton}
           onCheckedChange={setIncludeButton}
+          className="data-[state=checked]:bg-violet-600"
         />
-        <Label htmlFor="include-button" className="cursor-pointer">
-          Include "Join Community" button
+        <Label htmlFor="include-button" className="cursor-pointer text-violet-800 text-sm">
+          Include "Join Community" button 🔗
         </Label>
       </div>
       
-      <div className="border rounded-lg p-4 bg-gray-50">
-        <h3 className="text-sm font-medium mb-3">Preview</h3>
+      <div className="border rounded-lg p-4 bg-gradient-to-b from-gray-50 to-white shadow-sm">
+        <h3 className="text-sm font-medium mb-3 flex items-center">
+          <Send className="h-4 w-4 text-indigo-600 mr-2" /> 
+          Message Preview
+        </h3>
         <MessagePreview 
-          message={message}
+          message={message || "Your message will appear here..."}
           image={image}
-          buttonText={includeButton ? "Join Community🚀" : undefined}
+          buttonText={includeButton ? "Join Community 🚀" : undefined}
         />
       </div>
 
@@ -152,6 +174,7 @@ export const BroadcastMessageForm = ({
         <Button 
           onClick={handleSendBroadcast} 
           disabled={isSending || !message.trim() || (filterType === 'plan' && !selectedPlanId) || isUploading}
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-sm"
         >
           {isSending ? (
             <>

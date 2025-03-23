@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, Rocket, Users } from "lucide-react";
+import { Check, Rocket, Users, Bot } from "lucide-react";
 import { OnboardingStep, ONBOARDING_STEPS } from "@/group_owners/hooks/onboarding/types";
 
 interface StepProgressProps {
@@ -17,6 +17,10 @@ const STEP_INFO: Record<OnboardingStep, StepInfo> = {
   'welcome': {
     title: 'Welcome',
     icon: <Rocket className="h-4 w-4" />
+  },
+  'bot-selection': {
+    title: 'Choose Bot',
+    icon: <Bot className="h-4 w-4" />
   },
   'connect-telegram': {
     title: 'Connect Telegram',

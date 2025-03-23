@@ -7,6 +7,7 @@ import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import BotSelectionStep from "./steps/BotSelectionStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
+import CustomBotSetupStep from "./steps/CustomBotSetupStep";
 import { useToast } from "@/components/ui/use-toast";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 import { Loader2 } from "lucide-react";
@@ -110,6 +111,20 @@ const Onboarding = () => {
 
   const renderCurrentStep = () => {
     console.log("Rendering current step:", onboardingState.currentStep);
+    
+    // Extract the path to handle custom steps not tracked in onboardingState
+    const path = location.pathname.split('/').pop();
+    
+    // Special case for the custom bot setup step which isn't in the regular flow
+    if (path === 'custom-bot-setup') {
+      return (
+        <CustomBotSetupStep 
+          onComplete={() => goToNextStep("bot-selection")} 
+          activeStep={true}
+          goToPreviousStep={() => navigate('/onboarding/bot-selection')}
+        />
+      );
+    }
     
     switch(onboardingState.currentStep) {
       case "welcome":

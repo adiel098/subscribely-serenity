@@ -49,8 +49,13 @@ const AppRoutes = () => {
       <Route path="/auth/*" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
 
-      {/* Onboarding Route - simplified to a single route that handles all steps internally */}
-      <Route path="/onboarding/*" element={
+      {/* Onboarding Routes - handle all onboarding steps internally */}
+      <Route path="/onboarding" element={
+        <ProtectedRoute>
+          <Onboarding />
+        </ProtectedRoute>
+      } />
+      <Route path="/onboarding/:step" element={
         <ProtectedRoute>
           <Onboarding />
         </ProtectedRoute>

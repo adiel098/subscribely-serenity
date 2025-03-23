@@ -81,6 +81,10 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute><Onboarding /></ProtectedRoute>
       },
       {
+        path: "onboarding/:step",
+        element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+      },
+      {
         path: "connect/telegram",
         element: <ProtectedRoute><TelegramConnect /></ProtectedRoute>
       },

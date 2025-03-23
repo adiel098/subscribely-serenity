@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface BotSelectionStepProps {
   onComplete: () => void;
@@ -21,6 +22,7 @@ const BotSelectionStep = ({
   goToPreviousStep
 }: BotSelectionStepProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<"official" | "custom" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,8 +43,14 @@ const BotSelectionStep = ({
       
       toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
       
-      // Move to the next step
-      onComplete();
+      // Redirect based on selection
+      if (selected === "custom") {
+        // Redirect to custom bot setup page
+        navigate("/onboarding/custom-bot-setup");
+      } else {
+        // Continue with standard flow for official bot
+        onComplete();
+      }
     } catch (error) {
       console.error("Error saving bot selection:", error);
       toast.error("Failed to save your bot selection. Please try again.");

@@ -5,24 +5,19 @@ import { fetchOrGenerateVerificationCode } from "@/group_owners/utils/verificati
 import { useToast } from "@/components/ui/use-toast";
 
 interface DuplicateChannelErrorProps {
-  userId: string;
-  onRetry: (code: string) => void;
+  duplicateChatId: string;  // Changed from userId to duplicateChatId to match usage
+  onRetry: (code?: string) => void;  // Made code parameter optional
 }
 
 export const DuplicateChannelError: React.FC<DuplicateChannelErrorProps> = ({
-  userId,
+  duplicateChatId,
   onRetry,
 }) => {
   const { toast } = useToast();
 
   const handleBack = async () => {
     // Reset the verification state and try again
-    if (userId) {
-      fetchOrGenerateVerificationCode(userId, toast)
-        .then(code => {
-          if (code) onRetry(code);
-        });
-    }
+    onRetry(); // Call onRetry directly, ConnectTelegramStep will handle the code
   };
 
   return (

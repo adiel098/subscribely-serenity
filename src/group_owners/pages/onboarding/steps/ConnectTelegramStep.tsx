@@ -209,7 +209,7 @@ const ConnectTelegramStep = ({
             community={displayedCommunity}
             onComplete={onComplete}
             isRefreshingPhoto={isRefreshingPhoto}
-            onRefreshPhoto={(e) => {
+            onRefreshPhoto={(e, communityId, chatId) => {
               if (displayedCommunity && displayedCommunity.id) {
                 handleRefreshPhoto(e, displayedCommunity.id, displayedCommunity.telegram_chat_id);
               }
@@ -236,7 +236,16 @@ const ConnectTelegramStep = ({
             onRetry={handleCodeRetry}
           />
         ) : isVerifying ? (
-          <VerificationInProgress />
+          <VerificationInProgress 
+            verificationCode={verificationCode}
+            isLoading={isLoading}
+            isVerifying={isVerifying}
+            attemptCount={attemptCount}
+            onVerify={verifyConnection}
+            onBack={goToPreviousStep}
+            useCustomBot={useCustomBot}
+            customBotToken={customBotToken}
+          />
         ) : (
           <TelegramVerificationForm
             verificationCode={verificationCode}

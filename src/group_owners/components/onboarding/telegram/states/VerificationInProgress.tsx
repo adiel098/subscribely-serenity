@@ -7,8 +7,8 @@ interface VerificationInProgressProps {
   isLoading: boolean;
   isVerifying: boolean;
   attemptCount: number;
-  verifyConnection: () => void;
-  goToPreviousStep: () => void;
+  onVerify: () => void;
+  onBack?: () => void;
   useCustomBot?: boolean;
   customBotToken?: string | null;
 }
@@ -18,8 +18,8 @@ export const VerificationInProgress: React.FC<VerificationInProgressProps> = ({
   isLoading,
   isVerifying,
   attemptCount,
-  verifyConnection,
-  goToPreviousStep,
+  onVerify,
+  onBack,
   useCustomBot = false,
   customBotToken = null
 }) => {
@@ -29,9 +29,9 @@ export const VerificationInProgress: React.FC<VerificationInProgressProps> = ({
       isLoading={isLoading}
       isVerifying={isVerifying}
       attemptCount={attemptCount}
-      onVerify={verifyConnection}
-      onBack={goToPreviousStep}
-      showBackButton={true}
+      onVerify={onVerify}
+      onBack={onBack}
+      showBackButton={!!onBack}
       useCustomBot={useCustomBot}
       customBotToken={customBotToken}
     />

@@ -9,24 +9,24 @@ interface VerificationSuccessProps {
     telegram_chat_id: string | null;
     telegram_photo_url?: string | null;
   };
-  handleGoToDashboard: () => void;
-  handleRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
+  onComplete: () => void;  // Added this prop to match usage in ConnectTelegramStep
   isRefreshingPhoto: boolean;
+  onRefreshPhoto: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
 }
 
 export const VerificationSuccess: React.FC<VerificationSuccessProps> = ({
   community,
-  handleGoToDashboard,
-  handleRefreshPhoto,
-  isRefreshingPhoto
+  onComplete,
+  isRefreshingPhoto,
+  onRefreshPhoto
 }) => {
   return (
     <div className="flex flex-col items-center space-y-6">
       <div className="w-full">
         <ConnectedChannelDisplay 
           community={community}
-          onContinue={handleGoToDashboard}
-          onRefreshPhoto={handleRefreshPhoto}
+          onContinue={onComplete}
+          onRefreshPhoto={onRefreshPhoto}
           isRefreshingPhoto={isRefreshingPhoto}
         />
       </div>

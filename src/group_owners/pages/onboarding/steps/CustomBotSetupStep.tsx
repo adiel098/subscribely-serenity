@@ -2,8 +2,10 @@
 import React from "react";
 import { Bot } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { useCustomBotValidation } from "@/group_owners/hooks/onboarding/useCustomBotValidation";
 import { CustomBotSetupCard } from "@/group_owners/components/onboarding/custom-bot/CustomBotSetupCard";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CustomBotSetupStepProps {
   onComplete: () => void;
@@ -16,15 +18,29 @@ const CustomBotSetupStep = ({
   activeStep,
   goToPreviousStep
 }: CustomBotSetupStepProps) => {
-  const {
-    customTokenInput,
-    setCustomTokenInput,
-    isValidating,
-    validationSuccess,
-    validateBotToken
-  } = useCustomBotValidation({
-    onComplete
-  });
+  const [customTokenInput, setCustomTokenInput] = useState<string>("");
+  
+  // Store the token when completing this step
+  const handleContinue = async () => {
+    if (!customTokenInput) {
+      toast.error("Please enter your bot token");
+      return;
+    }
+    
+    try {
+      // Just save the token without validation
+      await supabase.rpc('set_bot_preference', { 
+        use_custom: true,
+        custom_token: customTokenInput
+      });
+      
+      // Continue to next step
+      onComplete();
+    } catch (error) {
+      console.error("Error saving bot token:", error);
+      toast.error("Failed to save bot token");
+    }
+  };
 
   return (
     <OnboardingLayout
@@ -39,11 +55,16 @@ const CustomBotSetupStep = ({
         <CustomBotSetupCard
           customTokenInput={customTokenInput}
           setCustomTokenInput={setCustomTokenInput}
-          validateBotToken={validateBotToken}
-          isValidating={isValidating}
-          validationSuccess={validationSuccess}
           goToPreviousStep={goToPreviousStep}
         />
+      </div>
+      <div className="max-w-3xl mx-auto flex justify-end mt-4">
+        <button
+          onClick={handleContinue}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+        >
+          Continue to Connect Telegram
+        </button>
       </div>
     </OnboardingLayout>
   );

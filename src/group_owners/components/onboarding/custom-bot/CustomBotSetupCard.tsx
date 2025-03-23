@@ -10,18 +10,12 @@ import BotCreationGuide from "./BotCreationGuide";
 interface CustomBotSetupCardProps {
   customTokenInput: string;
   setCustomTokenInput: (value: string) => void;
-  validateBotToken: () => void;
-  isValidating: boolean;
-  validationSuccess: boolean | null;
   goToPreviousStep: () => void;
 }
 
 export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   customTokenInput,
   setCustomTokenInput,
-  validateBotToken,
-  isValidating,
-  validationSuccess,
   goToPreviousStep
 }) => {
   return (
@@ -37,9 +31,6 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
           <BotTokenInput
             customTokenInput={customTokenInput}
             setCustomTokenInput={setCustomTokenInput}
-            validateBotToken={validateBotToken}
-            isValidating={isValidating}
-            validationSuccess={validationSuccess}
           />
           
           <BotCreationGuide />
@@ -52,6 +43,15 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
               className="gap-1"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Bot Selection
+            </Button>
+            
+            <Button
+              onClick={() => {
+                // Just go to the next step without validation
+                // The validation will happen in the connect-telegram step
+              }}
+            >
+              Continue
             </Button>
           </div>
         </div>

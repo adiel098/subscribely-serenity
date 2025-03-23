@@ -29,7 +29,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   if (pathStep === 'custom-bot-setup') {
     return (
       <CustomBotSetupStep 
-        onComplete={() => goToNextStep("custom-bot-setup")} 
+        onComplete={() => navigate('/onboarding/connect-telegram')} 
         activeStep={true}
         goToPreviousStep={() => navigate('/onboarding/bot-selection')}
       />

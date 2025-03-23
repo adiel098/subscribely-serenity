@@ -16,35 +16,15 @@ serve(async (req: Request) => {
 
   try {
     // Get request body
-    const { botToken, communityId } = await req.json();
+    const { botToken } = await req.json();
     
-    // Check if we have all required fields
+    // Check if we have required fields
     if (!botToken) {
       return new Response(
         JSON.stringify({ valid: false, message: 'Bot token is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
-
-    if (!communityId) {
-      return new Response(
-        JSON.stringify({ valid: false, message: 'Community ID is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Initialize the Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return new Response(
-        JSON.stringify({ valid: false, message: 'Server configuration error' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Validate the bot token by calling Telegram API
     const botResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMe`);
@@ -64,67 +44,19 @@ serve(async (req: Request) => {
     const botUsername = botData.result.username;
     console.log(`Bot validated: ${botUsername}`);
 
-    // Set up the webhook for the bot to receive messages
-    const webhookUrl = `${supabaseUrl}/functions/v1/telegram-webhook`;
-    const webhookResponse = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: webhookUrl,
-        allowed_updates: ["message", "callback_query", "chat_member", "my_chat_member"],
-      }),
-    });
+    // Get bot chat information
+    const chatResponse = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const chatData = await chatResponse.json();
     
-    const webhookData = await webhookResponse.json();
+    console.log("Chat updates data:", chatData);
     
-    if (!webhookResponse.ok || !webhookData.ok) {
-      console.error('Failed to set webhook:', webhookData);
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          message: `Bot is valid, but webhook setup failed: ${webhookData.description || 'Unknown error'}` 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    console.log(`Webhook set up successfully for bot ${botUsername}`);
-
-    // Save the bot token securely in the database
-    // Note: In a production environment, you should encrypt this token
-    const { error: updateError } = await supabase
-      .from('telegram_bot_settings')
-      .update({
-        use_custom_bot: true,
-        custom_bot_token: botToken
-      })
-      .eq('community_id', communityId);
-
-    if (updateError) {
-      console.error('Error saving bot token:', updateError);
-      return new Response(
-        JSON.stringify({ 
-          valid: false, 
-          message: 'Bot is valid, but error saving settings' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    console.log(`Bot settings updated for community ${communityId}`);
-
-    // Send a test message to ensure the bot works
-    // This step would require knowing a chat ID to send to,
-    // which we don't have at this point, so we'll skip it
-
     // Return success response
     return new Response(
       JSON.stringify({ 
         valid: true, 
-        botUsername: botUsername, 
-        message: 'Bot validated and webhook set up successfully'
+        botUsername: botUsername,
+        chatData: chatData.result || [],
+        message: 'Bot validated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

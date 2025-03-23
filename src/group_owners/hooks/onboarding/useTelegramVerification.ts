@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -41,23 +40,20 @@ export const useTelegramVerification = (
     }
   }, [userId]);
 
-  const verifyConnection = useCallback(async () => {
-    if (!userId || !verificationCode) {
-      toast.error("Missing user ID or verification code");
-      return;
-    }
-    
+  const verifyConnection = async () => {
     setIsVerifying(true);
-    setAttemptCount(prev => prev + 1);
-    
     try {
-      console.log("Verifying connection for user:", userId);
-      console.log("Using verification code:", verificationCode);
+      const { data: botPreference } = await supabase.rpc('get_bot_preference');
+      const isCustomBot = botPreference?.use_custom || false;
+      const customBotToken = botPreference?.custom_bot_token;
       
-      const { data, error } = await supabase.functions.invoke('verify-telegram', {
+      const botTokenToUse = isCustomBot && customBotToken ? customBotToken : null;
+      
+      const { data, error } = await supabase.functions.invoke('verify-telegram-code', {
         body: { 
-          userId, 
-          verificationCode 
+          userId: userId,
+          verificationCode: verificationCode,
+          customBotToken: botTokenToUse
         }
       });
       
@@ -70,7 +66,6 @@ export const useTelegramVerification = (
         setIsVerified(true);
         setLastVerifiedCommunity(data.community || null);
         
-        // Make sure to update our verification status
         await checkVerificationStatus();
       } else {
         if (data.errorType === 'DUPLICATE_CHAT') {
@@ -86,7 +81,7 @@ export const useTelegramVerification = (
     } finally {
       setIsVerifying(false);
     }
-  }, [userId, verificationCode, checkVerificationStatus]);
+  };
 
   return {
     isVerifying,

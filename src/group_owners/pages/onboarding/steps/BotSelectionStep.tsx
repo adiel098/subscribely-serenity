@@ -9,15 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { motion } from "framer-motion";
 
+interface BotSelectionStepProps {
+  onComplete: () => void;
+  activeStep: boolean;
+  goToPreviousStep: () => void; // Changed from goToNextStep to match how it's used in Onboarding.tsx
+}
+
 const BotSelectionStep = ({ 
   onComplete, 
-  activeStep, 
-  goToNextStep
-}: { 
-  onComplete: () => void, 
-  activeStep: boolean,
-  goToNextStep: () => void
-}) => {
+  activeStep,
+  goToPreviousStep
+}: BotSelectionStepProps) => {
   const { user } = useAuth();
   const [selected, setSelected] = useState<"official" | "custom" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +43,7 @@ const BotSelectionStep = ({
       toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
       
       // Move to the next step
-      goToNextStep();
+      onComplete();
     } catch (error) {
       console.error("Error saving bot selection:", error);
       toast.error("Failed to save your bot selection. Please try again.");
@@ -56,7 +58,8 @@ const BotSelectionStep = ({
       title="Choose Your Bot"
       description="Select which Telegram bot you want to use for your communities"
       icon={<Bot className="w-6 h-6" />}
-      showBackButton={false}
+      showBackButton={true}
+      onBackButtonClick={goToPreviousStep} // Use the goToPreviousStep function here
     >
       <div className="grid gap-6 max-w-4xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6">

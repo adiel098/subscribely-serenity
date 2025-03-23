@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -20,7 +19,6 @@ const Onboarding = () => {
   const initialLoadRef = useRef(true);
   const [isUrlProcessed, setIsUrlProcessed] = useState(false);
   
-  // Use the centralized onboarding hook
   const { 
     state: onboardingState, 
     isLoading: onboardingHookLoading, 
@@ -29,13 +27,11 @@ const Onboarding = () => {
     completeOnboarding
   } = useOnboarding();
 
-  // Check onboarding status on initial load
   useEffect(() => {
     const checkCompletionStatus = async () => {
       if (!user) return;
       
       try {
-        // Check if onboarding is already complete
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('onboarding_completed, onboarding_step')
@@ -44,7 +40,6 @@ const Onboarding = () => {
         
         if (error) throw error;
         
-        // If onboarding is complete, redirect to dashboard
         if (profile.onboarding_completed || profile.onboarding_step === 'complete') {
           console.log("Onboarding already complete, redirecting to dashboard");
           navigate('/dashboard', { replace: true });
@@ -60,13 +55,11 @@ const Onboarding = () => {
     checkCompletionStatus();
   }, [user, navigate]);
 
-  // Determine which step to show based on URL path - only once on initial load
   useEffect(() => {
     if (!isUrlProcessed && initialLoadRef.current && !isLoading) {
       console.log("Processing URL path:", location.pathname);
       const path = location.pathname;
       
-      // Default to welcome step if just on /onboarding
       if (path === '/onboarding' || path === '/onboarding/') {
         navigate('/onboarding/welcome', { replace: true });
       }
@@ -76,20 +69,16 @@ const Onboarding = () => {
     }
   }, [location.pathname, navigate, isUrlProcessed, isLoading]);
 
-  // Handle completion redirect - only when isCompleted changes
   useEffect(() => {
     if (onboardingState.isCompleted && !onboardingHookLoading) {
-      // Redirect to dashboard if onboarding is complete
       navigate('/dashboard', { replace: true });
     }
   }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
 
-  // Handle URL updates when currentStep changes
   useEffect(() => {
     const currentPath = location.pathname;
     const targetPath = `/onboarding/${onboardingState.currentStep}`;
     
-    // Only update URL if we've processed the initial URL and the path doesn't match current step
     if (
       isUrlProcessed && 
       !currentPath.includes(onboardingState.currentStep) && 
@@ -105,7 +94,6 @@ const Onboarding = () => {
   const handleCompleteOnboarding = async () => {
     try {
       await completeOnboarding();
-      // The redirect will happen via the useEffect that watches isCompleted
     } catch (error) {
       console.error("Error completing onboarding:", error);
     }
@@ -150,12 +138,10 @@ const Onboarding = () => {
         );
       
       case "complete":
-        // Redirect to dashboard via useEffect when completed
         return null;
       
       default:
         console.error("Unknown step:", onboardingState.currentStep);
-        // Redirect to welcome step if we have an unknown step
         navigate('/onboarding/welcome', { replace: true });
         return (
           <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 p-4">

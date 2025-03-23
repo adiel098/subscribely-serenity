@@ -9,10 +9,13 @@ import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
 import { toast } from "sonner";
 import { ImageUploadSection } from "../welcome-message/ImageUploadSection";
 import { MessagePreview } from "../MessagePreview";
+import { BroadcastButton } from "./BroadcastButton";
+
 interface BroadcastMessageFormProps {
   entityId: string;
   entityType: 'community' | 'group';
 }
+
 export const BroadcastMessageForm = ({
   entityId,
   entityType
@@ -25,9 +28,11 @@ export const BroadcastMessageForm = ({
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+
   const {
     sendBroadcastMessage
   } = useBroadcast();
+
   const handleSendBroadcast = async () => {
     if (!message.trim()) {
       toast.error("Message cannot be empty");
@@ -38,7 +43,6 @@ export const BroadcastMessageForm = ({
       return;
     }
 
-    // Prevent sending if image is still uploading
     if (isUploading) {
       toast.error("Please wait for image upload to complete");
       return;
@@ -60,7 +64,6 @@ export const BroadcastMessageForm = ({
           if (data.success) {
             toast.success(`Message sent to ${data.sent_success || 0} recipients 🎉`);
             setMessage("");
-            // Don't reset image and button settings to allow for similar follow-up messages
           } else {
             toast.error(`Failed to send broadcast: ${data.error}`);
           }
@@ -78,6 +81,7 @@ export const BroadcastMessageForm = ({
       setIsSending(false);
     }
   };
+
   return <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="filter-type" className="text-indigo-700 flex items-center font-medium">
@@ -125,10 +129,12 @@ export const BroadcastMessageForm = ({
         </Label>
       </div>
       
-      
-
       <div className="flex justify-end">
-        <Button onClick={handleSendBroadcast} disabled={isSending || !message.trim() || filterType === 'plan' && !selectedPlanId || isUploading} className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-sm">
+        <Button 
+          onClick={handleSendBroadcast} 
+          disabled={isSending || !message.trim() || filterType === 'plan' && !selectedPlanId || isUploading} 
+          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-sm w-full"
+        >
           {isSending ? <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Sending...

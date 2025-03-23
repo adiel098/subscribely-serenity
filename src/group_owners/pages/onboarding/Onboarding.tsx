@@ -118,21 +118,19 @@ const Onboarding = () => {
     // Extract the path to handle custom steps not tracked in onboardingState
     const path = location.pathname.split('/').pop();
     
-    // Special cases for the bot setup steps
+    // Special case for official-bot-setup - redirect to connect-telegram
+    if (path === 'official-bot-setup') {
+      // Redirect to connect-telegram step
+      console.log("Official bot setup detected, redirecting to connect-telegram");
+      navigate('/onboarding/connect-telegram', { replace: true });
+      return null;
+    }
+    
+    // Special case for custom-bot-setup
     if (path === 'custom-bot-setup') {
       return (
         <CustomBotSetupStep 
           onComplete={() => goToNextStep("custom-bot-setup")} 
-          activeStep={true}
-          goToPreviousStep={() => navigate('/onboarding/bot-selection')}
-        />
-      );
-    }
-    
-    if (path === 'official-bot-setup') {
-      return (
-        <OfficialBotSetupStep 
-          onComplete={() => goToNextStep("official-bot-setup")} 
           activeStep={true}
           goToPreviousStep={() => navigate('/onboarding/bot-selection')}
         />
@@ -183,7 +181,23 @@ const Onboarding = () => {
           <ConnectTelegramStep 
             onComplete={handleCompleteOnboarding} 
             activeStep={true}
-            goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
+            goToPreviousStep={() => {
+              // Check if we need to go back to custom-bot-setup or bot-selection
+              const hasBotToken = async () => {
+                const { data } = await supabase
+                  .from('bot_settings')
+                  .select('custom_bot_token')
+                  .single();
+                
+                if (data?.custom_bot_token) {
+                  navigate('/onboarding/custom-bot-setup');
+                } else {
+                  navigate('/onboarding/bot-selection');
+                }
+              };
+              
+              hasBotToken();
+            }}
           />
         );
       

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useOnboarding } from "../useOnboarding";
 
 interface UseBotSelectionActionsProps {
   userId: string | undefined;
@@ -13,6 +14,7 @@ export const useBotSelectionActions = ({ userId, onComplete }: UseBotSelectionAc
   const navigate = useNavigate();
   const [selected, setSelected] = useState<"official" | "custom" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { saveCurrentStep } = useOnboarding();
 
   const saveBotSelection = async () => {
     if (!selected || !userId) {
@@ -32,11 +34,13 @@ export const useBotSelectionActions = ({ userId, onComplete }: UseBotSelectionAc
       toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
       
       if (selected === "custom") {
-        // Navigate to custom bot setup
+        // For custom bot, navigate to custom bot setup
         navigate("/onboarding/custom-bot-setup");
       } else {
-        // For official bot, navigate to official bot setup
-        navigate("/onboarding/official-bot-setup");
+        // For official bot, skip directly to connect-telegram step
+        // This fixes the issue where it was incorrectly going to official-bot-setup
+        saveCurrentStep("connect-telegram");
+        navigate("/onboarding/connect-telegram");
       }
     } catch (error) {
       console.error("Error saving bot selection:", error);

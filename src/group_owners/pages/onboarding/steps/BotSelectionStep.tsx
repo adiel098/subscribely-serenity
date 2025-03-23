@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Bot, Check, ArrowRight, Shield, Star, Sparkles } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
@@ -43,10 +44,11 @@ const BotSelectionStep = ({
       toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
       
       if (selected === "custom") {
-        // Navigate to custom bot setup directly instead of using URL
+        // Navigate to custom bot setup directly
         navigate("/onboarding/custom-bot-setup");
       } else {
         // For official bot, continue with standard flow
+        console.log("Selected official bot, calling onComplete to navigate to the next step");
         onComplete();
       }
     } catch (error) {

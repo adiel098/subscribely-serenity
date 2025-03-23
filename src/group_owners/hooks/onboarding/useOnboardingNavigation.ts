@@ -40,6 +40,7 @@ export const useOnboardingNavigation = (
       }
       
       await saveOnboardingStep(user.id, validStep);
+      console.log("Setting current step to:", validStep);
       setCurrentStep(validStep);
       lastSavedStepRef.current = validStep;
       
@@ -84,8 +85,14 @@ export const useOnboardingNavigation = (
   const goToNextStep = useCallback((currentStep: OnboardingStep = "welcome") => {
     if (!user) return;
     
+    console.log("Current step in goToNextStep:", currentStep);
+    console.log("All onboarding steps:", ONBOARDING_STEPS);
+    
     const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
+    console.log("Current step index:", currentIndex);
+    
     const nextStep = ONBOARDING_STEPS[currentIndex + 1];
+    console.log("Next step calculated:", nextStep);
     
     if (nextStep) {
       console.log("Moving to next step:", nextStep);

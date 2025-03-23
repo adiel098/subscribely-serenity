@@ -141,7 +141,10 @@ const Onboarding = () => {
       case "bot-selection":
         return (
           <BotSelectionStep 
-            onComplete={() => goToNextStep(onboardingState.currentStep)} 
+            onComplete={() => {
+              console.log("Bot selection completed, going to next step");
+              goToNextStep(onboardingState.currentStep);
+            }} 
             activeStep={true}
             goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
           />

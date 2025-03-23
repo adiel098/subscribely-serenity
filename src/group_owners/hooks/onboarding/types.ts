@@ -4,7 +4,7 @@ export type OnboardingStep = "welcome" | "bot-selection" | "custom-bot-setup" | 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "bot-selection",
-  "custom-bot-setup", // Adding this step to the flow
+  "custom-bot-setup",
   "connect-telegram",
   "complete"
 ];

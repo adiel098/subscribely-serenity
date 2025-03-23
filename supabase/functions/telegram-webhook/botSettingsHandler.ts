@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 export async function getBotSettings(supabase: ReturnType<typeof createClient>, communityId: string) {
@@ -14,7 +13,7 @@ export async function getBotSettings(supabase: ReturnType<typeof createClient>, 
     // Build the query based on provided parameters
     const query = supabase
       .from('telegram_bot_settings')
-      .select('*')
+      .select('*, use_custom_bot, custom_bot_token')
       .eq('community_id', communityId);
     
     // Execute query
@@ -73,5 +72,40 @@ export async function updateBotSettings(
   } catch (error) {
     console.error('[BOT SETTINGS] ❌ Error in updateBotSettings:', error);
     throw error;
+  }
+}
+
+export async function getBotToken(
+  supabase: ReturnType<typeof createClient>,
+  communityId: string,
+  defaultBotToken: string
+): Promise<string> {
+  try {
+    // Get bot settings for this community
+    const { data, error } = await supabase
+      .from('telegram_bot_settings')
+      .select('use_custom_bot, custom_bot_token')
+      .eq('community_id', communityId)
+      .single();
+    
+    if (error) {
+      console.error(`[BOT SETTINGS] ❌ Error fetching bot token:`, error);
+      // Fallback to default bot
+      return defaultBotToken;
+    }
+    
+    // If custom bot is enabled and token is available, use it
+    if (data?.use_custom_bot && data?.custom_bot_token) {
+      console.log(`[BOT SETTINGS] 🔑 Using custom bot token for community ${communityId}`);
+      return data.custom_bot_token;
+    }
+    
+    // Otherwise use default bot
+    console.log(`[BOT SETTINGS] 🔑 Using default bot token for community ${communityId}`);
+    return defaultBotToken;
+  } catch (error) {
+    console.error(`[BOT SETTINGS] ❌ Error getting bot token:`, error);
+    // Fallback to default bot in case of any error
+    return defaultBotToken;
   }
 }

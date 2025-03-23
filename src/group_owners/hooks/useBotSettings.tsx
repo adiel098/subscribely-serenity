@@ -33,6 +33,8 @@ export interface BotSettings {
   second_reminder_days: number;
   second_reminder_message: string;
   second_reminder_image: string | null;
+  use_custom_bot: boolean;
+  custom_bot_token: string | null;
 }
 
 export const useBotSettings = (entityId: string | null) => {
@@ -69,7 +71,9 @@ export const useBotSettings = (entityId: string | null) => {
         first_reminder_image: data.first_reminder_image || null,
         second_reminder_days: data.second_reminder_days || 1,
         second_reminder_message: data.second_reminder_message || 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
-        second_reminder_image: data.second_reminder_image || null
+        second_reminder_image: data.second_reminder_image || null,
+        use_custom_bot: data.use_custom_bot || false,
+        custom_bot_token: data.custom_bot_token || null
       } as BotSettings;
     },
     enabled: Boolean(entityId),
@@ -97,6 +101,8 @@ export const useBotSettings = (entityId: string | null) => {
       second_reminder_days: 1,
       second_reminder_message: 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
       second_reminder_image: null,
+      use_custom_bot: false,
+      custom_bot_token: null,
     };
 
     try {
@@ -157,7 +163,8 @@ export const useBotSettings = (entityId: string | null) => {
       key !== 'language' && 
       key !== 'welcome_image' &&
       key !== 'first_reminder_image' &&
-      key !== 'second_reminder_image'
+      key !== 'second_reminder_image' &&
+      key !== 'custom_bot_token'
     )) {
       updateSettingsMutation.mutate(newSettings);
       return;

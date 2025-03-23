@@ -1,4 +1,3 @@
-
 /**
  * Client for interacting with Telegram Bot API
  */
@@ -74,6 +73,43 @@ export class TelegramApiClient {
     } catch (error) {
       console.error(`[Telegram API Client] Error creating invite link:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Factory method to create a TelegramApiClient with the appropriate token
+   * based on community settings
+   */
+  static async getClientForCommunity(supabase: any, communityId: string, defaultBotToken: string): Promise<TelegramApiClient> {
+    try {
+      console.log(`[Telegram API Client] Getting client for community ${communityId}`);
+      
+      // Get bot settings for this community
+      const { data, error } = await supabase
+        .from('telegram_bot_settings')
+        .select('use_custom_bot, custom_bot_token')
+        .eq('community_id', communityId)
+        .single();
+      
+      if (error) {
+        console.error(`[Telegram API Client] Error fetching bot settings:`, error);
+        // Fallback to default bot
+        return new TelegramApiClient(defaultBotToken);
+      }
+      
+      // If custom bot is enabled and token is available, use it
+      if (data?.use_custom_bot && data?.custom_bot_token) {
+        console.log(`[Telegram API Client] Using custom bot for community ${communityId}`);
+        return new TelegramApiClient(data.custom_bot_token);
+      }
+      
+      // Otherwise use default bot
+      console.log(`[Telegram API Client] Using default bot for community ${communityId}`);
+      return new TelegramApiClient(defaultBotToken);
+    } catch (error) {
+      console.error(`[Telegram API Client] Error creating client:`, error);
+      // Fallback to default bot in case of any error
+      return new TelegramApiClient(defaultBotToken);
     }
   }
 }

@@ -2,6 +2,8 @@
 /**
  * Utility functions for sending messages via Telegram Bot API
  */
+import { getBotToken } from "../../botSettingsHandler.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Verify a bot token is valid
 export async function verifyBotToken(botToken: string): Promise<boolean> {
@@ -25,14 +27,18 @@ export async function verifyBotToken(botToken: string): Promise<boolean> {
 
 // Send a text message with button
 export async function sendTextMessage(
-  botToken: string,
+  supabase: ReturnType<typeof createClient>,
+  defaultBotToken: string,
+  communityId: string,
   chatId: string | number,
   text: string,
-  miniAppUrl: string,
-  communityId: string
+  miniAppUrl: string
 ): Promise<boolean> {
   try {
     console.log(`[TelegramSender] 📤 Sending text message to chat ${chatId}`);
+    
+    // Get the appropriate bot token for this community
+    const botToken = await getBotToken(supabase, communityId, defaultBotToken);
     
     // Ensure we have a valid bot token and chat ID
     if (!botToken || !chatId) {
@@ -88,15 +94,19 @@ export async function sendTextMessage(
 
 // Send a photo message with caption and button
 export async function sendPhotoMessage(
-  botToken: string,
+  supabase: ReturnType<typeof createClient>,
+  defaultBotToken: string,
+  communityId: string,
   chatId: string | number,
   photoUrl: string,
   caption: string,
-  miniAppUrl: string,
-  communityId: string
+  miniAppUrl: string
 ): Promise<boolean> {
   try {
     console.log(`[TelegramSender] 🖼️ Sending photo message to chat ${chatId}`);
+    
+    // Get the appropriate bot token for this community
+    const botToken = await getBotToken(supabase, communityId, defaultBotToken);
     
     // Ensure we have all required parameters
     if (!botToken || !chatId || !photoUrl) {

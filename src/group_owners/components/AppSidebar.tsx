@@ -1,5 +1,4 @@
-
-import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
+import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings, Megaphone } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -30,8 +29,13 @@ const menuItems = [
   },
   {
     title: "Bot Settings",
-    icon: Bot,
+    icon: Megaphone,
     path: "/bot-settings"
+  },
+  {
+    title: "Telegram Bot",
+    icon: Bot,
+    path: "/telegram-bot"
   },
   {
     title: "Membify Settings",

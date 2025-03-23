@@ -5,6 +5,7 @@ import { OnboardingLayout } from "@/group_owners/components/onboarding/Onboardin
 import { CustomBotSetupCard } from "@/group_owners/components/onboarding/custom-bot/CustomBotSetupCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
 
 interface CustomBotSetupStepProps {
   onComplete: () => void;
@@ -19,7 +20,7 @@ const CustomBotSetupStep = ({
 }: CustomBotSetupStepProps) => {
   const [customTokenInput, setCustomTokenInput] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const [verificationResults, setVerificationResults] = useState<any[] | null>(null);
+  const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   
   // Store the token when completing this step

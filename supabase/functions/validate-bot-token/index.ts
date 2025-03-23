@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,18 +52,78 @@ serve(async (req: Request) => {
     // Get bot's chat list (groups/channels where the bot is added)
     const chatList = [];
     if (chatData.ok && chatData.result) {
+      // Process chats from updates
+      const processedChatIds = new Set();
+      
       for (const update of chatData.result) {
         if (update.message && update.message.chat) {
           const chat = update.message.chat;
           if ((chat.type === 'group' || chat.type === 'supergroup' || chat.type === 'channel') 
-              && !chatList.find(c => c.id === chat.id)) {
-            chatList.push({
+              && !processedChatIds.has(chat.id)) {
+                
+            processedChatIds.add(chat.id);
+            const chatInfo = {
               id: chat.id,
               title: chat.title,
               type: chat.type,
               username: chat.username || null
-            });
+            };
+            
+            // Get chat photo if possible
+            try {
+              const photoResponse = await fetch(`https://api.telegram.org/bot${botToken}/getChatPhoto?chat_id=${chat.id}`);
+              const photoData = await photoResponse.json();
+              
+              if (photoResponse.ok && photoData.ok && photoData.result && photoData.result.big_file_id) {
+                // Get the file path
+                const fileResponse = await fetch(
+                  `https://api.telegram.org/bot${botToken}/getFile?file_id=${photoData.result.big_file_id}`
+                );
+                const fileData = await fileResponse.json();
+                
+                if (fileResponse.ok && fileData.ok && fileData.result && fileData.result.file_path) {
+                  chatInfo.photo_url = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching photo for chat ${chat.id}:`, error);
+              // Continue without photo
+            }
+            
+            chatList.push(chatInfo);
           }
+        }
+      }
+      
+      // Try to get additional chat information for each chat
+      for (const chat of chatList) {
+        try {
+          const chatInfoResponse = await fetch(
+            `https://api.telegram.org/bot${botToken}/getChat?chat_id=${chat.id}`
+          );
+          const chatInfoData = await chatInfoResponse.json();
+          
+          if (chatInfoResponse.ok && chatInfoData.ok && chatInfoData.result) {
+            // Update with any additional info
+            if (chatInfoData.result.username && !chat.username) {
+              chat.username = chatInfoData.result.username;
+            }
+            
+            // Try to get chat photo if not already set
+            if (!chat.photo_url && chatInfoData.result.photo) {
+              const fileResponse = await fetch(
+                `https://api.telegram.org/bot${botToken}/getFile?file_id=${chatInfoData.result.photo.big_file_id}`
+              );
+              const fileData = await fileResponse.json();
+              
+              if (fileResponse.ok && fileData.ok && fileData.result && fileData.result.file_path) {
+                chat.photo_url = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching additional info for chat ${chat.id}:`, error);
+          // Continue without additional info
         }
       }
     }
@@ -75,7 +134,6 @@ serve(async (req: Request) => {
         valid: true, 
         botUsername: botUsername,
         chatList: chatList,
-        chatData: chatData.result || [],
         message: 'Bot validated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

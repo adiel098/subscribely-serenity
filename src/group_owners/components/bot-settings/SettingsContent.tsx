@@ -1,4 +1,3 @@
-
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useState } from "react";
 import { Accordion } from "@/components/ui/accordion";
@@ -67,6 +66,7 @@ export const SettingsContent = ({
         </motion.div>
         
         <motion.div className="md:col-span-2 sticky top-6" variants={itemVariants}>
+          
           <UnifiedMessagePreview settings={settings} activeSection={expandedSection} />
         </motion.div>
       </div>

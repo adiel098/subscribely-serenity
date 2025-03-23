@@ -1,16 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, CalendarClock, TrendingUp, BadgeCheck, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-
 interface BotStatsHeaderProps {
   entityId: string;
   entityType: 'community' | 'group';
 }
-
 export const BotStatsHeader = ({
   entityId,
   entityType
@@ -21,7 +18,6 @@ export const BotStatsHeader = ({
     expiringSubscriptions: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-
   useEffect(() => {
     const fetchStats = async () => {
       if (!entityId) return;
@@ -74,69 +70,44 @@ export const BotStatsHeader = ({
     };
     fetchStats();
   }, [entityId, entityType]);
-
-  const statsItems = [
-    {
-      title: "Total Members",
-      value: stats.totalMembers,
-      icon: <Users className="h-5 w-5 text-purple-600" />,
-      bgClass: "bg-purple-50",
-      textClass: "text-purple-700"
-    },
-    {
-      title: "Active Subscriptions",
-      value: stats.activeSubscriptions,
-      icon: <BadgeCheck className="h-5 w-5 text-green-600" />,
-      bgClass: "bg-green-50",
-      textClass: "text-green-700"
-    },
-    {
-      title: "Expiring Soon",
-      value: stats.expiringSubscriptions,
-      icon: <Clock className="h-5 w-5 text-amber-600" />,
-      bgClass: "bg-amber-50",
-      textClass: "text-amber-700"
-    }
-  ];
-
+  const statsItems = [{
+    title: "Total Members",
+    value: stats.totalMembers,
+    icon: <Users className="h-5 w-5 text-purple-600" />,
+    bgClass: "bg-purple-50",
+    textClass: "text-purple-700"
+  }, {
+    title: "Active Subscriptions",
+    value: stats.activeSubscriptions,
+    icon: <BadgeCheck className="h-5 w-5 text-green-600" />,
+    bgClass: "bg-green-50",
+    textClass: "text-green-700"
+  }, {
+    title: "Expiring Soon",
+    value: stats.expiringSubscriptions,
+    icon: <Clock className="h-5 w-5 text-amber-600" />,
+    bgClass: "bg-amber-50",
+    textClass: "text-amber-700"
+  }];
   if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-24 w-full" />
-        ))}
-      </div>
-    );
+    return <div className="grid gap-4 md:grid-cols-3 mb-6">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+      </div>;
   }
-
-  return (
-    <div className="grid gap-4 md:grid-cols-3 mb-6">
-      {statsItems.map((item, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.1 }}
-        >
+  return <div className="grid gap-4 md:grid-cols-3 mb-6">
+      {statsItems.map((item, index) => <motion.div key={index} initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} transition={{
+      duration: 0.3,
+      delay: index * 0.1
+    }}>
           <Card className={`${item.bgClass} border-0 shadow-sm hover:shadow transition-shadow duration-200`}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {item.title}
-                  </p>
-                  <p className={`text-2xl font-bold ${item.textClass}`}>
-                    {item.value}
-                  </p>
-                </div>
-                <div className={`${item.bgClass} p-3 rounded-full`}>
-                  {item.icon}
-                </div>
-              </div>
-            </CardContent>
+            
           </Card>
-        </motion.div>
-      ))}
-    </div>
-  );
+        </motion.div>)}
+    </div>;
 };

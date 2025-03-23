@@ -1,5 +1,5 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useAdminPermission } from "@/auth/hooks/useAdminPermission";
@@ -9,7 +9,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
-export const AdminProtectedRoute = () => {
+interface AdminProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: isCheckingAdmin, error, hasToastShown } = useAdminPermission();
   const { toast } = useToast();
@@ -136,5 +140,5 @@ export const AdminProtectedRoute = () => {
   }
 
   console.log("✅ AdminProtectedRoute: User is admin, rendering admin content");
-  return <Outlet />;
+  return children;
 };

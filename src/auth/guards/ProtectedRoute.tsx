@@ -3,11 +3,13 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useEffect } from "react";
 
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
 export const ProtectedRoute = ({
   children
-}: {
-  children: React.ReactNode;
-}) => {
+}: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   
   useEffect(() => {

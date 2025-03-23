@@ -1,3 +1,4 @@
+
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -25,6 +26,7 @@ import PlatformPlans from "@/group_owners/pages/PlatformPlans";
 import PlatformPayment from "@/group_owners/pages/PlatformPayment";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import MembifySettings from "@/group_owners/pages/MembifySettings";
+import TelegramBot from "@/group_owners/pages/TelegramBot";
 
 // Onboarding Pages
 import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
@@ -97,6 +99,13 @@ const AppRoutes = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
+      <Route path="/telegram-bot" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <TelegramBot />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
       <Route path="/platform-plans" element={
         <ProtectedRoute>
           <PlatformPlans />
@@ -121,15 +130,41 @@ const AppRoutes = () => {
       } />
 
       {/* Admin Routes */}
-      <Route element={<AdminProtectedRoute />}>
-        <Route path="/admin" element={<AdminLayout dashboard={<Dashboard />} />} />
-        <Route path="/admin/dashboard" element={<AdminLayout dashboard={<Dashboard />} />} />
-        <Route path="/admin/users" element={<AdminLayout dashboard={<Users />} />} />
-        <Route path="/admin/communities" element={<AdminLayout dashboard={<Communities />} />} />
-        <Route path="/admin/payments" element={<AdminLayout dashboard={<Payments />} />} />
-        <Route path="/admin/reports" element={<AdminLayout dashboard={<Reports />} />} />
-        <Route path="/admin/settings" element={<AdminLayout dashboard={<Settings />} />} />
-      </Route>
+      <Route path="/admin" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Dashboard />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/dashboard" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Dashboard />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/users" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Users />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/communities" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Communities />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/payments" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Payments />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/reports" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Reports />} />
+        </AdminProtectedRoute>
+      } />
+      <Route path="/admin/settings" element={
+        <AdminProtectedRoute>
+          <AdminLayout dashboard={<Settings />} />
+        </AdminProtectedRoute>
+      } />
 
       {/* Telegram Mini App Route */}
       <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />

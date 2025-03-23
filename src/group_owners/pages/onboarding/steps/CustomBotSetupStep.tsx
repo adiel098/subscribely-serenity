@@ -56,15 +56,8 @@ const CustomBotSetupStep = ({
           customTokenInput={customTokenInput}
           setCustomTokenInput={setCustomTokenInput}
           goToPreviousStep={goToPreviousStep}
+          onContinue={handleContinue}
         />
-      </div>
-      <div className="max-w-3xl mx-auto flex justify-end mt-4">
-        <button
-          onClick={handleContinue}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-        >
-          Continue to Connect Telegram
-        </button>
       </div>
     </OnboardingLayout>
   );

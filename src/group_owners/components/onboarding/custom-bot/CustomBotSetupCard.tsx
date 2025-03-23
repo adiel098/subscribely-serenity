@@ -11,12 +11,14 @@ interface CustomBotSetupCardProps {
   customTokenInput: string;
   setCustomTokenInput: (value: string) => void;
   goToPreviousStep: () => void;
+  onContinue: () => void;
 }
 
 export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   customTokenInput,
   setCustomTokenInput,
-  goToPreviousStep
+  goToPreviousStep,
+  onContinue
 }) => {
   return (
     <motion.div
@@ -45,12 +47,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
               <ArrowLeft className="h-4 w-4" /> Back to Bot Selection
             </Button>
             
-            <Button
-              onClick={() => {
-                // Just go to the next step without validation
-                // The validation will happen in the connect-telegram step
-              }}
-            >
+            <Button onClick={onContinue}>
               Continue
             </Button>
           </div>

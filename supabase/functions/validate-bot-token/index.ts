@@ -50,11 +50,31 @@ serve(async (req: Request) => {
     
     console.log("Chat updates data:", chatData);
     
-    // Return success response
+    // Get bot's chat list (groups/channels where the bot is added)
+    const chatList = [];
+    if (chatData.ok && chatData.result) {
+      for (const update of chatData.result) {
+        if (update.message && update.message.chat) {
+          const chat = update.message.chat;
+          if ((chat.type === 'group' || chat.type === 'supergroup' || chat.type === 'channel') 
+              && !chatList.find(c => c.id === chat.id)) {
+            chatList.push({
+              id: chat.id,
+              title: chat.title,
+              type: chat.type,
+              username: chat.username || null
+            });
+          }
+        }
+      }
+    }
+    
+    // Return success response with bot and chat info
     return new Response(
       JSON.stringify({ 
         valid: true, 
         botUsername: botUsername,
+        chatList: chatList,
         chatData: chatData.result || [],
         message: 'Bot validated successfully'
       }),

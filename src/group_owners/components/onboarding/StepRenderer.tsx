@@ -53,7 +53,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
             goToNextStep(currentStep);
           }} 
           activeStep={true}
-          goToPreviousStep={() => goToPreviousStep("bot-selection")}
+          goToPreviousStep={() => goToPreviousStep("welcome")}
         />
       );
       
@@ -62,7 +62,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         <CustomBotSetupStep 
           onComplete={() => goToNextStep(currentStep)} 
           activeStep={true}
-          goToPreviousStep={() => goToPreviousStep(currentStep)}
+          goToPreviousStep={() => goToPreviousStep("bot-selection")}
         />
       );
     

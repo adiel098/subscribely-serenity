@@ -11,6 +11,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
   const [customTokenInput, setCustomTokenInput] = useState<string>("");
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
+  const [botChatList, setBotChatList] = useState<any[]>([]);
 
   const validateBotToken = async () => {
     if (!customTokenInput) {
@@ -33,6 +34,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
 
       if (response.data.valid) {
         setValidationSuccess(true);
+        setBotChatList(response.data.chatList || []);
         
         // Save the token
         await supabase.rpc('set_bot_preference', { 
@@ -40,7 +42,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
           custom_token: customTokenInput
         });
         
-        toast.success("Bot token validated and saved successfully!");
+        toast.success("Bot token validated successfully!");
         
         // Small delay before continuing to next step
         setTimeout(() => {
@@ -64,6 +66,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
     setCustomTokenInput,
     isValidating,
     validationSuccess,
+    botChatList,
     validateBotToken
   };
 };

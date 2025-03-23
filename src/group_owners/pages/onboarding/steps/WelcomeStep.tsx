@@ -44,19 +44,19 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete, activeStep
               <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
                 1
               </div>
-              <span className="text-gray-700">Connect your Telegram channel or group</span>
+              <span className="text-gray-700">Choose which bot to use for your communities</span>
             </li>
             <li className="flex items-start gap-2">
               <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
                 2
               </div>
-              <span className="text-gray-700">Set up subscription plans for your members</span>
+              <span className="text-gray-700">Connect your Telegram channel or group</span>
             </li>
             <li className="flex items-start gap-2">
               <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
                 3
               </div>
-              <span className="text-gray-700">Configure payment methods for your subscribers</span>
+              <span className="text-gray-700">Set up subscription plans for your members</span>
             </li>
           </ul>
         </motion.div>

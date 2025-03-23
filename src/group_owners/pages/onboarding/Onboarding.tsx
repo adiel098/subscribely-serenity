@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
-import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
 import { WelcomeStep } from "./steps/WelcomeStep";
 import BotSelectionStep from "./steps/BotSelectionStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
@@ -127,7 +126,7 @@ const Onboarding = () => {
       case "welcome":
         return (
           <WelcomeStep 
-            onComplete={() => goToNextStep('welcome')} 
+            onComplete={() => goToNextStep(onboardingState.currentStep)} 
             activeStep={true}
           />
         );
@@ -135,9 +134,9 @@ const Onboarding = () => {
       case "bot-selection":
         return (
           <BotSelectionStep 
-            onComplete={() => {}} 
+            onComplete={() => goToNextStep(onboardingState.currentStep)} 
             activeStep={true}
-            goToNextStep={() => goToNextStep('bot-selection')}
+            goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
           />
         );
       
@@ -146,7 +145,7 @@ const Onboarding = () => {
           <ConnectTelegramStep 
             onComplete={handleCompleteOnboarding} 
             activeStep={true}
-            goToPreviousStep={() => goToPreviousStep('connect-telegram')}
+            goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
           />
         );
       

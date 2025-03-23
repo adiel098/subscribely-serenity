@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, CalendarClock, TrendingUp, BadgeCheck, Clock } from "lucide-react";
@@ -106,7 +107,22 @@ export const BotStatsHeader = ({
       delay: index * 0.1
     }}>
           <Card className={`${item.bgClass} border-0 shadow-sm hover:shadow transition-shadow duration-200`}>
-            
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-full ${item.bgClass} border border-${item.textClass.split('-')[1]}-200`}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{item.title}</p>
+                    <p className={`text-2xl font-bold ${item.textClass}`}>{item.value}</p>
+                  </div>
+                </div>
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${item.bgClass}`}>
+                  {item.icon}
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </motion.div>)}
     </div>;

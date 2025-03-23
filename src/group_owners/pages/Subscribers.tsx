@@ -10,11 +10,18 @@ import { SubscribersHeaderSection } from "../components/subscribers/SubscribersH
 import { SubscribersCountDisplay } from "../components/subscribers/SubscribersCountDisplay";
 import { SubscriberDialogs } from "../components/subscribers/SubscriberDialogs";
 import { exportSubscribersToCSV } from "../utils/exportSubscribers";
+import { SubscriberTabs } from "../components/subscribers/SubscriberTabs";
+import { useState } from "react";
+import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
+import { Subscriber } from "../hooks/useSubscribers";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const { toast } = useToast();
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  
+  const [userToAssignPlan, setUserToAssignPlan] = useState<Subscriber | null>(null);
+  const [assignPlanDialogOpen, setAssignPlanDialogOpen] = useState(false);
   
   const {
     subscribers,
@@ -36,7 +43,8 @@ const Subscribers = () => {
     onConfirmRemove,
     onConfirmUnblock,
     handleRemoveDialogChange,
-    handleUnblockDialogChange
+    handleUnblockDialogChange,
+    assignPlanToUser
   } = useSubscriberPageState(entityId || "");
 
   const {
@@ -47,6 +55,8 @@ const Subscribers = () => {
     planFilter,
     setPlanFilter,
     filteredSubscribers,
+    managedSubscribers,
+    unmanagedUsers,
     uniquePlans
   } = useSubscriberFilters(subscribers);
 
@@ -58,6 +68,17 @@ const Subscribers = () => {
         description: "Subscribers data exported successfully",
       });
     }
+  };
+
+  const handleAssignPlan = (user: Subscriber) => {
+    setUserToAssignPlan(user);
+    setAssignPlanDialogOpen(true);
+  };
+
+  const handleAssignPlanSubmit = async (userId: string, planId: string, endDate: Date) => {
+    await assignPlanToUser(userId, planId, endDate);
+    setAssignPlanDialogOpen(false);
+    setUserToAssignPlan(null);
   };
 
   if (isLoading) {
@@ -84,14 +105,16 @@ const Subscribers = () => {
         onExport={handleExport}
       />
 
-      <SubscribersTable 
-        subscribers={filteredSubscribers}
+      <SubscriberTabs
+        subscribers={managedSubscribers}
+        unmanagedUsers={unmanagedUsers}
         onEdit={(subscriber) => {
           setSelectedSubscriber(subscriber);
           setEditDialogOpen(true);
         }}
         onRemove={onRemoveClick}
         onUnblock={onUnblockClick}
+        onAssignPlan={handleAssignPlan}
       />
       
       <SubscribersCountDisplay 
@@ -114,6 +137,14 @@ const Subscribers = () => {
         isRemoving={isRemoving}
         isUnblocking={isUnblocking}
         onSuccess={refetch}
+      />
+
+      <AssignPlanDialog
+        user={userToAssignPlan}
+        plans={uniquePlans}
+        open={assignPlanDialogOpen}
+        onOpenChange={setAssignPlanDialogOpen}
+        onAssign={handleAssignPlanSubmit}
       />
     </div>
   );

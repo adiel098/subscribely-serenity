@@ -1,36 +1,35 @@
-
 import { useState, useMemo } from "react";
 import { Subscriber } from "./useSubscribers";
 
+// Add an additional isManaged parameter to the filteredSubscribers function
 export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [planFilter, setPlanFilter] = useState<string | null>(null);
 
-  const filteredSubscribers = useMemo(() => {
-    return (subscribers || []).filter((subscriber) => {
-      // Search filter
-      const matchesSearch = 
-        (subscriber.telegram_username || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        subscriber.telegram_user_id
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        (subscriber.first_name || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        (subscriber.last_name || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+  const uniquePlans = useMemo(() => {
+    return Array.from(
+      new Set(subscribers
+        .filter(s => s.plan)
+        .map(s => JSON.stringify(s.plan))
+      )
+    ).map(planString => JSON.parse(planString));
+  }, [subscribers]);
 
-      // Status filter
+  const filteredSubscribers = useMemo(() => {
+    return subscribers.filter((subscriber) => {
+      const matchesSearch = (subscriber.telegram_username || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+        subscriber.telegram_user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (subscriber.first_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (subscriber.last_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "active" && subscriber.subscription_status === "active") ||
         (statusFilter === "inactive" && subscriber.subscription_status !== "active");
 
-      // Plan filter
       const matchesPlan =
         !planFilter ||
         subscriber.plan?.id === planFilter;
@@ -39,22 +38,23 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
     });
   }, [subscribers, searchQuery, statusFilter, planFilter]);
 
-  // Extract unique plans for the filter dropdown
-  const uniquePlans = useMemo(() => {
-    const plans = (subscribers || [])
-      .map((s) => s.plan)
-      .filter(Boolean) as NonNullable<Subscriber['plan']>[];
-    
-    // Get unique plans by id
-    const uniquePlanMap = new Map();
-    plans.forEach(plan => {
-      if (plan && !uniquePlanMap.has(plan.id)) {
-        uniquePlanMap.set(plan.id, plan);
-      }
-    });
-    
-    return Array.from(uniquePlanMap.values());
-  }, [subscribers]);
+  // Split subscribers into managed and unmanaged
+  const managedSubscribers = useMemo(() => {
+    return filteredSubscribers.filter(sub => 
+      sub.subscription_status === "active" && 
+      sub.plan !== null && 
+      sub.subscription_end_date !== null
+    );
+  }, [filteredSubscribers]);
+
+  const unmanagedUsers = useMemo(() => {
+    return filteredSubscribers.filter(sub => 
+      (sub.subscription_status !== "active" || 
+      sub.plan === null || 
+      sub.subscription_end_date === null) &&
+      sub.is_active
+    );
+  }, [filteredSubscribers]);
 
   return {
     searchQuery,
@@ -64,6 +64,8 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
     planFilter,
     setPlanFilter,
     filteredSubscribers,
+    managedSubscribers,
+    unmanagedUsers,
     uniquePlans
   };
 };

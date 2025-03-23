@@ -1,8 +1,9 @@
 
-export type OnboardingStep = "welcome" | "connect-telegram" | "complete";
+export type OnboardingStep = "welcome" | "bot-selection" | "connect-telegram" | "complete";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
+  "bot-selection",
   "connect-telegram",
   "complete"
 ];

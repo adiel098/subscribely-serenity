@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -5,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { useOnboardingNavigation } from "@/group_owners/hooks/onboarding/useOnboardingNavigation";
 import { WelcomeStep } from "./steps/WelcomeStep";
+import BotSelectionStep from "./steps/BotSelectionStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import { useToast } from "@/components/ui/use-toast";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
@@ -127,6 +129,15 @@ const Onboarding = () => {
           <WelcomeStep 
             onComplete={() => goToNextStep('welcome')} 
             activeStep={true}
+          />
+        );
+      
+      case "bot-selection":
+        return (
+          <BotSelectionStep 
+            onComplete={() => {}} 
+            activeStep={true}
+            goToNextStep={() => goToNextStep('bot-selection')}
           />
         );
       

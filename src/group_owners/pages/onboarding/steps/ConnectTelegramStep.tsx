@@ -30,7 +30,9 @@ const ConnectTelegramStep = ({
     handleRefreshPhoto,
     verifyConnection,
     handleCodeRetry,
-    userId
+    userId,
+    useCustomBot,
+    customBotToken
   } = useTelegramVerificationState();
 
   // Go to dashboard and complete onboarding
@@ -42,10 +44,12 @@ const ConnectTelegramStep = ({
     navigate('/dashboard', { replace: true });
   };
 
+  const botTypeText = useCustomBot ? "Custom" : "Official Membify";
+  
   return (
     <OnboardingLayout
       currentStep="connect-telegram"
-      title="Connect Your Telegram Channel"
+      title={`Connect Your Telegram Channel (${botTypeText} Bot)`}
       description="Link your Telegram channel or group to enable subscription management"
       icon={<MessageCircle className="w-6 h-6" />}
       showBackButton={true}
@@ -75,6 +79,8 @@ const ConnectTelegramStep = ({
             attemptCount={attemptCount}
             verifyConnection={verifyConnection}
             goToPreviousStep={goToPreviousStep}
+            useCustomBot={useCustomBot}
+            customBotToken={customBotToken}
           />
         )}
       </div>

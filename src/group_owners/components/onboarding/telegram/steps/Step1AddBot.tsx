@@ -1,52 +1,90 @@
 
 import React from "react";
-import { Bot, ShieldCheck } from "lucide-react";
-import { motion } from "framer-motion";
+import { BookOpen, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const Step1AddBot = () => {
+interface Step1AddBotProps {
+  useCustomBot?: boolean;
+  customBotToken?: string | null;
+}
+
+const Step1AddBot: React.FC<Step1AddBotProps> = ({ 
+  useCustomBot = false,
+  customBotToken = null 
+}) => {
   return (
-    <motion.div 
-      className="flex flex-col md:flex-row gap-6"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-    >
-      <div className="flex-shrink-0 flex items-start">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
-          1
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-800">Step 1: Add Bot to Your Group</h3>
+      
+      {useCustomBot ? (
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Add <strong>your custom bot</strong> as an administrator to your Telegram group or channel.
+          </p>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm">
+            <div className="flex items-start gap-2">
+              <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-amber-800">Important:</p>
+                <p className="text-amber-700 mt-1">
+                  Make sure your bot has administrator permissions to:
+                </p>
+                <ul className="list-disc ml-5 mt-1 text-amber-700">
+                  <li>Add and remove members</li>
+                  <li>Send messages and media</li>
+                  <li>Read group messages</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2"
+              onClick={() => window.open('https://t.me/BotFather', '_blank')}
+            >
+              Open BotFather
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="flex-1">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <Bot className="h-5 w-5 text-indigo-600" />
-          Add our bot to your group
-        </h3>
-        <p className="mt-2 text-gray-600">
-          Add <a 
-            href="https://t.me/membifybot" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-indigo-600 font-medium hover:text-indigo-800 underline decoration-2 decoration-indigo-300 underline-offset-2"
-          >
-            @MembifyBot
-          </a> to your Telegram group or channel and make it an administrator with these permissions:
-        </p>
-        <ul className="mt-3 space-y-2">
-          <li className="flex items-center text-gray-700">
-            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-            <span>Delete messages</span>
-          </li>
-          <li className="flex items-center text-gray-700">
-            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-            <span>Ban users</span>
-          </li>
-          <li className="flex items-center text-gray-700">
-            <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-            <span>Add new admins</span>
-          </li>
-        </ul>
-      </div>
-    </motion.div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Add the <strong>Membify Bot (@MembifyBot)</strong> as an administrator to your Telegram group or channel.
+          </p>
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm">
+            <div className="flex items-start gap-2">
+              <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-amber-800">Important:</p>
+                <p className="text-amber-700 mt-1">
+                  Make sure the bot has administrator permissions to:
+                </p>
+                <ul className="list-disc ml-5 mt-1 text-amber-700">
+                  <li>Add and remove members</li>
+                  <li>Send messages</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2"
+              onClick={() => window.open('https://t.me/MembifyBot', '_blank')}
+            >
+              Open Membify Bot
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

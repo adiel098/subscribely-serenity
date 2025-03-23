@@ -807,6 +807,7 @@ export type Database = {
           chat_id: string | null
           community_id: string | null
           created_at: string
+          custom_bot_token: string | null
           expired_subscription_message: string | null
           first_reminder_days: number | null
           first_reminder_image: string | null
@@ -823,6 +824,7 @@ export type Database = {
           subscription_reminder_days: number | null
           subscription_reminder_message: string | null
           updated_at: string
+          use_custom_bot: boolean | null
           verification_code: string | null
           verified_at: string | null
           welcome_image: string | null
@@ -835,6 +837,7 @@ export type Database = {
           chat_id?: string | null
           community_id?: string | null
           created_at?: string
+          custom_bot_token?: string | null
           expired_subscription_message?: string | null
           first_reminder_days?: number | null
           first_reminder_image?: string | null
@@ -851,6 +854,7 @@ export type Database = {
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string
+          use_custom_bot?: boolean | null
           verification_code?: string | null
           verified_at?: string | null
           welcome_image?: string | null
@@ -863,6 +867,7 @@ export type Database = {
           chat_id?: string | null
           community_id?: string | null
           created_at?: string
+          custom_bot_token?: string | null
           expired_subscription_message?: string | null
           first_reminder_days?: number | null
           first_reminder_image?: string | null
@@ -879,6 +884,7 @@ export type Database = {
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string
+          use_custom_bot?: boolean | null
           verification_code?: string | null
           verified_at?: string | null
           welcome_image?: string | null

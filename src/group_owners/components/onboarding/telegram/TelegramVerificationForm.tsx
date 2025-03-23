@@ -16,6 +16,8 @@ interface TelegramVerificationFormProps {
   onVerify: () => void;
   onBack?: () => void;
   showBackButton?: boolean;
+  useCustomBot?: boolean;
+  customBotToken?: string | null;
 }
 
 export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> = ({
@@ -25,7 +27,9 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
   attemptCount,
   onVerify,
   onBack,
-  showBackButton = false
+  showBackButton = false,
+  useCustomBot = false,
+  customBotToken = null
 }) => {
   return (
     <motion.div
@@ -39,7 +43,7 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
           showError={attemptCount > 1}
           errorCount={attemptCount}
           troubleshootingSteps={[
-            "Make sure you've added @MembifyBot as an admin to your channel or group",
+            `Make sure you've added ${useCustomBot ? "your custom bot" : "@MembifyBot"} as an admin to your channel or group`,
             "Ensure the bot has permission to post messages",
             "Try posting the verification code as a new message (don't edit an existing message)"
           ]}
@@ -49,7 +53,10 @@ export const TelegramVerificationForm: React.FC<TelegramVerificationFormProps> =
       <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
         <div className="space-y-10">
           {/* Step 1: Add Bot */}
-          <Step1AddBot />
+          <Step1AddBot 
+            useCustomBot={useCustomBot}
+            customBotToken={customBotToken}
+          />
 
           {/* Step 2: Copy Code */}
           <Step2CopyCode 

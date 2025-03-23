@@ -9,6 +9,8 @@ interface VerificationInProgressProps {
   attemptCount: number;
   verifyConnection: () => void;
   goToPreviousStep: () => void;
+  useCustomBot?: boolean;
+  customBotToken?: string | null;
 }
 
 export const VerificationInProgress: React.FC<VerificationInProgressProps> = ({
@@ -17,7 +19,9 @@ export const VerificationInProgress: React.FC<VerificationInProgressProps> = ({
   isVerifying,
   attemptCount,
   verifyConnection,
-  goToPreviousStep
+  goToPreviousStep,
+  useCustomBot = false,
+  customBotToken = null
 }) => {
   return (
     <TelegramVerificationForm
@@ -28,6 +32,8 @@ export const VerificationInProgress: React.FC<VerificationInProgressProps> = ({
       onVerify={verifyConnection}
       onBack={goToPreviousStep}
       showBackButton={true}
+      useCustomBot={useCustomBot}
+      customBotToken={customBotToken}
     />
   );
 };

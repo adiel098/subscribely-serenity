@@ -59,7 +59,7 @@ const BotSelectionStep = ({
       description="Select which Telegram bot you want to use for your communities"
       icon={<Bot className="w-6 h-6" />}
       showBackButton={true}
-      onBackButtonClick={goToPreviousStep} // Use the goToPreviousStep function here
+      onBack={goToPreviousStep} // Changed from onBackButtonClick to onBack
     >
       <div className="grid gap-6 max-w-4xl mx-auto">
         <div className="grid md:grid-cols-2 gap-6">

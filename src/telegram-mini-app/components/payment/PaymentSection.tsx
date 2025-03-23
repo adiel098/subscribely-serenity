@@ -70,7 +70,7 @@ export const PaymentSection: React.FC<PaymentSectionProps> = ({
   return (
     <motion.div 
       id="payment-methods" 
-      className="scroll-mt-4 mt-3" // Reduced from mt-6 to mt-3 to decrease the spacing
+      className="scroll-mt-4 mt-1" // Reduced from mt-6 to mt-3 to decrease the spacing
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

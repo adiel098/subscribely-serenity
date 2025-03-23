@@ -65,10 +65,7 @@ export const SettingsContent = ({
           </Accordion>
         </motion.div>
         
-        <motion.div className="md:col-span-2 sticky top-6" variants={itemVariants}>
-          
-          <UnifiedMessagePreview settings={settings} activeSection={expandedSection} />
-        </motion.div>
+        
       </div>
     </motion.div>;
 };

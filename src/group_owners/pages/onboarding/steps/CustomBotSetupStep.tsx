@@ -1,9 +1,8 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Bot } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { CustomBotSetupCard } from "@/group_owners/components/onboarding/custom-bot/CustomBotSetupCard";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -19,6 +18,9 @@ const CustomBotSetupStep = ({
   goToPreviousStep
 }: CustomBotSetupStepProps) => {
   const [customTokenInput, setCustomTokenInput] = useState<string>("");
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [verificationResults, setVerificationResults] = useState<any[] | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   
   // Store the token when completing this step
   const handleContinue = async () => {
@@ -42,6 +44,43 @@ const CustomBotSetupStep = ({
     }
   };
 
+  const handleVerifyConnection = async () => {
+    if (!customTokenInput) {
+      toast.error("Please enter your bot token");
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError(null);
+    
+    try {
+      const response = await supabase.functions.invoke("validate-bot-token", {
+        body: { 
+          botToken: customTokenInput,
+          communityId: null // Will be associated with all communities
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data.valid) {
+        setVerificationResults(response.data.chatList || []);
+        toast.success("Bot token verified successfully!");
+      } else {
+        setVerificationError(response.data.message || "Invalid bot token");
+        toast.error(`Invalid bot token: ${response.data.message}`);
+      }
+    } catch (error: any) {
+      console.error("Error validating bot token:", error);
+      setVerificationError(error.message || "Failed to validate bot token");
+      toast.error("Failed to validate bot token. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <OnboardingLayout
       currentStep="custom-bot-setup"
@@ -57,6 +96,10 @@ const CustomBotSetupStep = ({
           setCustomTokenInput={setCustomTokenInput}
           goToPreviousStep={goToPreviousStep}
           onContinue={handleContinue}
+          onVerifyConnection={handleVerifyConnection}
+          isVerifying={isVerifying}
+          verificationResults={verificationResults}
+          verificationError={verificationError}
         />
       </div>
     </OnboardingLayout>

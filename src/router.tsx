@@ -1,4 +1,3 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import Login from "./auth/pages/Login";
@@ -39,7 +38,6 @@ export const router = createBrowserRouter([
         index: true,
         element: <Index />
       },
-      // Group owner routes
       {
         path: "dashboard",
         element: <ProtectedRoute><Dashboard /></ProtectedRoute>
@@ -88,7 +86,6 @@ export const router = createBrowserRouter([
         path: "connect/telegram",
         element: <ProtectedRoute><TelegramConnect /></ProtectedRoute>
       },
-      // Admin routes
       {
         path: "admin/dashboard",
         element: <AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>
@@ -113,7 +110,6 @@ export const router = createBrowserRouter([
         path: "admin/settings",
         element: <AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>
       },
-      // Authentication routes
       {
         path: "auth",
         element: <Auth />

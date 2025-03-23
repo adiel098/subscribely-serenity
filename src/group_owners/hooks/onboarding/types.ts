@@ -1,10 +1,11 @@
 
-export type OnboardingStep = "welcome" | "bot-selection" | "custom-bot-setup" | "connect-telegram" | "complete";
+export type OnboardingStep = "welcome" | "bot-selection" | "custom-bot-setup" | "official-bot-setup" | "connect-telegram" | "complete";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "bot-selection",
-  "custom-bot-setup",
+  "custom-bot-setup", // Will be skipped for official bot
+  "official-bot-setup", // Will be skipped for custom bot
   "connect-telegram",
   "complete"
 ];

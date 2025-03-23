@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -8,6 +7,7 @@ import { WelcomeStep } from "./steps/WelcomeStep";
 import BotSelectionStep from "./steps/BotSelectionStep";
 import ConnectTelegramStep from "./steps/ConnectTelegramStep";
 import CustomBotSetupStep from "./steps/CustomBotSetupStep";
+import OfficialBotSetupStep from "./steps/OfficialBotSetupStep";
 import { useToast } from "@/components/ui/use-toast";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 import { Loader2 } from "lucide-react";
@@ -87,7 +87,7 @@ const Onboarding = () => {
     if (
       pathStep && 
       pathStep !== onboardingState.currentStep && 
-      ["welcome", "bot-selection", "custom-bot-setup", "connect-telegram", "complete"].includes(pathStep) &&
+      ["welcome", "bot-selection", "custom-bot-setup", "official-bot-setup", "connect-telegram", "complete"].includes(pathStep) &&
       !onboardingHookLoading &&
       !isLoading
     ) {
@@ -118,11 +118,21 @@ const Onboarding = () => {
     // Extract the path to handle custom steps not tracked in onboardingState
     const path = location.pathname.split('/').pop();
     
-    // Special case for the custom bot setup step which isn't in the regular flow
+    // Special cases for the bot setup steps
     if (path === 'custom-bot-setup') {
       return (
         <CustomBotSetupStep 
           onComplete={() => goToNextStep("custom-bot-setup")} 
+          activeStep={true}
+          goToPreviousStep={() => navigate('/onboarding/bot-selection')}
+        />
+      );
+    }
+    
+    if (path === 'official-bot-setup') {
+      return (
+        <OfficialBotSetupStep 
+          onComplete={() => goToNextStep("official-bot-setup")} 
           activeStep={true}
           goToPreviousStep={() => navigate('/onboarding/bot-selection')}
         />
@@ -153,6 +163,15 @@ const Onboarding = () => {
       case "custom-bot-setup":
         return (
           <CustomBotSetupStep 
+            onComplete={() => goToNextStep(onboardingState.currentStep)} 
+            activeStep={true}
+            goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
+          />
+        );
+      
+      case "official-bot-setup":
+        return (
+          <OfficialBotSetupStep 
             onComplete={() => goToNextStep(onboardingState.currentStep)} 
             activeStep={true}
             goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}

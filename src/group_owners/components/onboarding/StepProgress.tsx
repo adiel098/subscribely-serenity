@@ -1,7 +1,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Check, Rocket, Users, Bot, Shield } from "lucide-react";
+import { Check, Rocket, Users, Bot, Shield, Zap } from "lucide-react";
 import { OnboardingStep, ONBOARDING_STEPS } from "@/group_owners/hooks/onboarding/types";
 
 interface StepProgressProps {
@@ -26,8 +26,12 @@ const STEP_INFO: Record<OnboardingStep, StepInfo> = {
     title: 'Setup Bot',
     icon: <Shield className="h-4 w-4" />
   },
+  'official-bot-setup': {
+    title: 'Official Bot',
+    icon: <Zap className="h-4 w-4" />
+  },
   'connect-telegram': {
-    title: 'Connect Telegram',
+    title: 'Connect',
     icon: <Users className="h-4 w-4" />
   },
   'complete': {

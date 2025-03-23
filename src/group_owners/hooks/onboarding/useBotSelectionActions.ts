@@ -32,12 +32,11 @@ export const useBotSelectionActions = ({ userId, onComplete }: UseBotSelectionAc
       toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
       
       if (selected === "custom") {
-        // Navigate to custom bot setup directly
+        // Navigate to custom bot setup
         navigate("/onboarding/custom-bot-setup");
       } else {
-        // For official bot, continue with standard flow
-        console.log("Selected official bot, calling onComplete to navigate to the next step");
-        onComplete();
+        // For official bot, navigate to official bot setup
+        navigate("/onboarding/official-bot-setup");
       }
     } catch (error) {
       console.error("Error saving bot selection:", error);

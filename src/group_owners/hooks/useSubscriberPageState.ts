@@ -21,7 +21,8 @@ export const useSubscriberPageState = (entityId: string) => {
     isUpdating,
     refetch,
     handleRemoveSubscriber,
-    handleUnblockSubscriber
+    handleUnblockSubscriber,
+    assignPlanToUser
   } = useSubscriberManagement(entityId || "");
 
   useEffect(() => {
@@ -162,6 +163,7 @@ export const useSubscriberPageState = (entityId: string) => {
     onConfirmRemove,
     onConfirmUnblock,
     handleRemoveDialogChange,
-    handleUnblockDialogChange
+    handleUnblockDialogChange,
+    assignPlanToUser
   };
 };

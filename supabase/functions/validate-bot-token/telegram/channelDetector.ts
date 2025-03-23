@@ -57,7 +57,7 @@ export class TelegramChannelDetector {
   async detectBotChats() {
     console.log("Starting comprehensive channel and group detection...");
     
-    // Store all detected chats here (using Set to avoid duplicates)
+    // Store all detected chats here (using Map to avoid duplicates)
     const chatMap = new Map();
     
     // Step 1: Check updates with focus on my_chat_member events
@@ -66,7 +66,10 @@ export class TelegramChannelDetector {
     // Step 2: Try to get chat administrators for known chats
     await this.verifyBotAdminStatus(chatMap);
     
-    // Step 3: Try direct channel access with popular channels as a fallback
+    // Step 3: Send probe messages to help identify channels and groups
+    await this.sendProbeMessages(chatMap);
+    
+    // Step 4: Try direct channel access with popular channels as a fallback
     await this.detectPopularChannels(chatMap);
     
     // Convert the Map to an array and sort it properly
@@ -86,6 +89,120 @@ export class TelegramChannelDetector {
     
     console.log(`Found ${chatList.length} total chats (${chatList.filter(c => c.type === 'channel').length} channels)`);
     return chatList;
+  }
+
+  /**
+   * Send probe messages to help identify channels and groups
+   * This helps generate fresh updates we can detect
+   */
+  private async sendProbeMessages(chatMap: Map<string, any>) {
+    console.log("Sending probe messages to help identify channels...");
+    
+    // Look for potential channel IDs in Telegram's update history
+    const updatesResponse = await fetch(
+      `https://api.telegram.org/bot${this.botToken}/getUpdates?limit=100&allowed_updates=["message","channel_post","my_chat_member"]`
+    );
+    
+    try {
+      const updatesData = await updatesResponse.json();
+      if (!updatesResponse.ok || !updatesData.ok) {
+        console.error("Failed to get updates:", updatesData);
+        return;
+      }
+      
+      // Extract unique chat IDs from all updates to try sending messages
+      const chatIds = new Set<string>();
+      const updates = updatesData.result || [];
+      
+      for (const update of updates) {
+        // Look for chat IDs in various update types
+        if (update.message?.chat?.id) {
+          chatIds.add(update.message.chat.id.toString());
+        }
+        if (update.channel_post?.chat?.id) {
+          chatIds.add(update.channel_post.chat.id.toString());
+        }
+        if (update.my_chat_member?.chat?.id) {
+          chatIds.add(update.my_chat_member.chat.id.toString());
+        }
+      }
+      
+      console.log(`Found ${chatIds.size} potential chat IDs from update history`);
+      
+      // Also add any chat IDs we've already found
+      for (const chatId of chatMap.keys()) {
+        chatIds.add(chatId);
+      }
+      
+      // Now send a temporary probe message to each chat
+      for (const chatId of chatIds) {
+        try {
+          console.log(`Sending probe message to chat ID: ${chatId}`);
+          
+          // Send a temporary service message that we'll delete immediately
+          const probeMessage = "🔍 Scanning for bot permissions... (this message will be deleted)";
+          const sendResponse = await fetch(
+            `https://api.telegram.org/bot${this.botToken}/sendMessage`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: probeMessage,
+                disable_notification: true
+              })
+            }
+          );
+          
+          const sendData = await sendResponse.json();
+          
+          if (sendResponse.ok && sendData.ok && sendData.result) {
+            console.log(`Successfully sent probe message to chat ID: ${chatId}`);
+            
+            // If we can send a message, the bot likely has admin rights
+            // Add this chat to our map if it's not already there
+            if (!chatMap.has(chatId)) {
+              // Get more information about this chat
+              const chatResponse = await fetch(
+                `https://api.telegram.org/bot${this.botToken}/getChat?chat_id=${chatId}`
+              );
+              
+              const chatData = await chatResponse.json();
+              
+              if (chatResponse.ok && chatData.ok && chatData.result) {
+                this.addChatToMap(chatMap, chatData.result);
+                console.log(`Added new chat from probe: ${chatData.result.title} (${chatData.result.type})`);
+              }
+            }
+            
+            // Delete the probe message to avoid spamming
+            try {
+              await fetch(
+                `https://api.telegram.org/bot${this.botToken}/deleteMessage`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    message_id: sendData.result.message_id
+                  })
+                }
+              );
+            } catch (deleteError) {
+              console.warn(`Could not delete probe message in chat ${chatId}:`, deleteError);
+            }
+          }
+        } catch (error) {
+          console.warn(`Error sending probe message to chat ${chatId}:`, error);
+        }
+      }
+      
+      // Refresh the updates to see if we've discovered any new chats
+      await this.detectChatsFromUpdates(chatMap);
+      
+    } catch (error) {
+      console.error("Error in sendProbeMessages:", error);
+    }
   }
 
   /**
@@ -196,7 +313,8 @@ export class TelegramChannelDetector {
     if (chatMap.size > 0) return; // Skip if we already found chats
     
     console.log("Attempting to detect popular channels as fallback...");
-    const testChannels = ['test', 'durov', 'telegram'];
+    // Add more potential channel usernames to try
+    const testChannels = ['test', 'durov', 'telegram', 'news', 'announcements', 'membify', 'updates'];
     
     for (const username of testChannels) {
       try {

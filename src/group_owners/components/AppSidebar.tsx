@@ -1,3 +1,4 @@
+
 import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
@@ -18,7 +19,7 @@ const menuItems = [
     path: "/subscribers"
   },
   {
-    title: "Subscriptions",
+    title: "Plans",
     icon: CreditCard,
     path: "/subscriptions"
   },

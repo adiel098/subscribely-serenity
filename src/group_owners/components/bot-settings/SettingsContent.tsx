@@ -5,7 +5,6 @@ import { BotStatsHeader } from "./BotStatsHeader";
 import { WelcomeMessageSection } from "./WelcomeMessageSection";
 import { SubscriptionSection } from "./SubscriptionSection";
 import { BroadcastSection } from "./BroadcastSection";
-import { UnifiedMessagePreview } from "./UnifiedMessagePreview";
 import { motion } from "framer-motion";
 import { Bot, MessageSquare, BellRing, Megaphone } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -113,10 +112,6 @@ export const SettingsContent = ({
           ))}
         </motion.div>
       </div>
-
-      <motion.div variants={itemVariants}>
-        <UnifiedMessagePreview settings={settings} activeSection={activeSection} />
-      </motion.div>
     </motion.div>
   );
 };

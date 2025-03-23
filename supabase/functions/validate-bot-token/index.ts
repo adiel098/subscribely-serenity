@@ -44,16 +44,18 @@ serve(async (req: Request) => {
     console.log(`Bot validated: ${botUsername}`);
 
     // Get bot chat information
-    const chatResponse = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const chatResponse = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=100`);
     const chatData = await chatResponse.json();
     
-    console.log("Chat updates data:", chatData);
+    console.log("Chat updates data received, processing...");
     
     // Get bot's chat list (groups/channels where the bot is added)
     const chatList = [];
     const processedChatIds = new Set();
     
     if (chatData.ok && chatData.result) {
+      console.log(`Found ${chatData.result.length} updates to process`);
+      
       // Process chats from updates
       for (const update of chatData.result) {
         // Check for regular messages (groups and supergroups)
@@ -63,6 +65,8 @@ serve(async (req: Request) => {
               && !processedChatIds.has(chat.id)) {
                 
             processedChatIds.add(chat.id);
+            console.log(`Found chat from message: ${chat.title} (${chat.type})`);
+            
             const chatInfo = {
               id: chat.id,
               title: chat.title,
@@ -79,6 +83,26 @@ serve(async (req: Request) => {
           const chat = update.channel_post.chat;
           if (!processedChatIds.has(chat.id)) {
             processedChatIds.add(chat.id);
+            console.log(`Found chat from channel_post: ${chat.title} (${chat.type})`);
+            
+            const chatInfo = {
+              id: chat.id,
+              title: chat.title,
+              type: chat.type,
+              username: chat.username || null
+            };
+            
+            chatList.push(chatInfo);
+          }
+        }
+        
+        // Check for edited channel posts
+        if (update.edited_channel_post && update.edited_channel_post.chat) {
+          const chat = update.edited_channel_post.chat;
+          if (!processedChatIds.has(chat.id)) {
+            processedChatIds.add(chat.id);
+            console.log(`Found chat from edited_channel_post: ${chat.title} (${chat.type})`);
+            
             const chatInfo = {
               id: chat.id,
               title: chat.title,
@@ -90,6 +114,35 @@ serve(async (req: Request) => {
           }
         }
       }
+      
+      // Try to get additional chats by calling getMyCommands
+      try {
+        console.log("Checking bot's commands for additional context...");
+        const commandsResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMyCommands`);
+        const commandsData = await commandsResponse.json();
+        
+        if (commandsResponse.ok && commandsData.ok) {
+          console.log("Bot commands retrieved successfully");
+        }
+      } catch (error) {
+        console.error("Error checking bot commands:", error);
+      }
+      
+      // Check if we have any admin channels that might not appear in updates
+      try {
+        console.log("Attempting deeper channel search...");
+        // This endpoint returns chats where the bot has admin privileges
+        const adminChatResponse = await fetch(`https://api.telegram.org/bot${botToken}/getMyDefaultAdministratorRights?for_channels=true`);
+        const adminChatData = await adminChatResponse.json();
+        
+        if (adminChatResponse.ok && adminChatData.ok) {
+          console.log("Bot admin rights retrieved:", adminChatData.result);
+        }
+      } catch (error) {
+        console.error("Error checking admin rights:", error);
+      }
+      
+      console.log(`Found ${chatList.length} total chats before enrichment`);
       
       // Try to get chat photos for each chat
       for (const chat of chatList) {
@@ -122,7 +175,23 @@ serve(async (req: Request) => {
           // Continue without additional info
         }
       }
+    } else {
+      console.warn("No updates found or error in getUpdates response:", chatData);
     }
+    
+    // Sort channels first, then groups
+    chatList.sort((a, b) => {
+      // Sort by type (channel first, then supergroup, then group)
+      if (a.type === 'channel' && b.type !== 'channel') return -1;
+      if (a.type !== 'channel' && b.type === 'channel') return 1;
+      if (a.type === 'supergroup' && b.type === 'group') return -1;
+      if (a.type === 'group' && b.type === 'supergroup') return 1;
+      
+      // If same type, sort alphabetically by title
+      return a.title.localeCompare(b.title);
+    });
+    
+    console.log(`Returning ${chatList.length} chats to the client`);
     
     // Return success response with bot and chat info
     return new Response(

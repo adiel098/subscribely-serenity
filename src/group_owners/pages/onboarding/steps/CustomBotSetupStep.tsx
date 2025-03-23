@@ -31,7 +31,7 @@ const CustomBotSetupStep = ({
     }
     
     try {
-      // Just save the token without validation
+      // Save the token
       await supabase.rpc('set_bot_preference', { 
         use_custom: true,
         custom_token: customTokenInput
@@ -68,7 +68,22 @@ const CustomBotSetupStep = ({
 
       if (response.data.valid) {
         setVerificationResults(response.data.chatList || []);
-        toast.success("Bot token verified successfully!");
+        
+        const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
+        const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
+        
+        let successMessage = `Bot token verified successfully!`;
+        if (response.data.chatList && response.data.chatList.length > 0) {
+          if (channelCount > 0 && groupCount > 0) {
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+          } else if (channelCount > 0) {
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'}.`;
+          } else if (groupCount > 0) {
+            successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+          }
+        }
+        
+        toast.success(successMessage);
       } else {
         setVerificationError(response.data.message || "Invalid bot token");
         toast.error(`Invalid bot token: ${response.data.message}`);

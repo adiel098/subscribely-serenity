@@ -1,14 +1,14 @@
 
 import React from "react";
-import { ArrowLeft, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { BotTokenInput } from "./BotTokenInput";
-import BotCreationGuide from "./BotCreationGuide";
-import { TelegramChatsList } from "./TelegramChatsList";
+import { Bot, ArrowLeft, AlertCircle, Check } from "lucide-react";
 import { TelegramChat } from "./TelegramChatItem";
+import { TelegramChatsList } from "./TelegramChatsList";
 
 interface CustomBotSetupCardProps {
   customTokenInput: string;
@@ -38,55 +38,89 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
       transition={{ duration: 0.5 }}
     >
       <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl">
-        <h3 className="text-lg font-semibold mb-4">Set Up Your Custom Bot</h3>
+        <h3 className="text-xl font-semibold mb-6">Set Up Your Custom Bot</h3>
         
-        <div className="space-y-6">
-          <BotTokenInput
-            customTokenInput={customTokenInput}
-            setCustomTokenInput={setCustomTokenInput}
-          />
+        <div className="space-y-6 mb-8">
+          <div className="space-y-2">
+            <Label htmlFor="bot-token">Bot Token from @BotFather</Label>
+            <Input
+              id="bot-token"
+              type="password"
+              value={customTokenInput}
+              onChange={(e) => setCustomTokenInput(e.target.value)}
+              placeholder="Enter your bot token"
+              className="w-full"
+            />
+          </div>
           
-          <BotCreationGuide />
+          <div className="space-y-3">
+            <h4 className="font-medium">How to create a Telegram bot:</h4>
+            <ol className="space-y-2 ml-5 list-decimal text-sm text-gray-700">
+              <li>Open Telegram and search for @BotFather</li>
+              <li>Send the /newbot command and follow the instructions</li>
+              <li>BotFather will provide a token (keep it secure)</li>
+              <li>Copy the API token provided and paste it above</li>
+              <li>Make your bot an admin in your channels and groups</li>
+            </ol>
+          </div>
           
-          {verificationError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertTitle>Verification Failed</AlertTitle>
-              <AlertDescription>{verificationError}</AlertDescription>
-            </Alert>
-          )}
-          
-          {verificationResults && (
-            <TelegramChatsList chats={verificationResults} />
-          )}
-          
-          <div className="flex justify-between mt-6">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={goToPreviousStep}
-              className="gap-1"
+          <div className="mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open('https://t.me/BotFather', '_blank')}
+              className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Bot Selection
+              Open @BotFather in Telegram
+            </Button>
+          </div>
+        </div>
+        
+        {verificationError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{verificationError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {verificationResults && (
+          <TelegramChatsList 
+            chats={verificationResults} 
+            botToken={customTokenInput}
+            onChatsRefresh={(newChats) => verificationResults = newChats}
+          />
+        )}
+        
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+          <Button
+            variant="outline"
+            onClick={goToPreviousStep}
+            className="flex items-center gap-1.5"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={onVerifyConnection}
+              disabled={!customTokenInput || isVerifying}
+              className="flex items-center gap-1.5"
+            >
+              <Bot className="h-4 w-4" />
+              {isVerifying ? 'Verifying...' : 'Verify Connection'}
             </Button>
             
-            <div className="space-x-3">
-              <Button 
-                variant="outline"
-                onClick={onVerifyConnection}
-                disabled={!customTokenInput || isVerifying}
-                className="gap-1"
-              >
-                <Shield className="h-4 w-4" />
-                {isVerifying ? "Verifying..." : "Verify Connection"}
-              </Button>
-              
-              <Button 
-                onClick={onContinue} 
-                disabled={isVerifying}
-              >
-                Continue
-              </Button>
-            </div>
+            <Button
+              onClick={onContinue}
+              disabled={!customTokenInput}
+              className="flex items-center gap-1.5"
+            >
+              <Check className="h-4 w-4" />
+              Continue
+            </Button>
           </div>
         </div>
       </Card>

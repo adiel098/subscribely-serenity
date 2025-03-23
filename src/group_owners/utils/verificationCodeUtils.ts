@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast as toastFunction } from "@/components/ui/use-toast";
 
 /**
+ * Generates a simple verification code with the MBF_ prefix
+ */
+export function generateVerificationCode(): string {
+  return 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+/**
  * Fetches an existing verification code or generates a new one for the user
  */
 export async function fetchOrGenerateVerificationCode(userId: string, toast: any): Promise<string | null> {
@@ -29,7 +36,7 @@ export async function fetchOrGenerateVerificationCode(userId: string, toast: any
       return profile.current_telegram_code;
     } else {
       // Generate a new code
-      const newCode = 'MBF_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const newCode = generateVerificationCode();
       
       const { error: updateError } = await supabase
         .from('profiles')

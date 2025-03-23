@@ -13,7 +13,15 @@ export const useTelegramVerificationState = () => {
   const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
   const [customBotToken, setCustomBotToken] = useState<string | null>(null);
   
-  const { verifyConnection, isVerifying, duplicateChatId, resetDuplicateError } = useTelegramVerification();
+  const userId = user?.id;
+  
+  const { 
+    verifyConnection: verifyTelegramConnection, 
+    isVerifying, 
+    duplicateChatId, 
+    resetDuplicateError 
+  } = useTelegramVerification(userId, verificationCode);
+  
   const { 
     isLoading: isCommunitiesLoading, 
     communities, 
@@ -21,9 +29,8 @@ export const useTelegramVerificationState = () => {
     getCommunityById,
     isRefreshingPhoto,
     handleRefreshPhoto
-  } = useTelegramCommunities();
+  } = useTelegramCommunities(userId);
   
-  const userId = user?.id;
   const isVerified = communities.length > 0;
   const displayedCommunity = communities.length > 0 ? communities[0] : null;
   const isLoading = verificationCode === null || isCommunitiesLoading;
@@ -65,8 +72,8 @@ export const useTelegramVerificationState = () => {
     if (!verificationCode) return;
     
     setAttemptCount(prevCount => prevCount + 1);
-    verifyConnection(verificationCode);
-  }, [verificationCode, verifyConnection]);
+    verifyTelegramConnection();
+  }, [verificationCode, verifyTelegramConnection]);
   
   // Handle code retry
   const handleCodeRetry = useCallback(() => {

@@ -17,6 +17,11 @@ export function useTelegramVerification(userId: string | undefined, verification
     setAttemptCount(0);
   }, [verificationCode]);
 
+  // Reset duplicate error
+  const resetDuplicateError = () => {
+    setDuplicateChatId(null);
+  };
+
   // Check verification status
   const checkVerificationStatus = async () => {
     if (!userId || !verificationCode) return false;
@@ -195,6 +200,7 @@ export function useTelegramVerification(userId: string | undefined, verification
     lastVerifiedCommunity,
     setIsVerified,
     verifyConnection,
-    checkVerificationStatus
+    checkVerificationStatus,
+    resetDuplicateError
   };
 }

@@ -68,7 +68,6 @@ export const UnifiedMessagePreview = ({
               <MessagePreview 
                 message={settings.welcome_message} 
                 image={settings.welcome_image}
-                showButton={false}
               />
             </TabsContent>
             
@@ -76,7 +75,6 @@ export const UnifiedMessagePreview = ({
               <MessagePreview 
                 message={settings.first_reminder_message} 
                 image={settings.first_reminder_image}
-                showButton={true}
                 buttonText="Renew Now"
               />
             </TabsContent>
@@ -85,7 +83,6 @@ export const UnifiedMessagePreview = ({
               <MessagePreview 
                 message={settings.second_reminder_message} 
                 image={settings.second_reminder_image}
-                showButton={true}
                 buttonText="Renew Now"
               />
             </TabsContent>
@@ -94,7 +91,6 @@ export const UnifiedMessagePreview = ({
               <MessagePreview 
                 message={settings.expired_subscription_message} 
                 image={null}
-                showButton={true}
                 buttonText="Renew Access"
               />
             </TabsContent>

@@ -26,7 +26,8 @@ const Onboarding = () => {
     isLoading: onboardingHookLoading, 
     goToNextStep, 
     goToPreviousStep,
-    completeOnboarding
+    completeOnboarding,
+    saveCurrentStep
   } = useOnboarding();
 
   useEffect(() => {
@@ -78,20 +79,22 @@ const Onboarding = () => {
   }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
 
   useEffect(() => {
+    // Extract the current step from the URL path
     const currentPath = location.pathname;
-    const targetPath = `/onboarding/${onboardingState.currentStep}`;
+    const pathStep = currentPath.split('/').pop();
     
+    // If URL path contains a valid step and it's different from current state
     if (
-      isUrlProcessed && 
-      !currentPath.includes(onboardingState.currentStep) && 
+      pathStep && 
+      pathStep !== onboardingState.currentStep && 
+      ["welcome", "bot-selection", "custom-bot-setup", "connect-telegram", "complete"].includes(pathStep) &&
       !onboardingHookLoading &&
-      !initialLoadRef.current &&
       !isLoading
     ) {
-      console.log(`Updating URL to match current step: ${onboardingState.currentStep}`);
-      navigate(targetPath, { replace: true });
+      console.log(`Updating step based on URL to: ${pathStep}`);
+      saveCurrentStep(pathStep);
     }
-  }, [onboardingState.currentStep, navigate, location.pathname, isUrlProcessed, onboardingHookLoading, isLoading]);
+  }, [location.pathname, onboardingState.currentStep, onboardingHookLoading, isLoading, saveCurrentStep]);
 
   const handleCompleteOnboarding = async () => {
     try {
@@ -119,7 +122,7 @@ const Onboarding = () => {
     if (path === 'custom-bot-setup') {
       return (
         <CustomBotSetupStep 
-          onComplete={() => goToNextStep("bot-selection")} 
+          onComplete={() => goToNextStep("custom-bot-setup")} 
           activeStep={true}
           goToPreviousStep={() => navigate('/onboarding/bot-selection')}
         />
@@ -138,6 +141,15 @@ const Onboarding = () => {
       case "bot-selection":
         return (
           <BotSelectionStep 
+            onComplete={() => goToNextStep(onboardingState.currentStep)} 
+            activeStep={true}
+            goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}
+          />
+        );
+        
+      case "custom-bot-setup":
+        return (
+          <CustomBotSetupStep 
             onComplete={() => goToNextStep(onboardingState.currentStep)} 
             activeStep={true}
             goToPreviousStep={() => goToPreviousStep(onboardingState.currentStep)}

@@ -4,9 +4,10 @@ export type OnboardingStep = "welcome" | "bot-selection" | "custom-bot-setup" | 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "bot-selection",
+  "custom-bot-setup", // Adding this step to the flow
   "connect-telegram",
   "complete"
-]; // Note: custom-bot-setup is not included here as it's optional in the flow
+];
 
 export interface OnboardingState {
   currentStep: OnboardingStep;

@@ -45,7 +45,7 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
       } else {
         toast.error("Failed to refresh chats");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error refreshing chats:", error);
       toast.error("An error occurred while refreshing chats");
     } finally {

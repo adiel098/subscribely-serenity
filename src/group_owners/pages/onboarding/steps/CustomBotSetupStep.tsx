@@ -97,6 +97,10 @@ const CustomBotSetupStep = ({
     }
   };
 
+  const handleChatsRefresh = (newChats: TelegramChat[]) => {
+    setVerificationResults(newChats);
+  };
+
   return (
     <OnboardingLayout
       currentStep="custom-bot-setup"
@@ -116,6 +120,7 @@ const CustomBotSetupStep = ({
           isVerifying={isVerifying}
           verificationResults={verificationResults}
           verificationError={verificationError}
+          onChatsRefresh={handleChatsRefresh}
         />
       </div>
     </OnboardingLayout>

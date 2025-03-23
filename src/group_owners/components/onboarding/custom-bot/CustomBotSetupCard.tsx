@@ -19,6 +19,7 @@ interface CustomBotSetupCardProps {
   isVerifying: boolean;
   verificationResults: TelegramChat[] | null;
   verificationError: string | null;
+  onChatsRefresh?: (newChats: TelegramChat[]) => void;
 }
 
 export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
@@ -29,7 +30,8 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   onVerifyConnection,
   isVerifying,
   verificationResults,
-  verificationError
+  verificationError,
+  onChatsRefresh
 }) => {
   return (
     <motion.div
@@ -88,7 +90,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
           <TelegramChatsList 
             chats={verificationResults} 
             botToken={customTokenInput}
-            onChatsRefresh={(newChats) => verificationResults = newChats}
+            onChatsRefresh={onChatsRefresh}
           />
         )}
         

@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -17,7 +16,7 @@ export const AuthFooter = ({
   }} transition={{
     delay: 0.4,
     duration: 0.5
-  }} className="w-full space-y-4 mt-8">
+  }} className="w-full mt-4">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-indigo-200" />

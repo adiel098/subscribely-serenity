@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 import { useOnboardingRouter } from "@/group_owners/hooks/onboarding/useOnboardingRouter";
@@ -11,6 +11,7 @@ import OfficialBotSetupStep from "./steps/OfficialBotSetupStep";
 const Onboarding = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const { 
     state: onboardingState, 
@@ -30,10 +31,18 @@ const Onboarding = () => {
   const handleCompleteOnboarding = async () => {
     try {
       await completeOnboarding();
+      navigate('/dashboard');
     } catch (error) {
       console.error("Error completing onboarding:", error);
     }
   };
+
+  useEffect(() => {
+    // If onboarding is complete, redirect to the dashboard
+    if (!onboardingHookLoading && onboardingState.isCompleted) {
+      navigate('/dashboard');
+    }
+  }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
 
   // Extract the current path step
   const pathStep = location.pathname.split('/').pop();

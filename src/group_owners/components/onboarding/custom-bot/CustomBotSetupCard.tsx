@@ -33,6 +33,8 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   verificationError,
   onChatsRefresh
 }) => {
+  const hasVerifiedChats = verificationResults && verificationResults.length > 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -117,7 +119,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             
             <Button
               onClick={onContinue}
-              disabled={!customTokenInput}
+              disabled={!hasVerifiedChats}
               className="flex items-center gap-1.5"
             >
               <Check className="h-4 w-4" />

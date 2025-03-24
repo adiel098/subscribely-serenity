@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { TelegramChat, TelegramChatItem } from "./TelegramChatItem";
 import { motion } from "framer-motion";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Shield, AlertCircle, RefreshCw } from "lucide-react";
+import { Shield, AlertCircle, RefreshCw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -113,6 +113,16 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
               {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
           )}
+        </div>
+        
+        <div className="p-3 bg-green-50 rounded border border-green-100 mb-3">
+          <div className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-green-600 mt-0.5" />
+            <div className="text-sm text-green-700">
+              <p className="font-medium">Verification Successful!</p>
+              <p>You can now click <strong>Continue</strong> to finish setup and go to your dashboard.</p>
+            </div>
+          </div>
         </div>
         
         <p className="text-sm text-gray-600 mb-3">

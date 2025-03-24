@@ -6,6 +6,7 @@ import { CustomBotSetupCard } from "@/group_owners/components/onboarding/custom-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
+import { useNavigate } from "react-router-dom";
 
 interface CustomBotSetupStepProps {
   onComplete: () => void;
@@ -18,6 +19,7 @@ const CustomBotSetupStep = ({
   activeStep,
   goToPreviousStep
 }: CustomBotSetupStepProps) => {
+  const navigate = useNavigate();
   const [customTokenInput, setCustomTokenInput] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
@@ -30,15 +32,43 @@ const CustomBotSetupStep = ({
       return;
     }
     
+    if (!verificationResults || verificationResults.length === 0) {
+      toast.error("Please verify your bot connection and detect at least one channel or group");
+      return;
+    }
+    
     try {
       // Save the token
-      await supabase.rpc('set_bot_preference', { 
+      const { error: tokenError } = await supabase.rpc('set_bot_preference', { 
         use_custom: true,
         custom_token: customTokenInput
       });
       
-      // Continue to next step
-      onComplete();
+      if (tokenError) throw tokenError;
+      
+      // Save verified channels and groups
+      const telegramChatIds = verificationResults.map(chat => ({
+        id: chat.id.toString(),
+        title: chat.title,
+        type: chat.type,
+        username: chat.username || null
+      }));
+      
+      // Complete onboarding and go directly to dashboard
+      try {
+        await supabase.from('profiles').update({ 
+          onboarding_completed: true,
+          onboarding_step: 'complete'
+        }).eq('id', (await supabase.auth.getUser()).data.user?.id);
+        
+        toast.success("Setup completed successfully!");
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } catch (completeError) {
+        console.error("Error completing onboarding:", completeError);
+        toast.error("Failed to complete setup");
+      }
     } catch (error) {
       console.error("Error saving bot token:", error);
       toast.error("Failed to save bot token");
@@ -72,8 +102,8 @@ const CustomBotSetupStep = ({
         const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
         const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
         
-        let successMessage = `Bot token verified successfully!`;
         if (response.data.chatList && response.data.chatList.length > 0) {
+          let successMessage = `Bot verified successfully!`;
           if (channelCount > 0 && groupCount > 0) {
             successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
           } else if (channelCount > 0) {
@@ -81,9 +111,10 @@ const CustomBotSetupStep = ({
           } else if (groupCount > 0) {
             successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
           }
+          toast.success(successMessage);
+        } else {
+          toast.warning("Bot token is valid, but no channels or groups were found. Make sure your bot is an admin in at least one group or channel.");
         }
-        
-        toast.success(successMessage);
       } else {
         setVerificationError(response.data.message || "Invalid bot token");
         toast.error(`Invalid bot token: ${response.data.message}`);

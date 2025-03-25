@@ -8,6 +8,15 @@ export type OnboardingStep =
   | "completion" 
   | "complete";
 
+export const ONBOARDING_STEPS: OnboardingStep[] = [
+  "welcome",
+  "bot-selection",
+  "custom-bot-setup",
+  "connect-telegram",
+  "completion",
+  "complete"
+];
+
 export interface OnboardingState {
   currentStep: OnboardingStep;
   isCompleted: boolean;

@@ -26,13 +26,13 @@ const STEP_INFO: Record<OnboardingStep, StepInfo> = {
     title: 'Setup Bot',
     icon: <Shield className="h-4 w-4" />
   },
-  'official-bot-setup': {
-    title: 'Official Bot',
-    icon: <Zap className="h-4 w-4" />
-  },
   'connect-telegram': {
     title: 'Connect',
     icon: <Users className="h-4 w-4" />
+  },
+  'completion': {
+    title: 'Review',
+    icon: <Check className="h-4 w-4" />
   },
   'complete': {
     title: 'Complete',

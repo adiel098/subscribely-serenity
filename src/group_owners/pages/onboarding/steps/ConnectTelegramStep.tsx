@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Bot, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 

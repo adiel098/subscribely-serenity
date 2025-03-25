@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface CustomBotSetupStepProps {
   onComplete: () => void;
@@ -20,6 +21,7 @@ const CustomBotSetupStep = ({
   goToPreviousStep
 }: CustomBotSetupStepProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [customTokenInput, setCustomTokenInput] = useState<string>("");
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
@@ -33,6 +35,11 @@ const CustomBotSetupStep = ({
       return;
     }
     
+    if (!user) {
+      toast.error("Authentication required. Please login again.");
+      return;
+    }
+    
     if (!verificationResults || verificationResults.length === 0) {
       toast.error("Please verify your bot connection and detect at least one channel or group");
       return;
@@ -40,6 +47,7 @@ const CustomBotSetupStep = ({
     
     try {
       setIsSaving(true);
+      console.log("Starting save process for user:", user.id);
       
       // Save the token
       const { error: tokenError } = await supabase.rpc('set_bot_preference', { 
@@ -47,41 +55,71 @@ const CustomBotSetupStep = ({
         custom_token: customTokenInput
       });
       
-      if (tokenError) throw tokenError;
+      if (tokenError) {
+        console.error("Error saving bot token:", tokenError);
+        throw tokenError;
+      }
+      
+      console.log("Bot token saved successfully");
       
       // Save each detected community/channel to the database
+      const savedCommunities = [];
       for (const chat of verificationResults) {
-        // Check if community already exists with this chat ID
-        const { data: existingCommunity } = await supabase
-          .from('communities')
-          .select('id')
-          .eq('telegram_chat_id', chat.id)
-          .maybeSingle();
-          
-        if (!existingCommunity) {
-          // Create new community record
-          const { error: communityError } = await supabase
+        try {
+          // Check if community already exists with this chat ID
+          const { data: existingCommunity } = await supabase
             .from('communities')
-            .insert({
-              name: chat.title,
-              telegram_chat_id: chat.id,
-              telegram_photo_url: chat.photo_url || null,
-              is_group: chat.type !== 'channel'
-            });
+            .select('id')
+            .eq('telegram_chat_id', chat.id)
+            .eq('owner_id', user.id)
+            .maybeSingle();
             
-          if (communityError) {
-            console.error("Error saving community:", communityError);
-            toast.error(`Failed to save community: ${chat.title}`);
-            // Continue with other communities even if one fails
+          if (!existingCommunity) {
+            // Create new community record
+            console.log("Creating new community:", chat.title);
+            const { data: newCommunity, error: communityError } = await supabase
+              .from('communities')
+              .insert({
+                name: chat.title,
+                telegram_chat_id: chat.id,
+                telegram_photo_url: chat.photo_url || null,
+                is_group: chat.type !== 'channel',
+                owner_id: user.id // Make sure to set the owner_id to comply with RLS policies
+              })
+              .select('id')
+              .single();
+              
+            if (communityError) {
+              console.error("Error saving community:", communityError);
+              toast.error(`Failed to save community: ${chat.title}`);
+              // Continue with other communities even if one fails
+            } else {
+              savedCommunities.push(newCommunity);
+              console.log("Community saved successfully:", newCommunity);
+            }
+          } else {
+            console.log("Community already exists:", existingCommunity);
+            savedCommunities.push(existingCommunity);
           }
+        } catch (communityError) {
+          console.error("Error processing community:", chat.title, communityError);
+          // Continue with other communities
         }
       }
       
-      // Explicitly mark onboarding as completed
-      await supabase.from('profiles').update({ 
-        onboarding_completed: true,
-        onboarding_step: 'complete'
-      });
+      if (savedCommunities.length === 0 && verificationResults.length > 0) {
+        toast.warning("No communities were saved. Please try again.");
+        setIsSaving(false);
+        return;
+      }
+      
+      // Mark onboarding as completed
+      await supabase.from('profiles')
+        .update({ 
+          onboarding_completed: true,
+          onboarding_step: 'complete'
+        })
+        .eq('id', user.id);
       
       toast.success("Setup completed successfully!");
       

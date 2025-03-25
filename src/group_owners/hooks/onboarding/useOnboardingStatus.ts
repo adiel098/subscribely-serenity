@@ -9,10 +9,11 @@ import {
   fetchPlatformSubscription, 
   fetchPaymentMethods 
 } from "../../services/onboardingService";
+import { toast } from "sonner";
 
 export const useOnboardingStatus = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const hasFetchedRef = useRef(false);
   const [state, setState] = useState<OnboardingState>({
@@ -34,20 +35,44 @@ export const useOnboardingStatus = () => {
       console.log("Fetching onboarding status for user:", user.id);
       
       // Fetch profile data to get onboarding status
-      const profile = await fetchOnboardingProfile(user.id);
-      console.log("Profile data:", profile);
+      let profile = null;
+      try {
+        profile = await fetchOnboardingProfile(user.id);
+        console.log("Profile data:", profile);
+      } catch (profileError) {
+        console.error("Error fetching profile:", profileError);
+        // Continue with default values if profile cannot be fetched
+      }
 
       // Check if user has connected a Telegram group
-      const communities = await fetchCommunities(user.id);
-      console.log("Communities data:", communities);
+      let communities = [];
+      try {
+        communities = await fetchCommunities(user.id);
+        console.log("Communities data:", communities);
+      } catch (communitiesError) {
+        console.error("Error fetching communities:", communitiesError);
+        // Continue with default values if communities cannot be fetched
+      }
 
       // Check if user has a platform subscription
-      const subscription = await fetchPlatformSubscription(user.id);
-      console.log("Subscription data:", subscription);
+      let subscription = null;
+      try {
+        subscription = await fetchPlatformSubscription(user.id);
+        console.log("Subscription data:", subscription);
+      } catch (subscriptionError) {
+        console.error("Error fetching subscription:", subscriptionError);
+        // Continue with default values if subscription cannot be fetched
+      }
 
       // Check if user has set up payment methods
-      const paymentMethods = await fetchPaymentMethods(user.id);
-      console.log("Payment methods data:", paymentMethods);
+      let paymentMethods = [];
+      try {
+        paymentMethods = await fetchPaymentMethods(user.id);
+        console.log("Payment methods data:", paymentMethods);
+      } catch (paymentMethodsError) {
+        console.error("Error fetching payment methods:", paymentMethodsError);
+        // Continue with default values if payment methods cannot be fetched
+      }
 
       setState({
         currentStep: (profile?.onboarding_step as any) || "welcome",
@@ -68,15 +93,11 @@ export const useOnboardingStatus = () => {
       hasFetchedRef.current = true;
     } catch (error) {
       console.error("Error fetching onboarding status:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load your onboarding status"
-      });
+      toast.error("Failed to load your onboarding status");
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast, isLoading]);
+  }, [user]);
 
   useEffect(() => {
     if (user && !hasFetchedRef.current) {

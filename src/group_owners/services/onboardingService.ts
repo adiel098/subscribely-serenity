@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "../hooks/onboarding/types";
 
 export const fetchOnboardingProfile = async (userId: string) => {
+  // Use maybeSingle instead of single to avoid the PGRST116 error when multiple rows are returned
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('onboarding_completed, onboarding_step')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (profileError) {
     console.error("Error fetching profile:", profileError);

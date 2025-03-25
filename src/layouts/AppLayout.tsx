@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useAuthRedirect } from "@/auth/hooks/useAuthRedirect";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const AppLayout = () => {
   const { user, isLoading } = useAuth();
@@ -31,19 +32,20 @@ export const AppLayout = () => {
           .from('profiles')
           .select('onboarding_completed, onboarding_step')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (profileError) {
           console.error("Error checking profile:", profileError);
+          // Don't redirect if there's an error, just continue with the current page
           setIsCheckingOnboarding(false);
           return;
         }
         
         console.log("Profile onboarding status:", profile);
         
-        // INVERSE LOGIC: Only redirect to onboarding if not complete
-        if (!profile.onboarding_step || 
-            (profile.onboarding_step !== "complete" && !profile.onboarding_completed)) {
+        // Only redirect to onboarding if profile exists and onboarding is not complete
+        if (profile && (!profile.onboarding_step || 
+            (profile.onboarding_step !== "complete" && !profile.onboarding_completed))) {
           console.log("Onboarding not completed, redirecting to onboarding flow");
           
           let targetPath = '/onboarding/welcome';
@@ -56,6 +58,7 @@ export const AppLayout = () => {
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);
+        toast.error("Error checking onboarding status. Please refresh the page.");
       } finally {
         setIsCheckingOnboarding(false);
       }

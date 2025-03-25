@@ -1,4 +1,3 @@
-
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -35,6 +34,8 @@ import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
 import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { AdminLayout } from "@/admin/components/AdminLayout";
 
+import CustomBotNewCommunity from "@/group_owners/pages/new-community/CustomBotNewCommunity";
+
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -48,6 +49,13 @@ const AppRoutes = () => {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/auth/*" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
+
+      {/* New Community Routes */}
+      <Route path="/new-community/custom-bot" element={
+        <ProtectedRoute>
+          <CustomBotNewCommunity />
+        </ProtectedRoute>
+      } />
 
       {/* Onboarding Routes - handle all onboarding steps internally */}
       <Route path="/onboarding" element={

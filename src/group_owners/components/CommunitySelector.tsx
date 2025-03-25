@@ -17,6 +17,7 @@ import { CommunityRequirementsBanner } from "./community-selector/CommunityRequi
 import { CreateGroupDialog } from "./community-groups/CreateGroupDialog";
 import { GroupMiniAppLinkButton } from "./community-groups/GroupMiniAppLinkButton";
 import { useGroupMemberCommunities } from "../hooks/useGroupMemberCommunities";
+import { useBotSettings } from "../hooks/useBotSettings";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -94,20 +95,7 @@ export const CommunitySelector = () => {
             </Button>
           </motion.div>
           
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button 
-              variant="default" 
-              onClick={handleCreateCommunity}
-              className="bg-gradient-to-r from-[#26A5E4] to-[#0088CC] hover:from-[#33C3F0] hover:to-[#0090BD] gap-2 shadow-md hover:shadow-lg transition-all duration-300 text-xs py-1 h-8 w-[150px]"
-              size="sm"
-            >
-              <PlusCircle className="h-3 w-3" />
-              New Community
-            </Button>
-          </motion.div>
+          <HeaderActions onNewCommunityClick={handleCreateCommunity} />
         </div>
       </motion.div>
 

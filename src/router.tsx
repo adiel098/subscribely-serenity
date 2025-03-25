@@ -27,6 +27,7 @@ import AdminPayments from "./admin/pages/Payments";
 import AdminReports from "./admin/pages/Reports";
 import AdminSettings from "./admin/pages/Settings";
 import TelegramConnect from "./group_owners/pages/connect/TelegramConnect";
+import CustomBotNewCommunity from "@/group_owners/pages/new-community/CustomBotNewCommunity";
 
 export const router = createBrowserRouter([
   {
@@ -133,7 +134,11 @@ export const router = createBrowserRouter([
       {
         path: "*",
         element: <NotFound />
-      }
+      },
+      {
+        path: "new-community/custom-bot",
+        element: <ProtectedRoute><CustomBotNewCommunity /></ProtectedRoute>
+      },
     ]
   }
 ]);

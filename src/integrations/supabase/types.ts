@@ -1177,6 +1177,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      set_bot_preference: {
+        Args: {
+          use_custom: boolean
+          custom_token?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       admin_role: "super_admin" | "admin" | "moderator"

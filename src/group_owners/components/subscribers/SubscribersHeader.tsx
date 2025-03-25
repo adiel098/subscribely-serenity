@@ -59,55 +59,6 @@ export const SubscribersHeader = ({
       <p className="text-sm text-muted-foreground">
         Manage community subscribers and their access
       </p>
-      
-      {!isMobile && (
-        <div className="flex items-center gap-2 mt-2">
-          {onAddSubscriber && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onAddSubscriber}
-              className="gap-1 border-green-200 text-green-700 hover:bg-green-50"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
-              Add Subscriber
-            </Button>
-          )}
-          
-          {onFilter && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onFilter}
-              className={`gap-1 ${hasFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : ''}`}
-            >
-              <FilterIcon className="h-3.5 w-3.5" />
-              {hasFilters ? 'Filters Applied' : 'Filter'}
-            </Button>
-          )}
-          
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={onUpdateStatus}
-            className="gap-1"
-            disabled={isUpdating}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
-            {isUpdating ? 'Updating...' : 'Update Status'}
-          </Button>
-          
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={onExport}
-            className="gap-1"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5" />
-            Export
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

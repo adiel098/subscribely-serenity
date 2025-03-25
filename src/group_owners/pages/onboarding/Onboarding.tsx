@@ -37,11 +37,11 @@ const Onboarding = () => {
       redirectingRef.current = true;
       await completeOnboarding();
       
-      // Use setTimeout to prevent React errors with navigation during renders
+      // Use setTimeout to prevent React errors during navigation
       setTimeout(() => {
         console.log("Navigation to dashboard after completion");
         navigate('/dashboard', { replace: true });
-      }, 200);
+      }, 300);
     } catch (error) {
       console.error("Error completing onboarding:", error);
       redirectingRef.current = false;
@@ -54,10 +54,10 @@ const Onboarding = () => {
       console.log("Onboarding detected as complete in main component, redirecting");
       redirectingRef.current = true;
       
-      // Use setTimeout to prevent React errors with navigation during renders
+      // Use setTimeout to prevent React errors during navigation
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 200);
+      }, 300);
     }
   }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
 
@@ -75,10 +75,10 @@ const Onboarding = () => {
       console.log("Complete step detected, redirecting to dashboard");
       redirectingRef.current = true;
       
-      // Use setTimeout to prevent React errors with navigation during renders
+      // Use setTimeout to prevent React errors during navigation
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 200);
+      }, 300);
     }
     
     // Show loading while redirect happens

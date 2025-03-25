@@ -38,10 +38,10 @@ export const useOnboardingRouter = (
           redirectingRef.current = true;
           completedOnboardingRef.current = true;
           
-          // Use setTimeout to avoid React errors with state updates during rendering
+          // Use setTimeout to avoid React errors during navigation
           setTimeout(() => {
             navigate('/dashboard', { replace: true });
-          }, 100);
+          }, 300);
           return;
         }
       } catch (error) {
@@ -51,14 +51,19 @@ export const useOnboardingRouter = (
       }
     };
     
-    if (!redirectingRef.current && !completionCheckDoneRef.current) {
+    // Only run the check if we're in the onboarding flow
+    if (location.pathname.includes('/onboarding') && !redirectingRef.current && !completionCheckDoneRef.current) {
       checkCompletionStatus();
+    } else if (!location.pathname.includes('/onboarding')) {
+      // If we're not in onboarding, mark as processed
+      setIsLoading(false);
+      setIsUrlProcessed(true);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   // Process initial URL path
   useEffect(() => {
-    if (!isUrlProcessed && initialLoadRef.current && !isLoading && !redirectingRef.current) {
+    if (!isUrlProcessed && initialLoadRef.current && !isLoading && !redirectingRef.current && location.pathname.includes('/onboarding')) {
       console.log("Processing URL path:", location.pathname);
       const path = location.pathname;
       
@@ -68,41 +73,44 @@ export const useOnboardingRouter = (
       
       setIsUrlProcessed(true);
       initialLoadRef.current = false;
+    } else if (!location.pathname.includes('/onboarding')) {
+      // If we're not in onboarding, mark as processed
+      setIsUrlProcessed(true);
     }
   }, [location.pathname, navigate, isUrlProcessed, isLoading]);
 
   // Redirect to dashboard if onboarding is completed
   useEffect(() => {
-    if (onboardingState.isCompleted && !onboardingHookLoading && !redirectingRef.current) {
+    if (onboardingState.isCompleted && !onboardingHookLoading && !redirectingRef.current && location.pathname.includes('/onboarding')) {
       console.log("Onboarding completed, redirecting to dashboard");
       redirectingRef.current = true;
       completedOnboardingRef.current = true;
       
-      // Use setTimeout to avoid React errors with state updates during rendering
+      // Use setTimeout to avoid React errors during navigation
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 300);
     }
-  }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
+  }, [onboardingState.isCompleted, onboardingHookLoading, navigate, location.pathname]);
 
   // Handle special case for complete step to avoid loops
   useEffect(() => {
-    if (onboardingState.currentStep === "complete" && !redirectingRef.current) {
+    if (onboardingState.currentStep === "complete" && !redirectingRef.current && location.pathname.includes('/onboarding')) {
       console.log("Current step is 'complete', redirecting to dashboard");
       redirectingRef.current = true;
       completedOnboardingRef.current = true;
       
-      // Use setTimeout to avoid React errors with state updates during rendering
+      // Use setTimeout to avoid React errors during navigation
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 300);
     }
-  }, [onboardingState.currentStep, navigate]);
+  }, [onboardingState.currentStep, navigate, location.pathname]);
 
   // Sync URL path with onboarding state, but don't do this if we're already marked as completed
   useEffect(() => {
     // Don't update if we're already redirecting or have completed onboarding
-    if (redirectingRef.current || completedOnboardingRef.current) return;
+    if (redirectingRef.current || completedOnboardingRef.current || !location.pathname.includes('/onboarding')) return;
     
     // Extract the current step from the URL path
     const currentPath = location.pathname;
@@ -126,10 +134,10 @@ export const useOnboardingRouter = (
       redirectingRef.current = true;
       completedOnboardingRef.current = true;
       
-      // Use setTimeout to avoid React errors with state updates during rendering
+      // Use setTimeout to avoid React errors during navigation
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 300);
     }
   }, [location.pathname, onboardingState.currentStep, onboardingHookLoading, isLoading, saveCurrentStep, navigate]);
 

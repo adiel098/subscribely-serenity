@@ -27,7 +27,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = React.useState(false);
 
-  // Handle the "complete" step explicitly
+  // Handle the "complete" step explicitly with useEffect
   React.useEffect(() => {
     if (currentStep === "complete" && !isRedirecting) {
       console.log("Onboarding complete in StepRenderer, preparing redirect to dashboard...");
@@ -37,7 +37,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
       const redirectTimer = setTimeout(() => {
         console.log("Executing dashboard redirect...");
         navigate('/dashboard', { replace: true });
-      }, 200);
+      }, 300); // Increased timeout to ensure all state updates complete
       
       return () => clearTimeout(redirectTimer);
     }

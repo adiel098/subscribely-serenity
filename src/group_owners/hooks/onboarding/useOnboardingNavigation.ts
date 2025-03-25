@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -14,6 +13,7 @@ export const useOnboardingNavigation = (
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSavedStepRef = useRef<OnboardingStep | null>(null);
+  const isCompletingRef = useRef(false);
 
   // Allow any step string to be passed, but save only valid OnboardingStep values
   const saveCurrentStep = useCallback(async (step: string) => {
@@ -44,6 +44,12 @@ export const useOnboardingNavigation = (
       setCurrentStep(validStep);
       lastSavedStepRef.current = validStep;
       
+      // If the step is "complete", also mark as completed
+      if (validStep === "complete" && !isCompletingRef.current) {
+        console.log("Step is 'complete', setting isCompleted to true");
+        setIsCompleted(true);
+      }
+      
       console.log("Step saved successfully");
     } catch (error) {
       console.error("Error saving onboarding step:", error);
@@ -55,13 +61,14 @@ export const useOnboardingNavigation = (
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, setCurrentStep, toast]);
+  }, [user, setCurrentStep, setIsCompleted, toast]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
-    if (!user) return;
+    if (!user || isCompletingRef.current) return;
     
     try {
       console.log("Completing onboarding for user:", user.id);
+      isCompletingRef.current = true;
       setIsSubmitting(true);
       
       await completeOnboardingProcess(user.id);
@@ -79,6 +86,7 @@ export const useOnboardingNavigation = (
       throw error; // Re-throw the error to handle it in the component
     } finally {
       setIsSubmitting(false);
+      // Keep isCompletingRef true to prevent repeated completions
     }
   }, [user, setCurrentStep, setIsCompleted, toast]);
 

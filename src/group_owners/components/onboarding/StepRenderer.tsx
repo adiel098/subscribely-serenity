@@ -7,6 +7,7 @@ import BotSelectionStep from "@/group_owners/pages/onboarding/steps/BotSelection
 import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface StepRendererProps {
   currentStep: OnboardingStep;
@@ -25,11 +26,35 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Handle the "complete" step explicitly
+  if (currentStep === "complete") {
+    console.log("Onboarding complete, redirecting to dashboard...");
+    // Redirect to dashboard immediately
+    React.useEffect(() => {
+      navigate('/dashboard', { replace: true });
+    }, [navigate]);
+    
+    // Show loading state while redirecting
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 max-w-md w-full text-center">
+          <h1 className="text-2xl font-bold mb-4 text-gray-800">Setup Complete!</h1>
+          <p className="mb-6 text-gray-600">Redirecting you to your dashboard...</p>
+          <Loader2 className="animate-spin mx-auto h-8 w-8 text-indigo-600" />
+        </div>
+      </div>
+    );
+  }
+
   // Special case for custom-bot-setup
   if (pathStep === 'custom-bot-setup') {
     return (
       <CustomBotSetupStep 
-        onComplete={() => navigate('/dashboard')} 
+        onComplete={() => {
+          console.log("Custom bot setup completed, marking as complete...");
+          // Update step to complete first
+          goToNextStep("custom-bot-setup");
+        }} 
         activeStep={true}
         goToPreviousStep={() => navigate('/onboarding/bot-selection')}
       />

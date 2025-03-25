@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Bot } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
@@ -46,29 +45,21 @@ const CustomBotSetupStep = ({
       
       if (tokenError) throw tokenError;
       
-      // Save verified channels and groups
-      const telegramChatIds = verificationResults.map(chat => ({
-        id: chat.id.toString(),
-        title: chat.title,
-        type: chat.type,
-        username: chat.username || null
-      }));
+      // Explicitly mark onboarding as completed
+      await supabase.from('profiles').update({ 
+        onboarding_completed: true,
+        onboarding_step: 'complete'
+      });
       
-      // Complete onboarding and go directly to dashboard
-      try {
-        await supabase.from('profiles').update({ 
-          onboarding_completed: true,
-          onboarding_step: 'complete'
-        }).eq('id', (await supabase.auth.getUser()).data.user?.id);
-        
-        toast.success("Setup completed successfully!");
-        
-        // Navigate to dashboard
-        navigate('/dashboard');
-      } catch (completeError) {
-        console.error("Error completing onboarding:", completeError);
-        toast.error("Failed to complete setup");
-      }
+      toast.success("Setup completed successfully!");
+      
+      // Use the onComplete callback to ensure proper state updates in parent components
+      onComplete();
+      
+      // Navigate to dashboard after a short delay to allow state updates
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 500);
     } catch (error) {
       console.error("Error saving bot token:", error);
       toast.error("Failed to save bot token");

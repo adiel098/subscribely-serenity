@@ -70,7 +70,7 @@ const Dashboard = () => {
       </div>;
   }
   console.log("✅ Dashboard render completed for ", selectedCommunityId ? `community: ${selectedCommunityId}` : `group: ${selectedGroupId}`);
-  return <div className="space-y-6 pb-10 px-[37px] py-[11px]">
+  return <div className="space-y-6 pb-10 px-[37px] py-[28px]">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">

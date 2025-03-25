@@ -52,7 +52,7 @@ export async function handleStartCommand(
       // No parameter provided, send welcome message with Mini App button
       await logger.info("👋 No parameter, sending discovery welcome message");
       
-      // Get the mini app URL from our utility file
+      // Get the mini app URL from our utility file - this needs to be a valid URL
       const miniAppUrl = TELEGRAM_MINI_APP_URL;
       await logger.info(`Using Mini App URL: ${miniAppUrl}`);
       
@@ -64,34 +64,36 @@ Discover and join premium Telegram communities, manage your subscriptions, and t
 Press the button below to explore communities:
       `;
       
-      // Create inline keyboard with web_app button (ensure valid URL)
-      const inlineKeyboard = {
-        inline_keyboard: [
-          [
-            {
-              text: "🔍 Discover Communities",
-              web_app: { url: miniAppUrl }
-            }
-          ]
-        ]
-      };
-      
-      await logger.info(`Sending welcome message with button URL: ${miniAppUrl}`);
-      
-      // Test the button URL separately to ensure it's valid
+      // Make sure the URL is valid - t.me URLs are valid for web_app buttons
+      // The only requirement is that it starts with https://
       try {
-        const urlTest = new URL(miniAppUrl);
-        await logger.info(`URL validation passed: ${urlTest.toString()}`);
+        if (!miniAppUrl.startsWith('https://')) {
+          throw new Error('URL must start with https://');
+        }
+        
+        // Create inline keyboard with web_app button
+        const inlineKeyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "🔍 Discover Communities",
+                web_app: { url: miniAppUrl }
+              }
+            ]
+          ]
+        };
+        
+        await logger.info(`Sending welcome message with button URL: ${miniAppUrl}`);
+        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage, inlineKeyboard);
+        
+        return true;
       } catch (urlError) {
         await logger.error(`❌ Invalid URL format: ${miniAppUrl}`, urlError);
-        // Send message without button if URL is invalid
+        
+        // If URL is invalid, send message without button
         await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
         return true;
       }
-      
-      await sendTelegramMessage(botToken, message.chat.id, welcomeMessage, inlineKeyboard);
-      
-      return true;
     }
   } catch (error) {
     await logger.error("❌ Error handling start command:", error);

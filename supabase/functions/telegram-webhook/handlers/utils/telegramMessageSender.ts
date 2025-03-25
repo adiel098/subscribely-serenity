@@ -49,7 +49,28 @@ export async function sendTextMessage(
       return false;
     }
     
-    // Prepare the inline keyboard
+    // Ensure the miniAppUrl is valid
+    if (miniAppUrl && !miniAppUrl.startsWith('https://')) {
+      console.error('[TelegramSender] ❌ Invalid mini app URL format:', miniAppUrl);
+      
+      // Send message without button if URL is invalid
+      const textOnlyPayload = {
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      };
+      
+      const textOnlyResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(textOnlyPayload)
+      });
+      
+      const textOnlyData = await textOnlyResponse.json();
+      return textOnlyData.ok;
+    }
+    
+    // Prepare the inline keyboard with validated URL
     const inlineKeyboard = {
       inline_keyboard: [[
         {
@@ -118,7 +139,29 @@ export async function sendPhotoMessage(
       return false;
     }
     
-    // Prepare the inline keyboard
+    // Ensure the miniAppUrl is valid
+    if (miniAppUrl && !miniAppUrl.startsWith('https://')) {
+      console.error('[TelegramSender] ❌ Invalid mini app URL format:', miniAppUrl);
+      
+      // Send photo without button if URL is invalid
+      const photoOnlyPayload = {
+        chat_id: chatId,
+        photo: photoUrl,
+        caption: caption,
+        parse_mode: 'HTML'
+      };
+      
+      const photoOnlyResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(photoOnlyPayload)
+      });
+      
+      const photoOnlyData = await photoOnlyResponse.json();
+      return photoOnlyData.ok;
+    }
+    
+    // Prepare the inline keyboard with validated URL
     const inlineKeyboard = {
       inline_keyboard: [[
         {

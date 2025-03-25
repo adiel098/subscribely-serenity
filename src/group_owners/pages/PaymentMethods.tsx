@@ -76,7 +76,7 @@ const PaymentMethods = () => {
         </motion.div>
 
         <Tabs defaultValue="all" className="max-w-5xl mx-auto">
-          <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden">
+          <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden mx-auto max-w-4xl">
             <CardHeader className="pb-3 pt-6">
               <CardTitle className="flex items-center justify-center gap-3 text-xl">
                 <LayoutGrid className="h-6 w-6 text-indigo-600" />

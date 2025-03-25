@@ -14,8 +14,8 @@ import { SubscriberTabs } from "../components/subscribers/SubscriberTabs";
 import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
-import { PageHeader } from "@/components/ui/page-header";
-import { Users } from "lucide-react";
+import { Users, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -89,63 +89,81 @@ const Subscribers = () => {
 
   return (
     <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6 pb-8">
-      <PageHeader
-        title="Subscribers"
-        description={`Manage ${isGroupSelected ? "group" : "community"} subscribers and their access`}
-        icon={<Users />}
-      />
+      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
+        <motion.div className="flex items-center space-x-3" initial={{
+          opacity: 0,
+          y: -20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5
+        }}>
+          <div className="p-3 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
+            <Users className="h-8 w-8 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Subscribers <Sparkles className="h-5 w-5 inline text-amber-400" />
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Manage {isGroupSelected ? "group" : "community"} subscribers and their access
+            </p>
+          </div>
+        </motion.div>
 
-      <SubscribersHeaderSection 
-        subscribers={subscribers} 
-        isGroupSelected={isGroupSelected} 
-        isUpdating={isUpdating}
-        onExport={handleExport}
-      />
+        <SubscribersHeaderSection 
+          subscribers={subscribers} 
+          isGroupSelected={isGroupSelected} 
+          isUpdating={isUpdating}
+          onExport={handleExport}
+        />
 
-      <SubscriberFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusFilterChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}
-        planFilter={planFilter}
-        onPlanFilterChange={setPlanFilter}
-        uniquePlans={uniquePlans}
-        onExport={handleExport}
-      />
+        <SubscriberFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}
+          planFilter={planFilter}
+          onPlanFilterChange={setPlanFilter}
+          uniquePlans={uniquePlans}
+          onExport={handleExport}
+        />
 
-      <SubscriberTabs
-        subscribers={managedSubscribers}
-        unmanagedUsers={unmanagedUsers}
-        onEdit={(subscriber) => {
-          setSelectedSubscriber(subscriber);
-          setEditDialogOpen(true);
-        }}
-        onRemove={onRemoveClick}
-        onUnblock={onUnblockClick}
-        onAssignPlan={handleAssignPlan}
-      />
-      
-      <SubscribersCountDisplay 
-        filteredCount={filteredSubscribers.length} 
-        totalCount={subscribers.length} 
-      />
+        <SubscriberTabs
+          subscribers={managedSubscribers}
+          unmanagedUsers={unmanagedUsers}
+          onEdit={(subscriber) => {
+            setSelectedSubscriber(subscriber);
+            setEditDialogOpen(true);
+          }}
+          onRemove={onRemoveClick}
+          onUnblock={onUnblockClick}
+          onAssignPlan={handleAssignPlan}
+        />
+        
+        <SubscribersCountDisplay 
+          filteredCount={filteredSubscribers.length} 
+          totalCount={subscribers.length} 
+        />
 
-      <SubscriberDialogs 
-        selectedSubscriber={selectedSubscriber}
-        editDialogOpen={editDialogOpen}
-        setEditDialogOpen={setEditDialogOpen}
-        subscriberToRemove={subscriberToRemove}
-        removeDialogOpen={removeDialogOpen}
-        handleRemoveDialogChange={handleRemoveDialogChange}
-        subscriberToUnblock={subscriberToUnblock}
-        unblockDialogOpen={unblockDialogOpen}
-        handleUnblockDialogChange={handleUnblockDialogChange}
-        onConfirmRemove={onConfirmRemove}
-        onConfirmUnblock={onConfirmUnblock}
-        isRemoving={isRemoving}
-        isUnblocking={isUnblocking}
-        onSuccess={refetch}
-      />
+        <SubscriberDialogs 
+          selectedSubscriber={selectedSubscriber}
+          editDialogOpen={editDialogOpen}
+          setEditDialogOpen={setEditDialogOpen}
+          subscriberToRemove={subscriberToRemove}
+          removeDialogOpen={removeDialogOpen}
+          handleRemoveDialogChange={handleRemoveDialogChange}
+          subscriberToUnblock={subscriberToUnblock}
+          unblockDialogOpen={unblockDialogOpen}
+          handleUnblockDialogChange={handleUnblockDialogChange}
+          onConfirmRemove={onConfirmRemove}
+          onConfirmUnblock={onConfirmUnblock}
+          isRemoving={isRemoving}
+          isUnblocking={isUnblocking}
+          onSuccess={refetch}
+        />
+      </div>
 
       <AssignPlanDialog
         user={userToAssignPlan}

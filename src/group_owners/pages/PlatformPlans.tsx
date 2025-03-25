@@ -11,8 +11,8 @@ import { CurrentSubscriptionAlert } from "../components/platform-plans/CurrentSu
 import { PlansLoadingSkeleton } from "../components/platform-plans/PlansLoadingSkeleton";
 import { PlatformPlansList } from "../components/platform-plans/PlatformPlansList";
 import { PaymentMethodsSection } from "../components/platform-plans/PaymentMethodsSection";
-import { PageHeader } from "@/components/ui/page-header";
-import { Sparkles, CreditCard } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function PlatformPlans() {
   const { plans, isLoading } = usePlatformPlans();
@@ -134,40 +134,58 @@ export default function PlatformPlans() {
   };
   
   return (
-    <div className="container max-w-6xl px-4 py-6 space-y-6">
-      <PageHeader
-        title="Platform Plans"
-        description="Subscribe to a platform plan to enable premium features"
-        icon={<Sparkles />}
-      />
-      
-      <CurrentSubscriptionAlert currentSubscription={currentSubscription} />
-      
-      {isLoading ? (
-        <PlansLoadingSkeleton />
-      ) : (
-        <div className="space-y-8">
-          <PlatformPlansList
-            plans={plans}
-            selectedPlan={selectedPlan}
-            currentSubscription={currentSubscription}
-            formatInterval={formatInterval}
-            handleSelectPlan={handleSelectPlan}
-          />
-          
-          {selectedPlan && (
-            <PaymentMethodsSection
+    <div className="container px-0 py-4 max-w-5xl ml-4">
+      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
+        <motion.div className="flex items-center space-x-3" initial={{
+          opacity: 0,
+          y: -20
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.5
+        }}>
+          <div className="p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl">
+            <Sparkles className="h-8 w-8 text-purple-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Platform Plans <Sparkles className="h-5 w-5 inline text-amber-400" />
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Subscribe to a platform plan to enable premium features
+            </p>
+          </div>
+        </motion.div>
+        
+        <CurrentSubscriptionAlert currentSubscription={currentSubscription} />
+        
+        {isLoading ? (
+          <PlansLoadingSkeleton />
+        ) : (
+          <div className="space-y-8">
+            <PlatformPlansList
+              plans={plans}
               selectedPlan={selectedPlan}
-              paymentMethods={paymentMethods}
-              paymentMethodsLoading={paymentMethodsLoading}
-              selectedPaymentMethod={selectedPaymentMethod}
-              isProcessing={isProcessing}
-              handleSelectPaymentMethod={handleSelectPaymentMethod}
-              handlePaymentProcess={handlePaymentProcess}
+              currentSubscription={currentSubscription}
+              formatInterval={formatInterval}
+              handleSelectPlan={handleSelectPlan}
             />
-          )}
-        </div>
-      )}
+            
+            {selectedPlan && (
+              <PaymentMethodsSection
+                selectedPlan={selectedPlan}
+                paymentMethods={paymentMethods}
+                paymentMethodsLoading={paymentMethodsLoading}
+                selectedPaymentMethod={selectedPaymentMethod}
+                isProcessing={isProcessing}
+                handleSelectPaymentMethod={handleSelectPaymentMethod}
+                handlePaymentProcess={handlePaymentProcess}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -23,11 +23,11 @@ export const MobileOptimizedPurchaseHistory: React.FC<MobileOptimizedPurchaseHis
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <Check className="h-3.5 w-3.5 text-green-500" />;
+        return <Check className="h-3 w-3 text-green-500" />;
       case "pending":
-        return <ArrowRight className="h-3.5 w-3.5 text-yellow-500" />;
+        return <ArrowRight className="h-3 w-3 text-yellow-500" />;
       case "failed":
-        return <X className="h-3.5 w-3.5 text-red-500" />;
+        return <X className="h-3 w-3 text-red-500" />;
       default:
         return null;
     }
@@ -36,30 +36,30 @@ export const MobileOptimizedPurchaseHistory: React.FC<MobileOptimizedPurchaseHis
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5 px-1.5">Completed</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-4 px-1.5">Completed</Badge>;
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-[10px] h-5 px-1.5">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-[10px] h-4 px-1.5">Pending</Badge>;
       case "failed":
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] h-5 px-1.5">Failed</Badge>;
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] h-4 px-1.5">Failed</Badge>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-xs font-medium text-gray-500 mb-2">Purchase History</h3>
+    <div className="space-y-2">
+      <h3 className="text-xs font-medium text-gray-500 mb-1">Purchase History</h3>
       
       {purchases.length === 0 ? (
         <Card className="border border-gray-200">
-          <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+          <CardContent className="flex flex-col items-center justify-center p-3 text-center">
             <p className="text-xs text-gray-500">No purchase history available</p>
           </CardContent>
         </Card>
       ) : (
         purchases.map((purchase) => (
           <Card key={purchase.id} className="border border-gray-200 overflow-hidden">
-            <CardContent className="p-3">
+            <CardContent className="p-2">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs font-medium text-gray-800">${purchase.amount.toFixed(2)}</p>

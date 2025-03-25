@@ -40,7 +40,7 @@ const MembifySettings = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className={`${isMobile ? 'p-2 pt-3' : 'p-6'} w-full`}>
+    <div className={`${isMobile ? 'p-2 pt-1' : 'p-6'} w-full`}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ const MembifySettings = () => {
       >
         <MembifySettingsHeader />
         
-        <div className={`grid grid-cols-1 ${isMobile ? '' : 'lg:grid-cols-3'} ${isMobile ? 'gap-3 mobile-grid-2' : 'gap-6'} mt-6`}>
+        <div className={`grid grid-cols-1 ${isMobile ? 'mobile-grid-2' : 'lg:grid-cols-3'} ${isMobile ? 'gap-3' : 'gap-6'} mt-6`}>
           {/* Profile Panel */}
           <ProfileTabContent />
           
@@ -58,7 +58,7 @@ const MembifySettings = () => {
           {/* Billing Information Panel */}
           <Card className="shadow-md border border-indigo-100">
             {isMobile ? (
-              <div className="p-3">
+              <div className="p-2">
                 <MobileOptimizedPurchaseHistory purchases={samplePurchases} />
               </div>
             ) : (

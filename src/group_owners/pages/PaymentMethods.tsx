@@ -8,6 +8,7 @@ import { useCommunityContext } from '@/contexts/CommunityContext';
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { usePaymentMethodsPage } from "@/group_owners/hooks/usePaymentMethodsPage";
 import { motion } from "framer-motion";
+import { PageHeader } from "@/components/ui/page-header";
 
 const PaymentMethods = () => {
   const {
@@ -53,25 +54,13 @@ const PaymentMethods = () => {
     );
   }
 
-  return <div className="space-y-4 py-6 animate-fade-in">
-      <motion.div initial={{
-      opacity: 0,
-      y: -20
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.5
-    }} className="text-left">
-        <h1 className="text-3xl font-semibold tracking-tight flex items-center gap-3">
-          <Zap className="h-7 w-7 text-indigo-500" />
-          Payment Methods
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">💰</span>
-        </h1>
-        <p className="text-base text-muted-foreground mt-2">
-          Configure and manage payment gateways for all your communities and groups 💸
-        </p>
-      </motion.div>
+  return (
+    <div className="container max-w-6xl px-4 py-6 space-y-4 animate-fade-in">
+      <PageHeader
+        title="Payment Methods"
+        description="Configure and manage payment gateways for all your communities and groups 💸"
+        icon={<Zap />}
+      />
 
       <Tabs defaultValue="all" className="max-w-5xl mx-auto">
         <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden">
@@ -153,7 +142,8 @@ const PaymentMethods = () => {
           </CardContent>
         </Card>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
 
 export default PaymentMethods;

@@ -11,6 +11,8 @@ import { CurrentSubscriptionAlert } from "../components/platform-plans/CurrentSu
 import { PlansLoadingSkeleton } from "../components/platform-plans/PlansLoadingSkeleton";
 import { PlatformPlansList } from "../components/platform-plans/PlatformPlansList";
 import { PaymentMethodsSection } from "../components/platform-plans/PaymentMethodsSection";
+import { PageHeader } from "@/components/ui/page-header";
+import { Sparkles, CreditCard } from "lucide-react";
 
 export default function PlatformPlans() {
   const { plans, isLoading } = usePlatformPlans();
@@ -132,8 +134,12 @@ export default function PlatformPlans() {
   };
   
   return (
-    <div className="container max-w-6xl px-4 py-10">
-      <PlatformPlansHeader />
+    <div className="container max-w-6xl px-4 py-6 space-y-6">
+      <PageHeader
+        title="Platform Plans"
+        description="Subscribe to a platform plan to enable premium features"
+        icon={<Sparkles />}
+      />
       
       <CurrentSubscriptionAlert currentSubscription={currentSubscription} />
       

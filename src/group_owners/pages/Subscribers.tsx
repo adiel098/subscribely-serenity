@@ -14,6 +14,8 @@ import { SubscriberTabs } from "../components/subscribers/SubscriberTabs";
 import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
+import { PageHeader } from "@/components/ui/page-header";
+import { Users } from "lucide-react";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -86,7 +88,13 @@ const Subscribers = () => {
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="container max-w-6xl px-4 py-6 space-y-6 pb-8">
+      <PageHeader
+        title="Subscribers"
+        description={`Manage ${isGroupSelected ? "group" : "community"} subscribers and their access`}
+        icon={<Users />}
+      />
+
       <SubscribersHeaderSection 
         subscribers={subscribers} 
         isGroupSelected={isGroupSelected} 

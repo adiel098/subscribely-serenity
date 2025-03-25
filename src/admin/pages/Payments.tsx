@@ -1,3 +1,4 @@
+
 import { 
   Card, 
   CardContent, 
@@ -11,13 +12,14 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Loader2, Building, Users } from "lucide-react";
+import { Loader2, Building, Users, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { useAdminPayments } from "@/admin/hooks/useAdminPayments";
 import { toast } from "sonner";
 import { PaymentsHeader } from "@/admin/components/payments/PaymentsHeader";
 import { PaymentSearch } from "@/admin/components/payments/PaymentSearch";
 import { PaymentTable } from "@/admin/components/payments/PaymentTable";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function Payments() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,8 +104,15 @@ export default function Payments() {
   }
 
   return (
-    <div className="space-y-6">
-      <PaymentsHeader onExportReport={handleExportReport} />
+    <div className="container max-w-6xl px-4 py-6 space-y-6">
+      <PageHeader
+        title="Payments"
+        description="Manage and track all platform payments 💰"
+        icon={<CreditCard />}
+        actions={
+          <PaymentsHeader onExportReport={handleExportReport} />
+        }
+      />
 
       {/* Payment Type Tabs */}
       <Card className="border-indigo-100 shadow-sm">

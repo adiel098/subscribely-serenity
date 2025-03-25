@@ -11,6 +11,7 @@ import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans"
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { Loader2, Plus, SparklesIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { PageHeader } from "@/components/ui/page-header";
 
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
@@ -81,35 +82,26 @@ const Subscriptions = () => {
   const hasPlans = plans && plans.length > 0;
 
   return (
-    <div className="space-y-6 py-6">
-      <motion.div 
-        className="flex justify-between items-center" 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <SparklesIcon className="h-6 w-6 text-indigo-600" />
-            Subscription Plans
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage your {isGroupSelected ? "group" : "community"} subscription plans
-          </p>
-        </div>
-        {hasPlans && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              onClick={handleCreatePlan} 
-              className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
-              type="button"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Create Plan
-            </Button>
-          </motion.div>
-        )}
-      </motion.div>
+    <div className="container max-w-6xl px-4 py-6 space-y-6">
+      <PageHeader
+        title="Subscription Plans"
+        description={`Manage your ${isGroupSelected ? "group" : "community"} subscription plans`}
+        icon={<SparklesIcon />}
+        actions={
+          hasPlans && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                onClick={handleCreatePlan} 
+                className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
+                type="button"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Create Plan
+              </Button>
+            </motion.div>
+          )
+        }
+      />
 
       {!hasPlans ? (
         <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />

@@ -24,7 +24,7 @@ const OfficialBotSetupStep: React.FC<OfficialBotSetupStepProps> = ({
       onBack={goToPreviousStep}
     >
       <div className="space-y-6 max-w-3xl mx-auto">
-        <OfficialBotSetupCard onContinue={onComplete} />
+        <OfficialBotSetupCard onComplete={onComplete} goToPreviousStep={goToPreviousStep} />
         <OfficialBotInstructions />
       </div>
     </OnboardingLayout>

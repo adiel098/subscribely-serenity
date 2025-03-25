@@ -33,8 +33,6 @@ export const OfficialBotSetupCard: React.FC<OfficialBotSetupCardProps> = ({
             Our bot is pre-configured and ready to use with your account.
           </p>
           
-          <OfficialBotInstructions />
-          
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-sm">
             <div className="flex items-start gap-2">
               <ShieldCheck className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />

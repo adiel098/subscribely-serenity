@@ -28,9 +28,9 @@ export const DashboardLayout = ({
               duration: 0.4,
               delay: 0.4
             }} 
-            className="p-4 mt-[140px] ml-[240px] max-w-[calc(100vw-260px)]"
+            className="p-4 mt-[140px] ml-[240px] w-[calc(100vw-260px)]"
           >
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-auto w-full">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden w-full">
               {children}
             </div>
           </motion.div>

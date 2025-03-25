@@ -81,8 +81,8 @@ const Subscriptions = () => {
   const hasPlans = plans && plans.length > 0;
 
   return (
-    <div className="container px-0 py-4 max-w-5xl ml-4">
-      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
+    <div className="container px-0 py-4 max-w-full">
+      <div className="space-y-6 px-6 py-0 my-[6px]">
         <motion.div className="flex items-center space-x-3" initial={{
           opacity: 0,
           y: -20
@@ -106,7 +106,7 @@ const Subscriptions = () => {
         </motion.div>
 
         {hasPlans && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex justify-end">
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex justify-end px-6">
             <Button 
               onClick={handleCreatePlan} 
               className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
@@ -125,7 +125,7 @@ const Subscriptions = () => {
             variants={containerVariants} 
             initial="hidden" 
             animate="visible" 
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl"
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl px-6"
           >
             {plans?.map(plan => (
               <motion.div key={plan.id} variants={itemVariants}>

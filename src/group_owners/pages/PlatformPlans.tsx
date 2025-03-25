@@ -134,8 +134,8 @@ export default function PlatformPlans() {
   };
   
   return (
-    <div className="container px-0 py-4 max-w-5xl ml-4">
-      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
+    <div className="w-full px-6 py-4">
+      <div className="space-y-6 max-w-5xl mx-auto">
         <motion.div className="flex items-center space-x-3" initial={{
           opacity: 0,
           y: -20

@@ -18,6 +18,7 @@ import { CreateGroupDialog } from "./community-groups/CreateGroupDialog";
 import { GroupMiniAppLinkButton } from "./community-groups/GroupMiniAppLinkButton";
 import { useGroupMemberCommunities } from "../hooks/useGroupMemberCommunities";
 import { useBotSettings } from "../hooks/useBotSettings";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -34,6 +35,7 @@ export const CommunitySelector = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [createGroupDialogOpen, setCreateGroupDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
   const { communities: groupCommunities } = useGroupMemberCommunities(selectedGroupId);
@@ -52,9 +54,9 @@ export const CommunitySelector = () => {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="fixed top-16 left-0 right-0 z-10 flex items-center gap-4 px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm h-[60px]"
+        className={`fixed top-16 left-0 right-0 z-10 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-3' : 'h-[60px]'}`}
       >
-        <div className="flex items-center gap-4 ml-[230px]">
+        <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-2 md:gap-4 ${!isMobile && 'ml-[230px]'}`}>
           <CommunityDropdown 
             communities={communities} 
             groups={groups}
@@ -62,16 +64,17 @@ export const CommunitySelector = () => {
             setSelectedCommunityId={setSelectedCommunityId}
             selectedGroupId={selectedGroupId}
             setSelectedGroupId={setSelectedGroupId}
+            isMobile={isMobile}
           />
 
           {/* The platform subscription banner manages its own visibility */}
-          <PlatformSubscriptionBanner />
+          {!isMobile && <PlatformSubscriptionBanner />}
           
           {/* Only show this when a community is selected (not a group) */}
-          {!isGroupSelected && <CommunityRequirementsBanner />}
+          {!isGroupSelected && !isMobile && <CommunityRequirementsBanner />}
           
           {/* Show Mini App Link button for groups */}
-          {isGroupSelected && selectedGroup && (
+          {isGroupSelected && selectedGroup && !isMobile && (
             <GroupMiniAppLinkButton 
               group={selectedGroup}
               communities={groupCommunities}
@@ -79,7 +82,7 @@ export const CommunitySelector = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-4 ml-auto">
+        <div className={`flex ${isMobile ? 'w-full justify-between mt-2' : 'items-center gap-4 ml-auto'}`}>
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -87,15 +90,15 @@ export const CommunitySelector = () => {
             <Button 
               variant="outline" 
               onClick={handleCreateGroup}
-              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 w-[130px]"
+              className={`border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 ${isMobile ? 'px-3' : 'w-[130px]'}`}
               size="sm"
             >
               <FolderPlus className="h-3.5 w-3.5" />
-              New Group
+              {isMobile ? 'Group' : 'New Group'}
             </Button>
           </motion.div>
           
-          <HeaderActions onNewCommunityClick={handleCreateCommunity} />
+          <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
         </div>
       </motion.div>
 

@@ -1,8 +1,11 @@
+
 import { SubscribersHeader } from "./SubscribersHeader";
 import { SubscribersStats } from "./SubscribersStats";
 import { Subscriber } from "../../hooks/useSubscribers";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, FileSpreadsheet } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 interface SubscribersHeaderSectionProps {
   subscribers: Subscriber[];
   isGroupSelected: boolean;
@@ -15,12 +18,16 @@ export const SubscribersHeaderSection = ({
   isUpdating,
   onExport
 }: SubscribersHeaderSectionProps) => {
-  return <div className="flex items-center justify-between">
-      <div className="flex items-center gap-6">
+  const isMobile = useIsMobile();
+  
+  return (
+    <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center justify-between'}`}>
+      <div className={`${isMobile ? 'w-full' : 'flex items-center gap-6'}`}>
         <SubscribersHeader onUpdateStatus={() => {}} onExport={onExport} isUpdating={isUpdating} />
-        <SubscribersStats subscribers={subscribers} />
+        {!isMobile && <SubscribersStats subscribers={subscribers} />}
       </div>
       
-      
-    </div>;
+      {isMobile && <SubscribersStats subscribers={subscribers} />}
+    </div>
+  );
 };

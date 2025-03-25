@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 export function GroupOwnerHeader() {
   const {
     signOut,
@@ -15,10 +18,13 @@ export function GroupOwnerHeader() {
   } = useAuth();
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
+  const isMobile = useIsMobile();
+  
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
+  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -27,10 +33,12 @@ export function GroupOwnerHeader() {
       console.error("Error signing out:", error);
     }
   };
+  
   const navigateToAccountSettings = () => {
     navigate('/membify-settings');
   };
-  return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
+  
+  return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-4 md:px-6">
       <motion.div initial={{
       opacity: 0,
       x: -20
@@ -40,32 +48,16 @@ export function GroupOwnerHeader() {
     }} transition={{
       duration: 0.4,
       ease: "easeOut"
-    }} className="flex items-center gap-3">
-        <Link to="/dashboard" className="text-xl font-bold flex items-center gap-2">
-          <Crown className="h-6 w-6 text-amber-500 drop-shadow-sm" /> 
+    }} className="flex items-center gap-2 md:gap-3">
+        <Link to="/dashboard" className="text-lg md:text-xl font-bold flex items-center gap-1 md:gap-2">
+          <Crown className="h-5 w-5 md:h-6 md:w-6 text-amber-500 drop-shadow-sm" /> 
           <span className="font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-500 bg-clip-text text-transparent">
-            Membify
+            {isMobile ? "Membify" : "Membify"}
           </span>
         </Link>
       </motion.div>
       
-      <div className="flex items-center space-x-3">
-        <motion.div whileHover={{
-        scale: 1.05
-      }} whileTap={{
-        scale: 0.95
-      }}>
-          
-        </motion.div>
-        
-        <motion.div whileHover={{
-        scale: 1.05
-      }} whileTap={{
-        scale: 0.95
-      }}>
-          
-        </motion.div>
-        
+      <div className="flex items-center space-x-2 md:space-x-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <motion.div whileHover={{
@@ -73,8 +65,8 @@ export function GroupOwnerHeader() {
           }} whileTap={{
             scale: 0.95
           }}>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
+                <Avatar className="h-7 w-7 md:h-8 md:w-8">
                   <AvatarImage alt="Profile" src="/lovable-uploads/fe0652ed-b292-4987-b51f-3706d2bdd013.png" />
                   <AvatarFallback className="bg-gradient-to-br from-blue-400 to-indigo-600 text-white font-bold">
                     {getInitials()}
@@ -84,9 +76,7 @@ export function GroupOwnerHeader() {
             </motion.div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 border-blue-100 shadow-xl">
-            
             <DropdownMenuSeparator />
-            
             <DropdownMenuItem className="flex items-center cursor-pointer py-2" onClick={navigateToAccountSettings}>
               <Settings className="mr-2 h-4 w-4 text-blue-600" />
               <span>Account Settings</span>

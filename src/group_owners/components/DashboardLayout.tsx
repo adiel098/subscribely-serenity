@@ -3,17 +3,26 @@ import { CommunitySelector } from "@/group_owners/components/CommunitySelector";
 import { AppSidebar } from "@/group_owners/components/AppSidebar";
 import { GroupOwnerHeader } from "@/group_owners/components/GroupOwnerHeader";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileSidebar } from "@/group_owners/components/mobile/MobileSidebar";
 
 export const DashboardLayout = ({
   children
 }: {
   children: React.ReactNode;
 }) => {
-  return <div className="h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden">
+  const isMobile = useIsMobile();
+
+  return (
+    <div className="h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden">
       <GroupOwnerHeader />
       <div className="flex w-full h-[calc(100vh-64px)]">
-        <AppSidebar />
-        <main className="flex-1 overflow-auto">
+        {!isMobile ? (
+          <AppSidebar />
+        ) : (
+          <MobileSidebar />
+        )}
+        <main className="flex-1 overflow-auto w-full">
           <CommunitySelector />
           <motion.div 
             initial={{
@@ -28,7 +37,7 @@ export const DashboardLayout = ({
               duration: 0.4,
               delay: 0.4
             }} 
-            className="p-4 mt-[140px] ml-[240px] w-[calc(100vw-260px)]"
+            className={`p-4 ${isMobile ? 'mt-[80px]' : 'mt-[140px] ml-[240px] w-[calc(100vw-260px)]'}`}
           >
             <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden w-full">
               {children}
@@ -36,5 +45,6 @@ export const DashboardLayout = ({
           </motion.div>
         </main>
       </div>
-    </div>;
+    </div>
+  );
 };

@@ -1,147 +1,98 @@
 
-import React, { useEffect, useState } from "react";
-import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { usePhotos } from "@/group_owners/hooks/usePhotos";
-import { Community } from "@/group_owners/hooks/useCommunities";
-import { CommunityGroup } from "@/group_owners/hooks/types/communityGroup.types";
-import { CommunitySelectItem } from "./dropdown-items/CommunitySelectItem";
-import { CommunitySelectedDisplay } from "./dropdown-items/CommunitySelectedDisplay";
-import { GroupSelectItem } from "./dropdown-items/GroupSelectItem";
-import { GroupSelectedDisplay } from "./dropdown-items/GroupSelectedDisplay";
+import { ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { useCommunityContext } from "@/contexts/CommunityContext";
 
-interface CommunityDropdownProps {
-  communities: Community[] | undefined;
-  groups: CommunityGroup[] | undefined;
-  selectedCommunityId: string | null;
-  setSelectedCommunityId: (id: string | null) => void;
-  selectedGroupId: string | null;
-  setSelectedGroupId: (id: string | null) => void;
-}
-
-export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
-  communities,
+export const CommunityDropdown = ({ 
+  communities, 
   groups,
   selectedCommunityId,
   setSelectedCommunityId,
   selectedGroupId,
-  setSelectedGroupId
+  setSelectedGroupId,
+  isMobile = false
 }) => {
-  const [selectedValue, setSelectedValue] = useState<string>("");
-  const [selectedType, setSelectedType] = useState<'community' | 'group' | null>(null);
-  const { getPhotoUrl, refreshPhoto, isRefreshing, lastUpdate } = usePhotos();
+  const { isGroupSelected } = useCommunityContext();
   
-  const selectedCommunity = communities?.find(community => community.id === selectedCommunityId);
-  const selectedGroup = groups?.find(group => group.id === selectedGroupId);
-  
-  const communityPhotoUrl = selectedCommunity ? getPhotoUrl(selectedCommunity.id) : undefined;
-  
-  useEffect(() => {
-    if (selectedCommunityId) {
-      setSelectedValue(`community-${selectedCommunityId}`);
-      setSelectedType('community');
-    } else if (selectedGroupId) {
-      setSelectedValue(`group-${selectedGroupId}`);
-      setSelectedType('group');
-    } else {
-      setSelectedValue("");
-      setSelectedType(null);
-    }
-  }, [selectedCommunityId, selectedGroupId]);
-  
-  useEffect(() => {
-    console.log("Photos lastUpdate:", lastUpdate);
-  }, [lastUpdate]);
-  
-  const handleValueChange = (value: string) => {
-    setSelectedValue(value);
-    
-    if (value.startsWith("community-")) {
-      const communityId = value.replace("community-", "");
-      setSelectedCommunityId(communityId);
-      setSelectedGroupId(null);
-      setSelectedType('community');
-    } else if (value.startsWith("group-")) {
-      const groupId = value.replace("group-", "");
-      setSelectedGroupId(groupId);
-      setSelectedCommunityId(null);
-      setSelectedType('group');
-    }
+  // Handle the community selection
+  const handleSelectCommunity = (communityId) => {
+    setSelectedCommunityId(communityId);
+    setSelectedGroupId(null);
   };
   
-  const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
-    e.stopPropagation();
-    refreshPhoto(communityId, chatId);
+  // Handle the group selection
+  const handleSelectGroup = (groupId) => {
+    setSelectedGroupId(groupId);
   };
+  
+  // Find the selected community or group to display in the trigger
+  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
+  const selectedGroup = groups?.find(g => g.id === selectedGroupId);
+  
+  // The display name for the trigger
+  const displayName = isGroupSelected 
+    ? selectedGroup?.name || "Select a group" 
+    : selectedCommunity?.name || "Select a community";
   
   return (
-    <div className="w-[240px]">
-      <Select value={selectedValue} onValueChange={handleValueChange}>
-        <SelectTrigger className="h-8 text-xs">
-          <SelectValue>
-            {selectedType === 'community' && selectedCommunity ? (
-              <CommunitySelectedDisplay
-                key={`selected-${selectedCommunity.id}-${lastUpdate}`}
-                community={selectedCommunity}
-                photoUrl={communityPhotoUrl}
-                isRefreshing={isRefreshing}
-                onRefreshPhoto={handleRefreshPhoto}
-              />
-            ) : selectedType === 'group' && selectedGroup ? (
-              <GroupSelectedDisplay
-                group={selectedGroup}
-              />
-            ) : (
-              <div className="flex items-center">
-                <span className="text-gray-400 text-xs">Select community or group</span>
-              </div>
-            )}
-          </SelectValue>
-        </SelectTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[260px] max-w-[400px]'}`}
+        >
+          <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
+            {displayName}
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-60 bg-white/95 backdrop-blur-sm border-blue-100 shadow-xl">
+        <DropdownMenuLabel>Your Communities</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {communities?.map((community) => (
+            <DropdownMenuItem 
+              key={community.id} 
+              className={`cursor-pointer ${selectedCommunityId === community.id && !isGroupSelected ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
+              onClick={() => handleSelectCommunity(community.id)}
+            >
+              <span className="truncate">{community.name}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
         
-        <SelectContent className="max-h-[260px]">
-          {groups && groups.length > 0 && (
-            <div className="px-2 py-1">
-              <h3 className="text-xs font-medium text-gray-500 mb-1">Groups</h3>
-              <div className="space-y-0.5">
-                {groups.map(group => (
-                  <GroupSelectItem
-                    key={group.id}
-                    group={group}
-                    value={`group-${group.id}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {communities && communities.length > 0 && (
-            <div className="px-2 py-1">
-              <h3 className="text-xs font-medium text-gray-500 mb-1">Communities</h3>
-              <div className="space-y-0.5">
-                {communities.filter(community => !community.is_group).map(community => {
-                  const photoUrl = getPhotoUrl(community.id);
-                  return (
-                    <CommunitySelectItem 
-                      key={`item-${community.id}-${lastUpdate}`}
-                      community={community}
-                      photoUrl={photoUrl}
-                      isRefreshing={isRefreshing}
-                      onRefreshPhoto={handleRefreshPhoto}
-                      value={`community-${community.id}`}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          
-          {(!communities || communities.length === 0) && (!groups || groups.length === 0) && (
-            <div className="px-2 py-3 text-center">
-              <p className="text-xs text-gray-500">No communities or groups found</p>
-            </div>
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+        {groups && groups.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Your Groups</DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {groups.map((group) => (
+                <DropdownMenuItem 
+                  key={group.id} 
+                  className={`cursor-pointer ${selectedGroupId === group.id ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
+                  onClick={() => handleSelectGroup(group.id)}
+                >
+                  <span className="truncate">{group.name}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

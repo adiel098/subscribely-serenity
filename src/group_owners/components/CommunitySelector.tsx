@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Bell, PlusCircle, FolderPlus, Plus } from "lucide-react";
+import { Bell, PlusCircle, FolderPlus, Plus, Copy, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityGroups } from "@/group_owners/hooks/useCommunityGroups";
@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -45,6 +46,8 @@ export const CommunitySelector = () => {
 
   const selectedGroup = groups?.find(group => group.id === selectedGroupId);
   const { communities: groupCommunities } = useGroupMemberCommunities(selectedGroupId);
+  const selectedCommunity = communities?.find(comm => comm.id === selectedCommunityId);
+  const botUsername = getBotUsername();
   
   const handleCreateCommunity = () => {
     navigate("/connect/telegram");
@@ -54,13 +57,53 @@ export const CommunitySelector = () => {
     setCreateGroupDialogOpen(true);
   };
 
+  const handleCopyLink = () => {
+    if (!selectedCommunityId && !selectedGroupId) {
+      toast.error("Please select a community or group first");
+      return;
+    }
+
+    let linkParam = "";
+    let entityName = "";
+
+    if (isGroupSelected && selectedGroup) {
+      linkParam = selectedGroup.custom_link || selectedGroup.id;
+      entityName = "group";
+    } else if (selectedCommunity) {
+      linkParam = selectedCommunity.custom_link || selectedCommunity.id;
+      entityName = "community";
+    }
+
+    const fullLink = `https://t.me/${botUsername}?start=${linkParam}`;
+    
+    navigator.clipboard.writeText(fullLink)
+      .then(() => {
+        toast.success(`${entityName} link copied to clipboard!`);
+      })
+      .catch((error) => {
+        console.error("Failed to copy link:", error);
+        toast.error("Failed to copy link to clipboard");
+      });
+  };
+
+  const handleEditLink = () => {
+    // In mobile view, we'll navigate to the appropriate edit page
+    if (isGroupSelected && selectedGroup) {
+      navigate(`/groups/${selectedGroup.id}/edit`);
+    } else if (selectedCommunity) {
+      navigate(`/communities/${selectedCommunity.id}/edit`);
+    } else {
+      toast.error("Please select a community or group first");
+    }
+  };
+
   return (
     <>
       <motion.div 
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className={`fixed top-16 left-0 right-0 z-10 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-3' : 'h-[60px]'}`}
+        className={`fixed top-16 left-0 right-0 z-10 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-2' : 'h-[60px]'}`}
       >
         {isMobile ? (
           <>
@@ -76,7 +119,27 @@ export const CommunitySelector = () => {
                   isMobile={isMobile}
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1 text-xs p-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors h-8 w-8 justify-center"
+                  title="Copy link"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleEditLink}
+                  className="flex items-center gap-1 text-xs p-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors h-8 w-8 justify-center mx-1"
+                  title="Edit link"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                </motion.button>
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -87,7 +150,7 @@ export const CommunitySelector = () => {
                       <Plus className="h-4 w-4 text-indigo-600" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="bg-white border border-gray-100 shadow-md">
                     <DropdownMenuItem onClick={handleCreateCommunity}>
                       <PlusCircle className="h-4 w-4 mr-2 text-blue-600" />
                       Add Community
@@ -102,15 +165,6 @@ export const CommunitySelector = () => {
             </div>
             
             <PlatformSubscriptionBanner />
-            
-            {!isGroupSelected && <CommunityRequirementsBanner />}
-            
-            {isGroupSelected && selectedGroup && (
-              <GroupMiniAppLinkButton 
-                group={selectedGroup}
-                communities={groupCommunities}
-              />
-            )}
           </>
         ) : (
           <>

@@ -141,6 +141,12 @@
     .recharts-tooltip-wrapper {
       font-size: 10px !important;
     }
+    
+    /* Ensure dropdown menus are visible */
+    [data-radix-popper-content-wrapper] {
+      z-index: 9999 !important;
+      background-color: white !important;
+    }
   }
   
   /* Fix overlapping elements on small screens */
@@ -171,6 +177,20 @@
     .mobile-table-header {
       font-size: 0.75rem !important;
       padding: 0.5rem 0.25rem !important;
+    }
+    
+    /* Grid improvements for mobile */
+    .grid-cols-1 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    /* Specific grids with 2-3 items per row */
+    .mobile-grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    .mobile-grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     }
   }
 }

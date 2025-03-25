@@ -44,7 +44,7 @@ export const PaymentMethodsPage = () => {
   };
 
   return (
-    <div className="container py-8">
+    <div className="p-6 w-full">
       <PageHeader
         title="Payment Methods"
         description="Configure and manage payment methods for all your communities"

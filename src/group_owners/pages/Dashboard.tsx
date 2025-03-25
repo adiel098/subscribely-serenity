@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { DashboardStats } from "@/group_owners/components/dashboard/DashboardStats";
@@ -11,6 +12,7 @@ import { PaymentAnalytics } from "@/group_owners/components/dashboard/PaymentAna
 import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardStats";
 import { useGroupDashboardStats } from "@/group_owners/hooks/dashboard/useGroupDashboardStats";
 import { Loader2, FolderKanban } from "lucide-react";
+
 const Dashboard = () => {
   const {
     selectedCommunityId,
@@ -46,6 +48,7 @@ const Dashboard = () => {
 
   // Get the owner's first name or use a fallback
   const ownerFirstName = ownerInfo?.first_name || 'there';
+  
   useEffect(() => {
     console.log("🔍 Dashboard loaded with community ID:", selectedCommunityId);
     console.log("🔍 Dashboard loaded with group ID:", selectedGroupId);
@@ -62,6 +65,7 @@ const Dashboard = () => {
       revenue: totalRevenue
     });
   }, [selectedCommunityId, selectedGroupId, ownerInfo, filteredSubscribers, activeSubscribers, inactiveSubscribers, totalRevenue, ownerFirstName]);
+  
   if (isLoading) {
     console.log("⏳ Dashboard is loading...");
     return <div className="flex flex-col items-center justify-center min-h-[500px]">
@@ -69,8 +73,11 @@ const Dashboard = () => {
         <p className="text-gray-600">Loading dashboard data...</p>
       </div>;
   }
+  
   console.log("✅ Dashboard render completed for ", selectedCommunityId ? `community: ${selectedCommunityId}` : `group: ${selectedGroupId}`);
-  return <div className="space-y-6 pb-10 px-[37px] py-[28px]">
+  
+  return (
+    <div className="space-y-6 p-6">
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -115,6 +122,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;

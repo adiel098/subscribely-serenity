@@ -13,7 +13,7 @@ const BotSettings = () => {
   const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
 
   return (
-    <div className="container px-0 py-4 max-w-5xl ml-4">
+    <div className="p-6 w-full">
       <BotSettingsLayout isLoading={isLoading}>
         <SettingsContent 
           settings={settings} 

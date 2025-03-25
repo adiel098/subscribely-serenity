@@ -12,7 +12,14 @@
   
   /* Card that extends all the way to the bottom with minimal spacing */
   .full-height-card {
-    min-height: calc(100vh - 70);
+    min-height: calc(100vh - 70px);
+    width: 100%;
+  }
+  
+  /* Dashboard content consistency */
+  .dashboard-content {
+    padding: 1.5rem;
+    width: 100%;
   }
   
   /* Translucent card for tab content area - Updated to be more transparent */
@@ -30,6 +37,21 @@
   .choose-plan-container .translucent-card {
     border: 1px solid rgba(124, 58, 237, 0.2);
     background-color: rgba(255, 255, 255, 0.7); /* Decreased from 0.9 to 0.7 for more transparency */
+  }
+  
+  /* Page consistency */
+  .page-container {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  
+  /* Dashboard header consistency */
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    width: 100%;
   }
   
   @media (max-width: 640px) {

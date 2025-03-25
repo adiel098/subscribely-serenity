@@ -12,7 +12,7 @@ const MembifySettings = () => {
   const { user } = useAuth();
 
   return (
-    <div className="h-full space-y-6 py-[5px] px-[14px]">
+    <div className="p-6 w-full">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

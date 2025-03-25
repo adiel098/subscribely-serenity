@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Bot, ArrowLeft, ArrowRight, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -19,6 +20,35 @@ const CustomBotNewCommunity: React.FC = () => {
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [existingCommunities, setExistingCommunities] = useState<string[]>([]);
+
+  // Fetch existing communities when component mounts
+  useEffect(() => {
+    const fetchExistingCommunities = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('communities')
+          .select('telegram_chat_id')
+          .eq('owner_id', user.id)
+          .not('telegram_chat_id', 'is', null);
+
+        if (error) {
+          console.error("Error fetching existing communities:", error);
+        } else if (data) {
+          // Extract chat IDs into an array
+          const chatIds = data.map(c => c.telegram_chat_id);
+          console.log("Existing community chat IDs:", chatIds);
+          setExistingCommunities(chatIds);
+        }
+      } catch (err) {
+        console.error("Error in fetchExistingCommunities:", err);
+      }
+    };
+
+    fetchExistingCommunities();
+  }, [user]);
 
   const handleVerifyConnection = async () => {
     if (!customTokenInput) {
@@ -42,21 +72,29 @@ const CustomBotNewCommunity: React.FC = () => {
       }
 
       if (response.data.valid) {
-        setVerificationResults(response.data.chatList || []);
+        // Filter out communities that are already added to user's account
+        const allChats = response.data.chatList || [];
+        const filteredChats = allChats.filter(chat => 
+          !existingCommunities.includes(chat.id.toString())
+        );
         
-        const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
-        const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
+        setVerificationResults(filteredChats);
         
-        if (response.data.chatList && response.data.chatList.length > 0) {
+        const channelCount = filteredChats.filter(chat => chat.type === 'channel').length;
+        const groupCount = filteredChats.filter(chat => chat.type !== 'channel').length;
+        
+        if (filteredChats.length > 0) {
           let successMessage = `Bot verified successfully!`;
           if (channelCount > 0 && groupCount > 0) {
-            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'new channel' : 'new channels'} and ${groupCount} ${groupCount === 1 ? 'new group' : 'new groups'}.`;
           } else if (channelCount > 0) {
-            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'}.`;
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'new channel' : 'new channels'}.`;
           } else if (groupCount > 0) {
-            successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+            successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'new group' : 'new groups'}.`;
           }
           toast.success(successMessage);
+        } else if (allChats.length > 0) {
+          toast.warning("All detected chats are already added to your account. Try a different bot or add your bot to new groups/channels.");
         } else {
           toast.warning("Bot token is valid, but no channels or groups were found. Make sure your bot is an admin in at least one group or channel.");
         }
@@ -152,7 +190,11 @@ const CustomBotNewCommunity: React.FC = () => {
   };
 
   const handleChatsRefresh = (newChats: TelegramChat[]) => {
-    setVerificationResults(newChats);
+    // Filter out already added communities from refreshed results as well
+    const filteredChats = newChats.filter(chat => 
+      !existingCommunities.includes(chat.id.toString())
+    );
+    setVerificationResults(filteredChats);
   };
 
   return (

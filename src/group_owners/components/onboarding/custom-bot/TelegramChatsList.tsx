@@ -59,11 +59,15 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
     return (
       <Alert className="mt-4 bg-amber-50 border-amber-100">
         <AlertCircle className="h-4 w-4 text-amber-600" />
-        <AlertTitle className="text-amber-800">No Groups or Channels Found</AlertTitle>
+        <AlertTitle className="text-amber-800">No New Groups or Channels Found</AlertTitle>
         <AlertDescription className="text-amber-700">
           <p className="mb-3">
-            Your bot token is valid, but the bot isn't added to any groups or channels yet. 
-            Make sure to add your bot to your Telegram groups/channels and grant it admin privileges.
+            No new communities were found. This can happen if:
+            <ul className="list-disc ml-5 mt-2">
+              <li>All your bot's communities are already added to your account</li>
+              <li>Your bot isn't added to any new groups or channels yet</li>
+              <li>Your bot doesn't have admin privileges in any new communities</li>
+            </ul>
           </p>
           
           {botToken && (
@@ -122,13 +126,13 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
             <Check className="h-4 w-4 text-green-600 mt-0.5" />
             <div className="text-sm text-green-700">
               <p className="font-medium">Verification Successful!</p>
-              <p>You can now click <strong>Continue</strong> to finish setup and go to your dashboard.</p>
+              <p>Found {chats.length} new communities you can add. Click <strong>Save Communities</strong> to proceed.</p>
             </div>
           </div>
         </div>
         
         <p className="text-sm text-gray-600 mb-3">
-          Your bot is connected to {chats.length} {chats.length === 1 ? 'chat' : 'chats'}
+          New communities available to add: {chats.length} {chats.length === 1 ? 'chat' : 'chats'}
           {channelCount > 0 && groupCount > 0 ? ` (${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'})` : 
            channelCount > 0 ? ` (${channelCount} ${channelCount === 1 ? 'channel' : 'channels'})` :
            groupCount > 0 ? ` (${groupCount} ${groupCount === 1 ? 'group' : 'groups'})` : ''}:

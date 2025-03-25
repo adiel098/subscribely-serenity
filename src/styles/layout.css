@@ -1,244 +1,35 @@
 
 @layer components {
-  /* ... keep existing code (community card grid styles and iOS scrolling) */
-  
-  /* Fix for mobile touch */
-  button, a {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  
-  /* ... keep existing code (community dropdown text and container styles) */
-  
-  /* Card that extends all the way to the bottom with minimal spacing */
-  .full-height-card {
-    min-height: calc(100vh - 70px);
+  /* community card grid styles and iOS scrolling */
+  .community-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
     width: 100%;
   }
   
-  /* Dashboard content consistency */
-  .dashboard-content {
-    padding: 1rem 1.5rem;
-    width: 100%;
+  /* iOS momentum scrolling fix */
+  .ios-momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll;
   }
   
-  /* Translucent card for tab content area - Updated to be more transparent */
-  .translucent-card {
-    @apply rounded-lg overflow-hidden;
-    min-height: auto;
-    height: auto;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background-color: rgba(255, 255, 255, 0.75); /* Decreased opacity from 0.95 to 0.75 for more transparency */
-    backdrop-filter: blur(15px);
-    position: relative;
-  }
-  
-  /* Plan card inside the choose-plan container - Updated with more transparency */
-  .choose-plan-container .translucent-card {
-    border: 1px solid rgba(124, 58, 237, 0.2);
-    background-color: rgba(255, 255, 255, 0.7); /* Decreased from 0.9 to 0.7 for more transparency */
-  }
-  
-  /* Page consistency */
-  .page-container {
-    width: 100%;
-    padding: 1rem;
-  }
-  
-  /* Dashboard header consistency */
-  .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    width: 100%;
-  }
-  
-  /* Sidebar spacing adjustments */
-  .left-sidebar {
-    position: fixed !important;
-    top: 140px !important;
-    left: 8px !important;
-    height: calc(100vh - 148px) !important;
-    z-index: 30 !important;
-    transition: none !important;
-  }
-  
-  /* Mobile optimizations */
-  @media (max-width: 640px) {
-    .community-dropdown-text {
-      max-width: 140px;
+  /* Small screen optimizations */
+  @media (max-width: 400px) {
+    .xs-hidden {
+      display: none !important;
     }
-    
-    .dashboard-content {
-      padding: 0.5rem;
+    .xs-visible {
+      display: block !important;
     }
-    
-    .page-container {
-      padding: 0.5rem;
-    }
-    
-    .dashboard-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
-    }
-    
-    /* Improve tap targets on mobile */
-    button, a {
-      min-height: 36px;
-    }
-    
-    /* Fix z-index for dropdowns on mobile */
-    .dropdown-content {
-      z-index: 9999 !important;
-    }
-    
-    /* Smaller dialogs for mobile */
-    .dialog-content {
-      width: 95% !important;
-      max-width: 95% !important;
-      padding: 0.75rem !important;
-    }
-    
-    /* Better spacing for mobile forms */
-    .form-group {
-      margin-bottom: 0.5rem;
-    }
-    
-    /* Make cards more compact on mobile */
-    .card {
-      padding: 0.5rem !important;
-    }
-    
-    /* Adjust text sizes for better mobile readability */
-    h1 {
-      font-size: 1.25rem !important;
-    }
-    h2 {
-      font-size: 1.125rem !important;
-    }
-    p {
-      font-size: 0.813rem !important;
-    }
-    
-    /* Better touch targets */
-    .touch-target {
-      min-height: 40px;
-      min-width: 40px;
-    }
-    
-    /* Fix drawer sizing on mobile */
-    [data-drawer-content] {
-      max-height: 85vh !important;
-    }
-    
-    /* Condensed stats grid on mobile */
-    .stats-grid {
-      gap: 0.5rem !important;
-    }
-    
-    /* Reduce padding in dropdown items on mobile */
-    .dropdown-item {
-      padding: 0.5rem 0.75rem !important;
-    }
-    
-    /* Optimize charts for mobile view */
-    .recharts-wrapper {
-      font-size: 10px !important;
-    }
-    
-    .recharts-tooltip-wrapper {
-      font-size: 10px !important;
-    }
-    
-    /* Ensure dropdown menus are visible */
-    [data-radix-popper-content-wrapper] {
-      z-index: 9999 !important;
-      background-color: white !important;
-    }
-    
-    /* Fix for community selector spacing */
-    .fixed.top-16 {
-      z-index: 30 !important;
-      height: auto !important;
-    }
-    
-    /* Fix main content top margin to avoid overlap with community selector */
-    .mt-[120px] {
-      margin-top: 120px !important;
-      padding-top: 0 !important;
-    }
-
-    /* Remove extra padding from page top on mobile */
-    .pt-0 {
-      padding-top: 0 !important;
-    }
-    
-    /* Adjust sidebar on mobile */
-    .left-sidebar {
-      top: 120px !important;
-      left: 0 !important;
-    }
-    
-    /* Bot settings mobile styles */
-    .bot-settings-collapsible {
-      margin-bottom: 0.75rem;
-      border-radius: 0.5rem;
-      overflow: hidden;
-    }
-    
-    .bot-settings-trigger {
-      padding: 0.75rem;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    /* Bot settings content adjustments for mobile */
-    .bot-settings-collapsible .btn,
-    .bot-settings-collapsible button:not(.bot-settings-trigger) {
+    .xs-text-xs {
       font-size: 0.75rem !important;
-      height: 2rem !important;
-      padding-left: 0.75rem !important;
-      padding-right: 0.75rem !important;
-      min-height: 2rem !important;
     }
-    
-    .bot-settings-collapsible input,
-    .bot-settings-collapsible textarea,
-    .bot-settings-collapsible select {
-      font-size: 0.75rem !important;
-      padding: 0.5rem 0.75rem !important;
-      height: 2.25rem !important;
+    .xs-p-1 {
+      padding: 0.25rem !important;
     }
-    
-    .bot-settings-collapsible textarea {
-      min-height: 5rem !important;
-      height: auto !important;
-    }
-    
-    .bot-settings-collapsible label {
-      font-size: 0.75rem !important;
-      margin-bottom: 0.25rem !important;
-    }
-    
-    .bot-settings-collapsible p {
-      font-size: 0.75rem !important;
-      line-height: 1.2 !important;
-    }
-    
-    .bot-settings-collapsible h3, 
-    .bot-settings-collapsible h4 {
-      font-size: 0.875rem !important;
-      margin-bottom: 0.5rem !important;
-    }
-    
-    .bot-settings-collapsible .form-section {
-      margin-bottom: 0.75rem !important;
+    .xs-m-1 {
+      margin: 0.25rem !important;
     }
   }
-  
-  /* ... keep existing code (small screen optimizations) */
 }

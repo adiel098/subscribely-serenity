@@ -1,0 +1,33 @@
+
+@layer components {
+  /* Dashboard content consistency */
+  .dashboard-content {
+    padding: 1rem 1.5rem;
+    width: 100%;
+  }
+  
+  /* Page consistency */
+  .page-container {
+    width: 100%;
+    padding: 1rem;
+  }
+  
+  /* Dashboard header consistency */
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    width: 100%;
+  }
+  
+  /* Sidebar spacing adjustments */
+  .left-sidebar {
+    position: fixed !important;
+    top: 140px !important;
+    left: 8px !important;
+    height: calc(100vh - 148px) !important;
+    z-index: 30 !important;
+    transition: none !important;
+  }
+}

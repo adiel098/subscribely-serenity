@@ -6,6 +6,11 @@
 @import './tab-styles.css';
 @import './text-gradient.css';
 @import './shimmer.css';
-@import './layout.css';
+@import './touch.css';
+@import './dashboard.css';
+@import './cards.css';
+@import './community.css';
+@import './mobile.css';
+@import './bot-settings.css';
 @import './animations.css';
 @import './safari-fixes.css';

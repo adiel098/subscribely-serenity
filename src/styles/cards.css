@@ -1,0 +1,25 @@
+
+@layer components {
+  /* Card that extends all the way to the bottom with minimal spacing */
+  .full-height-card {
+    min-height: calc(100vh - 70px);
+    width: 100%;
+  }
+  
+  /* Translucent card for tab content area */
+  .translucent-card {
+    @apply rounded-lg overflow-hidden;
+    min-height: auto;
+    height: auto;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(15px);
+    position: relative;
+  }
+  
+  /* Plan card inside the choose-plan container */
+  .choose-plan-container .translucent-card {
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    background-color: rgba(255, 255, 255, 0.7);
+  }
+}

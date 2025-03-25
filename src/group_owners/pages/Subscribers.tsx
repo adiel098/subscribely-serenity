@@ -14,14 +14,17 @@ import { SubscriberTabs } from "../components/subscribers/SubscriberTabs";
 import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const { toast } = useToast();
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const isMobile = useIsMobile();
   
   const [userToAssignPlan, setUserToAssignPlan] = useState<Subscriber | null>(null);
   const [assignPlanDialogOpen, setAssignPlanDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("subscribers");
   
   const {
     subscribers,

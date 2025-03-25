@@ -8,7 +8,8 @@ import {
   XCircle,
   Pencil,
   Unlock,
-  ExternalLink
+  ExternalLink,
+  UserPlus
 } from "lucide-react";
 import {
   Table,
@@ -39,13 +40,15 @@ interface SubscribersTableProps {
   onEdit: (subscriber: Subscriber) => void;
   onRemove: (subscriber: Subscriber) => void;
   onUnblock: (subscriber: Subscriber) => void;
+  onAssignPlan?: (subscriber: Subscriber) => void;
 }
 
 export const SubscribersTable = ({ 
   subscribers, 
   onEdit, 
   onRemove,
-  onUnblock 
+  onUnblock,
+  onAssignPlan
 }: SubscribersTableProps) => {
   const getStatusBadge = (subscriber: Subscriber) => {
     if (!subscriber.is_active) {
@@ -207,6 +210,16 @@ export const SubscribersTable = ({
                             <Pencil className="mr-2 h-4 w-4 text-blue-600" />
                             Edit Subscriber
                           </DropdownMenuItem>
+                          
+                          {!subscriber.plan && onAssignPlan && (
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => onAssignPlan(subscriber)}
+                            >
+                              <UserPlus className="mr-2 h-4 w-4 text-amber-600" />
+                              Assign Plan
+                            </DropdownMenuItem>
+                          )}
                           
                           {subscriber.subscription_status === "removed" ? (
                             <DropdownMenuItem

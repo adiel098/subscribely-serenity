@@ -33,7 +33,7 @@ export const SubscribersHeaderSection = ({
       
       {isMobile && (
         <div className="w-full overflow-auto">
-          <SubscribersStats subscribers={subscribers} isMobile={true} />
+          <SubscribersStats subscribers={subscribers} isMobile={isMobile} />
         </div>
       )}
     </div>

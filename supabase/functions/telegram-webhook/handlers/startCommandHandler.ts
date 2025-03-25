@@ -52,7 +52,7 @@ export async function handleStartCommand(
       // No parameter provided, send welcome message with Mini App button
       await logger.info("👋 No parameter, sending discovery welcome message");
       
-      // Get the mini app URL from our utility file instead of database
+      // Get the mini app URL from our utility file
       const miniAppUrl = TELEGRAM_MINI_APP_URL;
       await logger.info(`Using Mini App URL: ${miniAppUrl}`);
       
@@ -64,7 +64,7 @@ Discover and join premium Telegram communities, manage your subscriptions, and t
 Press the button below to explore communities:
       `;
       
-      // Create inline keyboard with web_app button
+      // Create inline keyboard with web_app button (ensure valid URL)
       const inlineKeyboard = {
         inline_keyboard: [
           [
@@ -75,6 +75,19 @@ Press the button below to explore communities:
           ]
         ]
       };
+      
+      await logger.info(`Sending welcome message with button URL: ${miniAppUrl}`);
+      
+      // Test the button URL separately to ensure it's valid
+      try {
+        const urlTest = new URL(miniAppUrl);
+        await logger.info(`URL validation passed: ${urlTest.toString()}`);
+      } catch (urlError) {
+        await logger.error(`❌ Invalid URL format: ${miniAppUrl}`, urlError);
+        // Send message without button if URL is invalid
+        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+        return true;
+      }
       
       await sendTelegramMessage(botToken, message.chat.id, welcomeMessage, inlineKeyboard);
       

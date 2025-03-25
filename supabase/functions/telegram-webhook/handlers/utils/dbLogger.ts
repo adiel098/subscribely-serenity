@@ -37,7 +37,7 @@ export async function createOrUpdateMember(
     
     // First check if member exists
     const { data: existingMember, error: checkError } = await supabase
-      .from('community_subscribers') // Updated from telegram_chat_members
+      .from('community_subscribers') // Updated table name
       .select('id')
       .eq('telegram_user_id', memberData.telegram_user_id)
       .eq('community_id', memberData.community_id)
@@ -54,7 +54,7 @@ export async function createOrUpdateMember(
       // Update existing member
       console.log(`[DB-LOGGER] 🔄 Updating existing member ID: ${existingMember.id}`);
       const { data, error } = await supabase
-        .from('community_subscribers') // Updated from telegram_chat_members
+        .from('community_subscribers') // Updated table name
         .update(memberData)
         .eq('id', existingMember.id)
         .select('id')
@@ -70,7 +70,7 @@ export async function createOrUpdateMember(
       // Create new member
       console.log('[DB-LOGGER] ➕ Creating new member record');
       const { data, error } = await supabase
-        .from('community_subscribers') // Updated from telegram_chat_members
+        .from('community_subscribers') // Updated table name
         .insert(memberData)
         .select('id')
         .single();

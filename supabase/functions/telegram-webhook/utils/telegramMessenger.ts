@@ -20,6 +20,17 @@ export async function sendTelegramMessage(
     console.log(`[TELEGRAM-MESSENGER] Has image: ${!!image}`);
     console.log(`[TELEGRAM-MESSENGER] Has inline keyboard: ${!!inlineKeyboard}`);
     
+    // Validate inline keyboard if provided
+    if (inlineKeyboard) {
+      // Check for web_app URLs and validate them
+      const validated = validateInlineKeyboard(inlineKeyboard);
+      if (!validated.valid) {
+        console.warn(`[TELEGRAM-MESSENGER] ⚠️ Invalid keyboard detected: ${validated.reason}`);
+        // Continue without the keyboard if it's invalid
+        inlineKeyboard = null;
+      }
+    }
+    
     if (image) {
       // If we have an image, send as photo with caption
       return await sendPhotoWithCaption(botToken, chatId, image, text, inlineKeyboard);
@@ -30,6 +41,56 @@ export async function sendTelegramMessage(
   } catch (error) {
     console.error(`[TELEGRAM-MESSENGER] Error sending message:`, error);
     return { ok: false, description: error.message || 'Unknown error' };
+  }
+}
+
+/**
+ * Validate inline keyboard to ensure all URLs are valid
+ */
+function validateInlineKeyboard(keyboard: any): { valid: boolean, reason?: string } {
+  try {
+    // Parse the keyboard if it's a string
+    const keyboardObj = typeof keyboard === 'string' ? JSON.parse(keyboard) : keyboard;
+    
+    // Make sure it has the expected format
+    if (!keyboardObj.inline_keyboard || !Array.isArray(keyboardObj.inline_keyboard)) {
+      return { valid: false, reason: 'No inline_keyboard array found' };
+    }
+    
+    // Check each button in the keyboard
+    for (const row of keyboardObj.inline_keyboard) {
+      if (!Array.isArray(row)) continue;
+      
+      for (const button of row) {
+        // Check web_app URLs
+        if (button.web_app && button.web_app.url) {
+          try {
+            // Test if it's a valid URL
+            new URL(button.web_app.url);
+            
+            // Verify it starts with https://
+            if (!button.web_app.url.startsWith('https://')) {
+              return { valid: false, reason: `Web app URL must start with https://: ${button.web_app.url}` };
+            }
+          } catch (e) {
+            return { valid: false, reason: `Invalid web_app URL: ${button.web_app.url}` };
+          }
+        }
+        
+        // Check URL buttons
+        if (button.url) {
+          try {
+            new URL(button.url);
+          } catch (e) {
+            return { valid: false, reason: `Invalid URL button: ${button.url}` };
+          }
+        }
+      }
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, reason: `Keyboard validation error: ${error.message}` };
   }
 }
 

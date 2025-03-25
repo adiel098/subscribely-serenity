@@ -17,28 +17,45 @@ export const HeaderActions = ({ onNewCommunityClick }: HeaderActionsProps) => {
   const { user } = useAuth();
   const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
   
-  // Check if the user has custom bot enabled in their settings
+  // Check if the user has custom bot enabled in their profile settings
   useEffect(() => {
     const checkCustomBotSetting = async () => {
       if (!user) return;
       
       try {
-        // First check if the user has any bot settings
+        // Check user's preference in profiles table
         const { data, error } = await supabase
-          .from('telegram_bot_settings')
+          .from('profiles')
           .select('use_custom_bot')
-          .eq('owner_id', user.id)
-          .limit(1)
-          .single();
+          .eq('id', user.id)
+          .maybeSingle();
         
         if (error) {
-          console.error('Error fetching bot settings:', error);
+          console.error('Error fetching bot settings from profile:', error);
           return;
         }
         
-        if (data) {
-          console.log('User bot settings found:', data);
+        if (data && data.use_custom_bot !== null) {
+          console.log('User profile bot setting found:', data.use_custom_bot);
           setUseCustomBot(data.use_custom_bot);
+        } else {
+          // Fallback to check telegram_bot_settings
+          const { data: botData, error: botError } = await supabase
+            .from('telegram_bot_settings')
+            .select('use_custom_bot')
+            .eq('owner_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          
+          if (botError) {
+            console.error('Error fetching telegram bot settings:', botError);
+            return;
+          }
+          
+          if (botData) {
+            console.log('Telegram bot settings found:', botData);
+            setUseCustomBot(botData.use_custom_bot);
+          }
         }
       } catch (error) {
         console.error('Error checking custom bot setting:', error);

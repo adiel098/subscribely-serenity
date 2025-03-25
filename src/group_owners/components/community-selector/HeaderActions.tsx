@@ -4,17 +4,54 @@ import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HeaderActionsProps {
   onNewCommunityClick: () => void;
 }
 
 export const HeaderActions = ({ onNewCommunityClick }: HeaderActionsProps) => {
-  const { settings, isLoading } = useBotSettings();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
+  
+  // Check if the user has custom bot enabled in their settings
+  useEffect(() => {
+    const checkCustomBotSetting = async () => {
+      if (!user) return;
+      
+      try {
+        // First check if the user has any bot settings
+        const { data, error } = await supabase
+          .from('telegram_bot_settings')
+          .select('use_custom_bot')
+          .eq('owner_id', user.id)
+          .limit(1)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching bot settings:', error);
+          return;
+        }
+        
+        if (data) {
+          console.log('User bot settings found:', data);
+          setUseCustomBot(data.use_custom_bot);
+        }
+      } catch (error) {
+        console.error('Error checking custom bot setting:', error);
+      }
+    };
+    
+    checkCustomBotSetting();
+  }, [user]);
   
   const handleNewCommunity = () => {
-    if (settings?.use_custom_bot) {
+    console.log('Current custom bot setting:', useCustomBot);
+    
+    if (useCustomBot) {
       navigate("/new-community/custom-bot");
     } else {
       navigate("/connect/telegram");

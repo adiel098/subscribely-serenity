@@ -88,7 +88,7 @@ const PaymentMethods = () => {
             </CardHeader>
             <CardContent className="pb-4">
               <TabsContent value="all" className="mt-0">
-                <motion.div className="grid gap-8 sm:grid-cols-1 md:grid-cols-3 mx-auto" variants={container} initial="hidden" animate="show">
+                <motion.div className="grid gap-8 sm:grid-cols-1 md:grid-cols-3 mx-auto justify-center" variants={container} initial="hidden" animate="show">
                   {!paymentMethods || paymentMethods.length === 0 ? <div className="col-span-3 py-10 text-center">
                       <motion.div variants={item} className="flex flex-col items-center gap-4">
                         <CreditCard className="h-16 w-16 text-gray-300" />

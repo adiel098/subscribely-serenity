@@ -10,9 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { AppSidebarContent } from '../AppSidebarContent';
+import { useLocation } from 'react-router-dom';
 
 export const MobileSidebar = () => {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   
   // Close the drawer when clicking outside or navigating
   useEffect(() => {
@@ -29,6 +31,11 @@ export const MobileSidebar = () => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
+  
+  // Close the drawer when navigating to a new page
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
   
   return (
     <div className="fixed bottom-4 left-4 z-50">

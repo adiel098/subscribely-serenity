@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -10,6 +11,7 @@ import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans"
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { PlanFeatureList } from "./PlanFeatureList";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   isOpen: boolean;
@@ -21,6 +23,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
   const { selectedCommunityId, selectedGroupId } = useCommunityContext();
   const entityId = isGroupMode ? selectedGroupId : selectedCommunityId;
   const { createPlan } = useSubscriptionPlans(entityId || "");
+  const isMobile = useIsMobile();
 
   const [newPlan, setNewPlan] = useState({
     name: "",
@@ -76,41 +79,41 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-indigo-50/30 border-indigo-100 shadow-lg">
+      <DialogContent className={`${isMobile ? 'max-w-[95%]' : 'sm:max-w-[525px]'} p-4 sm:p-6 bg-gradient-to-br from-white to-indigo-50/30 border-indigo-100 shadow-lg`}>
         <DialogHeader className="space-y-3 pb-6">
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            <SparklesIcon className="h-6 w-6 text-indigo-600 animate-pulse" />
+          <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
+            <SparklesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 animate-pulse" />
             Create New Subscription Plan
           </DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-sm sm:text-base">
             Design a new subscription plan to offer exclusive benefits to your {isGroupMode ? "group" : "community"} members.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 relative">
+        <div className="grid gap-4 sm:gap-6 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
           <div className="grid gap-2">
-            <Label htmlFor="name" className="text-base font-medium">Plan Name</Label>
+            <Label htmlFor="name" className="text-sm sm:text-base font-medium">Plan Name</Label>
             <Input 
               id="name" 
               placeholder='e.g. "Premium Plan"' 
               value={newPlan.name}
               onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-              className="text-lg border-indigo-100 focus:border-indigo-300 shadow-sm"
+              className="text-base sm:text-lg border-indigo-100 focus:border-indigo-300 shadow-sm"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description" className="text-base font-medium">Description</Label>
+            <Label htmlFor="description" className="text-sm sm:text-base font-medium">Description</Label>
             <Textarea 
               id="description" 
               placeholder="Describe the exclusive benefits of this plan..." 
               value={newPlan.description}
               onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-              className="min-h-[100px] text-base border-indigo-100 focus:border-indigo-300 shadow-sm"
+              className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base border-indigo-100 focus:border-indigo-300 shadow-sm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="price" className="text-base font-medium">Price</Label>
+              <Label htmlFor="price" className="text-sm sm:text-base font-medium">Price</Label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</div>
                 <Input 
@@ -119,12 +122,12 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
                   placeholder="0.00" 
                   value={newPlan.price}
                   onChange={e => setNewPlan({ ...newPlan, price: e.target.value })}
-                  className="text-lg pl-8 border-indigo-100 focus:border-indigo-300 shadow-sm"
+                  className="text-base sm:text-lg pl-8 border-indigo-100 focus:border-indigo-300 shadow-sm"
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="interval" className="text-base font-medium">Billing Interval</Label>
+              <Label htmlFor="interval" className="text-sm sm:text-base font-medium">Billing Interval</Label>
               <Select 
                 value={newPlan.interval}
                 onValueChange={(value: any) => setNewPlan({ ...newPlan, interval: value })}
@@ -143,8 +146,8 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
               </Select>
             </div>
           </div>
-          <div className="grid gap-4">
-            <Label className="text-base font-medium">Features</Label>
+          <div className="grid gap-3 sm:gap-4">
+            <Label className="text-sm sm:text-base font-medium">Features</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Add a feature..."
@@ -155,7 +158,7 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
               />
               <Button 
                 onClick={handleAddFeature}
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
               >
                 <PlusIcon className="h-4 w-4 mr-1" />
                 Add
@@ -171,17 +174,22 @@ export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: 
             )}
           </div>
         </div>
-        <DialogFooter className="gap-3 pt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className={`gap-3 pt-6 ${isMobile ? 'flex-col' : ''}`}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            className={isMobile ? "w-full" : ""}
+          >
             Cancel
           </Button>
           <motion.div
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            className={isMobile ? "w-full" : ""}
           >
             <Button 
               onClick={handleCreatePlan} 
-              className="gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md"
+              className={`gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md ${isMobile ? "w-full" : ""}`}
               disabled={!newPlan.name || !newPlan.price || createPlan.isPending || !entityId}
             >
               <Zap className="h-4 w-4" />

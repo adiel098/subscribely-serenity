@@ -37,7 +37,7 @@ export const DashboardLayout = ({
               duration: 0.4,
               delay: 0.4
             }} 
-            className={`p-4 ${isMobile ? 'mt-[80px]' : 'mt-[140px] ml-[240px] w-[calc(100vw-260px)]'}`}
+            className={`p-2 sm:p-4 ${isMobile ? 'mt-[95px]' : 'mt-[140px] ml-[240px] w-[calc(100vw-260px)]'}`}
           >
             <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden w-full">
               {children}

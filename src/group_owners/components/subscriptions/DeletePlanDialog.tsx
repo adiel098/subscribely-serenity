@@ -6,6 +6,7 @@ import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans"
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
   const { deletePlan, plans } = useSubscriptionPlans(entityId || "");
   const [isDeleting, setIsDeleting] = useState(false);
+  const isMobile = useIsMobile();
 
   const planToDelete = plans?.find(plan => plan.id === planId);
 
@@ -37,7 +39,7 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] p-6 border-red-100">
+      <DialogContent className={`${isMobile ? 'max-w-[90%]' : 'sm:max-w-[450px]'} p-5 sm:p-6 border-red-100`}>
         <DialogHeader className="space-y-3">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -64,17 +66,17 @@ export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
           </p>
         </div>
         
-        <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-2 mt-6">
+        <DialogFooter className={`flex ${isMobile ? 'flex-col' : 'flex-row sm:flex-row'} gap-3 sm:gap-2 mt-6`}>
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
-            className="sm:flex-1"
+            className={isMobile ? "w-full" : "sm:flex-1"}
           >
             Cancel
           </Button>
           <motion.div
             whileTap={{ scale: 0.97 }}
-            className="sm:flex-1 w-full"
+            className={isMobile ? "w-full" : "sm:flex-1 w-full"}
           >
             <Button 
               variant="destructive" 

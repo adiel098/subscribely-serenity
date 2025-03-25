@@ -83,5 +83,64 @@
     .dropdown-content {
       z-index: 9999 !important;
     }
+    
+    /* Smaller dialogs for mobile */
+    .dialog-content {
+      width: 95% !important;
+      max-width: 95% !important;
+      padding: 1rem !important;
+    }
+    
+    /* Better spacing for mobile forms */
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+    
+    /* Make cards more compact on mobile */
+    .card {
+      padding: 0.75rem !important;
+    }
+    
+    /* Adjust text sizes for better mobile readability */
+    h1 {
+      font-size: 1.5rem !important;
+    }
+    h2 {
+      font-size: 1.25rem !important;
+    }
+    p {
+      font-size: 0.875rem !important;
+    }
+    
+    /* Better touch targets */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Fix drawer sizing on mobile */
+    [data-drawer-content] {
+      max-height: 85vh !important;
+    }
+  }
+  
+  /* Fix overlapping elements on small screens */
+  @media (max-width: 480px) {
+    .sm-stack {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+    }
+    
+    .sm-full-width {
+      width: 100% !important;
+    }
+    
+    .sm-hidden {
+      display: none !important;
+    }
+    
+    .sm-visible {
+      display: block !important;
+    }
   }
 }

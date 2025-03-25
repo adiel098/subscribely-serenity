@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Bot, ArrowLeft, AlertCircle, Check } from "lucide-react";
+import { Bot, ArrowLeft, AlertCircle, Check, Loader2 } from "lucide-react";
 import { TelegramChat } from "./TelegramChatItem";
 import { TelegramChatsList } from "./TelegramChatsList";
 
@@ -20,6 +20,7 @@ interface CustomBotSetupCardProps {
   verificationResults: TelegramChat[] | null;
   verificationError: string | null;
   onChatsRefresh?: (newChats: TelegramChat[]) => void;
+  isSaving?: boolean;
 }
 
 export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
@@ -31,7 +32,8 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   isVerifying,
   verificationResults,
   verificationError,
-  onChatsRefresh
+  onChatsRefresh,
+  isSaving = false
 }) => {
   const hasVerifiedChats = verificationResults && verificationResults.length > 0;
 
@@ -54,6 +56,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
               onChange={(e) => setCustomTokenInput(e.target.value)}
               placeholder="Enter your bot token"
               className="w-full"
+              disabled={isSaving}
             />
           </div>
           
@@ -74,6 +77,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
               size="sm"
               onClick={() => window.open('https://t.me/BotFather', '_blank')}
               className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+              disabled={isSaving}
             >
               Open @BotFather in Telegram
             </Button>
@@ -93,6 +97,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             chats={verificationResults} 
             botToken={customTokenInput}
             onChatsRefresh={onChatsRefresh}
+            disabled={isSaving}
           />
         )}
         
@@ -101,6 +106,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             variant="outline"
             onClick={goToPreviousStep}
             className="flex items-center gap-1.5"
+            disabled={isSaving}
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -110,7 +116,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             <Button
               variant="outline"
               onClick={onVerifyConnection}
-              disabled={!customTokenInput || isVerifying}
+              disabled={!customTokenInput || isVerifying || isSaving}
               className="flex items-center gap-1.5"
             >
               <Bot className="h-4 w-4" />
@@ -119,11 +125,20 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             
             <Button
               onClick={onContinue}
-              disabled={!hasVerifiedChats}
+              disabled={!hasVerifiedChats || isSaving}
               className="flex items-center gap-1.5"
             >
-              <Check className="h-4 w-4" />
-              Continue
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Continue
+                </>
+              )}
             </Button>
           </div>
         </div>

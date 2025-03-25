@@ -12,12 +12,14 @@ interface TelegramChatsListProps {
   chats: TelegramChat[];
   botToken?: string;
   onChatsRefresh?: (newChats: TelegramChat[]) => void;
+  disabled?: boolean;
 }
 
 export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({ 
   chats, 
   botToken,
-  onChatsRefresh 
+  onChatsRefresh,
+  disabled = false
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -69,7 +71,7 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
               variant="outline" 
               size="sm" 
               onClick={handleRefreshChats}
-              disabled={isRefreshing}
+              disabled={isRefreshing || disabled}
               className="flex items-center gap-1.5"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -106,7 +108,7 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
               variant="outline" 
               size="sm" 
               onClick={handleRefreshChats}
-              disabled={isRefreshing}
+              disabled={isRefreshing || disabled}
               className="flex items-center gap-1.5"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />

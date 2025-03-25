@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Bot } from "lucide-react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
@@ -23,8 +24,9 @@ const CustomBotSetupStep = ({
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   
-  // Store the token when completing this step
+  // Store the token and communities when completing this step
   const handleContinue = async () => {
     if (!customTokenInput) {
       toast.error("Please enter your bot token");
@@ -37,6 +39,8 @@ const CustomBotSetupStep = ({
     }
     
     try {
+      setIsSaving(true);
+      
       // Save the token
       const { error: tokenError } = await supabase.rpc('set_bot_preference', { 
         use_custom: true,
@@ -44,6 +48,34 @@ const CustomBotSetupStep = ({
       });
       
       if (tokenError) throw tokenError;
+      
+      // Save each detected community/channel to the database
+      for (const chat of verificationResults) {
+        // Check if community already exists with this chat ID
+        const { data: existingCommunity } = await supabase
+          .from('communities')
+          .select('id')
+          .eq('telegram_chat_id', chat.id)
+          .maybeSingle();
+          
+        if (!existingCommunity) {
+          // Create new community record
+          const { error: communityError } = await supabase
+            .from('communities')
+            .insert({
+              name: chat.title,
+              telegram_chat_id: chat.id,
+              telegram_photo_url: chat.photo_url || null,
+              is_group: chat.type !== 'channel'
+            });
+            
+          if (communityError) {
+            console.error("Error saving community:", communityError);
+            toast.error(`Failed to save community: ${chat.title}`);
+            // Continue with other communities even if one fails
+          }
+        }
+      }
       
       // Explicitly mark onboarding as completed
       await supabase.from('profiles').update({ 
@@ -61,8 +93,9 @@ const CustomBotSetupStep = ({
         navigate('/dashboard', { replace: true });
       }, 500);
     } catch (error) {
-      console.error("Error saving bot token:", error);
-      toast.error("Failed to save bot token");
+      console.error("Error saving bot token and communities:", error);
+      toast.error("Failed to complete setup");
+      setIsSaving(false);
     }
   };
 
@@ -143,6 +176,7 @@ const CustomBotSetupStep = ({
           verificationResults={verificationResults}
           verificationError={verificationError}
           onChatsRefresh={handleChatsRefresh}
+          isSaving={isSaving}
         />
       </div>
     </OnboardingLayout>

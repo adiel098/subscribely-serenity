@@ -104,7 +104,7 @@ export default function Payments() {
   }
 
   return (
-    <div className="container max-w-6xl px-4 py-6 space-y-6">
+    <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6">
       <PageHeader
         title="Payments"
         description="Manage and track all platform payments 💰"

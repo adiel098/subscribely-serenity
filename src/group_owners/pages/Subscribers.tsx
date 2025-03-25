@@ -88,7 +88,7 @@ const Subscribers = () => {
   }
 
   return (
-    <div className="container max-w-6xl px-4 py-6 space-y-6 pb-8">
+    <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6 pb-8">
       <PageHeader
         title="Subscribers"
         description={`Manage ${isGroupSelected ? "group" : "community"} subscribers and their access`}

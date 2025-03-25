@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { OnboardingState } from "@/group_owners/hooks/onboarding/types";
 
 interface CompletionStepProps {
   onComplete: () => Promise<void>;
@@ -20,15 +19,6 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Mock state for demonstration - in a real app, this would come from a hook or props
-  const state: OnboardingState = {
-    currentStep: "complete",
-    isCompleted: false,
-    isTelegramConnected: true,
-    hasPlatformPlan: true,
-    hasPaymentMethod: true
-  };
-
   const handleCompleteOnboarding = async () => {
     try {
       await onComplete();
@@ -38,22 +28,13 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
     }
   };
 
-  // Calculate the number of steps completed
-  const getTotalStepsCompleted = () => {
-    let count = 0;
-    if (state.isTelegramConnected) count++;
-    if (state.hasPlatformPlan) count++;
-    if (state.hasPaymentMethod) count++;
-    return count;
-  };
-
   return (
     <OnboardingLayout
       currentStep="complete"
       title="You're All Set!"
       description="Your Telegram community is ready to accept paid memberships"
       icon={<CheckCircle className="w-6 h-6 text-green-500" />}
-      showBackButton={true}
+      showBackButton={false}
       onBack={goToPreviousStep}
     >
       <div className="space-y-6">
@@ -70,44 +51,44 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
           </div>
           
           <h2 className="text-xl font-semibold text-center text-green-800 mb-2">
-            Onboarding Complete!
+            Success! 🎉
           </h2>
           
           <p className="text-center text-green-700 mb-4">
-            You've completed {getTotalStepsCompleted()} out of 3 essential steps.
+            Your Telegram community has been successfully connected to Membify.
           </p>
           
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3">
-              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.isTelegramConnected ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
-                {state.isTelegramConnected ? "✓" : "1"}
+          <ul className="space-y-3 mb-6">
+            <li className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                ✓
               </div>
-              <p className={`${state.isTelegramConnected ? "text-green-700" : "text-gray-500"}`}>
-                {state.isTelegramConnected ? "Telegram channel connected" : "Connect Telegram channel"}
+              <p className="text-green-700">
+                Community connection verified
               </p>
-            </div>
+            </li>
             
-            <div className="flex items-center gap-3">
-              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.hasPlatformPlan ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
-                {state.hasPlatformPlan ? "✓" : "2"}
+            <li className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                ✓
               </div>
-              <p className={`${state.hasPlatformPlan ? "text-green-700" : "text-gray-500"}`}>
-                {state.hasPlatformPlan ? "Platform plan selected" : "Select platform plan"}
+              <p className="text-green-700">
+                Bot permissions configured
               </p>
-            </div>
+            </li>
             
-            <div className="flex items-center gap-3">
-              <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${state.hasPaymentMethod ? "bg-green-500 text-white" : "bg-gray-200 text-gray-500"}`}>
-                {state.hasPaymentMethod ? "✓" : "3"}
+            <li className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                ✓
               </div>
-              <p className={`${state.hasPaymentMethod ? "text-green-700" : "text-gray-500"}`}>
-                {state.hasPaymentMethod ? "Payment methods configured" : "Configure payment methods"}
+              <p className="text-green-700">
+                Ready to create subscription plans
               </p>
-            </div>
-          </div>
+            </li>
+          </ul>
           
           <p className="text-center text-sm text-green-600 italic mb-4">
-            Don't worry! You can always update these settings later from your dashboard.
+            You can now set up subscription plans and start accepting members!
           </p>
         </motion.div>
         

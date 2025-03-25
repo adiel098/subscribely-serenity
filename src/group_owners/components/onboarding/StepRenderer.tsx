@@ -6,6 +6,7 @@ import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
 import BotSelectionStep from "@/group_owners/pages/onboarding/steps/BotSelectionStep";
 import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
+import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -45,7 +46,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   }, [currentStep, navigate, isRedirecting]);
   
   // If we're redirecting or step is complete, show loading state
-  if (isRedirecting || currentStep === "complete") {
+  if (isRedirecting && currentStep !== "completion") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 max-w-md w-full text-center">
@@ -123,7 +124,11 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     case "connect-telegram":
       return (
         <ConnectTelegramStep 
-          onComplete={handleCompleteOnboarding} 
+          onComplete={() => {
+            console.log("Connect telegram completed, going to completion step");
+            goToNextStep("connect-telegram");
+            navigate('/onboarding/completion');
+          }}
           activeStep={true}
           goToPreviousStep={() => {
             // Check if we need to go back to custom-bot-setup or bot-selection
@@ -153,6 +158,19 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         />
       );
     
+    case "completion":
+      return (
+        <CompletionStep
+          onComplete={handleCompleteOnboarding}
+          activeStep={true}
+          goToPreviousStep={() => {
+            console.log("Going back to connect telegram step");
+            goToPreviousStep("completion");
+            navigate('/onboarding/connect-telegram');
+          }}
+        />
+      );
+      
     default:
       console.error("Unknown step:", currentStep);
       navigate('/onboarding/welcome', { replace: true });

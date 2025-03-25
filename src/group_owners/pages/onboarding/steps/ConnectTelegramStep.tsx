@@ -1,6 +1,4 @@
-
-import React, { useEffect, useState } from "react";
-import { Bot, ArrowLeft, ArrowRight, Link, ExternalLink, RefreshCw } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -20,15 +18,15 @@ import { useNavigate } from "react-router-dom";
 
 interface ConnectTelegramStepProps {
   onComplete: () => void;
-  activeStep: boolean;
   goToPreviousStep: () => void;
+  activeStep: boolean;
 }
 
-const ConnectTelegramStep = ({ 
-  onComplete, 
-  activeStep,
-  goToPreviousStep
-}: ConnectTelegramStepProps) => {
+const ConnectTelegramStep: React.FC<ConnectTelegramStepProps> = ({
+  onComplete,
+  goToPreviousStep,
+  activeStep
+}) => {
   const navigate = useNavigate();
   const {
     verificationCode,
@@ -51,17 +49,14 @@ const ConnectTelegramStep = ({
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
 
-  // For custom bot users who don't have a token set yet
   const needsCustomBotSetup = useCustomBot && !customBotToken;
 
-  // Redirect to telegram bot settings if using custom bot without token
   useEffect(() => {
     if (needsCustomBotSetup) {
       toast.info("You need to set up your custom bot first", {
         description: "You'll be redirected to the bot settings page"
       });
       
-      // Short delay before redirect to ensure the toast is seen
       const redirectTimer = setTimeout(() => {
         navigate('/telegram-bot');
       }, 2000);
@@ -92,7 +87,6 @@ const ConnectTelegramStep = ({
       if (response.data.valid) {
         setValidationSuccess(true);
         
-        // Save the token
         await supabase.rpc('set_bot_preference', { 
           use_custom: true,
           custom_token: customTokenInput
@@ -100,7 +94,6 @@ const ConnectTelegramStep = ({
         
         toast.success("Bot token validated and saved successfully!");
         
-        // Reload the page to refresh the state
         window.location.reload();
       } else {
         setValidationSuccess(false);
@@ -113,6 +106,10 @@ const ConnectTelegramStep = ({
     } finally {
       setIsValidating(false);
     }
+  };
+
+  const handleSuccess = () => {
+    onComplete();
   };
 
   if (needsCustomBotSetup) {
@@ -207,7 +204,7 @@ const ConnectTelegramStep = ({
         <div className="max-w-3xl mx-auto">
           <VerificationSuccess
             community={displayedCommunity}
-            onComplete={onComplete}
+            onComplete={handleSuccess}
             isRefreshingPhoto={isRefreshingPhoto}
             onRefreshPhoto={(e, communityId, chatId) => {
               if (displayedCommunity && displayedCommunity.id) {

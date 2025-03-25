@@ -511,6 +511,7 @@ export type Database = {
         Row: {
           created_at: string
           current_telegram_code: string | null
+          custom_bot_token: string | null
           email: string | null
           first_name: string | null
           full_name: string | null
@@ -525,10 +526,12 @@ export type Database = {
           registration_date: string | null
           status: string | null
           updated_at: string
+          use_custom_bot: boolean | null
         }
         Insert: {
           created_at?: string
           current_telegram_code?: string | null
+          custom_bot_token?: string | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -543,10 +546,12 @@ export type Database = {
           registration_date?: string | null
           status?: string | null
           updated_at?: string
+          use_custom_bot?: boolean | null
         }
         Update: {
           created_at?: string
           current_telegram_code?: string | null
+          custom_bot_token?: string | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -561,6 +566,7 @@ export type Database = {
           registration_date?: string | null
           status?: string | null
           updated_at?: string
+          use_custom_bot?: boolean | null
         }
         Relationships: []
       }
@@ -1109,6 +1115,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_bot_preference: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_members_to_check: {
         Args: Record<PropertyKey, never>

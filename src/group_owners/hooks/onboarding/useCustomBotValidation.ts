@@ -36,7 +36,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
         setValidationSuccess(true);
         setBotChatList(response.data.chatList || []);
         
-        // Save the token
+        // Save the token in profiles table
         await supabase.rpc('set_bot_preference', { 
           use_custom: true,
           custom_token: customTokenInput

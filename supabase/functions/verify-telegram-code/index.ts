@@ -16,12 +16,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { code, useCustomBot, customBotToken } = await req.json();
+    const reqBody = await req.json();
+    const { userId, verificationCode, customBotToken } = reqBody;
     
     // Check if we have all required fields
-    if (!code) {
+    if (!verificationCode) {
       return new Response(
-        JSON.stringify({ error: 'Verification code is required' }),
+        JSON.stringify({ success: false, message: 'Verification code is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -32,7 +33,7 @@ serve(async (req: Request) => {
     
     if (!supabaseUrl || !supabaseServiceKey) {
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
+        JSON.stringify({ success: false, message: 'Server configuration error' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -43,7 +44,7 @@ serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Authorization header is required' }),
+        JSON.stringify({ success: false, message: 'Authorization header is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
@@ -56,7 +57,7 @@ serve(async (req: Request) => {
     
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Invalid authentication token' }),
+        JSON.stringify({ success: false, message: 'Invalid authentication token' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       );
     }
@@ -64,24 +65,39 @@ serve(async (req: Request) => {
     // Get bot token based on user's preference
     let botToken: string;
     
-    if (useCustomBot && customBotToken) {
+    if (customBotToken) {
       // Use custom bot token if provided
       botToken = customBotToken;
+      console.log('Using custom bot token provided in request');
     } else {
-      // Get the default bot token from the database
-      const { data: globalSettings, error: globalSettingsError } = await supabase
-        .from('telegram_global_settings')
-        .select('bot_token')
+      // Get the user's profile to check for custom bot preference
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('use_custom_bot, custom_bot_token')
+        .eq('id', user.id)
         .single();
       
-      if (globalSettingsError || !globalSettings?.bot_token) {
-        return new Response(
-          JSON.stringify({ error: 'Default bot not configured' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+      if (!profileError && profileData && profileData.use_custom_bot && profileData.custom_bot_token) {
+        // Use custom bot token from profile
+        botToken = profileData.custom_bot_token;
+        console.log('Using custom bot token from user profile');
+      } else {
+        // Get the default bot token from the database
+        const { data: globalSettings, error: globalSettingsError } = await supabase
+          .from('telegram_global_settings')
+          .select('bot_token')
+          .single();
+        
+        if (globalSettingsError || !globalSettings?.bot_token) {
+          return new Response(
+            JSON.stringify({ success: false, message: 'Default bot not configured' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
+        }
+        
+        botToken = globalSettings.bot_token;
+        console.log('Using default bot token from global settings');
       }
-      
-      botToken = globalSettings.bot_token;
     }
 
     // Initialize the Telegram Bot API client
@@ -97,14 +113,14 @@ serve(async (req: Request) => {
       const matchingUpdates = updates.result.filter(update => {
         return update.message && 
                update.message.text && 
-               update.message.text.includes(code);
+               update.message.text.includes(verificationCode);
       });
       
-      console.log(`Found ${matchingUpdates.length} matching updates with code ${code}`);
+      console.log(`Found ${matchingUpdates.length} matching updates with code ${verificationCode}`);
       
       if (matchingUpdates.length === 0) {
         return new Response(
-          JSON.stringify({ verified: false, message: 'Verification code not found' }),
+          JSON.stringify({ success: false, message: 'Verification code not found' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -117,7 +133,7 @@ serve(async (req: Request) => {
       
       if (!chatId) {
         return new Response(
-          JSON.stringify({ verified: false, message: 'Unable to identify chat' }),
+          JSON.stringify({ success: false, message: 'Unable to identify chat' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -133,8 +149,9 @@ serve(async (req: Request) => {
         console.log(`Chat ${chatId} is already connected to user ${existingCommunity.owner_id}`);
         return new Response(
           JSON.stringify({ 
-            verified: false, 
-            duplicateChatId: chatId,
+            success: false, 
+            errorType: 'DUPLICATE_CHAT',
+            chatId: chatId,
             message: 'This Telegram group is already connected to another account' 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -164,6 +181,16 @@ serve(async (req: Request) => {
         // Continue without photo, it's not critical
       }
       
+      // Get user's custom bot preference
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('use_custom_bot, custom_bot_token')
+        .eq('id', user.id)
+        .single();
+        
+      const useCustomBot = profileData?.use_custom_bot || false;
+      const botTokenForSettings = useCustomBot ? profileData?.custom_bot_token : null;
+      
       // Get or create community record
       let community;
       
@@ -184,7 +211,7 @@ serve(async (req: Request) => {
         if (updateError) {
           console.error("Failed to update community:", updateError);
           return new Response(
-            JSON.stringify({ error: 'Failed to update community record' }),
+            JSON.stringify({ success: false, message: 'Failed to update community record' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
           );
         }
@@ -207,7 +234,7 @@ serve(async (req: Request) => {
         if (createError) {
           console.error("Failed to create community:", createError);
           return new Response(
-            JSON.stringify({ error: 'Failed to create community record' }),
+            JSON.stringify({ success: false, message: 'Failed to create community record' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
           );
         }
@@ -220,10 +247,10 @@ serve(async (req: Request) => {
           .insert({
             community_id: community.id,
             chat_id: chatId,
-            verification_code: code,
+            verification_code: verificationCode,
             verified_at: new Date().toISOString(),
             use_custom_bot: useCustomBot,
-            custom_bot_token: useCustomBot ? customBotToken : null
+            custom_bot_token: botTokenForSettings
           });
       }
       
@@ -236,7 +263,7 @@ serve(async (req: Request) => {
       // Return success
       return new Response(
         JSON.stringify({ 
-          verified: true, 
+          success: true, 
           community: community
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -245,7 +272,7 @@ serve(async (req: Request) => {
     } catch (telegramError) {
       console.error("Telegram API error:", telegramError);
       return new Response(
-        JSON.stringify({ error: 'Error connecting to Telegram: ' + telegramError.message }),
+        JSON.stringify({ success: false, message: 'Error connecting to Telegram: ' + telegramError.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -254,7 +281,7 @@ serve(async (req: Request) => {
     console.error('Error in verify-telegram-code function:', error);
     
     return new Response(
-      JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
+      JSON.stringify({ success: false, message: error.message || 'An unexpected error occurred' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

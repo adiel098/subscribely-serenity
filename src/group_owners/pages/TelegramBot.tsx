@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
 import { useCommunityContext } from "@/contexts/CommunityContext";

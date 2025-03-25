@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,11 +10,11 @@ interface HeaderActionsProps {
 }
 
 export const HeaderActions = ({ onNewCommunityClick }: HeaderActionsProps) => {
-  const { data: botSettings, isLoading } = useBotSettings();
+  const { settings, isLoading } = useBotSettings();
   const navigate = useNavigate();
   
   const handleNewCommunity = () => {
-    if (botSettings?.use_custom_bot) {
+    if (settings?.use_custom_bot) {
       navigate("/new-community/custom-bot");
     } else {
       navigate("/connect/telegram");

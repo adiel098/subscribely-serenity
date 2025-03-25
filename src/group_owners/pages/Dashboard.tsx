@@ -78,7 +78,7 @@ const Dashboard = () => {
   }
   
   return (
-    <div className={`space-y-4 pb-6 ${isMobile ? 'px-3 py-3' : 'px-[37px] py-[28px]'}`}>
+    <div className={`space-y-4 pb-6 ${isMobile ? 'px-3 py-1' : 'px-[37px] py-[28px]'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-4">
         <div>
           <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>

@@ -103,7 +103,7 @@ export const CommunitySelector = () => {
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className={`fixed top-16 left-0 right-0 z-10 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-2' : 'h-[60px]'}`}
+        className={`fixed top-16 left-0 right-0 z-30 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/95 to-gray-50/95 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-3' : 'h-[60px]'}`}
       >
         {isMobile ? (
           <>

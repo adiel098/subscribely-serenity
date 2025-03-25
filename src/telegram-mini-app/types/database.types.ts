@@ -30,6 +30,10 @@ export interface Database {
           description: string | null;
           telegram_photo_url: string | null;
           telegram_invite_link: string | null;
+          chat_type: string | null; // Added chat_type field to store Telegram chat type (channel, group, supergroup)
+          is_group: boolean | null; // This now represents platform groups, not Telegram groups
+          is_active: boolean | null;
+          bot_status: string | null;
           created_at?: string | null;
           updated_at?: string | null;
         };

@@ -23,13 +23,13 @@ export async function handleChannelVerification(
   try {
     console.log('[Channel] Processing message:', JSON.stringify(message, null, 2));
 
-    // וידוא שזו הודעה מערוץ או קבוצה
+    // Verify this is a message from a channel or group
     if (!message.chat || !['group', 'supergroup', 'channel'].includes(message.chat.type)) {
       console.log('[Channel] Not a channel/group message');
       return false;
     }
 
-    // חיפוש קוד אימות בהודעה
+    // Look for verification code in message
     const verificationCodeMatch = message.text?.match(/MBF_([A-Za-z0-9]+)/);
     if (!verificationCodeMatch) {
       console.log('[Channel] No verification code found in message');
@@ -39,7 +39,7 @@ export async function handleChannelVerification(
     const verificationCode = verificationCodeMatch[1];
     console.log('[Channel] Found verification code:', verificationCode);
 
-    // חיפוש הפרופיל המתאים
+    // Find matching profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -53,7 +53,7 @@ export async function handleChannelVerification(
 
     console.log('[Channel] Found matching profile:', profile.id);
 
-    // בדיקה האם הקהילה כבר קיימת
+    // Check if community already exists
     const { data: existingCommunity } = await supabase
       .from('communities')
       .select('*')
@@ -65,7 +65,7 @@ export async function handleChannelVerification(
       return false;
     }
 
-    // יצירת קהילה חדשה
+    // Create new community
     const { data: newCommunity, error: communityError } = await supabase
       .from('communities')
       .insert({
@@ -73,7 +73,9 @@ export async function handleChannelVerification(
         owner_id: profile.id,
         platform: 'telegram',
         telegram_chat_id: String(message.chat.id),
-        platform_id: String(message.chat.id)
+        platform_id: String(message.chat.id),
+        chat_type: message.chat.type, // Store the original chat type for reference
+        is_group: false // All Telegram entities are regular communities in our platform
       })
       .select()
       .single();
@@ -99,9 +101,9 @@ export async function handleChannelVerification(
       console.log('[Channel] No photo available or failed to fetch photo for community:', newCommunity.id);
     }
 
-    // שליחת הודעת אישור
+    // Send confirmation message
     try {
-      const confirmationMessage = `✅ Channel/Group successfully connected!\nCommunity ID: ${newCommunity.id}`;
+      const confirmationMessage = `✅ ${message.chat.type === 'channel' ? 'Channel' : 'Group'} successfully connected!\nCommunity ID: ${newCommunity.id}`;
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +114,7 @@ export async function handleChannelVerification(
       });
     } catch (sendError) {
       console.error('[Channel] Error sending confirmation:', sendError);
-      // לא מחזירים false כי הקהילה כבר נוצרה בהצלחה
+      // Don't return false as the community was already created successfully
     }
 
     return true;

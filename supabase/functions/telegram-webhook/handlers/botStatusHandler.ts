@@ -63,7 +63,7 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
       } else if (['group', 'supergroup', 'channel'].includes(chatType)) {
         console.log('[BOT-STATUS] ➕ Creating new community record');
         
-        // Create a new community record - Fix for all chat types to be treated as regular communities
+        // Create a new community record - All Telegram channels and groups are treated as regular communities
         const chatName = update.chat.title || `Chat ${chatId}`;
         const { data: newCommunity, error: createError } = await supabase
           .from('communities')
@@ -73,11 +73,11 @@ export async function handleMyChatMember(supabase: ReturnType<typeof createClien
             chat_type: chatType,
             is_active: true,
             bot_status: newStatus,
-            is_group: false, // שינוי: כל סוגי הצ'אטים (גם קבוצות) הם קהילות רגילות
+            is_group: false, // Important: All Telegram entities (groups and channels) are regular communities in our platform
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .select() // Add select() to get the created record
+          .select()
           .single();
         
         if (createError) {

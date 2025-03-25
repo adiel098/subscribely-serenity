@@ -64,12 +64,12 @@ const PaymentMethods = () => {
         }} transition={{
           duration: 0.5
         }}>
-          <div className="p-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
-            <CreditCard className="h-8 w-8 text-indigo-600" />
+          <div className={`p-${isMobile ? '2' : '3'} bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl`}>
+            <CreditCard className={`h-${isMobile ? '6' : '8'} w-${isMobile ? '6' : '8'} text-indigo-600`} />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Payment Methods <Sparkles className="h-5 w-5 inline text-amber-400" />
+              Payment Methods <Sparkles className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} inline text-amber-400`} />
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground">
               Configure and manage payment gateways for all your communities and groups 💸
@@ -79,19 +79,19 @@ const PaymentMethods = () => {
 
         <Tabs defaultValue="all" className="max-w-5xl mx-auto">
           <Card className="border-indigo-100 shadow-md bg-gradient-to-br from-indigo-50/50 to-white overflow-hidden mx-auto max-w-4xl">
-            <CardHeader className="pb-3 pt-6">
-              <CardTitle className="flex items-center justify-center gap-3 text-lg md:text-xl">
-                <LayoutGrid className="h-5 w-5 md:h-6 md:w-6 text-indigo-600" />
+            <CardHeader className={`${isMobile ? 'p-3 pb-2' : 'pb-3 pt-6'}`}>
+              <CardTitle className={`flex items-center justify-center gap-2 md:gap-3 text-${isMobile ? 'base' : 'lg'} md:text-xl`}>
+                <LayoutGrid className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} md:h-6 md:w-6 text-indigo-600`} />
                 Available Payment Gateways
               </CardTitle>
-              <CardDescription className="text-center text-sm md:text-base">
+              <CardDescription className="text-center text-xs md:text-sm lg:text-base">
                 Enable and configure global payment options for all your communities and groups
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-4">
+            <CardContent className={`${isMobile ? 'p-2 pb-3' : 'pb-4'}`}>
               <TabsContent value="all" className="mt-0">
                 <motion.div 
-                  className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-1 md:grid-cols-3'} mx-auto justify-center`} 
+                  className={`grid gap-${isMobile ? '4' : '8'} ${isMobile ? 'grid-cols-1 sm:grid-cols-2' : 'sm:grid-cols-1 md:grid-cols-3'} mx-auto justify-center`} 
                   variants={container} 
                   initial="hidden" 
                   animate="show"

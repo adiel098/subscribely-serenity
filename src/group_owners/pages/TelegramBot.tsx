@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -10,10 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TelegramBot = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const isMobile = useIsMobile();
   
   const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
   
@@ -82,11 +85,11 @@ const TelegramBot = () => {
   };
 
   if (isLoading) {
-    return <div className="container px-4 py-6 max-w-7xl mx-auto">
+    return <div className={`container ${isMobile ? 'px-3 py-4' : 'px-4 py-6'} max-w-7xl mx-auto`}>
       <PageHeader
         title="Telegram Bot Configuration"
         description="Configure your Telegram bot settings"
-        icon={<Bot className="h-6 w-6" />}
+        icon={<Bot className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       <Card className="animate-pulse">
         <CardContent className="h-64 flex items-center justify-center">
@@ -97,73 +100,73 @@ const TelegramBot = () => {
   }
 
   return (
-    <div className="container px-4 py-6 max-w-7xl mx-auto">
+    <div className={`container ${isMobile ? 'px-3 py-4' : 'px-4 py-6'} max-w-7xl mx-auto`}>
       <PageHeader
         title="Telegram Bot Configuration"
         description="Choose between Membify's bot or your own custom Telegram bot"
-        icon={<Bot className="h-6 w-6" />}
+        icon={<Bot className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       
-      <div className="grid gap-6">
+      <div className="grid gap-4 md:gap-6">
         <Card className={!useCustomBot ? "border-indigo-200 bg-indigo-50/50 shadow-md" : ""}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <Bot className="h-5 w-5 text-indigo-600" />
+          <CardHeader className={isMobile ? "p-3 pb-2" : ""}>
+            <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+              <div className={`bg-indigo-100 p-${isMobile ? '1.5' : '2'} rounded-full`}>
+                <Bot className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
               </div>
               Membify Default Bot
             </CardTitle>
-            <CardDescription>
+            <CardDescription className={isMobile ? "text-xs" : ""}>
               Use the official Membify bot to manage your community
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className={`space-y-2 md:space-y-3 ${isMobile ? 'p-3 pt-0' : ''}`}>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-sm">No setup required</span>
+              <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+              <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>No setup required</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Full access to all Membify features</span>
+              <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+              <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Full access to all Membify features</span>
             </div>
             <div className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Automatic updates and maintenance</span>
+              <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+              <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Automatic updates and maintenance</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className={useCustomBot ? "border-indigo-200 bg-indigo-50/50 shadow-md" : ""}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="bg-indigo-100 p-2 rounded-full">
-                <Lock className="h-5 w-5 text-indigo-600" />
+          <CardHeader className={isMobile ? "p-3 pb-2" : ""}>
+            <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+              <div className={`bg-indigo-100 p-${isMobile ? '1.5' : '2'} rounded-full`}>
+                <Lock className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
               </div>
               Custom Bot
             </CardTitle>
-            <CardDescription>
+            <CardDescription className={isMobile ? "text-xs" : ""}>
               Use your own custom Telegram bot (requires setup)
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
+          <CardContent className={`space-y-3 md:space-y-4 ${isMobile ? 'p-3 pt-0' : ''}`}>
+            <div className="space-y-2 md:space-y-3">
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Full brand customization</span>
+                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Full brand customization</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Private message handling</span>
+                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Private message handling</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Your own bot username and avatar</span>
+                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Your own bot username and avatar</span>
               </div>
             </div>
             
-            <div className="border-t pt-4">
+            <div className="border-t pt-3 md:pt-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="custom-bot-toggle" className="font-medium text-indigo-700">
+                <Label htmlFor="custom-bot-toggle" className={`font-medium text-indigo-700 ${isMobile ? 'text-sm' : ''}`}>
                   Use Custom Bot
                 </Label>
                 <Switch 
@@ -174,47 +177,47 @@ const TelegramBot = () => {
               </div>
               
               {useCustomBot && (
-                <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bot-token" className="text-sm">
+                <div className="mt-3 md:mt-4 space-y-3 md:space-y-4">
+                  <div className="space-y-1 md:space-y-2">
+                    <Label htmlFor="bot-token" className={`${isMobile ? 'text-xs' : 'text-sm'}`}>
                       Bot Token <span className="text-red-500">*</span>
                     </Label>
-                    <div className="flex gap-2">
+                    <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
                       <Input
                         id="bot-token"
                         type="password"
                         value={customBotToken}
                         onChange={(e) => setCustomBotToken(e.target.value)}
                         placeholder="Enter your bot token from @BotFather"
-                        className="flex-1"
+                        className={`flex-1 ${isMobile ? 'text-xs h-8' : ''}`}
                       />
                       <Button 
                         onClick={validateBotToken} 
                         disabled={isValidating || !customBotToken || customBotToken.includes('•')}
-                        className="whitespace-nowrap"
+                        className={`whitespace-nowrap ${isMobile ? 'text-xs h-8 mt-1' : ''}`}
                       >
                         {isValidating ? "Validating..." : "Validate & Save"}
                       </Button>
                     </div>
                     
                     {validationSuccess === true && (
-                      <div className="flex items-center gap-2 text-green-600 text-sm mt-2">
-                        <Check className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-green-600 text-xs mt-2">
+                        <Check className="h-3.5 w-3.5" />
                         <span>Bot token validated successfully!</span>
                       </div>
                     )}
                     
                     {validationSuccess === false && (
-                      <div className="flex items-center gap-2 text-red-600 text-sm mt-2">
-                        <AlertCircle className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-red-600 text-xs mt-2">
+                        <AlertCircle className="h-3.5 w-3.5" />
                         <span>Invalid bot token. Please check and try again.</span>
                       </div>
                     )}
                   </div>
                   
-                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm">
+                  <div className={`bg-amber-50 border border-amber-200 rounded-md p-${isMobile ? '2' : '3'} ${isMobile ? 'text-xs' : 'text-sm'}`}>
                     <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <AlertCircle className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-amber-600 mt-0.5 shrink-0`} />
                       <div>
                         <p className="font-medium text-amber-800">Important:</p>
                         <p className="text-amber-700 mt-1">
@@ -225,9 +228,9 @@ const TelegramBot = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">How to create a bot:</p>
-                    <ol className="text-sm space-y-2 pl-5 list-decimal">
+                  <div className="space-y-1 md:space-y-2">
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>How to create a bot:</p>
+                    <ol className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1 md:space-y-2 pl-5 list-decimal`}>
                       <li>Open Telegram and search for @BotFather</li>
                       <li>Send /newbot command and follow the instructions</li>
                       <li>Copy the API token provided and paste it above</li>

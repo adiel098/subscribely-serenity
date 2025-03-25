@@ -1,10 +1,13 @@
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Subscriber } from "@/group_owners/hooks/useSubscribers";
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscribersTable } from "./SubscribersTable";
 import { UnmanagedUsersList } from "./UnmanagedUsersList";
-import { motion } from "framer-motion";
-import { Users, UserPlus } from "lucide-react";
+import { MobileSubscribersList } from "./MobileSubscribersList";
+import { MobileUnmanagedUsersList } from "./MobileUnmanagedUsersList";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { User, UserPlus } from "lucide-react";
+import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 interface SubscriberTabsProps {
   subscribers: Subscriber[];
@@ -12,63 +15,70 @@ interface SubscriberTabsProps {
   onEdit: (subscriber: Subscriber) => void;
   onRemove: (subscriber: Subscriber) => void;
   onUnblock: (subscriber: Subscriber) => void;
-  onAssignPlan: (subscriber: Subscriber) => void;
+  onAssignPlan: (user: Subscriber) => void;
 }
 
-export const SubscriberTabs = ({
+export const SubscriberTabs: React.FC<SubscriberTabsProps> = ({
   subscribers,
   unmanagedUsers,
   onEdit,
   onRemove,
   onUnblock,
   onAssignPlan
-}: SubscriberTabsProps) => {
+}) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Tabs defaultValue="subscribers" className="w-full">
-        <TabsList className="mb-6 bg-white border rounded-lg p-1 shadow-sm">
-          <TabsTrigger 
-            value="subscribers" 
-            className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-50 data-[state=active]:to-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-md"
-          >
-            <Users className="h-4 w-4" />
-            <span>Subscribers</span>
-            <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-600">
-              {subscribers.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="unmanaged" 
-            className="flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-50 data-[state=active]:to-orange-50 data-[state=active]:text-amber-700 data-[state=active]:shadow-sm rounded-md"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Unmanaged Users</span>
-            <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-600">
-              {unmanagedUsers.length}
-            </span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="subscribers" className="mt-0">
-          <SubscribersTable 
-            subscribers={subscribers}
-            onEdit={onEdit}
-            onRemove={onRemove}
-            onUnblock={onUnblock}
-          />
+    <Tabs defaultValue="subscribers" className="w-full">
+      <TabsList className={`grid grid-cols-2 ${isMobile ? 'w-full text-xs h-9' : 'w-[400px]'}`}>
+        <TabsTrigger value="subscribers" className="flex items-center gap-1.5">
+          <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+          <span>Subscribers</span>
+          <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} ml-1 bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5`}>
+            {subscribers.length}
+          </span>
+        </TabsTrigger>
+        <TabsTrigger value="unmanaged" className="flex items-center gap-1.5">
+          <UserPlus className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+          <span>Unmanaged</span>
+          <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} ml-1 bg-gray-100 text-gray-600 rounded-full px-1.5 py-0.5`}>
+            {unmanagedUsers.length}
+          </span>
+        </TabsTrigger>
+      </TabsList>
+      <div className="mt-4">
+        <TabsContent value="subscribers">
+          {isMobile ? (
+            <MobileSubscribersList 
+              subscribers={subscribers}
+              onEdit={onEdit}
+              onRemove={onRemove}
+              onUnblock={onUnblock}
+            />
+          ) : (
+            <SubscribersTable 
+              subscribers={subscribers}
+              onEdit={onEdit}
+              onRemove={onRemove}
+              onUnblock={onUnblock}
+            />
+          )}
         </TabsContent>
         
-        <TabsContent value="unmanaged" className="mt-0">
-          <UnmanagedUsersList 
-            users={unmanagedUsers}
-            onAssignPlan={onAssignPlan}
-          />
+        <TabsContent value="unmanaged">
+          {isMobile ? (
+            <MobileUnmanagedUsersList
+              users={unmanagedUsers}
+              onAssignPlan={onAssignPlan}
+            />
+          ) : (
+            <UnmanagedUsersList
+              users={unmanagedUsers}
+              onAssignPlan={onAssignPlan}
+            />
+          )}
         </TabsContent>
-      </Tabs>
-    </motion.div>
+      </div>
+    </Tabs>
   );
 };

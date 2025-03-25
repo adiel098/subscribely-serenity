@@ -5,15 +5,17 @@ import { BotSettingsLayout } from "@/group_owners/components/bot-settings/BotSet
 import { SettingsContent } from "@/group_owners/components/bot-settings/SettingsContent";
 import { PageHeader } from "@/components/ui/page-header";
 import { Bot } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BotSettings = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const isMobile = useIsMobile();
   
   const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
 
   return (
-    <div className="p-6 w-full">
+    <div className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
       <BotSettingsLayout isLoading={isLoading}>
         <SettingsContent 
           settings={settings} 

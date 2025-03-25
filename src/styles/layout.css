@@ -54,6 +54,12 @@
     width: 100%;
   }
   
+  /* Sidebar spacing adjustments */
+  .left-sidebar {
+    padding-top: 140px; /* Match the top position of the sidebar */
+    margin-right: 20px;
+  }
+  
   /* Mobile optimizations */
   @media (max-width: 640px) {
     .community-dropdown-text {
@@ -163,6 +169,12 @@
     /* Remove extra padding from page top on mobile */
     .pt-0 {
       padding-top: 0 !important;
+    }
+    
+    /* Adjust sidebar on mobile */
+    .left-sidebar {
+      padding-top: 120px;
+      margin-right: 0;
     }
   }
   

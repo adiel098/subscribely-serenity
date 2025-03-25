@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface HeaderActionsProps {
   onNewCommunityClick: () => void;

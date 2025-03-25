@@ -21,7 +21,8 @@ const BotSettings = () => {
           settings={settings} 
           entityId={communityIdToUse} 
           entityType={isGroupSelected ? 'group' : 'community'}
-          updateSettings={updateSettings} 
+          updateSettings={updateSettings}
+          isMobile={isMobile}
         />
       </BotSettingsLayout>
     </div>

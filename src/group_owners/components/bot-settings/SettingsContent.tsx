@@ -1,28 +1,31 @@
-
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { useState } from "react";
 import { BotStatsHeader } from "./BotStatsHeader";
 import { WelcomeMessageSection } from "./WelcomeMessageSection";
 import { SubscriptionSection } from "./SubscriptionSection";
 import { BroadcastSection } from "./BroadcastSection";
-import { motion } from "framer-motion";
-import { Bot, MessageSquare, BellRing, Megaphone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bot, MessageSquare, BellRing, Megaphone, ChevronDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface SettingsContentProps {
   settings: BotSettings | null;
   entityId: string | null;
   entityType: 'community' | 'group';
   updateSettings: any;
+  isMobile?: boolean;
 }
 
 export const SettingsContent = ({
   settings,
   entityId,
   entityType,
-  updateSettings
+  updateSettings,
+  isMobile = false
 }: SettingsContentProps) => {
   const [activeSection, setActiveSection] = useState<string | null>("welcome");
+  const [openCollapsible, setOpenCollapsible] = useState<string | null>("welcome");
 
   if (!settings) {
     return (
@@ -78,6 +81,48 @@ export const SettingsContent = ({
       Component: BroadcastSection
     }
   ];
+
+  if (isMobile) {
+    return (
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
+        <motion.div variants={itemVariants}>
+          <BotStatsHeader entityId={entityId || ""} entityType={entityType} />
+        </motion.div>
+
+        <div className="space-y-4">
+          {sectionData.map(({ key, title, description, icon, color, borderColor, Component }) => (
+            <Collapsible
+              key={key}
+              open={openCollapsible === key}
+              onOpenChange={(open) => setOpenCollapsible(open ? key : null)}
+              className={`border ${borderColor} rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300`}
+            >
+              <CollapsibleTrigger className={`w-full bg-gradient-to-r ${color} p-4 flex items-center justify-between cursor-pointer`}>
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/60 p-2 rounded-full">{icon}</div>
+                  <div className="text-left">
+                    <h3 className="font-medium">{title}</h3>
+                    <p className="text-xs text-muted-foreground">{description}</p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${openCollapsible === key ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 bg-white">
+                  <Component 
+                    settings={settings} 
+                    updateSettings={updateSettings}
+                    entityId={entityId || ""}
+                    entityType={entityType}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">

@@ -14,8 +14,6 @@ import { SubscriberTabs } from "../components/subscribers/SubscriberTabs";
 import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
-import { Users, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();

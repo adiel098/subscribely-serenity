@@ -15,7 +15,7 @@ export const GroupCommunitiesDisplay: React.FC<GroupCommunitiesDisplayProps> = (
   return (
     <div className="space-y-3">
       <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-medium text-gray-800`}>Communities in this Group</h3>
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {communities && communities.length > 0 ? (
           communities.map(community => (
             <Card key={community.id} className="shadow-sm hover:shadow-md transition-shadow h-full">

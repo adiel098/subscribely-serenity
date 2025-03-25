@@ -1,5 +1,6 @@
+
 import { useNavigate } from "react-router-dom";
-import { Bell, PlusCircle, FolderPlus } from "lucide-react";
+import { Bell, PlusCircle, FolderPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityGroups } from "@/group_owners/hooks/useCommunityGroups";
@@ -18,6 +19,12 @@ import { GroupMiniAppLinkButton } from "./community-groups/GroupMiniAppLinkButto
 import { useGroupMemberCommunities } from "../hooks/useGroupMemberCommunities";
 import { useBotSettings } from "../hooks/useBotSettings";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
@@ -70,21 +77,27 @@ export const CommunitySelector = () => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCreateGroup}
-                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 px-3"
-                    size="sm"
-                  >
-                    <FolderPlus className="h-3.5 w-3.5" />
-                    Group
-                  </Button>
-                </motion.div>
-                <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      className="h-8 w-8 rounded-full border-indigo-200 shadow-sm bg-white"
+                    >
+                      <Plus className="h-4 w-4 text-indigo-600" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleCreateCommunity}>
+                      <PlusCircle className="h-4 w-4 mr-2 text-blue-600" />
+                      Add Community
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCreateGroup}>
+                      <FolderPlus className="h-4 w-4 mr-2 text-purple-600" />
+                      Add Group
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             

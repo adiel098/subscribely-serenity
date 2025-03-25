@@ -9,6 +9,7 @@ import { GroupDetailsDialog } from "./GroupDetailsDialog";
 import { GroupSuccessBanner } from "./group-success/GroupSuccessBanner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { getMiniAppUrl } from "@/telegram-mini-app/utils/config";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const logger = createLogger("GroupMiniAppLinkButton");
 
@@ -21,9 +22,10 @@ interface GroupMiniAppLinkButtonProps {
 export const GroupMiniAppLinkButton = ({ 
   group, 
   communities: initialCommunities,
-  showSuccessBanner = true // Changed default to true to ensure the banner is shown
+  showSuccessBanner = true
 }: GroupMiniAppLinkButtonProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   const botUsername = getBotUsername();
   
@@ -53,7 +55,7 @@ export const GroupMiniAppLinkButton = ({
 
   return (
     <>
-      {showSuccessBanner ? (
+      {showSuccessBanner && !isMobile ? (
         <GroupSuccessBanner
           groupId={group.id}
           customLink={group.custom_link || null}
@@ -66,7 +68,6 @@ export const GroupMiniAppLinkButton = ({
         />
       )}
 
-      {/* Group Edit Dialog with tabs */}
       <GroupDetailsDialog 
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
@@ -75,7 +76,7 @@ export const GroupMiniAppLinkButton = ({
         fullLink={fullLink}
         onCopyLink={handleCopyLink}
         onGroupUpdated={handleGroupUpdated}
-        isEditModeByDefault={false} // Changed to false to start in view mode
+        isEditModeByDefault={false}
       />
     </>
   );

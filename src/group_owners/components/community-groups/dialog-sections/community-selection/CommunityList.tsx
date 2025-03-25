@@ -4,6 +4,7 @@ import { Community } from "@/group_owners/hooks/useCommunities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Users } from "lucide-react";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const logger = createLogger("CommunityList");
 
@@ -18,6 +19,8 @@ export const CommunityList: React.FC<CommunityListProps> = memo(({
   selectedCommunityIds,
   toggleCommunity
 }) => {
+  const isMobile = useIsMobile();
+  
   // Log the received props
   logger.debug("CommunityList props:", {
     communities,
@@ -54,6 +57,7 @@ export const CommunityList: React.FC<CommunityListProps> = memo(({
             community={community}
             isSelected={selectedCommunityIds.includes(community.id)}
             onToggle={() => toggleCommunity(community.id)}
+            isMobile={isMobile}
           />
         );
       })}
@@ -65,10 +69,11 @@ interface CommunityItemProps {
   community: Community;
   isSelected: boolean;
   onToggle: () => void;
+  isMobile?: boolean;
 }
 
 // Separate memoized component for each item to prevent re-renders of all items
-const CommunityItem = memo(({ community, isSelected, onToggle }: CommunityItemProps) => {
+const CommunityItem = memo(({ community, isSelected, onToggle, isMobile }: CommunityItemProps) => {
   if (!community || typeof community !== 'object') {
     logger.error("Invalid community in CommunityItem:", community);
     return null;
@@ -76,7 +81,7 @@ const CommunityItem = memo(({ community, isSelected, onToggle }: CommunityItemPr
 
   return (
     <div 
-      className={`flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors ${
+      className={`flex items-center gap-2 p-2 hover:bg-gray-50 transition-colors ${
         isSelected ? 'bg-purple-50' : ''
       }`}
     >
@@ -86,22 +91,22 @@ const CommunityItem = memo(({ community, isSelected, onToggle }: CommunityItemPr
         onCheckedChange={onToggle}
         className={isSelected ? 'text-purple-600' : ''}
       />
-      <div className="flex-shrink-0 h-9 w-9 bg-gray-100 rounded-md overflow-hidden">
+      <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-md overflow-hidden">
         {community.telegram_photo_url ? (
           <img src={community.telegram_photo_url} alt={community.name} className="h-full w-full object-cover" />
         ) : (
-          <Users className="h-5 w-5 text-gray-400 m-2" />
+          <Users className="h-4 w-4 text-gray-400 m-2" />
         )}
       </div>
       <label htmlFor={`community-${community.id}`} className="flex items-center gap-2 flex-1 cursor-pointer">
         <div>
-          <p className="text-sm font-medium text-gray-700">{community.name}</p>
+          <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-700 truncate max-w-[150px]`}>{community.name}</p>
           {community.description && (
-            <p className="text-xs text-gray-500 truncate max-w-xs">{community.description}</p>
+            <p className="text-xs text-gray-500 truncate max-w-[150px]">{community.description}</p>
           )}
         </div>
         {isSelected && (
-          <CheckCircle2 className="h-5 w-5 text-green-500 ml-auto" />
+          <CheckCircle2 className="h-4 w-4 text-green-500 ml-auto" />
         )}
       </label>
     </div>

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Plus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommunityAvatar } from "@/group_owners/components/community-selector/photo-handling/CommunityAvatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ConnectedCommunitiesListProps {
   communities: Array<{
@@ -25,6 +26,8 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
   showAddMoreButton = false,
   onAddMoreClick
 }) => {
+  const isMobile = useIsMobile();
+  
   if (!communities || communities.length === 0) {
     return null;
   }
@@ -55,7 +58,7 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
         )}
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {communities.map((community, index) => (
           <motion.div 
             key={community.id}
@@ -74,7 +77,7 @@ export const ConnectedCommunitiesList: React.FC<ConnectedCommunitiesListProps> =
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-gray-900 truncate`}>
                 {community.name}
               </p>
               <div className="flex items-center mt-1">

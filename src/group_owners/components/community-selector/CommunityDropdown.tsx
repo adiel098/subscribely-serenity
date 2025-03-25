@@ -1,20 +1,18 @@
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useCommunityContext } from "@/contexts/CommunityContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
 export const CommunityDropdown = ({ 
   communities, 
@@ -46,6 +44,13 @@ export const CommunityDropdown = ({
   const displayName = isGroupSelected 
     ? selectedGroup?.name || "Select a group" 
     : selectedCommunity?.name || "Select a community";
+
+  // Process photo URL to ensure it's properly loaded
+  const selectedPhotoUrl = isGroupSelected
+    ? null // Groups don't have photos currently
+    : selectedCommunity?.telegram_photo_url 
+      ? getProxiedImageUrl(selectedCommunity.telegram_photo_url)
+      : null;
   
   return (
     <DropdownMenu>
@@ -54,9 +59,23 @@ export const CommunityDropdown = ({
           variant="outline" 
           className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[260px] max-w-[400px]'}`}
         >
-          <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
-            {displayName}
-          </span>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6 border border-indigo-100">
+              {selectedPhotoUrl ? (
+                <AvatarImage 
+                  src={selectedPhotoUrl} 
+                  alt={displayName}
+                />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
+                  {displayName?.charAt(0)?.toUpperCase() || '?'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
+              {displayName}
+            </span>
+          </div>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -70,7 +89,21 @@ export const CommunityDropdown = ({
               className={`cursor-pointer ${selectedCommunityId === community.id && !isGroupSelected ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
               onClick={() => handleSelectCommunity(community.id)}
             >
-              <span className="truncate">{community.name}</span>
+              <div className="flex items-center gap-2 w-full">
+                <Avatar className="h-5 w-5 border border-gray-100">
+                  {community.telegram_photo_url ? (
+                    <AvatarImage 
+                      src={getProxiedImageUrl(community.telegram_photo_url)} 
+                      alt={community.name}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px]">
+                      {community.name?.charAt(0)?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <span className="truncate">{community.name}</span>
+              </div>
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
@@ -86,7 +119,12 @@ export const CommunityDropdown = ({
                   className={`cursor-pointer ${selectedGroupId === group.id ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
                   onClick={() => handleSelectGroup(group.id)}
                 >
-                  <span className="truncate">{group.name}</span>
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex items-center justify-center h-5 w-5 rounded-md bg-indigo-100 text-indigo-600">
+                      <Users className="h-3 w-3" />
+                    </div>
+                    <span className="truncate">{group.name}</span>
+                  </div>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>

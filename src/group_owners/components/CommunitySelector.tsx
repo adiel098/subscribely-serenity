@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Bell, PlusCircle, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,50 +55,95 @@ export const CommunitySelector = () => {
         transition={{ duration: 0.3 }}
         className={`fixed top-16 left-0 right-0 z-10 flex ${isMobile ? 'flex-col' : 'items-center'} gap-2 md:gap-4 px-3 md:px-6 py-2 bg-gradient-to-r from-white/90 to-gray-50/90 border-b backdrop-blur-lg transition-all duration-300 shadow-sm ${isMobile ? 'h-auto pb-3' : 'h-[60px]'}`}
       >
-        <div className={`flex ${isMobile ? 'flex-col w-full' : 'items-center'} gap-2 md:gap-4 ${!isMobile && 'ml-[230px]'}`}>
-          <CommunityDropdown 
-            communities={communities} 
-            groups={groups}
-            selectedCommunityId={selectedCommunityId}
-            setSelectedCommunityId={setSelectedCommunityId}
-            selectedGroupId={selectedGroupId}
-            setSelectedGroupId={setSelectedGroupId}
-            isMobile={isMobile}
-          />
+        {isMobile ? (
+          <>
+            <div className="flex items-center w-full justify-between">
+              <div className="flex-1 max-w-[60%]">
+                <CommunityDropdown 
+                  communities={communities} 
+                  groups={groups}
+                  selectedCommunityId={selectedCommunityId}
+                  setSelectedCommunityId={setSelectedCommunityId}
+                  selectedGroupId={selectedGroupId}
+                  setSelectedGroupId={setSelectedGroupId}
+                  isMobile={isMobile}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCreateGroup}
+                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 px-3"
+                    size="sm"
+                  >
+                    <FolderPlus className="h-3.5 w-3.5" />
+                    Group
+                  </Button>
+                </motion.div>
+                <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
+              </div>
+            </div>
+            
+            <PlatformSubscriptionBanner />
+            
+            {!isGroupSelected && <CommunityRequirementsBanner />}
+            
+            {isGroupSelected && selectedGroup && (
+              <GroupMiniAppLinkButton 
+                group={selectedGroup}
+                communities={groupCommunities}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 md:gap-4 ml-[230px]">
+              <CommunityDropdown 
+                communities={communities} 
+                groups={groups}
+                selectedCommunityId={selectedCommunityId}
+                setSelectedCommunityId={setSelectedCommunityId}
+                selectedGroupId={selectedGroupId}
+                setSelectedGroupId={setSelectedGroupId}
+                isMobile={isMobile}
+              />
 
-          {/* The platform subscription banner manages its own visibility */}
-          {!isMobile && <PlatformSubscriptionBanner />}
-          
-          {/* Only show this when a community is selected (not a group) */}
-          {!isGroupSelected && !isMobile && <CommunityRequirementsBanner />}
-          
-          {/* Show Mini App Link button for groups */}
-          {isGroupSelected && selectedGroup && !isMobile && (
-            <GroupMiniAppLinkButton 
-              group={selectedGroup}
-              communities={groupCommunities}
-            />
-          )}
-        </div>
+              <PlatformSubscriptionBanner />
+              
+              {!isGroupSelected && <CommunityRequirementsBanner />}
+              
+              {isGroupSelected && selectedGroup && (
+                <GroupMiniAppLinkButton 
+                  group={selectedGroup}
+                  communities={groupCommunities}
+                />
+              )}
+            </div>
 
-        <div className={`flex ${isMobile ? 'w-full justify-between mt-2' : 'items-center gap-4 ml-auto'}`}>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button 
-              variant="outline" 
-              onClick={handleCreateGroup}
-              className={`border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 ${isMobile ? 'px-3' : 'w-[130px]'}`}
-              size="sm"
-            >
-              <FolderPlus className="h-3.5 w-3.5" />
-              {isMobile ? 'Group' : 'New Group'}
-            </Button>
-          </motion.div>
-          
-          <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
-        </div>
+            <div className="flex items-center gap-4 ml-auto">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  variant="outline" 
+                  onClick={handleCreateGroup}
+                  className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 w-[130px]"
+                  size="sm"
+                >
+                  <FolderPlus className="h-3.5 w-3.5" />
+                  New Group
+                </Button>
+              </motion.div>
+              
+              <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
+            </div>
+          </>
+        )}
       </motion.div>
 
       <AlertMessage 

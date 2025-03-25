@@ -72,9 +72,15 @@ export const CommunityDropdown = ({
                 </AvatarFallback>
               )}
             </Avatar>
-            <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
-              {displayName}
-            </span>
+            {!isMobile ? (
+              <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
+                {displayName}
+              </span>
+            ) : (
+              <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700 max-w-[120px]">
+                {displayName.length > 15 ? `${displayName.substring(0, 15)}...` : displayName}
+              </span>
+            )}
           </div>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>

@@ -3,6 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { OnboardingStep, ONBOARDING_STEPS } from "./types";
 import { saveOnboardingStep, completeOnboardingProcess } from "../../services/onboardingService";
+import { toast } from "sonner";
 
 export const useOnboardingNavigation = (
   currentStep: OnboardingStep,
@@ -10,7 +11,6 @@ export const useOnboardingNavigation = (
   setIsCompleted: (completed: boolean) => void
 ) => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSavedStepRef = useRef<OnboardingStep | null>(null);
   const isCompletingRef = useRef(false);
@@ -56,15 +56,11 @@ export const useOnboardingNavigation = (
       console.log("Step saved successfully");
     } catch (error) {
       console.error("Error saving onboarding step:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save your progress"
-      });
+      toast.error("Failed to save your progress");
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, setCurrentStep, setIsCompleted, toast]);
+  }, [user, setCurrentStep, setIsCompleted]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
     if (!user || isCompletingRef.current || completionInProgressRef.current || hasCompletedRef.current) {
@@ -93,11 +89,7 @@ export const useOnboardingNavigation = (
       return Promise.resolve();
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to complete onboarding"
-      });
+      toast.error("Failed to complete onboarding");
       completionInProgressRef.current = false;
       hasCompletedRef.current = false;
       return Promise.reject(error);
@@ -105,7 +97,7 @@ export const useOnboardingNavigation = (
       setIsSubmitting(false);
       // Keep isCompletingRef true to prevent repeated completions
     }
-  }, [user, setCurrentStep, setIsCompleted, toast]);
+  }, [user, setCurrentStep, setIsCompleted]);
 
   const goToNextStep = useCallback((currentStep: OnboardingStep = "welcome") => {
     if (!user) return;
@@ -123,6 +115,14 @@ export const useOnboardingNavigation = (
       console.log("Moving to next step:", nextStep);
       if (nextStep !== lastSavedStepRef.current) {
         saveCurrentStep(nextStep);
+        
+        // Add a direct navigation fallback using window.location for critical transitions
+        if (currentStep === "welcome" && nextStep === "bot-selection") {
+          console.log("Critical transition from welcome to bot-selection");
+          setTimeout(() => {
+            window.location.href = '/onboarding/bot-selection';
+          }, 500);
+        }
       } else {
         // Just update the UI without saving to the database
         setCurrentStep(nextStep);

@@ -8,6 +8,7 @@ import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotS
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface StepRendererProps {
   currentStep: OnboardingStep;
@@ -70,11 +71,22 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     );
   }
   
+  const handleWelcomeComplete = () => {
+    console.log("Welcome step completed, going to next step");
+    // Use direct navigation to ensure we move to the next step
+    goToNextStep("welcome");
+    
+    // Add a direct navigation fallback
+    setTimeout(() => {
+      navigate('/onboarding/bot-selection');
+    }, 300);
+  };
+  
   switch(currentStep) {
     case "welcome":
       return (
         <WelcomeStep 
-          onComplete={() => goToNextStep(currentStep)} 
+          onComplete={handleWelcomeComplete} 
           activeStep={true}
         />
       );
@@ -84,10 +96,14 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         <BotSelectionStep 
           onComplete={() => {
             console.log("Bot selection completed, going to next step");
-            goToNextStep(currentStep);
+            goToNextStep("bot-selection");
           }} 
           activeStep={true}
-          goToPreviousStep={() => goToPreviousStep("welcome")}
+          goToPreviousStep={() => {
+            console.log("Going back to welcome step");
+            goToPreviousStep("welcome");
+            navigate('/onboarding/welcome');
+          }}
         />
       );
       
@@ -96,7 +112,11 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         <CustomBotSetupStep 
           onComplete={() => handleCompleteOnboarding()} 
           activeStep={true}
-          goToPreviousStep={() => goToPreviousStep("bot-selection")}
+          goToPreviousStep={() => {
+            console.log("Going back to bot selection step");
+            goToPreviousStep("bot-selection");
+            navigate('/onboarding/bot-selection');
+          }}
         />
       );
     
@@ -108,14 +128,22 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           goToPreviousStep={() => {
             // Check if we need to go back to custom-bot-setup or bot-selection
             const hasBotToken = async () => {
-              const { data } = await supabase
-                .from('bot_settings')
-                .select('custom_bot_token')
-                .single();
-              
-              if (data?.custom_bot_token) {
-                navigate('/onboarding/custom-bot-setup');
-              } else {
+              try {
+                const { data } = await supabase
+                  .from('bot_settings')
+                  .select('custom_bot_token')
+                  .single();
+                
+                if (data?.custom_bot_token) {
+                  console.log("Has bot token, going back to custom-bot-setup");
+                  navigate('/onboarding/custom-bot-setup');
+                } else {
+                  console.log("No bot token, going back to bot-selection");
+                  navigate('/onboarding/bot-selection');
+                }
+              } catch (error) {
+                console.error("Error checking bot token:", error);
+                toast.error("Failed to check previous step");
                 navigate('/onboarding/bot-selection');
               }
             };

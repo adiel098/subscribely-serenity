@@ -4,6 +4,7 @@ import { PartyPopper, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
+import { useNavigate } from "react-router-dom";
 
 interface WelcomeStepProps {
   onComplete: () => void;
@@ -11,6 +12,17 @@ interface WelcomeStepProps {
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete, activeStep }) => {
+  const navigate = useNavigate();
+  
+  const handleBeginClick = () => {
+    console.log("Let's Begin button clicked");
+    onComplete();
+    // Add a direct navigation fallback
+    setTimeout(() => {
+      navigate('/onboarding/bot-selection');
+    }, 300);
+  };
+  
   return (
     <OnboardingLayout
       currentStep="welcome"
@@ -68,7 +80,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete, activeStep
           className="flex justify-center"
         >
           <Button 
-            onClick={onComplete}
+            onClick={handleBeginClick}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
             size="lg"
           >

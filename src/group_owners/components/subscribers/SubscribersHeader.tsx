@@ -5,7 +5,7 @@ import { Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubscribersHeaderProps {
-  onUpdateStatus: (status: string) => void;
+  onUpdateStatus: () => void; // Changed from (status: string) => void to () => void
   onExport: () => void;
   isUpdating: boolean;
   onAddSubscriber?: () => void;

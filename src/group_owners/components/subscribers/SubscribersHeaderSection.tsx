@@ -23,7 +23,11 @@ export const SubscribersHeaderSection = ({
   return (
     <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center justify-between'}`}>
       <div className={`${isMobile ? 'w-full' : 'flex items-center gap-6'}`}>
-        <SubscribersHeader onUpdateStatus={() => {}} onExport={onExport} isUpdating={isUpdating} />
+        <SubscribersHeader 
+          onUpdateStatus={() => {}} // Updated to pass a function with no parameters
+          onExport={onExport} 
+          isUpdating={isUpdating} 
+        />
         {!isMobile && <SubscribersStats subscribers={subscribers} />}
       </div>
       

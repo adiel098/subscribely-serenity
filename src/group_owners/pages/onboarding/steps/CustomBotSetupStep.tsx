@@ -76,6 +76,8 @@ const CustomBotSetupStep = ({
             
           if (!existingCommunity) {
             // Create new community record
+            // החלק החשוב: לשמור את כל סוגי הצ'אטים כקהילות רגילות (is_group: false)
+            // גם ערוצים וגם קבוצות טלגרם - כולם הם סוגים של קהילות במערכת שלך
             console.log("Creating new community:", chat.title);
             const { data: newCommunity, error: communityError } = await supabase
               .from('communities')
@@ -83,8 +85,8 @@ const CustomBotSetupStep = ({
                 name: chat.title,
                 telegram_chat_id: chat.id,
                 telegram_photo_url: chat.photo_url || null,
-                is_group: chat.type !== 'channel',
-                owner_id: user.id // Make sure to set the owner_id to comply with RLS policies
+                is_group: false, // תמיד false, גם עבור קבוצות טלגרם
+                owner_id: user.id
               })
               .select('id')
               .single();

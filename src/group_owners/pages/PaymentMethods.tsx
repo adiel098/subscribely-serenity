@@ -53,7 +53,7 @@ const PaymentMethods = () => {
   return (
     <div className="container px-0 py-4 max-w-5xl mx-auto">
       <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
-        <motion.div className="flex items-center space-x-3" initial={{
+        <motion.div className="flex items-center space-x-3 ml-4" initial={{
           opacity: 0,
           y: -20
         }} animate={{

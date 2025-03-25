@@ -90,27 +90,9 @@ const Subscribers = () => {
   return (
     <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6 pb-8">
       <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
-        <motion.div className="flex items-center space-x-3" initial={{
-          opacity: 0,
-          y: -20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.5
-        }}>
-          <div className="p-3 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl">
-            <Users className="h-8 w-8 text-indigo-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Subscribers <Sparkles className="h-5 w-5 inline text-amber-400" />
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage {isGroupSelected ? "group" : "community"} subscribers and their access
-            </p>
-          </div>
-        </motion.div>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Subscribers <Sparkles className="h-5 w-5 inline text-amber-400" />
+        </h1>
 
         <SubscribersHeaderSection 
           subscribers={subscribers} 

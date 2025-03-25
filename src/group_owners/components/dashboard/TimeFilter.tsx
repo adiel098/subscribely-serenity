@@ -1,33 +1,43 @@
 
 import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TimeRange } from "@/group_owners/hooks/dashboard/types";
-import { CalendarIcon } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CalendarDays } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TimeFilterProps {
-  timeRange: TimeRange;
-  onTimeRangeChange: (value: TimeRange) => void;
+  timeRange: "7d" | "30d" | "90d" | "all";
+  onTimeRangeChange: (range: "7d" | "30d" | "90d" | "all") => void;
 }
 
 export const TimeFilter: React.FC<TimeFilterProps> = ({
   timeRange,
-  onTimeRangeChange
+  onTimeRangeChange,
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex items-center gap-2 bg-white p-2 rounded-md border border-gray-200 shadow-sm">
-      <CalendarIcon className="h-4 w-4 text-gray-500" />
-      <Select
-        value={timeRange}
-        onValueChange={(value) => onTimeRangeChange(value as TimeRange)}
+    <div className="flex items-center">
+      <Select 
+        value={timeRange} 
+        onValueChange={(value) => onTimeRangeChange(value as "7d" | "30d" | "90d" | "all")}
       >
-        <SelectTrigger className="w-[150px] border-none shadow-none h-8 focus:ring-0">
-          <SelectValue placeholder="Select period" />
+        <SelectTrigger className={`${isMobile ? 'w-[110px] h-8 text-xs' : 'w-[150px]'} bg-white border-gray-200`}>
+          <div className="flex items-center">
+            <CalendarDays className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'} text-gray-500`} />
+            <SelectValue placeholder="Select Range" />
+          </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="7d">Last 7 days</SelectItem>
-          <SelectItem value="30d">Last 30 days</SelectItem>
-          <SelectItem value="90d">Last 90 days</SelectItem>
-          <SelectItem value="all">All time</SelectItem>
+          <SelectItem value="7d" className={isMobile ? 'text-xs' : ''}>Last 7 days</SelectItem>
+          <SelectItem value="30d" className={isMobile ? 'text-xs' : ''}>Last 30 days</SelectItem>
+          <SelectItem value="90d" className={isMobile ? 'text-xs' : ''}>Last 90 days</SelectItem>
+          <SelectItem value="all" className={isMobile ? 'text-xs' : ''}>All time</SelectItem>
         </SelectContent>
       </Select>
     </div>

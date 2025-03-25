@@ -21,7 +21,7 @@ export const SubscribersHeaderSection = ({
   const isMobile = useIsMobile();
   
   return (
-    <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center justify-between'}`}>
+    <div className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center justify-between'}`}>
       <div className={`${isMobile ? 'w-full' : 'flex items-center gap-6'}`}>
         <SubscribersHeader 
           onUpdateStatus={() => {}} // Updated to pass a function with no parameters
@@ -31,7 +31,11 @@ export const SubscribersHeaderSection = ({
         {!isMobile && <SubscribersStats subscribers={subscribers} />}
       </div>
       
-      {isMobile && <SubscribersStats subscribers={subscribers} />}
+      {isMobile && (
+        <div className="w-full overflow-auto">
+          <SubscribersStats subscribers={subscribers} isMobile={true} />
+        </div>
+      )}
     </div>
   );
 };

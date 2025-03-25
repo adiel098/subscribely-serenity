@@ -77,31 +77,29 @@ const Dashboard = () => {
       </div>;
   }
   
-  console.log("✅ Dashboard render completed for ", selectedCommunityId ? `community: ${selectedCommunityId}` : `group: ${selectedGroupId}`);
-  
   return (
-    <div className={`space-y-6 pb-10 ${isMobile ? 'px-4 py-4' : 'px-[37px] py-[28px]'}`}>
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
+    <div className={`space-y-4 pb-6 ${isMobile ? 'px-3 py-3' : 'px-[37px] py-[28px]'}`}>
+      <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-4">
         <div>
-          <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
             Hello 👋 {ownerFirstName}
-            {isGroupSelected && <span className="inline-flex items-center text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md ml-2">
-                <FolderKanban className="h-3.5 w-3.5 mr-1" />
+            {isGroupSelected && <span className="inline-flex items-center text-xs bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md ml-1.5">
+                <FolderKanban className="h-3 w-3 mr-0.5" />
                 Group View
               </span>}
           </h1>
-          <p className="text-gray-600 mt-1 text-sm">
-            {isGroupSelected ? "Overview of your community group's performance and metrics" : "Overview of your community's performance and metrics"}
+          <p className={`text-gray-600 mt-0.5 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {isGroupSelected ? "Overview of your community group's performance" : "Overview of your community's performance"}
           </p>
         </div>
         <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
         <div className="md:col-span-6">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             {isMobile ? (
-              // Mobile layout
+              // Mobile layout - 2 items per row
               <>
                 <div className="col-span-1">
                   <TrialUsersStats trialUsers={trialUsers} averageSubscriptionDuration={insights.averageSubscriptionDuration} />
@@ -109,7 +107,7 @@ const Dashboard = () => {
                 <div className="col-span-1">
                   <MiniAppUsersStats miniAppUsers={miniAppUsers} />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-2">
                   <DashboardStats 
                     totalSubscribers={filteredSubscribers.length} 
                     activeSubscribers={activeSubscribers.length} 
@@ -118,6 +116,7 @@ const Dashboard = () => {
                     avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
                     conversionRate={conversionRate} 
                     timeRange={timeRangeLabel} 
+                    isMobile={isMobile}
                   />
                 </div>
               </>
@@ -139,6 +138,7 @@ const Dashboard = () => {
                     avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
                     conversionRate={conversionRate} 
                     timeRange={timeRangeLabel} 
+                    isMobile={isMobile}
                   />
                 </div>
               </>
@@ -147,13 +147,13 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className={`flex flex-col lg:flex-row gap-4 mt-6`}>
+      <div className={`flex flex-col lg:flex-row gap-3 mt-4`}>
         <div className={`w-full ${isMobile ? '' : 'lg:w-[65%]'}`}>
           <DashboardCharts memberGrowthData={memberGrowthData} revenueData={revenueData} timeRange={timeRangeLabel} />
         </div>
         
-        <div className={`w-full ${isMobile ? '' : 'lg:w-[32%]'} flex flex-col gap-4`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={`w-full ${isMobile ? '' : 'lg:w-[32%]'} flex flex-col gap-3`}>
+          <div className="grid grid-cols-2 gap-3">
             <PaymentAnalytics paymentStats={paymentStats} />
             <AnalyticsOverview 
               averageSubscriptionDuration={insights.averageSubscriptionDuration} 

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Bot, ArrowLeft, ArrowRight, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -94,11 +93,9 @@ const CustomBotNewCommunity: React.FC = () => {
       setIsSaving(true);
       console.log("Starting save process for user:", user.id);
       
-      // Save each detected community/channel to the database
       const savedCommunities = [];
       for (const chat of verificationResults) {
         try {
-          // Check if community already exists with this chat ID
           const { data: existingCommunity } = await supabase
             .from('communities')
             .select('id')
@@ -107,7 +104,6 @@ const CustomBotNewCommunity: React.FC = () => {
             .maybeSingle();
             
           if (!existingCommunity) {
-            // Create new community record
             console.log("Creating new community:", chat.title);
             const { data: newCommunity, error: communityError } = await supabase
               .from('communities')
@@ -145,7 +141,6 @@ const CustomBotNewCommunity: React.FC = () => {
       
       toast.success(`Successfully added ${savedCommunities.length} communities!`);
       
-      // Navigate to dashboard after a short delay to allow state updates
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
       }, 500);
@@ -161,8 +156,8 @@ const CustomBotNewCommunity: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 py-16 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 py-16 px-4">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Community</h1>
           <p className="text-gray-600">Configure your custom bot to add a new Telegram community</p>
@@ -172,8 +167,9 @@ const CustomBotNewCommunity: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="flex justify-center w-full"
         >
-          <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl">
+          <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl w-full max-w-4xl">
             <div className="flex items-center mb-6 gap-2 text-blue-600">
               <Bot className="h-6 w-6" />
               <h3 className="text-xl font-semibold">Add New Telegram Community</h3>

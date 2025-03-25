@@ -4,7 +4,7 @@ import { handleGroupStartCommand } from './group/groupStartHandler.ts';
 import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
-import { TELEGRAM_MINI_APP_URL } from '../utils/botUtils.ts';
+import { TELEGRAM_MINI_APP_URL, MINI_APP_WEB_URL } from '../utils/botUtils.ts';
 
 /**
  * Handle the /start command from a Telegram user
@@ -52,9 +52,9 @@ export async function handleStartCommand(
       // No parameter provided, send welcome message with Mini App button
       await logger.info("👋 No parameter, sending discovery welcome message");
       
-      // Get the mini app URL from our utility file - this needs to be a valid URL
-      const miniAppUrl = TELEGRAM_MINI_APP_URL;
-      await logger.info(`Using Mini App URL: ${miniAppUrl}`);
+      // Get the mini app URL - this needs to be the web_app URL that starts with https://
+      const miniAppUrl = MINI_APP_WEB_URL;
+      await logger.info(`Using Mini App Web URL: ${miniAppUrl}`);
       
       const welcomeMessage = `
 👋 <b>Welcome to Membify!</b>
@@ -64,8 +64,7 @@ Discover and join premium Telegram communities, manage your subscriptions, and t
 Press the button below to explore communities:
       `;
       
-      // Make sure the URL is valid - t.me URLs are valid for web_app buttons
-      // The only requirement is that it starts with https://
+      // Make sure the URL is valid - starts with https:// for web_app buttons
       try {
         if (!miniAppUrl.startsWith('https://')) {
           throw new Error('URL must start with https://');

@@ -2,6 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
+import { MINI_APP_WEB_URL } from '../../../utils/botUtils.ts';
 
 export async function handleCommunityJoinRequest(
   supabase: ReturnType<typeof createClient>,
@@ -47,7 +48,7 @@ export async function handleCommunityJoinRequest(
     }
     
     const customLinkOrId = community.custom_link || community.id;
-    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${customLinkOrId}`;
+    const miniAppUrl = `${MINI_APP_WEB_URL}?start=${customLinkOrId}`;
     
     // If auto welcome message is enabled, send the configured welcome message
     const shouldSendWelcome = botSettings.auto_welcome_message !== false;

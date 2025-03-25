@@ -8,6 +8,7 @@ import { GroupActionButtons } from "./GroupActionButtons";
 import { GroupDetailsDialog } from "./GroupDetailsDialog";
 import { GroupSuccessBanner } from "./group-success/GroupSuccessBanner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { getMiniAppUrl } from "@/telegram-mini-app/utils/config";
 
 const logger = createLogger("GroupMiniAppLinkButton");
 
@@ -26,9 +27,9 @@ export const GroupMiniAppLinkButton = ({
   
   const botUsername = getBotUsername();
   
-  // Build the link using either custom_link or group ID (without the group_ prefix)
-  const baseUrl = `https://t.me/${botUsername}?start=`;
-  const fullLink = `${baseUrl}${group.custom_link || group.id.replace('group_', '')}`;
+  // Build the link using the utility function
+  const linkParam = group.custom_link || group.id.replace('group_', '');
+  const fullLink = getMiniAppUrl(linkParam);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(fullLink)

@@ -9,6 +9,9 @@ export const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.
 // Full URL for the Telegram mini app
 export const TELEGRAM_MINI_APP_URL = `https://t.me/membifybot/app`;
 
+// URL for direct access to the mini app web version
+export const MINI_APP_WEB_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
+
 /**
  * Get the full mini app URL with query parameters
  * @param communityIdOrLink The community ID or custom link to include as a start parameter
@@ -29,5 +32,5 @@ export const getMiniAppUrl = (communityIdOrLink: string): string => {
   }
   
   // For web URLs, use the normal format
-  return `${TELEGRAM_MINI_APP_URL}?start=${communityIdOrLink}`;
+  return `${MINI_APP_WEB_URL}?start=${communityIdOrLink}`;
 };

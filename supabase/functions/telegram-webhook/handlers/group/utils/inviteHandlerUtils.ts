@@ -2,6 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
+import { MINI_APP_WEB_URL } from '../../../utils/botUtils.ts';
 
 export async function handleGroupJoinRequest(
   supabase: ReturnType<typeof createClient>,
@@ -52,7 +53,7 @@ export async function handleGroupJoinRequest(
       `Click the button below to access the subscription options and join the group.`;
     
     const customLinkOrId = group.custom_link || group.id;
-    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${customLinkOrId}`;
+    const miniAppUrl = `${MINI_APP_WEB_URL}?start=${customLinkOrId}`;
     
     // Prepare inline keyboard with web_app button
     const inlineKeyboard = {

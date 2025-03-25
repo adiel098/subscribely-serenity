@@ -2,7 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleGroupStartCommand } from './group/groupStartHandler.ts';
 import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
-import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
+import { sendTelegramMessage, isValidTelegramUrl } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
 import { TELEGRAM_MINI_APP_URL, MINI_APP_WEB_URL } from '../utils/botUtils.ts';
 
@@ -64,35 +64,46 @@ Discover and join premium Telegram communities, manage your subscriptions, and t
 Press the button below to explore communities:
       `;
       
-      // Make sure the URL is valid - starts with https:// for web_app buttons
-      try {
-        if (!miniAppUrl.startsWith('https://')) {
-          throw new Error('URL must start with https://');
-        }
+      // Make sure the URL is valid for Telegram web_app buttons
+      if (!isValidTelegramUrl(miniAppUrl)) {
+        await logger.error(`❌ Invalid mini app URL format: ${miniAppUrl}`);
         
-        // Create inline keyboard with web_app button
-        const inlineKeyboard = {
-          inline_keyboard: [
-            [
-              {
-                text: "🔍 Discover Communities",
-                web_app: { url: miniAppUrl }
-              }
-            ]
-          ]
-        };
-        
-        await logger.info(`Sending welcome message with button URL: ${miniAppUrl}`);
-        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage, inlineKeyboard);
-        
-        return true;
-      } catch (urlError) {
-        await logger.error(`❌ Invalid URL format: ${miniAppUrl}`, urlError);
-        
-        // If URL is invalid, send message without button
+        // Send message without button if URL is invalid
         await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
         return true;
       }
+      
+      // Create inline keyboard with web_app button
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "🔍 Discover Communities",
+              web_app: { url: miniAppUrl }
+            }
+          ]
+        ]
+      };
+      
+      await logger.info(`Sending welcome message with button URL: ${miniAppUrl}`);
+      
+      const result = await sendTelegramMessage(
+        botToken, 
+        message.chat.id, 
+        welcomeMessage, 
+        inlineKeyboard
+      );
+      
+      if (!result.ok) {
+        await logger.error(`❌ Failed to send welcome message: ${result.description}`);
+        
+        // Try sending message without button as fallback
+        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+      } else {
+        await logger.success(`✅ Welcome message sent successfully`);
+      }
+      
+      return true;
     }
   } catch (error) {
     await logger.error("❌ Error handling start command:", error);

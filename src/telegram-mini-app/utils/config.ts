@@ -6,10 +6,10 @@
 // Base URL for the mini app platform
 export const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
 
-// Full URL for the Telegram mini app
+// Full URL for the Telegram mini app - this is for the t.me link
 export const TELEGRAM_MINI_APP_URL = `https://t.me/membifybot/app`;
 
-// URL for direct access to the mini app web version
+// URL for direct access to the mini app web version - must be HTTPS
 export const MINI_APP_WEB_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
 
 /**

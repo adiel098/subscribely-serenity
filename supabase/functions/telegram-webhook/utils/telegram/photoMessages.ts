@@ -1,175 +1,225 @@
 
-import { getApiHeaders, isValidImageUrl, processBase64Image, formatReplyMarkup } from "./coreClient.ts";
-import { sendTelegramMessage } from "./textMessages.ts";
+/**
+ * Utilities for sending photo messages via Telegram Bot API
+ */
 
 /**
- * Send a photo message to a Telegram chat
+ * Send an image with caption to a Telegram user
  */
-export async function sendTelegramPhotoMessage(
+export async function sendPhotoWithCaption(
   botToken: string,
   chatId: string | number,
-  photo: string,
+  imageData: string,
   caption: string = "",
-  replyMarkup: any = null
-): Promise<any> {
-  console.log(`[Telegram Client] Sending photo to chat ${chatId}`);
-  
-  // Validate photo URL
-  if (!isValidImageUrl(photo)) {
-    console.error(`[Telegram Client] Invalid photo URL: ${photo.substring(0, 30)}...`);
-    throw new Error("Invalid photo URL format. Must be HTTPS URL or base64 data URL.");
-  }
-  
-  const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-  
-  // Check if the photo is a base64 data URL
-  if (photo.startsWith('data:image')) {
-    console.log(`[Telegram Client] Base64 image detected, using multipart/form-data`);
+  inlineKeyboard: any = null
+): Promise<{ ok: boolean, description?: string }> {
+  try {
+    console.log(`[TELEGRAM-MESSENGER] Sending photo message to ${chatId}`);
     
-    try {
-      // Extract the base64 data
-      const base64Data = photo.split(',')[1];
+    // Handle base64 image data
+    if (imageData.startsWith('data:image')) {
+      console.log(`[TELEGRAM-MESSENGER] Processing base64 image data`);
       
-      // Get image format from data URL
-      const matches = photo.match(/^data:image\/([a-zA-Z+]+);base64,/);
-      const imageFormat = matches ? matches[1] : 'jpeg';
+      try {
+        // Create a FormData object for multipart/form-data request
+        const formData = new FormData();
+        formData.append('chat_id', chatId.toString());
+        
+        // Extract the base64 data (remove the data:image/xxx;base64, prefix)
+        const base64Data = imageData.split(',')[1];
+        const matches = imageData.match(/^data:image\/([a-zA-Z+]+);base64,/);
+        const imageFormat = matches ? matches[1] : 'jpeg'; // Default to jpeg if format can't be determined
+        
+        // Convert Base64 string to Blob
+        const byteCharacters = atob(base64Data);
+        const byteArrays = [];
+        
+        for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+          const slice = byteCharacters.slice(offset, offset + 1024);
+          
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+        
+        const blob = new Blob(byteArrays, { type: `image/${imageFormat}` });
+        
+        // Append the photo as a file
+        formData.append('photo', blob, `photo.${imageFormat}`);
+        
+        // Add caption if provided
+        if (caption) {
+          formData.append('caption', caption);
+          formData.append('parse_mode', 'HTML');
+        }
+        
+        // Add reply markup if provided
+        if (inlineKeyboard) {
+          if (typeof inlineKeyboard === 'string') {
+            formData.append('reply_markup', inlineKeyboard);
+          } else {
+            formData.append('reply_markup', JSON.stringify(inlineKeyboard));
+          }
+          console.log(`[TELEGRAM-MESSENGER] Added inline keyboard to photo message`);
+        }
+        
+        // Send the multipart request
+        const response = await fetch(
+          `https://api.telegram.org/bot${botToken}/sendPhoto`,
+          {
+            method: 'POST',
+            body: formData
+          }
+        );
+        
+        const result = await response.json();
+        
+        if (!result.ok) {
+          console.error(`[TELEGRAM-MESSENGER] ❌ Telegram API error:`, result);
+          // Fallback to sending text-only message if photo sending fails
+          console.log(`[TELEGRAM-MESSENGER] Falling back to text-only message`);
+          return await sendTextOnlyFallback(botToken, chatId, `${caption}\n\n(Image could not be sent)`, inlineKeyboard);
+        }
+        
+        console.log(`[TELEGRAM-MESSENGER] ✅ Photo message sent successfully`);
+        return { ok: true };
+      } catch (error) {
+        console.error(`[TELEGRAM-MESSENGER] ❌ Error processing base64 image:`, error);
+        // Fallback to text-only if image processing fails
+        return await sendTextOnlyFallback(botToken, chatId, caption, inlineKeyboard);
+      }
+    } 
+    // Handle URL images
+    else if (imageData.startsWith('http')) {
+      console.log(`[TELEGRAM-MESSENGER] Using image URL: ${imageData.substring(0, 50)}...`);
       
-      // Create a FormData object
-      const formData = new FormData();
-      formData.append('chat_id', chatId.toString());
+      // Create the request payload
+      const payload: any = {
+        chat_id: chatId,
+        photo: imageData,
+      };
       
-      // Convert base64 to Blob
-      const blob = processBase64Image(base64Data, imageFormat);
-      
-      // Add the photo to the form data
-      formData.append('photo', blob, `photo.${imageFormat}`);
-      
-      // Add other parameters
+      // Add caption if provided
       if (caption) {
-        formData.append('caption', caption);
-        formData.append('parse_mode', 'HTML');
+        payload.caption = caption;
+        payload.parse_mode = 'HTML';
       }
       
-      if (replyMarkup) {
-        formData.append('reply_markup', formatReplyMarkup(replyMarkup) || "");
+      // Add reply markup if provided
+      if (inlineKeyboard) {
+        if (typeof inlineKeyboard === 'string') {
+          try {
+            payload.reply_markup = JSON.parse(inlineKeyboard);
+          } catch (e) {
+            payload.reply_markup = inlineKeyboard;
+          }
+        } else {
+          payload.reply_markup = inlineKeyboard;
+        }
+        console.log(`[TELEGRAM-MESSENGER] Added inline keyboard to URL photo message`);
       }
       
-      // Make the request
-      return await sendPhotoFormData(botToken, url, formData, chatId, caption, replyMarkup);
-    } catch (error) {
-      return handlePhotoError(botToken, chatId, caption, replyMarkup, error);
+      // Make the API request
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendPhoto`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!result.ok) {
+        console.error(`[TELEGRAM-MESSENGER] ❌ Telegram API error:`, result);
+        // Fallback to text-only message if photo sending fails
+        return await sendTextOnlyFallback(botToken, chatId, `${caption}\n\n(Image could not be sent)`, inlineKeyboard);
+      }
+      
+      console.log(`[TELEGRAM-MESSENGER] ✅ Photo message with URL sent successfully`);
+      return { ok: true };
+    } 
+    // Invalid image data format
+    else {
+      console.error(`[TELEGRAM-MESSENGER] ❌ Invalid image data format`);
+      // Just send the text message without image
+      return await sendTextOnlyFallback(botToken, chatId, caption, inlineKeyboard);
     }
-  } else {
-    // Regular URL approach
-    return await sendPhotoUrl(botToken, url, chatId, photo, caption, replyMarkup);
-  }
-}
-
-/**
- * Send photo using FormData (for base64 images)
- */
-async function sendPhotoFormData(
-  botToken: string,
-  url: string,
-  formData: FormData,
-  chatId: string | number,
-  caption: string = "",
-  replyMarkup: any = null
-): Promise<any> {
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: getApiHeaders(true),
-      body: formData
-    });
-    
-    const responseData = await response.json();
-    
-    if (!responseData.ok) {
-      console.error(`[Telegram Client] API Error: ${responseData.description}`);
-      // Try to fall back to text-only message
-      console.log(`[Telegram Client] Falling back to text-only message`);
-      return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
-    }
-    
-    console.log(`[Telegram Client] Photo sent successfully to ${chatId}`);
-    return responseData;
   } catch (error) {
-    return handlePhotoError(botToken, chatId, caption, replyMarkup, error);
+    console.error(`[TELEGRAM-MESSENGER] ❌ Error in sendPhotoWithCaption:`, error);
+    // Fallback to text-only message in case of any error
+    try {
+      return await sendTextOnlyFallback(botToken, chatId, caption, inlineKeyboard);
+    } catch (finalError) {
+      console.error(`[TELEGRAM-MESSENGER] ❌ Final error in fallback:`, finalError);
+      return { ok: false, description: finalError.message || 'Failed to send both photo and text' };
+    }
   }
 }
 
 /**
- * Send photo using direct URL
+ * Fallback function to send text-only message when image sending fails
  */
-async function sendPhotoUrl(
+async function sendTextOnlyFallback(
   botToken: string,
-  url: string,
   chatId: string | number,
-  photo: string,
-  caption: string = "",
-  replyMarkup: any = null
-): Promise<any> {
+  text: string,
+  inlineKeyboard: any = null
+): Promise<{ ok: boolean, description?: string }> {
   try {
-    const body: any = {
+    console.log(`[TELEGRAM-MESSENGER] Sending fallback text message to ${chatId}`);
+    
+    // Create the request payload
+    const payload: any = {
       chat_id: chatId,
-      photo: photo,
+      text: text || "📢 Message from community owner",
       parse_mode: "HTML"
     };
-    
-    if (caption) {
-      body.caption = caption;
-    }
-    
-    if (replyMarkup) {
-      body.reply_markup = formatReplyMarkup(replyMarkup);
-      console.log(`[Telegram Client] Including reply markup:`, typeof replyMarkup === 'string' ? replyMarkup : JSON.stringify(replyMarkup));
-    }
-    
-    console.log(`[Telegram Client] Making API request to: ${url}`);
-    
-    const response = await fetch(url, {
-      method: "POST",
-      headers: getApiHeaders(),
-      body: JSON.stringify(body)
-    });
-    
-    const responseData = await response.json();
-    
-    if (!responseData.ok) {
-      console.error(`[Telegram Client] API Error: ${responseData.description}`);
-      console.error(`[Telegram Client] Request body was:`, JSON.stringify(body));
-      
-      // Try to fall back to text-only message
-      console.log(`[Telegram Client] Falling back to text-only message`);
-      return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
-    }
-    
-    console.log(`[Telegram Client] Photo sent successfully to ${chatId}`);
-    return responseData;
-  } catch (error) {
-    return handlePhotoError(botToken, chatId, caption, replyMarkup, error);
-  }
-}
 
-/**
- * Handle errors in photo sending by falling back to text message
- */
-async function handlePhotoError(
-  botToken: string,
-  chatId: string | number,
-  caption: string = "",
-  replyMarkup: any = null,
-  error: any
-): Promise<any> {
-  console.error(`[Telegram Client] Error sending photo:`, error);
-  
-  // Attempt to fall back to text-only message
-  try {
-    console.log(`[Telegram Client] Falling back to text-only message after exception`);
-    return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", replyMarkup);
-  } catch (fallbackError) {
-    console.error(`[Telegram Client] Even fallback message failed:`, fallbackError);
-    throw error;
+    // Add reply markup if provided
+    if (inlineKeyboard) {
+      if (typeof inlineKeyboard === 'string') {
+        try {
+          payload.reply_markup = JSON.parse(inlineKeyboard);
+        } catch (e) {
+          payload.reply_markup = inlineKeyboard;
+        }
+      } else {
+        payload.reply_markup = inlineKeyboard;
+      }
+    }
+
+    // Make the API request
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    // Parse the response
+    const result = await response.json();
+    
+    if (!result.ok) {
+      console.error(`[TELEGRAM-MESSENGER] ❌ Telegram API error (fallback):`, result);
+      return { ok: false, description: result.description || 'Unknown Telegram API error' };
+    }
+    
+    console.log(`[TELEGRAM-MESSENGER] ✅ Fallback message sent successfully`);
+    return { ok: true };
+  } catch (error) {
+    console.error(`[TELEGRAM-MESSENGER] ❌ Error sending fallback message:`, error);
+    return { ok: false, description: error.message || 'Unknown error sending fallback message' };
   }
 }

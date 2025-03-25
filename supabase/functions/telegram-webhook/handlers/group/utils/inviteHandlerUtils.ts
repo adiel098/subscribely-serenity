@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
+import { sendTelegramMessage, isValidTelegramUrl } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
 import { MINI_APP_WEB_URL } from '../../../utils/botUtils.ts';
 
@@ -38,13 +38,6 @@ export async function handleGroupJoinRequest(
           ? 'URL' 
           : 'unknown format';
       await logger.info(`🖼️ Image type: ${imageType}, length: ${botSettings.welcome_image.length} chars`);
-      
-      // Validate the image format and log potential issues
-      if (imageType === 'base64' && botSettings.welcome_image.split(',')[1]?.length % 4 !== 0) {
-        await logger.warn(`⚠️ Base64 image has incorrect padding length - may cause errors`);
-      } else if (imageType === 'URL' && !botSettings.welcome_image.startsWith('https://')) {
-        await logger.warn(`⚠️ Image URL should use HTTPS protocol for Telegram API compatibility`);
-      }
     }
     
     // Use bot settings welcome message if available, otherwise use default
@@ -54,6 +47,20 @@ export async function handleGroupJoinRequest(
     
     const customLinkOrId = group.custom_link || group.id;
     const miniAppUrl = `${MINI_APP_WEB_URL}?start=${customLinkOrId}`;
+    
+    // Verify the URL is valid for Telegram
+    if (!isValidTelegramUrl(miniAppUrl)) {
+      await logger.error(`❌ Invalid mini app URL format: ${miniAppUrl}`);
+      
+      // Send plain message without button
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `Welcome to ${group.name}! To join, use our web app: ${MINI_APP_WEB_URL}`
+      );
+      
+      return true;
+    }
     
     // Prepare inline keyboard with web_app button
     const inlineKeyboard = {
@@ -71,7 +78,7 @@ export async function handleGroupJoinRequest(
       // Send welcome message with image if available
       await logger.info(`📤 Attempting to send welcome message with image: ${botSettings?.welcome_image ? 'YES' : 'NO'}`);
       
-      await sendTelegramMessage(
+      const result = await sendTelegramMessage(
         botToken,
         message.chat.id,
         welcomeMessage,
@@ -79,19 +86,30 @@ export async function handleGroupJoinRequest(
         botSettings?.welcome_image
       );
       
-      await logger.success(`✅ Sent welcome message to user ${userId}`);
-    } catch (sendError) {
-      await logger.error(`❌ Error sending welcome message:`, sendError);
-      
-      // Try sending a plain text message as fallback
-      try {
-        await logger.info(`🔄 Trying fallback: plain text message without image`);
+      if (result.ok) {
+        await logger.success(`✅ Sent welcome message to user ${userId}`);
+      } else {
+        await logger.error(`❌ Error sending welcome message: ${result.description}`);
+        
+        // Try sending a plain text message as fallback
         await sendTelegramMessage(
           botToken,
           message.chat.id,
-          `Welcome to ${group.name}! To join, use this link: ${miniAppUrl}`,
+          `Welcome to ${group.name}! To join, use this link: ${MINI_APP_WEB_URL}?start=${customLinkOrId}`,
           null,
           null
+        );
+      }
+    } catch (sendError) {
+      await logger.error(`❌ Error sending welcome message:`, sendError);
+      
+      // Try sending a plain text message as final fallback
+      try {
+        await logger.info(`🔄 Trying fallback: plain text message without image or button`);
+        await sendTelegramMessage(
+          botToken,
+          message.chat.id,
+          `Welcome to ${group.name}! To join, use this link: ${MINI_APP_WEB_URL}?start=${customLinkOrId}`
         );
         await logger.info(`✅ Sent fallback plain text message`);
       } catch (finalError) {

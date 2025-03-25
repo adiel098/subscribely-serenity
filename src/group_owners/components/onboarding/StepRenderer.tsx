@@ -25,21 +25,26 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   handleCompleteOnboarding
 }) => {
   const navigate = useNavigate();
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
 
-  // Handle the "complete" step explicitly - note: we're checking it as a string here, not a type
-  if (currentStep === "complete") {
-    console.log("Onboarding complete, redirecting to dashboard...");
-    // Redirect to dashboard immediately
-    React.useEffect(() => {
-      // Using setTimeout to avoid the React infinite loop issue
+  // Handle the "complete" step explicitly
+  React.useEffect(() => {
+    if (currentStep === "complete" && !isRedirecting) {
+      console.log("Onboarding complete in StepRenderer, preparing redirect to dashboard...");
+      setIsRedirecting(true);
+      
+      // Use a slight delay to allow React to finish its current render cycle
       const redirectTimer = setTimeout(() => {
+        console.log("Executing dashboard redirect...");
         navigate('/dashboard', { replace: true });
-      }, 100);
+      }, 200);
       
       return () => clearTimeout(redirectTimer);
-    }, [navigate]);
-    
-    // Show loading state while redirecting
+    }
+  }, [currentStep, navigate, isRedirecting]);
+  
+  // If we're redirecting or step is complete, show loading state
+  if (isRedirecting || currentStep === "complete") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 p-4">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 max-w-md w-full text-center">
@@ -57,8 +62,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
       <CustomBotSetupStep 
         onComplete={() => {
           console.log("Custom bot setup completed, marking as complete...");
-          // Update step to complete first
-          goToNextStep("custom-bot-setup");
+          handleCompleteOnboarding();
         }} 
         activeStep={true}
         goToPreviousStep={() => navigate('/onboarding/bot-selection')}

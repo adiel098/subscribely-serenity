@@ -15,10 +15,11 @@ export const useOnboardingNavigation = (
   const lastSavedStepRef = useRef<OnboardingStep | null>(null);
   const isCompletingRef = useRef(false);
   const completionInProgressRef = useRef(false);
+  const hasCompletedRef = useRef(false);
 
   // Allow any step string to be passed, but save only valid OnboardingStep values
   const saveCurrentStep = useCallback(async (step: string) => {
-    if (!user) return;
+    if (!user || hasCompletedRef.current) return;
     
     // Prevent duplicate save operations for the same step
     if (step === lastSavedStepRef.current) {
@@ -49,6 +50,7 @@ export const useOnboardingNavigation = (
       if (validStep === "complete" && !isCompletingRef.current) {
         console.log("Step is 'complete', setting isCompleted to true");
         setIsCompleted(true);
+        hasCompletedRef.current = true;
       }
       
       console.log("Step saved successfully");
@@ -65,12 +67,16 @@ export const useOnboardingNavigation = (
   }, [user, setCurrentStep, setIsCompleted, toast]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
-    if (!user || isCompletingRef.current || completionInProgressRef.current) return;
+    if (!user || isCompletingRef.current || completionInProgressRef.current || hasCompletedRef.current) {
+      console.log("Onboarding already completed or in progress, skipping");
+      return Promise.resolve();
+    }
     
     try {
       console.log("Completing onboarding for user:", user.id);
       isCompletingRef.current = true;
       completionInProgressRef.current = true;
+      hasCompletedRef.current = true;
       setIsSubmitting(true);
       
       await completeOnboardingProcess(user.id);
@@ -93,6 +99,7 @@ export const useOnboardingNavigation = (
         description: "Failed to complete onboarding"
       });
       completionInProgressRef.current = false;
+      hasCompletedRef.current = false;
       return Promise.reject(error);
     } finally {
       setIsSubmitting(false);

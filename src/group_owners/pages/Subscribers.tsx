@@ -86,7 +86,7 @@ const Subscribers = () => {
   }
 
   return (
-    <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6 pb-8">
+    <div className="container px-0 py-4 max-w-5xl mx-4 space-y-6 pb-8">
       <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
         <SubscribersHeaderSection 
           subscribers={subscribers} 

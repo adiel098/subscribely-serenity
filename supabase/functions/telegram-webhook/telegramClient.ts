@@ -8,7 +8,7 @@
 export { sendTelegramMessage } from "./utils/telegram/textMessages.ts";
 
 // Export photo message utilities
-export { sendTelegramPhotoMessage } from "./utils/telegram/photoMessages.ts";
+export { sendPhotoWithCaption } from "./utils/telegram/photoMessages.ts";
 
 // Export user verification utilities
 export { canMessageUser } from "./utils/telegram/userVerification.ts";

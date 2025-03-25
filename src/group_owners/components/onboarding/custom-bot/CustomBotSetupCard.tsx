@@ -3,12 +3,12 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Bot, ArrowLeft, AlertCircle, Check, Loader2 } from "lucide-react";
 import { TelegramChat } from "./TelegramChatItem";
 import { TelegramChatsList } from "./TelegramChatsList";
+import { BotTokenInput } from "./BotTokenInput";
 
 interface CustomBotSetupCardProps {
   customTokenInput: string;
@@ -47,18 +47,11 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
         <h3 className="text-xl font-semibold mb-6">Set Up Your Custom Bot</h3>
         
         <div className="space-y-6 mb-8">
-          <div className="space-y-2">
-            <Label htmlFor="bot-token">Bot Token from @BotFather</Label>
-            <Input
-              id="bot-token"
-              type="password"
-              value={customTokenInput}
-              onChange={(e) => setCustomTokenInput(e.target.value)}
-              placeholder="Enter your bot token"
-              className="w-full"
-              disabled={isSaving}
-            />
-          </div>
+          {/* Replace Label+Input with BotTokenInput component */}
+          <BotTokenInput 
+            customTokenInput={customTokenInput} 
+            setCustomTokenInput={setCustomTokenInput}
+          />
           
           <div className="space-y-3">
             <h4 className="font-medium">How to create a Telegram bot:</h4>

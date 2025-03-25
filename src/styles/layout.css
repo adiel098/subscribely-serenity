@@ -195,6 +195,49 @@
       justify-content: space-between;
       align-items: center;
     }
+    
+    /* Bot settings content adjustments for mobile */
+    .bot-settings-collapsible .btn,
+    .bot-settings-collapsible button:not(.bot-settings-trigger) {
+      font-size: 0.75rem !important;
+      height: 2rem !important;
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+      min-height: 2rem !important;
+    }
+    
+    .bot-settings-collapsible input,
+    .bot-settings-collapsible textarea,
+    .bot-settings-collapsible select {
+      font-size: 0.75rem !important;
+      padding: 0.5rem 0.75rem !important;
+      height: 2.25rem !important;
+    }
+    
+    .bot-settings-collapsible textarea {
+      min-height: 5rem !important;
+      height: auto !important;
+    }
+    
+    .bot-settings-collapsible label {
+      font-size: 0.75rem !important;
+      margin-bottom: 0.25rem !important;
+    }
+    
+    .bot-settings-collapsible p {
+      font-size: 0.75rem !important;
+      line-height: 1.2 !important;
+    }
+    
+    .bot-settings-collapsible h3, 
+    .bot-settings-collapsible h4 {
+      font-size: 0.875rem !important;
+      margin-bottom: 0.5rem !important;
+    }
+    
+    .bot-settings-collapsible .form-section {
+      margin-bottom: 0.75rem !important;
+    }
   }
   
   /* ... keep existing code (small screen optimizations) */

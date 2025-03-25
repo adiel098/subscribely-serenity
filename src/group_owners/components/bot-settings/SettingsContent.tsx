@@ -1,5 +1,6 @@
+
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BotStatsHeader } from "./BotStatsHeader";
 import { WelcomeMessageSection } from "./WelcomeMessageSection";
 import { SubscriptionSection } from "./SubscriptionSection";
@@ -25,7 +26,14 @@ export const SettingsContent = ({
   isMobile = false
 }: SettingsContentProps) => {
   const [activeSection, setActiveSection] = useState<string | null>("welcome");
-  const [openCollapsible, setOpenCollapsible] = useState<string | null>("welcome");
+  const [openCollapsible, setOpenCollapsible] = useState<string | null>(null);
+
+  // Reset the openCollapsible state to null (all closed) on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setOpenCollapsible(null);
+    }
+  }, [isMobile]);
 
   if (!settings) {
     return (
@@ -95,20 +103,20 @@ export const SettingsContent = ({
               key={key}
               open={openCollapsible === key}
               onOpenChange={(open) => setOpenCollapsible(open ? key : null)}
-              className={`border ${borderColor} rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300`}
+              className={`border ${borderColor} rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bot-settings-collapsible`}
             >
-              <CollapsibleTrigger className={`w-full bg-gradient-to-r ${color} p-4 flex items-center justify-between cursor-pointer`}>
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/60 p-2 rounded-full">{icon}</div>
+              <CollapsibleTrigger className={`w-full bg-gradient-to-r ${color} p-3 flex items-center justify-between cursor-pointer bot-settings-trigger`}>
+                <div className="flex items-center gap-2">
+                  <div className="bg-white/60 p-1.5 rounded-full">{icon}</div>
                   <div className="text-left">
-                    <h3 className="font-medium">{title}</h3>
+                    <h3 className="font-medium text-sm">{title}</h3>
                     <p className="text-xs text-muted-foreground">{description}</p>
                   </div>
                 </div>
-                <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${openCollapsible === key ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openCollapsible === key ? 'rotate-180' : ''}`} />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="p-4 bg-white">
+                <div className="p-3 bg-white">
                   <Component 
                     settings={settings} 
                     updateSettings={updateSettings}

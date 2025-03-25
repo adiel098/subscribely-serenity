@@ -14,6 +14,7 @@ export const useOnboardingNavigation = (
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSavedStepRef = useRef<OnboardingStep | null>(null);
   const isCompletingRef = useRef(false);
+  const completionInProgressRef = useRef(false);
 
   // Allow any step string to be passed, but save only valid OnboardingStep values
   const saveCurrentStep = useCallback(async (step: string) => {
@@ -64,18 +65,26 @@ export const useOnboardingNavigation = (
   }, [user, setCurrentStep, setIsCompleted, toast]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
-    if (!user || isCompletingRef.current) return;
+    if (!user || isCompletingRef.current || completionInProgressRef.current) return;
     
     try {
       console.log("Completing onboarding for user:", user.id);
       isCompletingRef.current = true;
+      completionInProgressRef.current = true;
       setIsSubmitting(true);
       
       await completeOnboardingProcess(user.id);
       
       console.log("Onboarding completed successfully");
+      
+      // Set state variables to indicate completion
+      // This should trigger the router to redirect to dashboard
       setCurrentStep("complete");
       setIsCompleted(true);
+
+      console.log("Current step set to 'complete' and isCompleted set to true");
+      
+      return Promise.resolve();
     } catch (error) {
       console.error("Error completing onboarding:", error);
       toast({
@@ -83,7 +92,8 @@ export const useOnboardingNavigation = (
         title: "Error",
         description: "Failed to complete onboarding"
       });
-      throw error; // Re-throw the error to handle it in the component
+      completionInProgressRef.current = false;
+      return Promise.reject(error);
     } finally {
       setIsSubmitting(false);
       // Keep isCompletingRef true to prevent repeated completions

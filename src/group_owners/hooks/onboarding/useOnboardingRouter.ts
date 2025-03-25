@@ -15,12 +15,13 @@ export const useOnboardingRouter = (
   const initialLoadRef = useRef(true);
   const [isUrlProcessed, setIsUrlProcessed] = useState(false);
   const redirectingRef = useRef(false);
+  const completionCheckDoneRef = useRef(false);
 
   // Check if onboarding is already completed and redirect to dashboard if needed
   useEffect(() => {
     const checkCompletionStatus = async () => {
       try {
-        if (redirectingRef.current) return;
+        if (redirectingRef.current || completionCheckDoneRef.current) return;
         
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -29,10 +30,16 @@ export const useOnboardingRouter = (
         
         if (error) throw error;
         
+        completionCheckDoneRef.current = true;
+        
         if (profile?.onboarding_completed || profile?.onboarding_step === 'complete') {
           console.log("Onboarding already complete, redirecting to dashboard");
           redirectingRef.current = true;
-          navigate('/dashboard', { replace: true });
+          
+          // Use setTimeout to avoid React errors with state updates during rendering
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true });
+          }, 50);
           return;
         }
       } catch (error) {
@@ -42,7 +49,7 @@ export const useOnboardingRouter = (
       }
     };
     
-    if (!redirectingRef.current) {
+    if (!redirectingRef.current && !completionCheckDoneRef.current) {
       checkCompletionStatus();
     }
   }, [navigate]);
@@ -67,9 +74,26 @@ export const useOnboardingRouter = (
     if (onboardingState.isCompleted && !onboardingHookLoading && !redirectingRef.current) {
       console.log("Onboarding completed, redirecting to dashboard");
       redirectingRef.current = true;
-      navigate('/dashboard', { replace: true });
+      
+      // Use setTimeout to avoid React errors with state updates during rendering
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 50);
     }
   }, [onboardingState.isCompleted, onboardingHookLoading, navigate]);
+
+  // Handle special case for complete step to avoid loops
+  useEffect(() => {
+    if (onboardingState.currentStep === "complete" && !redirectingRef.current) {
+      console.log("Current step is 'complete', redirecting to dashboard");
+      redirectingRef.current = true;
+      
+      // Use setTimeout to avoid React errors with state updates during rendering
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 50);
+    }
+  }, [onboardingState.currentStep, navigate]);
 
   // Sync URL path with onboarding state
   useEffect(() => {
@@ -96,7 +120,11 @@ export const useOnboardingRouter = (
     if (pathStep === "complete" && !redirectingRef.current) {
       console.log("URL path is 'complete', redirecting to dashboard");
       redirectingRef.current = true;
-      navigate('/dashboard', { replace: true });
+      
+      // Use setTimeout to avoid React errors with state updates during rendering
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 50);
     }
   }, [location.pathname, onboardingState.currentStep, onboardingHookLoading, isLoading, saveCurrentStep, navigate]);
 

@@ -26,12 +26,17 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Handle the "complete" step explicitly
+  // Handle the "complete" step explicitly - note: we're checking it as a string here, not a type
   if (currentStep === "complete") {
     console.log("Onboarding complete, redirecting to dashboard...");
     // Redirect to dashboard immediately
     React.useEffect(() => {
-      navigate('/dashboard', { replace: true });
+      // Using setTimeout to avoid the React infinite loop issue
+      const redirectTimer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
+      
+      return () => clearTimeout(redirectTimer);
     }, [navigate]);
     
     // Show loading state while redirecting
@@ -85,7 +90,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     case "custom-bot-setup":
       return (
         <CustomBotSetupStep 
-          onComplete={() => navigate('/dashboard')} 
+          onComplete={() => handleCompleteOnboarding()} 
           activeStep={true}
           goToPreviousStep={() => goToPreviousStep("bot-selection")}
         />
@@ -115,10 +120,6 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           }}
         />
       );
-    
-    case "complete":
-      navigate('/dashboard');
-      return null;
     
     default:
       console.error("Unknown step:", currentStep);

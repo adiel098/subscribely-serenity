@@ -90,10 +90,6 @@ const Subscribers = () => {
   return (
     <div className="container px-0 py-4 max-w-5xl ml-4 space-y-6 pb-8">
       <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          Subscribers <Sparkles className="h-5 w-5 inline text-amber-400" />
-        </h1>
-
         <SubscribersHeaderSection 
           subscribers={subscribers} 
           isGroupSelected={isGroupSelected} 

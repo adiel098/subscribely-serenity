@@ -128,9 +128,10 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
       // Add meta viewport programmatically if not present
       let viewportMeta = document.querySelector('meta[name="viewport"]');
       if (!viewportMeta) {
-        viewportMeta = document.createElement('meta');
-        viewportMeta.name = 'viewport';
-        document.getElementsByTagName('head')[0].appendChild(viewportMeta);
+        const metaElement = document.createElement('meta');
+        metaElement.setAttribute('name', 'viewport');
+        document.getElementsByTagName('head')[0].appendChild(metaElement);
+        viewportMeta = metaElement;
       }
       
       // Set viewport meta attributes

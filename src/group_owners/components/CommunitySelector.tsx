@@ -49,10 +49,6 @@ export const CommunitySelector = () => {
   const selectedCommunity = communities?.find(comm => comm.id === selectedCommunityId);
   const botUsername = getBotUsername();
   
-  const handleCreateCommunity = () => {
-    navigate("/connect/telegram");
-  };
-  
   const handleCreateGroup = () => {
     setCreateGroupDialogOpen(true);
   };
@@ -151,7 +147,7 @@ export const CommunitySelector = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-white border border-gray-100 shadow-md">
-                    <DropdownMenuItem onClick={handleCreateCommunity}>
+                    <DropdownMenuItem onClick={() => navigate("/connect/telegram")}>
                       <PlusCircle className="h-4 w-4 mr-2 text-blue-600" />
                       Add Community
                     </DropdownMenuItem>
@@ -207,7 +203,7 @@ export const CommunitySelector = () => {
                 </Button>
               </motion.div>
               
-              <HeaderActions onNewCommunityClick={handleCreateCommunity} isMobile={isMobile} />
+              <HeaderActions isMobile={isMobile} />
             </div>
           </>
         )}

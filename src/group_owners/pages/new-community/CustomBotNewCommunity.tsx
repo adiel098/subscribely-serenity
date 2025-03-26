@@ -1,58 +1,42 @@
 
-import React, { useState, useEffect } from "react";
-import { Bot, ArrowLeft, ArrowRight, Shield } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import { Bot, Check, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { BotTokenInput } from "@/group_owners/components/onboarding/custom-bot/BotTokenInput";
-import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
-import { TelegramChatsList } from "@/group_owners/components/onboarding/custom-bot/TelegramChatsList";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useUserBotPreference } from "@/group_owners/hooks/useUserBotPreference";
+import { TelegramConnectHeader } from "@/group_owners/components/connect/TelegramConnectHeader";
 
-const CustomBotNewCommunity: React.FC = () => {
+interface TelegramChat {
+  id: string;
+  title: string;
+  type: string;
+  photo_url?: string;
+}
+
+const CustomBotNewCommunity = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [customTokenInput, setCustomTokenInput] = useState<string>("");
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const { botPreference, isLoadingBotPreference } = useUserBotPreference();
+
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [existingCommunities, setExistingCommunities] = useState<string[]>([]);
 
-  // Fetch existing communities when component mounts
-  useEffect(() => {
-    const fetchExistingCommunities = async () => {
-      if (!user) return;
+  // בדיקה אם יש טוקן בוט קאסטום
+  const customBotToken = botPreference?.custom_bot_token;
 
-      try {
-        const { data, error } = await supabase
-          .from('communities')
-          .select('telegram_chat_id')
-          .eq('owner_id', user.id)
-          .not('telegram_chat_id', 'is', null);
-
-        if (error) {
-          console.error("Error fetching existing communities:", error);
-        } else if (data) {
-          // Extract chat IDs into an array
-          const chatIds = data.map(c => c.telegram_chat_id);
-          console.log("Existing community chat IDs:", chatIds);
-          setExistingCommunities(chatIds);
-        }
-      } catch (err) {
-        console.error("Error in fetchExistingCommunities:", err);
-      }
-    };
-
-    fetchExistingCommunities();
-  }, [user]);
-
-  const handleVerifyConnection = async () => {
-    if (!customTokenInput) {
-      toast.error("Please enter your bot token");
+  const handleLoadGroups = async () => {
+    if (!customBotToken) {
+      toast.error("לא נמצא טוקן לבוט קאסטום");
+      navigate("/telegram-bot");
       return;
     }
 
@@ -62,8 +46,8 @@ const CustomBotNewCommunity: React.FC = () => {
     try {
       const response = await supabase.functions.invoke("validate-bot-token", {
         body: { 
-          botToken: customTokenInput,
-          communityId: null // Will be associated with all communities
+          botToken: customBotToken,
+          communityId: null
         }
       });
 
@@ -72,231 +56,215 @@ const CustomBotNewCommunity: React.FC = () => {
       }
 
       if (response.data.valid) {
-        // Filter out communities that are already added to user's account
-        const allChats = response.data.chatList || [];
-        const filteredChats = allChats.filter(chat => 
-          !existingCommunities.includes(chat.id.toString())
-        );
+        setVerificationResults(response.data.chatList || []);
         
-        setVerificationResults(filteredChats);
+        const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
+        const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
         
-        const channelCount = filteredChats.filter(chat => chat.type === 'channel').length;
-        const groupCount = filteredChats.filter(chat => chat.type !== 'channel').length;
-        
-        if (filteredChats.length > 0) {
-          let successMessage = `Bot verified successfully!`;
+        if (response.data.chatList && response.data.chatList.length > 0) {
+          let successMessage = `הבוט אומת בהצלחה!`;
           if (channelCount > 0 && groupCount > 0) {
-            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'new channel' : 'new channels'} and ${groupCount} ${groupCount === 1 ? 'new group' : 'new groups'}.`;
+            successMessage += ` נמצאו ${channelCount} ${channelCount === 1 ? 'ערוץ' : 'ערוצים'} ו-${groupCount} ${groupCount === 1 ? 'קבוצה' : 'קבוצות'}.`;
           } else if (channelCount > 0) {
-            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'new channel' : 'new channels'}.`;
+            successMessage += ` נמצאו ${channelCount} ${channelCount === 1 ? 'ערוץ' : 'ערוצים'}.`;
           } else if (groupCount > 0) {
-            successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'new group' : 'new groups'}.`;
+            successMessage += ` נמצאו ${groupCount} ${groupCount === 1 ? 'קבוצה' : 'קבוצות'}.`;
           }
           toast.success(successMessage);
-        } else if (allChats.length > 0) {
-          toast.warning("All detected chats are already added to your account. Try a different bot or add your bot to new groups/channels.");
         } else {
-          toast.warning("Bot token is valid, but no channels or groups were found. Make sure your bot is an admin in at least one group or channel.");
+          toast.warning("הטוקן של הבוט תקין, אך לא נמצאו ערוצים או קבוצות. ודא שהבוט הוא מנהל בלפחות קבוצה או ערוץ אחד.");
         }
       } else {
-        setVerificationError(response.data.message || "Invalid bot token");
-        toast.error(`Invalid bot token: ${response.data.message}`);
+        setVerificationError(response.data.message || "טוקן הבוט אינו תקין");
+        toast.error(`טוקן הבוט אינו תקין: ${response.data.message}`);
       }
     } catch (error: any) {
-      console.error("Error validating bot token:", error);
-      setVerificationError(error.message || "Failed to validate bot token");
-      toast.error("Failed to validate bot token. Please try again.");
+      console.error("שגיאה באימות טוקן הבוט:", error);
+      setVerificationError(error.message || "לא ניתן לאמת את טוקן הבוט");
+      toast.error("לא ניתן לאמת את טוקן הבוט. אנא נסה שוב.");
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const handleSaveCommunities = async () => {
-    if (!customTokenInput) {
-      toast.error("Please enter your bot token");
-      return;
-    }
-    
+  const handleAddCommunity = async (chat: TelegramChat) => {
     if (!user) {
-      toast.error("Authentication required. Please login again.");
-      return;
-    }
-    
-    if (!verificationResults || verificationResults.length === 0) {
-      toast.error("Please verify your bot connection and detect at least one channel or group");
+      toast.error("נדרשת התחברות. אנא התחבר מחדש.");
       return;
     }
     
     try {
       setIsSaving(true);
-      console.log("Starting save process for user:", user.id);
       
-      const savedCommunities = [];
-      for (const chat of verificationResults) {
-        try {
-          const { data: existingCommunity } = await supabase
-            .from('communities')
-            .select('id')
-            .eq('telegram_chat_id', chat.id)
-            .eq('owner_id', user.id)
-            .maybeSingle();
-            
-          if (!existingCommunity) {
-            console.log("Creating new community:", chat.title);
-            const { data: newCommunity, error: communityError } = await supabase
-              .from('communities')
-              .insert({
-                name: chat.title,
-                telegram_chat_id: chat.id,
-                telegram_photo_url: chat.photo_url || null,
-                is_group: false,
-                owner_id: user.id
-              })
-              .select('id')
-              .single();
-              
-            if (communityError) {
-              console.error("Error saving community:", communityError);
-              toast.error(`Failed to save community: ${chat.title}`);
-            } else {
-              savedCommunities.push(newCommunity);
-              console.log("Community saved successfully:", newCommunity);
-            }
-          } else {
-            console.log("Community already exists:", existingCommunity);
-            savedCommunities.push(existingCommunity);
-          }
-        } catch (communityError) {
-          console.error("Error processing community:", chat.title, communityError);
-        }
-      }
-      
-      if (savedCommunities.length === 0 && verificationResults.length > 0) {
-        toast.warning("No communities were saved. Please try again.");
+      // בדיקה אם הקהילה כבר קיימת עם מזהה צ'אט זה
+      const { data: existingCommunity } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chat.id)
+        .eq('owner_id', user.id)
+        .maybeSingle();
+        
+      if (existingCommunity) {
+        toast.warning(`הקהילה ${chat.title} כבר קיימת במערכת`);
         setIsSaving(false);
         return;
       }
       
-      toast.success(`Successfully added ${savedCommunities.length} communities!`);
+      // יצירת רשומת קהילה חדשה
+      const { data: newCommunity, error: communityError } = await supabase
+        .from('communities')
+        .insert({
+          name: chat.title,
+          telegram_chat_id: chat.id,
+          telegram_photo_url: chat.photo_url || null,
+          is_group: chat.type !== 'channel',
+          owner_id: user.id
+        })
+        .select('id')
+        .single();
+        
+      if (communityError) {
+        console.error("שגיאה בשמירת הקהילה:", communityError);
+        throw communityError;
+      }
       
+      toast.success(`הקהילה ${chat.title} נוספה בהצלחה!`);
+      
+      // מעבר לדשבורד אחרי הוספת הקהילה
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 500);
+        navigate('/dashboard');
+      }, 1500);
     } catch (error) {
-      console.error("Error saving communities:", error);
-      toast.error("Failed to save communities");
+      console.error("שגיאה בהוספת קהילה:", error);
+      toast.error("לא ניתן להוסיף את הקהילה. אנא נסה שוב.");
+    } finally {
       setIsSaving(false);
     }
   };
 
-  const handleChatsRefresh = (newChats: TelegramChat[]) => {
-    // Filter out already added communities from refreshed results as well
-    const filteredChats = newChats.filter(chat => 
-      !existingCommunities.includes(chat.id.toString())
-    );
-    setVerificationResults(filteredChats);
-  };
+  // אם אין טוקן בוט מותאם אישית, נפנה להגדרות הבוט
+  if (!isLoadingBotPreference && !customBotToken) {
+    toast.info("עליך להגדיר טוקן בוט מותאם אישית תחילה");
+    navigate("/telegram-bot");
+    return null;
+  }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 py-16 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Community</h1>
-          <p className="text-gray-600">Configure your custom bot to add a new Telegram community</p>
-        </div>
-
+    <div className="container mx-auto px-4 py-8">
+      <TelegramConnectHeader />
+      
+      <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex justify-center w-full"
         >
-          <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl w-full max-w-4xl">
-            <div className="flex items-center mb-6 gap-2 text-blue-600">
-              <Bot className="h-6 w-6" />
-              <h3 className="text-xl font-semibold">Add New Telegram Community</h3>
-            </div>
-            
-            <div className="space-y-6 mb-8">
-              <BotTokenInput 
-                customTokenInput={customTokenInput} 
-                setCustomTokenInput={setCustomTokenInput}
-              />
-              
-              <div className="space-y-3">
-                <h4 className="font-medium">Custom Bot Instructions:</h4>
-                <ol className="space-y-2 ml-5 list-decimal text-sm text-gray-700">
-                  <li>Make sure your bot is an admin in the Telegram groups or channels you want to add</li>
-                  <li>Enter your bot token and click "Verify Connection"</li>
-                  <li>Select the communities you want to add</li>
-                  <li>Click "Save Communities" to complete the process</li>
-                </ol>
+          <Card className="p-6 bg-white shadow-xl border border-indigo-100 rounded-xl mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-white" />
               </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 text-sm">
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-                  <div className="text-blue-700">
-                    <p className="font-medium">Important:</p>
-                    <ul className="list-disc ml-5 mt-1">
-                      <li>Your bot token is securely stored and encrypted</li>
-                      <li>Ensure your bot has admin privileges in your Telegram communities</li>
-                      <li>New users can only be added through the bot once you set up subscriptions</li>
-                    </ul>
-                  </div>
-                </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">חיבור קהילה עם בוט מותאם אישית</h2>
+                <p className="text-sm text-gray-600">השתמש בבוט שיצרת כדי לחבר את הקהילות שלך</p>
               </div>
             </div>
             
-            {verificationResults && (
-              <TelegramChatsList 
-                chats={verificationResults} 
-                botToken={customTokenInput}
-                onChatsRefresh={handleChatsRefresh}
-                disabled={isSaving}
-              />
-            )}
-            
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-1.5"
-                disabled={isSaving}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-              
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleVerifyConnection}
-                  disabled={!customTokenInput || isVerifying || isSaving}
-                  className="flex items-center gap-1.5"
+            {!verificationResults && (
+              <div className="flex flex-col gap-4">
+                <p className="text-gray-600">
+                  לחץ על הכפתור למטה כדי לטעון את כל הקבוצות והערוצים שהבוט שלך מחובר אליהם כמנהל.
+                </p>
+                
+                <Button 
+                  onClick={handleLoadGroups} 
+                  className="bg-indigo-600 hover:bg-indigo-700 w-full"
+                  disabled={isVerifying}
                 >
-                  <Bot className="h-4 w-4" />
-                  {isVerifying ? 'Verifying...' : 'Verify Connection'}
+                  {isVerifying ? "טוען קהילות..." : "טען קהילות זמינות"}
                 </Button>
                 
-                <Button
-                  onClick={handleSaveCommunities}
-                  disabled={!verificationResults || verificationResults.length === 0 || isSaving}
-                  className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+                {verificationError && (
+                  <div className="flex items-center gap-2 text-red-500 bg-red-50 p-3 rounded-md mt-2">
+                    <AlertCircle className="h-5 w-5" />
+                    <p className="text-sm">{verificationError}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {verificationResults && verificationResults.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold mb-2">קהילות זמינות</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  בחר קהילה מהרשימה הבאה כדי להוסיף אותה למערכת:
+                </p>
+                
+                <div className="grid gap-3">
+                  {verificationResults.map(chat => (
+                    <div 
+                      key={chat.id} 
+                      className="border border-gray-200 rounded-lg p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                          {chat.photo_url ? (
+                            <img src={chat.photo_url} alt={chat.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-medium">
+                              {chat.title.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{chat.title}</h4>
+                          <p className="text-xs text-gray-500">
+                            {chat.type === 'channel' ? 'ערוץ' : 'קבוצה'} • ID: {chat.id}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => handleAddCommunity(chat)} 
+                        className="bg-green-500 hover:bg-green-600"
+                        disabled={isSaving}
+                        size="sm"
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        הוספה
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button 
+                  onClick={handleLoadGroups} 
+                  variant="outline"
+                  className="mt-4"
+                  disabled={isVerifying}
                 >
-                  {isSaving ? (
-                    <>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      Save Communities
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
+                  רענן רשימה
                 </Button>
               </div>
-            </div>
+            )}
+            
+            {verificationResults && verificationResults.length === 0 && (
+              <div className="text-center py-8">
+                <div className="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="h-8 w-8 text-gray-500" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">לא נמצאו קהילות</h3>
+                <p className="text-gray-500 mb-4">
+                  הבוט שלך אינו מנהל באף קהילה. ודא שהבוט הוגדר כמנהל בערוצים או קבוצות שברצונך לחבר.
+                </p>
+                <Button 
+                  onClick={handleLoadGroups} 
+                  variant="outline"
+                  disabled={isVerifying}
+                >
+                  נסה שוב
+                </Button>
+              </div>
+            )}
           </Card>
         </motion.div>
       </div>

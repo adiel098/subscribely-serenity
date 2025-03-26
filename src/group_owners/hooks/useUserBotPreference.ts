@@ -1,42 +1,47 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
-export interface BotPreference {
-  use_custom_bot: boolean;
-  custom_bot_token: string | null;
+interface UserBotPreference {
+  isCustomBot: boolean;
+  hasCustomBotToken: boolean;
 }
 
-export const useUserBotPreference = () => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['user-bot-preference'],
-    queryFn: async (): Promise<BotPreference> => {
-      try {
-        const { data, error } = await supabase.rpc('get_bot_preference');
-        
-        if (error) {
-          console.error('Error fetching bot preference:', error);
-          // Default to official bot if there's an error
-          return { use_custom_bot: false, custom_bot_token: null };
-        }
-        
+export const useUserBotPreference = (): UserBotPreference => {
+  const { user } = useAuth();
+  
+  const { data } = useQuery({
+    queryKey: ["user-bot-preference", user?.id],
+    queryFn: async (): Promise<{
+      is_custom_bot: boolean;
+      custom_bot_token?: string | null;
+    } | null> => {
+      if (!user) return null;
+      
+      // Fetch user bot preference from database
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("is_custom_bot, custom_bot_token")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching user bot preference:", error);
         return {
-          use_custom_bot: data.use_custom_bot || false,
-          custom_bot_token: data.custom_bot_token || null
+          is_custom_bot: false,
+          custom_bot_token: null
         };
-      } catch (error) {
-        console.error('Failed to fetch bot preference:', error);
-        // Default to official bot if there's an error
-        return { use_custom_bot: false, custom_bot_token: null };
       }
+      
+      return data;
     },
+    enabled: !!user,
   });
-
+  
+  // Default to official bot if no preference is set
   return {
-    botPreference: data,
-    isCustomBot: data?.use_custom_bot || false,
-    hasCustomBotToken: Boolean(data?.custom_bot_token),
-    isLoadingBotPreference: isLoading,
-    botPreferenceError: error,
+    isCustomBot: data?.is_custom_bot || false,
+    hasCustomBotToken: !!data?.custom_bot_token
   };
 };

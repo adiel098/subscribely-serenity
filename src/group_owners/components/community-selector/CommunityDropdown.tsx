@@ -57,23 +57,24 @@ export const CommunityDropdown = ({
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
-          className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 ${isMobile ? 'w-full' : 'min-w-[260px] max-w-[400px]'}`}
+          className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 h-8 ${isMobile ? 'w-full text-xs' : 'min-w-[200px] max-w-[260px] text-xs'}`}
+          size="sm"
         >
           <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6 border border-indigo-100">
+            <Avatar className="h-5 w-5 border border-indigo-100">
               {selectedPhotoUrl ? (
                 <AvatarImage 
                   src={selectedPhotoUrl} 
                   alt={displayName}
                 />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px]">
                   {displayName?.charAt(0)?.toUpperCase() || '?'}
                 </AvatarFallback>
               )}
             </Avatar>
             {!isMobile ? (
-              <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700">
+              <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700 max-w-[180px]">
                 {displayName}
               </span>
             ) : (
@@ -82,17 +83,17 @@ export const CommunityDropdown = ({
               </span>
             )}
           </div>
-          <ChevronDown className="h-4 w-4 opacity-50" />
+          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-60 bg-white/95 backdrop-blur-sm border-blue-100 shadow-xl">
-        <DropdownMenuLabel>Your Communities</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">Your Communities</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           {communities?.map((community) => (
             <DropdownMenuItem 
               key={community.id} 
-              className={`cursor-pointer ${selectedCommunityId === community.id && !isGroupSelected ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
+              className={`cursor-pointer text-xs ${selectedCommunityId === community.id && !isGroupSelected ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
               onClick={() => handleSelectCommunity(community.id)}
             >
               <div className="flex items-center gap-2 w-full">
@@ -117,12 +118,12 @@ export const CommunityDropdown = ({
         {groups && groups.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Your Groups</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">Your Groups</DropdownMenuLabel>
             <DropdownMenuGroup>
               {groups.map((group) => (
                 <DropdownMenuItem 
                   key={group.id} 
-                  className={`cursor-pointer ${selectedGroupId === group.id ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
+                  className={`cursor-pointer text-xs ${selectedGroupId === group.id ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
                   onClick={() => handleSelectGroup(group.id)}
                 >
                   <div className="flex items-center gap-2 w-full">

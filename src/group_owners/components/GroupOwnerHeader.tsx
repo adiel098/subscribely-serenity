@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Crown, User, Settings, LogOut, HelpCircle } from 'lucide-react';
+import { Bell, Crown, User, Settings, LogOut, HelpCircle, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -10,6 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CommunityDropdown } from './community-selector/CommunityDropdown';
+import { useCommunities } from '@/group_owners/hooks/useCommunities';
+import { useCommunityGroups } from '@/group_owners/hooks/useCommunityGroups';
+import { useCommunityContext } from '@/contexts/CommunityContext';
+import { HeaderActions } from './community-selector/HeaderActions';
 
 export function GroupOwnerHeader() {
   const {
@@ -19,6 +24,16 @@ export function GroupOwnerHeader() {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
   const isMobile = useIsMobile();
+  
+  // Community selector data
+  const { data: communities } = useCommunities();
+  const { data: groups } = useCommunityGroups();
+  const { 
+    selectedCommunityId, 
+    setSelectedCommunityId,
+    selectedGroupId,
+    setSelectedGroupId
+  } = useCommunityContext();
   
   const getInitials = () => {
     if (!user?.email) return 'U';
@@ -38,33 +53,78 @@ export function GroupOwnerHeader() {
     navigate('/membify-settings');
   };
   
-  return <header className="fixed top-0 left-0 right-0 h-[68px] z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-4 md:px-6">
-      <motion.div initial={{
-      opacity: 0,
-      x: -20
-    }} animate={{
-      opacity: 1,
-      x: 0
-    }} transition={{
-      duration: 0.4,
-      ease: "easeOut"
-    }} className="flex items-center gap-2 md:gap-3">
+  const handleCopyLink = () => {
+    // This is a placeholder - the actual functionality will be handled by the community selector components
+  };
+  
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 shadow-sm backdrop-blur-sm flex items-center justify-between px-4 md:px-6 h-16">
+      <motion.div 
+        initial={{
+          opacity: 0,
+          x: -20
+        }} 
+        animate={{
+          opacity: 1,
+          x: 0
+        }} 
+        transition={{
+          duration: 0.4,
+          ease: "easeOut"
+        }} 
+        className="flex items-center gap-2 md:gap-3"
+      >
         <Link to="/dashboard" className="text-lg md:text-xl font-bold flex items-center gap-1 md:gap-2">
           <Crown className="h-5 w-5 md:h-6 md:w-6 text-amber-500 drop-shadow-sm" /> 
           <span className="font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-500 bg-clip-text text-transparent">
             {isMobile ? "Membify" : "Membify"}
           </span>
         </Link>
+        
+        {/* Community selector integrated into header */}
+        {!isMobile ? (
+          <div className="ml-6 flex items-center gap-2">
+            <CommunityDropdown 
+              communities={communities} 
+              groups={groups}
+              selectedCommunityId={selectedCommunityId}
+              setSelectedCommunityId={setSelectedCommunityId}
+              selectedGroupId={selectedGroupId}
+              setSelectedGroupId={setSelectedGroupId}
+              isMobile={isMobile}
+            />
+            <HeaderActions isMobile={isMobile} />
+          </div>
+        ) : null}
       </motion.div>
+      
+      {/* For mobile, add the selector below the main header */}
+      {isMobile && (
+        <div className="fixed top-16 left-0 right-0 z-40 bg-white/90 border-b flex items-center justify-between px-3 py-2 shadow-sm">
+          <CommunityDropdown 
+            communities={communities} 
+            groups={groups}
+            selectedCommunityId={selectedCommunityId}
+            setSelectedCommunityId={setSelectedCommunityId}
+            selectedGroupId={selectedGroupId}
+            setSelectedGroupId={setSelectedGroupId}
+            isMobile={isMobile}
+          />
+          <HeaderActions isMobile={isMobile} />
+        </div>
+      )}
       
       <div className="flex items-center space-x-2 md:space-x-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <motion.div whileHover={{
-            scale: 1.05
-          }} whileTap={{
-            scale: 0.95
-          }}>
+            <motion.div 
+              whileHover={{
+                scale: 1.05
+              }} 
+              whileTap={{
+                scale: 0.95
+              }}
+            >
               <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full hover:bg-indigo-200/50 border-2 border-indigo-300">
                 <Avatar className="h-7 w-7 md:h-8 md:w-8">
                   <AvatarImage alt="Profile" src="/lovable-uploads/fe0652ed-b292-4987-b51f-3706d2bdd013.png" />
@@ -90,16 +150,22 @@ export function GroupOwnerHeader() {
         </DropdownMenu>
       </div>
       
-      {showHelp && <motion.div initial={{
-      opacity: 0,
-      y: 10
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} exit={{
-      opacity: 0,
-      y: 10
-    }} className="absolute top-16 right-6 bg-white rounded-lg shadow-xl p-4 w-72 border border-blue-100 z-50">
+      {showHelp && (
+        <motion.div 
+          initial={{
+            opacity: 0,
+            y: 10
+          }} 
+          animate={{
+            opacity: 1,
+            y: 0
+          }} 
+          exit={{
+            opacity: 0,
+            y: 10
+          }} 
+          className="absolute top-16 right-6 bg-white rounded-lg shadow-xl p-4 w-72 border border-blue-100 z-50"
+        >
           <h3 className="text-lg font-bold text-blue-700 mb-2 flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-blue-500" />
             Need Help?
@@ -110,6 +176,8 @@ export function GroupOwnerHeader() {
           <Button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
             Contact Support
           </Button>
-        </motion.div>}
-    </header>;
+        </motion.div>
+      )}
+    </header>
+  );
 }

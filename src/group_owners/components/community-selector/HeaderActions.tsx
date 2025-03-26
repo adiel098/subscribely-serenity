@@ -18,17 +18,17 @@ export const HeaderActions = ({ onNewCommunityClick, isMobile = false }: HeaderA
     if (onNewCommunityClick) {
       onNewCommunityClick();
     } else {
-      // אם משתמש בבוט קאסטום
+      // If using custom bot
       if (isCustomBot) {
-        // אם יש טוקן לבוט קאסטום, נפנה לדף יצירת קהילה עם בוט קאסטום
+        // If there's a custom bot token, go to custom bot community creation
         if (hasCustomBotToken) {
           navigate("/new-community/custom-bot");
         } else {
-          // אם אין טוקן, נפנה לדף הגדרות הבוט כדי שהמשתמש יוכל להגדיר את הטוקן
+          // If no token, go to bot settings so user can set the token
           navigate("/telegram-bot");
         }
       } else {
-        // אם משתמש בבוט הרשמי, נפנה לדף חיבור טלגרם הרגיל
+        // If using official bot, go to regular Telegram connect
         navigate("/connect/telegram");
       }
     }
@@ -40,12 +40,12 @@ export const HeaderActions = ({ onNewCommunityClick, isMobile = false }: HeaderA
       whileTap={{ scale: 0.95 }}
     >
       <Button 
-        className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 gap-2 ${isMobile ? 'px-3 text-xs py-1 h-8' : ''}`}
+        className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow hover:shadow-md transition-all duration-300 gap-1.5 ${isMobile ? 'px-2 text-xs py-1 h-7' : 'h-8 text-xs px-3'}`}
         onClick={handleNewCommunityClick}
-        size={isMobile ? "sm" : "default"}
+        size="sm"
       >
-        <PlusCircle className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
-        {isMobile ? 'Community' : 'New Community'}
+        <PlusCircle className={`${isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
+        {isMobile ? 'New' : 'New Community'}
       </Button>
     </motion.div>
   );

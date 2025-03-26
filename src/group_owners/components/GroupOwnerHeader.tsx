@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Crown, User, Settings, LogOut, HelpCircle, PlusCircle } from 'lucide-react';
+import { Bell, Crown, User, Settings, LogOut, HelpCircle, PlusCircle, FolderPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,6 +15,13 @@ import { useCommunities } from '@/group_owners/hooks/useCommunities';
 import { useCommunityGroups } from '@/group_owners/hooks/useCommunityGroups';
 import { useCommunityContext } from '@/contexts/CommunityContext';
 import { HeaderActions } from './community-selector/HeaderActions';
+import { toast } from 'sonner';
+import { getBotUsername } from '@/telegram-mini-app/utils/telegram/botUsernameUtil';
+import { SuccessBanner } from './community-selector/banners/SuccessBanner';
+import { GroupSuccessBanner } from './community-groups/group-success/GroupSuccessBanner';
+import { CreateGroupDialog } from './community-groups/CreateGroupDialog';
+import { PlatformSubscriptionBanner } from './community-selector/PlatformSubscriptionBanner';
+import { CommunityRequirementsBanner } from './community-selector/CommunityRequirementsBanner';
 
 export function GroupOwnerHeader() {
   const {
@@ -24,6 +31,7 @@ export function GroupOwnerHeader() {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
   const isMobile = useIsMobile();
+  const [createGroupDialogOpen, setCreateGroupDialogOpen] = useState(false);
   
   // Community selector data
   const { data: communities } = useCommunities();
@@ -32,8 +40,13 @@ export function GroupOwnerHeader() {
     selectedCommunityId, 
     setSelectedCommunityId,
     selectedGroupId,
-    setSelectedGroupId
+    setSelectedGroupId,
+    isGroupSelected
   } = useCommunityContext();
+  
+  const selectedGroup = groups?.find(group => group.id === selectedGroupId);
+  const selectedCommunity = communities?.find(comm => comm.id === selectedCommunityId);
+  const botUsername = getBotUsername();
   
   const getInitials = () => {
     if (!user?.email) return 'U';
@@ -53,8 +66,50 @@ export function GroupOwnerHeader() {
     navigate('/membify-settings');
   };
   
+  const handleCreateGroup = () => {
+    setCreateGroupDialogOpen(true);
+  };
+  
   const handleCopyLink = () => {
-    // This is a placeholder - the actual functionality will be handled by the community selector components
+    if (!selectedCommunityId && !selectedGroupId) {
+      toast.error("Please select a community or group first");
+      return;
+    }
+
+    let linkParam = "";
+    let entityName = "";
+
+    if (isGroupSelected && selectedGroup) {
+      linkParam = selectedGroup.custom_link || selectedGroup.id;
+      entityName = "group";
+    } else if (selectedCommunity) {
+      linkParam = selectedCommunity.custom_link || selectedCommunity.id;
+      entityName = "community";
+    }
+
+    const fullLink = `https://t.me/${botUsername}?start=${linkParam}`;
+    
+    navigator.clipboard.writeText(fullLink)
+      .then(() => {
+        toast.success(`${entityName} link copied to clipboard!`);
+      })
+      .catch((error) => {
+        console.error("Failed to copy link:", error);
+        toast.error("Failed to copy link to clipboard");
+      });
+  };
+
+  const handleEditLink = () => {
+    if (!selectedCommunityId && !selectedGroupId) {
+      toast.error("Please select a community or group first");
+      return;
+    }
+
+    if (isGroupSelected && selectedGroup) {
+      navigate(`/groups/${selectedGroup.id}/edit`);
+    } else if (selectedCommunity) {
+      navigate(`/communities/${selectedCommunity.id}/edit`);
+    }
   };
   
   return (
@@ -83,7 +138,7 @@ export function GroupOwnerHeader() {
         
         {/* Community selector integrated into header */}
         {!isMobile ? (
-          <div className="ml-6 flex items-center gap-2">
+          <div className="ml-6 flex items-center gap-4">
             <CommunityDropdown 
               communities={communities} 
               groups={groups}
@@ -93,24 +148,104 @@ export function GroupOwnerHeader() {
               setSelectedGroupId={setSelectedGroupId}
               isMobile={isMobile}
             />
+            
+            <PlatformSubscriptionBanner />
+            
+            {!isGroupSelected && selectedCommunityId && (
+              <CommunityRequirementsBanner />
+            )}
+            
+            {/* Success banner showing community/group is ready with link */}
+            {isGroupSelected && selectedGroup ? (
+              <GroupSuccessBanner 
+                groupId={selectedGroup.id}
+                customLink={selectedGroup.custom_link || null}
+                onOpenEditDialog={handleEditLink}
+              />
+            ) : selectedCommunity && (
+              <SuccessBanner
+                communityId={selectedCommunity.id}
+                customLink={selectedCommunity.custom_link || null}
+                onOpenEditDialog={handleEditLink}
+                entityType="community"
+              />
+            )}
+            
             <HeaderActions isMobile={isMobile} />
+
+            {/* Add Group Button */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button 
+                variant="outline" 
+                onClick={handleCreateGroup}
+                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8"
+                size="sm"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                New Group
+              </Button>
+            </motion.div>
           </div>
         ) : null}
       </motion.div>
       
       {/* For mobile, add the selector below the main header */}
       {isMobile && (
-        <div className="fixed top-16 left-0 right-0 z-40 bg-white/90 border-b flex items-center justify-between px-3 py-2 shadow-sm">
-          <CommunityDropdown 
-            communities={communities} 
-            groups={groups}
-            selectedCommunityId={selectedCommunityId}
-            setSelectedCommunityId={setSelectedCommunityId}
-            selectedGroupId={selectedGroupId}
-            setSelectedGroupId={setSelectedGroupId}
-            isMobile={isMobile}
-          />
-          <HeaderActions isMobile={isMobile} />
+        <div className="fixed top-16 left-0 right-0 z-40 bg-white/90 border-b flex flex-col items-center justify-between px-3 py-3 shadow-sm">
+          <div className="flex items-center w-full justify-between">
+            <div className="flex-1 max-w-[60%]">
+              <CommunityDropdown 
+                communities={communities} 
+                groups={groups}
+                selectedCommunityId={selectedCommunityId}
+                setSelectedCommunityId={setSelectedCommunityId}
+                selectedGroupId={selectedGroupId}
+                setSelectedGroupId={setSelectedGroupId}
+                isMobile={isMobile}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <HeaderActions isMobile={isMobile} />
+              
+              {/* Add Group Button for mobile */}
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="h-8 w-8 rounded-full border-indigo-200 shadow-sm bg-white"
+                onClick={handleCreateGroup}
+              >
+                <FolderPlus className="h-4 w-4 text-indigo-600" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="w-full mt-2">
+            <PlatformSubscriptionBanner />
+            
+            {/* Success banner for mobile */}
+            {isGroupSelected && selectedGroup ? (
+              <div className="mt-2">
+                <GroupSuccessBanner 
+                  groupId={selectedGroup.id}
+                  customLink={selectedGroup.custom_link || null}
+                  onOpenEditDialog={handleEditLink}
+                />
+              </div>
+            ) : selectedCommunity && (
+              <div className="mt-2">
+                <SuccessBanner
+                  communityId={selectedCommunity.id}
+                  customLink={selectedCommunity.custom_link || null}
+                  onOpenEditDialog={handleEditLink}
+                  entityType="community"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
       
@@ -178,6 +313,12 @@ export function GroupOwnerHeader() {
           </Button>
         </motion.div>
       )}
+      
+      {/* Create Group Dialog */}
+      <CreateGroupDialog 
+        isOpen={createGroupDialogOpen}
+        onOpenChange={setCreateGroupDialogOpen}
+      />
     </header>
   );
 }

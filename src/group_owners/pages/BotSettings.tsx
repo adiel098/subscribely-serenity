@@ -6,6 +6,7 @@ import { SettingsContent } from "@/group_owners/components/bot-settings/Settings
 import { PageHeader } from "@/components/ui/page-header";
 import { Bot } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect } from "react";
 
 const BotSettings = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -17,6 +18,21 @@ const BotSettings = () => {
 
   console.log('BotSettings component - Selected community/group ID:', communityIdToUse);
   console.log('BotSettings component - Fetched settings:', settings);
+
+  // Use useEffect to monitor key changes for debugging
+  useEffect(() => {
+    console.log('BotSettings: communityIdToUse changed to:', communityIdToUse);
+  }, [communityIdToUse]);
+
+  useEffect(() => {
+    if (settings) {
+      console.log('BotSettings: settings loaded:', {
+        id: settings.id,
+        community_id: settings.community_id,
+        welcome_message: settings.welcome_message
+      });
+    }
+  }, [settings]);
 
   return (
     <div className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>

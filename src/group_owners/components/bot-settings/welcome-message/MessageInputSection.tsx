@@ -20,6 +20,7 @@ export const MessageInputSection = ({
   label,
   placeholder
 }: MessageInputSectionProps) => {
+  console.log(`MessageInputSection for ${settingsKey} - Current value:`, draftMessage);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDraftMessage(e.target.value);

@@ -41,10 +41,17 @@ export const useBotSettings = (entityId: string | null) => {
   const queryClient = useQueryClient();
   const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const { data: settings, isLoading } = useQuery({
+  console.log("useBotSettings hook initiated with entityId:", entityId);
+
+  const { data: settings, isLoading, error } = useQuery({
     queryKey: ['bot-settings', entityId],
     queryFn: async () => {
-      if (!entityId) return null;
+      if (!entityId) {
+        console.log("No entityId provided to useBotSettings");
+        return null;
+      }
+      
+      console.log(`Fetching bot settings for entity: ${entityId}`);
 
       const query = supabase
         .from('telegram_bot_settings')
@@ -57,14 +64,18 @@ export const useBotSettings = (entityId: string | null) => {
         console.error('Error fetching bot settings:', error);
         // If no settings found, create default settings
         if (error.code === 'PGRST116') {
+          console.log(`No settings found for entity ${entityId}, creating defaults`);
           return createDefaultBotSettings(entityId);
         }
         throw error;
       }
 
+      console.log(`Successfully fetched bot settings for entity ${entityId}:`, data);
+      
       // Ensure all required properties have default values
       return {
         ...data,
+        welcome_message: data.welcome_message || 'Welcome to our community! 👋\nWe\'re excited to have you here.',
         welcome_image: data.welcome_image || null,
         first_reminder_days: data.first_reminder_days || 3,
         first_reminder_message: data.first_reminder_message || 'Your subscription will expire soon. Renew now to maintain access!',
@@ -78,6 +89,10 @@ export const useBotSettings = (entityId: string | null) => {
     },
     enabled: Boolean(entityId),
   });
+
+  if (error) {
+    console.error("Error in useBotSettings query:", error);
+  }
 
   const createDefaultBotSettings = async (entityId: string | null) => {
     console.log("Creating default bot settings for entity", entityId);
@@ -117,6 +132,7 @@ export const useBotSettings = (entityId: string | null) => {
         throw error;
       }
 
+      console.log("Created default bot settings:", data);
       return data as BotSettings;
     } catch (error) {
       console.error('Failed to create default bot settings:', error);
@@ -127,6 +143,8 @@ export const useBotSettings = (entityId: string | null) => {
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<BotSettings>) => {
       if (!entityId) throw new Error('No entity selected');
+
+      console.log(`Updating bot settings for entity ${entityId}:`, newSettings);
 
       const query = supabase
         .from('telegram_bot_settings')
@@ -140,6 +158,7 @@ export const useBotSettings = (entityId: string | null) => {
         throw error;
       }
 
+      console.log(`Successfully updated bot settings for entity ${entityId}:`, data);
       return data;
     },
     onSuccess: () => {

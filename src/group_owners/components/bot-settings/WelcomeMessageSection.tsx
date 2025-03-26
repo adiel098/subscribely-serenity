@@ -3,7 +3,7 @@ import { MessageSquare, Image, Save, UserPlus, Sparkles } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";
 import { toast } from "sonner";
@@ -15,10 +15,20 @@ interface WelcomeMessageSectionProps {
 }
 
 export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessageSectionProps) => {
-  const [welcomeMessage, setWelcomeMessage] = useState(settings.welcome_message);
+  const [welcomeMessage, setWelcomeMessage] = useState(settings.welcome_message || '');
   const [welcomeImage, setWelcomeImage] = useState(settings.welcome_image);
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+
+  // Important: Update local state when settings change (like when community changes)
+  useEffect(() => {
+    setWelcomeMessage(settings.welcome_message || '');
+    setWelcomeImage(settings.welcome_image);
+  }, [settings]);
+
+  console.log("Welcome Message Section - settings:", settings);
+  console.log("Welcome Message from settings:", settings.welcome_message);
+  console.log("Local welcome message state:", welcomeMessage);
 
   const handleSaveWelcomeMessage = () => {
     updateSettings.mutate({ 
@@ -27,6 +37,10 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
       auto_welcome_message: true // Always set to true as per requirement
     });
     toast.success("Welcome message saved successfully");
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setWelcomeMessage(e.target.value);
   };
 
   return (
@@ -39,7 +53,7 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
         <Textarea
           id="welcome-message"
           value={welcomeMessage}
-          onChange={(e) => setWelcomeMessage(e.target.value)}
+          onChange={handleTextChange}
           placeholder="Welcome to our community! We're excited to have you join us..."
           className="min-h-[100px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200"
         />

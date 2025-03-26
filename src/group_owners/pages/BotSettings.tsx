@@ -12,8 +12,11 @@ const BotSettings = () => {
   const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
   const isMobile = useIsMobile();
   
-  // Add the communityIdToUse as a dependency in the query key to trigger a refetch when it changes
+  // Ensure we pass the correct communityId to the useBotSettings hook
   const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
+
+  console.log('BotSettings component - Selected community/group ID:', communityIdToUse);
+  console.log('BotSettings component - Fetched settings:', settings);
 
   return (
     <div className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>

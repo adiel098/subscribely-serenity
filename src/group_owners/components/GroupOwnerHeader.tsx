@@ -136,7 +136,7 @@ export function GroupOwnerHeader() {
         
         {/* Community selector integrated into header */}
         {!isMobile ? (
-          <div className="ml-6 flex items-center gap-4">
+          <div className="ml-6 flex items-center gap-6">
             <CommunityDropdown 
               communities={communities} 
               groups={groups}
@@ -152,24 +152,6 @@ export function GroupOwnerHeader() {
             {/* We only need the CommunityRequirementsBanner here - it handles showing both the requirements banner
                 and the success banner based on community/group configuration */}
             <CommunityRequirementsBanner />
-            
-            <HeaderActions isMobile={isMobile} />
-
-            {/* Add Group Button */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                variant="outline" 
-                onClick={handleCreateGroup}
-                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8"
-                size="sm"
-              >
-                <FolderPlus className="h-3.5 w-3.5" />
-                New Group
-              </Button>
-            </motion.div>
           </div>
         ) : null}
       </motion.div>
@@ -217,6 +199,29 @@ export function GroupOwnerHeader() {
       )}
       
       <div className="flex items-center space-x-2 md:space-x-3">
+        {/* Move New Community and New Group buttons here */}
+        {!isMobile && (
+          <div className="flex items-center gap-2 mr-3">
+            <HeaderActions isMobile={isMobile} />
+
+            {/* Add Group Button */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button 
+                variant="outline" 
+                onClick={handleCreateGroup}
+                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8"
+                size="sm"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                New Group
+              </Button>
+            </motion.div>
+          </div>
+        )}
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <motion.div 

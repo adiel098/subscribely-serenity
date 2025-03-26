@@ -27,6 +27,8 @@ import PlatformPayment from "@/group_owners/pages/PlatformPayment";
 import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import MembifySettings from "@/group_owners/pages/MembifySettings";
 import TelegramBot from "@/group_owners/pages/TelegramBot";
+import CommunityEdit from "@/group_owners/pages/communities/CommunityEdit";
+import GroupEdit from "@/group_owners/pages/groups/GroupEdit";
 
 // Onboarding Pages
 import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
@@ -139,6 +141,22 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <DashboardLayout>
             <MembifySettings />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      
+      {/* Community and Group Edit Routes */}
+      <Route path="/communities/:communityId/edit" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <CommunityEdit />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/groups/:groupId/edit" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <GroupEdit />
           </DashboardLayout>
         </ProtectedRoute>
       } />

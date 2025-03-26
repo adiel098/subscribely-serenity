@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Bell, PlusCircle, FolderPlus, Plus, Copy, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,13 +82,15 @@ export const CommunitySelector = () => {
   };
 
   const handleEditLink = () => {
-    // In mobile view, we'll navigate to the appropriate edit page
+    if (!selectedCommunityId && !selectedGroupId) {
+      toast.error("Please select a community or group first");
+      return;
+    }
+
     if (isGroupSelected && selectedGroup) {
       navigate(`/groups/${selectedGroup.id}/edit`);
     } else if (selectedCommunity) {
       navigate(`/communities/${selectedCommunity.id}/edit`);
-    } else {
-      toast.error("Please select a community or group first");
     }
   };
 

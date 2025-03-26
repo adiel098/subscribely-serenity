@@ -12,6 +12,7 @@ const BotSettings = () => {
   const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
   const isMobile = useIsMobile();
   
+  // Add the communityIdToUse as a dependency in the query key to trigger a refetch when it changes
   const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
 
   return (

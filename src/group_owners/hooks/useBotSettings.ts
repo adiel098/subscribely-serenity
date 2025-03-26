@@ -41,10 +41,18 @@ export const useBotSettings = (entityId: string | null = null) => {
   const queryClient = useQueryClient();
   const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Log the entityId to help with debugging
+  console.log(`useBotSettings hook called with entityId: ${entityId}`);
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ['bot-settings', entityId],
     queryFn: async () => {
-      if (!entityId) return null;
+      if (!entityId) {
+        console.log("No entityId provided to useBotSettings");
+        return null;
+      }
+      
+      console.log(`Fetching bot settings for entity: ${entityId}`);
 
       const query = supabase
         .from('telegram_bot_settings')
@@ -57,11 +65,14 @@ export const useBotSettings = (entityId: string | null = null) => {
         console.error('Error fetching bot settings:', error);
         // If no settings found, create default settings
         if (error.code === 'PGRST116') {
+          console.log(`No settings found for entity ${entityId}, creating defaults`);
           return createDefaultBotSettings(entityId);
         }
         throw error;
       }
 
+      console.log(`Successfully fetched bot settings for entity ${entityId}`);
+      
       // Ensure all required properties have default values
       return {
         ...data,

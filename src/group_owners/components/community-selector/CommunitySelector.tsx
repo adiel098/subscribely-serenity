@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Select,
@@ -12,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Copy } from "lucide-react";
+import { PlusCircle, Copy, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -89,21 +88,90 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline">
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" className="text-xs">
+              <PlusCircle className="mr-1 h-3 w-3" />
               Create Community
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create Community</DialogTitle>
-              <DialogDescription>
-                Create a new community to manage subscriptions and members.
+          <DialogContent className="sm:max-w-[425px] p-4">
+            <DialogHeader className="space-y-2 pb-4">
+              <DialogTitle className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent inline-flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                Create New Community
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground leading-normal">
+                Create a new community to manage subscriptions and members. You can create either a channel or a group.
               </DialogDescription>
             </DialogHeader>
-            {/* We'll replace the form with a simple message */}
-            <div className="py-4">
-              <p>Please use the "Create Community" button in the main interface to create a new community.</p>
+            
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-xs font-medium">
+                  Community Name
+                </Label>
+                <Input 
+                  id="name" 
+                  placeholder="Enter community name" 
+                  className="h-8 text-sm"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="description" className="text-xs font-medium">
+                  Description
+                </Label>
+                <Input 
+                  id="description" 
+                  placeholder="Enter community description" 
+                  className="h-8 text-sm"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="type" className="text-xs font-medium">
+                  Community Type
+                </Label>
+                <Select>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="channel" className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                          <span className="text-blue-600 text-xs">@</span>
+                        </div>
+                        Channel
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="group" className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+                          <span className="text-gray-600 text-xs">G</span>
+                        </div>
+                        Group
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setOpen(false)}
+                className="text-xs h-8"
+              >
+                Cancel
+              </Button>
+              <Button 
+                size="sm"
+                className="text-xs h-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white hover:opacity-90"
+              >
+                Create Community
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -111,12 +179,67 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
       
       <div className="space-y-6">
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:items-center justify-between">
-          <CommunityDropdown
-            communities={communities}
-            selectedCommunity={selectedCommunity}
-            onCommunityChange={handleCommunityChange}
-            isLoading={isLoading}
-          />
+          <div className="w-full">
+            <Select
+              value={selectedCommunity?.id}
+              onValueChange={handleCommunityChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-full bg-white/50 border-gray-200 hover:bg-white/80 transition-colors">
+                <SelectValue placeholder="Select a community" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Channels Section */}
+                {communities?.some(c => !c.is_group) && (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                      Your Channels
+                    </div>
+                    {communities.filter(c => !c.is_group).map((community) => (
+                      <SelectItem 
+                        key={community.id} 
+                        value={community.id}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <span className="text-blue-600 text-xs">@</span>
+                        </div>
+                        {community.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* Groups Section */}
+                {communities?.some(c => c.is_group) && (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground mt-2">
+                      Your Groups
+                    </div>
+                    {communities.filter(c => c.is_group).map((community) => (
+                      <SelectItem 
+                        key={community.id} 
+                        value={community.id}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                          <span className="text-gray-600 text-xs">G</span>
+                        </div>
+                        {community.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+
+                {/* Empty State */}
+                {(!communities || communities.length === 0) && (
+                  <div className="px-2 py-4 text-sm text-center text-muted-foreground">
+                    No communities found
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="mt-2 sm:mt-0 sm:flex-shrink-0">
             <MiniAppLinkButton 
@@ -150,34 +273,5 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
         )}
       </div>
     </div>
-  );
-};
-
-interface CommunityDropdownProps {
-  communities: Community[] | undefined;
-  selectedCommunity: Community | null;
-  onCommunityChange: (communityId: string) => void;
-  isLoading: boolean;
-}
-
-const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
-  communities,
-  selectedCommunity,
-  onCommunityChange,
-  isLoading,
-}) => {
-  return (
-    <Select onValueChange={onCommunityChange} disabled={isLoading}>
-      <SelectTrigger className="w-[320px]">
-        <SelectValue placeholder="Select a community" />
-      </SelectTrigger>
-      <SelectContent>
-        {communities?.map((community) => (
-          <SelectItem key={community.id} value={community.id}>
-            {community.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 };

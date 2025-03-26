@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
@@ -14,6 +13,7 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -92,121 +92,159 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
       if (!open) resetForm();
       onOpenChange(open);
     }}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Community Group</DialogTitle>
-          <DialogDescription>
-            Create a group of communities that can be managed together.
+      <DialogContent className="sm:max-w-[400px] p-3 gap-3">
+        <DialogHeader className="space-y-2 pb-3">
+          <DialogTitle className="text-base font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent inline-flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-600 text-xs">G</span>
+            </div>
+            Create New Group
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground leading-normal">
+            Create a group of communities that can be managed together
           </DialogDescription>
         </DialogHeader>
-        
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Group Name</Label>
-            <Input 
-              id="name" 
-              value={name} 
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="name" className="text-xs font-medium">
+              Group Name
+            </Label>
+            <Input
+              id="name"
+              value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter group name"
+              className="h-8 text-sm"
               required
             />
           </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              value={description} 
+
+          <div className="space-y-1">
+            <Label htmlFor="description" className="text-xs font-medium">
+              Description
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe this group of communities"
-              rows={3}
+              placeholder="Enter group description"
+              className="text-sm resize-none h-16"
             />
           </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="customLink">Custom Link (Optional)</Label>
-            <Input 
-              id="customLink" 
-              value={customLink} 
+
+          <div className="space-y-1">
+            <Label htmlFor="customLink" className="text-xs font-medium">
+              Custom Link
+            </Label>
+            <Input
+              id="customLink"
+              value={customLink}
               onChange={(e) => {
                 const value = e.target.value;
                 if (isValidCustomLink(value)) {
                   setCustomLink(value);
                 }
               }}
-              placeholder="my-community-group"
+              placeholder="my-group-link"
+              className="h-8 text-sm"
             />
-            <p className="text-xs text-muted-foreground">
-              Only letters, numbers, hyphens, and underscores allowed
+            <p className="text-[10px] text-muted-foreground">
+              Only letters, numbers, underscores and hyphens
             </p>
           </div>
-          
-          <div className="space-y-3">
-            <Label>Select Communities</Label>
-            {isCommunitiesLoading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : communities && communities.length > 0 ? (
-              <div className="max-h-60 overflow-y-auto border rounded-md p-3 space-y-2">
-                {communities.map(community => (
-                  <div key={community.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`community-${community.id}`} 
+
+          <div className="space-y-1">
+            <Label className="text-xs font-medium">Select Communities</Label>
+            <div className="border rounded-md p-2 space-y-1.5 max-h-35 overflow-y-auto">
+              {isCommunitiesLoading ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                </div>
+              ) : communities?.filter(c => !c.is_group).length > 0 ? (
+                communities.filter(c => !c.is_group).map((community) => (
+                  <div 
+                    key={community.id} 
+                    className={`group flex items-center gap-2 p-2 rounded-md transition-all ${
+                      selectedCommunities.includes(community.id) ? 'bg-blue-50/50 ring-1 ring-blue-200' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <Checkbox
+                      id={community.id}
                       checked={selectedCommunities.includes(community.id)}
                       onCheckedChange={() => handleCommunityToggle(community.id)}
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 cursor-pointer"
                     />
-                    <Label 
-                      htmlFor={`community-${community.id}`}
-                      className="cursor-pointer flex-1 text-sm font-normal"
+                    <Label
+                      htmlFor={community.id}
+                      className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                     >
-                      {community.name}
+                      <Avatar className="h-5 w-5 rounded-full ring-1 ring-border">
+                        <AvatarImage 
+                          src={community.profile_photo_url || `/images/default-community-avatar.png`}
+                          alt={community.name}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="text-[10px] bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 font-medium">
+                          {community.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-medium truncate">{community.name}</span>
+                        {community.telegram_username && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            @{community.telegram_username}
+                          </span>
+                        )}
+                      </div>
                     </Label>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-2">No communities available</p>
-            )}
-            {communities && communities.length > 0 && selectedCommunities.length === 0 && (
-              <p className="text-xs text-amber-600">Please select at least one community</p>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  No communities available
+                </p>
+              )}
+            </div>
+            {communities?.filter(c => !c.is_group).length > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Selected: {selectedCommunities.length} communities
+              </p>
             )}
           </div>
-          
-          <DialogFooter className="pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => {
-                resetForm();
-                onOpenChange(false);
-              }}
+
+          {error && (
+            <Alert variant="destructive" className="p-2">
+              <AlertCircle className="h-3 w-3" />
+              <AlertDescription className="text-xs ml-2">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <DialogFooter className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-xs h-7"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={
-                createGroupMutation.isPending || 
-                !name || 
-                selectedCommunities.length === 0 || 
-                !communities?.length
-              }
+            <Button
+              type="submit"
+              size="sm"
+              disabled={createGroupMutation.isPending}
+              className="text-xs h-7 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white hover:opacity-90"
             >
               {createGroupMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                   Creating...
                 </>
               ) : (
-                "Create Group"
+                'Create Group'
               )}
             </Button>
           </DialogFooter>

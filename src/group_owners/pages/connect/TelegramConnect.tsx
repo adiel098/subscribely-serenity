@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,8 +22,19 @@ const TelegramConnect = () => {
   } = useTelegramConnect();
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 py-4 md:py-12 px-3 md:px-6 lg:px-8">
+      <div className="w-full max-w-4xl mx-auto relative">
+        {/* Back Button - Positioned at the top */}
+        <Button 
+          onClick={goBack} 
+          variant="ghost" 
+          size="sm"
+          className="absolute -top-2 left-0 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50/80 h-8 md:h-9 text-xs md:text-sm flex items-center gap-1 md:gap-1.5 px-2 md:px-3 backdrop-blur-sm"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          Back
+        </Button>
+
         <TelegramConnectHeader />
 
         <motion.div
@@ -32,17 +42,8 @@ const TelegramConnect = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Button 
-            onClick={goBack} 
-            variant="outline" 
-            className="mb-4 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 flex items-center gap-2 transition-all"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Dashboard</span>
-          </Button>
-          
-          <Card className="p-8 bg-white/90 backdrop-blur-sm shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
-            <div className="space-y-10">
+          <Card className="p-4 md:p-8 bg-white/90 backdrop-blur-sm shadow-md md:shadow-xl border border-indigo-100 rounded-xl overflow-hidden">
+            <div className="space-y-6 md:space-y-10">
               <TelegramStepOne />
               <TelegramStepTwo 
                 verificationCode={verificationCode}

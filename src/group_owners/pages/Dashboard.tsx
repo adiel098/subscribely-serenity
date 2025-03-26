@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { DashboardStats } from "@/group_owners/components/dashboard/DashboardStats";
@@ -80,19 +79,22 @@ const Dashboard = () => {
   return (
     <div className={`space-y-4 pb-6 ${isMobile ? 'px-3 py-1' : 'px-[37px] py-[28px]'}`}>
       <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-4">
-        <div>
-          <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
-            Hello 👋 {ownerFirstName}
-            {isGroupSelected && <span className="inline-flex items-center text-xs bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md ml-1.5">
-                <FolderKanban className="h-3 w-3 mr-0.5" />
-                Group View
-              </span>}
-          </h1>
-          <p className={`text-gray-600 mt-0.5 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-            {isGroupSelected ? "Overview of your community group's performance" : "Overview of your community's performance"}
-          </p>
+        <div className={`${isMobile ? 'flex items-center justify-between w-full' : ''}`}>
+          <div>
+            <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
+              Hello 👋 {ownerFirstName}
+              {isGroupSelected && <span className="inline-flex items-center text-xs bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md ml-1.5">
+                  <FolderKanban className="h-3 w-3 mr-0.5" />
+                  Group View
+                </span>}
+            </h1>
+            <p className={`text-gray-600 mt-0.5 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+              {isGroupSelected ? "Overview of your community group's performance" : "Overview of your community's performance"}
+            </p>
+          </div>
+          {isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
         </div>
-        <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+        {!isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-6 gap-3">

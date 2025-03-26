@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -16,7 +15,7 @@ export function getProxiedImageUrl(photoUrl: string | null): string | null {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     
     if (!supabaseUrl) {
-      console.error('VITE_SUPABASE_URL is not defined in environment variables');
+      console.warn('VITE_SUPABASE_URL is not defined in environment variables, using original URL');
       return photoUrl; // Return original URL as fallback
     }
     
@@ -30,11 +29,11 @@ export function getProxiedImageUrl(photoUrl: string | null): string | null {
       
       return functionUrl;
     } catch (error) {
-      console.error('Error creating proxied image URL:', error);
-      return photoUrl; // Return original URL as fallback
+      console.error('Error creating proxied URL:', error);
+      return photoUrl; // Return original URL if there's an error
     }
   }
   
-  // Return the original URL if it doesn't need proxying
+  // If not a Telegram URL, return as is
   return photoUrl;
 }

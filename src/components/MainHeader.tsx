@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,10 +12,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { CommunitySelector } from '@/group_owners/components/community-selector/CommunitySelector';
+import { useCommunityContext } from '@/contexts/CommunityContext';
 
 export function MainHeader() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
   
   return (
     <header className="fixed top-0 left-0 right-0 h-16 z-50 bg-white/90 shadow-sm backdrop-blur-sm flex items-center justify-between px-6">
@@ -32,6 +34,11 @@ export function MainHeader() {
             Membify
           </span>
         </Link>
+        {user && (
+          <div className="ml-8 w-[200px]">
+            <CommunitySelector onCommunityChange={(community) => community && setSelectedCommunityId(community.id)} />
+          </div>
+        )}
         <nav className="ml-8 hidden md:flex space-x-1">
           {[
             { name: "Features", path: "/features", icon: Zap },

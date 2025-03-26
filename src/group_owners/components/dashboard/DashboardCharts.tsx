@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +30,7 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
         </div>
         
         <TabsContent value="members" className={`${isMobile ? 'h-[200px]' : 'h-[300px]'} mt-0`}>
+          <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-center text-gray-500 mb-1`}>Members growth over {timeRange}</p>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={memberGrowthData}
@@ -43,10 +43,10 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
               <Line type="monotone" dataKey="members" stroke="#8884d8" activeDot={{ r: isMobile ? 5 : 8 }} strokeWidth={isMobile ? 1.5 : 2} />
             </LineChart>
           </ResponsiveContainer>
-          <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-center text-gray-500 mt-1`}>Members growth over {timeRange}</p>
         </TabsContent>
         
         <TabsContent value="revenue" className={`${isMobile ? 'h-[200px]' : 'h-[300px]'} mt-0`}>
+          <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-center text-gray-500 mb-1`}>Revenue over {timeRange}</p>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={revenueData}
@@ -59,7 +59,6 @@ export const DashboardCharts: React.FC<DashboardChartsProps> = ({
               <Line type="monotone" dataKey="revenue" stroke="#82ca9d" activeDot={{ r: isMobile ? 5 : 8 }} strokeWidth={isMobile ? 1.5 : 2} />
             </LineChart>
           </ResponsiveContainer>
-          <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-center text-gray-500 mt-1`}>Revenue over {timeRange}</p>
         </TabsContent>
       </Tabs>
     </Card>

@@ -17,11 +17,9 @@ import { useCommunityContext } from '@/contexts/CommunityContext';
 import { HeaderActions } from './community-selector/HeaderActions';
 import { toast } from 'sonner';
 import { getBotUsername } from '@/telegram-mini-app/utils/telegram/botUsernameUtil';
-import { SuccessBanner } from './community-selector/banners/SuccessBanner';
-import { GroupSuccessBanner } from './community-groups/group-success/GroupSuccessBanner';
+import { CommunityRequirementsBanner } from './community-selector/CommunityRequirementsBanner';
 import { CreateGroupDialog } from './community-groups/CreateGroupDialog';
 import { PlatformSubscriptionBanner } from './community-selector/PlatformSubscriptionBanner';
-import { CommunityRequirementsBanner } from './community-selector/CommunityRequirementsBanner';
 
 export function GroupOwnerHeader() {
   const {
@@ -151,25 +149,9 @@ export function GroupOwnerHeader() {
             
             <PlatformSubscriptionBanner />
             
-            {!isGroupSelected && selectedCommunityId && (
-              <CommunityRequirementsBanner />
-            )}
-            
-            {/* Success banner showing community/group is ready with link */}
-            {isGroupSelected && selectedGroup ? (
-              <GroupSuccessBanner 
-                groupId={selectedGroup.id}
-                customLink={selectedGroup.custom_link || null}
-                onOpenEditDialog={handleEditLink}
-              />
-            ) : selectedCommunity && (
-              <SuccessBanner
-                communityId={selectedCommunity.id}
-                customLink={selectedCommunity.custom_link || null}
-                onOpenEditDialog={handleEditLink}
-                entityType="community"
-              />
-            )}
+            {/* We only need the CommunityRequirementsBanner here - it handles showing both the requirements banner
+                and the success banner based on community/group configuration */}
+            <CommunityRequirementsBanner />
             
             <HeaderActions isMobile={isMobile} />
 
@@ -226,25 +208,10 @@ export function GroupOwnerHeader() {
           <div className="w-full mt-2">
             <PlatformSubscriptionBanner />
             
-            {/* Success banner for mobile */}
-            {isGroupSelected && selectedGroup ? (
-              <div className="mt-2">
-                <GroupSuccessBanner 
-                  groupId={selectedGroup.id}
-                  customLink={selectedGroup.custom_link || null}
-                  onOpenEditDialog={handleEditLink}
-                />
-              </div>
-            ) : selectedCommunity && (
-              <div className="mt-2">
-                <SuccessBanner
-                  communityId={selectedCommunity.id}
-                  customLink={selectedCommunity.custom_link || null}
-                  onOpenEditDialog={handleEditLink}
-                  entityType="community"
-                />
-              </div>
-            )}
+            {/* CommunityRequirementsBanner for mobile - it will handle both requirements and success banners */}
+            <div className="mt-2">
+              <CommunityRequirementsBanner />
+            </div>
           </div>
         </div>
       )}

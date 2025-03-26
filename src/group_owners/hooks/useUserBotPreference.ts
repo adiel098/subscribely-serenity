@@ -16,34 +16,57 @@ export const useUserBotPreference = (): UserBotPreference => {
   const { data, isLoading } = useQuery({
     queryKey: ["user-bot-preference", user?.id],
     queryFn: async (): Promise<{
-      is_custom_bot: boolean;
+      use_custom_bot: boolean;
       custom_bot_token?: string | null;
     } | null> => {
       if (!user) return null;
       
-      // Fetch user bot preference from database
-      const { data, error } = await supabase
-        .from("user_settings")
-        .select("is_custom_bot, custom_bot_token")
-        .eq("user_id", user.id)
+      // First try to get from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("use_custom_bot, custom_bot_token")
+        .eq("id", user.id)
         .single();
       
-      if (error) {
-        console.error("Error fetching user bot preference:", error);
-        return {
-          is_custom_bot: false,
-          custom_bot_token: null
-        };
+      if (!profileError && profileData) {
+        console.log("Found bot preference in profiles:", profileData);
+        return profileData;
       }
       
-      return data;
+      // If not in profiles, check if user has any communities with bot settings
+      const { data: communityData, error: communityError } = await supabase
+        .from("communities")
+        .select("id")
+        .eq("owner_id", user.id)
+        .limit(1)
+        .single();
+      
+      if (!communityError && communityData) {
+        const { data: botSettingsData, error: botSettingsError } = await supabase
+          .from("telegram_bot_settings")
+          .select("use_custom_bot, custom_bot_token")
+          .eq("community_id", communityData.id)
+          .single();
+          
+        if (!botSettingsError && botSettingsData) {
+          console.log("Found bot preference in telegram_bot_settings:", botSettingsData);
+          return botSettingsData;
+        }
+      }
+      
+      console.log("No bot preference found, using defaults");
+      // Default to official bot if no preference is found
+      return {
+        use_custom_bot: false,
+        custom_bot_token: null
+      };
     },
     enabled: !!user,
   });
   
   // Default to official bot if no preference is set
   return {
-    isCustomBot: data?.is_custom_bot || false,
+    isCustomBot: data?.use_custom_bot || false,
     hasCustomBotToken: !!data?.custom_bot_token,
     custom_bot_token: data?.custom_bot_token,
     isLoadingBotPreference: isLoading

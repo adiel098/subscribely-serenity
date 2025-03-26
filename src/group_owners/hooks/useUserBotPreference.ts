@@ -6,12 +6,14 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 interface UserBotPreference {
   isCustomBot: boolean;
   hasCustomBotToken: boolean;
+  custom_bot_token?: string | null;
+  isLoadingBotPreference: boolean;
 }
 
 export const useUserBotPreference = (): UserBotPreference => {
   const { user } = useAuth();
   
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["user-bot-preference", user?.id],
     queryFn: async (): Promise<{
       is_custom_bot: boolean;
@@ -42,6 +44,8 @@ export const useUserBotPreference = (): UserBotPreference => {
   // Default to official bot if no preference is set
   return {
     isCustomBot: data?.is_custom_bot || false,
-    hasCustomBotToken: !!data?.custom_bot_token
+    hasCustomBotToken: !!data?.custom_bot_token,
+    custom_bot_token: data?.custom_bot_token,
+    isLoadingBotPreference: isLoading
   };
 };

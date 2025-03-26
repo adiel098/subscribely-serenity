@@ -23,7 +23,7 @@ interface TelegramChat {
 const CustomBotNewCommunity = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { botPreference, isLoadingBotPreference } = useUserBotPreference();
+  const { isCustomBot, hasCustomBotToken, custom_bot_token, isLoadingBotPreference } = useUserBotPreference();
 
   const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
@@ -31,7 +31,7 @@ const CustomBotNewCommunity = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // בדיקה אם יש טוקן בוט קאסטום
-  const customBotToken = botPreference?.custom_bot_token;
+  const customBotToken = custom_bot_token;
 
   const handleLoadGroups = async () => {
     if (!customBotToken) {

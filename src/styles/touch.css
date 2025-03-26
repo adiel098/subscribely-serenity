@@ -5,4 +5,21 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+  
+  /* Prevent zoom gestures */
+  body {
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+  }
+  
+  /* Disable pinch zoom */
+  .no-zoom {
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+  }
+  
+  /* Fix for iOS double-tap zoom */
+  * {
+    touch-action: manipulation;
+  }
 }

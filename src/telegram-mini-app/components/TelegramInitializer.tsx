@@ -81,6 +81,7 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
         
         // Add classes to body for proper telegram mini app styling
         document.body.classList.add('telegram-mini-app');
+        document.body.classList.add('no-zoom');
         
         // Platform-specific fixes
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -97,9 +98,46 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
           (container as HTMLElement).style.maxWidth = '100%';
           (container as HTMLElement).style.margin = '0 auto';
         });
+        
+        // Prevent zoom gestures
+        preventZoom();
       } catch (e) {
         console.error('💥 Error applying fullscreen:', e);
       }
+    };
+    
+    // Prevent zoom gestures function
+    const preventZoom = () => {
+      // Prevent pinch zoom
+      document.addEventListener('touchmove', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+      
+      // Prevent double-tap zoom
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+      
+      // Add meta viewport programmatically if not present
+      let viewportMeta = document.querySelector('meta[name="viewport"]');
+      if (!viewportMeta) {
+        viewportMeta = document.createElement('meta');
+        viewportMeta.name = 'viewport';
+        document.getElementsByTagName('head')[0].appendChild(viewportMeta);
+      }
+      
+      // Set viewport meta attributes
+      viewportMeta.setAttribute('content', 
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      
+      console.log('🔒 Zoom prevention applied');
     };
     
     // Initialize immediately

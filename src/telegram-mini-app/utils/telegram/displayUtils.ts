@@ -41,6 +41,7 @@ export const ensureFullScreen = (): void => {
       
       // Add class for iOS scrolling
       document.body.classList.add('ios-scroll');
+      document.body.classList.add('no-zoom');
       
       // Remove any padding or margin on container elements
       const containers = document.querySelectorAll('.container');
@@ -61,6 +62,9 @@ export const ensureFullScreen = (): void => {
         meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height';
         document.head.appendChild(meta);
       }
+      
+      // Prevent zoom for iOS
+      preventIOSZoom();
     }
     
     if (isAndroid) {
@@ -78,6 +82,7 @@ export const ensureFullScreen = (): void => {
       document.body.style.overflow = 'auto';
       document.body.style.margin = '0';
       document.body.style.padding = '0';
+      document.body.classList.add('no-zoom');
       
       // Add appropriate padding to container elements
       const containers = document.querySelectorAll('.container');
@@ -97,6 +102,7 @@ export const ensureFullScreen = (): void => {
       appContainer.style.position = 'relative';
       appContainer.style.margin = '0 auto';
       appContainer.style.maxWidth = '100%';
+      appContainer.classList.add('no-zoom');
     }
     
     // Add the telegram-mini-app class to body for specific styling
@@ -119,8 +125,60 @@ export const ensureFullScreen = (): void => {
       (container as HTMLElement).style.paddingRight = '2px';
     });
     
+    // Global zoom prevention
+    preventGlobalZoom();
+    
     console.log('✅ Full screen applied successfully');
   } catch (error) {
     console.error('❌ Error applying full screen:', error);
+  }
+};
+
+/**
+ * Prevent zooming specifically for iOS devices
+ */
+const preventIOSZoom = (): void => {
+  try {
+    // Prevent double tap zoom on iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+    
+    console.log('🍏 iOS zoom prevention applied');
+  } catch (error) {
+    console.error('❌ Error applying iOS zoom prevention:', error);
+  }
+};
+
+/**
+ * Apply global zoom prevention techniques
+ */
+const preventGlobalZoom = (): void => {
+  try {
+    // Prevent pinch zoom
+    document.addEventListener('touchmove', function(event) {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevent mousewheel zoom with ctrl key
+    document.addEventListener('wheel', function(event) {
+      if (event.ctrlKey) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Add css class for zoom prevention
+    document.documentElement.classList.add('no-zoom');
+    
+    console.log('🔒 Global zoom prevention applied');
+  } catch (error) {
+    console.error('❌ Error applying global zoom prevention:', error);
   }
 };

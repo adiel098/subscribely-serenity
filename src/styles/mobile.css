@@ -2,6 +2,7 @@
 @layer components {
   /* Mobile optimizations */
   @media (max-width: 640px) {
+    /* Existing styles */
     .community-dropdown-text {
       max-width: 140px;
     }
@@ -116,5 +117,40 @@
       top: 120px !important;
       left: 0 !important;
     }
+
+    /* New styles to prevent zoom */
+    /* Apply no-zoom class to all relevant elements */
+    body, html, #root, .telegram-mini-app-container {
+      touch-action: manipulation;
+      -ms-touch-action: manipulation;
+    }
+
+    /* iOS specific fixes for preventing zoom */
+    .ios-scroll {
+      touch-action: pan-x pan-y;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Ensure all interactive elements have proper sizing */
+    input, button, select, textarea {
+      font-size: 16px !important; /* iOS won't zoom on inputs if font size is at least 16px */
+      touch-action: manipulation;
+    }
+    
+    /* Remove focus zoom effects */
+    *:focus {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+  
+  /* Prevent zooming class for all devices */
+  .no-zoom {
+    touch-action: pan-x pan-y;
+    -ms-touch-action: pan-x pan-y;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 }

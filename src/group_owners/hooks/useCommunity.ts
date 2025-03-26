@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Community } from "./useCommunities";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
 
 export const useCommunity = (communityId?: string) => {

@@ -1,4 +1,4 @@
-
+import { Plan } from "../AssignPlanDialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plan } from "../AssignPlanDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PlanSelectorProps {
   plans: Plan[];
@@ -15,25 +15,27 @@ interface PlanSelectorProps {
   onPlanChange: (planId: string) => void;
 }
 
-export const PlanSelector = ({ 
-  plans, 
-  selectedPlanId, 
-  onPlanChange 
-}: PlanSelectorProps) => {
+export const PlanSelector = ({ plans, selectedPlanId, onPlanChange }: PlanSelectorProps) => {
+  const isMobile = useIsMobile();
+  const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
+  
   return (
-    <div className="space-y-3">
-      <Label htmlFor="plan-select">Select Subscription Plan</Label>
+    <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
+      <Label className={isMobile ? 'text-xs' : ''}>Select Plan</Label>
       <Select value={selectedPlanId} onValueChange={onPlanChange}>
-        <SelectTrigger id="plan-select" className="w-full">
-          <SelectValue placeholder="Select a plan" />
+        <SelectTrigger className={isMobile ? 'h-8 text-xs' : ''}>
+          <SelectValue placeholder="Select a plan">
+            {selectedPlan ? `${selectedPlan.name} - $${selectedPlan.price}/${selectedPlan.interval}` : 'Select a plan'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {plans.map((plan) => (
-            <SelectItem key={plan.id} value={plan.id}>
-              <div className="flex justify-between items-center w-full">
-                <span>{plan.name}</span>
-                <span className="text-gray-500">${plan.price} / {plan.interval}</span>
-              </div>
+            <SelectItem 
+              key={plan.id} 
+              value={plan.id}
+              className={isMobile ? 'text-xs h-8' : ''}
+            >
+              {plan.name} - ${plan.price}/{plan.interval}
             </SelectItem>
           ))}
         </SelectContent>

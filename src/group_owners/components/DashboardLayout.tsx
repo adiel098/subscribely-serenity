@@ -1,4 +1,3 @@
-
 import { AppSidebar } from "@/group_owners/components/AppSidebar";
 import { GroupOwnerHeader } from "@/group_owners/components/GroupOwnerHeader";
 import { motion } from "framer-motion";
@@ -13,9 +12,9 @@ export const DashboardLayout = ({
   const isMobile = useIsMobile();
 
   return (
-    <div className="h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden">
+    <div className="h-screen w-full bg-white overflow-hidden">
       <GroupOwnerHeader />
-      <div className="flex w-full h-[calc(100vh-64px)]">
+      <div className="flex w-full h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] pt-14 md:pt-16">
         {!isMobile ? (
           <AppSidebar />
         ) : (
@@ -35,9 +34,9 @@ export const DashboardLayout = ({
               duration: 0.4,
               delay: 0.2
             }} 
-            className={`p-1 sm:p-2 ${isMobile ? 'mt-[120px] max-w-[100vw]' : 'mt-[80px] ml-[240px] w-[calc(100vw-260px)]'}`}
+            className={`w-full ${!isMobile && 'pl-[240px] pr-6'}`}
           >
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden w-full">
+            <div className="bg-white w-full p-3 md:p-4">
               {children}
             </div>
           </motion.div>

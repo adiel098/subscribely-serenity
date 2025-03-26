@@ -1,4 +1,3 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
 import { BotSettingsLayout } from "@/group_owners/components/bot-settings/BotSettingsLayout";
@@ -35,7 +34,7 @@ const BotSettings = () => {
   }, [settings]);
 
   return (
-    <div className={`${isMobile ? 'p-3' : 'p-6'} w-full`}>
+    <div className="w-full">
       <BotSettingsLayout isLoading={isLoading}>
         <SettingsContent 
           settings={settings} 

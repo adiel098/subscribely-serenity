@@ -1,4 +1,3 @@
-
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -43,6 +42,7 @@ export const HeaderActions = ({ onNewCommunityClick, isMobile = false }: HeaderA
         className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow hover:shadow-md transition-all duration-300 gap-1.5 ${isMobile ? 'px-2 text-xs py-1 h-7' : 'h-8 text-xs px-3'}`}
         onClick={handleNewCommunityClick}
         size="sm"
+        data-testid="create-community-button"
       >
         <PlusCircle className={`${isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
         {isMobile ? 'New' : 'New Community'}

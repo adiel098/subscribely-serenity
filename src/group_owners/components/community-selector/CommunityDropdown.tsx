@@ -1,4 +1,3 @@
-
 import { ChevronDown, Users } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,18 +56,18 @@ export const CommunityDropdown = ({
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
-          className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 h-8 ${isMobile ? 'w-full text-xs' : 'min-w-[200px] max-w-[260px] text-xs'}`}
+          className={`justify-between border-indigo-100 hover:border-indigo-300 shadow-sm bg-white hover:bg-gray-50 ${isMobile ? 'w-full h-6 text-[11px]' : 'min-w-[200px] max-w-[260px] h-8 text-xs'}`}
           size="sm"
         >
-          <div className="flex items-center gap-2">
-            <Avatar className="h-5 w-5 border border-indigo-100">
+          <div className="flex items-center gap-1">
+            <Avatar className={`${isMobile ? 'h-3.5 w-3.5' : 'h-5 w-5'} border border-indigo-100`}>
               {selectedPhotoUrl ? (
                 <AvatarImage 
                   src={selectedPhotoUrl} 
                   alt={displayName}
                 />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px]">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[8px]">
                   {displayName?.charAt(0)?.toUpperCase() || '?'}
                 </AvatarFallback>
               )}
@@ -78,12 +77,12 @@ export const CommunityDropdown = ({
                 {displayName}
               </span>
             ) : (
-              <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700 max-w-[120px]">
-                {displayName.length > 15 ? `${displayName.substring(0, 15)}...` : displayName}
+              <span className="truncate community-dropdown-text mr-1 font-medium text-blue-700 max-w-[60px] text-[8px]">
+                {displayName.length > 8 ? `${displayName.substring(0, 8)}...` : displayName}
               </span>
             )}
           </div>
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+          <ChevronDown className={`${isMobile ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5'} opacity-50`} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-60 bg-white/95 backdrop-blur-sm border-blue-100 shadow-xl">

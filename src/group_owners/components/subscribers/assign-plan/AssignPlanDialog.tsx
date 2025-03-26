@@ -16,6 +16,7 @@ import { PlanSelector } from "./PlanSelector";
 import { DurationSelector } from "./DurationSelector";
 import { SubscriptionEndDate } from "./SubscriptionEndDate";
 import { Plan } from "../AssignPlanDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AssignPlanDialogProps {
   user: Subscriber | null;
@@ -32,6 +33,7 @@ export const AssignPlanDialog = ({
   onOpenChange,
   onAssign
 }: AssignPlanDialogProps) => {
+  const isMobile = useIsMobile();
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
   const [durationType, setDurationType] = useState<"1m" | "3m" | "6m" | "1y" | "custom">("1m");
   const [endDate, setEndDate] = useState<Date>(addMonths(new Date(), 1));
@@ -89,59 +91,62 @@ export const AssignPlanDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[475px]">
-        <DialogHeader>
-          <DialogTitle>Assign Subscription Plan</DialogTitle>
-          <DialogDescription>
+      <DialogContent className={`fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] ${isMobile ? 'w-[95%] max-w-[350px] p-4' : 'sm:max-w-[475px]'}`}>
+        <DialogHeader className={isMobile ? 'space-y-2 pb-2' : ''}>
+          <DialogTitle className={isMobile ? 'text-lg' : ''}>Assign Subscription Plan</DialogTitle>
+          <DialogDescription className={isMobile ? 'text-xs' : ''}>
             Assign a subscription plan to this user to grant them access to your content.
           </DialogDescription>
         </DialogHeader>
         
         {user && (
-          <div className="space-y-5 py-2">
+          <div className={`${isMobile ? 'space-y-3 py-1' : 'space-y-5 py-2'}`}>
             <SubscriberInfo user={user} />
             
-            <PlanSelector 
-              plans={plans} 
-              selectedPlanId={selectedPlanId} 
-              onPlanChange={handlePlanChange} 
-            />
-            
-            <DurationSelector 
-              durationType={durationType} 
-              onDurationChange={handleDurationChange} 
-              onCustomDateChange={handleCustomDateChange} 
-              endDate={endDate} 
-            />
-            
-            <SubscriptionEndDate 
-              endDate={endDate} 
-              selectedPlan={selectedPlan}
-            />
+            <div className={isMobile ? '[&_*]:!duration-0 [&_*]:!transition-none' : ''}>
+              <PlanSelector 
+                plans={plans} 
+                selectedPlanId={selectedPlanId} 
+                onPlanChange={handlePlanChange} 
+              />
+              
+              <DurationSelector 
+                durationType={durationType} 
+                onDurationChange={handleDurationChange} 
+                onCustomDateChange={handleCustomDateChange} 
+                endDate={endDate} 
+              />
+              
+              <SubscriptionEndDate 
+                endDate={endDate} 
+                selectedPlan={selectedPlan}
+              />
+            </div>
           </div>
         )}
         
-        <DialogFooter className="flex items-center justify-between">
+        <DialogFooter className={`flex items-center ${isMobile ? 'justify-end gap-2 mt-3' : 'justify-between'}`}>
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
+            className={isMobile ? 'h-8 text-xs px-3' : ''}
           >
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={!selectedPlanId || isSubmitting}
-            className="gap-2"
+            className={`gap-2 ${isMobile ? 'h-8 text-xs px-3' : ''}`}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} animate-spin`} />
                 Assigning...
               </>
             ) : (
               <>
-                <Check className="h-4 w-4" />
+                <Check className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
                 Assign Plan
               </>
             )}

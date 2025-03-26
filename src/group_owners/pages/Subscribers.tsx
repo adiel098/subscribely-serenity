@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { SubscribersTable } from "@/group_owners/components/subscribers/SubscribersTable";
@@ -15,6 +14,7 @@ import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BadgeDollarSign } from "lucide-react";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -89,8 +89,10 @@ const Subscribers = () => {
   }
 
   return (
-    <div className="container px-0 py-4 max-w-5xl mx-4 space-y-6 pb-8">
-      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
+    <div className="w-full">
+      <div className="space-y-6">
+        
+
         <SubscribersHeaderSection 
           subscribers={subscribers} 
           isGroupSelected={isGroupSelected} 
@@ -142,15 +144,15 @@ const Subscribers = () => {
           isUnblocking={isUnblocking}
           onSuccess={refetch}
         />
-      </div>
 
-      <AssignPlanDialog
-        user={userToAssignPlan}
-        plans={uniquePlans}
-        open={assignPlanDialogOpen}
-        onOpenChange={setAssignPlanDialogOpen}
-        onAssign={handleAssignPlanSubmit}
-      />
+        <AssignPlanDialog
+          user={userToAssignPlan}
+          plans={uniquePlans}
+          open={assignPlanDialogOpen}
+          onOpenChange={setAssignPlanDialogOpen}
+          onAssign={handleAssignPlanSubmit}
+        />
+      </div>
     </div>
   );
 };

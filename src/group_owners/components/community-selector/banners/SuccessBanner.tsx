@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, Copy, CheckCircle, Edit } from "lucide-react";
@@ -55,37 +54,7 @@ export const SuccessBanner: React.FC<SuccessBannerProps> = ({
 
   // For mobile, just show the buttons
   if (isMobile) {
-    return (
-      <div className="flex items-center gap-2">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={copyMiniAppLink}
-          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors ${
-            copySuccess 
-              ? "bg-emerald-200 text-emerald-800" 
-              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-          }`}
-          title="Copy link"
-        >
-          {copySuccess ? (
-            <CheckCircle className="h-3 w-3" />
-          ) : (
-            <Copy className="h-3 w-3" />
-          )}
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onOpenEditDialog}
-          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-          title="Edit link"
-        >
-          <Edit className="h-3 w-3" />
-        </motion.button>
-      </div>
-    );
+    return null; // Don't show anything in mobile since we moved the buttons to the header
   }
 
   // For desktop, show the full banner

@@ -1,5 +1,5 @@
-
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   MoreHorizontal, 
   User, 
@@ -50,6 +50,7 @@ export const SubscribersTable = ({
   onUnblock,
   onAssignPlan
 }: SubscribersTableProps) => {
+  const isMobile = useIsMobile();
   const getStatusBadge = (subscriber: Subscriber) => {
     if (!subscriber.is_active) {
       return (
@@ -85,7 +86,7 @@ export const SubscribersTable = ({
   return (
     <div className="rounded-lg border shadow-sm overflow-hidden bg-white">
       <div className="overflow-auto max-h-[calc(100vh-335px)]">
-        <Table className="w-full">
+        <Table className={`w-full ${!isMobile && 'pl-[240px] pr-6'}`}>
           <TableHeader>
             <TableRow className="bg-gray-50 border-b">
               <TableHead className="font-semibold text-xs text-gray-700">User</TableHead>

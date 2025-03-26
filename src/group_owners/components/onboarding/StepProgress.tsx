@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Check, Rocket, Users, Bot, Shield, Zap } from "lucide-react";
@@ -54,6 +53,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({ currentStep }) => {
           return (
             <React.Fragment key={step}>
               <motion.div 
+                data-lov-id={`step-${step}`}
                 className="flex flex-col items-center"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}

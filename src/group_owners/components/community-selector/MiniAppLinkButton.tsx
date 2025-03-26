@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Sparkles, Edit2 } from "lucide-react";
@@ -91,7 +90,7 @@ export const MiniAppLinkButton = ({ onClick, community }: MiniAppLinkButtonProps
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex-1"
+            className="flex-1 hidden sm:block"
           >
             <Button 
               onClick={onClick} 

@@ -1,8 +1,6 @@
-
-import { CalendarClock } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Plan } from "../AssignPlanDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubscriptionEndDateProps {
   endDate: Date;
@@ -10,20 +8,17 @@ interface SubscriptionEndDateProps {
 }
 
 export const SubscriptionEndDate = ({ endDate, selectedPlan }: SubscriptionEndDateProps) => {
+  const isMobile = useIsMobile();
+  
+  if (!selectedPlan) return null;
+
   return (
-    <div className={cn(
-      "flex items-center gap-2 p-3 rounded-lg",
-      selectedPlan ? "bg-green-50" : "bg-gray-50"
-    )}>
-      <CalendarClock className={cn(
-        "h-5 w-5",
-        selectedPlan ? "text-green-600" : "text-gray-400"
-      )} />
-      <div className="text-sm">
-        <span className="font-medium">Subscription will end on: </span>
-        <span className={selectedPlan ? "text-green-700" : "text-gray-500"}>
-          {format(endDate, "MMMM d, yyyy")}
-        </span>
+    <div className={`rounded-lg border p-3 ${isMobile ? 'p-2 text-xs' : ''}`}>
+      <p className={`font-medium ${isMobile ? 'text-sm mb-1' : 'mb-2'}`}>Subscription Summary</p>
+      <div className="space-y-1">
+        <p>Plan: {selectedPlan.name}</p>
+        <p>End Date: {format(endDate, 'MMM d, yyyy')}</p>
+        <p>Price: ${selectedPlan.price}</p>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,9 +52,9 @@ const PaymentMethods = () => {
       </div>;
   }
   return (
-    <div className="container px-0 py-4 max-w-5xl mx-auto">
-      <div className="space-y-6 max-w-7xl px-0 py-0 my-[6px]">
-        <motion.div className="flex items-center space-x-3 ml-4" initial={{
+    <div className="w-full">
+      <div className="space-y-6">
+        <motion.div className="flex items-start" initial={{
           opacity: 0,
           y: -20
         }} animate={{
@@ -64,16 +63,18 @@ const PaymentMethods = () => {
         }} transition={{
           duration: 0.5
         }}>
-          <div className={`p-${isMobile ? '2' : '3'} bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl`}>
-            <CreditCard className={`h-${isMobile ? '6' : '8'} w-${isMobile ? '6' : '8'} text-indigo-600`} />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Payment Methods <Sparkles className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} inline text-amber-400`} />
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              Configure and manage payment gateways for all your communities and groups 💸
-            </p>
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-xl">
+              <CreditCard className={`h-${isMobile ? '6' : '8'} w-${isMobile ? '6' : '8'} text-indigo-600`} />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Payment Methods <Sparkles className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} inline text-amber-400`} />
+              </h1>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Configure and manage payment gateways for all your communities and groups 💸
+              </p>
+            </div>
           </div>
         </motion.div>
 

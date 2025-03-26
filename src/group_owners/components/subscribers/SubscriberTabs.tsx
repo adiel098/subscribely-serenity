@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SubscribersTable } from "./SubscribersTable";
@@ -29,20 +28,28 @@ export const SubscriberTabs: React.FC<SubscriberTabsProps> = ({
   const isMobile = useIsMobile();
 
   if (!isMobile) {
-    // On desktop, show the appropriate table based on the active tab
-    return activeTab === "subscribers" ? (
-      <SubscribersTable 
-        subscribers={subscribers} 
-        onEdit={onEdit}
-        onRemove={onRemove}
-        onUnblock={onUnblock || (() => {})}
-        onAssignPlan={onAssignPlan}
-      />
-    ) : (
-      <UnmanagedUsersList
-        users={unmanagedUsers}
-        onAssignPlan={onAssignPlan}
-      />
+    return (
+      <Tabs defaultValue="subscribers">
+        <TabsList className="mb-4">
+          <TabsTrigger value="subscribers">Subscribers ({subscribers.length})</TabsTrigger>
+          <TabsTrigger value="unmanaged">Unmanaged Users ({unmanagedUsers.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="subscribers">
+          <SubscribersTable 
+            subscribers={subscribers} 
+            onEdit={onEdit}
+            onRemove={onRemove}
+            onUnblock={onUnblock || (() => {})}
+            onAssignPlan={onAssignPlan}
+          />
+        </TabsContent>
+        <TabsContent value="unmanaged">
+          <UnmanagedUsersList
+            users={unmanagedUsers}
+            onAssignPlan={onAssignPlan}
+          />
+        </TabsContent>
+      </Tabs>
     );
   }
 

@@ -19,6 +19,7 @@ export interface Subscriber {
   subscription_end_date: string | null;
   first_name: string | null;
   last_name: string | null;
+  is_blocked?: boolean;  // Added missing property
   plan?: {
     id: string;
     name: string;

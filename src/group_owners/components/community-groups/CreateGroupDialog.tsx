@@ -81,9 +81,7 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
     );
   };
 
-  // Validate the custom link format
   const isValidCustomLink = (link: string) => {
-    // Allow alphanumeric characters, underscores, and hyphens only or empty string
     return /^[a-zA-Z0-9_-]*$/.test(link);
   };
 
@@ -181,7 +179,7 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
                     >
                       <Avatar className="h-5 w-5 rounded-full ring-1 ring-border">
                         <AvatarImage 
-                          src={community.profile_photo_url || `/images/default-community-avatar.png`}
+                          src={community.photo_url || community.telegram_photo_url || `/images/default-community-avatar.png`}
                           alt={community.name}
                           className="object-cover"
                         />

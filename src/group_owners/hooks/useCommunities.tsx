@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -13,6 +14,7 @@ export interface Community {
   telegram_username: string | null;
   custom_link: string | null;
   photo_url: string | null;
+  profile_photo_url?: string | null;  // Added missing property
   created_at: string;
   updated_at: string;
   is_group: boolean;

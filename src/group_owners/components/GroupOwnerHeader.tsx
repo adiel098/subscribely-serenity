@@ -173,9 +173,7 @@ export function GroupOwnerHeader() {
             </div>
             
             <div className="flex items-center gap-2">
-              <HeaderActions isMobile={isMobile} />
-              
-              {/* Add Group Button for mobile */}
+              {/* Add Group Button for mobile - Now on the left */}
               <Button 
                 variant="outline" 
                 size="icon"
@@ -184,6 +182,9 @@ export function GroupOwnerHeader() {
               >
                 <FolderPlus className="h-4 w-4 text-indigo-600" />
               </Button>
+              
+              {/* New Community Button for mobile - Now on the right */}
+              <HeaderActions isMobile={isMobile} />
             </div>
           </div>
           
@@ -202,9 +203,7 @@ export function GroupOwnerHeader() {
         {/* Move New Community and New Group buttons here */}
         {!isMobile && (
           <div className="flex items-center gap-2 mr-3">
-            <HeaderActions isMobile={isMobile} />
-
-            {/* Add Group Button */}
+            {/* Add Group Button - Now on the left */}
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -219,6 +218,9 @@ export function GroupOwnerHeader() {
                 New Group
               </Button>
             </motion.div>
+            
+            {/* New Community Button - Now on the right */}
+            <HeaderActions isMobile={isMobile} />
           </div>
         )}
         

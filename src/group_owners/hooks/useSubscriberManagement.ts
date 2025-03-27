@@ -1,17 +1,15 @@
 
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useSubscribers, Subscriber } from "./useSubscribers";
+import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useSubscribers, Subscriber } from "./useSubscribers";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSubscriberManagement = (entityId: string) => {
+  const { subscribers, isLoading, refetch } = useSubscribers(entityId);
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
-  const { subscribers, isLoading, refetch } = useSubscribers(entityId);
 
-  const updateSubscriberStatus = useCallback(async () => {
-    if (!entityId) return;
-    
+  const handleUpdateStatus = async () => {
     setIsUpdating(true);
     try {
       const { error } = await supabase.functions.invoke('telegram-webhook', {
@@ -39,113 +37,99 @@ export const useSubscriberManagement = (entityId: string) => {
     } finally {
       setIsUpdating(false);
     }
-  }, [entityId, refetch, toast]);
+  };
 
-  const handleRemoveSubscriber = useCallback(async (subscriber: Subscriber) => {
+  const handleRemoveSubscriber = async (subscriber: Subscriber) => {
+    console.log('Starting subscription removal process for subscriber:', subscriber);
+    
     try {
-      console.log('Removing subscriber:', subscriber.telegram_user_id);
+      console.log('Attempting to update subscription status and end date...');
       
-      const { error } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('community_subscribers')
         .update({
-          subscription_status: 'removed',
+          subscription_status: "inactive",
           subscription_end_date: new Date().toISOString(),
-          subscription_plan_id: null,
-          is_active: false
+          subscription_plan_id: null
         })
-        .eq('id', subscriber.id);
+        .eq('id', subscriber.id)
+        .select();
 
-      if (error) {
-        console.error('Error removing subscriber:', error);
-        throw error;
+      console.log('Update response:', { data: updateData, error: updateError });
+
+      if (updateError) {
+        console.error('Error in update:', updateError);
+        throw updateError;
       }
 
-      console.log('Successfully removed subscriber');
+      console.log('Successfully updated subscriber status');
+
       return true;
     } catch (error) {
-      console.error('Error in handleRemoveSubscriber:', error);
+      console.error('Detailed error in subscription removal:', error);
+      console.error('Error stack:', (error as Error).stack);
       throw error;
     }
-  }, []);
+  };
 
-  const handleUnblockSubscriber = useCallback(async (subscriber: Subscriber) => {
+  const handleUnblockSubscriber = async (subscriber: Subscriber) => {
+    console.log('Starting unblock process for subscriber:', subscriber);
+    
     try {
-      console.log('Unblocking subscriber:', subscriber.telegram_user_id);
-      
-      const { error } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('community_subscribers')
         .update({
-          subscription_status: 'inactive',
-          is_active: true
+          is_active: true,
+          subscription_status: "inactive" // We set it to inactive initially
         })
-        .eq('id', subscriber.id);
+        .eq('id', subscriber.id)
+        .select();
 
-      if (error) {
-        console.error('Error unblocking subscriber:', error);
-        throw error;
+      if (updateError) {
+        console.error('Error in unblock:', updateError);
+        throw updateError;
       }
 
       console.log('Successfully unblocked subscriber');
+
       return true;
     } catch (error) {
-      console.error('Error in handleUnblockSubscriber:', error);
+      console.error('Error in subscriber unblock:', error);
       throw error;
     }
-  }, []);
+  };
 
-  const assignPlanToUser = useCallback(async (
-    userId: string, 
-    planId: string, 
-    endDate: Date
-  ) => {
-    if (!entityId || !userId || !planId) return;
-    
+  const assignPlanToUser = async (userId: string, planId: string, endDate: Date) => {
     try {
-      console.log('Assigning plan to user:', { userId, planId, endDate, entityId });
+      const startDate = new Date();
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('community_subscribers')
         .update({
-          subscription_status: 'active',
           subscription_plan_id: planId,
-          subscription_start_date: new Date().toISOString(),
-          subscription_end_date: endDate.toISOString(),
-          is_active: true
+          subscription_status: "active",
+          subscription_start_date: startDate.toISOString(),
+          subscription_end_date: endDate.toISOString()
         })
-        .eq('telegram_user_id', userId)
-        .eq('community_id', entityId);
-
-      if (error) {
-        console.error('Error assigning plan:', error);
-        throw error;
-      }
-
-      console.log('Successfully assigned plan');
+        .eq('id', userId)
+        .select();
+      
+      if (error) throw error;
+      
       await refetch();
-      
-      toast({
-        title: "Success",
-        description: "Subscription plan assigned successfully",
-      });
-      
-      return true;
+      return data;
     } catch (error) {
-      console.error('Error in assignPlanToUser:', error);
-      toast({
-        title: "Error",
-        description: "Failed to assign subscription plan",
-        variant: "destructive",
-      });
+      console.error('Error assigning plan to user:', error);
       throw error;
     }
-  }, [entityId, refetch, toast]);
+  };
 
   return {
     subscribers,
     isLoading,
     isUpdating,
     refetch,
-    updateSubscriberStatus,
+    handleUpdateStatus,
     handleRemoveSubscriber,
     handleUnblockSubscriber,
     assignPlanToUser

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, User, UserPlus, Users } from "lucide-react";
+import { ExternalLink, User, UserPlus, Users, Package } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -33,6 +33,7 @@ export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListPr
               <TableHead className="font-semibold text-xs text-gray-700">User</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Name</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Telegram ID</TableHead>
+              <TableHead className="font-semibold text-xs text-gray-700">Subscription Plan</TableHead>
               <TableHead className="font-semibold text-xs text-gray-700">Joined On</TableHead>
               <TableHead className="w-[120px] text-right font-semibold text-xs text-gray-700">Actions</TableHead>
             </TableRow>
@@ -93,6 +94,20 @@ export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListPr
                     </TooltipProvider>
                   </TableCell>
                   
+                  {/* Subscription Plan cell - נוספה */}
+                  <TableCell className="py-3">
+                    {user.subscription_plan_id ? (
+                      <div className="flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-medium text-amber-600">
+                          {user.subscription_plan_id}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs italic">No plan</span>
+                    )}
+                  </TableCell>
+                  
                   {/* Joined Date cell */}
                   <TableCell className="py-3 text-left">
                     <div className="text-sm text-gray-700">
@@ -116,7 +131,7 @@ export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListPr
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-64 text-center">
+                <TableCell colSpan={6} className="h-64 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                       <UserPlus className="h-8 w-8 text-gray-300" />

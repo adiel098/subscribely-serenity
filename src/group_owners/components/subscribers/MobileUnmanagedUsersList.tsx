@@ -1,9 +1,10 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { User, UserPlus } from "lucide-react";
+import { User, UserPlus, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
+import { Badge } from "@/components/ui/badge";
 
 interface MobileUnmanagedUsersListProps {
   users: Subscriber[];
@@ -43,6 +44,16 @@ export const MobileUnmanagedUsersList: React.FC<MobileUnmanagedUsersListProps> =
                   </span>
                 )}
               </div>
+              
+              {/* הוספת הצגת פרטי המנוי */}
+              {user.subscription_plan_id && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Package className="h-3 w-3 text-amber-500" />
+                  <span className="text-xs font-medium text-amber-600">
+                    Plan ID: {user.subscription_plan_id}
+                  </span>
+                </div>
+              )}
             </div>
             
             <Button 

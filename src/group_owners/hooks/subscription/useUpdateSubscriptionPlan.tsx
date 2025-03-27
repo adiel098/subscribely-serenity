@@ -7,7 +7,7 @@ import { toast } from "sonner";
 interface UpdatePlanParams {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   interval: string;
   features: string[];
@@ -32,7 +32,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
           .from('subscription_plans')
           .select('*')
           .eq('id', planData.id)
-          .maybeSingle();
+          .single();
           
         if (checkError) {
           console.error("Error checking if plan exists:", checkError);
@@ -77,7 +77,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
         
         // Check if any rows were affected by the update
         if (!data || data.length === 0) {
-          console.warn("No rows were returned after update, plan may not exist:", planData.id);
+          console.error("No rows were returned after update, plan may not exist:", planData.id);
           throw new Error("Plan not found or could not be updated");
         }
         

@@ -30,6 +30,7 @@ Exclusive community benefits
 Priority customer support"
               {...field}
               rows={4}
+              value={field.value || ''}
             />
           </FormControl>
           <FormDescription>

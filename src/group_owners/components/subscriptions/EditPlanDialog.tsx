@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
-import { planFormSchema, PlanFormValues } from "./plan-form/PlanFormSchema";
+import { planFormSchema, PlanFormValues, featuresToArray, featuresToString } from "./plan-form/PlanFormSchema";
 import { PlanBasicInfoSection } from "./form-sections/PlanBasicInfoSection";
 import { PlanPricingSection } from "./form-sections/PlanPricingSection";
 import { PlanFeaturesSection } from "./form-sections/PlanFeaturesSection";
@@ -47,19 +47,21 @@ export const EditPlanDialog = ({
     },
   });
 
+  // Reset form when plan changes or dialog opens
   useEffect(() => {
-    if (plan) {
+    if (plan && isOpen) {
+      console.log("Setting form values for plan:", plan);
       form.reset({
         name: plan.name,
-        description: plan.description,
+        description: plan.description || "",
         price: plan.price,
         interval: plan.interval,
-        features: plan.features?.join("\n") || "",
+        features: featuresToString(plan.features),
         has_trial_period: plan.has_trial_period || false,
         trial_days: plan.trial_days || 0,
       });
     }
-  }, [plan, form]);
+  }, [plan, isOpen, form]);
 
   const handleSubmit = async (data: PlanFormValues) => {
     if (!plan) return;
@@ -67,15 +69,13 @@ export const EditPlanDialog = ({
     setIsSubmitting(true);
     try {
       // Convert features string to array
-      const featuresArray = data.features
-        ? data.features.split("\n").filter((feature) => feature.trim() !== "")
-        : [];
+      const featuresArray = featuresToArray(data.features);
 
       // Prepare data for submission, ensuring all fields are included
       const updatedPlan: Partial<SubscriptionPlan> = {
         id: plan.id,
         name: data.name,
-        description: data.description,
+        description: data.description || null,
         price: data.price,
         interval: data.interval,
         features: featuresArray,

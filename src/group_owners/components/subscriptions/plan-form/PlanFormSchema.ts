@@ -12,3 +12,15 @@ export const planFormSchema = z.object({
 });
 
 export type PlanFormValues = z.infer<typeof planFormSchema>;
+
+// Helper function to transform features string to array
+export const featuresToArray = (featuresStr?: string): string[] => {
+  if (!featuresStr) return [];
+  return featuresStr.split('\n').filter(feature => feature.trim() !== '');
+};
+
+// Helper function to transform features array to string
+export const featuresToString = (features?: string[]): string => {
+  if (!features || !Array.isArray(features)) return '';
+  return features.join('\n');
+};

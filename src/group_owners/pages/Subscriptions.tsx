@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -73,11 +72,10 @@ const Subscriptions = () => {
     console.log("[Subscriptions] Current entity ID:", entityId);
     
     try {
-      // Ensure community_id is set
       const updateData = {
         ...data,
         id: planId,
-        community_id: entityId || data.community_id
+        community_id: entityId
       };
       
       await updatePlan.mutateAsync(updateData);
@@ -119,8 +117,6 @@ const Subscriptions = () => {
     );
   }
 
-  const hasPlans = plans && plans.length > 0;
-
   return (
     <div className="container px-0 py-4 max-w-full">
       <div className="space-y-6 px-6 py-0 my-[6px]">
@@ -146,7 +142,7 @@ const Subscriptions = () => {
           </div>
         </motion.div>
 
-        {hasPlans && (
+        {plans && plans.length > 0 && (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex justify-end px-6">
             <Button 
               onClick={handleCreatePlan} 
@@ -159,7 +155,7 @@ const Subscriptions = () => {
           </motion.div>
         )}
 
-        {!hasPlans ? (
+        {!plans || plans.length === 0 ? (
           <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
         ) : (
           <motion.div 

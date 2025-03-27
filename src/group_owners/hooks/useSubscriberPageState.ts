@@ -1,8 +1,8 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useSubscriberManagement } from "./useSubscriberManagement";
 import { Subscriber } from "./useSubscribers";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSubscriberPageState = (entityId: string) => {
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
@@ -60,14 +60,48 @@ export const useSubscriberPageState = (entityId: string) => {
     if (!subscriber || isRemoving) return;
     
     try {
-      // Get the bot token first
-      const { data: botSettings } = await fetch(`/api/bot-settings?communityId=${subscriber.community_id}`).then(res => res.json());
-      const botToken = botSettings?.botToken;
+      const { data: botSettings, error: botError } = await supabase
+        .from('telegram_bot_settings')
+        .select('*')
+        .eq('community_id', subscriber.community_id)
+        .single();
+      
+      if (botError) {
+        console.error('Error fetching bot settings:', botError);
+        toast({
+          title: "Error",
+          description: "Could not retrieve bot settings",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      let botToken = null;
+      if (botSettings?.use_custom_bot && botSettings?.custom_bot_token) {
+        botToken = botSettings.custom_bot_token;
+      } else {
+        const { data: globalSettings, error: globalError } = await supabase
+          .from('telegram_global_settings')
+          .select('bot_token')
+          .single();
+          
+        if (globalError || !globalSettings?.bot_token) {
+          console.error('Error retrieving global bot token:', globalError);
+          toast({
+            title: "Error",
+            description: "Could not retrieve bot token",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        botToken = globalSettings.bot_token;
+      }
       
       if (!botToken) {
         toast({
           title: "Error",
-          description: "Could not retrieve bot token",
+          description: "No bot token available",
           variant: "destructive"
         });
         return;

@@ -1,7 +1,4 @@
 
-/**
- * Client for interacting with the Telegram Bot API
- */
 export class TelegramApiClient {
   private botToken: string;
   
@@ -10,107 +7,66 @@ export class TelegramApiClient {
   }
   
   /**
-   * Base method to call the Telegram API
+   * Kick a chat member
    */
-  private async callApi(method: string, body: any): Promise<any> {
+  async kickChatMember(chatId: string, userId: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
     try {
-      console.log(`[TELEGRAM-API] 🔄 Calling method ${method}`);
+      console.log(`[TelegramApi] Attempting to kick user ${userId} from chat ${chatId}`);
       
-      const response = await fetch(`https://api.telegram.org/bot${this.botToken}/${method}`, {
+      // First try to ban the member with a short duration (Telegram's recommended way to kick)
+      const banResponse = await fetch(`https://api.telegram.org/bot${this.botToken}/banChatMember`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId,
+          until_date: Math.floor(Date.now() / 1000) + 40, // 40 seconds (minimum allowed by Telegram)
+        }),
       });
       
-      if (!response.ok) {
-        console.error(`[TELEGRAM-API] ❌ HTTP error: ${response.status}`);
-        const errorText = await response.text();
-        console.error(`[TELEGRAM-API] Response: ${errorText}`);
-        throw new Error(`HTTP error: ${response.status}`);
+      const banResult = await banResponse.json();
+      
+      if (!banResult.ok) {
+        console.error(`[TelegramApi] Failed to kick user: ${banResult.description}`);
+        return {
+          success: false,
+          error: banResult.description
+        };
       }
       
-      const result = await response.json();
+      console.log(`[TelegramApi] Successfully kicked user ${userId}`);
       
-      if (!result.ok) {
-        console.error(`[TELEGRAM-API] ❌ API error: ${result.description}`);
-        return result; // Return the error response so we can handle it
-      }
+      // After a short delay, unban the user to allow them to rejoin only if they get a new invite link
+      // Wait 2 seconds before unbanning
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      return result;
-    } catch (error) {
-      console.error(`[TELEGRAM-API] ❌ Exception in ${method}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Kick a user from a chat
-   */
-  async kickChatMember(chatId: string, userId: string): Promise<any> {
-    console.log(`[TELEGRAM-API] 🚫 Kicking user ${userId} from chat ${chatId}`);
-    
-    try {
-      const result = await this.callApi('banChatMember', {
-        chat_id: chatId,
-        user_id: userId,
-        until_date: Math.floor(Date.now() / 1000) + 40 // 40 seconds ban (minimum allowed)
+      console.log(`[TelegramApi] Now unbanning user ${userId} so they can rejoin in the future with a new invite link`);
+      
+      const unbanResponse = await fetch(`https://api.telegram.org/bot${this.botToken}/unbanChatMember`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId,
+          only_if_banned: true,
+        }),
       });
       
-      if (result.ok) {
-        console.log(`[TELEGRAM-API] ✅ Successfully kicked user ${userId}`);
-        
-        // Unban after a short delay so they can rejoin if needed
-        setTimeout(async () => {
-          try {
-            await this.unbanChatMember(chatId, userId);
-          } catch (error) {
-            console.error(`[TELEGRAM-API] ❌ Error unbanning user:`, error);
-          }
-        }, 2000);
+      const unbanResult = await unbanResponse.json();
+      
+      if (!unbanResult.ok) {
+        console.warn(`[TelegramApi] Failed to unban user: ${unbanResult.description}`);
+        // Don't return false here, as the kick operation was still successful
       } else {
-        console.log(`[TELEGRAM-API] ⚠️ Kick response for user ${userId}: ${result.description}`);
+        console.log(`[TelegramApi] Successfully unbanned user ${userId}`);
       }
       
-      return {
-        success: result.ok,
-        error: result.ok ? null : result.description
-      };
+      return { success: true };
     } catch (error) {
-      console.error(`[TELEGRAM-API] ❌ Error kicking user ${userId} from chat ${chatId}:`, error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-  
-  /**
-   * Unban a user from a chat
-   */
-  async unbanChatMember(chatId: string, userId: string): Promise<any> {
-    console.log(`[TELEGRAM-API] 🔓 Unbanning user ${userId} from chat ${chatId}`);
-    
-    try {
-      const result = await this.callApi('unbanChatMember', {
-        chat_id: chatId,
-        user_id: userId,
-        only_if_banned: true
-      });
-      
-      if (result.ok) {
-        console.log(`[TELEGRAM-API] ✅ User ${userId} successfully unbanned from chat ${chatId}`);
-      } else {
-        console.log(`[TELEGRAM-API] ⚠️ Unban response for user ${userId}: ${result.description}`);
-      }
-      
-      return {
-        success: result.ok,
-        error: result.ok ? null : result.description
-      };
-    } catch (error) {
-      console.error(`[TELEGRAM-API] ❌ Error unbanning user ${userId} from chat ${chatId}:`, error);
+      console.error(`[TelegramApi] Error in kickChatMember: ${error.message}`);
       return {
         success: false,
         error: error.message

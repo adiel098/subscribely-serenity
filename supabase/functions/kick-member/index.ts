@@ -25,7 +25,17 @@ serve(async (req) => {
     await logger.info("Kick member function called");
 
     // Parse request body
-    const requestData = await req.json();
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      await logger.error(`Invalid JSON: ${parseError.message}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON payload" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+    
     const { member_id, telegram_user_id, chat_id, bot_token } = requestData;
     
     // Log request details

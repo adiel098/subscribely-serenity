@@ -24,6 +24,14 @@ export const useCoupons = (communityId: string) => {
         
         if (error) {
           console.error('Error fetching coupons:', error);
+          if (error.message?.includes('infinite recursion')) {
+            // Use RPC function to check auth status if hitting recursion issues
+            toast({
+              title: "Database permission issue",
+              description: "There's a permission issue with your account. Please contact support.",
+              variant: "destructive"
+            });
+          }
           throw error;
         }
         
@@ -46,7 +54,10 @@ export const useCoupons = (communityId: string) => {
       try {
         // Make sure owner_id is set to the authenticated user
         const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
+        if (userError) {
+          console.error('Error getting current user:', userError);
+          throw userError;
+        }
 
         const fullCouponData = {
           ...couponData,
@@ -63,6 +74,13 @@ export const useCoupons = (communityId: string) => {
         
         if (error) {
           console.error('Error creating coupon:', error);
+          if (error.message?.includes('infinite recursion')) {
+            toast({
+              title: "Database permission issue",
+              description: "There's an admin permission issue. Please use the get_admin_status function.",
+              variant: "destructive"
+            });
+          }
           throw error;
         }
         
@@ -80,11 +98,11 @@ export const useCoupons = (communityId: string) => {
         description: "Coupon created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Mutation error in createCoupon:', error);
       toast({
         title: "Error creating coupon",
-        description: "There was an error creating the coupon. Please try again.",
+        description: error.message || "There was an error creating the coupon. Please try again.",
         variant: "destructive"
       });
     }
@@ -124,11 +142,11 @@ export const useCoupons = (communityId: string) => {
         description: "Coupon updated successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Mutation error in updateCoupon:', error);
       toast({
         title: "Error updating coupon",
-        description: "There was an error updating the coupon. Please try again.",
+        description: error.message || "There was an error updating the coupon. Please try again.",
         variant: "destructive"
       });
     }
@@ -164,11 +182,11 @@ export const useCoupons = (communityId: string) => {
         description: "Coupon deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Mutation error in deleteCoupon:', error);
       toast({
         title: "Error deleting coupon",
-        description: "There was an error deleting the coupon. Please try again.",
+        description: error.message || "There was an error deleting the coupon. Please try again.",
         variant: "destructive"
       });
     }

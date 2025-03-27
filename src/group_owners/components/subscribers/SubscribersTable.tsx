@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { 
@@ -9,7 +10,8 @@ import {
   Pencil,
   Unlock,
   ExternalLink,
-  UserPlus
+  UserPlus,
+  Clock
 } from "lucide-react";
 import {
   Table,
@@ -64,6 +66,13 @@ export const SubscribersTable = ({
         <Badge variant="success" className="text-xs py-0.5 px-2.5 gap-1 font-medium">
           <CheckCircle2 className="h-3 w-3" />
           <span>Active</span>
+        </Badge>
+      );
+    } else if (subscriber.subscription_status === "expired") {
+      return (
+        <Badge variant="warning" className="text-xs py-0.5 px-2.5 gap-1 font-medium bg-amber-50 text-amber-700 border-amber-200">
+          <Clock className="h-3 w-3" />
+          <span>Expired</span>
         </Badge>
       );
     } else if (subscriber.subscription_status === "removed") {

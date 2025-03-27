@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { 
@@ -64,6 +65,13 @@ export const MobileSubscribersList: React.FC<MobileSubscribersListProps> = ({
         <Badge variant="success" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px]">
           <CheckCircle2 className="h-1.5 w-1.5" />
           <span>Active</span>
+        </Badge>
+      );
+    } else if (subscriber.subscription_status === "expired") {
+      return (
+        <Badge variant="warning" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px] bg-amber-50 text-amber-700 border-amber-200">
+          <Clock className="h-1.5 w-1.5" />
+          <span>Expired</span>
         </Badge>
       );
     } else if (subscriber.subscription_status === "removed") {

@@ -125,13 +125,15 @@ export const CouponsPage = () => {
             Create and manage discount coupons for your subscribers
           </p>
         </div>
-        <Button
-          onClick={() => setCreateDialogOpen(true)}
-          className="gap-2"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Create Coupon
-        </Button>
+        {coupons && coupons.length > 0 && (
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Create Coupon
+          </Button>
+        )}
       </div>
       
       {coupons && coupons.length > 0 ? (

@@ -17,7 +17,7 @@ export const EmptyCouponsState = ({ onCreateCoupon }: EmptyCouponsStateProps) =>
         Create discount coupons to attract new subscribers or reward existing ones
         with special offers.
       </p>
-      <Button onClick={onCreateCoupon} className="gap-2">
+      <Button onClick={onCreateCoupon} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
         <PlusIcon className="h-4 w-4" />
         Create Your First Coupon
       </Button>

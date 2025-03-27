@@ -1,4 +1,3 @@
-
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
@@ -33,7 +32,14 @@ export const useDashboardStats = (communityId: string) => {
   // Cast and ensure all required properties are available for DashboardSubscriber
   const dashboardSubscribers: DashboardSubscriber[] = subscribers.map(sub => ({
     ...sub,
-    telegram_user_id: sub.telegram_user_id || '', // Ensure this is never undefined
+    telegram_user_id: sub.telegram_user_id || '',   // Ensure this is never undefined
+    telegram_username: sub.telegram_username || null,  // Allow null values
+    community_id: sub.community_id || communityId,  // Ensure community_id is present
+    joined_at: sub.joined_at || new Date().toISOString(),  // Default joined_at to now if missing
+    is_active: sub.is_active ?? true,  // Default to true if missing
+    last_active: sub.last_active || null,  // Allow null
+    subscription_start_date: sub.subscription_start_date || null,  // Allow null
+    subscription_end_date: sub.subscription_end_date || null  // Allow null
   }));
   
   // Filter subscribers based on time range

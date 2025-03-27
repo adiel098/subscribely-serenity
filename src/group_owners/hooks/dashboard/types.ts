@@ -1,8 +1,7 @@
-
 export interface DashboardSubscriber {
   id: string;
   telegram_user_id: string;
-  telegram_username: string | null;
+  telegram_username: string | null; // Changed from required to allow null values
   community_id: string;
   joined_at: string;
   last_active: string | null;

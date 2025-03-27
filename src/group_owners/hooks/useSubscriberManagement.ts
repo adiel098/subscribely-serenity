@@ -1,12 +1,13 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { Subscriber } from "./useSubscribers";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscribers } from "./useSubscribers";
+import { Subscriber } from "./useSubscribers";
 
 export const useSubscriberManagement = (communityId: string) => {
-  const { data: subscribers, isLoading, refetch } = useSubscribers(communityId);
+  // Fix: Use subscribers directly instead of data.subscribers
+  const { subscribers, isLoading, refetch } = useSubscribers(communityId);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const { toast } = useToast();

@@ -43,7 +43,7 @@ export const EditPlanDialog = ({
       interval: "monthly",
       features: "",
       has_trial_period: false,
-      trial_days: 0,
+      trial_days: undefined,
     },
     mode: "onBlur",
   });
@@ -59,7 +59,7 @@ export const EditPlanDialog = ({
         interval: plan.interval,
         features: featuresToString(plan.features),
         has_trial_period: plan.has_trial_period || false,
-        trial_days: plan.trial_days || 0,
+        trial_days: plan.trial_days || undefined,
       });
     }
   }, [plan, isOpen, form]);

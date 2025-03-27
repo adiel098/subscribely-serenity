@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
@@ -43,7 +42,7 @@ export const CreatePlanDialog = ({
       interval: "monthly",
       features: "",
       has_trial_period: false,
-      trial_days: 0,
+      trial_days: undefined,
     },
     mode: "onBlur",
   });
@@ -78,7 +77,7 @@ export const CreatePlanDialog = ({
   };
 
   // Reset form when dialog opens or closes
-  useState(() => {
+  useEffect(() => {
     if (!isOpen) {
       form.reset({
         name: "",
@@ -87,10 +86,10 @@ export const CreatePlanDialog = ({
         interval: "monthly",
         features: "",
         has_trial_period: false,
-        trial_days: 0,
+        trial_days: undefined,
       });
     }
-  });
+  }, [isOpen, form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

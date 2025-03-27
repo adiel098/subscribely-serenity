@@ -10,18 +10,17 @@ export const planFormSchema = z.object({
   trial_days: z.coerce
     .number()
     .min(1, { message: "Trial period must be at least 1 day" })
-    .optional()
-    .refine(
-      (val, ctx) => {
-        if (ctx.parent.has_trial_period) {
-          return val !== undefined && val >= 1;
-        }
-        return true;
-      },
-      {
-        message: "Trial days are required when trial period is enabled",
-      }
-    ),
+    .optional(),
+}).refine((data) => {
+  // If trial period is enabled, trial_days must be set and >= 1
+  if (data.has_trial_period) {
+    return data.trial_days !== undefined && data.trial_days >= 1;
+  }
+  // Otherwise no additional validation needed
+  return true;
+}, {
+  message: "Trial days are required when trial period is enabled",
+  path: ["trial_days"], // This specifies which field the error should be associated with
 });
 
 export type PlanFormValues = z.infer<typeof planFormSchema>;

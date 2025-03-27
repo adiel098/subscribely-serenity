@@ -35,7 +35,13 @@ export const PlanTrialSection: React.FC<PlanTrialSectionProps> = ({ form }) => {
             <FormControl>
               <Switch
                 checked={field.value}
-                onCheckedChange={field.onChange}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  // If turning off trial, clear trial days
+                  if (!checked) {
+                    form.setValue("trial_days", undefined);
+                  }
+                }}
               />
             </FormControl>
           </FormItem>
@@ -56,6 +62,10 @@ export const PlanTrialSection: React.FC<PlanTrialSectionProps> = ({ form }) => {
                   placeholder="0"
                   {...field}
                   value={field.value || ""}
+                  onChange={(e) => {
+                    const value = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                    field.onChange(value);
+                  }}
                 />
               </FormControl>
               <FormDescription>

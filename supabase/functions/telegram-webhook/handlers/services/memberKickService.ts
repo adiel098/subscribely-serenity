@@ -72,7 +72,7 @@ export async function kickMemberService(
       await logger.info(`Updating member status in database for community ${community.id} with status: ${reason}`);
       
       const { error: updateError } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
         .update({
           is_active: false,
           subscription_status: reason // Use the provided reason instead of hardcoding 'removed'

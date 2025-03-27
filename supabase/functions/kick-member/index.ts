@@ -34,7 +34,7 @@ serve(async (req) => {
 
     // Get member and community info
     const { data: member, error: memberError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
       .select(`
         *,
         community:communities(
@@ -46,7 +46,7 @@ serve(async (req) => {
       .single();
 
     if (memberError || !member) {
-      throw new Error('Member not found');
+      throw new Error('Member not found: ' + (memberError?.message || 'Unknown error'));
     }
 
     // Get bot token
@@ -139,7 +139,7 @@ serve(async (req) => {
 
     // Update member status in database with correct reason
     const { error: updateError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
       .update({
         is_active: false,
         subscription_status: validReason,

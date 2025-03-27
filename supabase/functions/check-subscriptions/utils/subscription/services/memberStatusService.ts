@@ -14,7 +14,7 @@ export async function updateMemberStatusToExpired(
     console.log(`📝 STATUS SERVICE: Updating member status to 'expired' for user ${member.telegram_user_id}`);
     
     const { error: updateError } = await supabase
-      .from("telegram_chat_members")
+      .from("community_subscribers")  // Changed from telegram_chat_members to community_subscribers
       .update({
         subscription_status: 'expired',
         is_active: false // Update is_active to false since an expired subscription should be considered inactive

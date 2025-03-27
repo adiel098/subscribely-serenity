@@ -186,7 +186,7 @@ export class TelegramMemberManager {
       }
       
       const { error } = await this.supabase
-        .from('community_subscribers')
+        .from('community_subscribers')  // Changed from community_subscribers to community_subscribers
         .update({
           is_active: false,
           subscription_status: reason // Use the specific reason passed in

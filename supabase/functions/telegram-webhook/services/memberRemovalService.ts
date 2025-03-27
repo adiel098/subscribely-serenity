@@ -57,7 +57,7 @@ export async function handleMemberRemoval(
         
         // Update the member record to set subscription_status based on the reason
         const { error: memberUpdateError } = await supabase
-          .from('telegram_chat_members')
+          .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
           .update({
             subscription_status: reason,
             is_active: false

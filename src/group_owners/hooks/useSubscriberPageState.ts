@@ -11,7 +11,6 @@ export const useSubscriberPageState = (entityId: string) => {
   const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
   const [subscriberToRemove, setSubscriberToRemove] = useState<Subscriber | null>(null);
   const [subscriberToUnblock, setSubscriberToUnblock] = useState<Subscriber | null>(null);
-  const [isRemoving, setIsRemoving] = useState(false);
   const [isUnblocking, setIsUnblocking] = useState(false);
   const { toast } = useToast();
 
@@ -19,10 +18,12 @@ export const useSubscriberPageState = (entityId: string) => {
     subscribers,
     isLoading,
     isUpdating,
+    isRemoving,
     refetch,
     handleRemoveSubscriber,
     handleUnblockSubscriber,
-    assignPlanToUser
+    assignPlanToUser,
+    removeSubscriber
   } = useSubscriberManagement(entityId || "");
 
   useEffect(() => {
@@ -30,8 +31,6 @@ export const useSubscriberPageState = (entityId: string) => {
       setRemoveDialogOpen(false);
       setUnblockDialogOpen(false);
       setEditDialogOpen(false);
-      setIsRemoving(false);
-      setIsUnblocking(false);
       
       setTimeout(() => {
         setSubscriberToRemove(null);
@@ -60,14 +59,21 @@ export const useSubscriberPageState = (entityId: string) => {
   const onConfirmRemove = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber || isRemoving) return;
     
-    setIsRemoving(true);
     try {
-      await handleRemoveSubscriber(subscriber);
-      toast({
-        title: "Success",
-        description: "Subscriber removed successfully"
-      });
+      // Get the bot token first
+      const { data: botSettings } = await fetch(`/api/bot-settings?communityId=${subscriber.community_id}`).then(res => res.json());
+      const botToken = botSettings?.botToken;
       
+      if (!botToken) {
+        toast({
+          title: "Error",
+          description: "Could not retrieve bot token",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      await removeSubscriber(subscriber, botToken);
       await refetch();
     } catch (error) {
       console.error("Error removing subscriber:", error);
@@ -77,14 +83,13 @@ export const useSubscriberPageState = (entityId: string) => {
         variant: "destructive"
       });
     } finally {
-      setIsRemoving(false);
       setRemoveDialogOpen(false);
       
       setTimeout(() => {
         setSubscriberToRemove(null);
       }, 500);
     }
-  }, [handleRemoveSubscriber, toast, refetch, isRemoving]);
+  }, [removeSubscriber, toast, refetch, isRemoving]);
 
   const onConfirmUnblock = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber || isUnblocking) return;

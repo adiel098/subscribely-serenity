@@ -27,27 +27,50 @@ export const useDashboardStats = (communityId: string) => {
   logger.log("👥 Subscribers loading:", subscribersLoading, "Count:", subscribers?.length || 0);
   
   // Fetch subscription plans
-  const { data: plans } = useFetchSubscriptionPlans(communityId);
+  const { data: plans, isLoading: plansLoading } = useFetchSubscriptionPlans(communityId);
   logger.log("💲 Subscription plans loaded:", plans?.length || 0);
+
+  // Process subscribers data to ensure plan information is correctly associated
+  const processedSubscribers = subscribers.map(sub => {
+    // If plan is missing or undefined in the subscriber data, try to find it from plans
+    let subscriberPlan = sub.plan;
+    
+    // If plan is not available but subscription_plan_id exists, try to find the plan
+    if ((!subscriberPlan || subscriberPlan === null) && sub.subscription_plan_id && plans) {
+      const matchingPlan = plans.find(plan => plan.id === sub.subscription_plan_id);
+      if (matchingPlan) {
+        subscriberPlan = {
+          id: matchingPlan.id,
+          name: matchingPlan.name,
+          price: matchingPlan.price,
+          interval: matchingPlan.interval,
+          features: matchingPlan.features
+        };
+      }
+    }
+    
+    // Cast and ensure all required properties are available for DashboardSubscriber
+    return {
+      ...sub,
+      telegram_user_id: sub.telegram_user_id || '',   // Ensure this is never undefined
+      telegram_username: sub.telegram_username || null,  // Allow null values
+      community_id: sub.community_id || communityId,  // Ensure community_id is present
+      joined_at: sub.joined_at || new Date().toISOString(),  // Default joined_at to now if missing
+      is_active: sub.is_active ?? true,  // Default to true if missing
+      last_active: sub.last_active || null,  // Allow null
+      subscription_start_date: sub.subscription_start_date || null,  // Allow null
+      subscription_end_date: sub.subscription_end_date || null,  // Allow null
+      first_name: sub.first_name || null,  // Allow null
+      last_name: sub.last_name || null,  // Allow null
+      plan: subscriberPlan // Use the corrected plan
+    } as DashboardSubscriber;
+  });
   
-  // Cast and ensure all required properties are available for DashboardSubscriber
-  const dashboardSubscribers: DashboardSubscriber[] = subscribers.map(sub => ({
-    ...sub,
-    telegram_user_id: sub.telegram_user_id || '',   // Ensure this is never undefined
-    telegram_username: sub.telegram_username || null,  // Allow null values
-    community_id: sub.community_id || communityId,  // Ensure community_id is present
-    joined_at: sub.joined_at || new Date().toISOString(),  // Default joined_at to now if missing
-    is_active: sub.is_active ?? true,  // Default to true if missing
-    last_active: sub.last_active || null,  // Allow null
-    subscription_start_date: sub.subscription_start_date || null,  // Allow null
-    subscription_end_date: sub.subscription_end_date || null,  // Allow null
-    first_name: sub.first_name || null,  // Allow null
-    last_name: sub.last_name || null  // Allow null
-  }));
+  logger.log("🔍 Processed subscribers with plans:", processedSubscribers.filter(s => s.plan !== null && s.plan !== undefined).length);
   
   // Filter subscribers based on time range
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(dashboardSubscribers, timeRangeStartDate);
+    useFilteredSubscribers(processedSubscribers, timeRangeStartDate);
   logger.log("🔍 Filtered subscribers:", {
     total: filteredSubscribers.length,
     active: activeSubscribers.length,
@@ -79,7 +102,7 @@ export const useDashboardStats = (communityId: string) => {
   
   // Calculate payment statistics
   const { paymentStats } = usePaymentStats(filteredSubscribers);
-  logger.log("💳 Payment stats calculated");
+  logger.log("💳 Payment stats calculated:", paymentStats);
   
   // Generate insights from subscriber data
   const { insights } = useInsights(
@@ -91,6 +114,7 @@ export const useDashboardStats = (communityId: string) => {
   logger.log("🧠 Insights calculated:", {
     avgDuration: insights.averageSubscriptionDuration,
     mostPopularPlan: insights.mostPopularPlan,
+    mostPopularPlanPrice: insights.mostPopularPlanPrice,
     renewalRate: insights.renewalRate
   });
   
@@ -105,7 +129,7 @@ export const useDashboardStats = (communityId: string) => {
   const { data: ownerInfo, isLoading: ownerLoading } = useOwnerInfo(communityId);
 
   // Combine loading states
-  const isLoading = subscribersLoading || ownerLoading || miniAppUsersLoading;
+  const isLoading = subscribersLoading || plansLoading || ownerLoading || miniAppUsersLoading;
   
   if (isLoading) {
     logger.log("⏳ Dashboard stats still loading...");
@@ -120,7 +144,7 @@ export const useDashboardStats = (communityId: string) => {
     timeRangeLabel,
     
     // Subscribers data
-    subscribers,
+    subscribers: processedSubscribers,
     filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,

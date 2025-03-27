@@ -6,12 +6,18 @@ export const useRevenueStats = (
   filteredSubscribers: DashboardSubscriber[]
 ) => {
   const totalRevenue = useMemo(() => {
-    return filteredSubscribers.reduce((sum, sub) => {
-      if (sub.plan) {
-        return sum + (sub.plan.price || 0);
-      }
-      return sum;
-    }, 0);
+    let revenue = 0;
+    
+    filteredSubscribers.forEach(sub => {
+      // If the subscriber has a plan with a price, add it to the revenue
+      if (sub.plan && sub.plan.price) {
+        revenue += sub.plan.price;
+      } 
+      // If no plan but has subscription_plan_id, try to infer a price (future improvement)
+    });
+    
+    console.log("Total revenue calculated:", revenue);
+    return revenue;
   }, [filteredSubscribers]);
 
   const avgRevenuePerSubscriber = useMemo(() => {

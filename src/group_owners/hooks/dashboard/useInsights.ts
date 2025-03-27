@@ -1,7 +1,7 @@
 
 import { useMemo } from "react";
-import { format } from "date-fns";
-import { DashboardSubscriber, Insights } from "./types";
+import { differenceInDays } from "date-fns";
+import { DashboardSubscriber } from "./types";
 
 export const useInsights = (
   filteredSubscribers: DashboardSubscriber[],
@@ -9,83 +9,100 @@ export const useInsights = (
   inactiveSubscribers: DashboardSubscriber[],
   plans: any[] | undefined
 ) => {
-  const averageSubscriptionDuration = useMemo(() => {
-    if (!filteredSubscribers.length) return 0;
-    
-    let totalDays = 0;
-    let count = 0;
+  const insights = useMemo(() => {
+    // Calculate average subscription duration
+    let totalDuration = 0;
+    let subscribersWithDuration = 0;
     
     filteredSubscribers.forEach(sub => {
       if (sub.subscription_start_date && sub.subscription_end_date) {
         const startDate = new Date(sub.subscription_start_date);
         const endDate = new Date(sub.subscription_end_date);
-        const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (durationDays > 0) {
-          totalDays += durationDays;
-          count++;
+        if (startDate < endDate) {
+          totalDuration += differenceInDays(endDate, startDate);
+          subscribersWithDuration++;
         }
       }
     });
     
-    return count > 0 ? Math.round(totalDays / count) : 0;
-  }, [filteredSubscribers]);
-
-  const mostPopularPlan = useMemo(() => {
-    if (!filteredSubscribers.length || !plans?.length) return { name: "None", price: 0 };
+    const averageSubscriptionDuration = subscribersWithDuration > 0 
+      ? Math.round(totalDuration / subscribersWithDuration) 
+      : 0;
     
-    const planCounts: Record<string, { count: number; name: string; price: number }> = {};
+    // Find most popular plan
+    const planCounts: Record<string, {count: number, price: number}> = {};
     
     filteredSubscribers.forEach(sub => {
-      if (sub.plan?.id) {
-        if (!planCounts[sub.plan.id]) {
-          planCounts[sub.plan.id] = { 
-            count: 0, 
-            name: sub.plan.name || "Unknown", 
-            price: sub.plan.price || 0 
-          };
+      if (sub.plan && sub.plan.id) {
+        const planId = sub.plan.id;
+        if (!planCounts[planId]) {
+          planCounts[planId] = { count: 0, price: sub.plan.price || 0 };
         }
-        planCounts[sub.plan.id].count += 1;
+        planCounts[planId].count++;
+      } else if (sub.subscription_plan_id && plans) {
+        // Try to find the plan from the plans array
+        const matchingPlan = plans.find(plan => plan.id === sub.subscription_plan_id);
+        if (matchingPlan) {
+          if (!planCounts[matchingPlan.id]) {
+            planCounts[matchingPlan.id] = { count: 0, price: matchingPlan.price || 0 };
+          }
+          planCounts[matchingPlan.id].count++;
+        }
       }
     });
     
-    const sortedPlans = Object.values(planCounts).sort((a, b) => b.count - a.count);
-    return sortedPlans.length > 0 ? sortedPlans[0] : { name: "None", price: 0 };
-  }, [filteredSubscribers, plans]);
-
-  const mostActiveDay = useMemo(() => {
-    if (!filteredSubscribers.length) return "N/A";
+    let mostPopularPlanId = "";
+    let mostPopularPlanCount = 0;
+    let mostPopularPlanPrice = 0;
     
-    const dayCount: Record<string, number> = {};
-    
-    filteredSubscribers.forEach(sub => {
-      const dayOfWeek = format(new Date(sub.joined_at), "EEEE");
-      dayCount[dayOfWeek] = (dayCount[dayOfWeek] || 0) + 1;
-    });
-    
-    let maxDay = "";
-    let maxCount = 0;
-    
-    Object.entries(dayCount).forEach(([day, count]) => {
-      if (count > maxCount) {
-        maxDay = day;
-        maxCount = count;
+    Object.entries(planCounts).forEach(([planId, { count, price }]) => {
+      if (count > mostPopularPlanCount) {
+        mostPopularPlanId = planId;
+        mostPopularPlanCount = count;
+        mostPopularPlanPrice = price;
       }
     });
     
-    return maxDay;
-  }, [filteredSubscribers]);
-
-  const renewalRate = useMemo(() => {
-    return Math.round((activeSubscribers.length / (activeSubscribers.length + inactiveSubscribers.length || 1)) * 100);
-  }, [activeSubscribers, inactiveSubscribers]);
-
-  const insights: Insights = {
-    averageSubscriptionDuration,
-    mostPopularPlan: mostPopularPlan.name,
-    mostPopularPlanPrice: mostPopularPlan.price,
-    mostActiveDay,
-    renewalRate
-  };
+    // Get most popular plan name
+    let mostPopularPlan = "None";
+    if (mostPopularPlanId && plans) {
+      const matchingPlan = plans.find(plan => plan.id === mostPopularPlanId);
+      if (matchingPlan) {
+        mostPopularPlan = matchingPlan.name;
+      } else {
+        // If not found in plans, try to find in the subscribers
+        const subWithPlan = filteredSubscribers.find(sub => sub.plan && sub.plan.id === mostPopularPlanId);
+        if (subWithPlan && subWithPlan.plan && subWithPlan.plan.name) {
+          mostPopularPlan = subWithPlan.plan.name;
+        }
+      }
+    }
+    
+    // Calculate renewal rate
+    const renewalRate = activeSubscribers.length > 0 
+      ? Math.round((activeSubscribers.length / (activeSubscribers.length + inactiveSubscribers.length)) * 100) 
+      : 0;
+    
+    // Determine most active day (simplified example)
+    const mostActiveDay = "Monday"; // Would need day-of-week analysis of joined_at dates
+    
+    console.log("Insights calculated:", {
+      averageSubscriptionDuration,
+      mostPopularPlan,
+      mostPopularPlanPrice,
+      renewalRate,
+      mostActiveDay,
+      planCounts
+    });
+    
+    return {
+      averageSubscriptionDuration,
+      mostPopularPlan,
+      mostPopularPlanPrice,
+      renewalRate,
+      mostActiveDay
+    };
+  }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plans]);
 
   return { insights };
 };

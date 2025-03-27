@@ -1,3 +1,4 @@
+
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
@@ -39,7 +40,9 @@ export const useDashboardStats = (communityId: string) => {
     is_active: sub.is_active ?? true,  // Default to true if missing
     last_active: sub.last_active || null,  // Allow null
     subscription_start_date: sub.subscription_start_date || null,  // Allow null
-    subscription_end_date: sub.subscription_end_date || null  // Allow null
+    subscription_end_date: sub.subscription_end_date || null,  // Allow null
+    first_name: sub.first_name || null,  // Allow null
+    last_name: sub.last_name || null  // Allow null
   }));
   
   // Filter subscribers based on time range

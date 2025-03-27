@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import Login from "./auth/pages/Login";
@@ -28,6 +29,7 @@ import AdminReports from "./admin/pages/Reports";
 import AdminSettings from "./admin/pages/Settings";
 import TelegramConnect from "./group_owners/pages/connect/TelegramConnect";
 import CustomBotNewCommunity from "@/group_owners/pages/new-community/CustomBotNewCommunity";
+import { CouponsPage } from "@/group_owners/components/coupons/CouponsPage";
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +52,10 @@ export const router = createBrowserRouter([
       {
         path: "subscribers",
         element: <ProtectedRoute><Subscribers /></ProtectedRoute>
+      },
+      {
+        path: "coupons",
+        element: <ProtectedRoute><CouponsPage /></ProtectedRoute>
       },
       {
         path: "payment-methods",

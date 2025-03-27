@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings, Megaphone } from 'lucide-react';
+import { LayoutDashboard, BadgeDollarSign, CreditCard, Wallet, Bot, LogOut, HelpCircle, Settings, Megaphone, Tag } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/auth/contexts/AuthContext';
 import { 
@@ -29,6 +29,11 @@ const menuItems = [
     title: "Plans",
     icon: CreditCard,
     path: "/subscriptions"
+  },
+  {
+    title: "Discount Coupons",
+    icon: Tag,
+    path: "/coupons"
   },
   {
     title: "Payment Methods",

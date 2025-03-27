@@ -1,4 +1,3 @@
-
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -29,6 +28,7 @@ import MembifySettings from "@/group_owners/pages/MembifySettings";
 import TelegramBot from "@/group_owners/pages/TelegramBot";
 import CommunityEdit from "@/group_owners/pages/communities/CommunityEdit";
 import GroupEdit from "@/group_owners/pages/groups/GroupEdit";
+import { CouponsPage } from "@/group_owners/components/coupons/CouponsPage";
 
 // Onboarding Pages
 import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
@@ -91,6 +91,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <DashboardLayout>
             <Subscriptions />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/coupons" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <CouponsPage />
           </DashboardLayout>
         </ProtectedRoute>
       } />

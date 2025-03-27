@@ -12,10 +12,10 @@ export async function handleMemberRemoval(
   userId: string, 
   botToken: string,
   communityId?: string,
-  reason: 'removed' | 'expired' = 'removed' // Add reason parameter with default 'removed'
+  reason: 'removed' | 'expired' = 'removed'
 ): Promise<Response> {
   try {
-    console.log(`[MEMBER-REMOVAL] 👤 Removing user ${userId} from chat ${chatId}, reason: ${reason}`);
+    console.log(`[MEMBER-REMOVAL] Removing user ${userId} from chat ${chatId}, reason: ${reason}`);
     const success = await kickMemberService(
       supabase,
       chatId,
@@ -49,15 +49,15 @@ export async function handleMemberRemoval(
           .eq('community_id', resolvedCommunityId);
         
         if (invalidateError) {
-          console.error('[MEMBER-REMOVAL] ❌ Error invalidating invite links:', invalidateError);
+          console.error('[MEMBER-REMOVAL] Error invalidating invite links:', invalidateError);
           // Continue despite error as the main operation succeeded
         } else {
-          console.log(`[MEMBER-REMOVAL] 🔗 Successfully invalidated invite links for user ${userId}`);
+          console.log(`[MEMBER-REMOVAL] Successfully invalidated invite links for user ${userId}`);
         }
         
         // Update the member record to set subscription_status based on the reason
         const { error: memberUpdateError } = await supabase
-          .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
+          .from('community_subscribers')
           .update({
             subscription_status: reason,
             is_active: false
@@ -66,9 +66,9 @@ export async function handleMemberRemoval(
           .eq('community_id', resolvedCommunityId);
           
         if (memberUpdateError) {
-          console.error('[MEMBER-REMOVAL] ❌ Error updating member status:', memberUpdateError);
+          console.error('[MEMBER-REMOVAL] Error updating member status:', memberUpdateError);
         } else {
-          console.log(`[MEMBER-REMOVAL] ✅ Successfully set subscription_status to "${reason}" for user ${userId}`);
+          console.log(`[MEMBER-REMOVAL] Successfully set subscription_status to "${reason}" for user ${userId}`);
         }
         
         // Log the removal in the activity log
@@ -81,27 +81,27 @@ export async function handleMemberRemoval(
             details: reason === 'expired' 
               ? 'User removed from channel due to subscription expiration' 
               : 'User removed from channel by admin',
-            status: reason // Add status field to track the reason
+            status: reason
           })
           .then(({ error }) => {
             if (error) {
-              console.error('[MEMBER-REMOVAL] ❌ Error logging removal activity:', error);
+              console.error('[MEMBER-REMOVAL] Error logging removal activity:', error);
             } else {
-              console.log('[MEMBER-REMOVAL] 📝 Removal logged to activity log');
+              console.log('[MEMBER-REMOVAL] Removal logged to activity log');
             }
           });
       } catch (error) {
-        console.error('[MEMBER-REMOVAL] ❌ Error in invite link invalidation process:', error);
+        console.error('[MEMBER-REMOVAL] Error in invite link invalidation process:', error);
         // Continue despite error as the main operation succeeded
       }
     }
 
-    console.log(`[MEMBER-REMOVAL] ${success ? '✅' : '❌'} Member removal ${success ? 'successful' : 'failed'}`);
+    console.log(`[MEMBER-REMOVAL] Member removal ${success ? 'successful' : 'failed'}`);
     return new Response(JSON.stringify({ success }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('[MEMBER-REMOVAL] ❌ Error removing member:', error);
+    console.error('[MEMBER-REMOVAL] Error removing member:', error);
     return new Response(JSON.stringify({ 
       success: false, 
       error: error.message || 'An unknown error occurred' 

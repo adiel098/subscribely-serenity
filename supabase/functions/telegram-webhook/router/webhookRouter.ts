@@ -72,13 +72,11 @@ export async function routeTelegramWebhook(
     
     // Handle standard Telegram webhook update
     if (body.update_id) {
-      logger.info(`RECEIVED WEBHOOK: ${JSON.stringify(body)}`);
       logger.info(`Processing webhook update: ${JSON.stringify(body).substring(0, 100)}...`);
       
       // Process different update types
       if (body.message) {
         logger.info(`Routing message to message handler`);
-        logger.info(`Chat ID: ${body.message.chat.id}`);
         // We would implement message handling logic here
         return new Response(
           JSON.stringify({ success: true }),
@@ -97,7 +95,6 @@ export async function routeTelegramWebhook(
       
       if (body.chat_member) {
         logger.info(`Routing chat member update to member handler`);
-        logger.info(`Group/Chat ID: ${body.chat_member.chat.id}`);
         // We would implement chat member handling logic here
         return new Response(
           JSON.stringify({ success: true }),

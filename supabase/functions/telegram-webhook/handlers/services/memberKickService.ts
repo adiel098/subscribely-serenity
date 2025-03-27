@@ -9,21 +9,28 @@ export async function kickMemberService(
   userId: string,
   botToken: string,
   unbanAfterKick = true,
-  reason: 'removed' | 'expired' = 'removed' // Add reason parameter with default 'removed'
+  reason: 'removed' | 'expired' = 'removed'
 ): Promise<boolean> {
   const logger = createLogger(supabase, 'KICK-SERVICE');
   
   try {
     await logger.info(`Attempting to kick user ${userId} from chat ${chatId}, reason: ${reason}`);
     
-    // First kick the user
-    const kickEndpoint = `https://api.telegram.org/bot${botToken}/kickChatMember`;
+    // Validate inputs
+    if (!chatId || !userId || !botToken) {
+      await logger.error(`Missing required parameters: ${!chatId ? 'chatId' : ''} ${!userId ? 'userId' : ''} ${!botToken ? 'botToken' : ''}`);
+      return false;
+    }
+
+    // First try to kick the member using banChatMember with a short ban time
+    const kickEndpoint = `https://api.telegram.org/bot${botToken}/banChatMember`;
     const kickResponse = await fetch(kickEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
         user_id: userId,
+        until_date: Math.floor(Date.now() / 1000) + 40, // 40 seconds (minimum allowed by Telegram)
       }),
     });
     
@@ -36,8 +43,11 @@ export async function kickMemberService(
     
     await logger.success(`Successfully kicked user ${userId} from chat ${chatId}`);
     
-    // Unban the user if requested - this allows them to rejoin in the future
+    // After a short delay, unban the user to allow them to rejoin in the future
     if (unbanAfterKick) {
+      // Wait 2 seconds before unbanning
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       await logger.info(`Now unbanning user ${userId} so they can rejoin in the future`);
       
       const unbanEndpoint = `https://api.telegram.org/bot${botToken}/unbanChatMember`;
@@ -72,10 +82,10 @@ export async function kickMemberService(
       await logger.info(`Updating member status in database for community ${community.id} with status: ${reason}`);
       
       const { error: updateError } = await supabase
-        .from('community_subscribers')  // Changed from telegram_chat_members to community_subscribers
+        .from('community_subscribers')
         .update({
           is_active: false,
-          subscription_status: reason // Use the provided reason instead of hardcoding 'removed'
+          subscription_status: reason
         })
         .eq('telegram_user_id', userId)
         .eq('community_id', community.id);

@@ -73,11 +73,14 @@ const Subscriptions = () => {
     console.log("[Subscriptions] Current entity ID:", entityId);
     
     try {
-      await updatePlan.mutateAsync({
-        id: planId,
+      // Ensure community_id is set
+      const updateData = {
         ...data,
-        community_id: entityId // Explicitly pass the community_id
-      });
+        id: planId,
+        community_id: entityId || data.community_id
+      };
+      
+      await updatePlan.mutateAsync(updateData);
       setEditDialogOpen(false);
       toast({
         title: "Plan updated",
@@ -191,7 +194,7 @@ const Subscriptions = () => {
             isOpen={editDialogOpen} 
             onOpenChange={setEditDialogOpen} 
             plan={plans?.find(p => p.id === selectedPlanId) || null}
-            onSubmit={(data) => handleUpdatePlan(selectedPlanId, data)}
+            onSubmit={(planId, data) => handleUpdatePlan(planId, data)}
           />
           
           <DeletePlanDialog 

@@ -45,7 +45,7 @@ export const useSubscribers = (communityId: string) => {
       
       console.log("Fetching subscribers for community:", communityId);
       
-      // Updated query to join with the subscription_plans table
+      // שאילתה מעודכנת לחיבור עם טבלת subscription_plans
       const { data, error } = await supabase
         .from('community_subscribers')
         .select(`
@@ -68,12 +68,23 @@ export const useSubscribers = (communityId: string) => {
       
       console.log("Raw subscriber data:", data);
       
-      // Process the data to format the plan property correctly
+      // עיבוד מתקדם של נתוני התוכנית (plan)
       const processedData = data.map(subscriber => {
-        // Handle the nested plan data from the join
+        // טיפול בנתוני התוכנית מהחיבור
         let plan = null;
+        
+        // טיפול במקרה שהתוכנית מגיעה כמערך 
         if (subscriber.plan && Array.isArray(subscriber.plan) && subscriber.plan.length > 0) {
           plan = subscriber.plan[0];
+        } 
+        // טיפול במקרה שהתוכנית מגיעה כאובייקט
+        else if (subscriber.plan && typeof subscriber.plan === 'object' && !Array.isArray(subscriber.plan)) {
+          plan = subscriber.plan;
+        }
+        
+        // אם יש subscription_plan_id אבל אין plan, ננסה לחלץ מידע בסיסי לגביו
+        if (!plan && subscriber.subscription_plan_id) {
+          console.log(`Subscriber ${subscriber.id} has subscription_plan_id ${subscriber.subscription_plan_id} but no plan data`);
         }
         
         return {

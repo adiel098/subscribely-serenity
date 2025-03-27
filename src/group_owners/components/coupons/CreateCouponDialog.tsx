@@ -47,7 +47,6 @@ interface CreateCouponDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateCouponData) => Promise<void>;
-  isSubmitting?: boolean; // Add this prop to fix TypeScript error
 }
 
 export const CreateCouponDialog = ({
@@ -55,7 +54,6 @@ export const CreateCouponDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  isSubmitting = false, // Provide default value
 }: CreateCouponDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 

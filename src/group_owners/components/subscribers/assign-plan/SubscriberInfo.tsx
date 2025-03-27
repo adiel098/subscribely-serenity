@@ -1,3 +1,4 @@
+
 import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -11,13 +12,13 @@ export const SubscriberInfo = ({ user }: SubscriberInfoProps) => {
   return (
     <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : ''}`}>
       <img 
-        src={user.photo_url || "/images/default-avatar.png"} 
+        src={user.image || "/images/default-avatar.png"} 
         alt={user.first_name}
         className={`rounded-full ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}`}
       />
       <div>
         <p className={`font-medium ${isMobile ? 'text-sm' : ''}`}>{user.first_name} {user.last_name}</p>
-        <p className="text-gray-500">@{user.username}</p>
+        <p className="text-gray-500">@{user.telegram_username || 'user'}</p>
       </div>
     </div>
   );

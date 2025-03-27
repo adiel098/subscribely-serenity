@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Select,
@@ -17,7 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Copy, Sparkles, Users, BroadcastPin } from "lucide-react";
+import { PlusCircle, Copy, Sparkles, Users, Radio } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -106,7 +107,7 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
                 setOpen(true);
                 setInitialType("channel");
               }}>
-                <BroadcastPin className="mr-2 h-3 w-3" />
+                <Radio className="mr-2 h-3 w-3" />
                 <span className="text-xs">Channel</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {

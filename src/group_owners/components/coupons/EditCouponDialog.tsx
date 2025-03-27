@@ -92,7 +92,12 @@ export const EditCouponDialog = ({
     try {
       const updateData: UpdateCouponData = {
         id: coupon.id,
-        ...data,
+        code: data.code,
+        description: data.description,
+        discount_type: data.discount_type,
+        discount_amount: data.discount_amount,
+        max_uses: data.max_uses,
+        is_active: data.is_active,
         expires_at: data.expires_at 
           ? new Date(data.expires_at).toISOString() 
           : null,
@@ -200,7 +205,7 @@ export const EditCouponDialog = ({
                         <Input
                           type="number"
                           min={0}
-                          step={field.value === "percentage" ? 1 : 0.01}
+                          step={form.watch("discount_type") === "percentage" ? 1 : 0.01}
                           {...field}
                         />
                         <div className="absolute right-3 top-2.5 text-muted-foreground">

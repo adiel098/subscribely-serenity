@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { 
@@ -29,7 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Logo } from "../header/Logo";
+import { Logo } from "./Logo";
 
 interface SidebarItemProps {
   title: string;
@@ -112,7 +113,7 @@ export function GroupOwnerSidebar() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { selectedCommunity, selectCommunity, communities } = useCommunityContext();
+  const { selectedCommunityId } = useCommunityContext();
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
@@ -165,11 +166,11 @@ export function GroupOwnerSidebar() {
       <div className="border-t p-4">
         <div className="mb-4 flex items-center space-x-4 pt-4">
           <Avatar>
-            <AvatarImage src={user?.avatar_url} />
+            <AvatarImage src={user?.image} />
             <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">{user?.full_name}</p>
+            <p className="text-sm font-medium">{user?.name}</p>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { couponFormSchema, CouponFormValues } from "./CouponFormSchema";
-import { CalendarIcon, Loader2, Percent, SaveIcon, TagIcon, X } from "lucide-react";
+import { CalendarIcon, Loader2, SaveIcon, TagIcon, X } from "lucide-react";
 import { format } from "date-fns";
 
 import {
@@ -74,7 +74,12 @@ export const CreateCouponDialog = ({
     setIsSubmitting(true);
     try {
       const couponData: CreateCouponData = {
-        ...data,
+        code: data.code,
+        description: data.description,
+        discount_type: data.discount_type,
+        discount_amount: data.discount_amount,
+        max_uses: data.max_uses,
+        is_active: data.is_active,
         community_id: communityId,
         expires_at: data.expires_at 
           ? new Date(data.expires_at).toISOString() 
@@ -181,7 +186,7 @@ export const CreateCouponDialog = ({
                         <Input
                           type="number"
                           min={0}
-                          step={field.value === "percentage" ? 1 : 0.01}
+                          step={form.watch("discount_type") === "percentage" ? 1 : 0.01}
                           {...field}
                         />
                         <div className="absolute right-3 top-2.5 text-muted-foreground">

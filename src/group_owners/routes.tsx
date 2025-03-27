@@ -1,37 +1,21 @@
-
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { GroupOwnerDashboard } from "./pages/Dashboard";
-import { SubscribersPage } from "./pages/Subscribers";
-import { SettingsPage } from "./pages/Settings";
-import { PaymentsPage } from "./pages/Payments";
-import { MessagesPage } from "./pages/Messages";
-import { Subscriptions } from "./pages/Subscriptions";
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Subscribers from "./pages/Subscribers";
 import { CouponsPage } from "./components/coupons/CouponsPage";
+import Subscriptions from "./pages/Subscriptions";
 
-export const Route = createFileRoute("/_auth/group-owner/")({
-  component: () => <GroupOwnerDashboard />,
-});
+export const GroupOwnerRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/subscribers" element={<Subscribers />} />
+      <Route path="/subscriptions" element={<Subscriptions />} />
+      <Route path="/coupons" element={<CouponsPage />} />
+      {/* Add other routes as they are implemented */}
+    </Routes>
+  );
+};
 
-export const SubscribersRoute = createFileRoute("/_auth/group-owner/subscribers")({
-  component: () => <SubscribersPage />,
-});
-
-export const SubscriptionsRoute = createFileRoute("/_auth/group-owner/subscriptions")({
-  component: () => <Subscriptions />,
-});
-
-export const CouponsRoute = createFileRoute("/_auth/group-owner/coupons")({
-  component: () => <CouponsPage />,
-});
-
-export const SettingsRoute = createFileRoute("/_auth/group-owner/settings")({
-  component: () => <SettingsPage />,
-});
-
-export const PaymentsRoute = createFileRoute("/_auth/group-owner/payments")({
-  component: () => <PaymentsPage />,
-});
-
-export const MessagesRoute = createFileRoute("/_auth/group-owner/messages")({
-  component: () => <MessagesPage />,
-});
+export default GroupOwnerRoutes;

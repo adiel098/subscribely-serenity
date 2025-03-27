@@ -1,97 +1,130 @@
 
-import React, { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
-import { PaymentMethods } from "@/telegram-mini-app/components/PaymentMethods";
-import { motion } from "framer-motion";
+import { PaymentMethods } from "../PaymentMethods";
+import { CouponInput } from "../coupon/CouponInput";
+import { PricingSummary } from "./PricingSummary";
+import { CheckCouponResult } from "@/group_owners/hooks/types/coupon.types";
+import { Card, CardContent } from "@/components/ui/card";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
+import { useApplyCoupon } from "@/group_owners/hooks/coupon/useApplyCoupon";
 
 interface PaymentSectionProps {
-  selectedPlan: Plan | null;
+  selectedPlan: Plan;
   selectedPaymentMethod: string | null;
   onPaymentMethodSelect: (method: string) => void;
   onCompletePurchase: () => void;
   onPaymentStart?: () => void;
   onPaymentError?: (error: string) => void;
   isProcessing?: boolean;
-  communityInviteLink: string | null;
-  communityId: string;
+  communityInviteLink?: string | null;
   showSuccess: boolean;
   telegramUserId?: string;
   telegramUsername?: string;
-  firstName?: string;
+  firstName?: string;  
   lastName?: string;
   activeSubscription?: Subscription | null;
+  communityId: string;
 }
 
-export const PaymentSection: React.FC<PaymentSectionProps> = ({
+export const PaymentSection = ({
   selectedPlan,
   selectedPaymentMethod,
   onPaymentMethodSelect,
   onCompletePurchase,
   onPaymentStart,
   onPaymentError,
-  isProcessing = false,
+  isProcessing,
   communityInviteLink,
-  communityId,
   showSuccess,
   telegramUserId,
   telegramUsername,
   firstName,
   lastName,
-  activeSubscription
-}) => {
-  // Enhanced logging for debugging
+  activeSubscription,
+  communityId
+}: PaymentSectionProps) => {
+  const [appliedCoupon, setAppliedCoupon] = useState<CheckCouponResult | null>(null);
+  const { mutateAsync: applyCoupon } = useApplyCoupon();
+
+  // When payment method changes or payment starts, we need to apply the coupon
   useEffect(() => {
-    console.log('[PaymentSection] Rendering with props:');
-    console.log('[PaymentSection] Selected payment method:', selectedPaymentMethod);
-    console.log('[PaymentSection] Community invite link:', communityInviteLink);
-    console.log('[PaymentSection] Community ID:', communityId);
-    console.log('[PaymentSection] Selected plan:', selectedPlan);
-    if (selectedPlan) {
-      console.log('[PaymentSection] Selected plan price:', selectedPlan.price);
-      console.log('[PaymentSection] Selected plan interval:', selectedPlan.interval);
-    }
-    console.log('[PaymentSection] Show success:', showSuccess);
-    console.log('[PaymentSection] Telegram user ID:', telegramUserId);
-    console.log('[PaymentSection] Telegram username:', telegramUsername);
-    console.log('[PaymentSection] First name:', firstName);
-    console.log('[PaymentSection] Last name:', lastName);
-    console.log('[PaymentSection] Active subscription:', activeSubscription);
-    console.log('[PaymentSection] Processing state:', isProcessing);
-  }, [communityInviteLink, selectedPlan, showSuccess, telegramUserId, telegramUsername, firstName, lastName, activeSubscription, isProcessing, communityId]);
+    const handleApplyCouponToPayment = async () => {
+      if (appliedCoupon?.isValid && appliedCoupon.coupon && isProcessing) {
+        try {
+          await applyCoupon({
+            couponId: appliedCoupon.coupon.id,
+            telegramUserId: telegramUserId,
+          });
+          console.log('Coupon applied to payment');
+        } catch (error) {
+          console.error('Failed to apply coupon to payment:', error);
+        }
+      }
+    };
+    
+    handleApplyCouponToPayment();
+  }, [isProcessing, appliedCoupon, applyCoupon, telegramUserId]);
   
-  if (!selectedPlan) return null;
+  // When plan changes, reset the applied coupon
+  useEffect(() => {
+    setAppliedCoupon(null);
+  }, [selectedPlan]);
   
-  const handlePaymentMethodSelect = (method: string) => {
-    console.log(`[PaymentSection] Payment method selected: ${method}`);
-    onPaymentMethodSelect(method);
+  const handleApplyCoupon = (couponResult: CheckCouponResult) => {
+    setAppliedCoupon(couponResult);
   };
   
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+  };
+  
+  // Calculate the final price after any discount
+  const finalPrice = appliedCoupon?.isValid 
+    ? appliedCoupon.finalPrice || selectedPlan.price
+    : selectedPlan.price;
+
   return (
-    <motion.div 
-      id="payment-methods" 
-      className="scroll-mt-4 mt-1" // Reduced from mt-6 to mt-3 to decrease the spacing
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6">
+          <h2 className="text-xl font-bold mb-4">Payment Details</h2>
+          
+          <PricingSummary 
+            plan={selectedPlan} 
+            appliedCoupon={appliedCoupon} 
+          />
+          
+          <CouponInput 
+            communityId={communityId}
+            planPrice={selectedPlan.price}
+            onApplyCoupon={handleApplyCoupon}
+            onRemoveCoupon={handleRemoveCoupon}
+            appliedCoupon={appliedCoupon}
+          />
+        </CardContent>
+      </Card>
+      
       <PaymentMethods
-        selectedPlan={selectedPlan}
+        selectedPlan={{
+          ...selectedPlan,
+          price: finalPrice, // Use the final price after discount
+        }}
         selectedPaymentMethod={selectedPaymentMethod}
-        onPaymentMethodSelect={handlePaymentMethodSelect}
+        onPaymentMethodSelect={onPaymentMethodSelect}
         onCompletePurchase={onCompletePurchase}
         onPaymentStart={onPaymentStart}
         onPaymentError={onPaymentError}
         isProcessing={isProcessing}
         communityInviteLink={communityInviteLink}
-        communityId={communityId}
         showSuccess={showSuccess}
         telegramUserId={telegramUserId}
         telegramUsername={telegramUsername}
         firstName={firstName}
         lastName={lastName}
         activeSubscription={activeSubscription}
+        communityId={communityId}
       />
-    </motion.div>
+    </div>
   );
 };

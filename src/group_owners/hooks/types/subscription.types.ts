@@ -26,6 +26,8 @@ export interface SubscriptionPlan {
   is_active: boolean;
   community_id: string;
   features?: string[];
+  has_trial_period?: boolean;
+  trial_days?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -50,4 +52,6 @@ export interface CreateSubscriptionPlanData {
   price: number;
   interval: SubscriptionInterval;
   features?: string[];
+  has_trial_period?: boolean;
+  trial_days?: number;
 }

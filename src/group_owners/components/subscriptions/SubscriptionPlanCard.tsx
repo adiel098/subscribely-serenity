@@ -1,117 +1,116 @@
 
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, TrashIcon } from "lucide-react";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { PlanCardHeader } from "./PlanCardHeader";
-import { PlanFeatureList } from "./PlanFeatureList";
-import { motion } from "framer-motion";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { CheckIcon, ClockIcon, EditIcon, GiftIcon, StarIcon, Trash2Icon } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  interval: 'monthly' | 'quarterly' | 'half-yearly' | 'yearly' | 'one-time' | 'lifetime';
-  features: string[];
-}
-
-interface Props {
+interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
-  intervalColors: Record<string, string>;
-  intervalLabels: Record<string, string>;
   onEdit: (plan: SubscriptionPlan) => void;
-  onDelete: (id: string) => void;
+  onDelete: (planId: string) => void;
 }
 
-export const SubscriptionPlanCard = ({ 
-  plan, 
-  intervalColors, 
-  intervalLabels, 
-  onEdit, 
-  onDelete 
-}: Props) => {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-      className="h-full"
-    >
-      <Card className="group relative overflow-hidden border hover:border-indigo-300 transition-all duration-300 bg-white shadow-sm hover:shadow-md h-full flex flex-col">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 to-indigo-700"></div>
-        
-        {/* Action Buttons */}
-        <div className="absolute top-3 right-3 flex gap-1.5 z-10">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  className="h-8 w-8 p-0 rounded-full bg-green-50 border border-green-200 text-green-600 hover:bg-green-100 hover:text-green-700 shadow-sm"
-                  onClick={() => onEdit(plan)}
-                >
-                  <PencilIcon className="h-4 w-4" />
-                  <span className="sr-only">Edit plan</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit plan</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+export const SubscriptionPlanCard = ({
+  plan,
+  onEdit,
+  onDelete,
+}: SubscriptionPlanCardProps) => {
+  const intervalLabel = {
+    monthly: "Monthly",
+    quarterly: "Quarterly",
+    "half-yearly": "Half-Yearly",
+    yearly: "Yearly",
+    "one-time": "One-Time",
+    lifetime: "Lifetime",
+  };
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  className="h-8 w-8 p-0 rounded-full bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 hover:text-red-600 shadow-sm"
-                  onClick={() => onDelete(plan.id)}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete plan</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete plan</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+  const intervalColor = {
+    monthly: "bg-blue-100 text-blue-800",
+    quarterly: "bg-green-100 text-green-800",
+    "half-yearly": "bg-purple-100 text-purple-800", 
+    yearly: "bg-amber-100 text-amber-800",
+    "one-time": "bg-gray-100 text-gray-800",
+    lifetime: "bg-indigo-100 text-indigo-800",
+  };
+
+  return (
+    <Card className="border shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-4 pt-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-bold text-lg">{plan.name}</h3>
+            {plan.description && (
+              <p className="text-muted-foreground text-sm mt-1">
+                {plan.description}
+              </p>
+            )}
+          </div>
+          <Badge
+            variant="outline"
+            className={`font-medium ${
+              intervalColor[plan.interval as keyof typeof intervalColor] || ""
+            }`}
+          >
+            {intervalLabel[plan.interval as keyof typeof intervalLabel]}
+          </Badge>
         </div>
         
-        <div className="p-5 flex flex-col h-full relative z-0">
-          <div className="mb-2">
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${intervalColors[plan.interval]}`}>
-              {intervalLabels[plan.interval]}
+        <div className="mt-2">
+          <div className="flex items-baseline">
+            <span className="text-2xl font-bold">
+              {formatCurrency(plan.price)}
             </span>
+            {plan.interval !== "one-time" && plan.interval !== "lifetime" && (
+              <span className="text-muted-foreground text-sm ml-1">
+                /{plan.interval.replace("-", " ")}
+              </span>
+            )}
           </div>
           
-          <PlanCardHeader 
-            name={plan.name}
-            price={plan.price}
-            interval={plan.interval}
-            intervalLabel={intervalLabels[plan.interval]}
-          />
-          
-          {plan.description && (
-            <p className="text-gray-600 leading-relaxed mt-3 text-sm">{plan.description}</p>
-          )}
-          
-          {plan.features && plan.features.length > 0 && (
-            <div className="mt-3">
-              <PlanFeatureList features={plan.features} />
+          {plan.has_trial_period && plan.trial_days && plan.trial_days > 0 && (
+            <div className="flex items-center mt-2 text-sm text-indigo-600">
+              <GiftIcon className="h-4 w-4 mr-1" />
+              <span>{plan.trial_days}-day free trial</span>
             </div>
           )}
         </div>
-      </Card>
-    </motion.div>
+      </CardHeader>
+      <CardContent className="pb-6 pt-0">
+        {plan.features && plan.features.length > 0 ? (
+          <ul className="space-y-2">
+            {plan.features.map((feature, i) => (
+              <li key={i} className="flex items-start">
+                <CheckIcon className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm italic">
+            No features specified
+          </p>
+        )}
+      </CardContent>
+      <CardFooter className="bg-muted/50 pt-4 pb-4 flex justify-end space-x-2 border-t">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(plan)}
+          className="h-8 px-2 text-muted-foreground"
+        >
+          <EditIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(plan.id)}
+          className="h-8 px-2 text-destructive hover:text-destructive"
+        >
+          <Trash2Icon className="h-4 w-4" />
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

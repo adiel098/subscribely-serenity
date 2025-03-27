@@ -608,6 +608,62 @@ export type Database = {
           },
         ]
       }
+      subscription_coupons: {
+        Row: {
+          code: string
+          community_id: string | null
+          created_at: string | null
+          description: string | null
+          discount_amount: number
+          discount_type: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          owner_id: string | null
+          updated_at: string | null
+          used_count: number | null
+        }
+        Insert: {
+          code: string
+          community_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_amount: number
+          discount_type: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          owner_id?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Update: {
+          code?: string
+          community_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_amount?: number
+          discount_type?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          owner_id?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_coupons_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_notifications: {
         Row: {
           community_id: string | null
@@ -657,11 +713,14 @@ export type Database = {
         Row: {
           amount: number
           community_id: string | null
+          coupon_id: string | null
           created_at: string
+          discount_amount: number | null
           first_name: string | null
           id: string
           invite_link: string | null
           last_name: string | null
+          original_amount: number | null
           payment_method: string | null
           plan_id: string | null
           status: string
@@ -672,11 +731,14 @@ export type Database = {
         Insert: {
           amount: number
           community_id?: string | null
+          coupon_id?: string | null
           created_at?: string
+          discount_amount?: number | null
           first_name?: string | null
           id?: string
           invite_link?: string | null
           last_name?: string | null
+          original_amount?: number | null
           payment_method?: string | null
           plan_id?: string | null
           status: string
@@ -687,11 +749,14 @@ export type Database = {
         Update: {
           amount?: number
           community_id?: string | null
+          coupon_id?: string | null
           created_at?: string
+          discount_amount?: number | null
           first_name?: string | null
           id?: string
           invite_link?: string | null
           last_name?: string | null
+          original_amount?: number | null
           payment_method?: string | null
           plan_id?: string | null
           status?: string
@@ -705,6 +770,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_coupons"
             referencedColumns: ["id"]
           },
           {
@@ -722,11 +794,13 @@ export type Database = {
           created_at: string
           description: string | null
           features: Json | null
+          has_trial_period: boolean | null
           id: string
           interval: string
           is_active: boolean | null
           name: string
           price: number
+          trial_days: number | null
           updated_at: string
         }
         Insert: {
@@ -734,11 +808,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
+          has_trial_period?: boolean | null
           id?: string
           interval: string
           is_active?: boolean | null
           name: string
           price: number
+          trial_days?: number | null
           updated_at?: string
         }
         Update: {
@@ -746,11 +822,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           features?: Json | null
+          has_trial_period?: boolean | null
           id?: string
           interval?: string
           is_active?: boolean | null
           name?: string
           price?: number
+          trial_days?: number | null
           updated_at?: string
         }
         Relationships: [

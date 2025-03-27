@@ -20,6 +20,11 @@ export const planFormSchema = z.object({
     z.coerce.number().int().min(1, "Must allow at least 1 member per community"),
     z.literal('').transform(() => null)
   ]),
+  has_trial_period: z.boolean().default(false),
+  trial_days: z.union([
+    z.coerce.number().int().min(1, "Trial days must be at least 1"),
+    z.literal('').transform(() => null)
+  ]).optional(),
 });
 
 export type PlanFormValues = z.infer<typeof planFormSchema>;

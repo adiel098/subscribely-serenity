@@ -1,187 +1,323 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { CheckIcon, Loader2, PencilIcon, SaveIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusIcon, SparklesIcon, CheckIcon } from "lucide-react";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunityContext } from "@/contexts/CommunityContext";
-import { PlanFeatureList } from "./PlanFeatureList";
-import { motion } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 
-interface EditPlanData {
-  id: string;
-  name: string;
-  description: string;
-  price: string;
-  interval: string;
-  features: string[];
-}
-
-interface Props {
+interface EditPlanDialogProps {
+  plan: SubscriptionPlan | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  editPlanData: EditPlanData;
-  isGroupMode?: boolean;
+  onSubmit: (planId: string, data: Partial<SubscriptionPlan>) => Promise<void>;
 }
 
-export const EditPlanDialog = ({ isOpen, onOpenChange, editPlanData, isGroupMode = false }: Props) => {
-  const { selectedCommunityId, selectedGroupId } = useCommunityContext();
-  const entityId = isGroupMode ? selectedGroupId : selectedCommunityId;
-  const { updatePlan } = useSubscriptionPlans(entityId || "");
+const planFormSchema = z.object({
+  name: z.string().min(1, { message: "Plan name is required" }),
+  description: z.string().nullable().optional(),
+  price: z.coerce.number().min(0, { message: "Price must be a positive number" }),
+  interval: z.enum(["monthly", "quarterly", "half-yearly", "yearly", "one-time", "lifetime"]),
+  features: z.string().optional(),
+  has_trial_period: z.boolean().default(false),
+  trial_days: z.coerce.number().min(0).optional(),
+});
 
-  const [editedPlan, setEditedPlan] = useState<EditPlanData>(editPlanData);
-  const [newFeature, setNewFeature] = useState("");
+type PlanFormValues = z.infer<typeof planFormSchema>;
 
-  // Update local state when editPlanData changes
-  if (editPlanData.id !== editedPlan.id && isOpen) {
-    setEditedPlan(editPlanData);
-  }
+export const EditPlanDialog = ({
+  plan,
+  isOpen,
+  onOpenChange,
+  onSubmit,
+}: EditPlanDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddFeature = () => {
-    if (newFeature.trim()) {
-      setEditedPlan({
-        ...editedPlan,
-        features: [...editedPlan.features, newFeature.trim()]
+  const form = useForm<PlanFormValues>({
+    resolver: zodResolver(planFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      interval: "monthly",
+      features: "",
+      has_trial_period: false,
+      trial_days: 0,
+    },
+  });
+
+  const watchHasTrial = form.watch("has_trial_period");
+
+  useEffect(() => {
+    if (plan) {
+      form.reset({
+        name: plan.name,
+        description: plan.description,
+        price: plan.price,
+        interval: plan.interval,
+        features: plan.features?.join("\n") || "",
+        has_trial_period: plan.has_trial_period || false,
+        trial_days: plan.trial_days || 0,
       });
-      setNewFeature("");
     }
-  };
+  }, [plan, form]);
 
-  const handleRemoveFeature = (index: number) => {
-    setEditedPlan({
-      ...editedPlan,
-      features: editedPlan.features.filter((_, i) => i !== index)
-    });
-  };
+  const handleSubmit = async (data: PlanFormValues) => {
+    if (!plan) return;
 
-  const handleUpdatePlan = async () => {
-    if (!entityId) return;
-    
+    setIsSubmitting(true);
     try {
-      await updatePlan.mutateAsync({
-        id: editedPlan.id,
-        name: editedPlan.name,
-        description: editedPlan.description,
-        price: Number(editedPlan.price),
-        interval: editedPlan.interval,
-        features: editedPlan.features
-      });
-      
+      // Convert features string to array
+      const featuresArray = data.features
+        ? data.features.split("\n").filter((feature) => feature.trim() !== "")
+        : [];
+
+      // Prepare data for submission
+      const updatedPlan: Partial<SubscriptionPlan> = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        interval: data.interval,
+        features: featuresArray,
+        has_trial_period: data.has_trial_period,
+        trial_days: data.has_trial_period ? data.trial_days : 0,
+      };
+
+      await onSubmit(plan.id, updatedPlan);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating plan:', error);
+      console.error("Error updating plan:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (!plan) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px] p-6 bg-gradient-to-br from-white to-indigo-50/30 border-indigo-100">
-        <DialogHeader className="space-y-3 pb-6">
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            <SparklesIcon className="h-6 w-6 text-indigo-600" />
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <PencilIcon className="h-5 w-5 text-indigo-500" />
             Edit Subscription Plan
           </DialogTitle>
-          <DialogDescription className="text-base">
-            Update your {isGroupMode ? "group" : "community"} subscription plan details.
+          <DialogDescription>
+            Update your subscription plan details
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6">
-          <div className="grid gap-2">
-            <Label htmlFor="name" className="text-base font-medium">Plan Name</Label>
-            <Input 
-              id="name" 
-              value={editedPlan.name}
-              onChange={e => setEditedPlan({ ...editedPlan, name: e.target.value })}
-              className="text-lg"
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plan Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Premium Plan" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description" className="text-base font-medium">Description</Label>
-            <Textarea 
-              id="description" 
-              value={editedPlan.description}
-              onChange={e => setEditedPlan({ ...editedPlan, description: e.target.value })}
-              className="min-h-[100px] text-base"
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Access to all premium content and features"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="price" className="text-base font-medium">Price</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</div>
-                <Input 
-                  id="price" 
-                  type="number" 
-                  value={editedPlan.price}
-                  onChange={e => setEditedPlan({ ...editedPlan, price: e.target.value })}
-                  className="text-lg pl-8"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="interval" className="text-base font-medium">Billing Interval</Label>
-              <Select 
-                value={editedPlan.interval}
-                onValueChange={(value) => setEditedPlan({ ...editedPlan, interval: value })}
-              >
-                <SelectTrigger id="interval">
-                  <SelectValue placeholder="Select interval" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="half-yearly">Half-Yearly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="one-time">One-Time</SelectItem>
-                  <SelectItem value="lifetime">Lifetime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-4">
-            <Label className="text-base font-medium">Features</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a feature..."
-                value={newFeature}
-                onChange={e => setNewFeature(e.target.value)}
-                onKeyPress={e => e.key === "Enter" && handleAddFeature()}
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          {...field}
+                        />
+                        <div className="absolute right-3 top-2.5 text-muted-foreground">
+                          $
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <Button 
-                onClick={handleAddFeature}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                <PlusIcon className="h-4 w-4 mr-1" />
-                Add
-              </Button>
+
+              <FormField
+                control={form.control}
+                name="interval"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Billing Interval</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select interval" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="one-time">One-Time</SelectItem>
+                        <SelectItem value="lifetime">Lifetime</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            
-            {editedPlan.features.length > 0 && (
-              <PlanFeatureList 
-                features={editedPlan.features} 
-                onRemoveFeature={handleRemoveFeature}
-                isEditable={true}
+
+            <FormField
+              control={form.control}
+              name="features"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Features (one per line)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Full access to private content
+Exclusive community benefits
+Priority customer support"
+                      {...field}
+                      rows={4}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter each feature on a new line
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="has_trial_period"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Free Trial Period</FormLabel>
+                    <FormDescription>
+                      Offer a free trial period for this plan
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {watchHasTrial && (
+              <FormField
+                control={form.control}
+                name="trial_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trial Period (days)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="7"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of days for the free trial period
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             )}
-          </div>
-        </div>
-        <DialogFooter className="gap-3 pt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleUpdatePlan} 
-            className="gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-md"
-            disabled={!editedPlan.name || !editedPlan.price || updatePlan.isPending}
-          >
-            <CheckIcon className="h-4 w-4" />
-            {updatePlan.isPending ? "Updating..." : "Update Plan"}
-          </Button>
-        </DialogFooter>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

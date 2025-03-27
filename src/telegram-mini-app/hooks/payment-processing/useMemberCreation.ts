@@ -11,6 +11,8 @@ interface MemberCreationParams {
   planInterval?: string;
   paymentId?: string;
   telegramUsername?: string;
+  hasTrial?: boolean;
+  trialDays?: number;
 }
 
 export const useMemberCreation = () => {
@@ -23,7 +25,9 @@ export const useMemberCreation = () => {
     planId,
     planInterval,
     paymentId,
-    telegramUsername
+    telegramUsername,
+    hasTrial = false,
+    trialDays = 0
   }: MemberCreationParams) => {
     if (!telegramUserId) return false;
     
@@ -32,9 +36,17 @@ export const useMemberCreation = () => {
     
     try {
       console.log(`[useMemberCreation] Creating member record with subscription dates`);
+      console.log(`[useMemberCreation] Trial: ${hasTrial ? 'Yes' : 'No'}, Days: ${trialDays}`);
       
-      // Calculate start and end dates for subscription
-      const { startDate, endDate } = calculateSubscriptionDates(planInterval);
+      // Calculate start and end dates for subscription or trial
+      const { startDate, endDate } = calculateSubscriptionDates(
+        planInterval, 
+        hasTrial, 
+        trialDays
+      );
+      
+      console.log(`[useMemberCreation] Start date: ${startDate.toISOString()}`);
+      console.log(`[useMemberCreation] End date: ${endDate.toISOString()}`);
       
       // Create or update the member record
       const memberResult = await createOrUpdateMember({
@@ -45,7 +57,8 @@ export const useMemberCreation = () => {
         payment_id: paymentId,
         username: telegramUsername,
         subscription_start_date: startDate.toISOString(),
-        subscription_end_date: endDate.toISOString()
+        subscription_end_date: endDate.toISOString(),
+        is_trial: hasTrial && trialDays > 0
       });
       
       if (!memberResult) {

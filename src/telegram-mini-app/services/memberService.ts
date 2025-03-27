@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logServiceAction, validateTelegramId, invokeSupabaseFunction } from "./utils/serviceUtils";
 import { SubscriptionStatus } from "../types/database.types";
@@ -12,6 +11,7 @@ export interface CreateMemberParams {
   username?: string;
   subscription_start_date?: string;
   subscription_end_date?: string;
+  is_trial?: boolean;
 }
 
 export interface Subscription {
@@ -138,7 +138,8 @@ export async function createOrUpdateMember(memberData: CreateMemberParams): Prom
       payment_id: memberData.payment_id,
       username: memberData.username,
       subscription_start_date: memberData.subscription_start_date,
-      subscription_end_date: memberData.subscription_end_date
+      subscription_end_date: memberData.subscription_end_date,
+      is_trial: memberData.is_trial || false
     };
     console.log("📤 Sending to edge function:", payload);
     

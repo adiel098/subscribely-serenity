@@ -1,202 +1,306 @@
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { CheckIcon, Loader2, PlusIcon, SaveIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusIcon, SparklesIcon, Zap } from "lucide-react";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunityContext } from "@/contexts/CommunityContext";
-import { PlanFeatureList } from "./PlanFeatureList";
-import { motion } from "framer-motion";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { CreateSubscriptionPlanData } from "@/group_owners/hooks/types/subscription.types";
 
-interface Props {
+interface CreatePlanDialogProps {
+  communityId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  isGroupMode?: boolean;
+  onSubmit: (data: CreateSubscriptionPlanData) => Promise<void>;
 }
 
-export const CreatePlanDialog = ({ isOpen, onOpenChange, isGroupMode = false }: Props) => {
-  const { selectedCommunityId, selectedGroupId } = useCommunityContext();
-  const entityId = isGroupMode ? selectedGroupId : selectedCommunityId;
-  const { createPlan } = useSubscriptionPlans(entityId || "");
-  const isMobile = useIsMobile();
+const planFormSchema = z.object({
+  name: z.string().min(1, { message: "Plan name is required" }),
+  description: z.string().optional(),
+  price: z.coerce.number().min(0, { message: "Price must be a positive number" }),
+  interval: z.enum(["monthly", "quarterly", "half-yearly", "yearly", "one-time", "lifetime"]),
+  features: z.string().optional(),
+  has_trial_period: z.boolean().default(false),
+  trial_days: z.coerce.number().min(0).optional(),
+});
 
-  const [newPlan, setNewPlan] = useState({
-    name: "",
-    description: "",
-    price: "",
-    interval: "monthly" as const,
-    features: [] as string[]
+type PlanFormValues = z.infer<typeof planFormSchema>;
+
+export const CreatePlanDialog = ({
+  communityId,
+  isOpen,
+  onOpenChange,
+  onSubmit,
+}: CreatePlanDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<PlanFormValues>({
+    resolver: zodResolver(planFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 9.99,
+      interval: "monthly",
+      features: "",
+      has_trial_period: false,
+      trial_days: 0,
+    },
   });
-  
-  const [newFeature, setNewFeature] = useState("");
 
-  const handleAddFeature = () => {
-    if (newFeature.trim()) {
-      setNewPlan({
-        ...newPlan,
-        features: [...newPlan.features, newFeature.trim()]
-      });
-      setNewFeature("");
-    }
-  };
+  const watchHasTrial = form.watch("has_trial_period");
 
-  const handleRemoveFeature = (index: number) => {
-    setNewPlan({
-      ...newPlan,
-      features: newPlan.features.filter((_, i) => i !== index)
-    });
-  };
-
-  const handleCreatePlan = async () => {
-    if (!entityId) return;
-    
+  const handleSubmit = async (data: PlanFormValues) => {
+    setIsSubmitting(true);
     try {
-      await createPlan.mutateAsync({
-        name: newPlan.name,
-        description: newPlan.description,
-        price: Number(newPlan.price),
-        interval: newPlan.interval,
-        features: newPlan.features
-      });
-      
+      // Convert features string to array
+      const featuresArray = data.features
+        ? data.features.split("\n").filter((feature) => feature.trim() !== "")
+        : [];
+
+      // Prepare data for submission
+      const planData: CreateSubscriptionPlanData = {
+        community_id: communityId,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        interval: data.interval,
+        features: featuresArray,
+        has_trial_period: data.has_trial_period,
+        trial_days: data.has_trial_period ? data.trial_days : 0,
+      };
+
+      await onSubmit(planData);
+      form.reset();
       onOpenChange(false);
-      setNewPlan({
-        name: "",
-        description: "",
-        price: "",
-        interval: "monthly",
-        features: []
-      });
     } catch (error) {
-      console.error('Error creating plan:', error);
+      console.error("Error creating plan:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className={`${isMobile ? 'max-w-[95%]' : 'sm:max-w-[525px]'} p-4 sm:p-6 bg-gradient-to-br from-white to-indigo-50/30 border-indigo-100 shadow-lg`}>
-        <DialogHeader className="space-y-3 pb-6">
-          <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-            <SparklesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 animate-pulse" />
-            Create New Subscription Plan
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <PlusIcon className="h-5 w-5 text-indigo-500" />
+            Create Subscription Plan
           </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base">
-            Design a new subscription plan to offer exclusive benefits to your {isGroupMode ? "group" : "community"} members.
+          <DialogDescription>
+            Create a new subscription plan for your community
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 sm:gap-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-white/80 to-transparent pointer-events-none h-32 -mt-10" />
-          <div className="grid gap-2">
-            <Label htmlFor="name" className="text-sm sm:text-base font-medium">Plan Name</Label>
-            <Input 
-              id="name" 
-              placeholder='e.g. "Premium Plan"' 
-              value={newPlan.name}
-              onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-              className="text-base sm:text-lg border-indigo-100 focus:border-indigo-300 shadow-sm"
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plan Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Premium Plan" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description" className="text-sm sm:text-base font-medium">Description</Label>
-            <Textarea 
-              id="description" 
-              placeholder="Describe the exclusive benefits of this plan..." 
-              value={newPlan.description}
-              onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-              className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base border-indigo-100 focus:border-indigo-300 shadow-sm"
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Access to all premium content and features"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="price" className="text-sm sm:text-base font-medium">Price</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</div>
-                <Input 
-                  id="price" 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={newPlan.price}
-                  onChange={e => setNewPlan({ ...newPlan, price: e.target.value })}
-                  className="text-base sm:text-lg pl-8 border-indigo-100 focus:border-indigo-300 shadow-sm"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="interval" className="text-sm sm:text-base font-medium">Billing Interval</Label>
-              <Select 
-                value={newPlan.interval}
-                onValueChange={(value: any) => setNewPlan({ ...newPlan, interval: value })}
-              >
-                <SelectTrigger id="interval" className="border-indigo-100 focus:border-indigo-300 shadow-sm">
-                  <SelectValue placeholder="Select interval" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="half-yearly">Half-Yearly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="one-time">One-Time</SelectItem>
-                  <SelectItem value="lifetime">Lifetime</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:gap-4">
-            <Label className="text-sm sm:text-base font-medium">Features</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a feature..."
-                value={newFeature}
-                onChange={e => setNewFeature(e.target.value)}
-                onKeyPress={e => e.key === "Enter" && handleAddFeature()}
-                className="border-indigo-100 focus:border-indigo-300 shadow-sm"
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          {...field}
+                        />
+                        <div className="absolute right-3 top-2.5 text-muted-foreground">
+                          $
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <Button 
-                onClick={handleAddFeature}
-                className="bg-indigo-600 hover:bg-indigo-700 shrink-0"
-              >
-                <PlusIcon className="h-4 w-4 mr-1" />
-                Add
-              </Button>
+
+              <FormField
+                control={form.control}
+                name="interval"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Billing Interval</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select interval" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
+                        <SelectItem value="half-yearly">Half-Yearly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="one-time">One-Time</SelectItem>
+                        <SelectItem value="lifetime">Lifetime</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            
-            {newPlan.features.length > 0 && (
-              <PlanFeatureList 
-                features={newPlan.features} 
-                onRemoveFeature={handleRemoveFeature}
-                isEditable={true}
+
+            <FormField
+              control={form.control}
+              name="features"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Features (one per line)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Full access to private content
+Exclusive community benefits
+Priority customer support"
+                      {...field}
+                      rows={4}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter each feature on a new line
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="has_trial_period"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Free Trial Period</FormLabel>
+                    <FormDescription>
+                      Offer a free trial period for this plan
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {watchHasTrial && (
+              <FormField
+                control={form.control}
+                name="trial_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trial Period (days)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="7"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Number of days for the free trial period
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             )}
-          </div>
-        </div>
-        <DialogFooter className={`gap-3 pt-6 ${isMobile ? 'flex-col' : ''}`}>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            className={isMobile ? "w-full" : ""}
-          >
-            Cancel
-          </Button>
-          <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className={isMobile ? "w-full" : ""}
-          >
-            <Button 
-              onClick={handleCreatePlan} 
-              className={`gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 shadow-md ${isMobile ? "w-full" : ""}`}
-              disabled={!newPlan.name || !newPlan.price || createPlan.isPending || !entityId}
-            >
-              <Zap className="h-4 w-4" />
-              {createPlan.isPending ? "Creating..." : "Create Plan"}
-            </Button>
-          </motion.div>
-        </DialogFooter>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    Create Plan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

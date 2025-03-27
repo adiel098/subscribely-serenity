@@ -27,8 +27,20 @@ export const CouponCard = ({ coupon, onEdit, onDelete }: CouponCardProps) => {
     });
   };
 
-  const handleDelete = () => {
-    onDelete(coupon);
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      onDelete(coupon);
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete coupon. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (

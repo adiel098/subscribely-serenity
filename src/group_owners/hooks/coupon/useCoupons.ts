@@ -15,19 +15,25 @@ export const useCoupons = (communityId: string) => {
       
       console.log('Fetching coupons for community:', communityId);
       
-      const { data, error } = await supabase
-        .from('subscription_coupons')
-        .select('*')
-        .eq('community_id', communityId)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching coupons:', error);
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('subscription_coupons')
+          .select('*')
+          .eq('community_id', communityId)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching coupons:', error);
+          throw error;
+        }
+        
+        console.log('Fetched coupons:', data);
+        return data as Coupon[];
+      } catch (err) {
+        console.error('Exception in fetchCoupons:', err);
+        // Return empty array to prevent UI from breaking
+        return [];
       }
-      
-      console.log('Fetched coupons:', data);
-      return data as Coupon[];
     },
     enabled: !!communityId
   });
@@ -37,21 +43,50 @@ export const useCoupons = (communityId: string) => {
     mutationFn: async (couponData: CreateCouponData) => {
       console.log('Creating coupon with data:', couponData);
       
-      const { data, error } = await supabase
-        .from('subscription_coupons')
-        .insert(couponData)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error creating coupon:', error);
-        throw error;
+      try {
+        // Make sure owner_id is set to the authenticated user
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        const fullCouponData = {
+          ...couponData,
+          owner_id: userData.user.id
+        };
+        
+        console.log('Submitting coupon with full data:', fullCouponData);
+        
+        const { data, error } = await supabase
+          .from('subscription_coupons')
+          .insert(fullCouponData)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error creating coupon:', error);
+          throw error;
+        }
+        
+        console.log('Created coupon successfully:', data);
+        return data as Coupon;
+      } catch (err) {
+        console.error('Exception in createCoupon:', err);
+        throw err;
       }
-      
-      return data as Coupon;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
+      toast({
+        title: "Success",
+        description: "Coupon created successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('Mutation error in createCoupon:', error);
+      toast({
+        title: "Error creating coupon",
+        description: "There was an error creating the coupon. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -62,22 +97,40 @@ export const useCoupons = (communityId: string) => {
       
       console.log('Updating coupon:', id, 'with data:', updateData);
       
-      const { data, error } = await supabase
-        .from('subscription_coupons')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error updating coupon:', error);
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('subscription_coupons')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error updating coupon:', error);
+          throw error;
+        }
+        
+        console.log('Updated coupon successfully:', data);
+        return data as Coupon;
+      } catch (err) {
+        console.error('Exception in updateCoupon:', err);
+        throw err;
       }
-      
-      return data as Coupon;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
+      toast({
+        title: "Success",
+        description: "Coupon updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('Mutation error in updateCoupon:', error);
+      toast({
+        title: "Error updating coupon",
+        description: "There was an error updating the coupon. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -86,25 +139,43 @@ export const useCoupons = (communityId: string) => {
     mutationFn: async (couponId: string) => {
       console.log('Deleting coupon with ID:', couponId);
       
-      const { error } = await supabase
-        .from('subscription_coupons')
-        .delete()
-        .eq('id', couponId);
-      
-      if (error) {
-        console.error('Error deleting coupon:', error);
-        throw error;
+      try {
+        const { error } = await supabase
+          .from('subscription_coupons')
+          .delete()
+          .eq('id', couponId);
+        
+        if (error) {
+          console.error('Error deleting coupon:', error);
+          throw error;
+        }
+        
+        console.log('Deleted coupon successfully');
+        return { success: true, id: couponId };
+      } catch (err) {
+        console.error('Exception in deleteCoupon:', err);
+        throw err;
       }
-      
-      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
+      toast({
+        title: "Success",
+        description: "Coupon deleted successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('Mutation error in deleteCoupon:', error);
+      toast({
+        title: "Error deleting coupon",
+        description: "There was an error deleting the coupon. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
   return {
-    coupons,
+    coupons: coupons || [],
     isLoading,
     error,
     createCoupon,

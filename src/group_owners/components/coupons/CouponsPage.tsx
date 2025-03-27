@@ -25,6 +25,7 @@ export const CouponsPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Filter coupons based on search query
   const filteredCoupons = coupons?.filter(
@@ -35,21 +36,24 @@ export const CouponsPage = () => {
   
   const handleCreateCoupon = async (data: CreateCouponData) => {
     try {
+      setIsProcessing(true);
+      console.log("Submitting coupon:", { ...data, community_id: communityId });
+      
       await createCoupon.mutateAsync({
         ...data,
         community_id: communityId
       });
-      toast({
-        title: "Success",
-        description: "Coupon created successfully",
-      });
+      
+      setCreateDialogOpen(false);
     } catch (error) {
       console.error("Error creating coupon:", error);
       toast({
         title: "Error",
-        description: "Failed to create coupon. Please try again.",
+        description: "Failed to create coupon. Please try again later.",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -59,12 +63,12 @@ export const CouponsPage = () => {
   };
   
   const handleUpdateCoupon = async (data: UpdateCouponData) => {
+    if (!data.id) return;
+    
     try {
+      setIsProcessing(true);
       await updateCoupon.mutateAsync(data);
-      toast({
-        title: "Success",
-        description: "Coupon updated successfully",
-      });
+      setEditDialogOpen(false);
     } catch (error) {
       console.error("Error updating coupon:", error);
       toast({
@@ -72,6 +76,8 @@ export const CouponsPage = () => {
         description: "Failed to update coupon. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -81,22 +87,21 @@ export const CouponsPage = () => {
   };
   
   const handleDeleteCoupon = async () => {
-    if (selectedCoupon) {
-      try {
-        await deleteCoupon.mutateAsync(selectedCoupon.id);
-        setDeleteDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Coupon deleted successfully",
-        });
-      } catch (error) {
-        console.error("Error deleting coupon:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete coupon. Please try again.",
-          variant: "destructive"
-        });
-      }
+    if (!selectedCoupon) return;
+    
+    try {
+      setIsProcessing(true);
+      await deleteCoupon.mutateAsync(selectedCoupon.id);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting coupon:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete coupon. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
   
@@ -165,6 +170,7 @@ export const CouponsPage = () => {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateCoupon}
+        isSubmitting={isProcessing || createCoupon.isPending}
       />
       
       {selectedCoupon && (
@@ -173,6 +179,7 @@ export const CouponsPage = () => {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           onSubmit={handleUpdateCoupon}
+          isSubmitting={isProcessing || updateCoupon.isPending}
         />
       )}
       
@@ -187,12 +194,13 @@ export const CouponsPage = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteCoupon}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isProcessing || deleteCoupon.isPending}
             >
-              Delete
+              {isProcessing || deleteCoupon.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

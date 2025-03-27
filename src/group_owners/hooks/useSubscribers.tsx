@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -113,8 +114,16 @@ export const useSubscribers = (communityId: string) => {
         // Add the user details from telegram_mini_app_users if available
         const userDetails = userMap[subscriber.telegram_user_id] || { first_name: null, last_name: null };
         
+        // Make sure subscription_status is always a string value
+        const status = typeof subscriber.subscription_status === 'string' 
+          ? subscriber.subscription_status 
+          : subscriber.subscription_status === true 
+            ? 'active' 
+            : 'inactive';
+            
         return {
           ...subscriber,
+          subscription_status: status,
           plan,
           first_name: userDetails.first_name,
           last_name: userDetails.last_name

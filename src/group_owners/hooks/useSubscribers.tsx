@@ -12,8 +12,8 @@ export interface Plan {
 
 export interface Subscriber {
   id: string;
-  first_name: string;
-  last_name?: string;
+  first_name: string | null;
+  last_name?: string | null;
   telegram_username?: string;
   photo_url?: string;
   subscription_status: string;
@@ -68,6 +68,30 @@ export const useSubscribers = (communityId: string) => {
       
       console.log("Raw subscriber data:", data);
       
+      // Get user names from telegram_mini_app_users if available
+      const userTelegramIds = data.map(subscriber => subscriber.telegram_user_id);
+      
+      const { data: telegramUsers, error: telegramError } = await supabase
+        .from('telegram_mini_app_users')
+        .select('telegram_id, first_name, last_name')
+        .in('telegram_id', userTelegramIds);
+      
+      if (telegramError) {
+        console.error('Error fetching telegram users:', telegramError);
+      }
+      
+      // Create a map of telegram_id to user details
+      const userMap: Record<string, { first_name: string | null, last_name: string | null }> = {};
+      
+      if (telegramUsers && telegramUsers.length > 0) {
+        telegramUsers.forEach(user => {
+          userMap[user.telegram_id] = {
+            first_name: user.first_name,
+            last_name: user.last_name
+          };
+        });
+      }
+      
       // עיבוד מתקדם של נתוני התוכנית (plan)
       const processedData = data.map(subscriber => {
         // טיפול בנתוני התוכנית מהחיבור
@@ -87,9 +111,14 @@ export const useSubscribers = (communityId: string) => {
           console.log(`Subscriber ${subscriber.id} has subscription_plan_id ${subscriber.subscription_plan_id} but no plan data`);
         }
         
+        // Add the user details from telegram_mini_app_users if available
+        const userDetails = userMap[subscriber.telegram_user_id] || { first_name: null, last_name: null };
+        
         return {
           ...subscriber,
-          plan
+          plan,
+          first_name: userDetails.first_name,
+          last_name: userDetails.last_name
         };
       });
       

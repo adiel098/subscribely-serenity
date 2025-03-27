@@ -39,13 +39,12 @@ export const MobileUnmanagedUsersList: React.FC<MobileUnmanagedUsersListProps> =
               <div className="text-xs text-gray-500 mt-1">
                 <span className="block">ID: {user.telegram_user_id}</span>
                 {user.first_name && (
-                  <span className="block mt-0.5">
+                  <span className="block mt-0.5 text-gray-700 font-medium">
                     {user.first_name} {user.last_name || ''}
                   </span>
                 )}
               </div>
               
-              {/* הוספת הצגת פרטי המנוי */}
               {user.subscription_plan_id && (
                 <div className="flex items-center gap-1 mt-1">
                   <Package className="h-3 w-3 text-amber-500" />

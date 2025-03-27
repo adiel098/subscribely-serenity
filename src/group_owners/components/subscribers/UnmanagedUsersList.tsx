@@ -94,7 +94,7 @@ export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListPr
                     </TooltipProvider>
                   </TableCell>
                   
-                  {/* Subscription Plan cell - נוספה */}
+                  {/* Subscription Plan cell */}
                   <TableCell className="py-3">
                     {user.subscription_plan_id ? (
                       <div className="flex items-center gap-1.5">

@@ -38,8 +38,12 @@ export async function processMember(
   };
 
   try {
-    console.log(`🔍 Processing member ${member.telegram_user_id} for community ${member.community_id}`);
-    console.log(`👤 Member details: ${JSON.stringify(member, null, 2)}`);
+    // Get current time with hours and minutes for logging
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    console.log(`🔍 [${timeStr}] Processing member ${member.telegram_user_id} for community ${member.community_id}`);
+    console.log(`👤 [${timeStr}] Member details: ${JSON.stringify(member, null, 2)}`);
 
     // Get the community information to access telegram_chat_id
     const { data: community, error: communityError } = await supabase
@@ -49,34 +53,34 @@ export async function processMember(
       .single();
 
     if (communityError) {
-      console.error(`❌ Error getting community info: ${communityError.message}`);
+      console.error(`❌ [${timeStr}] Error getting community info: ${communityError.message}`);
       log.action = "error";
       log.details = `Failed to get community info: ${communityError.message}`;
       return log;
     }
 
-    console.log(`📋 Community info: ${JSON.stringify(community, null, 2)}`);
+    console.log(`📋 [${timeStr}] Community info: ${JSON.stringify(community, null, 2)}`);
 
     // 1. Handle expired subscription members
     if (
       member.is_active &&
       member.subscription_status === "active" &&
       member.subscription_end_date &&
-      new Date(member.subscription_end_date) < new Date()
+      new Date(member.subscription_end_date) < now
     ) {
-      console.log(`⚠️ Member ${member.telegram_user_id} has an expired subscription`);
+      console.log(`⚠️ [${timeStr}] Member ${member.telegram_user_id} has an expired subscription`);
       
       // Update the member record in the database
       const { error: updateError } = await supabase
         .from("community_subscribers")
         .update({
           subscription_status: "expired",
-          last_checked: new Date().toISOString()
+          last_checked: now.toISOString()
         })
         .eq("id", member.member_id);
 
       if (updateError) {
-        console.error(`❌ Error updating member status: ${updateError.message}`);
+        console.error(`❌ [${timeStr}] Error updating member status: ${updateError.message}`);
         log.action = "error";
         log.details = `Failed to update member status: ${updateError.message}`;
         return log;
@@ -88,7 +92,7 @@ export async function processMember(
       // If bot settings specify auto-remove, also remove from chat
       if (botSettings.auto_remove_expired && community.telegram_chat_id) {
         try {
-          console.log(`🔄 Auto-remove is enabled, will try to remove user ${member.telegram_user_id} from chat`);
+          console.log(`🔄 [${timeStr}] Auto-remove is enabled, will try to remove user ${member.telegram_user_id} from chat`);
           
           // Get the bot token
           const { data: settings, error: settingsError } = await supabase
@@ -97,7 +101,7 @@ export async function processMember(
             .single();
 
           if (settingsError) {
-            console.error(`❌ Error getting bot token: ${settingsError.message}`);
+            console.error(`❌ [${timeStr}] Error getting bot token: ${settingsError.message}`);
             log.details += "; Failed to get bot token for removal";
             return log;
           }
@@ -113,7 +117,7 @@ export async function processMember(
           );
 
           if (kickResult) {
-            console.log(`✅ Successfully removed member ${member.telegram_user_id} from chat`);
+            console.log(`✅ [${timeStr}] Successfully removed member ${member.telegram_user_id} from chat`);
             log.details += "; Member was removed from chat";
             
             // Update the member record as inactive
@@ -121,15 +125,15 @@ export async function processMember(
               .from("community_subscribers")
               .update({
                 is_active: false,
-                last_checked: new Date().toISOString()
+                last_checked: now.toISOString()
               })
               .eq("id", member.member_id);
           } else {
-            console.warn(`⚠️ Failed to remove member ${member.telegram_user_id} from chat`);
+            console.warn(`⚠️ [${timeStr}] Failed to remove member ${member.telegram_user_id} from chat`);
             log.details += "; Failed to remove member from chat";
           }
         } catch (kickError) {
-          console.error(`❌ Error during member removal: ${kickError.message}`);
+          console.error(`❌ [${timeStr}] Error during member removal: ${kickError.message}`);
           log.details += `; Error during removal: ${kickError.message}`;
         }
       }
@@ -155,10 +159,9 @@ export async function processMember(
       member.subscription_end_date
     ) {
       const endDate = new Date(member.subscription_end_date);
-      const now = new Date();
       const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      console.log(`📅 Member ${member.telegram_user_id} subscription expires in ${daysUntilExpiry} days`);
+      console.log(`📅 [${timeStr}] Member ${member.telegram_user_id} subscription expires in ${daysUntilExpiry} days`);
       
       if (daysUntilExpiry <= 3 && daysUntilExpiry > 0) {
         // We should send a notification here (implement in a future update)
@@ -169,7 +172,7 @@ export async function processMember(
         await supabase
           .from("community_subscribers")
           .update({
-            last_checked: new Date().toISOString()
+            last_checked: now.toISOString()
           })
           .eq("id", member.member_id);
       }
@@ -178,13 +181,13 @@ export async function processMember(
     // 3. Handle inactive members that might still be in the group
     // This is a placeholder for future implementation
     if (!member.is_active) {
-      console.log(`ℹ️ Member ${member.telegram_user_id} is currently marked as inactive`);
+      console.log(`ℹ️ [${timeStr}] Member ${member.telegram_user_id} is currently marked as inactive`);
       
       // Update the last checked timestamp
       await supabase
         .from("community_subscribers")
         .update({
-          last_checked: new Date().toISOString()
+          last_checked: now.toISOString()
         })
         .eq("id", member.member_id);
       
@@ -194,7 +197,9 @@ export async function processMember(
 
     return log;
   } catch (error) {
-    console.error(`❌ Error processing member: ${error.message}`);
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    console.error(`❌ [${timeStr}] Error processing member: ${error.message}`);
     log.action = "error";
     log.details = `Processing error: ${error.message}`;
     return log;

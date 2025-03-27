@@ -6,6 +6,10 @@ import { processMember } from "./memberProcessor.ts";
 import { logSystemEvent } from "./utils/databaseLogger.ts";
 
 serve(async (req) => {
+  // Get current time with hours and minutes for logging
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
     return new Response("OK", { headers: corsHeaders });
@@ -19,11 +23,11 @@ serve(async (req) => {
         const requestData = await req.json();
         community_id = requestData.community_id || null;
       } catch (parseError) {
-        console.log("No community ID provided in request, will check all communities");
+        console.log(`[${timeStr}] No community ID provided in request, will check all communities`);
       }
     }
 
-    console.log(`🔄 Starting subscription check process${community_id ? ` for community: ${community_id}` : ''}`);
+    console.log(`🔄 [${timeStr}] Starting subscription check process${community_id ? ` for community: ${community_id}` : ''}`);
     
     // Create a Supabase client with the service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -37,7 +41,7 @@ serve(async (req) => {
       `Starting ${community_id ? 'targeted' : 'scheduled'} subscription check`,
       { 
         community_id,
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString()
       }
     );
 
@@ -47,18 +51,18 @@ serve(async (req) => {
       queryParams = { community_id_param: community_id };
     }
 
-    console.log(`📊 Fetching members to check with params:`, JSON.stringify(queryParams));
+    console.log(`📊 [${timeStr}] Fetching members to check with params:`, JSON.stringify(queryParams));
     const { data: membersToCheck, error: memberError } = await supabase.rpc(
       "get_members_to_check_v2",
       queryParams
     );
 
     if (memberError) {
-      console.error("❌ Error getting members to check:", memberError);
+      console.error(`❌ [${timeStr}] Error getting members to check:`, memberError);
       throw memberError;
     }
 
-    console.log(`✅ Found ${membersToCheck?.length || 0} members to process`);
+    console.log(`✅ [${timeStr}] Found ${membersToCheck?.length || 0} members to process`);
 
     // Process each member
     const logs = [];
@@ -67,7 +71,7 @@ serve(async (req) => {
     if (membersToCheck && membersToCheck.length > 0) {
       for (const member of membersToCheck) {
         try {
-          console.log("💫 Processing member:", JSON.stringify(member, null, 2));
+          console.log(`💫 [${timeStr}] Processing member:`, JSON.stringify(member, null, 2));
           
           // Get bot settings for this community
           const { data: botSettings, error: settingsError } = await supabase
@@ -77,7 +81,7 @@ serve(async (req) => {
             .single();
 
           if (settingsError) {
-            console.error(`❌ Error getting bot settings for community ${member.community_id}:`, settingsError);
+            console.error(`❌ [${timeStr}] Error getting bot settings for community ${member.community_id}:`, settingsError);
             logs.push({
               memberId: member.member_id,
               telegramUserId: member.telegram_user_id,
@@ -87,18 +91,18 @@ serve(async (req) => {
             continue;
           }
 
-          console.log(`📋 BOT SETTINGS for ${member.community_id}:`, JSON.stringify(botSettings, null, 2));
-          console.log(`⚙️ auto_remove_expired setting is: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
+          console.log(`📋 [${timeStr}] BOT SETTINGS for ${member.community_id}:`, JSON.stringify(botSettings, null, 2));
+          console.log(`⚙️ [${timeStr}] auto_remove_expired setting is: ${botSettings.auto_remove_expired ? 'ENABLED' : 'DISABLED'}`);
 
           // Process this member
           const result = await processMember(supabase, member, botSettings);
           logs.push(result);
           processedCount++;
           
-          console.log(`✅ Processed member ${member.telegram_user_id} with result: ${result.action} - ${result.details}`);
+          console.log(`✅ [${timeStr}] Processed member ${member.telegram_user_id} with result: ${result.action} - ${result.details}`);
         } catch (memberProcessError) {
           console.error(
-            `❌ Error processing member ${member.telegram_user_id}:`,
+            `❌ [${timeStr}] Error processing member ${member.telegram_user_id}:`,
             memberProcessError
           );
           logs.push({
@@ -110,7 +114,7 @@ serve(async (req) => {
         }
       }
     } else {
-      console.log(`ℹ️ No members to process${community_id ? ` for community ${community_id}` : ''} at this time`);
+      console.log(`ℹ️ [${timeStr}] No members to process${community_id ? ` for community ${community_id}` : ''} at this time`);
     }
 
     // Update the database with a status log
@@ -123,18 +127,18 @@ serve(async (req) => {
         logs,
         processedCount,
         totalMembers: membersToCheck?.length || 0,
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString()
       }
     );
 
-    console.log("✅ Subscription check completed successfully");
+    console.log(`✅ [${timeStr}] Subscription check completed successfully`);
     
     return new Response(
       JSON.stringify({
         success: true,
         message: `Processed ${processedCount} of ${membersToCheck?.length || 0} members`,
         logs,
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString()
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,7 +146,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("❌ Error in check-subscriptions function:", error);
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    console.error(`❌ [${timeStr}] Error in check-subscriptions function:`, error);
 
     // Log the error to the database
     try {
@@ -157,7 +163,7 @@ serve(async (req) => {
         { stack: error.stack }
       );
     } catch (logError) {
-      console.error("❌ Failed to log error:", logError);
+      console.error(`❌ [${timeStr}] Failed to log error:`, logError);
     }
 
     return new Response(
@@ -165,7 +171,7 @@ serve(async (req) => {
         success: false,
         error: error.message,
         stack: error.stack,
-        timestamp: new Date().toISOString()
+        timestamp: now.toISOString()
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

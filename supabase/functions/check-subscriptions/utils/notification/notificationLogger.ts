@@ -10,10 +10,13 @@ export async function logSuccessfulNotification(
   member: SubscriptionMember,
   notificationType: string
 ): Promise<void> {
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
   try {
     const memberId = member.id || member.member_id;
     if (!memberId) {
-      console.error("Missing member ID in logSuccessfulNotification:", JSON.stringify(member, null, 2));
+      console.error(`[${timeStr}] Missing member ID in logSuccessfulNotification:`, JSON.stringify(member, null, 2));
       throw new Error("Missing member ID");
     }
 
@@ -28,12 +31,12 @@ export async function logSuccessfulNotification(
       });
 
     if (error) {
-      console.error("Error logging notification:", error);
+      console.error(`[${timeStr}] Error logging notification:`, error);
       throw error;
     }
 
-    console.log(`Successfully logged ${notificationType} notification for member ${memberId}`);
+    console.log(`[${timeStr}] Successfully logged ${notificationType} notification for member ${memberId}`);
   } catch (error) {
-    console.error("Failed to log notification:", error);
+    console.error(`[${timeStr}] Failed to log notification:`, error);
   }
 }

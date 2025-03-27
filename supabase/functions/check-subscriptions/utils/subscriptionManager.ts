@@ -22,18 +22,22 @@ export async function handleExpiredSubscription(
   botSettings: BotSettings, 
   result: any
 ) {
+  // Get current time with hours and minutes for logging
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
   // Use community_id or group_id based on what's available
   const entityId = member.community_id || member.group_id;
   const entityType = member.community_id ? 'community' : 'group';
 
-  console.log(`⌛ EXPIRED: Handling expired subscription for member ${member.telegram_user_id} in ${entityType} ${entityId}`);
+  console.log(`⌛ [${timeStr}] EXPIRED: Handling expired subscription for member ${member.telegram_user_id} in ${entityType} ${entityId}`);
 
   result.action = "expired";
   result.details = `Handling expired subscription in ${entityType} ${entityId}`;
 
   // Check if auto-removal is enabled
   if (botSettings.auto_remove_expired) {
-    console.log(`🤖 Auto-removal is enabled for ${entityType} ${entityId}`);
+    console.log(`🤖 [${timeStr}] Auto-removal is enabled for ${entityType} ${entityId}`);
     result.details += " - Auto-removal enabled";
 
     try {
@@ -48,19 +52,19 @@ export async function handleExpiredSubscription(
         .eq("community_id", member.community_id);
 
       if (updateError) {
-        console.error("❌ Error suspending user:", updateError);
+        console.error(`❌ [${timeStr}] Error suspending user: ${updateError.message}`);
         result.action = "error";
         result.details = `Failed to suspend user: ${updateError.message}`;
         return;
       }
 
-      console.log(`✅ Successfully suspended user ${member.telegram_user_id} in database`);
+      console.log(`✅ [${timeStr}] Successfully suspended user ${member.telegram_user_id} in database`);
       result.details += " - User suspended in database";
 
       // Send notification to the user
       if (botSettings.expired_subscription_message) {
         try {
-          console.log(`💬 Sending expired subscription message to user ${member.telegram_user_id}`);
+          console.log(`💬 [${timeStr}] Sending expired subscription message to user ${member.telegram_user_id}`);
           await sendTelegramMessage(
             supabase,
             member.telegram_user_id,
@@ -68,7 +72,7 @@ export async function handleExpiredSubscription(
             botSettings.bot_signature
           );
 
-          console.log(`✅ Successfully sent expired subscription message to user ${member.telegram_user_id}`);
+          console.log(`✅ [${timeStr}] Successfully sent expired subscription message to user ${member.telegram_user_id}`);
           result.details += " - Expired subscription message sent";
 
           // Log the notification
@@ -80,26 +84,26 @@ export async function handleExpiredSubscription(
           );
         } catch (notificationError) {
           console.error(
-            `❌ Error sending expired subscription message to user ${member.telegram_user_id}:`,
+            `❌ [${timeStr}] Error sending expired subscription message to user ${member.telegram_user_id}:`,
             notificationError
           );
           result.action = "warning";
           result.details = `Failed to send expired subscription message: ${notificationError.message}`;
         }
       } else {
-        console.log(`ℹ️ No expired subscription message configured for ${entityType} ${entityId} - skipping notification`);
+        console.log(`ℹ️ [${timeStr}] No expired subscription message configured for ${entityType} ${entityId} - skipping notification`);
         result.details += " - No expired subscription message configured";
       }
     } catch (error) {
       console.error(
-        `❌ Error handling expired subscription for user ${member.telegram_user_id}:`,
+        `❌ [${timeStr}] Error handling expired subscription for user ${member.telegram_user_id}:`,
         error
       );
       result.action = "error";
       result.details = `Failed to handle expired subscription: ${error.message}`;
     }
   } else {
-    console.log(`ℹ️ Auto-removal is disabled for ${entityType} ${entityId} - skipping removal`);
+    console.log(`ℹ️ [${timeStr}] Auto-removal is disabled for ${entityType} ${entityId} - skipping removal`);
     result.details += " - Auto-removal disabled";
   }
 }
@@ -111,11 +115,15 @@ export async function sendReminderNotifications(
   daysUntilExpiration: number, 
   result: any
 ) {
+  // Get current time with hours and minutes for logging
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
   // Use community_id or group_id based on what's available  
   const entityId = member.community_id || member.group_id;
   const entityType = member.community_id ? 'community' : 'group';
 
-  console.log(`🔔 NOTIFICATION: Checking reminders for member ${member.telegram_user_id} - ${daysUntilExpiration} days until expiration in ${entityType} ${entityId}`);
+  console.log(`🔔 [${timeStr}] NOTIFICATION: Checking reminders for member ${member.telegram_user_id} - ${daysUntilExpiration} days until expiration in ${entityType} ${entityId}`);
 
   // First Reminder
   if (
@@ -123,7 +131,7 @@ export async function sendReminderNotifications(
     botSettings.first_reminder_message
   ) {
     try {
-      console.log(`💬 Sending FIRST reminder to user ${member.telegram_user_id}`);
+      console.log(`💬 [${timeStr}] Sending FIRST reminder to user ${member.telegram_user_id}`);
       await sendTelegramMessage(
         supabase,
         member.telegram_user_id,
@@ -131,7 +139,7 @@ export async function sendReminderNotifications(
         botSettings.bot_signature
       );
 
-      console.log(`✅ Successfully sent FIRST reminder to user ${member.telegram_user_id}`);
+      console.log(`✅ [${timeStr}] Successfully sent FIRST reminder to user ${member.telegram_user_id}`);
       result.action = "reminder_1";
       result.details = `First reminder sent - ${daysUntilExpiration} days until expiration`;
 
@@ -144,7 +152,7 @@ export async function sendReminderNotifications(
       );
     } catch (reminderError) {
       console.error(
-        `❌ Error sending FIRST reminder to user ${member.telegram_user_id}:`,
+        `❌ [${timeStr}] Error sending FIRST reminder to user ${member.telegram_user_id}:`,
         reminderError
       );
       result.action = "warning";
@@ -158,7 +166,7 @@ export async function sendReminderNotifications(
     botSettings.second_reminder_message
   ) {
     try {
-      console.log(`💬 Sending SECOND reminder to user ${member.telegram_user_id}`);
+      console.log(`💬 [${timeStr}] Sending SECOND reminder to user ${member.telegram_user_id}`);
       await sendTelegramMessage(
         supabase,
         member.telegram_user_id,
@@ -166,7 +174,7 @@ export async function sendReminderNotifications(
         botSettings.bot_signature
       );
 
-      console.log(`✅ Successfully sent SECOND reminder to user ${member.telegram_user_id}`);
+      console.log(`✅ [${timeStr}] Successfully sent SECOND reminder to user ${member.telegram_user_id}`);
       result.action = "reminder_2";
       result.details = `Second reminder sent - ${daysUntilExpiration} days until expiration`;
 
@@ -179,7 +187,7 @@ export async function sendReminderNotifications(
       );
     } catch (reminderError) {
       console.error(
-        `❌ Error sending SECOND reminder to user ${member.telegram_user_id}:`,
+        `❌ [${timeStr}] Error sending SECOND reminder to user ${member.telegram_user_id}:`,
         reminderError
       );
       result.action = "warning";

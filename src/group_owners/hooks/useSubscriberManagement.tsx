@@ -67,7 +67,8 @@ export const useSubscriberManagement = (communityId: string) => {
         body: { 
           path: '/remove-member',
           chat_id: community.telegram_chat_id,
-          user_id: subscriber.telegram_user_id
+          user_id: subscriber.telegram_user_id,
+          community_id: subscriber.community_id  // Pass community_id explicitly
         }
       });
 
@@ -92,17 +93,20 @@ export const useSubscriberManagement = (communityId: string) => {
         // Continue despite error, as the primary goal is to remove the user
       }
 
-      // 3. Update the database record to mark as inactive
+      // 3. Update the database record to mark as inactive and set the correct subscription status
       console.log('Updating subscription status in database...');
       
+      // IMPORTANT FIX: We need to use the correct table name and field names
+      // Changed from 'telegram_chat_members' to 'community_subscribers'
+      // Changed boolean subscription_status to text field
       const { data: updateData, error: updateError } = await supabase
-        .from('telegram_chat_members')
+        .from('community_subscribers')
         .update({
-          subscription_status: false,
+          subscription_status: 'removed',
           is_active: false
-          // No longer updating subscription_end_date as requested
         })
-        .eq('id', subscriber.id)
+        .eq('telegram_user_id', subscriber.telegram_user_id)
+        .eq('community_id', subscriber.community_id)
         .select();
 
       console.log('Update response:', { data: updateData, error: updateError });
@@ -119,7 +123,8 @@ export const useSubscriberManagement = (communityId: string) => {
           telegram_user_id: subscriber.telegram_user_id,
           community_id: subscriber.community_id,
           activity_type: 'member_removed',
-          details: 'Member manually removed from community by admin'
+          details: 'Member manually removed from community by admin',
+          status: 'removed'
         });
 
       console.log('Successfully updated subscriber status and logged removal');

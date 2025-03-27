@@ -82,7 +82,7 @@ export const useCoupons = (communityId: string) => {
     }
   });
 
-  // Delete a coupon - Fix the parameter type to accept a Coupon object
+  // Delete a coupon - Fixed to accept string ID instead of Coupon object
   const deleteCoupon = useMutation({
     mutationFn: async (couponId: string) => {
       const { error } = await supabase

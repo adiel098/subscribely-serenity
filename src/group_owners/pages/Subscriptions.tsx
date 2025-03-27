@@ -143,14 +143,14 @@ const Subscriptions = () => {
       </div>
 
       <CreatePlanDialog 
-        open={createDialogOpen} 
+        isOpen={createDialogOpen} 
         onOpenChange={setCreateDialogOpen}
       />
 
       {selectedPlanId && (
         <>
           <EditPlanDialog 
-            open={editDialogOpen} 
+            isOpen={editDialogOpen} 
             onOpenChange={setEditDialogOpen} 
             planId={selectedPlanId}
           />

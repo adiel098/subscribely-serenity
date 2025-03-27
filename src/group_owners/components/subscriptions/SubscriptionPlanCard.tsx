@@ -6,7 +6,7 @@ import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types"
 import { CheckIcon, ClockIcon, EditIcon, GiftIcon, StarIcon, Trash2Icon } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
-interface SubscriptionPlanCardProps {
+export interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
   onEdit: (plan: SubscriptionPlan) => void;
   onDelete: (planId: string) => void;

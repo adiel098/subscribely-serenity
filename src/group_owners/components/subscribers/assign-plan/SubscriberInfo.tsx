@@ -9,11 +9,14 @@ interface SubscriberInfoProps {
 export const SubscriberInfo = ({ user }: SubscriberInfoProps) => {
   const isMobile = useIsMobile();
   
+  // Generate profile image with fallbacks
+  const profileImage = user.photo_url || "/images/default-avatar.png";
+  
   return (
     <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : ''}`}>
       <img 
-        src={user.image || user.photo_url || "/images/default-avatar.png"} 
-        alt={user.first_name}
+        src={profileImage} 
+        alt={user.first_name || "User"}
         className={`rounded-full ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}`}
       />
       <div>

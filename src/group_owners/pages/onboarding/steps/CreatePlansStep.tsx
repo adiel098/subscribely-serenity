@@ -19,9 +19,9 @@ const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
   quarterly: "bg-green-100 text-green-700",
   "half-yearly": "bg-purple-100 text-purple-700",
-  yearly: "bg-orange-100 text-orange-700",
-  "one-time": "bg-gray-100 text-gray-700",
-  "lifetime": "bg-amber-100 text-amber-700"
+  yearly: "bg-orange-100 text-amber-800",
+  "one-time": "bg-gray-100 text-gray-800",
+  "lifetime": "bg-indigo-100 text-indigo-800",
 };
 
 const intervalLabels = {
@@ -226,14 +226,14 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
       {communityId && (
         <>
           <CreatePlanDialog 
-            open={createDialogOpen} 
+            isOpen={createDialogOpen} 
             onOpenChange={setCreateDialogOpen} 
           />
 
           {selectedPlanId && (
             <>
               <EditPlanDialog 
-                open={editDialogOpen} 
+                isOpen={editDialogOpen} 
                 onOpenChange={setEditDialogOpen} 
                 planId={selectedPlanId}
               />

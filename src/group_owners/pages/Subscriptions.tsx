@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -68,15 +67,27 @@ const Subscriptions = () => {
   };
 
   const handleUpdatePlan = async (planId: string, data: any) => {
-    await updatePlan.mutateAsync({
-      id: planId,
-      ...data
-    });
-    setEditDialogOpen(false);
-    toast({
-      title: "Plan updated",
-      description: "Your subscription plan was updated successfully."
-    });
+    console.log("[Subscriptions] Updating plan with ID:", planId);
+    console.log("[Subscriptions] Update data:", data);
+    
+    try {
+      await updatePlan.mutateAsync({
+        id: planId,
+        ...data
+      });
+      setEditDialogOpen(false);
+      toast({
+        title: "Plan updated",
+        description: "Your subscription plan was updated successfully."
+      });
+    } catch (error) {
+      console.error("[Subscriptions] Error updating plan:", error);
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: `Could not update plan: ${error instanceof Error ? error.message : "Unknown error"}`
+      });
+    }
   };
 
   const containerVariants = {

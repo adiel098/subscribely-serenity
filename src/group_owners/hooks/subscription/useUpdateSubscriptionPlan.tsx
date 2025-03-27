@@ -11,6 +11,8 @@ interface UpdatePlanParams {
   price: number;
   interval: string;
   features: string[];
+  has_trial_period?: boolean;
+  trial_days?: number;
 }
 
 export const useUpdateSubscriptionPlan = (communityId: string) => {
@@ -19,7 +21,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
   
   return useMutation({
     mutationFn: async (planData: UpdatePlanParams) => {
-      // Log operation for debugging
+      // Enhanced logging for debugging
       console.log(`Updating plan with ID: ${planData.id} for community: ${communityId}`);
       console.log("Plan data being sent:", JSON.stringify(planData, null, 2));
       
@@ -27,7 +29,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
         // First verify if the plan exists
         const { data: existingPlan, error: checkError } = await supabase
           .from('subscription_plans')
-          .select('id')
+          .select('*')
           .eq('id', planData.id)
           .maybeSingle();
           
@@ -41,6 +43,8 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
           throw new Error(`Plan with ID ${planData.id} not found`);
         }
         
+        console.log("Existing plan found:", existingPlan);
+        
         // If we get here, the plan exists, so update it
         const { data, error } = await supabase
           .from('subscription_plans')
@@ -50,8 +54,9 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
             price: planData.price,
             interval: planData.interval,
             features: planData.features,
-            has_trial_period: planData.has_trial_period,
-            trial_days: planData.trial_days
+            has_trial_period: planData.has_trial_period !== undefined ? planData.has_trial_period : existingPlan.has_trial_period,
+            trial_days: planData.trial_days !== undefined ? planData.trial_days : existingPlan.trial_days,
+            community_id: communityId // Ensure community_id is included
           })
           .eq('id', planData.id)
           .select();
@@ -61,6 +66,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
           throw error;
         }
         
+        // Check if any rows were affected by the update
         if (!data || data.length === 0) {
           console.warn("No rows were returned after update, plan may not exist:", planData.id);
           throw new Error("Plan not found or could not be updated");

@@ -100,8 +100,9 @@ export const EditPlanDialog = ({
         ? data.features.split("\n").filter((feature) => feature.trim() !== "")
         : [];
 
-      // Prepare data for submission
+      // Prepare data for submission, ensuring all fields are included
       const updatedPlan: Partial<SubscriptionPlan> = {
+        id: plan.id, // Make sure to include the ID
         name: data.name,
         description: data.description,
         price: data.price,
@@ -111,6 +112,7 @@ export const EditPlanDialog = ({
         trial_days: data.has_trial_period ? data.trial_days : 0,
       };
 
+      console.log("Submitting updated plan:", updatedPlan);
       await onSubmit(plan.id, updatedPlan);
       onOpenChange(false);
     } catch (error) {

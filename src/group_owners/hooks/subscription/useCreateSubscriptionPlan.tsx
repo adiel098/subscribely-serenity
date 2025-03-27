@@ -18,7 +18,9 @@ export const useCreateSubscriptionPlan = (communityId: string) => {
         price: planData.price,
         interval: planData.interval,
         features: planData.features || [],
-        is_active: true // Ensure plans are active by default
+        is_active: true, // Ensure plans are active by default
+        has_trial_period: planData.has_trial_period || false,
+        trial_days: planData.has_trial_period ? (planData.trial_days || 0) : 0
       };
       
       console.log("Creating subscription plan with payload:", payload);

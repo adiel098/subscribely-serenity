@@ -9,8 +9,8 @@ import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/Su
 import { EmptySubscriptionsState } from "@/group_owners/components/subscriptions/EmptySubscriptionsState";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { Loader2, Plus, SparklesIcon, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { Loader2, Plus, SparklesIcon, Sparkles } from "lucide-react";
 
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",

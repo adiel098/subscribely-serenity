@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { SubscribersTable } from "@/group_owners/components/subscribers/SubscribersTable";
@@ -14,7 +15,6 @@ import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BadgeDollarSign } from "lucide-react";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -24,7 +24,6 @@ const Subscribers = () => {
   
   const [userToAssignPlan, setUserToAssignPlan] = useState<Subscriber | null>(null);
   const [assignPlanDialogOpen, setAssignPlanDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("subscribers");
   
   const {
     subscribers,
@@ -50,6 +49,10 @@ const Subscribers = () => {
     assignPlanToUser
   } = useSubscriberPageState(entityId || "");
 
+  // Log the subscribers to debug
+  console.log("All subscribers:", subscribers);
+  console.log("Number of subscribers:", subscribers.length);
+
   const {
     searchQuery,
     setSearchQuery,
@@ -62,6 +65,10 @@ const Subscribers = () => {
     unmanagedUsers,
     uniquePlans
   } = useSubscriberFilters(subscribers);
+
+  // Log the filtered subscribers to debug
+  console.log("Managed subscribers:", managedSubscribers.length, managedSubscribers);
+  console.log("Unmanaged users:", unmanagedUsers.length, unmanagedUsers);
 
   const handleExport = () => {
     const success = exportSubscribersToCSV(filteredSubscribers);
@@ -91,8 +98,6 @@ const Subscribers = () => {
   return (
     <div className="w-full">
       <div className="space-y-6">
-        
-
         <SubscribersHeaderSection 
           subscribers={subscribers} 
           isGroupSelected={isGroupSelected} 

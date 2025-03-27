@@ -43,6 +43,8 @@ export const useSubscribers = (communityId: string) => {
     queryFn: async () => {
       if (!communityId) return [];
       
+      console.log("Fetching subscribers for community:", communityId);
+      
       // Updated query to join with the subscription_plans table
       const { data, error } = await supabase
         .from('community_subscribers')
@@ -64,6 +66,8 @@ export const useSubscribers = (communityId: string) => {
         throw error;
       }
       
+      console.log("Raw subscriber data:", data);
+      
       // Process the data to format the plan property correctly
       const processedData = data.map(subscriber => {
         // Handle the nested plan data from the join
@@ -76,6 +80,8 @@ export const useSubscribers = (communityId: string) => {
           plan: plan
         };
       });
+      
+      console.log("Processed subscriber data:", processedData);
       
       return processedData as Subscriber[];
     },

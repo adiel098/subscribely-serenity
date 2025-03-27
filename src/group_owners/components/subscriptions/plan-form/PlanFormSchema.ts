@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const planFormSchema = z.object({
@@ -8,7 +7,21 @@ export const planFormSchema = z.object({
   interval: z.enum(["monthly", "quarterly", "half-yearly", "yearly", "one-time", "lifetime"]),
   features: z.string().optional(),
   has_trial_period: z.boolean().default(false),
-  trial_days: z.coerce.number().min(0).optional(),
+  trial_days: z.coerce
+    .number()
+    .min(1, { message: "Trial period must be at least 1 day" })
+    .optional()
+    .refine(
+      (val, ctx) => {
+        if (ctx.parent.has_trial_period) {
+          return val !== undefined && val >= 1;
+        }
+        return true;
+      },
+      {
+        message: "Trial days are required when trial period is enabled",
+      }
+    ),
 });
 
 export type PlanFormValues = z.infer<typeof planFormSchema>;

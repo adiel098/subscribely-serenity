@@ -45,6 +45,7 @@ export const CreatePlanDialog = ({
       has_trial_period: false,
       trial_days: 0,
     },
+    mode: "onBlur",
   });
 
   const handleSubmit = async (data: PlanFormValues) => {
@@ -62,7 +63,7 @@ export const CreatePlanDialog = ({
         interval: data.interval,
         features: featuresArray,
         has_trial_period: data.has_trial_period,
-        trial_days: data.has_trial_period ? data.trial_days : 0,
+        trial_days: data.has_trial_period ? (data.trial_days || 0) : 0,
       };
 
       console.log("Creating plan with data:", planData);
@@ -75,6 +76,21 @@ export const CreatePlanDialog = ({
       setIsSubmitting(false);
     }
   };
+
+  // Reset form when dialog opens or closes
+  useState(() => {
+    if (!isOpen) {
+      form.reset({
+        name: "",
+        description: "",
+        price: 9.99,
+        interval: "monthly",
+        features: "",
+        has_trial_period: false,
+        trial_days: 0,
+      });
+    }
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

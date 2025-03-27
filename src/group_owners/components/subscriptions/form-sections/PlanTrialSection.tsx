@@ -53,13 +53,13 @@ export const PlanTrialSection: React.FC<PlanTrialSectionProps> = ({ form }) => {
                 <Input
                   type="number"
                   min="1"
-                  placeholder="7"
+                  placeholder="0"
                   {...field}
                   value={field.value || ""}
                 />
               </FormControl>
               <FormDescription>
-                Number of days for the free trial period
+                Number of days for the free trial period (minimum 1)
               </FormDescription>
               <FormMessage />
             </FormItem>

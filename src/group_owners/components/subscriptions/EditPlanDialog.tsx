@@ -45,6 +45,7 @@ export const EditPlanDialog = ({
       has_trial_period: false,
       trial_days: 0,
     },
+    mode: "onBlur",
   });
 
   // Reset form when plan changes or dialog opens
@@ -80,7 +81,7 @@ export const EditPlanDialog = ({
         interval: data.interval,
         features: featuresArray,
         has_trial_period: data.has_trial_period,
-        trial_days: data.has_trial_period ? data.trial_days : 0,
+        trial_days: data.has_trial_period ? (data.trial_days || 0) : 0,
         community_id: plan.community_id, // Ensure community_id is passed
       };
 

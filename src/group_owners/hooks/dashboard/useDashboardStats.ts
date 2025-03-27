@@ -10,7 +10,7 @@ import { useChartData } from "./useChartData";
 import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
 import { useMiniAppUsers } from "./useMiniAppUsers";
 import { useOwnerInfo } from "./useOwnerInfo";
-import { MiniAppData } from "./types";
+import { DashboardSubscriber, MiniAppData } from "./types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useDashboardStats");
@@ -30,9 +30,15 @@ export const useDashboardStats = (communityId: string) => {
   const { data: plans } = useFetchSubscriptionPlans(communityId);
   logger.log("💲 Subscription plans loaded:", plans?.length || 0);
   
+  // Cast and ensure all required properties are available for DashboardSubscriber
+  const dashboardSubscribers: DashboardSubscriber[] = subscribers.map(sub => ({
+    ...sub,
+    telegram_user_id: sub.telegram_user_id || '', // Ensure this is never undefined
+  }));
+  
   // Filter subscribers based on time range
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(subscribers, timeRangeStartDate);
+    useFilteredSubscribers(dashboardSubscribers, timeRangeStartDate);
   logger.log("🔍 Filtered subscribers:", {
     total: filteredSubscribers.length,
     active: activeSubscribers.length,

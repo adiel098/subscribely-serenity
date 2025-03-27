@@ -12,7 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 interface CouponCardProps {
   coupon: Coupon;
   onEdit: (coupon: Coupon) => void;
-  onDelete: (couponId: string) => void;
+  onDelete: (coupon: Coupon) => void; // Changed from (couponId: string) to (coupon: Coupon)
 }
 
 export const CouponCard = ({ coupon, onEdit, onDelete }: CouponCardProps) => {
@@ -30,7 +30,7 @@ export const CouponCard = ({ coupon, onEdit, onDelete }: CouponCardProps) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await onDelete(coupon.id);
+      await onDelete(coupon); // Pass the entire coupon object
     } finally {
       setIsDeleting(false);
     }

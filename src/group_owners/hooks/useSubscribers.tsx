@@ -30,6 +30,11 @@ export interface Subscriber {
   community_id?: string;
   plan?: Plan;
   is_blocked?: boolean;
+  payment_status?: string;
+  metadata?: {
+    mini_app_accessed?: boolean;
+    [key: string]: any;
+  };
 }
 
 export const useSubscribers = (communityId: string) => {

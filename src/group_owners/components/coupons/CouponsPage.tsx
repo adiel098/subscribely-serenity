@@ -11,9 +11,11 @@ import { CreateCouponDialog } from "./CreateCouponDialog";
 import { EditCouponDialog } from "./EditCouponDialog";
 import { EmptyCouponsState } from "./EmptyCouponsState";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export const CouponsPage = () => {
   const { selectedCommunityId } = useCommunityContext();
+  const { toast } = useToast();
   const communityId = selectedCommunityId || "";
   
   const { coupons, isLoading, createCoupon, updateCoupon, deleteCoupon } = useCoupons(communityId);
@@ -32,7 +34,23 @@ export const CouponsPage = () => {
   );
   
   const handleCreateCoupon = async (data: CreateCouponData) => {
-    await createCoupon.mutateAsync(data);
+    try {
+      await createCoupon.mutateAsync({
+        ...data,
+        community_id: communityId
+      });
+      toast({
+        title: "Success",
+        description: "Coupon created successfully",
+      });
+    } catch (error) {
+      console.error("Error creating coupon:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create coupon. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleEditCoupon = (coupon: Coupon) => {
@@ -41,10 +59,22 @@ export const CouponsPage = () => {
   };
   
   const handleUpdateCoupon = async (data: UpdateCouponData) => {
-    await updateCoupon.mutateAsync(data);
+    try {
+      await updateCoupon.mutateAsync(data);
+      toast({
+        title: "Success",
+        description: "Coupon updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating coupon:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update coupon. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
-  // Changed to accept a coupon object and extract the ID
   const handleDeleteConfirm = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
     setDeleteDialogOpen(true);
@@ -52,8 +82,21 @@ export const CouponsPage = () => {
   
   const handleDeleteCoupon = async () => {
     if (selectedCoupon) {
-      await deleteCoupon.mutateAsync(selectedCoupon.id);
-      setDeleteDialogOpen(false);
+      try {
+        await deleteCoupon.mutateAsync(selectedCoupon.id);
+        setDeleteDialogOpen(false);
+        toast({
+          title: "Success",
+          description: "Coupon deleted successfully",
+        });
+      } catch (error) {
+        console.error("Error deleting coupon:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete coupon. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
   
@@ -124,12 +167,14 @@ export const CouponsPage = () => {
         onSubmit={handleCreateCoupon}
       />
       
-      <EditCouponDialog
-        coupon={selectedCoupon}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onSubmit={handleUpdateCoupon}
-      />
+      {selectedCoupon && (
+        <EditCouponDialog
+          coupon={selectedCoupon}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSubmit={handleUpdateCoupon}
+        />
+      )}
       
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Coupon, CreateCouponData, UpdateCouponData } from "../types/coupon.types";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 
 export const useCoupons = (communityId: string) => {
   const queryClient = useQueryClient();
@@ -12,6 +12,8 @@ export const useCoupons = (communityId: string) => {
     queryKey: ['coupons', communityId],
     queryFn: async () => {
       if (!communityId) return [];
+      
+      console.log('Fetching coupons for community:', communityId);
       
       const { data, error } = await supabase
         .from('subscription_coupons')
@@ -24,6 +26,7 @@ export const useCoupons = (communityId: string) => {
         throw error;
       }
       
+      console.log('Fetched coupons:', data);
       return data as Coupon[];
     },
     enabled: !!communityId
@@ -32,6 +35,8 @@ export const useCoupons = (communityId: string) => {
   // Create a new coupon
   const createCoupon = useMutation({
     mutationFn: async (couponData: CreateCouponData) => {
+      console.log('Creating coupon with data:', couponData);
+      
       const { data, error } = await supabase
         .from('subscription_coupons')
         .insert(couponData)
@@ -46,11 +51,7 @@ export const useCoupons = (communityId: string) => {
       return data as Coupon;
     },
     onSuccess: () => {
-      toast.success('Coupon created successfully');
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to create coupon: ${error.message}`);
     }
   });
 
@@ -58,6 +59,8 @@ export const useCoupons = (communityId: string) => {
   const updateCoupon = useMutation({
     mutationFn: async (couponData: UpdateCouponData) => {
       const { id, ...updateData } = couponData;
+      
+      console.log('Updating coupon:', id, 'with data:', updateData);
       
       const { data, error } = await supabase
         .from('subscription_coupons')
@@ -74,17 +77,15 @@ export const useCoupons = (communityId: string) => {
       return data as Coupon;
     },
     onSuccess: () => {
-      toast.success('Coupon updated successfully');
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to update coupon: ${error.message}`);
     }
   });
 
-  // Delete a coupon - Fixed to accept string ID instead of Coupon object
+  // Delete a coupon - accepts string ID
   const deleteCoupon = useMutation({
     mutationFn: async (couponId: string) => {
+      console.log('Deleting coupon with ID:', couponId);
+      
       const { error } = await supabase
         .from('subscription_coupons')
         .delete()
@@ -98,11 +99,7 @@ export const useCoupons = (communityId: string) => {
       return { success: true };
     },
     onSuccess: () => {
-      toast.success('Coupon deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['coupons', communityId] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete coupon: ${error.message}`);
     }
   });
 

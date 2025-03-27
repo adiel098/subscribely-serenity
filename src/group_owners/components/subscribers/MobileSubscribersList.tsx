@@ -53,14 +53,8 @@ export const MobileSubscribersList: React.FC<MobileSubscribersListProps> = ({
   onAssignPlan
 }) => {
   const getStatusBadge = (subscriber: Subscriber) => {
-    if (!subscriber.is_active) {
-      return (
-        <Badge variant="destructive" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px]">
-          <XCircle className="h-1.5 w-1.5" />
-          <span>Removed</span>
-        </Badge>
-      );
-    } else if (subscriber.subscription_status === "active") {
+    // First check subscription_status
+    if (subscriber.subscription_status === "active") {
       return (
         <Badge variant="success" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px]">
           <CheckCircle2 className="h-1.5 w-1.5" />
@@ -75,6 +69,15 @@ export const MobileSubscribersList: React.FC<MobileSubscribersListProps> = ({
         </Badge>
       );
     } else if (subscriber.subscription_status === "removed") {
+      return (
+        <Badge variant="destructive" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px]">
+          <XCircle className="h-1.5 w-1.5" />
+          <span>Removed</span>
+        </Badge>
+      );
+    } 
+    // Only if subscription_status doesn't provide useful information, check is_active
+    else if (!subscriber.is_active) {
       return (
         <Badge variant="destructive" className="text-[0.5rem] py-0 px-1 gap-0.5 font-medium h-[14px]">
           <XCircle className="h-1.5 w-1.5" />

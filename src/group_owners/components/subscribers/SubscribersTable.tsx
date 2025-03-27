@@ -54,14 +54,8 @@ export const SubscribersTable = ({
 }: SubscribersTableProps) => {
   const isMobile = useIsMobile();
   const getStatusBadge = (subscriber: Subscriber) => {
-    if (!subscriber.is_active) {
-      return (
-        <Badge variant="destructive" className="text-xs py-0.5 px-2.5 gap-1 font-medium">
-          <XCircle className="h-3 w-3" />
-          <span>Removed</span>
-        </Badge>
-      );
-    } else if (subscriber.subscription_status === "active") {
+    // First check subscription_status
+    if (subscriber.subscription_status === "active") {
       return (
         <Badge variant="success" className="text-xs py-0.5 px-2.5 gap-1 font-medium">
           <CheckCircle2 className="h-3 w-3" />
@@ -76,6 +70,15 @@ export const SubscribersTable = ({
         </Badge>
       );
     } else if (subscriber.subscription_status === "removed") {
+      return (
+        <Badge variant="destructive" className="text-xs py-0.5 px-2.5 gap-1 font-medium">
+          <XCircle className="h-3 w-3" />
+          <span>Removed</span>
+        </Badge>
+      );
+    } 
+    // Only if subscription_status doesn't provide useful information, check is_active
+    else if (!subscriber.is_active) {
       return (
         <Badge variant="destructive" className="text-xs py-0.5 px-2.5 gap-1 font-medium">
           <XCircle className="h-3 w-3" />

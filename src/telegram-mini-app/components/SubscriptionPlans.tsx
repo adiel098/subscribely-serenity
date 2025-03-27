@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock } from "lucide-react";
+import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock, Gift } from "lucide-react";
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 import { motion } from "framer-motion";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
@@ -98,6 +98,7 @@ export const SubscriptionPlans = ({
         const intervalDisplay = getIntervalDisplay(plan.interval);
         const isPremium = planIndex === 0 || plan.name.toLowerCase().includes('premium') || plan.name.toLowerCase().includes('pro');
         const isSelected = selectedPlan?.id === plan.id;
+        const hasTrial = plan.has_trial_period && plan.trial_days && plan.trial_days > 0;
         
         return (
           <motion.div
@@ -132,6 +133,12 @@ export const SubscriptionPlans = ({
                       Active
                     </Badge>
                   )}
+                  {hasTrial && (
+                    <Badge variant="outline" className="text-xs py-0 px-1.5 bg-rose-50 text-rose-700 border-rose-200 flex items-center gap-0.5">
+                      <Gift className="h-3 w-3 text-rose-500" />
+                      <span>{plan.trial_days}-day trial</span>
+                    </Badge>
+                  )}
                   {isPremium && !isActive && (
                     <Badge variant="secondary" className="text-xs py-0 px-1.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
                       Recommended
@@ -161,6 +168,15 @@ export const SubscriptionPlans = ({
                 </p>
               </div>
             </div>
+            
+            {hasTrial && (
+              <div className="mt-1 mb-1 bg-rose-50/70 backdrop-blur-sm p-1.5 rounded-lg border border-rose-100 flex items-center">
+                <Gift className="h-4 w-4 text-rose-500 mr-1.5 flex-shrink-0" />
+                <span className="text-xs text-rose-700">
+                  Start with a <span className="font-medium">{plan.trial_days}-day free trial</span>
+                </span>
+              </div>
+            )}
             
             {plan.features && plan.features.length > 0 && (
               <div className="mt-1 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
@@ -195,3 +211,4 @@ export const SubscriptionPlans = ({
     </motion.div>
   );
 };
+

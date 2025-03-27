@@ -170,7 +170,6 @@ export const CouponsPage = () => {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateCoupon}
-        isSubmitting={isProcessing || createCoupon.isPending}
       />
       
       {selectedCoupon && (
@@ -179,7 +178,6 @@ export const CouponsPage = () => {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           onSubmit={handleUpdateCoupon}
-          isSubmitting={isProcessing || updateCoupon.isPending}
         />
       )}
       

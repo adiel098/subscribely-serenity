@@ -12,6 +12,8 @@ interface MemberDataInterface {
   subscription_end_date?: string;
   is_trial?: boolean;
   trial_end_date?: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 interface MemberResult {

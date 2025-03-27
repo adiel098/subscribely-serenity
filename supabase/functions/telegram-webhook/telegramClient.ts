@@ -13,5 +13,8 @@ export { sendPhotoWithCaption } from "./utils/telegram/photoMessages.ts";
 // Export user verification utilities
 export { canMessageUser } from "./utils/telegram/userVerification.ts";
 
+// Export user information utilities
+export { getTelegramUserInfo } from "./utils/telegram/userInfo.ts";
+
 // Export core utilities 
 export { isValidImageUrl } from "./utils/telegram/coreClient.ts";

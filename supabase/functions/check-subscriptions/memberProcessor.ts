@@ -161,12 +161,16 @@ export async function processMember(
       const endDate = new Date(member.subscription_end_date);
       const daysUntilExpiry = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      console.log(`📅 [${timeStr}] Member ${member.telegram_user_id} subscription expires in ${daysUntilExpiry} days`);
+      // Calculate more precise time remaining
+      const hoursUntilExpiry = Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60)) % 24;
+      const minutesUntilExpiry = Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60)) % 60;
+      
+      console.log(`📅 [${timeStr}] Member ${member.telegram_user_id} subscription expires in ${daysUntilExpiry} days, ${hoursUntilExpiry} hours, ${minutesUntilExpiry} minutes`);
       
       if (daysUntilExpiry <= 3 && daysUntilExpiry > 0) {
         // We should send a notification here (implement in a future update)
         log.action = "expiring_soon";
-        log.details = `Subscription expires in ${daysUntilExpiry} days`;
+        log.details = `Subscription expires in ${daysUntilExpiry} days, ${hoursUntilExpiry} hours, ${minutesUntilExpiry} minutes`;
         
         // Update the last checked timestamp
         await supabase

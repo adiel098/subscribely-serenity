@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Zap, AlertCircle, CheckCircle2, ChevronRight } from "lucide-react";
 import { Subscription } from "../../services/memberService";
-import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ExpirationWarning } from "./ExpirationWarning";
 import { MembershipStatusBadge } from "./membership-card/MembershipStatusBadge";
+import { getDetailedTimeRemaining } from "@/utils/dateUtils";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -28,6 +28,9 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
+  
+  // Get detailed time remaining
+  const detailedTimeRemaining = getDetailedTimeRemaining(subscription.expiry_date);
 
   let statusIcon;
   if (isExpired) {
@@ -73,12 +76,12 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             {isExpired ? (
               <span className="text-red-500 font-medium flex items-center gap-1">
                 <AlertCircle className="h-3.5 w-3.5" />
-                Expired {format(new Date(subscription.expiry_date), 'MMM d, yyyy')}
+                Expired
               </span>
             ) : (
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                Expires {format(new Date(subscription.expiry_date), 'MMM d, yyyy')}
+                {detailedTimeRemaining} remaining
               </span>
             )}
           </div>

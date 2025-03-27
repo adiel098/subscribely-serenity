@@ -23,6 +23,21 @@ export const MobileUnmanagedUsersList: React.FC<MobileUnmanagedUsersListProps> =
     );
   }
 
+  const getUserDisplayName = (user: Subscriber): string => {
+    // First try to use telegram username
+    if (user.telegram_username) {
+      return `@${user.telegram_username}`;
+    }
+    
+    // Then try to use first name + last name
+    if (user.first_name) {
+      return `${user.first_name} ${user.last_name || ''}`.trim();
+    }
+    
+    // Fallback to telegram ID if nothing else is available
+    return `User ${user.telegram_user_id}`;
+  };
+
   return (
     <div className="space-y-3">
       {users.map((user) => (
@@ -32,13 +47,13 @@ export const MobileUnmanagedUsersList: React.FC<MobileUnmanagedUsersListProps> =
               <div className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-gray-500" />
                 <h3 className="font-medium text-sm">
-                  {user.telegram_username || 'No username'}
+                  {getUserDisplayName(user)}
                 </h3>
               </div>
               
               <div className="text-xs text-gray-500 mt-1">
                 <span className="block">ID: {user.telegram_user_id}</span>
-                {user.first_name && (
+                {user.first_name && user.first_name !== getUserDisplayName(user) && (
                   <span className="block mt-0.5 text-gray-700 font-medium">
                     {user.first_name} {user.last_name || ''}
                   </span>

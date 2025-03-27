@@ -24,6 +24,13 @@ interface UnmanagedUsersListProps {
 }
 
 export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListProps) => {
+  const getUserDisplayName = (user: Subscriber): string => {
+    if (user.first_name) {
+      return `${user.first_name} ${user.last_name || ''}`.trim();
+    }
+    return '-';
+  };
+
   return (
     <div className="rounded-lg border shadow-sm overflow-hidden bg-white">
       <div className="overflow-auto max-h-[calc(100vh-335px)]">
@@ -74,9 +81,7 @@ export const UnmanagedUsersList = ({ users, onAssignPlan }: UnmanagedUsersListPr
                   {/* Name cell */}
                   <TableCell className="py-3">
                     <div className="font-medium text-sm text-gray-800">
-                      {user.first_name || "-"}
-                      {user.first_name && user.last_name && " "}
-                      {user.last_name || ""}
+                      {getUserDisplayName(user)}
                     </div>
                   </TableCell>
                   

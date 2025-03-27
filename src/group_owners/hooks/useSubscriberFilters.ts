@@ -38,25 +38,25 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
     });
   }, [subscribers, searchQuery, statusFilter, planFilter]);
 
-  // Split subscribers into managed and unmanaged - משתמשים מנוהלים ולא מנוהלים
+  // Split subscribers into managed and unmanaged
   const managedSubscribers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
-      // התנאי החדש לסיווג מנויים מנוהלים:
-      // 1. בעל סטטוס מנוי פעיל (המצב החשוב ביותר)
+      // Updated condition for managed subscribers:
+      // 1. Has active subscription status
       sub.subscription_status === "active" || 
-      // 2. או שיש לו תוכנית מוגדרת (גם אם הסטטוס לא פעיל כרגע)
+      // 2. Or has a defined plan (even if status isn't active now)
       (sub.plan !== null && sub.plan !== undefined)
     );
   }, [filteredSubscribers]);
 
   const unmanagedUsers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
-      // התנאי החדש לסיווג משתמשים לא מנוהלים:
-      // 1. סטטוס מנוי לא פעיל
+      // Updated condition for unmanaged users:
+      // 1. Not active subscription status
       sub.subscription_status !== "active" && 
-      // 2. וגם אין לו תוכנית מוגדרת 
+      // 2. No defined plan
       (sub.plan === null || sub.plan === undefined) &&
-      // 3. המשתמש עצמו עדיין פעיל במערכת
+      // 3. User is still active in the system (they're in the group)
       sub.is_active
     );
   }, [filteredSubscribers]);

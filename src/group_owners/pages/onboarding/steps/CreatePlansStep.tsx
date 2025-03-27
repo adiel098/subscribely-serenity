@@ -89,7 +89,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
   }, [user]);
 
   // Use the subscription plans hook when we have a community ID
-  const { plans, isLoading: plansLoading } = useSubscriptionPlans(communityId || "");
+  const { plans, isLoading: plansLoading, createPlan } = useSubscriptionPlans(communityId || "");
   
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -103,6 +103,20 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
   const handleDeletePlan = (planId: string) => {
     setSelectedPlanId(planId);
     setDeleteDialogOpen(true);
+  };
+
+  const handleSubmitPlan = async (data: any) => {
+    if (!communityId) return;
+    
+    await createPlan.mutateAsync({
+      ...data,
+      community_id: communityId
+    });
+    setCreateDialogOpen(false);
+    toast({
+      title: "Plan created",
+      description: "Your subscription plan was created successfully."
+    });
   };
 
   const handleContinue = async () => {
@@ -228,6 +242,8 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
           <CreatePlanDialog 
             isOpen={createDialogOpen} 
             onOpenChange={setCreateDialogOpen} 
+            communityId={communityId}
+            onSubmit={handleSubmitPlan}
           />
 
           {selectedPlanId && (
@@ -235,7 +251,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
               <EditPlanDialog 
                 isOpen={editDialogOpen} 
                 onOpenChange={setEditDialogOpen} 
-                planId={selectedPlanId}
+                plan={plans?.find(p => p.id === selectedPlanId) || null}
               />
               
               <DeletePlanDialog 

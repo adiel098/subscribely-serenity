@@ -39,7 +39,7 @@ const Subscriptions = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
-  const { plans, isLoading } = useSubscriptionPlans(entityId || "");
+  const { plans, isLoading, createPlan } = useSubscriptionPlans(entityId || "");
 
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -53,6 +53,18 @@ const Subscriptions = () => {
   const handleDeletePlan = (planId: string) => {
     setSelectedPlanId(planId);
     setDeleteDialogOpen(true);
+  };
+
+  const handleSubmitPlan = async (data: any) => {
+    await createPlan.mutateAsync({
+      ...data,
+      community_id: entityId || ""
+    });
+    setCreateDialogOpen(false);
+    toast({
+      title: "Plan created",
+      description: "Your subscription plan was created successfully."
+    });
   };
 
   const containerVariants = {
@@ -145,6 +157,8 @@ const Subscriptions = () => {
       <CreatePlanDialog 
         isOpen={createDialogOpen} 
         onOpenChange={setCreateDialogOpen}
+        communityId={entityId || ""}
+        onSubmit={handleSubmitPlan}
       />
 
       {selectedPlanId && (
@@ -152,7 +166,7 @@ const Subscriptions = () => {
           <EditPlanDialog 
             isOpen={editDialogOpen} 
             onOpenChange={setEditDialogOpen} 
-            planId={selectedPlanId}
+            plan={plans?.find(p => p.id === selectedPlanId) || null}
           />
           
           <DeletePlanDialog 

@@ -21,8 +21,27 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
     mutationFn: async (planData: UpdatePlanParams) => {
       // Log operation for debugging
       console.log(`Updating plan with ID: ${planData.id} for community: ${communityId}`);
+      console.log("Plan data being sent:", JSON.stringify(planData, null, 2));
       
       try {
+        // First verify if the plan exists
+        const { data: existingPlan, error: checkError } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('id', planData.id)
+          .maybeSingle();
+          
+        if (checkError) {
+          console.error("Error checking if plan exists:", checkError);
+          throw checkError;
+        }
+        
+        if (!existingPlan) {
+          console.error(`Plan with ID ${planData.id} not found in database`);
+          throw new Error(`Plan with ID ${planData.id} not found`);
+        }
+        
+        // If we get here, the plan exists, so update it
         const { data, error } = await supabase
           .from('subscription_plans')
           .update({
@@ -30,7 +49,9 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
             description: planData.description,
             price: planData.price,
             interval: planData.interval,
-            features: planData.features
+            features: planData.features,
+            has_trial_period: planData.has_trial_period,
+            trial_days: planData.trial_days
           })
           .eq('id', planData.id)
           .select();

@@ -57,6 +57,32 @@ export class TelegramMemberManager {
       const unbanResult = await this.unbanChatMember(chatId, userId);
       console.log('[Member Manager] Unban result:', unbanResult);
 
+      // Get community ID from chat ID
+      const { data: community, error: communityError } = await this.supabase
+        .from('communities')
+        .select('id')
+        .eq('telegram_chat_id', chatId)
+        .single();
+        
+      if (communityError || !community) {
+        console.error('[Member Manager] Error getting community:', communityError);
+        return false;
+      }
+      
+      // Invalidate any invite links for this user
+      const { error: inviteError } = await this.supabase
+        .from('subscription_payments')
+        .update({ invite_link: null })
+        .eq('telegram_user_id', userId)
+        .eq('community_id', community.id);
+        
+      if (inviteError) {
+        console.error('[Member Manager] Error invalidating invite links:', inviteError);
+        // Continue despite error as the primary goal is to remove the user
+      } else {
+        console.log(`[Member Manager] Successfully invalidated invite links for user ${userId}`);
+      }
+
       // Update the database with the correct reason/status
       const updateSuccess = await this.updateMemberStatus(userId, chatId, reason);
       
@@ -186,7 +212,7 @@ export class TelegramMemberManager {
       }
       
       const { error } = await this.supabase
-        .from('community_subscribers')  // Changed from community_subscribers to community_subscribers
+        .from('community_subscribers')  // Using the correct table name
         .update({
           is_active: false,
           subscription_status: reason // Use the specific reason passed in

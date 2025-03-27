@@ -86,6 +86,20 @@ export async function processMember(
         return log;
       }
 
+      // Invalidate any invite links for this user
+      const { error: inviteError } = await supabase
+        .from('subscription_payments')
+        .update({ invite_link: null })
+        .eq('telegram_user_id', member.telegram_user_id)
+        .eq('community_id', member.community_id);
+        
+      if (inviteError) {
+        console.error(`❌ [${timeStr}] Error invalidating invite links: ${inviteError.message}`);
+        // Continue despite error as this is not critical
+      } else {
+        console.log(`✅ [${timeStr}] Successfully invalidated invite links for user ${member.telegram_user_id}`);
+      }
+
       log.action = "subscription_expired";
       log.details = `Subscription expired on ${member.subscription_end_date}`;
 

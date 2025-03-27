@@ -6,6 +6,7 @@ import { useMemberCreation } from "./useMemberCreation";
 import { usePaymentInviteLink } from "./usePaymentInviteLink";
 import { PaymentProcessingParams } from "./types/paymentProcessing.types";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client"; // Add missing import
 import { 
   resetPaymentState,
   setPaymentLoadingState,

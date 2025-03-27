@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -225,29 +226,16 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
       {communityId && (
         <>
           <CreatePlanDialog 
-            isOpen={createDialogOpen} 
+            open={createDialogOpen} 
             onOpenChange={setCreateDialogOpen} 
-            isGroupMode={false}
           />
 
           {selectedPlanId && (
             <>
               <EditPlanDialog 
-                isOpen={editDialogOpen} 
+                open={editDialogOpen} 
                 onOpenChange={setEditDialogOpen} 
-                editPlanData={
-                  plans?.find(plan => plan.id === selectedPlanId) 
-                    ? {
-                        id: selectedPlanId,
-                        name: plans.find(plan => plan.id === selectedPlanId)?.name || "",
-                        description: plans.find(plan => plan.id === selectedPlanId)?.description || "",
-                        price: plans.find(plan => plan.id === selectedPlanId)?.price.toString() || "",
-                        interval: plans.find(plan => plan.id === selectedPlanId)?.interval || "monthly",
-                        features: plans.find(plan => plan.id === selectedPlanId)?.features || []
-                      }
-                    : undefined
-                }
-                isGroupMode={false}
+                planId={selectedPlanId}
               />
               
               <DeletePlanDialog 

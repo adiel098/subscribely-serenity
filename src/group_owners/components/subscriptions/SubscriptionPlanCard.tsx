@@ -10,14 +10,32 @@ interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
   onEdit: (plan: SubscriptionPlan) => void;
   onDelete: (planId: string) => void;
+  intervalColors?: {
+    monthly: string;
+    quarterly: string;
+    "half-yearly": string;
+    yearly: string;
+    "one-time": string;
+    lifetime: string;
+  };
+  intervalLabels?: {
+    monthly: string;
+    quarterly: string;
+    "half-yearly": string;
+    yearly: string;
+    "one-time": string;
+    lifetime: string;
+  };
 }
 
 export const SubscriptionPlanCard = ({
   plan,
   onEdit,
   onDelete,
+  intervalColors,
+  intervalLabels
 }: SubscriptionPlanCardProps) => {
-  const intervalLabel = {
+  const defaultIntervalLabel = {
     monthly: "Monthly",
     quarterly: "Quarterly",
     "half-yearly": "Half-Yearly",
@@ -26,7 +44,7 @@ export const SubscriptionPlanCard = ({
     lifetime: "Lifetime",
   };
 
-  const intervalColor = {
+  const defaultIntervalColor = {
     monthly: "bg-blue-100 text-blue-800",
     quarterly: "bg-green-100 text-green-800",
     "half-yearly": "bg-purple-100 text-purple-800", 
@@ -34,6 +52,9 @@ export const SubscriptionPlanCard = ({
     "one-time": "bg-gray-100 text-gray-800",
     lifetime: "bg-indigo-100 text-indigo-800",
   };
+
+  const finalIntervalLabels = intervalLabels || defaultIntervalLabel;
+  const finalIntervalColors = intervalColors || defaultIntervalColor;
 
   return (
     <Card className="border shadow-sm hover:shadow-md transition-shadow">
@@ -50,10 +71,10 @@ export const SubscriptionPlanCard = ({
           <Badge
             variant="outline"
             className={`font-medium ${
-              intervalColor[plan.interval as keyof typeof intervalColor] || ""
+              finalIntervalColors[plan.interval as keyof typeof finalIntervalColors] || ""
             }`}
           >
-            {intervalLabel[plan.interval as keyof typeof intervalLabel]}
+            {finalIntervalLabels[plan.interval as keyof typeof finalIntervalLabels]}
           </Badge>
         </div>
         

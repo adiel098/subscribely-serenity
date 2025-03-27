@@ -143,29 +143,16 @@ const Subscriptions = () => {
       </div>
 
       <CreatePlanDialog 
-        isOpen={createDialogOpen} 
-        onOpenChange={setCreateDialogOpen} 
-        isGroupMode={isGroupSelected}
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen}
       />
 
       {selectedPlanId && (
         <>
           <EditPlanDialog 
-            isOpen={editDialogOpen} 
+            open={editDialogOpen} 
             onOpenChange={setEditDialogOpen} 
-            editPlanData={
-              plans?.find(plan => plan.id === selectedPlanId) 
-                ? {
-                    id: selectedPlanId,
-                    name: plans.find(plan => plan.id === selectedPlanId)?.name || "",
-                    description: plans.find(plan => plan.id === selectedPlanId)?.description || "",
-                    price: plans.find(plan => plan.id === selectedPlanId)?.price.toString() || "",
-                    interval: plans.find(plan => plan.id === selectedPlanId)?.interval || "monthly",
-                    features: plans.find(plan => plan.id === selectedPlanId)?.features || []
-                  }
-                : undefined
-            }
-            isGroupMode={isGroupSelected}
+            planId={selectedPlanId}
           />
           
           <DeletePlanDialog 

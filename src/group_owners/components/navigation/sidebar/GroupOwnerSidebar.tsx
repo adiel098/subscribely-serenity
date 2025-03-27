@@ -166,11 +166,11 @@ export function GroupOwnerSidebar() {
       <div className="border-t p-4">
         <div className="mb-4 flex items-center space-x-4 pt-4">
           <Avatar>
-            <AvatarImage src={user?.image} />
+            <AvatarImage src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture} />
             <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">{user?.name}</p>
+            <p className="text-sm font-medium">{user?.user_metadata?.full_name || user?.email}</p>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
         </div>

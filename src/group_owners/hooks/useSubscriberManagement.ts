@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 export const useSubscriberManagement = (entityId: string) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
-  const { data: subscribers = [], isLoading, refetch } = useSubscribers(entityId);
+  const { subscribers, isLoading, refetch } = useSubscribers(entityId);
 
   const updateSubscriberStatus = useCallback(async () => {
     if (!entityId) return;

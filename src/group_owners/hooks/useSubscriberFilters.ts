@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { Subscriber } from "./useSubscribers";
 
@@ -21,7 +22,7 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
       const matchesSearch = (subscriber.telegram_username || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-        subscriber.telegram_user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (subscriber.telegram_user_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (subscriber.first_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (subscriber.last_name || "").toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -42,16 +43,16 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const managedSubscribers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
       sub.subscription_status === "active" && 
-      sub.plan !== null && 
-      sub.subscription_end_date !== null
+      sub.plan !== undefined && 
+      sub.subscription_end_date !== undefined
     );
   }, [filteredSubscribers]);
 
   const unmanagedUsers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
       (sub.subscription_status !== "active" || 
-      sub.plan === null || 
-      sub.subscription_end_date === null) &&
+      sub.plan === undefined || 
+      sub.subscription_end_date === undefined) &&
       sub.is_active
     );
   }, [filteredSubscribers]);

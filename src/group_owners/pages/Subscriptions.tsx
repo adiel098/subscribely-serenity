@@ -39,7 +39,7 @@ const Subscriptions = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   
   const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
-  const { plans, isLoading, createPlan } = useSubscriptionPlans(entityId || "");
+  const { plans, isLoading, createPlan, updatePlan } = useSubscriptionPlans(entityId || "");
 
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -64,6 +64,18 @@ const Subscriptions = () => {
     toast({
       title: "Plan created",
       description: "Your subscription plan was created successfully."
+    });
+  };
+
+  const handleUpdatePlan = async (planId: string, data: any) => {
+    await updatePlan.mutateAsync({
+      id: planId,
+      ...data
+    });
+    setEditDialogOpen(false);
+    toast({
+      title: "Plan updated",
+      description: "Your subscription plan was updated successfully."
     });
   };
 
@@ -144,9 +156,7 @@ const Subscriptions = () => {
                 <SubscriptionPlanCard 
                   plan={plan} 
                   onEdit={handleEditPlan} 
-                  onDelete={handleDeletePlan} 
-                  intervalColors={intervalColors} 
-                  intervalLabels={intervalLabels} 
+                  onDelete={handleDeletePlan}
                 />
               </motion.div>
             ))}
@@ -167,6 +177,7 @@ const Subscriptions = () => {
             isOpen={editDialogOpen} 
             onOpenChange={setEditDialogOpen} 
             plan={plans?.find(p => p.id === selectedPlanId) || null}
+            onSubmit={(data) => handleUpdatePlan(selectedPlanId, data)}
           />
           
           <DeletePlanDialog 

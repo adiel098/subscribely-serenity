@@ -44,7 +44,7 @@ export const CouponsPage = () => {
     await updateCoupon.mutateAsync(data);
   };
   
-  // Changed to accept a coupon ID instead of a coupon object
+  // Changed to accept a coupon object and extract the ID
   const handleDeleteConfirm = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
     setDeleteDialogOpen(true);

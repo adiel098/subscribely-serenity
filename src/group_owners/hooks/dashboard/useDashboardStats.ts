@@ -23,7 +23,7 @@ export const useDashboardStats = (communityId: string) => {
   logger.log("⏱️ Time range set to:", timeRange, "Label:", timeRangeLabel);
   
   // Fetch subscribers data
-  const { data: subscribers, isLoading: subscribersLoading } = useSubscribers(communityId);
+  const { subscribers, isLoading: subscribersLoading } = useSubscribers(communityId);
   logger.log("👥 Subscribers loading:", subscribersLoading, "Count:", subscribers?.length || 0);
   
   // Fetch subscription plans

@@ -1,12 +1,21 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  interval: string;
+  features?: string[];
+}
 
 export interface Subscriber {
   id: string;
   first_name: string;
   last_name?: string;
   telegram_username?: string;
-  photo_url?: string; // Added this property to the Subscriber interface
+  photo_url?: string;
   subscription_status: string;
   subscription_end_date?: string;
   joined_at?: string;
@@ -19,6 +28,8 @@ export interface Subscriber {
   last_active?: string;
   last_checked?: string;
   community_id?: string;
+  plan?: Plan;
+  is_blocked?: boolean;
 }
 
 export const useSubscribers = (communityId: string) => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/Su
 import { EmptySubscriptionsState } from "@/group_owners/components/subscriptions/EmptySubscriptionsState";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 
-// Define interval colors and labels - same as Subscriptions page
 const intervalColors = {
   monthly: "bg-blue-100 text-blue-700",
   quarterly: "bg-green-100 text-green-700",
@@ -53,7 +51,6 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Fetch the last created community ID
   useEffect(() => {
     const fetchCommunity = async () => {
       if (!user) return;
@@ -88,8 +85,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
     fetchCommunity();
   }, [user]);
 
-  // Use the subscription plans hook when we have a community ID
-  const { plans, isLoading: plansLoading, createPlan } = useSubscriptionPlans(communityId || "");
+  const { plans, isLoading: plansLoading, createPlan, updatePlan } = useSubscriptionPlans(communityId || "");
   
   const handleCreatePlan = () => {
     setCreateDialogOpen(true);
@@ -119,8 +115,19 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
     });
   };
 
+  const handleUpdatePlan = async (planId: string, data: any) => {
+    await updatePlan.mutateAsync({
+      id: planId, 
+      ...data
+    });
+    setEditDialogOpen(false);
+    toast({
+      title: "Plan updated",
+      description: "Your subscription plan was updated successfully."
+    });
+  };
+
   const handleContinue = async () => {
-    // Save current step and proceed to next step
     saveCurrentStep("connect-telegram");
     goToNextStep();
   };
@@ -252,6 +259,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
                 isOpen={editDialogOpen} 
                 onOpenChange={setEditDialogOpen} 
                 plan={plans?.find(p => p.id === selectedPlanId) || null}
+                onSubmit={(data) => handleUpdatePlan(selectedPlanId, data)}
               />
               
               <DeletePlanDialog 

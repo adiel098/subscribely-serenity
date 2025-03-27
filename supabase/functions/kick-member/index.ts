@@ -41,7 +41,7 @@ serve(async (req) => {
     // Log request details
     await logger.info(`Request to kick member ${telegram_user_id} from chat ${chat_id}`);
 
-    if (!member_id || !telegram_user_id || !chat_id || !bot_token) {
+    if (!member_id || !telegram_user_id || !chat_id) {
       await logger.error("Missing required parameters in request");
       return new Response(
         JSON.stringify({ success: false, error: "Missing required parameters" }),
@@ -49,15 +49,93 @@ serve(async (req) => {
       );
     }
 
+    // Get the correct bot token if not provided
+    let useBotToken = bot_token;
+    if (!useBotToken) {
+      try {
+        // Look up bot token based on the community ID
+        const { data: community, error: communityError } = await supabase
+          .from('communities')
+          .select('id, telegram_chat_id')
+          .eq('id', chat_id)
+          .single();
+          
+        if (communityError) {
+          await logger.error(`Failed to find community: ${communityError.message}`);
+          return new Response(
+            JSON.stringify({ success: false, error: `Community not found: ${communityError.message}` }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+          );
+        }
+        
+        // Check if the community has a custom bot or use the global one
+        const { data: botSettings, error: botError } = await supabase
+          .from('telegram_bot_settings')
+          .select('use_custom_bot, custom_bot_token')
+          .eq('community_id', chat_id)
+          .single();
+          
+        if (botError) {
+          await logger.error(`Failed to get bot settings: ${botError.message}`);
+        }
+        
+        if (botSettings?.use_custom_bot && botSettings?.custom_bot_token) {
+          useBotToken = botSettings.custom_bot_token;
+          await logger.info("Using custom bot token for this community");
+        } else {
+          // Use global bot token
+          const { data: globalSettings, error: globalError } = await supabase
+            .from('telegram_global_settings')
+            .select('bot_token')
+            .single();
+            
+          if (globalError || !globalSettings?.bot_token) {
+            await logger.error(`Failed to get global bot token: ${globalError?.message}`);
+            return new Response(
+              JSON.stringify({ success: false, error: "Bot token not found" }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+            );
+          }
+          
+          useBotToken = globalSettings.bot_token;
+          await logger.info("Using global bot token");
+        }
+      } catch (error) {
+        await logger.error(`Error getting bot token: ${error.message}`);
+        return new Response(
+          JSON.stringify({ success: false, error: `Failed to get bot token: ${error.message}` }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        );
+      }
+    }
+
+    // First, get the actual Telegram chat ID from the community ID
+    const { data: community, error: communityError } = await supabase
+      .from('communities')
+      .select('telegram_chat_id')
+      .eq('id', chat_id)
+      .single();
+      
+    if (communityError || !community?.telegram_chat_id) {
+      await logger.error(`Failed to get telegram_chat_id for community: ${communityError?.message}`);
+      return new Response(
+        JSON.stringify({ success: false, error: `Could not find Telegram chat ID: ${communityError?.message}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
+    }
+    
+    const telegramChatId = community.telegram_chat_id;
+    await logger.info(`Resolved community ID ${chat_id} to Telegram chat ID ${telegramChatId}`);
+
     // Initialize Telegram API client
-    const telegramApi = new TelegramApiClient(bot_token);
+    const telegramApi = new TelegramApiClient(useBotToken);
     
     // Use our member removal service
     const removalService = new MemberRemovalService(supabase);
     
     // Execute the removal as a manual action (admin-initiated)
     const result = await removalService.removeManually(
-      chat_id, 
+      telegramChatId, // Use the resolved Telegram chat ID instead of community ID
       telegram_user_id, 
       member_id,
       telegramApi

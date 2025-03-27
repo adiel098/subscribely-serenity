@@ -31,6 +31,7 @@ export class MemberRemovalService {
       const kickResult = await telegramApi.kickChatMember(chatId, telegramUserId);
       
       // 2. Get community ID for updating records
+      // We now assume we receive the telegram_chat_id directly, so we need to look up the community ID
       const { data: community, error: communityError } = await this.supabase
         .from('communities')
         .select('id')
@@ -46,14 +47,16 @@ export class MemberRemovalService {
         };
       }
       
+      const communityId = community.id;
+      
       // 3. Invalidate any invite links for this user
-      await this.logger.info(`Invalidating invite links for user ${telegramUserId} in community ${community.id}`);
+      await this.logger.info(`Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
       
       const { error: inviteError } = await this.supabase
         .from('subscription_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', community.id);
+        .eq('community_id', communityId);
         
       if (inviteError) {
         await this.logger.warn(`Error invalidating invite links: ${inviteError.message}`);
@@ -85,7 +88,7 @@ export class MemberRemovalService {
         .from('subscription_activity_logs')
         .insert({
           telegram_user_id: telegramUserId,
-          community_id: community.id,
+          community_id: communityId,
           activity_type: 'member_removed',
           details: 'Member manually removed from community by admin',
           status: 'removed'

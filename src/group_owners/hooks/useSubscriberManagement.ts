@@ -162,12 +162,18 @@ export const useSubscriberManagement = (communityId: string) => {
   const removeSubscriber = async (subscriber: Subscriber, botToken: string) => {
     setIsRemoving(true);
     try {
+      console.log("Removing subscriber with data:", {
+        id: subscriber.id,
+        telegram_user_id: subscriber.telegram_user_id,
+        community_id: subscriber.community_id
+      });
+
       // Call the kick-member edge function
       const { data, error } = await supabase.functions.invoke("kick-member", {
         body: {
           member_id: subscriber.id,
           telegram_user_id: subscriber.telegram_user_id,
-          chat_id: subscriber.community_id, // Using community_id as chat_id
+          chat_id: subscriber.community_id, // We pass community_id, the function will resolve the telegram_chat_id
           bot_token: botToken,
         },
       });
@@ -183,7 +189,7 @@ export const useSubscriberManagement = (communityId: string) => {
       }
 
       // Handle the response from the edge function
-      if (data.success) {
+      if (data && data.success) {
         console.log("Subscriber removed successfully", data);
         
         // Show appropriate success message
@@ -203,10 +209,10 @@ export const useSubscriberManagement = (communityId: string) => {
         await refetch();
         return true;
       } else {
-        console.error("Failed to remove subscriber:", data.error);
+        console.error("Failed to remove subscriber:", data?.error || "Unknown error");
         toast({
           title: "Error",
-          description: data.error || "Failed to remove subscriber",
+          description: data?.error || "Failed to remove subscriber",
           variant: "destructive",
         });
         return false;

@@ -107,6 +107,24 @@ export const useSubscriberPageState = (entityId: string) => {
         return;
       }
       
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('telegram_chat_id')
+        .eq('id', subscriber.community_id)
+        .single();
+        
+      if (communityError || !community?.telegram_chat_id) {
+        console.error('Error retrieving telegram chat ID:', communityError);
+        toast({
+          title: "Error",
+          description: "Could not retrieve Telegram chat ID",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log(`Removing subscriber with community_id: ${subscriber.community_id} and telegram_chat_id: ${community.telegram_chat_id}`);
+      
       await removeSubscriber(subscriber, botToken);
       await refetch();
     } catch (error) {
@@ -124,6 +142,34 @@ export const useSubscriberPageState = (entityId: string) => {
       }, 500);
     }
   }, [removeSubscriber, toast, refetch, isRemoving]);
+
+  const handleRemoveDialogChange = useCallback((open: boolean) => {
+    if (isRemoving && open === false) {
+      return;
+    }
+    
+    setRemoveDialogOpen(open);
+    
+    if (!open) {
+      setTimeout(() => {
+        setSubscriberToRemove(null);
+      }, 500);
+    }
+  }, [isRemoving]);
+
+  const handleUnblockDialogChange = useCallback((open: boolean) => {
+    if (isUnblocking && open === false) {
+      return;
+    }
+    
+    setUnblockDialogOpen(open);
+    
+    if (!open) {
+      setTimeout(() => {
+        setSubscriberToUnblock(null);
+      }, 500);
+    }
+  }, [isUnblocking]);
 
   const onConfirmUnblock = useCallback(async (subscriber: Subscriber) => {
     if (!subscriber || isUnblocking) return;
@@ -153,34 +199,6 @@ export const useSubscriberPageState = (entityId: string) => {
       }, 500);
     }
   }, [handleUnblockSubscriber, toast, refetch, isUnblocking]);
-
-  const handleRemoveDialogChange = useCallback((open: boolean) => {
-    if (isRemoving && open === false) {
-      return;
-    }
-    
-    setRemoveDialogOpen(open);
-    
-    if (!open) {
-      setTimeout(() => {
-        setSubscriberToRemove(null);
-      }, 500);
-    }
-  }, [isRemoving]);
-
-  const handleUnblockDialogChange = useCallback((open: boolean) => {
-    if (isUnblocking && open === false) {
-      return;
-    }
-    
-    setUnblockDialogOpen(open);
-    
-    if (!open) {
-      setTimeout(() => {
-        setSubscriberToUnblock(null);
-      }, 500);
-    }
-  }, [isUnblocking]);
 
   return {
     subscribers,

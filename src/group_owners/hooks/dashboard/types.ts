@@ -1,3 +1,4 @@
+
 export interface DashboardSubscriber {
   id: string;
   telegram_user_id: string;
@@ -20,6 +21,7 @@ export interface DashboardSubscriber {
   is_trial?: boolean;
   trial_end_date?: string | null;
   payment_status?: string;
+  subscription_plan_id?: string | null; // Add this property
   metadata?: {
     mini_app_accessed?: boolean;
     [key: string]: any;
@@ -66,6 +68,7 @@ export interface PaymentStatistics {
   completed: number;
   pending: number;
   failed: number;
+  total: number; // Add this property to the type
 }
 
 // Additional types needed for chart data

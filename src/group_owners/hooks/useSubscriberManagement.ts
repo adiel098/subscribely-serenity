@@ -47,9 +47,6 @@ export const useSubscriberManagement = (communityId: string) => {
     setIsRemoving(true);
     
     try {
-      // First, attempt to remove the user from the Telegram channel
-      console.log('Attempting to remove user from Telegram channel...');
-      
       // Important fix: Ensure we're sending the correct chat_id format
       // The community_id is the UUID in our database, but Telegram needs the actual chat_id
       const { data: community, error: communityError } = await supabase
@@ -65,44 +62,69 @@ export const useSubscriberManagement = (communityId: string) => {
       
       console.log(`Using telegram_chat_id: ${community.telegram_chat_id} instead of community_id: ${subscriber.community_id}`);
       
-      // 1. Remove member from Telegram chat through the edge function
-      const { error: kickError } = await supabase.functions.invoke('kick-member', {
+      // 1. Get bot token for this community
+      const { data: botSettings, error: botError } = await supabase
+        .from('telegram_bot_settings')
+        .select('use_custom_bot, custom_bot_token')
+        .eq('community_id', subscriber.community_id)
+        .single();
+      
+      if (botError) {
+        console.error('Error fetching bot settings:', botError);
+        // Fallback to global bot token
+        console.log('Falling back to global bot token');
+      }
+      
+      // Get the bot token (custom or global)
+      let botToken;
+      if (botSettings?.use_custom_bot && botSettings?.custom_bot_token) {
+        console.log('Using custom bot token');
+        botToken = botSettings.custom_bot_token;
+      } else {
+        console.log('Using global bot token');
+        const { data: globalSettings, error: globalError } = await supabase
+          .from('telegram_global_settings')
+          .select('bot_token')
+          .single();
+          
+        if (globalError || !globalSettings?.bot_token) {
+          console.error('Error retrieving global bot token:', globalError);
+          throw new Error('Could not retrieve bot token');
+        }
+        
+        botToken = globalSettings.bot_token;
+      }
+      
+      // 2. Remove member from Telegram chat through the kick-member edge function
+      const { data: kickResult, error: kickError } = await supabase.functions.invoke('kick-member', {
         body: { 
           member_id: subscriber.id,
           telegram_user_id: subscriber.telegram_user_id,
-          chat_id: subscriber.community_id
+          chat_id: community.telegram_chat_id,
+          bot_token: botToken
         }
       });
 
       if (kickError) {
         console.error('Error removing member from Telegram:', kickError);
+        throw new Error('Failed to remove member from Telegram channel');
+      }
+      
+      if (!kickResult?.success) {
+        console.error('Kick-member function returned error:', kickResult?.error);
         // Continue despite error to update the database status
         console.log('Continuing with database update despite Telegram API error');
       } else {
         console.log('Successfully removed user from Telegram channel');
       }
 
-      // 2. Explicitly invalidate any invite links for this user
-      console.log('Invalidating invite links...');
-      
-      const { error: inviteError } = await supabase
-        .from('subscription_payments')
-        .update({ invite_link: null })
-        .eq('telegram_user_id', subscriber.telegram_user_id)
-        .eq('community_id', subscriber.community_id);
-        
-      if (inviteError) {
-        console.error('Error invalidating invite links:', inviteError);
-        // Continue despite error, as the primary goal is to remove the user
-      }
-
-      // 3. FIX: Update the correct table and field for subscription status
+      // 3. Update the subscriber record to mark as removed
       console.log('Updating subscription status in database to "removed"...');
       
       const { error: updateError } = await supabase
-        .from('community_subscribers')  // Previously was 'telegram_chat_members'
+        .from('community_subscribers')
         .update({
-          subscription_status: 'removed',  // Previously was just 'status'
+          subscription_status: 'removed',
           is_active: false
         })
         .eq('id', subscriber.id);
@@ -122,7 +144,7 @@ export const useSubscriberManagement = (communityId: string) => {
           community_id: subscriber.community_id,
           activity_type: 'member_removed',
           details: 'Member manually removed from community by admin',
-          status: 'removed'  // Add status here to be consistent
+          status: 'removed'
         });
 
       console.log('Successfully updated subscriber status and logged removal');
@@ -244,13 +266,24 @@ export const useSubscriberManagement = (communityId: string) => {
 
   const removeSubscriber = async (subscriber: Subscriber, botToken: string) => {
     try {
+      // Get the community's telegram chat ID
+      const { data: community, error: communityError } = await supabase
+        .from('communities')
+        .select('telegram_chat_id')
+        .eq('id', subscriber.community_id)
+        .single();
+      
+      if (communityError || !community?.telegram_chat_id) {
+        throw new Error('Could not find Telegram chat ID for this community');
+      }
+
       console.log('Calling kick-member function for subscriber:', subscriber.id);
       
       const { data, error } = await supabase.functions.invoke('kick-member', {
         body: { 
           member_id: subscriber.id,
           telegram_user_id: subscriber.telegram_user_id,
-          chat_id: subscriber.community_id,
+          chat_id: community.telegram_chat_id,
           bot_token: botToken
         }
       });

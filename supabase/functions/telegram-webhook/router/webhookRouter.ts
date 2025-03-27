@@ -2,7 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getLogger } from '../services/loggerService.ts';
 import { corsHeaders } from '../cors.ts';
-import { handleMemberRemoval } from '../services/memberRemovalService.ts';
+import { handleMemberRemoval } from '../services/subscription/memberRemovalService.ts';
 
 // Create a logger for this module
 const logger = getLogger('webhook-router');
@@ -38,7 +38,7 @@ export async function routeTelegramWebhook(
           logger.info('Processing member removal request');
           
           // Extract the chat_id, user_id and reason from the request body
-          const { chat_id, user_id, reason = 'removed' } = body;
+          const { chat_id, user_id, reason = 'removed', community_id } = body;
           
           if (!chat_id || !user_id) {
             logger.error('Missing required parameters: chat_id or user_id');
@@ -55,7 +55,59 @@ export async function routeTelegramWebhook(
           }
           
           // Call the member removal service
-          return await handleMemberRemoval(supabase, chat_id, user_id, botToken, body.community_id, reason);
+          return await handleMemberRemoval(supabase, chat_id, user_id, botToken, community_id, reason);
+          
+        case '/expire-member':
+          // Handle member expiration endpoint
+          logger.info('Processing member expiration request');
+          
+          // Extract parameters
+          const { telegram_user_id, community_id: expireCommunityId } = body;
+          
+          if (!telegram_user_id || !expireCommunityId) {
+            logger.error('Missing required parameters: telegram_user_id or community_id');
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                error: 'Missing required parameters: telegram_user_id and community_id are required' 
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400
+              }
+            );
+          }
+          
+          // Get the chat ID for this community
+          const { data: community, error: communityError } = await supabase
+            .from('communities')
+            .select('telegram_chat_id')
+            .eq('id', expireCommunityId)
+            .single();
+            
+          if (communityError || !community?.telegram_chat_id) {
+            logger.error(`Could not find community: ${communityError?.message}`);
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                error: `Could not find community: ${communityError?.message || 'Not found'}` 
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 404
+              }
+            );
+          }
+          
+          // Call the member removal service with reason 'expired'
+          return await handleMemberRemoval(
+            supabase, 
+            community.telegram_chat_id, 
+            telegram_user_id, 
+            botToken, 
+            expireCommunityId, 
+            'expired'
+          );
           
         // Add other custom endpoints as needed
         default:

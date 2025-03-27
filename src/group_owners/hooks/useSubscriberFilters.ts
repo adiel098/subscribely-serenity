@@ -43,16 +43,13 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const managedSubscribers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
       sub.subscription_status === "active" && 
-      sub.plan !== undefined && 
-      sub.subscription_end_date !== undefined
+      sub.plan !== undefined
     );
   }, [filteredSubscribers]);
 
   const unmanagedUsers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
-      (sub.subscription_status !== "active" || 
-      sub.plan === undefined || 
-      sub.subscription_end_date === undefined) &&
+      (sub.subscription_status !== "active" || sub.plan === undefined) &&
       sub.is_active
     );
   }, [filteredSubscribers]);

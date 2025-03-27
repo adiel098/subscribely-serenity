@@ -43,9 +43,19 @@ export const useSubscribers = (communityId: string) => {
     queryFn: async () => {
       if (!communityId) return [];
       
+      // Updated query to join with the subscription_plans table
       const { data, error } = await supabase
         .from('community_subscribers')
-        .select('*')
+        .select(`
+          *,
+          plan:subscription_plans(
+            id,
+            name,
+            price,
+            interval,
+            features
+          )
+        `)
         .eq('community_id', communityId)
         .order('joined_at', { ascending: false });
         
@@ -54,7 +64,20 @@ export const useSubscribers = (communityId: string) => {
         throw error;
       }
       
-      return data as Subscriber[];
+      // Process the data to format the plan property correctly
+      const processedData = data.map(subscriber => {
+        // Handle the nested plan data from the join
+        const plan = subscriber.plan && subscriber.plan.length > 0 
+          ? subscriber.plan[0] 
+          : undefined;
+        
+        return {
+          ...subscriber,
+          plan: plan
+        };
+      });
+      
+      return processedData as Subscriber[];
     },
     enabled: !!communityId
   });

@@ -110,6 +110,7 @@ export const EditPlanDialog = ({
         features: featuresArray,
         has_trial_period: data.has_trial_period,
         trial_days: data.has_trial_period ? data.trial_days : 0,
+        community_id: plan.community_id, // Ensure community_id is passed
       };
 
       console.log("Submitting updated plan:", updatedPlan);

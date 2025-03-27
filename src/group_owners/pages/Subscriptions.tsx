@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -69,11 +70,13 @@ const Subscriptions = () => {
   const handleUpdatePlan = async (planId: string, data: any) => {
     console.log("[Subscriptions] Updating plan with ID:", planId);
     console.log("[Subscriptions] Update data:", data);
+    console.log("[Subscriptions] Current entity ID:", entityId);
     
     try {
       await updatePlan.mutateAsync({
         id: planId,
-        ...data
+        ...data,
+        community_id: entityId // Explicitly pass the community_id
       });
       setEditDialogOpen(false);
       toast({

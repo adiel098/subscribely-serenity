@@ -13,6 +13,7 @@ interface UpdatePlanParams {
   features: string[];
   has_trial_period?: boolean;
   trial_days?: number;
+  community_id?: string; // Make community_id optional here
 }
 
 export const useUpdateSubscriptionPlan = (communityId: string) => {
@@ -45,6 +46,14 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
         
         console.log("Existing plan found:", existingPlan);
         
+        // Use the community_id from the planData if provided, otherwise fallback to the communityId param
+        const effectiveCommunityId = planData.community_id || communityId || existingPlan.community_id;
+        
+        if (!effectiveCommunityId) {
+          console.error("No community ID available for update operation");
+          throw new Error("Missing community ID for plan update");
+        }
+        
         // If we get here, the plan exists, so update it
         const { data, error } = await supabase
           .from('subscription_plans')
@@ -56,7 +65,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
             features: planData.features,
             has_trial_period: planData.has_trial_period !== undefined ? planData.has_trial_period : existingPlan.has_trial_period,
             trial_days: planData.trial_days !== undefined ? planData.trial_days : existingPlan.trial_days,
-            community_id: communityId // Ensure community_id is included
+            community_id: effectiveCommunityId // Use the effective community ID
           })
           .eq('id', planData.id)
           .select();

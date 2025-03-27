@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import { Subscriber } from "./useSubscribers";
 
-// Add an additional isManaged parameter to the filteredSubscribers function
 export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
@@ -43,13 +42,14 @@ export const useSubscriberFilters = (subscribers: Subscriber[]) => {
   const managedSubscribers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
       sub.subscription_status === "active" && 
+      sub.plan !== null && 
       sub.plan !== undefined
     );
   }, [filteredSubscribers]);
 
   const unmanagedUsers = useMemo(() => {
     return filteredSubscribers.filter(sub => 
-      (sub.subscription_status !== "active" || sub.plan === undefined) &&
+      (sub.subscription_status !== "active" || sub.plan === null || sub.plan === undefined) &&
       sub.is_active
     );
   }, [filteredSubscribers]);

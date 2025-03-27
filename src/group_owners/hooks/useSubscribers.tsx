@@ -28,7 +28,7 @@ export interface Subscriber {
   last_active?: string;
   last_checked?: string;
   community_id?: string;
-  plan?: Plan;
+  plan?: Plan | null;
   is_blocked?: boolean;
   payment_status?: string;
   metadata?: {
@@ -71,13 +71,14 @@ export const useSubscribers = (communityId: string) => {
       // Process the data to format the plan property correctly
       const processedData = data.map(subscriber => {
         // Handle the nested plan data from the join
-        const plan = subscriber.plan && subscriber.plan.length > 0 
-          ? subscriber.plan[0] 
-          : undefined;
+        let plan = null;
+        if (subscriber.plan && Array.isArray(subscriber.plan) && subscriber.plan.length > 0) {
+          plan = subscriber.plan[0];
+        }
         
         return {
           ...subscriber,
-          plan: plan
+          plan
         };
       });
       

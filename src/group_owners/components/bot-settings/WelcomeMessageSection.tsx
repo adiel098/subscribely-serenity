@@ -55,7 +55,7 @@ export const WelcomeMessageSection = ({ settings, updateSettings }: WelcomeMessa
           value={welcomeMessage}
           onChange={handleTextChange}
           placeholder="Welcome to our community! We're excited to have you join us..."
-          className="min-h-[100px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200"
+          className="min-h-[208px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200"
         />
         <p className="text-xs text-muted-foreground">
           Use friendly language and let members know what to expect! 📝

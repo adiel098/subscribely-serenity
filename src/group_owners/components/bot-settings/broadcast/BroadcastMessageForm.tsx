@@ -98,7 +98,7 @@ export const BroadcastMessageForm = ({
           <ArrowRight className="h-4 w-4 mr-1.5" />
           Message
         </Label>
-        <Textarea id="message" value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your broadcast message here..." className="min-h-[120px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200" />
+        <Textarea id="message" value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your broadcast message here..." className="min-h-[158px] border-indigo-200 focus:border-indigo-300 focus:ring-indigo-200" />
         <div className="flex justify-between">
           <p className="text-xs text-muted-foreground">
             {message.length}/1000 characters

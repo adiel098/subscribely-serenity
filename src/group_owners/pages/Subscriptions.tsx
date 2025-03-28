@@ -119,8 +119,8 @@ const Subscriptions = () => {
 
   return (
     <div className="container px-0 py-4 max-w-full">
-      <div className="space-y-6 px-6 py-0 my-[6px]">
-        <motion.div className="flex items-center space-x-3" initial={{
+      <div className="space-y-6 px-2 sm:px-6 py-0 my-[6px]">
+        <motion.div className="flex items-center justify-between" initial={{
           opacity: 0,
           y: -20
         }} animate={{
@@ -129,31 +129,33 @@ const Subscriptions = () => {
         }} transition={{
           duration: 0.5
         }}>
-          <div className="p-3 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-xl">
-            <SparklesIcon className="h-8 w-8 text-amber-600" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-2 sm:p-3 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-lg sm:rounded-xl">
+              <SparklesIcon className="h-5 w-5 sm:h-8 sm:w-8 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
+                Subscription Plans <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 inline text-amber-400" />
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Manage your {isGroupSelected ? "group" : "community"} subscription plans
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
-              Subscription Plans <Sparkles className="h-5 w-5 inline text-amber-400" />
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your {isGroupSelected ? "group" : "community"} subscription plans
-            </p>
-          </div>
+          
+          {plans && plans.length > 0 && (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                onClick={handleCreatePlan} 
+                className="w-8 h-8 sm:w-auto sm:h-auto bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 p-1.5 sm:px-5 sm:py-2 text-sm sm:text-base rounded-md" 
+                type="button"
+              >
+                <Plus className="h-5 w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Create Plan</span>
+              </Button>
+            </motion.div>
+          )}
         </motion.div>
-
-        {plans && plans.length > 0 && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex justify-end px-6">
-            <Button 
-              onClick={handleCreatePlan} 
-              className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
-              type="button"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Create Plan
-            </Button>
-          </motion.div>
-        )}
 
         {!plans || plans.length === 0 ? (
           <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
@@ -162,7 +164,7 @@ const Subscriptions = () => {
             variants={containerVariants} 
             initial="hidden" 
             animate="visible" 
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl px-6"
+            className="grid gap-2 sm:gap-6 lg:gap-8 grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl auto-rows-fr mt-6 sm:mt-16 lg:mt-82 px-1 sm:px-6"
           >
             {plans?.map(plan => (
               <motion.div key={plan.id} variants={itemVariants}>

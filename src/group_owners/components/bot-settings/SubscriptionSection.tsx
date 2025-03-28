@@ -47,11 +47,11 @@ export const SubscriptionSection = ({ settings, updateSettings }: SubscriptionSe
         <TabsList className="w-full mb-4 bg-gray-50">
           <TabsTrigger value="first-reminder" className="flex-1 flex items-center gap-1">
             <Bell className="h-3.5 w-3.5" />
-            <span>First Reminder</span>
+            <span>First</span>
           </TabsTrigger>
           <TabsTrigger value="second-reminder" className="flex-1 flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
-            <span>Final Reminder</span>
+            <span>Final</span>
           </TabsTrigger>
           <TabsTrigger value="expired" className="flex-1 flex items-center gap-1">
             <Send className="h-3.5 w-3.5" />

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { 
   Drawer,
@@ -50,13 +49,13 @@ export const MobileSidebar = () => {
             <Menu className="h-6 w-6 text-blue-600" />
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="h-[85vh] p-0" data-drawer-content>
+        <DrawerContent className="h-auto p-0" data-drawer-content>
           <DrawerHeader className="border-b border-gray-100 py-4">
             <DrawerTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Menu
+              Membify
             </DrawerTitle>
           </DrawerHeader>
-          <div className="p-0 overflow-auto h-full">
+          <div className="p-0">
             <AppSidebarContent isMobile={true} />
           </div>
         </DrawerContent>

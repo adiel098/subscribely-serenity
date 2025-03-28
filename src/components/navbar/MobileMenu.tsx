@@ -21,7 +21,7 @@ export const MobileMenu = ({ isOpen, setIsOpen, handleSignOut }: MobileMenuProps
   return (
     <div className="md:hidden fixed inset-0 z-40">
       <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-      <div className="fixed bottom-20 right-4 w-48 p-2 rounded-lg bg-white shadow-xl">
+      <div className="fixed bottom-20 right-4 w-48 p-2 rounded-lg bg-white shadow-xl max-h-[calc(100vh-6rem)] overflow-y-auto">
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           {user && (
             <>

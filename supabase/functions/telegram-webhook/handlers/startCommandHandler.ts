@@ -181,18 +181,38 @@ async function handleCommunityStartCommand(
     
     await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
     
-    // Generate mini app URL
-    const miniAppUrl = `${MINI_APP_WEB_URL}?community=${encodeURIComponent(community.custom_link || community.id)}`;
-    
-    await logger.info(`Mini App URL: ${miniAppUrl}`);
-    
-    // Send welcome message with subscription button
-    const welcomeMessage = `
+    // Fetch welcome message from bot settings
+    const { data: botSettings, error: botSettingsError } = await supabase
+      .from('telegram_bot_settings')
+      .select('welcome_message, welcome_image')
+      .eq('community_id', community.id)
+      .single();
+      
+    // Default welcome message if not found
+    let welcomeMessage = `
 <b>Welcome to ${community.name}!</b> 🎉
 
 To join this community and access exclusive content, please subscribe using the button below:
     `;
     
+    let welcomeImage = null;
+    
+    // Use custom welcome message if available
+    if (!botSettingsError && botSettings) {
+      welcomeMessage = botSettings.welcome_message || welcomeMessage;
+      welcomeImage = botSettings.welcome_image;
+      await logger.info(`Using custom welcome message from bot settings`);
+    } else {
+      await logger.warn(`No bot settings found for community ${community.id}, using default message`);
+    }
+    
+    // Generate mini app URL with the community ID or custom link
+    const communityParam = community.custom_link || community.id;
+    const miniAppUrl = `${MINI_APP_WEB_URL}?community=${encodeURIComponent(communityParam)}`;
+    
+    await logger.info(`Mini App URL: ${miniAppUrl}`);
+    
+    // Create inline keyboard with web_app button
     const inlineKeyboard = {
       inline_keyboard: [
         [
@@ -204,11 +224,13 @@ To join this community and access exclusive content, please subscribe using the 
       ]
     };
     
+    // Send welcome message with image if available
     const result = await sendTelegramMessage(
       botToken,
       message.chat.id,
       welcomeMessage,
-      inlineKeyboard
+      inlineKeyboard,
+      welcomeImage
     );
     
     if (!result.ok) {

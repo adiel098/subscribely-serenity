@@ -281,7 +281,7 @@ async function sendTelegramMessage(
       chat_id: chatId,
       text: text,
       parse_mode: 'HTML',
-      ...options
+      reply_markup: options.reply_markup ? JSON.stringify(options.reply_markup) : undefined
     }),
   });
 
@@ -376,8 +376,8 @@ async function sendTelegramPhotoMessage(
             data.description.includes('Wrong character in the string'))) {
           console.log("Trying alternative approach for sending image...");
           
-          // Try sending as URL instead
-          const response2 = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          // Try sending as text message with inline keyboard if applicable
+          const messageResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -386,12 +386,12 @@ async function sendTelegramPhotoMessage(
               chat_id: chatId,
               text: caption || "📣 New announcement from your community!",
               parse_mode: 'HTML',
-              ...options
+              reply_markup: options.reply_markup ? JSON.stringify(options.reply_markup) : undefined
             }),
           });
           
-          const data2 = await response2.json();
-          return data2.ok;
+          const messageData = await messageResponse.json();
+          return messageData.ok;
         }
         
         // Fall back to text message
@@ -403,18 +403,25 @@ async function sendTelegramPhotoMessage(
       // For standard URLs
       const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
       
+      const payload = {
+        chat_id: chatId,
+        photo: photoUrl,
+        caption: caption || "",
+        parse_mode: 'HTML'
+      };
+      
+      if (options.reply_markup) {
+        payload.reply_markup = typeof options.reply_markup === 'string' 
+          ? options.reply_markup 
+          : JSON.stringify(options.reply_markup);
+      }
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: photoUrl,
-          caption: caption || "",
-          parse_mode: 'HTML',
-          ...options
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

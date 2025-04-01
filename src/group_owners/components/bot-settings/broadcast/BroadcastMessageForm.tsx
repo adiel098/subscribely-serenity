@@ -9,7 +9,6 @@ import { FilterTypeSelector } from "./FilterTypeSelector";
 import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
 import { toast } from "sonner";
 import { ImageUploadSection } from "../welcome-message/ImageUploadSection";
-import { MessagePreview } from "../MessagePreview";
 
 interface BroadcastMessageFormProps {
   entityId: string;
@@ -139,27 +138,6 @@ export const BroadcastMessageForm = ({
           Include "Join Community" button 🔗
         </Label>
       </div>
-      
-      {(image || message.trim()) && 
-        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-          <h3 className="text-sm font-medium text-slate-700 mb-2">Message Preview</h3>
-          <div className="rounded-lg overflow-hidden border border-slate-300 bg-white">
-            {image && 
-              <div className="p-3 border-b border-slate-200">
-                <img src={image} alt="Preview" className="max-h-40 object-contain mx-auto rounded" />
-              </div>
-            }
-            <div className="p-3">
-              <p className="whitespace-pre-wrap break-words text-sm text-slate-800">{message}</p>
-              {includeButton && 
-                <div className="mt-2">
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium">Join Community 🚀</span>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      }
       
       <div className="flex justify-end">
         <Button 

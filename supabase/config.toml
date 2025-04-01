@@ -2,68 +2,60 @@
 project_id = "trkiniaqliiwdkrvvuky"
 
 [api]
+# Swagger documentation
 enabled = true
 port = 54321
 schemas = ["public", "storage", "graphql_public"]
 
 [db]
+# Port for the DB
 port = 54322
+shadow_port = 54320
+major_version = 15
 
 [studio]
-enabled = true
+# Port for Supabase Studio
 port = 54323
 
+# Email testing server
 [inbucket]
-enabled = true
+# Inbucket service
 port = 54324
+smtp_port = 54325
+pop3_port = 54326
 
 [storage]
-enabled = true
+# Storage service
+file_size_limit = "50MiB"
 
 [auth]
-enabled = true
+# Enable debugging for auth service
+debug = false
 
-[realtime]
-enabled = true
-
+[functions]
 [functions.telegram-webhook]
 verify_jwt = false
+
+[functions.telegram-community-data]
+verify_jwt = true
+
+[functions.telegram-user-manager]
+verify_jwt = true
+
+[functions.telegram-mini-app]
+verify_jwt = true
+
+[functions.send-broadcast]
+verify_jwt = true
 
 [functions.check-subscriptions]
 verify_jwt = false
 
-[functions.database-diagnostics]
-verify_jwt = false
+[functions.get-telegram-chat-photo]
+verify_jwt = true
 
-[functions.create-stripe-payment-intent]
-verify_jwt = false
-
-[functions.update-community-counts]
-verify_jwt = false
-
-[functions.telegram-image-proxy]
-verify_jwt = false
-
-[functions.check-community-photo]
-verify_jwt = false
+[functions.kick-member]
+verify_jwt = true
 
 [functions.create-invite-link]
-verify_jwt = false
-
-[functions.create-stripe-session]
-verify_jwt = false
-
-[functions.telegram-user-manager]
-verify_jwt = false
-
-[functions.telegram-community-data]
-verify_jwt = false
-
-[functions.telegram-mini-app]
-verify_jwt = false
-
-[functions.send-broadcast]
-verify_jwt = false
-
-[functions.validate-bot-token]
-verify_jwt = false
+verify_jwt = true

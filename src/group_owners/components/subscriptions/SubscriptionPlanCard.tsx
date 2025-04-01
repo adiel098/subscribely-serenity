@@ -1,9 +1,16 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 import { CheckIcon, ClockIcon, EditIcon, GiftIcon, StarIcon, Trash2Icon } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
@@ -56,7 +63,48 @@ export const SubscriptionPlanCard = ({
   const finalIntervalColors = intervalColors || defaultIntervalColor;
 
   return (
-    <Card className="border shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
+    <Card className="border shadow-sm hover:shadow-md transition-shadow h-full flex flex-col relative group">
+      {/* Action buttons in top right corner */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(plan)}
+                className="h-7 w-7 p-0 rounded-full bg-white text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
+              >
+                <EditIcon className="h-3.5 w-3.5" />
+                <span className="sr-only">Edit plan</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit plan</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(plan.id)}
+                className="h-7 w-7 p-0 rounded-full bg-white text-muted-foreground hover:text-destructive hover:bg-red-50"
+              >
+                <Trash2Icon className="h-3.5 w-3.5" />
+                <span className="sr-only">Delete plan</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete plan</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
       <CardHeader className="pb-2 sm:pb-4 pt-2 sm:pt-6 px-2 sm:px-6">
         <div className="flex justify-between items-start gap-1">
           <div>
@@ -97,10 +145,10 @@ export const SubscriptionPlanCard = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="pb-2 sm:pb-6 pt-0 px-2 sm:px-6 flex-1 flex flex-col">
+      <CardContent className="pb-4 sm:pb-6 pt-0 px-2 sm:px-6 flex-1 flex flex-col">
         {plan.features && plan.features.length > 0 ? (
           <div className="flex flex-col flex-1">
-            <ul className="space-y-0.5 sm:space-y-2 flex-1">
+            <ul className="space-y-0.5 sm:space-y-2">
               {plan.features.map((feature, i) => (
                 <li key={i} className="flex items-start">
                   <CheckIcon className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-green-500 mr-0.5 sm:mr-2 mt-0.5 flex-shrink-0" />
@@ -108,49 +156,11 @@ export const SubscriptionPlanCard = ({
                 </li>
               ))}
             </ul>
-            <div className="flex justify-end space-x-0.5 sm:space-x-2 pt-1 sm:pt-4 mt-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(plan)}
-                className="h-5 sm:h-8 px-0.5 sm:px-2 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
-              >
-                <EditIcon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(plan.id)}
-                className="h-5 sm:h-8 px-0.5 sm:px-2 text-destructive hover:text-destructive hover:bg-red-50"
-              >
-                <Trash2Icon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
           </div>
         ) : (
-          <>
-            <p className="text-muted-foreground text-[10px] sm:text-sm italic">
-              No features specified
-            </p>
-            <div className="flex justify-end space-x-0.5 sm:space-x-2 mt-1 sm:mt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(plan)}
-                className="h-5 sm:h-8 px-0.5 sm:px-2 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
-              >
-                <EditIcon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(plan.id)}
-                className="h-5 sm:h-8 px-0.5 sm:px-2 text-destructive hover:text-destructive hover:bg-red-50"
-              >
-                <Trash2Icon className="h-2.5 w-2.5 sm:h-4 sm:w-4" />
-              </Button>
-            </div>
-          </>
+          <p className="text-muted-foreground text-[10px] sm:text-sm italic">
+            No features specified
+          </p>
         )}
       </CardContent>
     </Card>

@@ -10,7 +10,6 @@ import { useBroadcast } from "@/group_owners/hooks/useBroadcast";
 import { toast } from "sonner";
 import { ImageUploadSection } from "../welcome-message/ImageUploadSection";
 import { MessagePreview } from "../MessagePreview";
-import { BroadcastButton } from "./BroadcastButton";
 
 interface BroadcastMessageFormProps {
   entityId: string;
@@ -36,10 +35,11 @@ export const BroadcastMessageForm = ({
   } = useBroadcast();
 
   const handleSendBroadcast = async () => {
-    if (!message.trim()) {
-      toast.error("Message cannot be empty");
+    if (!message.trim() && !image) {
+      toast.error("Message or image is required");
       return;
     }
+    
     if (filterType === 'plan' && !selectedPlanId) {
       toast.error("Please select a subscription plan");
       return;
@@ -49,6 +49,7 @@ export const BroadcastMessageForm = ({
       toast.error("Please wait for image upload to complete");
       return;
     }
+    
     setIsSending(true);
     try {
       sendBroadcast(
@@ -57,13 +58,15 @@ export const BroadcastMessageForm = ({
         message,
         filterType,
         includeButton,
-        undefined, // buttonText parameter
-        undefined, // buttonUrl parameter
+        "Join Community 🚀", // Default button text
+        undefined, // buttonUrl will be generated server-side
         image
       ).then(data => {
         if (data && data.success) {
           toast.success(`Message sent to ${data.sent_count || 0} recipients 🎉`);
           setMessage("");
+          // Optionally clear the image after sending
+          // setImage(null);
         } else {
           toast.error(`Failed to send broadcast: ${data?.message || 'Unknown error'}`);
         }
@@ -112,9 +115,19 @@ export const BroadcastMessageForm = ({
           <ImageIcon className="h-4 w-4 mr-1.5" />
           Add Image (Optional)
         </Label>
-        <ImageUploadSection image={image} setImage={setImage} updateSettings={{
-        mutate: () => {}
-      }} settingsKey="broadcast_image" isUploading={isUploading} setIsUploading={setIsUploading} imageError={imageError} setImageError={setImageError} label="Upload Image 🖼️" />
+        <ImageUploadSection 
+          image={image} 
+          setImage={setImage} 
+          updateSettings={{
+            mutate: () => {} // We don't persist broadcast images to settings
+          }} 
+          settingsKey="broadcast_image" 
+          isUploading={isUploading} 
+          setIsUploading={setIsUploading} 
+          imageError={imageError} 
+          setImageError={setImageError} 
+          label="Upload Image 🖼️" 
+        />
         <p className="text-xs text-muted-foreground">
           Images increase engagement by up to 80%! 📈
         </p>
@@ -127,10 +140,31 @@ export const BroadcastMessageForm = ({
         </Label>
       </div>
       
+      {(image || message.trim()) && 
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+          <h3 className="text-sm font-medium text-slate-700 mb-2">Message Preview</h3>
+          <div className="rounded-lg overflow-hidden border border-slate-300 bg-white">
+            {image && 
+              <div className="p-3 border-b border-slate-200">
+                <img src={image} alt="Preview" className="max-h-40 object-contain mx-auto rounded" />
+              </div>
+            }
+            <div className="p-3">
+              <p className="whitespace-pre-wrap break-words text-sm text-slate-800">{message}</p>
+              {includeButton && 
+                <div className="mt-2">
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium">Join Community 🚀</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      
       <div className="flex justify-end">
         <Button 
           onClick={handleSendBroadcast} 
-          disabled={isSending || !message.trim() || filterType === 'plan' && !selectedPlanId || isUploading} 
+          disabled={isSending || (!message.trim() && !image) || (filterType === 'plan' && !selectedPlanId) || isUploading} 
           className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-sm w-full"
         >
           {isSending ? <>

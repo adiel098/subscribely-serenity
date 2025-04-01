@@ -45,9 +45,9 @@ export const ImageUploadSection = ({
       return;
     }
 
-    // Validate file size (max 1MB for Telegram compatibility)
-    if (file.size > 1 * 1024 * 1024) {
-      setImageError("Image size should be less than 1MB for Telegram compatibility");
+    // Validate file size (max 800KB for Telegram compatibility)
+    if (file.size > 800 * 1024) {
+      setImageError("Image size should be less than 800KB for Telegram compatibility");
       setIsUploading(false);
       return;
     }
@@ -110,7 +110,7 @@ export const ImageUploadSection = ({
     }
     
     // Calculate new dimensions (max width/height 1280px for Telegram)
-    const MAX_SIZE = 1280;
+    const MAX_SIZE = 1024;
     let width = img.width;
     let height = img.height;
     
@@ -130,10 +130,10 @@ export const ImageUploadSection = ({
     ctx.drawImage(img, 0, 0, width, height);
     
     // Convert to JPEG format (more compatible with Telegram)
-    // Use quality 0.8 (80%) for a good balance between size and quality
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Use quality 0.7 (70%) for a good balance between size and quality
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
     
-    // Ensure the base64 data is properly padded
+    // Ensure the base64 data is properly padded for Telegram API
     return ensureBase64Padding(dataUrl);
   };
 

@@ -72,7 +72,10 @@ async function sendBroadcastMessage(params: {
   buttonUrl?: string;
   image?: string | null;
 }) {
-  console.log('Sending broadcast message:', params);
+  console.log('Sending broadcast message with params:', {
+    ...params,
+    image: params.image ? 'Image data present (truncated)' : null
+  });
   
   try {
     const { data, error } = await supabase.functions.invoke("send-broadcast", {

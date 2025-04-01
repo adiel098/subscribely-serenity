@@ -101,7 +101,7 @@ export async function handleStartCommand(
 function generateMiniAppUrl(communityIdOrLink: string): string {
   // Make sure to use an actual URL from your config
   const baseUrl = 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
-  return `${baseUrl}?community=${encodeURIComponent(communityIdOrLink)}`;
+  return `${baseUrl}?start=${encodeURIComponent(communityIdOrLink)}`;
 }
 
 /**

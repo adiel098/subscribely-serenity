@@ -3,86 +3,68 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../services/loggingService.ts';
 
 /**
- * Handle updates to chat members (users joining/leaving/being kicked)
+ * Handle chat member updates (joins, leaves, etc.)
  */
 export async function handleChatMemberUpdated(
   supabase: ReturnType<typeof createClient>,
   update: any,
   botToken: string
 ) {
-  const logger = createLogger(supabase, 'MEMBER-UPDATE-HANDLER');
+  const logger = createLogger(supabase, 'MEMBER-UPDATE');
   
   try {
-    // Check if it's my_chat_member or chat_member
-    const memberUpdate = update.my_chat_member || update.chat_member;
+    const chatMemberUpdate = update.my_chat_member || update.chat_member;
     
-    if (!memberUpdate) {
-      await logger.error("No member update data found");
-      return { success: false, error: 'No member update data found' };
+    if (!chatMemberUpdate) {
+      await logger.error("No chat member update data found");
+      return { success: false, error: "No chat member update data" };
     }
     
-    await logger.info(`Processing member update in chat ${memberUpdate.chat.id}`);
+    const chatId = chatMemberUpdate.chat.id.toString();
+    const userId = chatMemberUpdate.from.id.toString();
+    const newStatus = chatMemberUpdate.new_chat_member?.status;
+    const oldStatus = chatMemberUpdate.old_chat_member?.status;
     
-    // Determine the update type
-    const oldStatus = memberUpdate.old_chat_member.status;
-    const newStatus = memberUpdate.new_chat_member.status;
-    const userId = memberUpdate.new_chat_member.user.id.toString();
-    const isSelf = memberUpdate.new_chat_member.user.is_bot && 
-                   memberUpdate.new_chat_member.user.username === botToken.split(':')[0];
+    await logger.info(`Chat member update in ${chatId} for user ${userId}: ${oldStatus} -> ${newStatus}`);
     
-    await logger.info(`Member ${userId} status changed from ${oldStatus} to ${newStatus}`);
+    // Log the event to the database for analytics
+    await supabase.from('system_logs').insert({
+      event_type: 'chat_member_updated',
+      details: `Chat member updated in ${chatId}`,
+      metadata: {
+        chat_id: chatId,
+        user_id: userId,
+        old_status: oldStatus,
+        new_status: newStatus,
+        raw_data: chatMemberUpdate
+      }
+    });
     
-    // If this is about the bot itself
-    if (isSelf) {
-      await logger.info("Update is about the bot itself");
+    // Process different status changes (administrator, member, left, kicked, etc.)
+    if (newStatus === 'administrator' && oldStatus !== 'administrator') {
+      await logger.info(`Bot was promoted to admin in chat ${chatId}`);
       
-      if (newStatus === 'member' || newStatus === 'administrator') {
-        // Bot was added to a group or promoted
-        await logger.info(`Bot was added or promoted in chat ${memberUpdate.chat.id}`);
-        // You could initialize the bot's settings for this chat here
-      } else if (newStatus === 'left' || newStatus === 'kicked') {
-        // Bot was removed from a group or kicked
-        await logger.info(`Bot was removed from chat ${memberUpdate.chat.id}`);
-        // You could clean up the bot's settings for this chat here
+      // Find community with this chat ID and update admin status
+      const { data: settings, error } = await supabase
+        .from('telegram_bot_settings')
+        .update({ is_admin: true })
+        .eq('chat_id', chatId)
+        .select();
+      
+      if (error) {
+        await logger.error(`Failed to update admin status:`, error);
       }
+    } else if (newStatus !== 'administrator' && oldStatus === 'administrator') {
+      await logger.info(`Bot was demoted from admin in chat ${chatId}`);
       
-      // Log to database
-      try {
-        await supabase.from('telegram_bot_events').insert({
-          chat_id: memberUpdate.chat.id.toString(),
-          event_type: `bot_${newStatus}`,
-          details: `Bot status changed from ${oldStatus} to ${newStatus}`,
-          raw_data: memberUpdate
-        });
-      } catch (error) {
-        await logger.error("Error logging bot event:", error);
-      }
-    } else {
-      // Update is about a regular user
-      await logger.info(`User ${userId} status changed in chat ${memberUpdate.chat.id}`);
+      // Update admin status
+      const { error } = await supabase
+        .from('telegram_bot_settings')
+        .update({ is_admin: false })
+        .eq('chat_id', chatId);
       
-      if (newStatus === 'member' && (oldStatus === 'left' || oldStatus === 'kicked')) {
-        // User joined the group
-        await logger.info(`User ${userId} joined chat ${memberUpdate.chat.id}`);
-        // Handle user joining
-      } else if ((newStatus === 'left' || newStatus === 'kicked') && oldStatus === 'member') {
-        // User left or was kicked from the group
-        await logger.info(`User ${userId} left chat ${memberUpdate.chat.id}`);
-        // Handle user leaving
-      }
-      
-      // Log to database
-      try {
-        await supabase.from('telegram_membership_logs').insert({
-          telegram_chat_id: memberUpdate.chat.id.toString(),
-          telegram_user_id: userId,
-          telegram_username: memberUpdate.new_chat_member.user.username,
-          event_type: `user_${newStatus}`,
-          details: `User status changed from ${oldStatus} to ${newStatus}`,
-          raw_data: memberUpdate
-        });
-      } catch (error) {
-        await logger.error("Error logging membership event:", error);
+      if (error) {
+        await logger.error(`Failed to update admin status:`, error);
       }
     }
     

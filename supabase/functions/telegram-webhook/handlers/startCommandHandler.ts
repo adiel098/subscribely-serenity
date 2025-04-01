@@ -1,11 +1,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleGroupStartCommand } from './group/groupStartHandler.ts';
-import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
+import { findCommunityByIdOrLink } from '../communityHandler.ts';
 import { sendTelegramMessage, isValidTelegramUrl } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
 
-// Constant for the mini app URL - Updated to the correct URL
+// Constant for the mini app URL
 export const MINI_APP_WEB_URL = 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
 export const TELEGRAM_MINI_APP_URL = 'https://t.me/YourBotUsername/app';
 
@@ -16,7 +15,7 @@ export async function handleStartCommand(
   supabase: ReturnType<typeof createClient>,
   message: any,
   botToken: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   const logger = createLogger(supabase, 'START-COMMAND');
   
   try {
@@ -47,7 +46,7 @@ export async function handleStartCommand(
         await logger.info(`👥👥👥 Group parameter detected: ${groupId}`);
         return await handleGroupStartCommand(supabase, message, botToken, groupId);
       } else {
-        // This is likely a community code
+        // This is a community code
         await logger.info(`🏢 Community parameter detected: ${startParam}`);
         return await handleCommunityStartCommand(supabase, message, botToken, startParam);
       }
@@ -119,6 +118,108 @@ Press the button below to explore communities:
       raw_data: message
     });
     
+    return false;
+  }
+}
+
+/**
+ * Handle /start command with a group parameter
+ */
+async function handleGroupStartCommand(
+  supabase: ReturnType<typeof createClient>,
+  message: any, 
+  botToken: string,
+  groupId: string
+): Promise<boolean> {
+  const logger = createLogger(supabase, 'GROUP-START-COMMAND');
+  
+  try {
+    await logger.info(`Processing group start command for ID: ${groupId}`);
+    
+    // Send a generic response for now - you can implement this fully later
+    const response = await sendTelegramMessage(
+      botToken,
+      message.chat.id,
+      `<b>Welcome to Group!</b>\n\nThis feature is coming soon. Stay tuned!`
+    );
+    
+    return response.ok;
+  } catch (error) {
+    await logger.error(`Error processing group start command:`, error);
+    return false;
+  }
+}
+
+/**
+ * Handle /start command with a community parameter
+ */
+async function handleCommunityStartCommand(
+  supabase: ReturnType<typeof createClient>,
+  message: any, 
+  botToken: string,
+  communityIdOrLink: string
+): Promise<boolean> {
+  const logger = createLogger(supabase, 'COMMUNITY-START-COMMAND');
+  
+  try {
+    await logger.info(`🏢 Processing community start command for identifier: ${communityIdOrLink}`);
+    
+    // Find the community
+    const community = await findCommunityByIdOrLink(supabase, communityIdOrLink);
+    
+    if (!community) {
+      await logger.error(`❌ Community not found for identifier: ${communityIdOrLink}`);
+      
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
+      );
+      
+      return false;
+    }
+    
+    await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
+    
+    // Generate mini app URL
+    const miniAppUrl = `${MINI_APP_WEB_URL}?community=${encodeURIComponent(community.custom_link || community.id)}`;
+    
+    await logger.info(`Mini App URL: ${miniAppUrl}`);
+    
+    // Send welcome message with subscription button
+    const welcomeMessage = `
+<b>Welcome to ${community.name}!</b> 🎉
+
+To join this community and access exclusive content, please subscribe using the button below:
+    `;
+    
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "💳 Subscribe Now",
+            web_app: { url: miniAppUrl }
+          }
+        ]
+      ]
+    };
+    
+    const result = await sendTelegramMessage(
+      botToken,
+      message.chat.id,
+      welcomeMessage,
+      inlineKeyboard
+    );
+    
+    if (!result.ok) {
+      await logger.error(`❌ Failed to send community welcome message: ${result.description}`);
+      return false;
+    }
+    
+    await logger.info(`✅ Community welcome message sent successfully`);
+    return true;
+  } catch (error) {
+    await logger.error(`Error in community start command:`, error);
     return false;
   }
 }

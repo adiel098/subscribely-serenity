@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleStartCommand } from './commands/startCommandHandler.ts';
+import { handleStartCommand } from '../handlers/startCommandHandler.ts';
 import { handleHelpCommand } from './commands/helpCommandHandler.ts';
 import { createLogger } from '../services/loggingService.ts';
 
@@ -41,7 +41,7 @@ export async function handleCommandMessage(
     
     if (command === 'start') {
       await logger.info("🚀 Forwarding /start command to handleStartCommand()");
-      result = await handleStartCommand(supabase, message, params, botToken);
+      result = await handleStartCommand(supabase, message, botToken);
     } else if (command === 'help') {
       await logger.info("ℹ️ Forwarding /help command to handleHelpCommand()");
       result = await handleHelpCommand(supabase, message, botToken);

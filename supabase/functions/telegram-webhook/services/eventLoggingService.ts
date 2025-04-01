@@ -1,52 +1,55 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-/**
- * Log webhook event to the database
- */
 export async function logWebhookEvent(
   supabase: ReturnType<typeof createClient>,
   update: any,
   message: any,
   handled: boolean
-): Promise<void> {
+) {
   try {
-    console.log("[EVENT-LOGGING] 📝 Logging event to database");
-    await supabase
-      .from('telegram_events')
-      .insert({
-        event_type: update.channel_post ? 'channel_post' : 'webhook_update',
-        raw_data: update,
-        handled: handled,
-        chat_id: message.chat?.id?.toString(),
-        message_text: message.text,
-        username: message.from?.username,
-        user_id: message.from?.id?.toString()
-      });
-    console.log("[EVENT-LOGGING] ✅ Event logged successfully");
-  } catch (logError) {
-    console.error("[EVENT-LOGGING] ❌ Error logging event:", logError);
+    console.log(`Logging webhook event: update_id=${update.update_id}, handled=${handled}`);
+    
+    await supabase.from('telegram_webhook_logs').insert({
+      update_id: update.update_id,
+      telegram_user_id: message?.from?.id?.toString(),
+      chat_id: message?.chat?.id?.toString(),
+      event_type: getEventType(update),
+      was_handled: handled,
+      raw_data: update
+    });
+  } catch (error) {
+    console.error('Error logging webhook event:', error);
   }
 }
 
-/**
- * Log error to the database
- */
 export async function logWebhookError(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createClient>, 
   error: Error,
-  context?: any
-): Promise<void> {
+  update: any
+) {
   try {
-    console.error('[EVENT-LOGGING] ❌ Error logging to database:', error);
+    console.error(`Logging webhook error: ${error.message}`);
     
     await supabase.from('telegram_errors').insert({
-      error_type: 'webhook_router_error',
+      error_type: 'webhook_error',
       error_message: error.message,
       stack_trace: error.stack,
-      raw_data: context
+      update_id: update?.update_id,
+      raw_data: update
     });
   } catch (logError) {
-    console.error('[EVENT-LOGGING] ❌ Failed to log error to database:', logError);
+    console.error('Error logging webhook error:', logError);
   }
+}
+
+function getEventType(update: any): string {
+  if (update.message) return 'message';
+  if (update.edited_message) return 'edited_message';
+  if (update.channel_post) return 'channel_post';
+  if (update.callback_query) return 'callback_query';
+  if (update.chat_join_request) return 'chat_join_request';
+  if (update.my_chat_member) return 'my_chat_member';
+  if (update.chat_member) return 'chat_member';
+  return 'unknown';
 }

@@ -4,9 +4,11 @@ import { handleNewMessage, handleEditedMessage, handleChannelPost } from './hand
 import { handleChatJoinRequest } from './handlers/joinRequestHandler.ts';
 import { handleChatMemberUpdated } from './handlers/memberUpdateHandler.ts';
 import { logWebhookEvent, logWebhookError } from './services/eventLoggingService.ts';
+import { createLogger } from './services/loggingService.ts';
 
 export async function routeTelegramUpdate(supabase: ReturnType<typeof createClient>, update: any, context: { BOT_TOKEN: string }) {
-  console.log("[webhook-router] Processing update:", JSON.stringify(update, null, 2));
+  const logger = createLogger(supabase, 'webhook-router');
+  await logger.info("Processing update:", JSON.stringify(update, null, 2));
   
   try {
     // Extract the relevant message/event based on the update type
@@ -18,7 +20,7 @@ export async function routeTelegramUpdate(supabase: ReturnType<typeof createClie
                     update.chat_member;
 
     if (!message) {
-      console.error("[webhook-router] Unrecognized request format");
+      await logger.error("Unrecognized request format");
       return { success: false, error: 'Unrecognized request format' };
     }
 
@@ -47,12 +49,12 @@ export async function routeTelegramUpdate(supabase: ReturnType<typeof createClie
     
     return { success: true, handled };
   } catch (error) {
-    console.error("[webhook-router] Error processing update:", error);
+    await logger.error("Error processing update:", error);
     
     try {
       await logWebhookError(supabase, error, update);
     } catch (logError) {
-      console.error("[webhook-router] Failed to log error:", logError);
+      await logger.error("Failed to log error:", logError);
     }
     
     return { success: false, error: error.message };

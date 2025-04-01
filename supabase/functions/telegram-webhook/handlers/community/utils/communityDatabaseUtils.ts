@@ -12,9 +12,19 @@ export async function findCommunityById(
   const logger = createLogger(supabase, 'COMMUNITY-DB-UTILS');
   
   try {
-    await logger.info(`🔍 Searching for community with ID or link: ${communityIdOrLink}`);
+    await logger.info(`🔍 Looking up community by ID or link: ${communityIdOrLink}`);
     
-    // First try to find by ID
+    // Check if the input looks like a UUID or a custom link
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isUuid = uuidPattern.test(communityIdOrLink);
+    
+    if (isUuid) {
+      await logger.info(`🔍 Input appears to be a UUID: ${communityIdOrLink}`);
+    } else {
+      await logger.info(`🔗 Input appears to be a custom link: ${communityIdOrLink}`);
+    }
+    
+    // First try to find by ID or custom link
     let { data: communities, error } = await supabase
       .from('communities')
       .select('*')

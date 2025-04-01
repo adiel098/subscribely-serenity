@@ -12,27 +12,41 @@ export const createLogger = (
   module: string
 ) => {
   const log = async (level: string, message: string, details?: any) => {
-    console.log(`[${module}] [${level}] ${message}`);
-    
     try {
-      await supabase
-        .from('system_logs')
-        .insert({
-          module: module,
-          event_type: level.toLowerCase(),
-          message: message,
-          metadata: details ? (typeof details === 'object' ? details : { value: details }) : {}
-        });
-    } catch (error) {
-      console.error(`Error writing to system_logs:`, error);
-      // Continue execution even if logging fails
+      console.log(`[${module}] [${level}] ${message}`);
+      
+      if (details) {
+        if (typeof details === 'object') {
+          console.log(`[${module}] [${level}] Details:`, details);
+        } else {
+          console.log(`[${module}] [${level}] Details: ${details}`);
+        }
+      }
+      
+      try {
+        await supabase
+          .from('system_logs')
+          .insert({
+            module: module,
+            event_type: level.toLowerCase(),
+            message: message,
+            metadata: details ? (typeof details === 'object' ? details : { value: details }) : {}
+          });
+      } catch (dbError) {
+        console.error(`[${module}] Error writing to system_logs:`, dbError);
+        // Continue execution even if logging to DB fails
+      }
+    } catch (consoleError) {
+      // Last resort fallback if even console logging fails
+      console.error("Logger error:", consoleError);
     }
   };
 
   return {
     info: (message: string, details?: any) => log('INFO', message, details),
-    success: (message: string, details?: any) => log('SUCCESS', message, details),
+    success: (message: string, details?: any) => log('SUCCESS', message, details), // Added success method
     warn: (message: string, details?: any) => log('WARNING', message, details),
     error: (message: string, details?: any) => log('ERROR', message, details),
+    debug: (message: string, details?: any) => log('DEBUG', message, details), // Added debug method
   };
 };

@@ -64,6 +64,18 @@ export async function handleCommunityStartCommand(
     );
   } catch (error) {
     await logger.error(`❌ Error in handleCommunityStartCommand:`, error);
+    
+    // Try to notify the user about the error
+    try {
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `❌ Sorry, something went wrong while processing your request. Please try again later.`
+      );
+    } catch (sendError) {
+      await logger.error(`Failed to send error message to user:`, sendError);
+    }
+    
     return false;
   }
 }

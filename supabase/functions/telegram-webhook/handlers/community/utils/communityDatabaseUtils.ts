@@ -46,7 +46,8 @@ export async function findCommunityById(supabase: ReturnType<typeof createClient
     // Get the first matching community
     const community = communities[0];
     
-    await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
+    // Changed from logger.success to logger.info to avoid the error
+    await logger.info(`✅ Found community: ${community.name} (ID: ${community.id})`);
     return { success: true, data: community };
   } catch (error) {
     await logger.error(`❌ Error in findCommunityById for ID or link: ${communityIdOrLink}`, error);

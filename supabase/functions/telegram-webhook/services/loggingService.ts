@@ -11,7 +11,7 @@ export const createLogger = (
   supabase: ReturnType<typeof createClient>,
   module: string
 ) => {
-  const log = async (level: string, message: string) => {
+  const log = async (level: string, message: string, details?: any) => {
     console.log(`[${module}] [${level}] ${message}`);
     
     try {
@@ -21,7 +21,7 @@ export const createLogger = (
           module: module,
           event_type: level.toLowerCase(),
           message: message,
-          metadata: {}
+          metadata: details ? (typeof details === 'object' ? details : { value: details }) : {}
         });
     } catch (error) {
       console.error(`Error writing to system_logs:`, error);
@@ -30,9 +30,9 @@ export const createLogger = (
   };
 
   return {
-    info: (message: string) => log('INFO', message),
-    success: (message: string) => log('SUCCESS', message),
-    warn: (message: string) => log('WARNING', message),
-    error: (message: string) => log('ERROR', message),
+    info: (message: string, details?: any) => log('INFO', message, details),
+    success: (message: string, details?: any) => log('SUCCESS', message, details),
+    warn: (message: string, details?: any) => log('WARNING', message, details),
+    error: (message: string, details?: any) => log('ERROR', message, details),
   };
 };

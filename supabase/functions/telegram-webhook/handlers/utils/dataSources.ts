@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../../services/loggingService.ts';
 
@@ -94,7 +95,7 @@ export async function fetchStartCommandData(
       };
     }
     
-    await logger.success('Successfully fetched community and bot settings');
+    await logger.info('Successfully fetched community and bot settings');
     
     return {
       success: true,
@@ -136,7 +137,7 @@ export async function fetchCommunityWithPlans(
       throw error;
     }
     
-    await logger.success('Successfully fetched community with plans');
+    await logger.info('Successfully fetched community with plans');
     return data;
   } catch (error) {
     await logger.error('Exception in fetchCommunityWithPlans:', error);

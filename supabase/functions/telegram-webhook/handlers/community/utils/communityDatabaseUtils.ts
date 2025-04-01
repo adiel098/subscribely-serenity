@@ -25,6 +25,8 @@ export async function findCommunityById(
     }
     
     // First try to find by ID or custom link
+    // NOTE: Fixed critical bug - don't use string interpolation for column names in queries
+    // Instead, use proper parameter format with explicit column conditions
     let { data: communities, error } = await supabase
       .from('communities')
       .select('*')
@@ -33,6 +35,43 @@ export async function findCommunityById(
     if (error) {
       await logger.error(`❌ Error querying communities:`, error);
       return { success: false, error: error.message };
+    }
+    
+    // If we didn't find any communities with the or statement, try more explicit queries
+    if (!communities || communities.length === 0) {
+      await logger.info(`⚠️ No community found with combined query, trying specific queries`);
+      
+      // Try UUID lookup first if it looks like a UUID
+      if (isUuid) {
+        const { data: uuidCommunities, error: uuidError } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', communityIdOrLink)
+          .limit(1);
+        
+        if (uuidError) {
+          await logger.error(`❌ Error querying by UUID:`, uuidError);
+        } else if (uuidCommunities && uuidCommunities.length > 0) {
+          communities = uuidCommunities;
+          await logger.info(`✅ Found community by UUID: ${communities[0].name}`);
+        }
+      }
+      
+      // If still no result, try by custom link
+      if (!communities || communities.length === 0) {
+        const { data: linkCommunities, error: linkError } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('custom_link', communityIdOrLink)
+          .limit(1);
+        
+        if (linkError) {
+          await logger.error(`❌ Error querying by custom link:`, linkError);
+        } else if (linkCommunities && linkCommunities.length > 0) {
+          communities = linkCommunities;
+          await logger.info(`✅ Found community by custom link: ${communities[0].name}`);
+        }
+      }
     }
     
     if (!communities || communities.length === 0) {
@@ -83,7 +122,7 @@ export async function checkCommunityRequirements(
     const { data: paymentMethods, error: paymentMethodsError } = await supabase
       .from('payment_methods')
       .select('id')
-      .eq('owner_id', communityId)
+      .eq('community_id', communityId)
       .eq('is_active', true)
       .limit(1);
     

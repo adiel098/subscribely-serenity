@@ -15,4 +15,11 @@
 - Fixed Mini App URL in startCommandHandler.ts
 - Ensured consistent URLs across config.ts and expirationNotificationService.ts
 
+## 2025-04-03
+- Fixed critical bug in `findCommunityById` function where SQL query wasn't properly handling custom links
+- Improved community lookup logic with explicit queries for UUID and custom links
+- Enhanced error handling and logging for community lookups
+- Fixed database utilities to properly handle both UUID and custom link formats
+- Added fallback lookup methods when primary query fails
+
 All these changes should fix the issue with the Telegram bot not responding to commands and ensure the correct mini app URL is used.

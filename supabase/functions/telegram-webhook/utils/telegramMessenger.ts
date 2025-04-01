@@ -2,6 +2,7 @@
 /**
  * Utility functions for sending messages to Telegram
  */
+import { sendPhotoWithCaption, isValidPhotoSource } from './telegram/photoMessages.ts';
 
 /**
  * Validates that a URL is a proper HTTPS URL for Telegram web_app buttons
@@ -38,10 +39,11 @@ export async function sendTelegramMessage(
   
   try {
     // If we have an image, send a photo with caption instead of a text message
-    if (image) {
+    if (image && isValidPhotoSource(image)) {
       return await sendPhotoWithCaption(botToken, chatId, image, text, replyMarkup);
     }
     
+    // Fall back to text message if no image or invalid image
     const messageData: any = {
       chat_id: chatId,
       text: text,
@@ -77,54 +79,5 @@ export async function sendTelegramMessage(
   }
 }
 
-/**
- * Sends a photo with an optional caption to a Telegram user
- */
-async function sendPhotoWithCaption(
-  botToken: string,
-  chatId: string | number,
-  photoUrl: string,
-  caption: string | null = null,
-  replyMarkup: any = null
-): Promise<{ ok: boolean; description?: string; result?: any }> {
-  try {
-    const messageData: any = {
-      chat_id: chatId,
-      photo: photoUrl,
-      parse_mode: 'HTML'
-    };
-    
-    if (caption) {
-      messageData.caption = caption;
-    }
-    
-    if (replyMarkup) {
-      messageData.reply_markup = typeof replyMarkup === 'string' 
-        ? replyMarkup 
-        : JSON.stringify(replyMarkup);
-    }
-    
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(messageData)
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      console.error(`Failed to send Telegram photo: ${data.description}`);
-      return { ok: false, description: data.description };
-    }
-    
-    return { ok: true, result: data.result };
-  } catch (error) {
-    console.error(`Error sending photo:`, error);
-    return { ok: false, description: error.message };
-  }
-}
-
 // Export the photo sending function for direct use
-export { sendPhotoWithCaption };
+export { sendPhotoWithCaption, isValidPhotoSource };

@@ -59,35 +59,17 @@ export const ImageUploadSection = ({
       // For additional reliability, create an image to verify the data loads
       const img = new Image();
       img.onload = () => {
-        // Image loaded successfully
-        // Ensure the base64 data is valid (correct padding)
         try {
-          // Extract the base64 data part without the prefix
-          const base64Data = result.split(',')[1];
-          // Check if the data length is valid for base64 (multiple of 4)
-          if (base64Data.length % 4 !== 0) {
-            // Fix padding if needed
-            const paddedData = base64Data + '='.repeat((4 - base64Data.length % 4) % 4);
-            // Reconstruct the data URL with proper padding
-            const fixedResult = result.split(',')[0] + ',' + paddedData;
-            setImage(fixedResult);
-            console.log(`Fixed base64 padding for ${settingsKey} image`);
-            
-            // Save fixed image immediately after upload
-            const updateObj: any = {};
-            updateObj[settingsKey] = fixedResult;
-            updateSettings.mutate(updateObj);
-          } else {
-            // Base64 data already has correct padding
-            setImage(result);
-            
-            // Save image immediately after upload
-            const updateObj: any = {};
-            updateObj[settingsKey] = result;
-            updateSettings.mutate(updateObj);
-          }
+          // Process for Telegram compatibility
+          const processedImageData = preprocessImageForTelegram(result);
+          setImage(processedImageData);
           
-          console.log(`Image uploaded for ${settingsKey}:`, result.substring(0, 30) + "...");
+          // Save image immediately after upload
+          const updateObj: any = {};
+          updateObj[settingsKey] = processedImageData;
+          updateSettings.mutate(updateObj);
+          
+          console.log(`Image uploaded for ${settingsKey}`);
           toast.success(`${label} uploaded successfully`);
           setIsUploading(false);
         } catch (error) {
@@ -111,6 +93,33 @@ export const ImageUploadSection = ({
     };
     
     reader.readAsDataURL(file);
+  };
+
+  /**
+   * Preprocess image data for Telegram compatibility
+   * Ensures proper base64 padding and format
+   */
+  const preprocessImageForTelegram = (imageData: string): string => {
+    // For base64 data URLs, ensure the padding is correct
+    if (imageData.startsWith('data:')) {
+      try {
+        // Get the MIME type and base64 data
+        const [prefix, base64Data] = imageData.split(',');
+        
+        // Check if the data length is valid for base64 (multiple of 4)
+        if (base64Data.length % 4 !== 0) {
+          // Fix padding if needed (add trailing = characters)
+          const paddedData = base64Data + '='.repeat((4 - base64Data.length % 4) % 4);
+          // Reconstruct with correct padding
+          return `${prefix},${paddedData}`;
+        }
+      } catch (e) {
+        console.error("Error preprocessing image:", e);
+      }
+    }
+    
+    // Return original if no processing needed or on error
+    return imageData;
   };
 
   const triggerFileInput = () => {

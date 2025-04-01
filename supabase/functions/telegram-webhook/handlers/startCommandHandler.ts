@@ -1,7 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { findCommunityByIdOrLink } from '../communityHandler.ts';
-import { sendTelegramMessage, isValidTelegramUrl } from '../utils/telegramMessenger.ts';
+import { sendTelegramMessage, isValidTelegramUrl, isValidPhotoSource } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
 
 // Constant for the mini app URL
@@ -24,7 +24,7 @@ export async function handleStartCommand(
     // Check if this is a response to the start command
     if (!message?.text || !message.text.startsWith('/start')) {
       await logger.info("⏭️ Not a start command, skipping");
-      return false;
+      return { success: false, error: "Not a start command" };
     }
     
     const userId = message.from.id.toString();
@@ -71,8 +71,8 @@ Press the button below to explore communities:
         await logger.error(`❌ Invalid mini app URL format: ${miniAppUrl}`);
         
         // Send message without button if URL is invalid
-        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
-        return true;
+        const simpleResult = await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+        return { success: simpleResult.ok, error: simpleResult.description };
       }
       
       // Create inline keyboard with web_app button
@@ -100,12 +100,13 @@ Press the button below to explore communities:
         await logger.error(`❌ Failed to send welcome message: ${result.description}`);
         
         // Try sending message without button as fallback
-        await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+        const fallbackResult = await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
+        return { success: fallbackResult.ok, error: fallbackResult.description };
       } else {
         await logger.info(`✅ Welcome message sent successfully`);
       }
       
-      return true;
+      return { success: true };
     }
   } catch (error) {
     await logger.error("❌ Error handling start command:", error);
@@ -118,7 +119,7 @@ Press the button below to explore communities:
       raw_data: message
     });
     
-    return false;
+    return { success: false, error: error.message };
   }
 }
 
@@ -130,7 +131,7 @@ async function handleGroupStartCommand(
   message: any, 
   botToken: string,
   groupId: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   const logger = createLogger(supabase, 'GROUP-START-COMMAND');
   
   try {
@@ -143,10 +144,10 @@ async function handleGroupStartCommand(
       `<b>Welcome to Group!</b>\n\nThis feature is coming soon. Stay tuned!`
     );
     
-    return response.ok;
+    return { success: response.ok, error: response.description };
   } catch (error) {
     await logger.error(`Error processing group start command:`, error);
-    return false;
+    return { success: false, error: error.message };
   }
 }
 
@@ -158,7 +159,7 @@ async function handleCommunityStartCommand(
   message: any, 
   botToken: string,
   communityIdOrLink: string
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   const logger = createLogger(supabase, 'COMMUNITY-START-COMMAND');
   
   try {
@@ -170,13 +171,13 @@ async function handleCommunityStartCommand(
     if (!community) {
       await logger.error(`❌ Community not found for identifier: ${communityIdOrLink}`);
       
-      await sendTelegramMessage(
+      const errorResult = await sendTelegramMessage(
         botToken,
         message.chat.id,
         `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
       );
       
-      return false;
+      return { success: false, error: "Community not found" };
     }
     
     await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
@@ -184,7 +185,7 @@ async function handleCommunityStartCommand(
     // Fetch welcome message from bot settings
     const { data: botSettings, error: botSettingsError } = await supabase
       .from('telegram_bot_settings')
-      .select('welcome_message, welcome_image')
+      .select('welcome_message, welcome_image, auto_welcome_message')
       .eq('community_id', community.id)
       .single();
       
@@ -199,9 +200,26 @@ To join this community and access exclusive content, please subscribe using the 
     
     // Use custom welcome message if available
     if (!botSettingsError && botSettings) {
-      welcomeMessage = botSettings.welcome_message || welcomeMessage;
-      welcomeImage = botSettings.welcome_image;
-      await logger.info(`Using custom welcome message from bot settings`);
+      if (botSettings.welcome_message) {
+        welcomeMessage = botSettings.welcome_message;
+        await logger.info(`Using custom welcome message from bot settings`);
+      }
+      
+      if (botSettings.welcome_image) {
+        welcomeImage = botSettings.welcome_image;
+        await logger.info(`Using custom welcome image from bot settings`);
+        
+        // Log a preview of the image data to help debug
+        const imageSample = typeof welcomeImage === 'string' ? 
+          welcomeImage.substring(0, 50) + '...' : 'null';
+        await logger.info(`Image data sample: ${imageSample}`);
+        
+        // Validate image data
+        if (welcomeImage && !isValidPhotoSource(welcomeImage)) {
+          await logger.warn(`⚠️ Welcome image appears to be invalid, will fallback to text-only message`);
+          welcomeImage = null;
+        }
+      }
     } else {
       await logger.warn(`No bot settings found for community ${community.id}, using default message`);
     }
@@ -235,13 +253,13 @@ To join this community and access exclusive content, please subscribe using the 
     
     if (!result.ok) {
       await logger.error(`❌ Failed to send community welcome message: ${result.description}`);
-      return false;
+      return { success: false, error: result.description };
     }
     
     await logger.info(`✅ Community welcome message sent successfully`);
-    return true;
+    return { success: true };
   } catch (error) {
     await logger.error(`Error in community start command:`, error);
-    return false;
+    return { success: false, error: error.message };
   }
 }

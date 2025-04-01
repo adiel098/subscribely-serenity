@@ -19,9 +19,44 @@ export function isValidPhotoSource(source: string | null): boolean {
     const url = new URL(source);
     return url.protocol === 'https:' || url.protocol === 'http:';
   } catch (e) {
-    // Not a URL - could be a file ID or invalid
-    return source.length > 8; // Basic length check for file IDs
+    // Not a URL - could be a file ID
+    // Telegram file IDs are usually alphanumeric strings
+    return /^[a-zA-Z0-9_-]{5,}$/.test(source);
   }
+}
+
+/**
+ * Preprocesses an image source for Telegram API compatibility
+ * Handles data URLs properly to ensure valid encoding
+ */
+function preprocessImageSource(source: string): string {
+  // If it's a data URL, ensure proper formatting
+  if (source.startsWith('data:image/')) {
+    try {
+      // Extract MIME type and base64 data
+      const [prefix, base64Data] = source.split(',');
+      
+      if (!base64Data) {
+        console.error('[TELEGRAM-PHOTO-PREPROCESS] Invalid data URL format');
+        return ''; // Return empty to fail validation
+      }
+      
+      // Remove spaces and line breaks that might exist in the base64 string
+      const cleanedData = base64Data.replace(/\s/g, '');
+      
+      // Ensure the base64 data has proper padding
+      const paddingNeeded = (4 - (cleanedData.length % 4)) % 4;
+      const paddedData = cleanedData + '='.repeat(paddingNeeded);
+      
+      return `${prefix},${paddedData}`;
+    } catch (error) {
+      console.error('[TELEGRAM-PHOTO-PREPROCESS] Error processing data URL:', error);
+      return ''; // Return empty to fail validation
+    }
+  }
+  
+  // For regular URLs or file IDs, return as is
+  return source;
 }
 
 /**
@@ -35,17 +70,35 @@ export async function sendPhotoWithCaption(
   replyMarkup: any = null
 ): Promise<{ ok: boolean; description?: string; result?: any }> {
   try {
-    if (!photoUrl || !isValidPhotoSource(photoUrl)) {
-      console.log(`[TELEGRAM-PHOTO] Invalid photo source, falling back to text message`);
+    // First validate and preprocess the photo source
+    if (!photoUrl) {
+      console.log(`[TELEGRAM-PHOTO] No photo source provided, falling back to text message`);
+      return await sendTextFallback(botToken, chatId, caption, replyMarkup);
+    }
+    
+    // Preprocess the image source to ensure compatibility with Telegram API
+    const processedPhotoUrl = preprocessImageSource(photoUrl);
+    
+    if (!processedPhotoUrl || !isValidPhotoSource(processedPhotoUrl)) {
+      console.log(`[TELEGRAM-PHOTO] Invalid photo source after preprocessing, falling back to text message`);
       return await sendTextFallback(botToken, chatId, caption, replyMarkup);
     }
     
     console.log(`[TELEGRAM-PHOTO] Sending photo to ${chatId}`);
-    console.log(`[TELEGRAM-PHOTO] Photo URL: ${typeof photoUrl === 'string' ? photoUrl.substring(0, 50) + '...' : 'null'}`);
     
+    // For logging, truncate the URL to avoid huge logs
+    const loggablePhotoUrl = typeof processedPhotoUrl === 'string' 
+      ? (processedPhotoUrl.startsWith('data:') 
+          ? processedPhotoUrl.substring(0, 30) + '...[base64 data]' 
+          : processedPhotoUrl) 
+      : 'null';
+    console.log(`[TELEGRAM-PHOTO] Photo source type: ${processedPhotoUrl.startsWith('data:') ? 'Data URL' : 'URL/File ID'}`);
+    console.log(`[TELEGRAM-PHOTO] Photo source: ${loggablePhotoUrl}`);
+    
+    // Prepare the message data
     const messageData: any = {
       chat_id: chatId,
-      photo: photoUrl,
+      photo: processedPhotoUrl,
       parse_mode: 'HTML'
     };
     
@@ -59,6 +112,15 @@ export async function sendPhotoWithCaption(
         : JSON.stringify(replyMarkup);
     }
     
+    // Attempt to determine if we're dealing with a data URL that should be sent as a file
+    // Data URLs over a certain length may need to be uploaded as multipart/form-data
+    if (processedPhotoUrl.startsWith('data:image/') && processedPhotoUrl.length > 10000) {
+      console.log('[TELEGRAM-PHOTO] Large data URL detected, may require special handling');
+      // For very large data URLs, we might need to use a different approach,
+      // but for now we'll try the standard method
+    }
+    
+    // Send the message
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
       method: 'POST',
       headers: {
@@ -71,6 +133,14 @@ export async function sendPhotoWithCaption(
     
     if (!response.ok) {
       console.error(`[TELEGRAM-PHOTO] ❌ Failed to send photo: ${data.description}`);
+      
+      // If we get a specific error about the image format, try to extract more information
+      if (data.description && data.description.includes('wrong remote file identifier')) {
+        console.error(`[TELEGRAM-PHOTO] Image format error details: ${data.description}`);
+        console.error(`[TELEGRAM-PHOTO] This typically indicates an issue with the image format or encoding`);
+      }
+      
+      // Fall back to sending a text-only message
       return await sendTextFallback(botToken, chatId, caption, replyMarkup);
     }
     

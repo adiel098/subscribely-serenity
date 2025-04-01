@@ -45,9 +45,9 @@ export const ImageUploadSection = ({
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setImageError("Image size should be less than 5MB");
+    // Validate file size (max 2MB for Telegram compatibility)
+    if (file.size > 2 * 1024 * 1024) {
+      setImageError("Image size should be less than 2MB for Telegram compatibility");
       setIsUploading(false);
       return;
     }
@@ -97,29 +97,83 @@ export const ImageUploadSection = ({
 
   /**
    * Preprocess image data for Telegram compatibility
-   * Ensures proper base64 padding and format
+   * Ensures proper base64 padding and format for Telegram API
    */
   const preprocessImageForTelegram = (imageData: string): string => {
-    // For base64 data URLs, ensure the padding is correct
-    if (imageData.startsWith('data:')) {
-      try {
-        // Get the MIME type and base64 data
-        const [prefix, base64Data] = imageData.split(',');
-        
-        // Check if the data length is valid for base64 (multiple of 4)
-        if (base64Data.length % 4 !== 0) {
-          // Fix padding if needed (add trailing = characters)
-          const paddedData = base64Data + '='.repeat((4 - base64Data.length % 4) % 4);
-          // Reconstruct with correct padding
-          return `${prefix},${paddedData}`;
-        }
-      } catch (e) {
-        console.error("Error preprocessing image:", e);
-      }
+    if (!imageData.startsWith('data:')) {
+      return imageData;
     }
     
-    // Return original if no processing needed or on error
-    return imageData;
+    try {
+      // Split the data URL into MIME type and base64 data
+      const [prefix, base64Data] = imageData.split(',');
+      
+      if (!base64Data) {
+        console.error("Invalid data URL format");
+        return imageData;
+      }
+      
+      // Remove any whitespace from the base64 string
+      const cleanedData = base64Data.replace(/\s/g, '');
+      
+      // Calculate proper padding (should be divisible by 4)
+      const paddingNeeded = (4 - (cleanedData.length % 4)) % 4;
+      const paddedData = cleanedData + '='.repeat(paddingNeeded);
+      
+      // For better Telegram compatibility, make sure image is proper format
+      // Convert large images to JPEG if they're not already
+      if (prefix.includes('image/png') && imageData.length > 100000) {
+        // For very large PNG images, convert to JPEG to reduce size
+        return convertToJpeg(imageData);
+      }
+      
+      // Reconstruct with correct padding
+      return `${prefix},${paddedData}`;
+    } catch (e) {
+      console.error("Error preprocessing image:", e);
+      return imageData; // Return original on error
+    }
+  };
+
+  /**
+   * Convert image to JPEG format for better Telegram compatibility
+   */
+  const convertToJpeg = (dataUrl: string): string => {
+    try {
+      const canvas = document.createElement('canvas');
+      const img = new Image();
+      
+      // Create a synchronous version using a temporary image
+      img.src = dataUrl;
+      
+      // Set canvas dimensions to match image (with max size limits)
+      const MAX_SIZE = 1280; // Telegram prefers images <= 1280px
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > height && width > MAX_SIZE) {
+        height = (height * MAX_SIZE) / width;
+        width = MAX_SIZE;
+      } else if (height > MAX_SIZE) {
+        width = (width * MAX_SIZE) / height;
+        height = MAX_SIZE;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and convert
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return dataUrl;
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Quality between 0.8 and 0.9 is usually good balance of quality vs size
+      return canvas.toDataURL('image/jpeg', 0.85);
+    } catch (e) {
+      console.error("Error converting image to JPEG:", e);
+      return dataUrl; // Return original on error
+    }
   };
 
   const triggerFileInput = () => {

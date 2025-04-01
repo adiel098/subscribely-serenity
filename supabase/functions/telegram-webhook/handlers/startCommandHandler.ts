@@ -5,8 +5,8 @@ import { handleCommunityStartCommand } from './community/communityStartHandler.t
 import { sendTelegramMessage, isValidTelegramUrl } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
 
-// Constant for the mini app URL
-export const MINI_APP_WEB_URL = 'https://app.membify.dev';
+// Constant for the mini app URL - Updated to the correct URL
+export const MINI_APP_WEB_URL = 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
 export const TELEGRAM_MINI_APP_URL = 'https://t.me/YourBotUsername/app';
 
 /**

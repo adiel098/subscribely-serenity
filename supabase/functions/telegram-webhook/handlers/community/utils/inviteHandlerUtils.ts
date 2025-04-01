@@ -1,9 +1,11 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { sendTelegramMessage, isValidTelegramUrl } from '../../../utils/telegramMessenger.ts';
+import { sendTelegramMessage } from '../../../utils/telegramMessenger.ts';
 import { createLogger } from '../../../services/loggingService.ts';
-import { MINI_APP_WEB_URL } from '../../../utils/botUtils.ts';
 
+/**
+ * Handle a user requesting to join a community
+ */
 export async function handleCommunityJoinRequest(
   supabase: ReturnType<typeof createClient>,
   message: any,
@@ -12,116 +14,155 @@ export async function handleCommunityJoinRequest(
   userId: string,
   username: string | undefined
 ): Promise<boolean> {
-  const logger = createLogger(supabase, 'COMMUNITY-JOIN-HANDLER');
+  const logger = createLogger(supabase, 'COMMUNITY-JOIN');
   
   try {
-    await logger.info(`👋 Processing join request for user ${userId} to community ${community.name}`);
+    await logger.info(`👤 Processing join request for user ${userId} to community ${community.id}`);
     
-    // Get bot settings for welcome message configuration
-    const { data: botSettings, error: settingsError } = await supabase
-      .from('telegram_bot_settings')
-      .select('welcome_message, welcome_image, auto_welcome_message')
+    // Check if user is already a member of this community
+    const { data: existingMember, error: memberError } = await supabase
+      .from('community_subscribers')
+      .select('*')
       .eq('community_id', community.id)
+      .eq('telegram_user_id', userId)
       .single();
-      
-    if (settingsError) {
-      await logger.error(`❌ Error fetching bot settings:`, settingsError);
-      return false;
+    
+    if (memberError && memberError.code !== 'PGRST116') { // PGRST116 = not found
+      await logger.error(`❌ Error checking existing membership:`, memberError);
+      throw new Error('Error checking membership status');
     }
     
-    // Log welcome image details for debugging
-    await logger.info(`🖼️ Welcome image status for community ${community.id}: ${botSettings?.welcome_image ? 'PRESENT' : 'NOT SET'}`);
-    if (botSettings?.welcome_image) {
-      const imageType = botSettings.welcome_image.startsWith('data:') 
-        ? 'base64' 
-        : botSettings.welcome_image.startsWith('https://') 
-          ? 'URL' 
-          : 'unknown format';
-      await logger.info(`🖼️ Image type: ${imageType}, length: ${botSettings.welcome_image.length} chars`);
-    }
-    
-    const customLinkOrId = community.custom_link || community.id;
-    const miniAppUrl = `${MINI_APP_WEB_URL}?start=${customLinkOrId}`;
-    
-    // If auto welcome message is enabled, send the configured welcome message
-    const shouldSendWelcome = botSettings.auto_welcome_message !== false;
-    
-    if (shouldSendWelcome) {
-      const welcomeMessage = botSettings.welcome_message || 
-        `Welcome to ${community.name}! 👋\nWe're excited to have you here.`;
+    // If user is already a member, check their subscription status
+    if (existingMember) {
+      await logger.info(`👤 User ${userId} is already a member of community ${community.id}`);
       
-      // Verify the URL is valid for Telegram
-      if (!isValidTelegramUrl(miniAppUrl)) {
-        await logger.error(`❌ Invalid mini app URL format: ${miniAppUrl}`);
+      if (existingMember.is_active) {
+        // User is an active member, send them a message
+        await logger.info(`✅ User ${userId} is an active member`);
         
-        // Send plain message without button
         await sendTelegramMessage(
           botToken,
           message.chat.id,
-          `${welcomeMessage}\n\nTo join, use our web app: ${MINI_APP_WEB_URL}`
+          `✅ You are already an active member of <b>${community.name}</b>! Enjoy your subscription.`
         );
-        
         return true;
-      }
-      
-      // Create the inline keyboard markup
-      const inlineKeyboardMarkup = {
-        inline_keyboard: [[
-          {
-            text: "Join Community 🚀",
-            web_app: { url: miniAppUrl }
-          }
-        ]]
-      };
-      
-      try {
-        // Send welcome message with image if available
-        await logger.info(`📤 Attempting to send welcome message with image: ${botSettings?.welcome_image ? 'YES' : 'NO'}`);
+      } else {
+        // User's subscription has expired, prompt them to renew
+        await logger.info(`⏱️ User ${userId} has an expired subscription`);
         
-        const result = await sendTelegramMessage(
+        const renewMessage = `
+Your subscription to <b>${community.name}</b> has expired.
+
+Would you like to renew your subscription?
+        `;
+        
+        // Create renewal button
+        const renewalUrl = `https://app.membify.dev/renew/${community.id}`;
+        const inlineKeyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "🔄 Renew Subscription",
+                url: renewalUrl
+              }
+            ]
+          ]
+        };
+        
+        await sendTelegramMessage(
           botToken,
           message.chat.id,
-          welcomeMessage,
-          inlineKeyboardMarkup,
-          botSettings?.welcome_image
+          renewMessage,
+          inlineKeyboard
         );
-        
-        if (result.ok) {
-          await logger.success(`✅ Sent welcome message to user ${userId}`);
-        } else {
-          await logger.error(`❌ Error sending welcome message: ${result.description}`);
-          
-          // Try sending a plain text message as fallback
-          await sendTelegramMessage(
-            botToken,
-            message.chat.id,
-            `Welcome to ${community.name}! To join, use this link: ${MINI_APP_WEB_URL}?start=${customLinkOrId}`,
-            null,
-            null
-          );
-        }
-      } catch (sendError) {
-        await logger.error(`❌ Error sending welcome message:`, sendError);
-        
-        // Try sending a plain text message as final fallback
-        try {
-          await logger.info(`🔄 Trying fallback: plain text message without image or button`);
-          await sendTelegramMessage(
-            botToken,
-            message.chat.id,
-            `Welcome to ${community.name}! To join, use this link: ${MINI_APP_WEB_URL}?start=${customLinkOrId}`
-          );
-          await logger.info(`✅ Sent fallback plain text message`);
-        } catch (finalError) {
-          await logger.error(`❌ Complete failure sending any message:`, finalError);
-          return false;
-        }
+        return true;
       }
     }
+    
+    // User is not a member, show them available subscription plans
+    await logger.info(`🔍 Fetching subscription plans for community ${community.id}`);
+    
+    const { data: plans, error: plansError } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('community_id', community.id)
+      .eq('is_active', true)
+      .order('price', { ascending: true });
+    
+    if (plansError) {
+      await logger.error(`❌ Error fetching subscription plans:`, plansError);
+      throw new Error('Error fetching subscription plans');
+    }
+    
+    if (!plans || plans.length === 0) {
+      await logger.warn(`⚠️ No active subscription plans found for community ${community.id}`);
+      
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `⚠️ There are no active subscription plans available for <b>${community.name}</b> at the moment. Please try again later.`
+      );
+      return true;
+    }
+    
+    // Build the plans message
+    let plansMessage = `
+Welcome to <b>${community.name}</b>! 👋
 
+Please choose a subscription plan to join:
+    `;
+    
+    // Build the inline keyboard with subscription options
+    const subscribeButtons = plans.map(plan => {
+      const buttonLabel = `${plan.name} - $${plan.price}/${plan.interval}`;
+      const subscribeUrl = `https://app.membify.dev/subscribe/${community.id}/${plan.id}`;
+      
+      return [
+        {
+          text: buttonLabel,
+          url: subscribeUrl
+        }
+      ];
+    });
+    
+    const inlineKeyboard = {
+      inline_keyboard: subscribeButtons
+    };
+    
+    await logger.info(`📤 Sending subscription plans to user ${userId}`);
+    
+    await sendTelegramMessage(
+      botToken,
+      message.chat.id,
+      plansMessage,
+      inlineKeyboard
+    );
+    
+    // Log the interaction in our system
+    await supabase
+      .from('subscription_activity_logs')
+      .insert({
+        telegram_user_id: userId,
+        community_id: community.id,
+        activity_type: 'viewed_plans',
+        details: `User viewed ${plans.length} subscription plans`
+      });
+    
     return true;
   } catch (error) {
     await logger.error(`❌ Error in handleCommunityJoinRequest:`, error);
+    
+    // Try to notify the user about the error
+    try {
+      await sendTelegramMessage(
+        botToken,
+        message.chat.id,
+        `❌ Sorry, something went wrong while processing your request. Please try again later.`
+      );
+    } catch (sendError) {
+      await logger.error(`Failed to send error message to user:`, sendError);
+    }
+    
     return false;
   }
 }

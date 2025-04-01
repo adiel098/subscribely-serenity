@@ -223,3 +223,24 @@ export async function getChatInfo(
     throw error;
   }
 }
+
+/**
+ * Validates if a URL is a valid Telegram mini app URL
+ */
+export function isValidTelegramUrl(url: string): boolean {
+  if (!url) return false;
+  
+  try {
+    const urlObj = new URL(url);
+    // Check if it's an HTTPS URL
+    if (urlObj.protocol !== 'https:') return false;
+    
+    // Check if it's a valid domain
+    if (!urlObj.hostname) return false;
+    
+    return true;
+  } catch (e) {
+    console.error("Invalid URL format:", e);
+    return false;
+  }
+}

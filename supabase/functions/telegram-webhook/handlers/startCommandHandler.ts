@@ -4,7 +4,10 @@ import { handleGroupStartCommand } from './group/groupStartHandler.ts';
 import { handleCommunityStartCommand } from './community/communityStartHandler.ts';
 import { sendTelegramMessage, isValidTelegramUrl } from '../utils/telegramMessenger.ts';
 import { createLogger } from '../services/loggingService.ts';
-import { TELEGRAM_MINI_APP_URL, MINI_APP_WEB_URL } from '../utils/botUtils.ts';
+
+// Constant for the mini app URL
+export const MINI_APP_WEB_URL = 'https://app.membify.dev';
+export const TELEGRAM_MINI_APP_URL = 'https://t.me/YourBotUsername/app';
 
 /**
  * Handle the /start command from a Telegram user
@@ -100,7 +103,7 @@ Press the button below to explore communities:
         // Try sending message without button as fallback
         await sendTelegramMessage(botToken, message.chat.id, welcomeMessage);
       } else {
-        await logger.success(`✅ Welcome message sent successfully`);
+        await logger.info(`✅ Welcome message sent successfully`);
       }
       
       return true;

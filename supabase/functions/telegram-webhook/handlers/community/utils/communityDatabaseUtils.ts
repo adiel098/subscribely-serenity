@@ -5,116 +5,90 @@ import { createLogger } from '../../../services/loggingService.ts';
 /**
  * Find a community by its ID or custom link
  */
-export async function findCommunityById(supabase: ReturnType<typeof createClient>, communityIdOrLink: string) {
+export async function findCommunityById(
+  supabase: ReturnType<typeof createClient>,
+  communityIdOrLink: string
+) {
   const logger = createLogger(supabase, 'COMMUNITY-DB-UTILS');
   
   try {
-    await logger.info(`🔍 Looking up community by ID or link: ${communityIdOrLink}`);
+    await logger.info(`🔍 Searching for community with ID or link: ${communityIdOrLink}`);
     
-    // Check if it's a UUID or custom link
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(communityIdOrLink);
+    // First try to find by ID
+    let { data: communities, error } = await supabase
+      .from('communities')
+      .select('*')
+      .or(`id.eq.${communityIdOrLink},custom_link.eq.${communityIdOrLink}`);
     
-    let query;
-    if (isUUID) {
-      await logger.info(`🆔 Input appears to be a UUID: ${communityIdOrLink}`);
-      // Search by ID
-      query = supabase
-        .from('communities')
-        .select('id, name, telegram_chat_id, custom_link')
-        .eq('id', communityIdOrLink);
-    } else {
-      await logger.info(`🔗 Input appears to be a custom link: ${communityIdOrLink}`);
-      // Search by custom link
-      query = supabase
-        .from('communities')
-        .select('id, name, telegram_chat_id, custom_link')
-        .eq('custom_link', communityIdOrLink);
-    }
-    
-    const { data: communities, error: searchError } = await query;
-    
-    if (searchError) {
-      await logger.error(`❌ Error searching for community: ${searchError.message}`);
-      return { success: false, error: searchError };
+    if (error) {
+      await logger.error(`❌ Error querying communities:`, error);
+      return { success: false, error: error.message };
     }
     
     if (!communities || communities.length === 0) {
-      await logger.error(`❌ No community found with identifier: ${communityIdOrLink}`);
-      return { success: false, error: { message: 'Community not found' } };
+      await logger.info(`⚠️ No community found for ID or link: ${communityIdOrLink}`);
+      return { success: false, error: 'Community not found' };
     }
     
     // Get the first matching community
     const community = communities[0];
     
-    // Changed from logger.success to logger.info to avoid the error
+    // Use info instead of success to match available methods
     await logger.info(`✅ Found community: ${community.name} (ID: ${community.id})`);
     return { success: true, data: community };
   } catch (error) {
     await logger.error(`❌ Error in findCommunityById for ID or link: ${communityIdOrLink}`, error);
-    return { success: false, error };
+    return { success: false, error: error.message || 'Unknown error' };
   }
 }
 
 /**
- * Check if a community has at least one active subscription plan and one active payment method
+ * Check if a community has the required configuration for subscription
  */
 export async function checkCommunityRequirements(
   supabase: ReturnType<typeof createClient>,
   communityId: string
-): Promise<{ hasActivePlan: boolean, hasActivePaymentMethod: boolean }> {
+) {
   const logger = createLogger(supabase, 'COMMUNITY-DB-UTILS');
   
   try {
-    await logger.info(`🔍 Checking community requirements for community ${communityId}`);
+    await logger.info(`🔍 Checking requirements for community: ${communityId}`);
     
-    // Check for active subscription plans
-    const { count: planCount, error: planError } = await supabase
+    // Check if the community has at least one active subscription plan
+    const { data: plans, error: plansError } = await supabase
       .from('subscription_plans')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('community_id', communityId)
       .eq('is_active', true)
       .limit(1);
     
-    if (planError) {
-      await logger.error(`❌ Error checking for active plans: ${planError.message}`);
+    if (plansError) {
+      await logger.error(`❌ Error checking subscription plans:`, plansError);
       return { hasActivePlan: false, hasActivePaymentMethod: false };
     }
     
-    // Find the owner of the community
-    const { data: communityData, error: communityError } = await supabase
-      .from('communities')
-      .select('owner_id')
-      .eq('id', communityId)
-      .single();
+    const hasActivePlan = plans && plans.length > 0;
     
-    if (communityError) {
-      await logger.error(`❌ Error finding community owner: ${communityError.message}`);
-      return { hasActivePlan: planCount > 0, hasActivePaymentMethod: false };
-    }
-    
-    const ownerId = communityData.owner_id;
-    
-    // Check for active payment methods owned by the community owner
-    const { count: paymentMethodCount, error: paymentError } = await supabase
+    // Check if there's at least one active payment method
+    const { data: paymentMethods, error: paymentMethodsError } = await supabase
       .from('payment_methods')
-      .select('id', { count: 'exact', head: true })
-      .eq('owner_id', ownerId)
+      .select('id')
+      .eq('owner_id', communityId)
       .eq('is_active', true)
       .limit(1);
     
-    if (paymentError) {
-      await logger.error(`❌ Error checking for active payment methods: ${paymentError.message}`);
-      return { hasActivePlan: planCount > 0, hasActivePaymentMethod: false };
+    if (paymentMethodsError) {
+      await logger.error(`❌ Error checking payment methods:`, paymentMethodsError);
+      return { hasActivePlan, hasActivePaymentMethod: false };
     }
     
-    const hasActivePlan = (planCount || 0) > 0;
-    const hasActivePaymentMethod = (paymentMethodCount || 0) > 0;
+    const hasActivePaymentMethod = paymentMethods && paymentMethods.length > 0;
     
-    await logger.info(`✅ Community ${communityId} requirements check: Active Plans: ${hasActivePlan ? 'YES' : 'NO'}, Active Payment Methods: ${hasActivePaymentMethod ? 'YES' : 'NO'}`);
+    await logger.info(`✅ Community requirements check: Plans: ${hasActivePlan}, Payment Methods: ${hasActivePaymentMethod}`);
     
     return { hasActivePlan, hasActivePaymentMethod };
   } catch (error) {
-    await logger.error(`❌ Error checking community requirements: ${error.message}`, error);
+    await logger.error(`❌ Error in checkCommunityRequirements:`, error);
     return { hasActivePlan: false, hasActivePaymentMethod: false };
   }
 }

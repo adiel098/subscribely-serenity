@@ -16,7 +16,6 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log("[webhook-main] Handling CORS preflight request");
-    console.log("[webhook-main] Received OPTIONS request to telegram-webhook");
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -41,7 +40,9 @@ serve(async (req) => {
     let telegramUpdate;
     try {
       telegramUpdate = await req.json();
+      console.log("[webhook-main] Received update:", JSON.stringify(telegramUpdate, null, 2));
     } catch (e) {
+      console.error("[webhook-main] Failed to parse request body:", e);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -55,7 +56,53 @@ serve(async (req) => {
     }
 
     // Process the Telegram update using the router
+    console.log("[webhook-main] Processing update with router");
     const result = await routeTelegramUpdate(supabase, telegramUpdate, { BOT_TOKEN: botToken });
+    console.log("[webhook-main] Result from router:", JSON.stringify(result, null, 2));
+    
+    // Log the webhook event to the database
+    try {
+      await supabase.from('telegram_events').insert({
+        event_type: 'WEBHOOK',
+        raw_data: telegramUpdate,
+        chat_id: telegramUpdate.message?.chat?.id?.toString() || 
+                telegramUpdate.channel_post?.chat?.id?.toString() || 
+                telegramUpdate.chat_member?.chat?.id?.toString() || 
+                telegramUpdate.my_chat_member?.chat?.id?.toString(),
+        user_id: telegramUpdate.message?.from?.id?.toString() || 
+                telegramUpdate.channel_post?.from?.id?.toString() || 
+                telegramUpdate.chat_member?.from?.id?.toString() || 
+                telegramUpdate.my_chat_member?.from?.id?.toString(),
+        username: telegramUpdate.message?.from?.username || 
+                telegramUpdate.channel_post?.from?.username || 
+                telegramUpdate.chat_member?.from?.username || 
+                telegramUpdate.my_chat_member?.from?.username,
+        message_id: telegramUpdate.message?.message_id?.toString() || 
+                    telegramUpdate.channel_post?.message_id?.toString(),
+        message_text: telegramUpdate.message?.text || 
+                     telegramUpdate.channel_post?.text
+      });
+      console.log("[webhook-main] Successfully logged webhook event to database");
+    } catch (logError) {
+      console.error("[webhook-main] Error logging webhook event:", logError);
+      // Continue processing even if logging fails
+    }
+    
+    // Also add to system_logs
+    try {
+      await supabase.from('system_logs').insert({
+        event_type: 'TELEGRAM_WEBHOOK',
+        details: `Received update_id=${telegramUpdate.update_id}, handled=${result.success}`,
+        metadata: {
+          update_id: telegramUpdate.update_id,
+          result: result,
+          update_type: Object.keys(telegramUpdate).filter(key => key !== 'update_id')[0]
+        }
+      });
+      console.log("Logging webhook event: update_id=" + telegramUpdate.update_id + ", handled=" + result.success);
+    } catch (logError) {
+      console.error("[webhook-main] Error logging to system_logs:", logError);
+    }
     
     // Return the processing result
     return new Response(

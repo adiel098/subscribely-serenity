@@ -1,62 +1,53 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleNewMessage, handleEditedMessage, handleChannelPost } from './handlers/messageHandler.ts';
-import { handleChatJoinRequest } from './handlers/joinRequestHandler.ts';
 import { handleChatMemberUpdated } from './handlers/memberUpdateHandler.ts';
-import { logWebhookEvent, logWebhookError } from './services/eventLoggingService.ts';
-import { createLogger } from './services/loggingService.ts';
+import { handleChannelVerification } from './handlers/channelVerificationHandler.ts';
 
-export async function routeTelegramUpdate(supabase: ReturnType<typeof createClient>, update: any, context: { BOT_TOKEN: string }) {
-  const logger = createLogger(supabase, 'webhook-router');
-  await logger.info("Processing update:", JSON.stringify(update, null, 2));
-  
+/**
+ * Route Telegram webhook updates to appropriate handlers
+ */
+export async function routeTelegramUpdate(
+  supabase: ReturnType<typeof createClient>,
+  update: any,
+  context: { BOT_TOKEN: string }
+) {
+  console.log("Routing Telegram update:", JSON.stringify(update, null, 2));
+
   try {
-    // Extract the relevant message/event based on the update type
-    const message = update.message || 
-                    update.edited_message || 
-                    update.channel_post || 
-                    update.chat_join_request || 
-                    update.my_chat_member || 
-                    update.chat_member;
-
-    if (!message) {
-      await logger.error("Unrecognized request format");
-      return { success: false, error: 'Unrecognized request format' };
-    }
-
-    let handled = false;
-    
-    // Route to the appropriate handler based on update type
+    // Check what type of update this is based on the properties
     if (update.message) {
-      await handleNewMessage(supabase, update, context);
-      handled = true;
-    } else if (update.edited_message) {
-      await handleEditedMessage(supabase, update);
-      handled = true;
-    } else if (update.channel_post) {
-      await handleChannelPost(supabase, update);
-      handled = true;
-    } else if (update.chat_join_request) {
-      await handleChatJoinRequest(supabase, update.chat_join_request, context.BOT_TOKEN);
-      handled = true;
-    } else if (update.my_chat_member || update.chat_member) {
-      await handleChatMemberUpdated(supabase, update, context.BOT_TOKEN);
-      handled = true;
+      console.log("Detected message update");
+      return await handleNewMessage(supabase, update, context);
+    } 
+    else if (update.edited_message) {
+      console.log("Detected edited message update");
+      return await handleEditedMessage(supabase, update);
+    } 
+    else if (update.channel_post) {
+      console.log("Detected channel post update");
+      // Special handling for channel verification messages
+      if (update.channel_post.text && update.channel_post.text.startsWith('MBF_')) {
+        console.log("Detected verification message in channel");
+        const isVerified = await handleChannelVerification(supabase, update.channel_post, context.BOT_TOKEN);
+        return { success: true, verified: isVerified };
+      }
+      return await handleChannelPost(supabase, update);
+    } 
+    else if (update.my_chat_member || update.chat_member) {
+      console.log("Detected chat member update");
+      return await handleChatMemberUpdated(supabase, update, context.BOT_TOKEN);
     }
-
-    // Log the event whether it was handled or not
-    await logWebhookEvent(supabase, update, message, handled);
-    
-    return { success: true, handled };
+    else {
+      // Log the update type for debugging
+      console.log("Unhandled update type:", Object.keys(update).join(', '));
+      return { success: true, message: "Update type not implemented" };
+    }
   } catch (error) {
-    await logger.error("Error processing update:", error);
-    
-    try {
-      await logWebhookError(supabase, error, update);
-    } catch (logError) {
-      await logger.error("Failed to log error:", logError);
-    }
-    
-    return { success: false, error: error.message };
+    console.error("Error routing Telegram update:", error);
+    return {
+      success: false,
+      error: error.message || "Unknown error in webhook router"
+    };
   }
 }

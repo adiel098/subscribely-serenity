@@ -22,4 +22,12 @@
 - Fixed database utilities to properly handle both UUID and custom link formats
 - Added fallback lookup methods when primary query fails
 
+## 2025-04-04
+- Improved logging throughout telegram-webhook edge function
+- Enhanced webhook request processing with detailed logs
+- Implemented proper error handling in all webhook handlers
+- Added debug logs for message processing
+- Updated loggingService to include both console and database logging
+- Improved telegram event type detection and routing
+
 All these changes should fix the issue with the Telegram bot not responding to commands and ensure the correct mini app URL is used.

@@ -1,66 +1,68 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { handleStartCommand } from './startCommandHandler.ts';
+import { handleStartCommand } from './commands/startCommandHandler.ts';
+import { handleHelpCommand } from './commands/helpCommandHandler.ts';
 import { createLogger } from '../services/loggingService.ts';
 
 /**
- * Router for command-based messages received from Telegram
+ * Handle a command message
  */
-export async function handleCommand(
-  supabase: ReturnType<typeof createClient>, 
-  message: any, 
+export async function handleCommandMessage(
+  supabase: ReturnType<typeof createClient>,
+  message: any,
   botToken: string
-): Promise<boolean> {
+) {
   const logger = createLogger(supabase, 'COMMAND-HANDLER');
   
   try {
-    // Check if message contains text
-    if (!message?.text) {
-      await logger.info('No text in message, not a command');
-      return false;
+    // Extract command and parameters
+    const text = message.text;
+    const commandMatch = text.match(/^\/([^\s@]+)(?:@\S+)?(?:\s+(.*))?$/);
+    
+    if (!commandMatch) {
+      await logger.warn("Invalid command format");
+      return { success: false, error: 'Invalid command format' };
     }
     
-    // Enhanced logging for all commands
-    await logger.info(`Processing command: ${message.text}`);
+    const command = commandMatch[1].toLowerCase();
+    const params = commandMatch[2] || '';
     
-    // Check if it's a start command
-    if (message.text.startsWith('/start')) {
-      await logger.info('🚀 Forwarding /start command to handleStartCommand()');
-      
-      // Log all parameters of the start command
-      const startParams = message.text.split(' ');
-      const param = startParams.length > 1 ? startParams[1] : 'no-parameter';
-      await logger.info(`/start command with parameter: ${param}`);
-      
-      // Log user and chat details
-      await logger.info(`User ID: ${message.from.id}, Chat ID: ${message.chat.id}, Username: ${message.from.username || 'none'}`);
-      
-      // Forward to start command handler
-      const result = await handleStartCommand(supabase, message, botToken);
-      
-      // Log result
-      await logger.info(`/start command handling result: ${result ? 'SUCCESS' : 'FAILED'}`);
-      
-      return result;
-    }
+    await logger.info(`Processing command: /${command} ${params}`);
     
-    // Handle other commands here as needed
-    // e.g., /help, /settings, etc.
+    // User and chat information
+    const userId = message.from.id.toString();
+    const chatId = message.chat.id.toString();
+    const username = message.from.username;
     
-    // No recognized command
-    await logger.info(`Command not recognized: ${message.text}`);
-    return false;
-  } catch (error) {
-    await logger.error('Error in handleCommand:', error);
+    await logger.info(`User ID: ${userId}, Chat ID: ${chatId}, Username: ${username}`);
     
-    // Log specific details about the error
-    if (error instanceof Error) {
-      await logger.error(`Error type: ${error.name}, Message: ${error.message}`);
-      if (error.stack) {
-        await logger.error(`Stack trace: ${error.stack}`);
+    // Route command to appropriate handler
+    let result;
+    
+    if (command === 'start') {
+      await logger.info("🚀 Forwarding /start command to handleStartCommand()");
+      result = await handleStartCommand(supabase, message, params, botToken);
+    } else if (command === 'help') {
+      await logger.info("ℹ️ Forwarding /help command to handleHelpCommand()");
+      result = await handleHelpCommand(supabase, message, botToken);
+    } else {
+      // Unknown command
+      await logger.warn(`Unknown command: /${command}`);
+      // Send a message to the user that the command is not recognized
+      try {
+        // You might want to implement a generic command handler here
+        await logger.info(`Command /${command} not implemented`);
+      } catch (error) {
+        await logger.error(`Error sending unknown command response:`, error);
       }
+      
+      result = { success: false, error: 'Unknown command' };
     }
     
-    return false;
+    await logger.info(`/${command} command handling result: ${result.success ? 'SUCCESS' : 'FAILURE'}`);
+    return result;
+  } catch (error) {
+    await logger.error(`Error handling command:`, error);
+    return { success: false, error: error.message };
   }
 }

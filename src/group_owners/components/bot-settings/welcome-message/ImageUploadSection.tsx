@@ -45,9 +45,9 @@ export const ImageUploadSection = ({
       return;
     }
 
-    // Validate file size (max 2MB for Telegram compatibility)
-    if (file.size > 2 * 1024 * 1024) {
-      setImageError("Image size should be less than 2MB for Telegram compatibility");
+    // Validate file size (max 1MB for Telegram compatibility)
+    if (file.size > 1 * 1024 * 1024) {
+      setImageError("Image size should be less than 1MB for Telegram compatibility");
       setIsUploading(false);
       return;
     }
@@ -60,17 +60,19 @@ export const ImageUploadSection = ({
       const img = new Image();
       img.onload = () => {
         try {
-          // Process for Telegram compatibility
-          const processedImageData = preprocessImageForTelegram(result);
-          setImage(processedImageData);
+          // Resize and optimize the image for Telegram
+          const optimizedImage = optimizeImageForTelegram(img);
+          
+          // Set the optimized image
+          setImage(optimizedImage);
           
           // Save image immediately after upload
           const updateObj: any = {};
-          updateObj[settingsKey] = processedImageData;
+          updateObj[settingsKey] = optimizedImage;
           updateSettings.mutate(updateObj);
           
-          console.log(`Image uploaded for ${settingsKey}`);
-          toast.success(`${label} uploaded successfully`);
+          console.log(`Image uploaded and optimized for ${settingsKey}`);
+          toast.success(`${label} uploaded and optimized for Telegram`);
           setIsUploading(false);
         } catch (error) {
           console.error("Error processing image:", error);
@@ -96,83 +98,67 @@ export const ImageUploadSection = ({
   };
 
   /**
-   * Preprocess image data for Telegram compatibility
-   * Ensures proper base64 padding and format for Telegram API
+   * Optimize and resize image for Telegram compatibility
    */
-  const preprocessImageForTelegram = (imageData: string): string => {
-    if (!imageData.startsWith('data:')) {
-      return imageData;
+  const optimizeImageForTelegram = (img: HTMLImageElement): string => {
+    // Create a canvas for image manipulation
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      throw new Error("Failed to get canvas context");
     }
     
-    try {
-      // Split the data URL into MIME type and base64 data
-      const [prefix, base64Data] = imageData.split(',');
-      
-      if (!base64Data) {
-        console.error("Invalid data URL format");
-        return imageData;
-      }
-      
-      // Remove any whitespace from the base64 string
-      const cleanedData = base64Data.replace(/\s/g, '');
-      
-      // Calculate proper padding (should be divisible by 4)
-      const paddingNeeded = (4 - (cleanedData.length % 4)) % 4;
-      const paddedData = cleanedData + '='.repeat(paddingNeeded);
-      
-      // For better Telegram compatibility, make sure image is proper format
-      // Convert large images to JPEG if they're not already
-      if (prefix.includes('image/png') && imageData.length > 100000) {
-        // For very large PNG images, convert to JPEG to reduce size
-        return convertToJpeg(imageData);
-      }
-      
-      // Reconstruct with correct padding
-      return `${prefix},${paddedData}`;
-    } catch (e) {
-      console.error("Error preprocessing image:", e);
-      return imageData; // Return original on error
+    // Calculate new dimensions (max width/height 1280px for Telegram)
+    const MAX_SIZE = 1280;
+    let width = img.width;
+    let height = img.height;
+    
+    if (width > height && width > MAX_SIZE) {
+      height = (height * MAX_SIZE) / width;
+      width = MAX_SIZE;
+    } else if (height > MAX_SIZE) {
+      width = (width * MAX_SIZE) / height;
+      height = MAX_SIZE;
     }
+    
+    // Set canvas dimensions
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Draw image onto canvas with new dimensions
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // Convert to JPEG format (more compatible with Telegram)
+    // Use quality 0.8 (80%) for a good balance between size and quality
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    
+    // Ensure the base64 data is properly padded
+    return ensureBase64Padding(dataUrl);
   };
 
   /**
-   * Convert image to JPEG format for better Telegram compatibility
+   * Ensure base64 data is properly padded for Telegram API
    */
-  const convertToJpeg = (dataUrl: string): string => {
+  const ensureBase64Padding = (dataUrl: string): string => {
     try {
-      const canvas = document.createElement('canvas');
-      const img = new Image();
+      // Extract base64 data
+      const parts = dataUrl.split(',');
+      if (parts.length !== 2) return dataUrl;
       
-      // Create a synchronous version using a temporary image
-      img.src = dataUrl;
+      const prefix = parts[0];
+      let base64Data = parts[1];
       
-      // Set canvas dimensions to match image (with max size limits)
-      const MAX_SIZE = 1280; // Telegram prefers images <= 1280px
-      let width = img.width;
-      let height = img.height;
-      
-      if (width > height && width > MAX_SIZE) {
-        height = (height * MAX_SIZE) / width;
-        width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width = (width * MAX_SIZE) / height;
-        height = MAX_SIZE;
+      // Ensure padding is correct (must be divisible by 4)
+      const paddingNeeded = (4 - (base64Data.length % 4)) % 4;
+      if (paddingNeeded > 0) {
+        base64Data += '='.repeat(paddingNeeded);
       }
       
-      canvas.width = width;
-      canvas.height = height;
-      
-      // Draw and convert
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return dataUrl;
-      
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Quality between 0.8 and 0.9 is usually good balance of quality vs size
-      return canvas.toDataURL('image/jpeg', 0.85);
+      return `${prefix},${base64Data}`;
     } catch (e) {
-      console.error("Error converting image to JPEG:", e);
-      return dataUrl; // Return original on error
+      console.error("Error ensuring base64 padding:", e);
+      return dataUrl;
     }
   };
 

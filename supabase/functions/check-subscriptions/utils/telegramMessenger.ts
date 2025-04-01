@@ -1,4 +1,3 @@
-
 /**
  * Telegram messaging utility for sending messages with or without images
  */
@@ -81,12 +80,7 @@ export async function sendTextMessage(
       payload.reply_markup = typeof inlineKeyboard === 'string' 
         ? inlineKeyboard 
         : JSON.stringify(inlineKeyboard);
-      console.log("Adding inline keyboard to text message:", typeof inlineKeyboard === 'string' ? inlineKeyboard : JSON.stringify(inlineKeyboard));
-    } else {
-      console.log("No inline keyboard provided for text message");
     }
-
-    console.log("Text message payload:", JSON.stringify(payload));
 
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -148,52 +142,54 @@ export async function sendPhotoMessage(
       console.log('Base64 image detected, processing as multipart form data');
       
       try {
-        // Extract the Base64 data (remove the data:image/xxx;base64, prefix)
-        const base64Data = photoUrl.split(',')[1];
+        // Extract the content type and actual base64 data
+        const matches = photoUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
         
-        // Determine image format from the data URL
-        const matches = photoUrl.match(/^data:image\/([a-zA-Z+]+);base64,/);
-        const imageFormat = matches ? matches[1] : 'jpeg'; // Default to jpeg if format can't be determined
-        
-        // Create a FormData object to send the image as multipart/form-data
-        const formData = new FormData();
-        formData.append('chat_id', chatId.toString());
-        
-        // Convert Base64 string to Blob
-        const byteCharacters = atob(base64Data);
-        const byteArrays = [];
-        
-        for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-          const slice = byteCharacters.slice(offset, offset + 1024);
-          
-          const byteNumbers = new Array(slice.length);
-          for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-          }
-          
-          const byteArray = new Uint8Array(byteNumbers);
-          byteArrays.push(byteArray);
+        if (!matches || matches.length !== 3) {
+          console.error('Invalid base64 data format');
+          return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
         }
         
-        const blob = new Blob(byteArrays, { type: `image/${imageFormat}` });
+        const contentType = matches[1];
+        let imageData = matches[2];
         
-        // Append the Blob as a file
-        formData.append('photo', blob, `photo.${imageFormat}`);
+        // Ensure proper base64 padding
+        const paddingNeeded = (4 - (imageData.length % 4)) % 4;
+        if (paddingNeeded > 0) {
+          imageData += '='.repeat(paddingNeeded);
+        }
+        
+        // Create FormData for multipart request
+        const formData = new FormData();
+        formData.append('chat_id', chatId.toString());
         
         if (caption) {
           formData.append('caption', caption);
           formData.append('parse_mode', 'HTML');
         }
         
-        // Add inline keyboard if provided
         if (inlineKeyboard) {
-          formData.append('reply_markup', JSON.stringify(inlineKeyboard));
-          console.log("Adding inline keyboard to photo message:", JSON.stringify(inlineKeyboard));
-        } else {
-          console.log("No inline keyboard provided for photo message");
+          const replyMarkupStr = typeof inlineKeyboard === 'string' 
+            ? inlineKeyboard 
+            : JSON.stringify(inlineKeyboard);
+          formData.append('reply_markup', replyMarkupStr);
         }
         
-        // Send the request with FormData
+        // Convert base64 to binary
+        const binaryStr = atob(imageData);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        
+        // Extract file extension
+        const extension = contentType.split('/')[1] || 'jpg';
+        
+        // Create blob and append it
+        const blob = new Blob([bytes], { type: contentType });
+        formData.append('photo', blob, `photo.${extension}`);
+        
+        // Send the multipart request
         const response = await fetch(
           `https://api.telegram.org/bot${botToken}/sendPhoto`,
           {
@@ -205,14 +201,20 @@ export async function sendPhotoMessage(
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`HTTP error ${response.status}: ${errorText}`);
-          return false;
+          
+          // Fallback to sending text-only message
+          console.log("Falling back to text-only message");
+          return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
         }
-
+        
         const result = await response.json();
         
         if (!result.ok) {
           console.error("Error sending photo message with FormData:", result);
-          return false;
+          
+          // Fallback to sending text-only message
+          console.log("Falling back to text-only message");
+          return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
         }
         
         console.log("Photo message sent successfully with FormData");
@@ -220,7 +222,7 @@ export async function sendPhotoMessage(
       } catch (error) {
         console.error("Error processing base64 image:", error);
         
-        // Fallback to sending text-only message if image processing fails
+        // Fallback to sending text-only message
         console.log("Falling back to text-only message");
         return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
       }
@@ -228,12 +230,12 @@ export async function sendPhotoMessage(
       // For regular URLs, use the JSON approach
       const payload: any = {
         chat_id: chatId,
-        photo: photoUrl,
-        parse_mode: "HTML"
+        photo: photoUrl
       };
       
       if (caption) {
         payload.caption = caption;
+        payload.parse_mode = "HTML";
       }
       
       // Add inline keyboard if provided - ensure we don't double stringify
@@ -241,12 +243,7 @@ export async function sendPhotoMessage(
         payload.reply_markup = typeof inlineKeyboard === 'string' 
           ? inlineKeyboard 
           : JSON.stringify(inlineKeyboard);
-        console.log("Adding inline keyboard to photo message:", typeof inlineKeyboard === 'string' ? inlineKeyboard : JSON.stringify(inlineKeyboard));
-      } else {
-        console.log("No inline keyboard provided for photo message");
       }
-      
-      console.log("Photo message payload:", JSON.stringify(payload));
       
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/sendPhoto`,
@@ -263,7 +260,7 @@ export async function sendPhotoMessage(
         const errorText = await response.text();
         console.error(`HTTP error ${response.status}: ${errorText}`);
         
-        // Fallback to sending text-only message if image sending fails
+        // Fallback to sending text-only message
         console.log("Falling back to text-only message");
         return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
       }
@@ -273,8 +270,8 @@ export async function sendPhotoMessage(
       if (!result.ok) {
         console.error("Error sending photo message:", result);
         
-        // Fallback to sending text-only message if the API returned an error
-        console.log("Falling back to text-only message after API error");
+        // Fallback to sending text-only message
+        console.log("Falling back to text-only message");
         return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
       }
       
@@ -286,7 +283,7 @@ export async function sendPhotoMessage(
     
     // Final fallback for any unexpected errors
     try {
-      console.log("Final fallback to text-only message after exception");
+      console.log("Final fallback to text-only message");
       return await sendTextMessage(botToken, chatId, caption || "Image could not be sent", inlineKeyboard);
     } catch (finalError) {
       console.error("Even fallback message failed:", finalError);

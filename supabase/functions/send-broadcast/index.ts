@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
@@ -160,27 +159,35 @@ async function broadcastToMembers(
   
   for (const memberId of members) {
     try {
-      let options = {};
+      let replyMarkup = null;
       
       // Add reply markup if button is included
       if (includeButton && buttonText && buttonUrl) {
-        options = {
-          reply_markup: JSON.stringify({
-            inline_keyboard: [
-              [{ text: buttonText, url: buttonUrl }]
-            ]
-          })
+        replyMarkup = {
+          inline_keyboard: [
+            [{ text: buttonText, url: buttonUrl }]
+          ]
         };
       }
       
       // Send message with or without image
+      let success = false;
+      
       if (image) {
-        await sendTelegramPhotoMessage(botToken, memberId, image, message, options);
+        // Process the image for Telegram compatibility if it's a base64 string
+        let processedImage = image;
+        if (image.startsWith('data:image')) {
+          processedImage = await preprocessBase64Image(image);
+        }
+        
+        success = await sendTelegramPhotoMessage(botToken, memberId, processedImage, message, replyMarkup);
       } else {
-        await sendTelegramMessage(botToken, memberId, message, options);
+        success = await sendTelegramMessage(botToken, memberId, message, replyMarkup);
       }
       
-      successCount++;
+      if (success) {
+        successCount++;
+      }
       
       // Add a small delay to avoid hitting Telegram's rate limits
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -191,6 +198,27 @@ async function broadcastToMembers(
   }
   
   return successCount;
+}
+
+async function preprocessBase64Image(base64Image: string): Promise<string> {
+  // Extract the content type and actual base64 data
+  const matches = base64Image.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+  
+  if (!matches || matches.length !== 3) {
+    console.error('Invalid base64 data format');
+    return base64Image;
+  }
+  
+  const contentType = matches[1];
+  let imageData = matches[2];
+  
+  // Ensure proper base64 padding
+  const paddingNeeded = (4 - (imageData.length % 4)) % 4;
+  if (paddingNeeded > 0) {
+    imageData += '='.repeat(paddingNeeded);
+  }
+  
+  return `${matches[1]};base64,${imageData}`;
 }
 
 async function sendTelegramMessage(
@@ -220,7 +248,7 @@ async function sendTelegramMessage(
     throw new Error(`Telegram API error: ${JSON.stringify(data)}`);
   }
   
-  return data;
+  return data.ok;
 }
 
 async function sendTelegramPhotoMessage(
@@ -230,27 +258,108 @@ async function sendTelegramPhotoMessage(
   caption: string = '',
   options: any = {}
 ) {
-  const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      photo: photoUrl,
-      caption: caption,
-      parse_mode: 'HTML',
-      ...options
-    }),
-  });
+  try {
+    // Handle base64 data URLs
+    if (photoUrl.startsWith('data:image')) {
+      console.log('Base64 image detected, handling with FormData');
+      
+      // Extract the content type and data
+      const matches = photoUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      
+      if (!matches || matches.length !== 3) {
+        console.error('Invalid base64 data format');
+        return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", options);
+      }
+      
+      const contentType = matches[1];
+      let imageData = matches[2];
+      
+      // Create FormData for multipart request
+      const formData = new FormData();
+      formData.append('chat_id', chatId.toString());
+      
+      if (caption) {
+        formData.append('caption', caption);
+        formData.append('parse_mode', 'HTML');
+      }
+      
+      if (options.reply_markup) {
+        formData.append('reply_markup', 
+          typeof options.reply_markup === 'string' 
+            ? options.reply_markup 
+            : JSON.stringify(options.reply_markup));
+      }
+      
+      // Convert base64 to binary
+      const binaryStr = atob(imageData);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      
+      // Extract file extension
+      const extension = contentType.split('/')[1] || 'jpg';
+      
+      // Create blob and append it
+      const blob = new Blob([bytes], { type: contentType });
+      formData.append('photo', blob, `photo.${extension}`);
+      
+      // Send the multipart request
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendPhoto`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!data.ok) {
+        console.error("Error sending photo with FormData:", data);
+        
+        // Fall back to text message
+        return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", options);
+      }
+      
+      return true;
+    } else {
+      // For standard URLs
+      const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: photoUrl,
+          caption: caption,
+          parse_mode: 'HTML',
+          ...options
+        }),
+      });
 
-  const data = await response.json();
-  
-  if (!data.ok) {
-    throw new Error(`Telegram API error: ${JSON.stringify(data)}`);
+      const data = await response.json();
+      
+      if (!data.ok) {
+        console.error(`Telegram API error when sending photo:`, data);
+        // Fall back to text message
+        return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", options);
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error("Error sending photo message:", error);
+    
+    // Fall back to text message on error
+    try {
+      return await sendTelegramMessage(botToken, chatId, caption || "Image could not be sent", options);
+    } catch (finalError) {
+      console.error("Even fallback text message failed:", finalError);
+      return false;
+    }
   }
-  
-  return data;
 }

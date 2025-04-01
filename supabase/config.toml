@@ -2,37 +2,29 @@
 project_id = "trkiniaqliiwdkrvvuky"
 
 [api]
-# Swagger documentation
 enabled = true
 port = 54321
 schemas = ["public", "storage", "graphql_public"]
 
 [db]
-# Port for the DB
 port = 54322
 shadow_port = 54320
 major_version = 15
 
 [studio]
-# Port for Supabase Studio
 port = 54323
 
-# Email testing server
 [inbucket]
-# Inbucket service
 port = 54324
 smtp_port = 54325
 pop3_port = 54326
 
 [storage]
-# Storage service
 file_size_limit = "50MiB"
 
 [auth]
-# Enable debugging for auth service
-debug = false
+# Note: Removed the invalid 'debug' property
 
-[functions]
 [functions.telegram-webhook]
 verify_jwt = false
 
@@ -46,7 +38,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.send-broadcast]
-verify_jwt = true
+verify_jwt = false
 
 [functions.check-subscriptions]
 verify_jwt = false

@@ -32,7 +32,7 @@ export const useBroadcast = () => {
     entityId: string,
     entityType: "community" | "group",
     message: string,
-    filterType: "all" | "active" = "all",
+    filterType: "all" | "active" | "expired" | "plan" = "all",
     includeButton: boolean = false,
     buttonText?: string,
     buttonUrl?: string,
@@ -66,7 +66,7 @@ async function sendBroadcastMessage(params: {
   entityId: string;
   entityType: "community" | "group";
   message: string;
-  filterType?: "all" | "active";
+  filterType?: "all" | "active" | "expired" | "plan";
   includeButton?: boolean;
   buttonText?: string;
   buttonUrl?: string;
@@ -80,7 +80,7 @@ async function sendBroadcastMessage(params: {
     });
 
     if (error) {
-      console.error("Error invoking telegram-webhook function:", error);
+      console.error("Error invoking send-broadcast function:", error);
       throw new Error(`Failed to send broadcast: ${error.message}`);
     }
 

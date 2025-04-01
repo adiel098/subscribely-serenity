@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,8 @@ export const BroadcastMessageForm = ({
   const [imageError, setImageError] = useState<string | null>(null);
 
   const {
-    sendBroadcastMessage
+    sendBroadcast,
+    isLoading
   } = useBroadcast();
 
   const handleSendBroadcast = async () => {
@@ -49,31 +51,27 @@ export const BroadcastMessageForm = ({
     }
     setIsSending(true);
     try {
-      sendBroadcastMessage({
+      sendBroadcast(
         entityId,
         entityType,
         message,
         filterType,
         includeButton,
-        image,
-        ...(filterType === 'plan' && {
-          subscriptionPlanId: selectedPlanId
-        })
-      }, {
-        onSuccess: data => {
-          if (data.success) {
-            toast.success(`Message sent to ${data.sent_success || 0} recipients 🎉`);
-            setMessage("");
-          } else {
-            toast.error(`Failed to send broadcast: ${data.error}`);
-          }
-          setIsSending(false);
-        },
-        onError: error => {
-          console.error('Error sending broadcast:', error);
-          toast.error('An error occurred while sending the broadcast');
-          setIsSending(false);
+        undefined, // buttonText parameter
+        undefined, // buttonUrl parameter
+        image
+      ).then(data => {
+        if (data && data.success) {
+          toast.success(`Message sent to ${data.sent_count || 0} recipients 🎉`);
+          setMessage("");
+        } else {
+          toast.error(`Failed to send broadcast: ${data?.message || 'Unknown error'}`);
         }
+        setIsSending(false);
+      }).catch(error => {
+        console.error('Error sending broadcast:', error);
+        toast.error('An error occurred while sending the broadcast');
+        setIsSending(false);
       });
     } catch (error) {
       console.error('Error sending broadcast:', error);

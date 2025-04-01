@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
@@ -113,13 +112,22 @@ serve(async (req) => {
       );
     }
 
-    // Generate mini app URL based on custom link or ID
-    const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
-    const TELEGRAM_MINI_APP_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
-    
+    // Add this function to generate valid URLs for Telegram
+    function getValidWebAppUrl(baseUrl: string, linkParam: string): string {
+      try {
+        const url = new URL(baseUrl);
+        url.searchParams.set('start', linkParam);
+        return url.toString();
+      } catch (error) {
+        console.error(`Invalid URL format for mini app: ${baseUrl}`, error);
+        return `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${linkParam}`;
+      }
+    }
+
     // Use either custom link or entity ID for the mini app URL
     const linkParam = communityCustomLink || entityId;
-    const miniAppUrl = `${TELEGRAM_MINI_APP_URL}?start=${linkParam}`;
+    // Create the mini app URL to use in the button - using a valid HTTPS URL
+    const miniAppUrl = getValidWebAppUrl(TELEGRAM_MINI_APP_URL, linkParam);
     
     console.log(`Generated Mini App URL: ${miniAppUrl}`);
     
@@ -195,12 +203,12 @@ async function broadcastToMembers(
           inline_keyboard: [
             [{ 
               text: buttonText || "Join Community 🚀", 
-              web_app: { url: buttonUrl }
+              web_app: { url: miniAppUrl } // Use valid URL format
             }]
           ]
         };
         
-        console.log(`Created button with URL: ${buttonUrl} for member ${memberId}`);
+        console.log(`Created button with URL: ${miniAppUrl} for member ${memberId}`);
       }
       
       // Send message with or without image

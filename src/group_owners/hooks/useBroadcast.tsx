@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 export const useBroadcast = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,9 @@ export const useBroadcast = () => {
         buttonUrl,
         image,
       });
+    } catch (error: any) {
+      sonnerToast.error(`Failed to send broadcast: ${error.message || 'Unknown error'}`);
+      throw error;
     } finally {
       setIsLoading(false);
     }

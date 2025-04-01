@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendTelegramMessage } from '../utils/telegramMessenger.ts';
 
@@ -85,6 +84,18 @@ async function getBotUsernameFromToken(botToken: string): Promise<string> {
   } catch (error) {
     console.error(`❌ [BROADCAST-HANDLER] Error fetching bot username from API:`, error);
     return 'membifybot'; // Fallback to default
+  }
+}
+
+// Add this function to generate valid URLs for Telegram
+function getValidWebAppUrl(baseUrl: string, linkParam: string): string {
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set('start', linkParam);
+    return url.toString();
+  } catch (error) {
+    console.error(`❌ [BROADCAST-HANDLER] Invalid URL format for mini app: ${baseUrl}`, error);
+    return `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${linkParam}`;
   }
 }
 
@@ -200,8 +211,8 @@ export async function sendBroadcast(
     
     // Use either custom link or entity ID
     const linkParameter = customLink || entityId;
-    // Create the mini app URL to use in the button
-    const miniappUrl = `${TELEGRAM_MINI_APP_URL}?start=${linkParameter}`;
+    // Create the mini app URL to use in the button - using a valid HTTPS URL that Telegram will accept
+    const miniappUrl = getValidWebAppUrl(TELEGRAM_MINI_APP_URL, linkParameter);
     
     console.log(`📝 [BROADCAST-HANDLER] Generated MiniApp URL: ${miniappUrl}`);
 

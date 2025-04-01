@@ -1,9 +1,26 @@
 
 // Bot utility constants and functions
 
-// Mini App URLs
+// Mini App URLs - updated to ensure valid HTTPS format for buttons
 export const TELEGRAM_MINI_APP_URL = 'https://t.me/YourBotUsername/app';
 export const MINI_APP_WEB_URL = 'https://app.membify.dev';
+
+/**
+ * Generate a valid Telegram web_app URL for buttons
+ * @param communityIdOrLink Community ID or custom link
+ * @returns A properly formatted HTTPS URL that Telegram will accept
+ */
+export function getMiniAppUrl(communityIdOrLink: string): string {
+  if (!communityIdOrLink) {
+    return MINI_APP_WEB_URL;
+  }
+  
+  // Always use direct HTTPS URLs for buttons, not t.me links
+  const url = new URL(MINI_APP_WEB_URL);
+  url.searchParams.set('start', communityIdOrLink);
+  
+  return url.toString();
+}
 
 /**
  * Format currency amount for display

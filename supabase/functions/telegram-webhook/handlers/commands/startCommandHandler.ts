@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { findCommunityByIdOrLink } from '../../communityHandler.ts';
 import { getBotToken } from '../../botSettingsHandler.ts';
 import { createLogger } from '../../services/loggingService.ts';
+import { getMiniAppUrl } from '../../utils/botUtils.ts';
 
 /**
  * Handle /start command which is used to join a community
@@ -54,8 +55,8 @@ export async function handleStartCommand(
     // Get the bot token for this community (could be custom or default)
     const botToken = await getBotToken(supabase, community.id, defaultBotToken);
     
-    // Generate mini app URL
-    const miniAppUrl = generateMiniAppUrl(community.custom_link || community.id);
+    // Generate mini app URL using the utility function for consistency
+    const miniAppUrl = getMiniAppUrl(community.custom_link || community.id);
     
     await logger.info(`Mini app URL generated: ${miniAppUrl}`);
     
@@ -93,15 +94,6 @@ export async function handleStartCommand(
     
     return { success: false, error: error.message };
   }
-}
-
-/**
- * Generate Telegram Mini App URL
- */
-function generateMiniAppUrl(communityIdOrLink: string): string {
-  // Make sure to use an actual URL from your config
-  const baseUrl = 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
-  return `${baseUrl}?start=${encodeURIComponent(communityIdOrLink)}`;
 }
 
 /**

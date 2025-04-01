@@ -1,3 +1,4 @@
+
 import { ChevronDown, Users } from "lucide-react";
 import {
   DropdownMenu,
@@ -10,10 +11,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useCommunityContext } from "@/contexts/CommunityContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Community } from "@/group_owners/hooks/useCommunities";
+import { CommunityAvatar } from "./photo-handling/CommunityAvatar";
+import { useState } from "react";
 import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 
-export const CommunityDropdown = ({ 
+interface CommunityDropdownProps {
+  communities?: Community[] | null;
+  groups?: any[] | null;
+  selectedCommunityId: string | null;
+  setSelectedCommunityId: (id: string) => void;
+  selectedGroupId: string | null;
+  setSelectedGroupId: (id: string | null) => void;
+  isMobile?: boolean;
+}
+
+export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({ 
   communities, 
   groups,
   selectedCommunityId,
@@ -23,15 +36,16 @@ export const CommunityDropdown = ({
   isMobile = false
 }) => {
   const { isGroupSelected } = useCommunityContext();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Handle the community selection
-  const handleSelectCommunity = (communityId) => {
+  const handleSelectCommunity = (communityId: string) => {
     setSelectedCommunityId(communityId);
     setSelectedGroupId(null);
   };
   
   // Handle the group selection
-  const handleSelectGroup = (groupId) => {
+  const handleSelectGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
   };
   
@@ -41,8 +55,8 @@ export const CommunityDropdown = ({
   
   // The display name for the trigger
   const displayName = isGroupSelected 
-    ? selectedGroup?.name || "Select a group" 
-    : selectedCommunity?.name || "Select a community";
+    ? selectedGroup?.name || "בחר קבוצה" 
+    : selectedCommunity?.name || "בחר קהילה";
 
   // Process photo URL to ensure it's properly loaded
   const selectedPhotoUrl = isGroupSelected
@@ -50,6 +64,13 @@ export const CommunityDropdown = ({
     : selectedCommunity?.telegram_photo_url 
       ? getProxiedImageUrl(selectedCommunity.telegram_photo_url)
       : null;
+  
+  const handleRefreshPhoto = (e: React.MouseEvent, communityId: string, chatId?: string | null) => {
+    e.stopPropagation();
+    setIsRefreshing(true);
+    // כאן יש להוסיף לוגיקה לרענון תמונה אם צריך
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
   
   return (
     <DropdownMenu>
@@ -60,18 +81,14 @@ export const CommunityDropdown = ({
           size="sm"
         >
           <div className="flex items-center gap-1">
-            <Avatar className={`${isMobile ? 'h-3.5 w-3.5' : 'h-5 w-5'} border border-indigo-100`}>
-              {selectedPhotoUrl ? (
-                <AvatarImage 
-                  src={selectedPhotoUrl} 
-                  alt={displayName}
-                />
-              ) : (
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[8px]">
-                  {displayName?.charAt(0)?.toUpperCase() || '?'}
-                </AvatarFallback>
-              )}
-            </Avatar>
+            <CommunityAvatar
+              community={selectedCommunity || { id: '', name: 'קהילה'} as Community}
+              photoUrl={selectedPhotoUrl || undefined}
+              isRefreshing={isRefreshing}
+              onRefresh={handleRefreshPhoto}
+              size={isMobile ? "sm" : "md"}
+              showRefreshButton={false}
+            />
             {!isMobile ? (
               <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700 max-w-[180px]">
                 {displayName}
@@ -86,28 +103,24 @@ export const CommunityDropdown = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-60 bg-white/95 backdrop-blur-sm border-blue-100 shadow-xl">
-        <DropdownMenuLabel className="text-xs">Your Communities</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">הקהילות שלך</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {communities?.map((community) => (
+          {communities?.filter(community => !community.is_group).map((community) => (
             <DropdownMenuItem 
               key={community.id} 
               className={`cursor-pointer text-xs ${selectedCommunityId === community.id && !isGroupSelected ? 'bg-blue-50 text-blue-700 font-medium' : ''}`}
               onClick={() => handleSelectCommunity(community.id)}
             >
               <div className="flex items-center gap-2 w-full">
-                <Avatar className="h-5 w-5 border border-gray-100">
-                  {community.telegram_photo_url ? (
-                    <AvatarImage 
-                      src={getProxiedImageUrl(community.telegram_photo_url)} 
-                      alt={community.name}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-[10px]">
-                      {community.name?.charAt(0)?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
+                <CommunityAvatar
+                  community={community}
+                  photoUrl={community.telegram_photo_url || undefined}
+                  isRefreshing={isRefreshing}
+                  onRefresh={handleRefreshPhoto}
+                  size="sm"
+                  showRefreshButton={false}
+                />
                 <span className="truncate">{community.name}</span>
               </div>
             </DropdownMenuItem>
@@ -117,7 +130,7 @@ export const CommunityDropdown = ({
         {groups && groups.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs">Your Groups</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">הקבוצות שלך</DropdownMenuLabel>
             <DropdownMenuGroup>
               {groups.map((group) => (
                 <DropdownMenuItem 

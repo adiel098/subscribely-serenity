@@ -42,6 +42,7 @@ example:
 Every database action (insert, update, delete) must call a single log function to store logs in a dedicated database table.
 The log function should be reusable and called in every function that modifies data.
 
+important note: before any change or update that really affects the database or call database please check the file `/src/data_explain.md` for more information and knowladge about how the database build and all tables and rows columns names.
 🔒 Feature Safety & Compatibility
  When developing a new feature, do not delete or modify existing features in a way that could break them.
  Ensure backward compatibility and avoid overwriting/removing functionalities that are already implemented.

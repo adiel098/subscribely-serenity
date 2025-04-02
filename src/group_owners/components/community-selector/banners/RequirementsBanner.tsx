@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, CreditCard, Package, ArrowRight } from "lucide-react";
@@ -9,6 +8,7 @@ interface RequirementsBannerProps {
   hasActivePaymentMethods: boolean;
   onNavigateToSubscriptions: () => void;
   onNavigateToPaymentMethods: () => void;
+  entityType?: 'community' | 'group';
 }
 
 export const RequirementsBanner: React.FC<RequirementsBannerProps> = ({
@@ -16,7 +16,10 @@ export const RequirementsBanner: React.FC<RequirementsBannerProps> = ({
   hasActivePaymentMethods,
   onNavigateToSubscriptions,
   onNavigateToPaymentMethods,
+  entityType = 'community'
 }) => {
+  const entityName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -30,7 +33,7 @@ export const RequirementsBanner: React.FC<RequirementsBannerProps> = ({
       </div>
       
       <div className="text-sm text-red-600 font-medium">
-        <span>Setup required to onboard members</span>
+        <span>{entityName} setup required to onboard members</span>
       </div>
 
       <div className="flex items-center gap-2 ml-auto">

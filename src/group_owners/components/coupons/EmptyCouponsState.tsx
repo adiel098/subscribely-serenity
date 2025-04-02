@@ -1,26 +1,40 @@
-
 import { Button } from "@/components/ui/button";
 import { PlusIcon, Tag, TicketIcon } from "lucide-react";
 
 interface EmptyCouponsStateProps {
-  onCreateCoupon: () => void;
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+  showCreateButton?: boolean;
+  onCreateClick?: () => void;
 }
 
-export const EmptyCouponsState = ({ onCreateCoupon }: EmptyCouponsStateProps) => {
+export const EmptyCouponsState = ({ 
+  title,
+  description,
+  icon = <Tag className="h-10 w-10 text-indigo-500" />,
+  showCreateButton = false,
+  onCreateClick
+}: EmptyCouponsStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed rounded-lg">
       <div className="bg-indigo-100 p-4 rounded-full mb-4">
-        <Tag className="h-10 w-10 text-indigo-500" />
+        {icon}
       </div>
-      <h3 className="text-lg font-semibold mb-2">No Coupons Created Yet</h3>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-muted-foreground text-center max-w-md mb-6">
-        Create discount coupons to attract new subscribers or reward existing ones
-        with special offers.
+        {description}
       </p>
-      <Button onClick={onCreateCoupon} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
-        <PlusIcon className="h-4 w-4" />
-        Create Your First Coupon
-      </Button>
+      
+      {showCreateButton && onCreateClick && (
+        <Button 
+          onClick={onCreateClick} 
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700"
+        >
+          <PlusIcon className="h-4 w-4" />
+          Create Your First Coupon
+        </Button>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 max-w-4xl">
         <FeatureCard

@@ -11,6 +11,7 @@ import { getBotUsername } from '@/telegram-mini-app/utils/telegram/botUsernameUt
 import { CommunityRequirementsBanner } from './community-selector/CommunityRequirementsBanner';
 import { CreateGroupDialog } from './community-groups/CreateGroupDialog';
 import { PlatformSubscriptionBanner } from './community-selector/PlatformSubscriptionBanner';
+import { CommunityEditBanner } from './community-selector/CommunityEditBanner';
 
 // Import new components
 import { Logo } from './header/Logo';
@@ -81,6 +82,7 @@ export function GroupOwnerHeader() {
                 isMobile={true}
               />
             </div>
+            
             <MobileActions 
               selectedCommunityId={selectedCommunityId}
               selectedGroupId={selectedGroupId}
@@ -106,6 +108,7 @@ export function GroupOwnerHeader() {
               
               <PlatformSubscriptionBanner />
               <CommunityRequirementsBanner />
+              
             </div>
           )}
         </div>

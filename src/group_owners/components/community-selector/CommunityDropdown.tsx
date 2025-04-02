@@ -1,4 +1,3 @@
-
 import { ChevronDown, Users } from "lucide-react";
 import {
   DropdownMenu,
@@ -15,6 +14,7 @@ import { Community } from "@/group_owners/hooks/useCommunities";
 import { CommunityAvatar } from "./photo-handling/CommunityAvatar";
 import { useState } from "react";
 import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface CommunityDropdownProps {
   communities?: Community[] | null;
@@ -25,6 +25,39 @@ interface CommunityDropdownProps {
   setSelectedGroupId: (id: string | null) => void;
   isMobile?: boolean;
 }
+
+// Simple avatar component for consistency
+const SimpleAvatar = ({ 
+  name, 
+  photoUrl, 
+  className = "",
+  size = "sm"
+}: { 
+  name: string; 
+  photoUrl?: string | null; 
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) => {
+  const sizeClass = {
+    sm: "h-5 w-5",
+    md: "h-7 w-7",
+    lg: "h-10 w-10"
+  };
+  
+  return (
+    <Avatar className={`${sizeClass[size]} ${className}`}>
+      {photoUrl && (
+        <AvatarImage 
+          src={photoUrl} 
+          alt={name}
+        />
+      )}
+      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-xs">
+        {name?.charAt(0)?.toUpperCase() || '?'}
+      </AvatarFallback>
+    </Avatar>
+  );
+};
 
 export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({ 
   communities, 
@@ -60,7 +93,9 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
 
   // Process photo URL to ensure it's properly loaded
   const selectedPhotoUrl = isGroupSelected
-    ? null // Groups don't have photos currently
+    ? selectedGroup?.telegram_photo_url 
+      ? getProxiedImageUrl(selectedGroup.telegram_photo_url)
+      : null
     : selectedCommunity?.telegram_photo_url 
       ? getProxiedImageUrl(selectedCommunity.telegram_photo_url)
       : null;
@@ -81,14 +116,28 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
           size="sm"
         >
           <div className="flex items-center gap-1">
-            <CommunityAvatar
-              community={selectedCommunity || { id: '', name: 'קהילה'} as Community}
-              photoUrl={selectedPhotoUrl || undefined}
-              isRefreshing={isRefreshing}
-              onRefresh={handleRefreshPhoto}
-              size={isMobile ? "sm" : "md"}
-              showRefreshButton={false}
-            />
+            {isGroupSelected ? (
+              selectedGroup?.telegram_photo_url ? (
+                <SimpleAvatar 
+                  name={selectedGroup.name}
+                  photoUrl={selectedPhotoUrl}
+                  size={isMobile ? "sm" : "md"}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-5 w-5 rounded-md bg-indigo-100 text-indigo-600">
+                  <Users className="h-3 w-3" />
+                </div>
+              )
+            ) : (
+              <CommunityAvatar
+                community={selectedCommunity || { id: '', name: 'קהילה'} as Community}
+                photoUrl={selectedPhotoUrl || undefined}
+                isRefreshing={isRefreshing}
+                onRefresh={handleRefreshPhoto}
+                size={isMobile ? "sm" : "md"}
+                showRefreshButton={false}
+              />
+            )}
             {!isMobile ? (
               <span className="truncate community-dropdown-text mr-2 font-medium text-blue-700 max-w-[180px]">
                 {displayName}
@@ -103,7 +152,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-60 bg-white/95 backdrop-blur-sm border-blue-100 shadow-xl">
-        <DropdownMenuLabel className="text-xs">הקהילות שלך</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">Your Communities</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           {communities?.filter(community => !community.is_group).map((community) => (
@@ -130,7 +179,7 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
         {groups && groups.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs">הקבוצות שלך</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">Your Groups</DropdownMenuLabel>
             <DropdownMenuGroup>
               {groups.map((group) => (
                 <DropdownMenuItem 
@@ -139,9 +188,17 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
                   onClick={() => handleSelectGroup(group.id)}
                 >
                   <div className="flex items-center gap-2 w-full">
-                    <div className="flex items-center justify-center h-5 w-5 rounded-md bg-indigo-100 text-indigo-600">
-                      <Users className="h-3 w-3" />
-                    </div>
+                    {group.telegram_photo_url ? (
+                      <SimpleAvatar 
+                        name={group.name}
+                        photoUrl={group.telegram_photo_url}
+                        size="sm"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-5 w-5 rounded-md bg-indigo-100 text-indigo-600">
+                        <Users className="h-3 w-3" />
+                      </div>
+                    )}
                     <span className="truncate">{group.name}</span>
                   </div>
                 </DropdownMenuItem>

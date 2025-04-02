@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Link, Copy, CheckCircle, Edit } from "lucide-react";
+import { Link, Copy, CheckCircle, Edit, Settings } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface SuccessBannerProps {
   communityId: string;
@@ -19,9 +20,12 @@ export const SuccessBanner: React.FC<SuccessBannerProps> = ({
   entityType = 'community'
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [copySuccess, setCopySuccess] = useState(false);
   const botUsername = getBotUsername();
   const isMobile = useIsMobile();
+  const entityName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+  const isGroup = entityType === 'group';
 
   const copyMiniAppLink = () => {
     if (!communityId) return;
@@ -51,6 +55,13 @@ export const SuccessBanner: React.FC<SuccessBannerProps> = ({
         });
       });
   };
+  
+  // Navigate to edit group page
+  const handleEditGroup = () => {
+    if (communityId) {
+      navigate(`/groups/${communityId}/edit`);
+    }
+  };
 
   // For mobile, just show the buttons
   if (isMobile) {
@@ -70,7 +81,7 @@ export const SuccessBanner: React.FC<SuccessBannerProps> = ({
         <div className="flex-shrink-0 bg-emerald-100 rounded-full p-1">
           <CheckCircle className="h-4 w-4 text-emerald-600" />
         </div>
-        <span className="text-sm text-emerald-800">Your {entityType} is ready! 🎉</span>
+        <span className="text-sm text-emerald-800">Your {entityName} is ready! 🎉</span>
       </div>
       
       <div className="flex items-center gap-2 ml-2 bg-white/70 rounded-md px-2 py-1 border border-emerald-100 min-w-[300px] max-w-[400px]">
@@ -99,15 +110,29 @@ export const SuccessBanner: React.FC<SuccessBannerProps> = ({
           )}
         </motion.button>
         
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onOpenEditDialog}
-          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-          title="Edit link"
-        >
-          <Edit className="h-3 w-3" />
-        </motion.button>
+        {isGroup ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleEditGroup}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+            title="Edit group details"
+          >
+            <Settings className="h-3 w-3" />
+            <span>Edit Group</span>
+          </motion.button>
+        ) : (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onOpenEditDialog}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+            title="Edit link"
+          >
+            <Edit className="h-3 w-3" />
+          </motion.button>
+        )}
+        
       </div>
     </motion.div>
   );

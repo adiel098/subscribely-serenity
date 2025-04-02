@@ -6,7 +6,9 @@ import { RequirementsBanner } from "./banners/RequirementsBanner";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 
 export const CommunityRequirementsBanner = () => {
-  const { selectedCommunityId } = useCommunityContext();
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  
   const {
     selectedCommunity,
     hasActivePaymentMethods,
@@ -21,7 +23,7 @@ export const CommunityRequirementsBanner = () => {
     handleLinkUpdated
   } = useCommunityRequirements();
 
-  if (isLoading || !selectedCommunityId) return null;
+  if (isLoading || !entityId) return null;
 
   return (
     <>
@@ -29,9 +31,10 @@ export const CommunityRequirementsBanner = () => {
         {isFullyConfigured ? (
           <SuccessBanner
             key="success-banner"
-            communityId={selectedCommunityId}
+            communityId={entityId}
             customLink={selectedCommunity?.custom_link || null}
             onOpenEditDialog={openEditDialog}
+            entityType={isGroupSelected ? 'group' : 'community'}
           />
         ) : (
           <RequirementsBanner
@@ -40,6 +43,7 @@ export const CommunityRequirementsBanner = () => {
             hasActivePaymentMethods={hasActivePaymentMethods}
             onNavigateToSubscriptions={navigateToSubscriptions}
             onNavigateToPaymentMethods={navigateToPaymentMethods}
+            entityType={isGroupSelected ? 'group' : 'community'}
           />
         )}
       </AnimatePresence>
@@ -50,9 +54,10 @@ export const CommunityRequirementsBanner = () => {
             key="link-edit-dialog"
             isOpen={isEditDialogOpen}
             onClose={closeEditDialog}
-            communityId={selectedCommunityId}
+            communityId={entityId}
             currentCustomLink={selectedCommunity?.custom_link || null}
             onLinkUpdated={handleLinkUpdated}
+            entityType={isGroupSelected ? 'group' : 'community'}
           />
         )}
       </AnimatePresence>

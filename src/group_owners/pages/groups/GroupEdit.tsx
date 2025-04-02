@@ -1,151 +1,394 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button"; 
+import { Save, Loader2, Plus, X, Users, ArrowLeft } from "lucide-react"; 
 import { useCommunityGroup } from "@/group_owners/hooks/useCommunityGroup";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; 
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { useCommunities } from "@/group_owners/hooks/useCommunities";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+
+import GroupDetailsForm from "@/group_owners/components/group-edit/GroupDetailsForm";
+import GroupImageUpload from "@/group_owners/components/group-edit/GroupImageUpload";
+import GroupCommunitiesSection from "@/group_owners/components/group-edit/GroupCommunitiesSection";
+import GroupActionButtons from "@/group_owners/components/group-edit/GroupActionButtons";
+
+interface Community {
+  id: string;
+  name: string;
+  created_at: string;
+  is_group?: boolean; 
+}
+
+interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  custom_link?: string;
+  telegram_photo_url?: string;
+  owner_id?: string;
+  is_group?: boolean;
+  created_at?: string;
+}
 
 const GroupEdit = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
-  const { data: group, isLoading } = useCommunityGroup(groupId || "");
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const { data: allCommunities, isLoading: isCommunitiesLoading } = useCommunities();
+  const queryClient = useQueryClient();
   
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [customLink, setCustomLink] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  
+  const [availableCommunities, setAvailableCommunities] = useState<Community[]>([]);
+  const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
+  const [loadingCommunities, setLoadingCommunities] = useState(false);
+  
+  const { 
+    data: groupData, 
+    isLoading: isGroupLoading, 
+    error: groupError,
+  } = useCommunityGroup(groupId);
+
+  const updateGroupMutation = useMutation({
+    mutationFn: async (updates: Partial<Group>) => {
+      if (!groupId) throw new Error("Group ID is missing");
+      const { error } = await supabase
+        .from('communities')
+        .update(updates)
+        .eq('id', groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['community', groupId]);
+    }
+  });
+
+  const fetchAvailableCommunities = useCallback(async () => {
+    setLoadingCommunities(true);
+    try {
+      if (allCommunities && allCommunities.length > 0) {
+        console.log("Using communities from hook:", allCommunities.length);
+        const regularCommunities = allCommunities.filter(community => !community.is_group);
+        const sortedCommunities = [...regularCommunities].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        console.log("Filtered regular communities:", regularCommunities.length);
+        console.log("Sorted communities:", sortedCommunities);
+        setAvailableCommunities(sortedCommunities);
+      } 
+      else if (user?.id) {
+        console.log("Falling back to direct DB query for available communities");
+        const { data, error } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('is_group', false)
+          .eq('owner_id', user.id);
+          
+        if (error) throw error;
+        
+        console.log("Fetched communities directly:", data);
+        if (data && data.length > 0) {
+          const sortedCommunities = [...data].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setAvailableCommunities(sortedCommunities);
+        } else {
+          console.log("No available communities found for user ID:", user.id);
+          setAvailableCommunities([]);
+        }
+      } else {
+        console.error("No user ID available and no communities from hook");
+        setAvailableCommunities([]);
+        toast.error("Cannot load communities: User not identified.");
+      }
+    } catch (error) {
+      console.error('Error fetching available communities:', error);
+      toast.error('Failed to load available communities');
+      setAvailableCommunities([]); 
+    } finally {
+      setLoadingCommunities(false);
+    }
+  }, [allCommunities, user?.id]);
+
+  const fetchLinkedCommunities = useCallback(async () => {
+    if (!groupId) return;
+    try {
+      const { data, error } = await supabase
+        .from('community_relationships')
+        .select('member_id')
+        .eq('community_id', groupId);
+        
+      if (error) throw error;
+      
+      const linkedIds = data ? data.map(rel => rel.member_id) : [];
+      console.log("Fetched linked community IDs:", linkedIds);
+      setSelectedCommunities(linkedIds);
+      
+    } catch (error) {
+      console.error("Error fetching linked communities:", error);
+      toast.error("Failed to load linked communities.");
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    console.log("Authentication context user:", user);
+    if (!user || !user.id) {
+      console.warn("User not available or missing ID in GroupEdit component");
+    }
+  }, [user]);
   
   useEffect(() => {
-    if (group) {
-      setName(group.name || "");
-      setDescription(group.description || "");
-      setCustomLink(group.custom_link || "");
+    console.log("Communities from hook:", allCommunities);
+  }, [allCommunities]);
+
+  useEffect(() => {
+    if (allCommunities) {
+      fetchAvailableCommunities();
     }
-  }, [group]);
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!groupId) return;
-    
-    // This is a placeholder. You should implement the actual group update mutation
-    toast.success("Group updated successfully!");
-    navigate("/dashboard");
-  };
-  
-  const isValidCustomLink = (link: string) => {
-    // Allow alphanumeric characters, underscores, and hyphens only or empty string
-    return /^[a-zA-Z0-9_-]*$/.test(link);
-  };
-  
-  const handleCustomLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (isValidCustomLink(value)) {
-      setCustomLink(value);
-    }
-  };
-  
-  return (
-    <div className="space-y-4 p-3">
-      <div className="flex items-center justify-center">
-        <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent`}>
-          Edit Group
-        </h1>
-      </div>
+  }, [allCommunities, fetchAvailableCommunities]);
+
+  useEffect(() => {
+    if (groupData && !initialDataLoaded) {
+      console.log("Populating form with group data:", groupData); 
+      console.log("Telegram photo URL from groupData:", groupData.telegram_photo_url); 
+      setName(groupData.name || "");
+      setDescription(groupData.description || "");
+      setCustomLink(groupData.custom_link || "");
+      setImageUrl(groupData.telegram_photo_url || null);
       
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      // Fetch both linked and available communities
+      fetchLinkedCommunities();
+      fetchAvailableCommunities();
+      
+      setInitialDataLoaded(true);
+    }
+  }, [groupData, initialDataLoaded, fetchLinkedCommunities, fetchAvailableCommunities]);
+  
+  const handleCommunitySelect = (communityId: string) => {
+    setSelectedCommunities(prev =>
+      prev.includes(communityId)
+        ? prev.filter(id => id !== communityId)
+        : [...prev, communityId]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!groupId) {
+      toast.error("Group ID is missing.");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      // Save group details
+      await updateGroupMutation.mutateAsync({
+        name,
+        description,
+        custom_link: customLink,
+        telegram_photo_url: imageUrl,
+      });
+
+      // Save communities relationships
+      const { data: existingRels, error: fetchError } = await supabase
+        .from('community_relationships')
+        .select('member_id')
+        .eq('community_id', groupId);
+
+      if (fetchError) throw fetchError;
+      const existingMemberIds = existingRels ? existingRels.map(r => r.member_id) : [];
+
+      const relationshipsToAdd = selectedCommunities
+        .filter(id => !existingMemberIds.includes(id))
+        .map(member_id => ({ community_id: groupId, member_id }));
+
+      const relationshipsToRemove = existingMemberIds
+        .filter(id => !selectedCommunities.includes(id));
+
+      // Remove old relationships
+      if (relationshipsToRemove.length > 0) {
+        const { error: removeError } = await supabase
+          .from('community_relationships')
+          .delete()
+          .eq('community_id', groupId)
+          .in('member_id', relationshipsToRemove);
+
+        if (removeError) throw removeError;
+      }
+
+      // Add new relationships
+      if (relationshipsToAdd.length > 0) {
+        const { error: addError } = await supabase
+          .from('community_relationships')
+          .insert(relationshipsToAdd);
+
+        if (addError) throw addError;
+      }
+
+      toast.success("Group updated successfully!");
+      
+    } catch (error) {
+      console.error('Error saving group:', error);
+      toast.error('Failed to save group');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const uploadGroupImageMutation = useMutation({
+    mutationFn: async ({ file, groupId }: { file: File; groupId: string }) => {
+      if (!user || !groupId) throw new Error("User or Group ID is missing");
+
+      // Convert the file to a data URL to get its content
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+
+      // Update telegram_photo_url in the database with the data URL
+      const { error: updateError } = await supabase
+        .from('communities')
+        .update({ telegram_photo_url: dataUrl })
+        .eq('id', groupId)
+        .eq('owner_id', user.id);
+
+      if (updateError) {
+        console.error('Error updating group photo URL:', updateError);
+        throw new Error('Failed to update group photo URL.');
+      }
+
+      return dataUrl;
+    },
+    onMutate: () => {
+      setIsUploading(true);
+    },
+    onSuccess: (newImageUrl) => {
+      toast.success("✨ Group photo updated successfully!");
+      setImageUrl(newImageUrl);
+      queryClient.invalidateQueries({ queryKey: ['community-group', groupId] });
+    },
+    onError: (error) => {
+      console.error("Photo update failed:", error);
+      toast.error(`Photo update failed: ${error.message}`);
+    },
+    onSettled: () => {
+      setIsUploading(false);
+    },
+  });
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setImageFile(event.target.files[0]);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !groupId) return;
+    
+    try {
+      // Use the mutation to upload the image
+      await uploadGroupImageMutation.mutateAsync({ file: imageFile, groupId });
+      setImageFile(null); // Clear the selected file after successful upload
+    } catch (error) {
+      // Error handling is now mostly done within the mutation's onError
+      console.error("Error initiating image upload:", error); 
+      // toast.error is handled in mutation's onError
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const previousImageUrl = imageUrl;
+    setImageUrl(null);
+    setImageFile(null);
+    
+    if (groupId) {
+       try {
+         await updateGroupMutation.mutateAsync({ telegram_photo_url: null }); 
+         toast.success("Image removed.");
+       } catch(error) {
+         setImageUrl(previousImageUrl);
+         console.error("Failed to remove image from database:", error);
+         toast.error("Failed to remove image.");
+       }
+    }
+  };
+
+  if (isGroupLoading && !initialDataLoaded) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+  
+  if (groupError) {
+     return (
+       <div className="flex justify-center items-center h-screen text-red-600">
+         Error loading group data. Please try again.
+       </div>
+     );
+  }
+
+  return (
+    <div className={`container mx-auto px-4 py-8 ${isMobile ? 'max-w-full' : 'max-w-4xl'}`}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-8"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <GroupDetailsForm 
+              name={name}
+              setName={setName}
+              description={description}
+              setDescription={setDescription}
+              customLink={customLink}
+              setCustomLink={setCustomLink}
+              isSaving={isSaving}
+            />
+          </div>
+          
+          <div>
+            <GroupImageUpload 
+              imageUrl={imageUrl}
+              imageFile={imageFile}
+              handleImageChange={handleImageChange}
+              handleImageUpload={handleImageUpload}
+              handleRemoveImage={handleRemoveImage}
+              isUploading={isUploading}
+              isSaving={isSaving} 
+            />
+          </div>
         </div>
-      ) : !group ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Group not found</p>
-          <Button 
-            onClick={() => navigate("/dashboard")} 
-            variant="outline" 
-            className="mt-4"
-            size={isMobile ? "sm" : "default"}
-          >
-            Return to Dashboard
-          </Button>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <form onSubmit={handleSubmit}>
-            <Card className="border-indigo-100 shadow-md">
-              <CardHeader className={isMobile ? "px-3 py-4" : "px-6 py-5"}>
-                <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'} text-indigo-700`}>
-                  Group Details
-                </CardTitle>
-                <CardDescription className={isMobile ? "text-xs" : "text-sm"}>
-                  Update information about your group
-                </CardDescription>
-              </CardHeader>
-              <CardContent className={`space-y-4 ${isMobile ? 'px-3 py-2' : 'px-6 py-3'}`}>
-                <div className="space-y-2">
-                  <Label htmlFor="name" className={isMobile ? "text-xs" : "text-sm"}>Group Name</Label>
-                  <Input 
-                    id="name" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter group name"
-                    required
-                    className={isMobile ? "h-8 text-sm" : ""}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description" className={isMobile ? "text-xs" : "text-sm"}>Description</Label>
-                  <Textarea 
-                    id="description" 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe your group"
-                    rows={isMobile ? 2 : 3}
-                    className={isMobile ? "text-sm" : ""}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="customLink" className={isMobile ? "text-xs" : "text-sm"}>
-                    Custom Link (Optional)
-                  </Label>
-                  <Input 
-                    id="customLink" 
-                    value={customLink} 
-                    onChange={handleCustomLinkChange}
-                    placeholder="my-group"
-                    className={isMobile ? "h-8 text-sm" : ""}
-                  />
-                  <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>
-                    Only letters, numbers, hyphens, and underscores allowed
-                  </p>
-                </div>
-              </CardContent>
-              <CardFooter className={`flex justify-end gap-2 ${isMobile ? 'px-3 py-3' : 'px-6 py-4'}`}>
-                <Button 
-                  type="submit" 
-                  size={isMobile ? "sm" : "default"}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                >
-                  <Save className={`${isMobile ? 'mr-1 h-3 w-3' : 'mr-2 h-4 w-4'}`} />
-                  <span className={isMobile ? "text-xs" : ""}>Save Changes</span>
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
-        </motion.div>
-      )}
+          
+        <GroupCommunitiesSection 
+          availableCommunities={availableCommunities}
+          selectedCommunities={selectedCommunities}
+          handleCommunitySelect={handleCommunitySelect}
+          loadingCommunities={loadingCommunities}
+        />
+
+        <GroupActionButtons 
+          handleSave={handleSave}
+          isSaving={isSaving}
+        />
+        
+      </motion.div>
     </div>
   );
 };

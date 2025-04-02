@@ -67,7 +67,7 @@ export async function handleStartCommand(
       inline_keyboard: [
         [
           {
-            text: "💳 Subscribe Now",
+            text: "Join Community 🚀",
             web_app: { url: miniAppUrl }
           }
         ]

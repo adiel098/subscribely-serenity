@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { CommunityGroup } from "./types/communityGroup.types";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,10 +12,11 @@ export const useCommunityGroup = (groupId: string) => {
       if (!groupId || !user) return null;
       
       const { data, error } = await supabase
-        .from("community_groups")
+        .from("communities")
         .select("*")
         .eq("id", groupId)
         .eq("owner_id", user.id)
+        .eq("is_group", true)
         .single();
       
       if (error) {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,7 @@ interface LinkEditDialogProps {
   communityId: string | null;
   currentCustomLink: string | null;
   onLinkUpdated: (newLink: string | null) => void;
+  entityType?: 'community' | 'group';
 }
 
 export const LinkEditDialog = ({ 
@@ -20,11 +20,13 @@ export const LinkEditDialog = ({
   onClose, 
   communityId, 
   currentCustomLink, 
-  onLinkUpdated 
+  onLinkUpdated,
+  entityType = 'community'
 }: LinkEditDialogProps) => {
   const [customLink, setCustomLink] = useState(currentCustomLink || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const entityName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
 
   const baseUrl = "https://t.me/membifybot?start=";
 
@@ -101,7 +103,7 @@ export const LinkEditDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Custom Link</DialogTitle>
           <DialogDescription>
-            Create a custom link for your community that users can use to join.
+            Create a custom link for your {entityType} that users can use to join.
           </DialogDescription>
         </DialogHeader>
         
@@ -110,7 +112,7 @@ export const LinkEditDialog = ({
             <Label htmlFor="customLink">Custom Link Identifier</Label>
             <Input
               id="customLink"
-              placeholder="e.g. my-awesome-community"
+              placeholder={`e.g. my-awesome-${entityType}`}
               value={customLink}
               onChange={(e) => {
                 const value = e.target.value;
@@ -120,7 +122,7 @@ export const LinkEditDialog = ({
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Only alphanumeric characters, underscores, and hyphens are allowed. Leave empty to use the community ID.
+              Only alphanumeric characters, underscores, and hyphens are allowed. Leave empty to use the {entityType} ID.
             </p>
           </div>
           

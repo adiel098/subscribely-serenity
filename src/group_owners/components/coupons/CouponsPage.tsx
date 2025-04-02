@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +13,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/components/ui/use-toast";
 
 export const CouponsPage = () => {
-  const { selectedCommunityId } = useCommunityContext();
+  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const { toast } = useToast();
-  const communityId = selectedCommunityId || "";
+  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
   
-  const { coupons, isLoading, createCoupon, updateCoupon, deleteCoupon } = useCoupons(communityId);
+  const { coupons, isLoading, createCoupon, updateCoupon, deleteCoupon } = useCoupons(entityId || "");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -37,11 +36,11 @@ export const CouponsPage = () => {
   const handleCreateCoupon = async (data: CreateCouponData) => {
     try {
       setIsProcessing(true);
-      console.log("Submitting coupon:", { ...data, community_id: communityId });
+      console.log("Submitting coupon:", { ...data, community_id: entityId });
       
       await createCoupon.mutateAsync({
         ...data,
-        community_id: communityId
+        community_id: entityId || ""
       });
       
       setCreateDialogOpen(false);
@@ -105,81 +104,87 @@ export const CouponsPage = () => {
     }
   };
   
-  if (!communityId) {
+  if (!entityId) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Select a community to manage coupons</p>
-      </div>
+      <EmptyCouponsState 
+        title={`Select a ${isGroupSelected ? 'group' : 'community'} to manage coupons`}
+        description={`Choose a ${isGroupSelected ? 'group' : 'community'} from the dropdown above to start managing coupons.`}
+      />
     );
   }
   
-  return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TagIcon className="h-6 w-6 text-indigo-500" />
-            Discount Coupons
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create and manage discount coupons for your subscribers
-          </p>
-        </div>
-        {coupons && coupons.length > 0 && (
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Create Coupon
-          </Button>
-        )}
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
       </div>
-      
-      {coupons && coupons.length > 0 ? (
-        <>
-          <div className="relative mb-6">
-            <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search coupons..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+    );
+  }
+
+  const hasCoupons = filteredCoupons && filteredCoupons.length > 0;
+  
+  return (
+    <div className="space-y-6">
+      {hasCoupons && (
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex-1 w-full md:w-auto">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder="Search coupons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-full"
+              />
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCoupons?.map((coupon) => (
-              <CouponCard
-                key={coupon.id}
-                coupon={coupon}
-                onEdit={handleEditCoupon}
-                onDelete={handleDeleteConfirm}
-              />
-            ))}
-          </div>
-        </>
-      ) : isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading coupons...</p>
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="w-full md:w-auto"
+            disabled={isProcessing}
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Create Coupon
+          </Button>
         </div>
+      )}
+      
+      {!hasCoupons ? (
+        <EmptyCouponsState
+          title="No coupons found"
+          description="Create your first coupon to start offering discounts."
+          icon={<TagIcon className="h-12 w-12" />}
+          showCreateButton
+          onCreateClick={() => setCreateDialogOpen(true)}
+        />
       ) : (
-        <EmptyCouponsState onCreateCoupon={() => setCreateDialogOpen(true)} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCoupons?.map((coupon) => (
+            <CouponCard
+              key={coupon.id}
+              coupon={coupon}
+              onEdit={() => handleEditCoupon(coupon)}
+              onDelete={() => handleDeleteConfirm(coupon)}
+            />
+          ))}
+        </div>
       )}
       
       <CreateCouponDialog
-        communityId={communityId}
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateCoupon}
+        isProcessing={isProcessing}
       />
       
       {selectedCoupon && (
         <EditCouponDialog
-          coupon={selectedCoupon}
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
+          coupon={selectedCoupon}
           onSubmit={handleUpdateCoupon}
+          isProcessing={isProcessing}
         />
       )}
       
@@ -188,19 +193,25 @@ export const CouponsPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the coupon{" "}
-              <span className="font-semibold">{selectedCoupon?.code}</span>. 
-              This action cannot be undone.
+              This action cannot be undone. This will permanently delete the coupon
+              and remove it from any active subscriptions.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteCoupon}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isProcessing || deleteCoupon.isPending}
+              disabled={isProcessing}
+              className="bg-red-500 hover:bg-red-600"
             >
-              {isProcessing || deleteCoupon.isPending ? "Deleting..." : "Delete"}
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

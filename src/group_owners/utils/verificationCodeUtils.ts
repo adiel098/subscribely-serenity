@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast as toastFunction } from "@/components/ui/use-toast";
 
@@ -20,7 +19,7 @@ export async function fetchOrGenerateVerificationCode(userId: string, toast: any
       .from('profiles')
       .select('initial_telegram_code, current_telegram_code')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
@@ -32,11 +31,23 @@ export async function fetchOrGenerateVerificationCode(userId: string, toast: any
       return null;
     }
 
+    if (!profile) {
+      console.error('Profile not found:', userId);
+      toast({
+        title: "Error",
+        description: "Profile not found",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     if (profile.current_telegram_code) {
+      console.log('Using existing code:', profile.current_telegram_code);
       return profile.current_telegram_code;
     } else {
       // Generate a new code
       const newCode = generateVerificationCode();
+      console.log('Generated new code:', newCode);
       
       const { error: updateError } = await supabase
         .from('profiles')
@@ -49,7 +60,7 @@ export async function fetchOrGenerateVerificationCode(userId: string, toast: any
       if (updateError) {
         console.error('Error updating codes:', updateError);
         toast({
-          title: "Error", 
+          title: "Error",
           description: "Failed to update verification code",
           variant: "destructive",
         });

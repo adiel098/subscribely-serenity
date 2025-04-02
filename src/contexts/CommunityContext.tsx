@@ -1,8 +1,9 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useCommunityGroups } from "@/group_owners/hooks/useCommunityGroups";
 import { useLocation, useNavigate } from "react-router-dom";
+import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
+import { toast } from "sonner";
 
 type CommunityContextType = {
   selectedCommunityId: string | null;
@@ -136,6 +137,51 @@ export const CommunityProvider = ({
       return;
     }
   }, [communities, groups, selectedCommunityId, selectedGroupId, isCommunitiesLoading, isGroupsLoading, location, navigate]);
+
+  useEffect(() => {
+    // Synchronize community photos from Telegram on page load
+    const refreshCommunityPhotos = async () => {
+      if (!communities || communities.length === 0) return;
+      
+      try {
+        console.log("Refreshing community photos on page load...");
+        
+        // Filter communities with Telegram chat IDs
+        const telegramCommunities = communities.filter(c => c.id && c.telegram_chat_id);
+        
+        if (telegramCommunities.length === 0) {
+          console.log("No communities with Telegram chat IDs found");
+          return;
+        }
+        
+        // Prepare community data for the bulk request
+        const communitiesData = telegramCommunities.map(c => ({
+          id: c.id,
+          telegramChatId: c.telegram_chat_id
+        }));
+        
+        // Call the Edge function
+        const { data, error } = await invokeSupabaseFunction("check-community-photo", {
+          communities: communitiesData,
+          forceFetch: true
+        });
+        
+        if (error) {
+          console.error("Error refreshing community photos:", error);
+          return;
+        }
+        
+        // Log success
+        console.log("Successfully refreshed all community photos:", data);
+      } catch (err) {
+        console.error("Failed to refresh community photos:", err);
+      }
+    };
+    
+    if (!isCommunitiesLoading && communities && communities.length > 0) {
+      refreshCommunityPhotos();
+    }
+  }, [communities, isCommunitiesLoading]);
 
   return (
     <CommunityContext.Provider value={{

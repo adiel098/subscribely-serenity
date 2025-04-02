@@ -37,10 +37,25 @@ export async function handleStartCommand(
     // If no community ID provided, just send a welcome message
     if (!params) {
       await logger.info('No community ID provided, sending generic welcome message');
+      
+      const welcomeMessage = `👋 Welcome to Membify!\n\nDiscover and join premium Telegram communities, manage your subscriptions, and track your membership payments - all in one place!\n\nPress the button below to explore communities:`;
+      
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: "Explore Communities 🚀",
+              web_app: { url: "https://preview--subscribely-serenity.lovable.app/telegram-mini-app" }
+            }
+          ]
+        ]
+      };
+
       await sendTelegramMessage(
         defaultBotToken,
         chatId,
-        `Welcome to Membify! 👋\n\nTo join a specific community, you need to use a start link provided by the community owner.`
+        welcomeMessage,
+        inlineKeyboard
       );
       return { success: true };
     }

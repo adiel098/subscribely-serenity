@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleStartCommand } from './commands/startHandler.ts';
-import { handleHelpCommand } from './helpCommandHandler.ts';
+import { handleHelpCommand } from './commands/helpCommandHandler.ts';
 import { createLogger } from '../services/loggingService.ts';
 
 /**

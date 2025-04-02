@@ -278,7 +278,7 @@ async function sendTelegramMessage(
   botToken: string,
   chatId: string | number,
   text: string,
-  options: any = {}
+  options: any = null
 ) {
   if (!text || text.trim() === '') {
     text = "📣 New announcement from your community!";
@@ -286,17 +286,24 @@ async function sendTelegramMessage(
   
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   
+  // Ensure options is not null before trying to access reply_markup
+  const payload = {
+    chat_id: chatId,
+    text: text,
+    parse_mode: 'HTML',
+  };
+  
+  // Only add reply_markup if options is not null and has a reply_markup property
+  if (options && options.reply_markup) {
+    payload.reply_markup = JSON.stringify(options.reply_markup);
+  }
+  
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-      parse_mode: 'HTML',
-      reply_markup: options.reply_markup ? JSON.stringify(options.reply_markup) : undefined
-    }),
+    body: JSON.stringify(payload),
   });
 
   const data = await response.json();
@@ -314,7 +321,7 @@ async function sendTelegramPhotoMessage(
   chatId: string | number,
   photoUrl: string,
   caption: string = '',
-  options: any = {}
+  options: any = null
 ) {
   try {
     // Handle base64 data URLs
@@ -348,7 +355,7 @@ async function sendTelegramPhotoMessage(
       }
       
       // Add reply markup if present
-      if (options.reply_markup) {
+      if (options && options.reply_markup) {
         formData.append('reply_markup', 
           typeof options.reply_markup === 'string' 
             ? options.reply_markup 
@@ -400,7 +407,7 @@ async function sendTelegramPhotoMessage(
               chat_id: chatId,
               text: caption || "📣 New announcement from your community!",
               parse_mode: 'HTML',
-              reply_markup: options.reply_markup ? JSON.stringify(options.reply_markup) : undefined
+              reply_markup: options && options.reply_markup ? JSON.stringify(options.reply_markup) : undefined
             }),
           });
           
@@ -424,7 +431,7 @@ async function sendTelegramPhotoMessage(
         parse_mode: 'HTML'
       };
       
-      if (options.reply_markup) {
+      if (options && options.reply_markup) {
         payload.reply_markup = typeof options.reply_markup === 'string' 
           ? options.reply_markup 
           : JSON.stringify(options.reply_markup);

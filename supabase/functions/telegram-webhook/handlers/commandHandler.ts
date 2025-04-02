@@ -9,7 +9,7 @@ import { createLogger } from '../services/loggingService.ts';
 export async function handleCommandMessage(
   supabase: ReturnType<typeof createClient>,
   message: any,
-  botToken: string
+  defaultBotToken: string
 ) {
   const logger = createLogger(supabase, 'COMMAND-HANDLER');
   
@@ -23,11 +23,11 @@ export async function handleCommandMessage(
     switch (command) {
       case '/start':
         await logger.info("🚀 Forwarding /start command to handleStartCommand()");
-        return await handleStartCommand(supabase, message, params, botToken);
+        return await handleStartCommand(supabase, message, params, defaultBotToken);
         
       case '/help':
         await logger.info("❓ Forwarding /help command to handleHelpCommand()");
-        return await handleHelpCommand(supabase, message, botToken);
+        return await handleHelpCommand(supabase, message, defaultBotToken);
         
       default:
         await logger.warn(`⚠️ Unknown command: ${command}`);

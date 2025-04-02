@@ -3,6 +3,7 @@ import { sendTelegramMessage } from '../../utils/telegramMessenger.ts';
 import { findCommunityByIdOrLink } from '../../communityHandler.ts';
 import { getMiniAppUrl } from '../../utils/botUtils.ts';
 import { createLogger } from '../../services/loggingService.ts';
+import { getBotToken } from '../../botSettingsHandler.ts';
 
 interface Community {
   id: string;
@@ -21,7 +22,7 @@ export async function handleStartCommand(
   supabase: ReturnType<typeof createClient>,
   message: any,
   params: string,
-  botToken: string
+  defaultBotToken: string
 ): Promise<{ success: boolean; error?: string }> {
   const logger = createLogger(supabase, 'START-COMMAND');
   
@@ -37,7 +38,7 @@ export async function handleStartCommand(
     if (!params) {
       await logger.info('No community ID provided, sending generic welcome message');
       await sendTelegramMessage(
-        botToken,
+        defaultBotToken,
         chatId,
         `Welcome to Membify! 👋\n\nTo join a specific community, you need to use a start link provided by the community owner.`
       );
@@ -51,7 +52,7 @@ export async function handleStartCommand(
     if (!community) {
       await logger.error(`❌ Community not found for identifier: ${params}`);
       await sendTelegramMessage(
-        botToken,
+        defaultBotToken,
         chatId,
         `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
       );
@@ -60,6 +61,10 @@ export async function handleStartCommand(
     
     await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
     
+    // Get the bot token for this community (could be custom or default)
+    const botToken = await getBotToken(supabase, community.id, defaultBotToken);
+    await logger.info(`Using bot token for community ${community.id}`);
+
     // Check if community has at least one active subscription plan and one active payment method
     const { data: plans } = await supabase
       .from('subscription_plans')
@@ -123,7 +128,7 @@ export async function handleStartCommand(
     try {
       // Send generic error message to the user
       await sendTelegramMessage(
-        botToken,
+        defaultBotToken,
         message.chat.id.toString(),
         `❌ Sorry, there was an error processing your request. Please try again later.`
       );

@@ -52,16 +52,7 @@ export async function getMembersToNotify(
       query = query.eq('subscription_plan_id', planId);
     }
     
-    // Get count first
-    const countQuery = query;
-    const { count, error: countError } = await countQuery.count();
-    
-    if (countError) {
-      logger.error(`Error getting member count: ${countError.message}`);
-      return { error: `Error getting member count: ${countError.message}` };
-    }
-    
-    // Execute query to get members
+    // Execute query to get members first
     const { data: members, error } = await query;
     
     if (error) {
@@ -69,8 +60,12 @@ export async function getMembersToNotify(
       return { error: `Error fetching members: ${error.message}` };
     }
     
-    logger.log(`Found ${members?.length || 0} members`);
-    return { members: members as Member[], totalCount: count };
+    // Get total count - using the length of the returned members array 
+    // instead of a separate count query which was causing the error
+    const totalCount = members?.length || 0;
+    
+    logger.log(`Found ${totalCount} members`);
+    return { members: members as Member[], totalCount };
   } catch (error) {
     logger.error(`Exception in getMembersToNotify: ${error.message}`);
     return { error: `Exception: ${error.message}` };

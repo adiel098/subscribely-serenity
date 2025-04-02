@@ -4,6 +4,25 @@
  */
 
 /**
+ * Validate if the provided source is a valid photo URL or base64 image data
+ */
+export function isValidPhotoSource(source: string | null): boolean {
+  if (!source) return false;
+  
+  // Check if it's a URL
+  if (source.startsWith('http://') || source.startsWith('https://')) {
+    return true;
+  }
+  
+  // Check if it's a valid base64 data URL for images
+  if (source.startsWith('data:image/')) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Send a photo with caption to a Telegram user
  */
 export async function sendPhotoWithCaption(

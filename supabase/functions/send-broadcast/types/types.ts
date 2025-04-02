@@ -1,4 +1,3 @@
-
 export interface BroadcastRequest {
   entityId: string;
   entityType?: 'community' | 'group';
@@ -17,8 +16,6 @@ export interface Member {
   subscription_status?: string;
   is_active?: boolean;
   telegram_username?: string;
-  first_name?: string;
-  last_name?: string;
 }
 
 export interface ValidationResult {
@@ -28,8 +25,8 @@ export interface ValidationResult {
 
 export interface MembersResult {
   members?: Member[];
-  error?: string;
   totalCount?: number;
+  error?: string;
 }
 
 export interface BroadcastResult {

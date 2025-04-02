@@ -20,7 +20,7 @@ export async function getMembersToNotify(
     // Base query
     let query = supabase
       .from('community_subscribers')
-      .select('telegram_user_id, subscription_status, is_active, telegram_username, first_name, last_name');
+      .select('telegram_user_id, subscription_status, is_active, telegram_username');
     
     // Apply filter based on entityType
     if (entityType === 'community') {

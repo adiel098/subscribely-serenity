@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2";
 
@@ -6,6 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Define Mini App URLs
+const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
+const TELEGRAM_MINI_APP_URL = `https://t.me/membifybot/app`;
+const MINI_APP_WEB_URL = `${PLATFORM_BASE_URL}/telegram-mini-app`;
 
 // Handle CORS preflight requests
 serve(async (req) => {
@@ -127,7 +133,7 @@ serve(async (req) => {
     // Use either custom link or entity ID for the mini app URL
     const linkParam = communityCustomLink || entityId;
     // Create the mini app URL to use in the button - using a valid HTTPS URL
-    const miniAppUrl = getValidWebAppUrl(TELEGRAM_MINI_APP_URL, linkParam);
+    const miniAppUrl = getValidWebAppUrl(MINI_APP_WEB_URL, linkParam);
     
     console.log(`Generated Mini App URL: ${miniAppUrl}`);
     
@@ -188,7 +194,7 @@ async function broadcastToMembers(
   image: string | null = null,
   includeButton: boolean = false,
   buttonText: string = "",
-  buttonUrl: string = ""
+  miniAppUrl: string = ""
 ): Promise<number> {
   let successCount = 0;
   
@@ -197,7 +203,7 @@ async function broadcastToMembers(
       let replyMarkup = null;
       
       // Add reply markup if button is included and URL is provided
-      if (includeButton && buttonUrl) {
+      if (includeButton && miniAppUrl) {
         // Use web_app format for the button to launch the Telegram Mini App
         replyMarkup = {
           inline_keyboard: [

@@ -20,7 +20,11 @@ export async function handleNewMessage(
     // Check if it's a command message (starts with '/')
     if (message.text && message.text.startsWith('/')) {
       await logger.info("📨 Detected command, forwarding to command handler");
-      return await handleCommandMessage(supabase, message, context.BOT_TOKEN);
+      const result = await handleCommandMessage(supabase, message, context.BOT_TOKEN);
+      if (!result.success) {
+        await logger.error("Command failed:", result.error);
+      }
+      return { success: true };
     }
     
     // Handle regular messages here if needed
@@ -31,7 +35,8 @@ export async function handleNewMessage(
     return { success: true };
   } catch (error) {
     await logger.error("Error handling message:", error);
-    throw error;
+    // Don't throw the error, just return failure
+    return { success: false, error: error.message };
   }
 }
 
@@ -45,11 +50,14 @@ export async function handleEditedMessage(
   const logger = createLogger(supabase, 'EDITED-MESSAGE-HANDLER');
   const message = update.edited_message;
   
-  await logger.info("🖊️ Processing edited message");
-  await logger.info("Details:", message);
-  
-  // Just log for now, implement specific handling if needed
-  return { success: true };
+  try {
+    await logger.info("🖊️ Processing edited message");
+    await logger.info("Details:", message);
+    return { success: true };
+  } catch (error) {
+    await logger.error("Error handling edited message:", error);
+    return { success: false, error: error.message };
+  }
 }
 
 /**
@@ -62,9 +70,12 @@ export async function handleChannelPost(
   const logger = createLogger(supabase, 'CHANNEL-POST-HANDLER');
   const post = update.channel_post;
   
-  await logger.info("📢 Processing channel post");
-  await logger.info("Details:", post);
-  
-  // Just log for now, implement specific handling if needed
-  return { success: true };
+  try {
+    await logger.info("📢 Processing channel post");
+    await logger.info("Details:", post);
+    return { success: true };
+  } catch (error) {
+    await logger.error("Error handling channel post:", error);
+    return { success: false, error: error.message };
+  }
 }

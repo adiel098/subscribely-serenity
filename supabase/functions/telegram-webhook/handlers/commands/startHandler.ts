@@ -66,11 +66,16 @@ export async function handleStartCommand(
     
     if (!community) {
       await logger.error(`❌ Community not found for identifier: ${params}`);
-      await sendTelegramMessage(
-        defaultBotToken,
-        chatId,
-        `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
-      );
+      try {
+        await sendTelegramMessage(
+          defaultBotToken,
+          chatId,
+          `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
+        );
+      } catch (sendError) {
+        // If sending the error message fails, just log it but don't throw
+        await logger.error(`Failed to send error message:`, sendError);
+      }
       return { success: false, error: 'Community not found' };
     }
     
@@ -148,6 +153,7 @@ export async function handleStartCommand(
         `❌ Sorry, there was an error processing your request. Please try again later.`
       );
     } catch (sendError) {
+      // If sending the error message fails, just log it but don't throw
       await logger.error(`Failed to send error message:`, sendError);
     }
     

@@ -29,10 +29,12 @@ export async function routeTelegramUpdate(
         return { success: true, verified: isVerified };
       }
       
+      await logger.info("📨 Routing to message handler");
       return await handleNewMessage(supabase, update, context);
     } 
     else if (update.edited_message) {
       await logger.info("Detected edited message update");
+      await logger.info("✏️ Routing to edited message handler");
       return await handleEditedMessage(supabase, update);
     } 
     else if (update.channel_post) {
@@ -45,19 +47,23 @@ export async function routeTelegramUpdate(
         return { success: true, verified: isVerified };
       }
       
+      await logger.info("📢 Routing to channel post handler");
       return await handleChannelPost(supabase, update);
     } 
     else if (update.my_chat_member || update.chat_member) {
       await logger.info("Detected chat member update");
+      await logger.info("👥 Routing to chat member update handler");
       return await handleChatMemberUpdated(supabase, update, context.BOT_TOKEN);
     }
     else {
       // Log the update type for debugging
       await logger.info("Unhandled update type:", Object.keys(update).join(', '));
+      await logger.warn("⚠️ Unhandled update type");
       return { success: true, message: "Update type not implemented" };
     }
   } catch (error) {
-    await logger.error("Error routing Telegram update:", error);
-    throw error;
+    await logger.error("❌ Error in webhook router:", error);
+    // Don't throw errors, just return failure
+    return { success: false, error: error.message };
   }
 }

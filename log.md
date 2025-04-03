@@ -27,6 +27,9 @@ Implemented CoinPayments integration using the existing "crypto" payment method 
    - Added crypto address validation
    - Created utility functions for random secret generation
 
+## Dependency Updates
+- Added `react-qr-code` package for generating QR codes for cryptocurrency payments
+
 ## Testing Notes
 
 - Manual testing required for both payment pathways
@@ -43,3 +46,4 @@ Implemented CoinPayments integration using the existing "crypto" payment method 
 ## Completed Date
 
 2025-04-03
+

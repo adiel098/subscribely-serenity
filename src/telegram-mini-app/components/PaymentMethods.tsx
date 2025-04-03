@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -9,6 +8,8 @@ import { PaymentOptions } from "./payment/PaymentOptions";
 import { PaymentButton } from "./payment/PaymentButton";
 import { toast } from "@/components/ui/use-toast";
 import { Subscription } from "../services/memberService";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const TEST_MODE = true;
 

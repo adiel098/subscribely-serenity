@@ -27,6 +27,11 @@ Implemented CoinPayments integration using the existing "crypto" payment method 
    - Added crypto address validation
    - Created utility functions for random secret generation
 
+5. **Admin Configuration**
+   - Added payment method configuration UI for channel owners
+   - Implemented settings dialog for configuring payment methods
+   - Added role-based access control to show configuration options only to admins
+
 ## Dependency Updates
 - Added `react-qr-code` package for generating QR codes for cryptocurrency payments
 

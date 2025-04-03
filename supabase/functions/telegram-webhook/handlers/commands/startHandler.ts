@@ -93,15 +93,23 @@ export async function handleStartCommand(
       .eq('is_active', true)
       .limit(1);
       
-    const { data: paymentMethods } = await supabase
+    // Get the community owner's ID
+    const { data: communityOwner } = await supabase
+      .from('communities')
+      .select('owner_id')
+      .eq('id', community.id)
+      .single();
+    
+    // Check if owner has any active payment methods
+    const { data: ownerPaymentMethods } = await supabase
       .from('payment_methods')
       .select('id')
-      .eq('community_id', community.id)
+      .eq('owner_id', communityOwner?.owner_id)
       .eq('is_active', true)
       .limit(1);
     
     const hasActivePlan = plans && plans.length > 0;
-    const hasActivePaymentMethod = paymentMethods && paymentMethods.length > 0;
+    const hasActivePaymentMethod = ownerPaymentMethods && ownerPaymentMethods.length > 0;
     
     if (!hasActivePlan || !hasActivePaymentMethod) {
       await logger.warn(`⚠️ Community ${community.id} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);

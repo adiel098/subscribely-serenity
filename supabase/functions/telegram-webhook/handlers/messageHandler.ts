@@ -27,8 +27,63 @@ export async function handleNewMessage(
       return { success: true };
     }
     
+    // Check if this is a private message to the bot
+    if (message.chat.type === 'private') {
+      await logger.info("📨 Received private message to bot");
+      
+      // Check if it looks like a verification code
+      if (message.text && message.text.startsWith('MBF_')) {
+        await logger.info("Detected verification code in private chat");
+        
+        const helpMessage = `❌ Error: Verification code must be sent in your channel
+
+Please follow these steps:
+1️⃣ Add me as an admin to your channel
+2️⃣ Send the verification code *in your channel* (not here)
+3️⃣ Click 'Verify Connection' in the Subscribely dashboard
+
+Need help? Visit our website or contact support.`;
+
+        await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: message.chat.id,
+            text: helpMessage,
+            parse_mode: 'Markdown'
+          })
+        });
+        
+        return { success: true };
+      }
+      
+      // Send a general helpful message for other private messages
+      const helpMessage = `👋 Hi! I'm the Subscribely Bot.
+
+I help manage paid Telegram channels and groups. Here's how to use me:
+
+1️⃣ Add me as an admin to your channel
+2️⃣ Get your verification code from the Subscribely dashboard
+3️⃣ Send the verification code *in your channel* (not here)
+
+❗ Important: Don't send the verification code here in private chat. It must be sent in the channel you want to connect.
+
+Need help? Visit our website or contact support.`;
+
+      await fetch(`https://api.telegram.org/bot${context.BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: message.chat.id,
+          text: helpMessage,
+          parse_mode: 'Markdown'
+        })
+      });
+      
+      return { success: true };
+    }
+    
     // Handle regular messages here if needed
-    // For now, just log that we received a message
     await logger.info(`📨 Received regular message from user ${message.from.id}`);
     
     await logger.info("Message handled");

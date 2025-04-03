@@ -1,7 +1,8 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { createBotSettings } from '../telegram-webhook/services/botSettings/createBotSettingsService.ts';
+import { LoggerService } from '../telegram-webhook/services/loggingService.ts';
 
 const corsHeadersWithAuth = {
   ...corsHeaders,
@@ -159,16 +160,19 @@ serve(async (req) => {
                 console.log('Successfully created community:', newCommunity);
                 
                 // Also add to telegram_bot_settings
-                const { error: settingsError } = await supabase
-                  .from('telegram_bot_settings')
-                  .insert({
-                    community_id: newCommunity.id,
-                    chat_id: chatId,
-                    verification_code: verificationCode,
-                    verified_at: new Date().toISOString()
-                  });
-                  
-                if (settingsError) {
+                const { success: settingsSuccess, error: settingsError } = await createBotSettings(
+                  supabase,
+                  new LoggerService('CHECK-VERIFICATION'),
+                  {
+                    communityId: newCommunity.id,
+                    chatId,
+                    communityName: newCommunity.name,
+                    description: newCommunity.description,
+                    verificationCode
+                  }
+                );
+
+                if (!settingsSuccess) {
                   console.error('Error creating bot settings:', settingsError);
                 }
                 

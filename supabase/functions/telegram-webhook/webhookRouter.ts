@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleNewMessage, handleEditedMessage, handleChannelPost } from './handlers/messageHandler.ts';
 import { handleChatMemberUpdated } from './handlers/memberUpdateHandler.ts';
-import { handleVerification } from './handlers/verificationHandler.ts';
+import { handleVerification } from './handlers/verification/verificationHandler.ts';
 import { createLogger } from './services/loggingService.ts';
 
 /**
@@ -22,7 +22,13 @@ export async function routeTelegramUpdate(
     if (update.message) {
       await logger.info("Detected message update");
       
-      // Check if it's a verification message
+      // Check if it's a private message to the bot
+      if (update.message.chat.type === 'private') {
+        await logger.info("Detected private message to bot");
+        return await handleNewMessage(supabase, update, context);
+      }
+      
+      // Check if it's a verification message (only in channels/groups)
       if (update.message.text?.startsWith('MBF_')) {
         await logger.info("Detected verification message");
         const isVerified = await handleVerification(supabase, update.message, context.BOT_TOKEN);

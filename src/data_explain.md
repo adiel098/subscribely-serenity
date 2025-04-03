@@ -220,6 +220,7 @@ event_type: סוג האירוע
 details: פרטי האירוע
 user_id: מזהה המשתמש (מפתח זר ל-profiles)
 metadata: מידע נוסף (JSON)
+
 19. telegram_bot_settings - הגדרות בוט טלגרם
 טבלה זו מכילה את הגדרות בוט הטלגרם לכל קהילה.
 

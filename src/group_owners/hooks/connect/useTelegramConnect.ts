@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
@@ -11,7 +11,6 @@ export function useTelegramConnect() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationCode, setVerificationCode] = useState<string>('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { refetch } = useCommunities();
@@ -49,16 +48,13 @@ export function useTelegramConnect() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast({
-        title: "✅ Copied Successfully!",
+      toast.success("Copied Successfully!", {
         description: "Verification code copied to clipboard",
-        className: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-800",
+        duration: 5000,
       });
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
-        variant: "destructive",
+      toast.error("Failed to copy to clipboard", {
+        duration: 5000,
       });
     }
   };
@@ -69,47 +65,76 @@ export function useTelegramConnect() {
 
   const verifyConnection = async () => {
     try {
-      if (!user || !verificationCode) return;
+      if (!user) {
+        toast.warning("Authentication Required", {
+          description: "Please log in to verify your channel connection.",
+          duration: 5000,
+        });
+        return;
+      }
+
+      if (!verificationCode) {
+        toast.warning("No Verification Code", {
+          description: "Please wait while we generate your verification code...",
+          duration: 5000,
+        });
+        await initializeVerificationCode();
+        return;
+      }
       
       setIsVerifying(true);
 
-      // Explicitly specify which foreign key to use
-      const { data: botSettings, error: settingsError } = await supabase
-        .from('telegram_bot_settings')
-        .select(`
-          verified_at,
-          chat_id,
-          community_id,
-          communities!telegram_bot_settings_community_id_fkey(
-            name,
-            telegram_chat_id,
-            owner_id
-          )
-        `)
-        .eq('verification_code', verificationCode)
-        .not('verified_at', 'is', null)
-        .maybeSingle();
-
-      if (settingsError) {
-        console.error('Error checking bot settings:', settingsError);
-        throw settingsError;
-      }
-
-      // Check for community created through webhook
-      const { data: recentCommunity, error: communityError } = await supabase
+      // Check for a verified community with this code
+      const { data: verifiedCommunity, error: verifiedError } = await supabase
         .from('communities')
         .select('*')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .single();
 
-      if (communityError) {
-        console.error('Error checking recent community:', communityError);
-        throw communityError;
+      if (verifiedError) {
+        if (verifiedError.code === 'PGRST116') {
+          // No community found
+          setIsVerifying(false);
+          toast.warning("Channel Not Connected", {
+            description: "Please add the bot as an admin and send the verification code in your channel.",
+            action: {
+              label: "To connect your channel:",
+              onClick: () => {
+                toast.message("Follow these steps:", {
+                  description: React.createElement('ol', { className: 'list-decimal list-inside space-y-1 mt-2' },
+                    React.createElement('li', null, [
+                      'Add ',
+                      React.createElement('code', { className: 'bg-gray-100 px-1 rounded' }, '@SubscribelyBot'),
+                      ' as admin'
+                    ]),
+                    React.createElement('li', null, 'Send the verification code in your channel'),
+                    React.createElement('li', null, 'Click \'Verify Connection\' again')
+                  ),
+                  duration: 10000,
+                });
+              }
+            },
+            duration: 10000,
+          });
+          return;
+        }
+        console.error('Error checking verified community:', verifiedError);
+        throw verifiedError;
       }
 
-      if (botSettings || (recentCommunity && recentCommunity.telegram_chat_id)) {
+      // אם החיבור הצליח (או דרך bot_settings או דרך הwebhook)
+      if (verifiedCommunity?.telegram_chat_id) {
+        // קודם מעדכנים את הסטטוס ומציגים הודעת הצלחה
+        setShowSuccessDialog(true);
+        setIsVerifying(false);
+        toast.success("Channel Connected!", {
+          description: "Your Telegram channel has been successfully connected.",
+          duration: 5000,
+        });
+
+        // רק אחרי שהחיבור הצליח, מייצרים קוד חדש
         const newCode = generateNewCode();
         const { error: updateError } = await supabase
           .from('profiles')
@@ -119,23 +144,41 @@ export function useTelegramConnect() {
         if (updateError) {
           console.error('Error updating verification code:', updateError);
         } else {
+          // מעדכנים את הקוד בממשק רק אחרי שהעדכון בדאטהבייס הצליח
           setVerificationCode(newCode);
         }
 
-        setShowSuccessDialog(true);
+        // מרעננים את רשימת הקהילות
+        refetch();
       } else {
-        toast({
-          title: "⚠️ Not Verified",
-          description: "Please make sure you've added the bot as an admin and sent the verification code in your group.",
-          variant: "destructive",
+        setIsVerifying(false);
+        toast.warning("Channel Not Connected", {
+          description: "Please add the bot as an admin and send the verification code in your Telegram channel.",
+          action: {
+            label: "To connect your channel:",
+            onClick: () => {
+              toast.message("Follow these steps:", {
+                description: React.createElement('ol', { className: 'list-decimal list-inside space-y-1 mt-2' },
+                  React.createElement('li', null, [
+                    'Add ',
+                    React.createElement('code', { className: 'bg-gray-100 px-1 rounded' }, '@SubscribelyBot'),
+                    ' as admin'
+                  ]),
+                  React.createElement('li', null, 'Send the verification code in your channel'),
+                  React.createElement('li', null, 'Click \'Verify Connection\' again')
+                ),
+                duration: 10000,
+              });
+            }
+          },
+          duration: 10000,
         });
       }
     } catch (error) {
+      setIsVerifying(false);
       console.error('Verification error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to verify the connection. Please try again.",
-        variant: "destructive",
+      toast.error("Failed to verify the connection. Please try again.", {
+        duration: 5000,
       });
     } finally {
       setIsVerifying(false);

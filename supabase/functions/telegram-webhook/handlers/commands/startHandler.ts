@@ -4,6 +4,7 @@ import { findCommunityByIdOrLink } from '../../communityHandler.ts';
 import { getMiniAppUrl } from '../../utils/botUtils.ts';
 import { createLogger } from '../../services/loggingService.ts';
 import { getBotToken } from '../../botSettingsHandler.ts';
+import { sendPhotoWithCaption } from '../../utils/telegram/photoMessages.ts';
 
 interface Community {
   id: string;
@@ -36,9 +37,16 @@ export async function handleStartCommand(
     
     // If no community ID provided, just send a welcome message
     if (!params) {
-      await logger.info('No community ID provided, sending generic welcome message');
+      await logger.info('No community ID provided, sending welcome message from settings');
       
-      const welcomeMessage = `👋 Welcome to Membify!\n\nDiscover and join premium Telegram communities, manage your subscriptions, and track your membership payments - all in one place!\n\nPress the button below to explore communities:`;
+      // Get welcome message from settings
+      const { data: botSettings } = await supabase
+        .from('telegram_bot_settings')
+        .select('welcome_message')
+        .single();
+      
+      const welcomeMessage = botSettings?.welcome_message || 
+        `👋 Welcome to Membify!\n\nDiscover and join premium Telegram communities, manage your subscriptions, and track your membership payments - all in one place!\n\nPress the button below to explore communities:`;
       
       const inlineKeyboard = {
         inline_keyboard: [
@@ -51,12 +59,11 @@ export async function handleStartCommand(
         ]
       };
 
-      await sendTelegramMessage(
-        defaultBotToken,
-        chatId,
-        welcomeMessage,
-        inlineKeyboard
-      );
+      try {
+        await sendTelegramMessage(defaultBotToken, chatId, welcomeMessage, inlineKeyboard);
+      } catch (error) {
+        await logger.error('Failed to send welcome message:', error);
+      }
       return { success: true };
     }
     
@@ -65,20 +72,29 @@ export async function handleStartCommand(
     const community = await findCommunityByIdOrLink(supabase, params);
     
     if (!community) {
-      await logger.error(`❌ Community not found for identifier: ${params}`);
-      try {
-        await sendTelegramMessage(
-          defaultBotToken,
-          chatId,
-          `❌ Sorry, the community you're trying to join doesn't exist or there was an error.`
-        );
-      } catch (sendError) {
-        // If sending the error message fails, just log it but don't throw
-        await logger.error(`Failed to send error message:`, sendError);
-      }
-      return { success: false, error: 'Community not found' };
+      await logger.warn(`Community not found for ID/link: ${params}`);
+      await sendTelegramMessage(
+        defaultBotToken,
+        chatId,
+        '❌ Sorry, this community was not found. Please check the link and try again.',
+        {
+          inline_keyboard: [
+            [
+              {
+                text: "Explore Communities 🚀",
+                web_app: { url: "https://preview--subscribely-serenity.lovable.app/telegram-mini-app" }
+              }
+            ]
+          ]
+        }
+      );
+      return { success: true };
     }
-    
+
+    // Pass the community code in the URL
+    const communityCode = community.custom_link || community.id;
+    const miniAppUrl = `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${communityCode}`;
+
     await logger.success(`✅ Found community: ${community.name} (ID: ${community.id})`);
     
     // Get the bot token for this community (could be custom or default)
@@ -115,8 +131,8 @@ export async function handleStartCommand(
       await logger.warn(`⚠️ Community ${community.id} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
       
       // Generate mini app URL for configuration
-      const miniAppUrl = getMiniAppUrl(`${community.custom_link || community.id}/admin`);
-      await logger.info(`🔗 Mini app URL generated for admin: ${miniAppUrl}`);
+      const miniAppUrlConfig = getMiniAppUrl(`${community.custom_link || community.id}/admin`);
+      await logger.info(`🔗 Mini app URL generated for admin: ${miniAppUrlConfig}`);
       
       // Send message with configuration button
       const message = `⚠️ This community needs additional configuration before members can join.\n\n`;
@@ -128,7 +144,7 @@ export async function handleStartCommand(
         inline_keyboard: [[
           {
             text: '⚙️ Configure Community',
-            url: miniAppUrl
+            url: miniAppUrlConfig
           }
         ]]
       };
@@ -146,32 +162,51 @@ export async function handleStartCommand(
       return { success: true };
     }
     
-    // Generate mini app URL for subscription
-    const miniAppUrl = getMiniAppUrl(community.custom_link || community.id);
-    await logger.info(`🔗 Mini app URL generated: ${miniAppUrl}`);
-    
     // Send welcome message with subscription button
-    const welcomeMessage = `Welcome to *${community.name}*! 🎉\n\nTo join this community and access exclusive content, please subscribe using the button below:`;
+    // Get community-specific welcome message and image from settings
+    const { data: botSettings } = await supabase
+      .from('telegram_bot_settings')
+      .select('welcome_message, welcome_image')
+      .eq('community_id', community.id)
+      .single();
+
+    const welcomeMessage = botSettings?.welcome_message || 
+      `Welcome to *${community.name}*! 🎉\n\nTo join this community and access exclusive content, please subscribe using the button below:`;
     
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: "Join Community 🚀",
-            web_app: { url: miniAppUrl }
-          }
-        ]
-      ]
+    const keyboard = {
+      inline_keyboard: [[
+        {
+          text: 'Join Community 🚀',
+          web_app: { url: `https://preview--subscribely-serenity.lovable.app/telegram-mini-app?start=${community.custom_link || community.id}` }
+        }
+      ]]
     };
     
-    await sendTelegramMessage(
-      botToken,
-      chatId,
-      welcomeMessage,
-      inlineKeyboard
-    );
+    try {
+      // If we have a welcome image, send it with the message
+      if (botSettings?.welcome_image) {
+        await sendPhotoWithCaption(
+          botToken,
+          chatId,
+          botSettings.welcome_image,
+          welcomeMessage,
+          keyboard
+        );
+      } else {
+        // Otherwise just send the text message
+        await sendTelegramMessage(
+          botToken,
+          chatId,
+          welcomeMessage,
+          keyboard
+        );
+      }
+      
+      await logger.success(`✅ Welcome message sent to user ${userId} for community ${community.name}`);
+    } catch (error) {
+      await logger.error('Failed to send welcome message:', error);
+    }
     
-    await logger.success(`✅ Welcome message sent to user ${userId} for community ${community.name}`);
     return { success: true };
     
   } catch (error) {

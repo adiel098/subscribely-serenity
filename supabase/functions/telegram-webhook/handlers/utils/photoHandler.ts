@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getLogger } from '../../services/loggerService.ts';
 
@@ -18,11 +17,10 @@ export async function fetchAndUpdateCommunityPhoto(
 
     // Get chat photo file_id from Telegram
     const chatResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/getChat`,
+      `https://api.telegram.org/bot${botToken}/getChat?chat_id=${chatId}`,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId })
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
       }
     );
 
@@ -71,7 +69,7 @@ export async function fetchAndUpdateCommunityPhoto(
     // Update the community with the photo URL
     const { error: updateError } = await supabase
       .from('communities')
-      .update({ profile_image_url: photoUrl })
+      .update({ telegram_photo_url: photoUrl })
       .eq('id', communityId);
 
     if (updateError) {

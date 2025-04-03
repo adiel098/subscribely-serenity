@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 /**
@@ -11,11 +10,12 @@ export async function updateCommunityMemberCount(
   try {
     console.log(`[COMMUNITY-COUNTS] 🔄 Updating counts for community ${communityId}`);
     
-    // Count all members in the community
+    // Count all active members in the community
     const { data: membersCount, error: membersError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers')
       .select('id', { count: 'exact', head: true })
-      .eq('community_id', communityId);
+      .eq('community_id', communityId)
+      .eq('is_active', true);
     
     if (membersError) {
       console.error('[COMMUNITY-COUNTS] ❌ Error counting members:', membersError);
@@ -24,9 +24,10 @@ export async function updateCommunityMemberCount(
     
     // Count active subscriptions
     const { data: subscriptionsCount, error: subsError } = await supabase
-      .from('telegram_chat_members')
+      .from('community_subscribers')
       .select('id', { count: 'exact', head: true })
       .eq('community_id', communityId)
+      .eq('is_active', true)
       .eq('subscription_status', 'active');
     
     if (subsError) {

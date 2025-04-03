@@ -106,11 +106,35 @@ export async function handleStartCommand(
     if (!hasActivePlan || !hasActivePaymentMethod) {
       await logger.warn(`⚠️ Community ${community.id} does not meet requirements: Active Plan: ${hasActivePlan}, Active Payment Method: ${hasActivePaymentMethod}`);
       
-      await sendTelegramMessage(
-        botToken,
-        chatId,
-        `⚠️ This community is not fully configured yet. Please contact the administrator.`
-      );
+      // Generate mini app URL for configuration
+      const miniAppUrl = getMiniAppUrl(`${community.custom_link || community.id}/admin`);
+      await logger.info(`🔗 Mini app URL generated for admin: ${miniAppUrl}`);
+      
+      // Send message with configuration button
+      const message = `⚠️ This community needs additional configuration before members can join.\n\n`;
+      const missingItems = [];
+      if (!hasActivePlan) missingItems.push('• Active subscription plan');
+      if (!hasActivePaymentMethod) missingItems.push('• Active payment method');
+      
+      const keyboard = {
+        inline_keyboard: [[
+          {
+            text: '⚙️ Configure Community',
+            url: miniAppUrl
+          }
+        ]]
+      };
+      
+      try {
+        await sendTelegramMessage(
+          botToken,
+          chatId,
+          message + missingItems.join('\n') + '\n\nClick below to complete the setup:',
+          keyboard
+        );
+      } catch (sendError) {
+        await logger.error(`Failed to send configuration message:`, sendError);
+      }
       return { success: true };
     }
     

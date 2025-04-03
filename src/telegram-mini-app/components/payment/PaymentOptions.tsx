@@ -2,7 +2,6 @@
 import React, { useEffect } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
-import CryptoPaymentForm from "./CryptoPaymentForm";
 import { motion } from "framer-motion";
 
 interface PaymentOptionsProps {
@@ -12,12 +11,6 @@ interface PaymentOptionsProps {
   communityId: string;
   price: number;
   onPaymentSuccess: () => void;
-  telegramUserId?: string;
-  telegramUsername?: string;
-  firstName?: string;
-  lastName?: string;
-  planId?: string;
-  inviteLink?: string;
 }
 
 export const PaymentOptions = ({
@@ -26,21 +19,14 @@ export const PaymentOptions = ({
   stripeConfig,
   communityId,
   price,
-  onPaymentSuccess,
-  telegramUserId,
-  telegramUsername,
-  firstName,
-  lastName,
-  planId,
-  inviteLink
+  onPaymentSuccess
 }: PaymentOptionsProps) => {
   // Enhanced logging for debugging
   useEffect(() => {
     console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
     console.log("[PaymentOptions] Community ID:", communityId);
     console.log("[PaymentOptions] Price:", price);
-    console.log("[PaymentOptions] Telegram user ID:", telegramUserId);
-  }, [selectedPaymentMethod, communityId, price, telegramUserId]);
+  }, [selectedPaymentMethod, communityId, price]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -110,27 +96,6 @@ export const PaymentOptions = ({
             communityId={communityId}
             onSuccess={onPaymentSuccess}
             price={price}
-          />
-        </motion.div>
-      )}
-
-      {selectedPaymentMethod === 'crypto' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mt-8"
-        >
-          <CryptoPaymentForm
-            communityId={communityId}
-            onSuccess={onPaymentSuccess}
-            price={price}
-            telegramUserId={telegramUserId}
-            telegramUsername={telegramUsername}
-            firstName={firstName}
-            lastName={lastName}
-            planId={planId}
-            inviteLink={inviteLink}
           />
         </motion.div>
       )}

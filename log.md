@@ -1,45 +1,33 @@
 
-# CoinPayments Integration Log
+# Telegram Bot Debug Log
 
-## Implementation Summary
+## 2025-04-01
+- Fixed missing `isValidTelegramUrl` function in telegramMessenger.ts
+- Fixed missing `handleChatMemberUpdated` function in memberUpdateHandler.ts
+- Updated loggingService.ts to include 'success' and 'debug' methods
+- Fixed logger.success method being called in communityDatabaseUtils.ts
+- Implemented missing handlers for various Telegram update types
+- Added proper CORS headers and error handling
+- Created placeholder handlers for verification messages
 
-Implemented CoinPayments integration using the existing "crypto" payment method in our platform:
+## 2025-04-02
+- Updated Mini App URL from 'app.membify.dev' to 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app'
+- Fixed Mini App URL in startCommandHandler.ts
+- Ensured consistent URLs across config.ts and expirationNotificationService.ts
 
-1. **Enhanced Crypto Payment Configuration**
-   - Added support for both manual wallet addresses and CoinPayments integration
-   - Created user interface to configure CoinPayments merchant ID, IPN secret, and API keys
-   - Added QR code support for easier cryptocurrency payments
+## 2025-04-03
+- Fixed critical bug in `findCommunityById` function where SQL query wasn't properly handling custom links
+- Improved community lookup logic with explicit queries for UUID and custom links
+- Enhanced error handling and logging for community lookups
+- Fixed database utilities to properly handle both UUID and custom link formats
+- Added fallback lookup methods when primary query fails
 
-2. **Backend Implementation**
-   - Created `coinpayments-api` Supabase Edge Function to interact with CoinPayments API
-   - Implemented `coinpayments-webhook` endpoint to process Instant Payment Notifications (IPNs)
-   - Added HMAC signature verification for secure webhook processing
-   - Updated Supabase configuration to support public webhook endpoints
+## 2025-04-04
+- Improved logging throughout telegram-webhook edge function
+- Enhanced webhook request processing with detailed logs
+- Implemented proper error handling in all webhook handlers
+- Added debug logs for message processing
+- Updated loggingService to include both console and database logging
+- Improved telegram event type detection and routing
 
-3. **Frontend Integration**
-   - Created CryptoPaymentForm component to handle both manual and CoinPayments transactions
-   - Updated PaymentOptions component to support crypto payments
-   - Enhanced payment flow to handle cryptocurrency payment processes
-   - Added detailed transaction information and QR codes for payment
-
-4. **Security & Utilities**
-   - Implemented secure HMAC signature verification
-   - Added crypto address validation
-   - Created utility functions for random secret generation
-
-## Testing Notes
-
-- Manual testing required for both payment pathways
-- Test both manual wallet payments and CoinPayments integration
-- Verify IPN handling by checking subscription status after payment
-
-## Future Enhancements
-
-- Add support for more cryptocurrencies
-- Implement automatic rate conversion
-- Enhance payment status tracking
-- Add transaction history view
-
-## Completed Date
-
-2025-04-03
+All these changes should fix the issue with the Telegram bot not responding to commands and ensure the correct mini app URL is used.

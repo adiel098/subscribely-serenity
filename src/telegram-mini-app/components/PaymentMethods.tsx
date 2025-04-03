@@ -137,20 +137,14 @@ export const PaymentMethods = ({
               onPaymentMethodSelect(method);
             }}
             stripeConfig={stripeConfig}
-            communityId={communityId || selectedPlan.community_id}
+            communityId={selectedPlan.community_id}
             price={selectedPlan.price}
             onPaymentSuccess={handlePaymentSuccess}
-            telegramUserId={telegramUserId}
-            telegramUsername={telegramUsername}
-            firstName={firstName}
-            lastName={lastName}
-            planId={selectedPlan.id}
-            inviteLink={communityInviteLink}
           />
         </PaymentHeader>
       </div>
 
-      {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && selectedPaymentMethod !== 'crypto' && (
+      {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
         <div className="mt-8">
           <PaymentButton
             price={selectedPlan.price}

@@ -1,19 +1,15 @@
-
 import { createLogger } from '../../_shared/logger.ts';
 
 const logger = createLogger('url-utils');
 
-// Define URLs as constants
-export const TELEGRAM_MINI_APP_URL = 'https://app.membify.dev';
-export const PREVIEW_APP_URL = 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
+// Get the Mini App URL from environment variables, with fallback to preview URL
+const MINI_APP_URL = Deno.env.get('MINI_APP_URL') || 'https://preview--subscribely-serenity.lovable.app/telegram-mini-app';
 
 /**
  * Generate a web app URL for Telegram Mini App
  */
 export function generateMiniAppUrl(communityId: string): string {
-  // Use the official URL in production, fallback to preview for development
-  const baseUrl = TELEGRAM_MINI_APP_URL || PREVIEW_APP_URL;
-  return `${baseUrl}?start=${communityId}`;
+  return `${MINI_APP_URL}?start=${communityId}`;
 }
 
 /**
@@ -28,7 +24,7 @@ export function createJoinButton(communityId: string, buttonText: string): any {
     inline_keyboard: [
       [
         {
-          text: buttonText || 'Join Community 🚀',
+          text: buttonText || 'Join Community ',
           web_app: { url: webAppUrl }
         }
       ]

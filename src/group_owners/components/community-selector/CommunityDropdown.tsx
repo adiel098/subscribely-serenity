@@ -88,8 +88,8 @@ export const CommunityDropdown: React.FC<CommunityDropdownProps> = ({
   
   // The display name for the trigger
   const displayName = isGroupSelected 
-    ? selectedGroup?.name || "בחר קבוצה" 
-    : selectedCommunity?.name || "בחר קהילה";
+    ? selectedGroup?.name || "Choose group" 
+    : selectedCommunity?.name || "Choose community";
 
   // Process photo URL to ensure it's properly loaded
   const selectedPhotoUrl = isGroupSelected

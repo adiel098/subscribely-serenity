@@ -1,7 +1,8 @@
-
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useEffect } from "react";
+import { localStorageService } from "@/utils/localStorageService";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ export const ProtectedRoute = ({
   children
 }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   
   useEffect(() => {
     if (loading) {
@@ -24,14 +26,29 @@ export const ProtectedRoute = ({
 
   if (loading) {
     console.log("⏳ ProtectedRoute: Still loading, showing loading state");
-    return <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+    return <LoadingScreen />;
   }
   
   if (!user) {
     console.log("🚫 ProtectedRoute: Redirecting to auth page");
     return <Navigate to="/auth" />;
+  }
+
+  // Check if we're trying to access the dashboard and need onboarding
+  const isDashboardRoute = location.pathname === "/dashboard";
+  const onboardingStatus = localStorageService.getOnboardingStatus();
+  const hasCommunity = localStorageService.getHasCommunity();
+  
+  if (isDashboardRoute && (!onboardingStatus?.isCompleted || !hasCommunity)) {
+    console.log("🔄 ProtectedRoute: Redirecting to onboarding from dashboard");
+    return <Navigate to="/onboarding" />;
+  }
+
+  // If we're trying to access onboarding but it's completed and we have a community
+  const isOnboardingRoute = location.pathname.startsWith("/onboarding");
+  if (isOnboardingRoute && onboardingStatus?.isCompleted && hasCommunity) {
+    console.log("✅ ProtectedRoute: Onboarding complete, redirecting to dashboard");
+    return <Navigate to="/dashboard" />;
   }
 
   return children;

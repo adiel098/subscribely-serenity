@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -10,18 +9,34 @@ import {
   fetchPaymentMethods 
 } from "../../services/onboardingService";
 import { toast } from "sonner";
+import { localStorageService } from "@/utils/localStorageService";
 
 export const useOnboardingStatus = () => {
   const { user } = useAuth();
   const { toast: uiToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const hasFetchedRef = useRef(false);
-  const [state, setState] = useState<OnboardingState>({
-    currentStep: "welcome",
-    isCompleted: false,
-    isTelegramConnected: false,
-    hasPlatformPlan: false,
-    hasPaymentMethod: false,
+  const [state, setState] = useState<OnboardingState>(() => {
+    // Try to get initial state from localStorage
+    const savedStatus = localStorageService.getOnboardingStatus();
+    const savedHasCommunity = localStorageService.getHasCommunity();
+    
+    if (savedStatus && savedHasCommunity !== null) {
+      return {
+        ...savedStatus,
+        isTelegramConnected: savedHasCommunity,
+        hasPlatformPlan: false,
+        hasPaymentMethod: false,
+      };
+    }
+    
+    return {
+      currentStep: "welcome",
+      isCompleted: false,
+      isTelegramConnected: false,
+      hasPlatformPlan: false,
+      hasPaymentMethod: false,
+    };
   });
 
   const fetchOnboardingStatus = useCallback(async () => {
@@ -74,21 +89,25 @@ export const useOnboardingStatus = () => {
         // Continue with default values if payment methods cannot be fetched
       }
 
-      setState({
+      const hasCommunity = communities && communities.length > 0 && communities.some(c => c.telegram_chat_id);
+      const newState = {
         currentStep: (profile?.onboarding_step as any) || "welcome",
         isCompleted: profile?.onboarding_completed || false,
-        isTelegramConnected: communities && communities.length > 0 && communities.some(c => c.telegram_chat_id),
+        isTelegramConnected: hasCommunity,
         hasPlatformPlan: !!subscription,
         hasPaymentMethod: paymentMethods && paymentMethods.length > 0
-      });
+      };
 
-      console.log("Onboarding state updated:", {
-        currentStep: (profile?.onboarding_step as any) || "welcome",
-        isCompleted: profile?.onboarding_completed || false,
-        isTelegramConnected: communities && communities.length > 0 && communities.some(c => c.telegram_chat_id),
-        hasPlatformPlan: !!subscription,
-        hasPaymentMethod: paymentMethods && paymentMethods.length > 0
+      // Save to localStorage
+      localStorageService.setOnboardingStatus({
+        currentStep: newState.currentStep,
+        isCompleted: newState.isCompleted
       });
+      localStorageService.setHasCommunity(hasCommunity);
+
+      setState(newState);
+
+      console.log("Onboarding state updated:", newState);
       
       hasFetchedRef.current = true;
     } catch (error) {
@@ -99,15 +118,27 @@ export const useOnboardingStatus = () => {
     }
   }, [user]);
 
+  // Clear localStorage when user logs out
+  useEffect(() => {
+    if (!user) {
+      localStorageService.clearAll();
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user && !hasFetchedRef.current) {
       fetchOnboardingStatus();
     }
   }, [user, fetchOnboardingStatus]);
 
+  const refreshStatus = useCallback(() => {
+    hasFetchedRef.current = false;
+    return fetchOnboardingStatus();
+  }, [fetchOnboardingStatus]);
+
   return {
     state,
     isLoading,
-    refreshStatus: fetchOnboardingStatus
+    refreshStatus
   };
 };

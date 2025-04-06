@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { SubscribersTable } from "@/group_owners/components/subscribers/SubscribersTable";
@@ -15,6 +14,7 @@ import { useState } from "react";
 import { AssignPlanDialog } from "../components/subscribers/AssignPlanDialog";
 import { Subscriber } from "../hooks/useSubscribers";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { motion } from "framer-motion";
 
 const Subscribers = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -96,15 +96,30 @@ const Subscribers = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <SubscribersHeaderSection 
           subscribers={subscribers} 
           isGroupSelected={isGroupSelected} 
           isUpdating={isUpdating}
           onExport={handleExport}
         />
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
         <SubscriberFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -115,7 +130,7 @@ const Subscribers = () => {
           uniquePlans={uniquePlans}
           onExport={handleExport}
         />
-
+      </motion.div>
         <SubscriberTabs
           subscribers={managedSubscribers}
           unmanagedUsers={unmanagedUsers}
@@ -127,37 +142,36 @@ const Subscribers = () => {
           onUnblock={onUnblockClick}
           onAssignPlan={handleAssignPlan}
         />
-        
-        <SubscribersCountDisplay 
-          filteredCount={filteredSubscribers.length} 
-          totalCount={subscribers.length} 
-        />
+      </motion.div>
 
-        <SubscriberDialogs 
-          selectedSubscriber={selectedSubscriber}
-          editDialogOpen={editDialogOpen}
-          setEditDialogOpen={setEditDialogOpen}
-          subscriberToRemove={subscriberToRemove}
-          removeDialogOpen={removeDialogOpen}
-          handleRemoveDialogChange={handleRemoveDialogChange}
-          subscriberToUnblock={subscriberToUnblock}
-          unblockDialogOpen={unblockDialogOpen}
-          handleUnblockDialogChange={handleUnblockDialogChange}
-          onConfirmRemove={onConfirmRemove}
-          onConfirmUnblock={onConfirmUnblock}
-          isRemoving={isRemoving}
-          isUnblocking={isUnblocking}
-          onSuccess={refetch}
-        />
+      
 
-        <AssignPlanDialog
-          user={userToAssignPlan}
-          plans={uniquePlans}
-          open={assignPlanDialogOpen}
-          onOpenChange={setAssignPlanDialogOpen}
-          onAssign={handleAssignPlanSubmit}
-        />
-      </div>
+      
+
+      <SubscriberDialogs 
+        selectedSubscriber={selectedSubscriber}
+        editDialogOpen={editDialogOpen}
+        setEditDialogOpen={setEditDialogOpen}
+        subscriberToRemove={subscriberToRemove}
+        removeDialogOpen={removeDialogOpen}
+        handleRemoveDialogChange={handleRemoveDialogChange}
+        subscriberToUnblock={subscriberToUnblock}
+        unblockDialogOpen={unblockDialogOpen}
+        handleUnblockDialogChange={handleUnblockDialogChange}
+        onConfirmRemove={onConfirmRemove}
+        onConfirmUnblock={onConfirmUnblock}
+        isRemoving={isRemoving}
+        isUnblocking={isUnblocking}
+        onSuccess={refetch}
+      />
+
+      <AssignPlanDialog
+        user={userToAssignPlan}
+        plans={uniquePlans}
+        open={assignPlanDialogOpen}
+        onOpenChange={setAssignPlanDialogOpen}
+        onAssign={handleAssignPlanSubmit}
+      />
     </div>
   );
 };

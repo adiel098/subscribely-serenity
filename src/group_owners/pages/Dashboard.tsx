@@ -12,6 +12,7 @@ import { useDashboardStats } from "@/group_owners/hooks/dashboard/useDashboardSt
 import { useGroupDashboardStats } from "@/group_owners/hooks/dashboard/useGroupDashboardStats";
 import { Loader2, FolderKanban } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const {
@@ -78,95 +79,115 @@ const Dashboard = () => {
   
   return (
     <div className={`space-y-4 pb-6 ${isMobile ? 'px-3 py-1' : 'px-[37px] py-[28px]'}`}>
-      <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-4">
-        <div className={`${isMobile ? 'flex items-center justify-between w-full' : ''}`}>
-          <div>
-            <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
-              Hello 👋 {ownerFirstName}
-              {isGroupSelected && <span className="inline-flex items-center text-xs bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md ml-1.5">
-                  <FolderKanban className="h-3 w-3 mr-0.5" />
-                  Group View
-                </span>}
-            </h1>
-            <p className={`text-gray-600 mt-0.5 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
-              {isGroupSelected ? "Overview of your community group's performance" : "Overview of your community's performance"}
-            </p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-4">
+          <div className={`${isMobile ? 'flex items-center justify-between w-full' : ''}`}>
+            <div>
+              <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 flex items-center gap-2`}>
+                Hello 👋 {ownerFirstName}
+                {isGroupSelected && <span className="inline-flex items-center text-xs bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded-md ml-1.5">
+                    <FolderKanban className="h-3 w-3 mr-0.5" />
+                    Group View
+                  </span>}
+              </h1>
+              <p className={`text-gray-600 mt-0.5 ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
+                {isGroupSelected ? "Overview of your community group's performance" : "Overview of your community's performance"}
+              </p>
+            </div>
+            {isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
           </div>
-          {isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
+          {!isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
         </div>
-        {!isMobile && <TimeFilter timeRange={timeRange} onTimeRangeChange={setTimeRange} />}
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-        <div className="md:col-span-6">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            {isMobile ? (
-              // Mobile layout - 2 items per row
-              <>
-                <div className="col-span-1">
-                  <TrialUsersStats trialUsers={trialUsers} averageSubscriptionDuration={insights.averageSubscriptionDuration} />
-                </div>
-                <div className="col-span-1">
-                  <MiniAppUsersStats miniAppUsers={miniAppUsers} />
-                </div>
-                <div className="col-span-2">
-                  <DashboardStats 
-                    totalSubscribers={filteredSubscribers.length} 
-                    activeSubscribers={activeSubscribers.length} 
-                    inactiveSubscribers={inactiveSubscribers.length} 
-                    totalRevenue={totalRevenue} 
-                    avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
-                    conversionRate={conversionRate} 
-                    timeRange={timeRangeLabel} 
-                    isMobile={isMobile}
-                  />
-                </div>
-              </>
-            ) : (
-              // Desktop layout
-              <>
-                <div className="md:col-span-1">
-                  <TrialUsersStats trialUsers={trialUsers} averageSubscriptionDuration={insights.averageSubscriptionDuration} />
-                </div>
-                <div className="md:col-span-1">
-                  <MiniAppUsersStats miniAppUsers={miniAppUsers} />
-                </div>
-                <div className="md:col-span-4">
-                  <DashboardStats 
-                    totalSubscribers={filteredSubscribers.length} 
-                    activeSubscribers={activeSubscribers.length} 
-                    inactiveSubscribers={inactiveSubscribers.length} 
-                    totalRevenue={totalRevenue} 
-                    avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
-                    conversionRate={conversionRate} 
-                    timeRange={timeRangeLabel} 
-                    isMobile={isMobile}
-                  />
-                </div>
-              </>
-            )}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+          <div className="md:col-span-6">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {isMobile ? (
+                // Mobile layout - 2 items per row
+                <>
+                  <div className="col-span-1">
+                    <TrialUsersStats trialUsers={trialUsers} averageSubscriptionDuration={insights.averageSubscriptionDuration} />
+                  </div>
+                  <div className="col-span-1">
+                    <MiniAppUsersStats miniAppUsers={miniAppUsers} />
+                  </div>
+                  <div className="col-span-2">
+                    <DashboardStats 
+                      totalSubscribers={filteredSubscribers.length} 
+                      activeSubscribers={activeSubscribers.length} 
+                      inactiveSubscribers={inactiveSubscribers.length} 
+                      totalRevenue={totalRevenue} 
+                      avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
+                      conversionRate={conversionRate} 
+                      timeRange={timeRangeLabel} 
+                      isMobile={isMobile}
+                    />
+                  </div>
+                </>
+              ) : (
+                // Desktop layout
+                <>
+                  <div className="md:col-span-1">
+                    <TrialUsersStats trialUsers={trialUsers} averageSubscriptionDuration={insights.averageSubscriptionDuration} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <MiniAppUsersStats miniAppUsers={miniAppUsers} />
+                  </div>
+                  <div className="md:col-span-4">
+                    <DashboardStats 
+                      totalSubscribers={filteredSubscribers.length} 
+                      activeSubscribers={activeSubscribers.length} 
+                      inactiveSubscribers={inactiveSubscribers.length} 
+                      totalRevenue={totalRevenue} 
+                      avgRevenuePerSubscriber={avgRevenuePerSubscriber} 
+                      conversionRate={conversionRate} 
+                      timeRange={timeRangeLabel} 
+                      isMobile={isMobile}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className={`flex flex-col lg:flex-row gap-3 mt-4`}>
-        <div className={`w-full ${isMobile ? '' : 'lg:w-[65%]'}`}>
-          <DashboardCharts memberGrowthData={memberGrowthData} revenueData={revenueData} timeRange={timeRangeLabel} />
-        </div>
-        
-        <div className={`w-full ${isMobile ? '' : 'lg:w-[32%]'} flex flex-col gap-3`}>
-          <div className="grid grid-cols-2 gap-3">
-            <PaymentAnalytics paymentStats={paymentStats} />
-            <AnalyticsOverview 
-              averageSubscriptionDuration={insights.averageSubscriptionDuration} 
-              mostPopularPlan={insights.mostPopularPlan} 
-              mostPopularPlanPrice={insights.mostPopularPlanPrice} 
-              mostActiveDay={insights.mostActiveDay} 
-              renewalRate={insights.renewalRate} 
-            />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <div className={`flex flex-col lg:flex-row gap-3 mt-4`}>
+          <div className={`w-full ${isMobile ? '' : 'lg:w-[65%]'}`}>
+            <DashboardCharts memberGrowthData={memberGrowthData} revenueData={revenueData} timeRange={timeRangeLabel} />
+          </div>
+          
+          <div className={`w-full ${isMobile ? '' : 'lg:w-[32%]'} flex flex-col gap-3`}>
+            <div className="grid grid-cols-2 gap-3">
+              <PaymentAnalytics paymentStats={paymentStats} />
+              <AnalyticsOverview 
+                averageSubscriptionDuration={insights.averageSubscriptionDuration} 
+                mostPopularPlan={insights.mostPopularPlan} 
+                mostPopularPlanPrice={insights.mostPopularPlanPrice} 
+                mostActiveDay={insights.mostActiveDay} 
+                renewalRate={insights.renewalRate} 
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
+
+     
     </div>
   );
 };

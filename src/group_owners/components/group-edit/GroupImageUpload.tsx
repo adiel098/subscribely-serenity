@@ -30,20 +30,27 @@ const GroupImageUpload: React.FC<GroupImageUploadProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
+      className="w-full max-w-2xl mx-auto"
     >
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-indigo-700">Group Image</CardTitle>
           <CardDescription>Upload a profile image for your group.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-4">
-          <Avatar className="h-32 w-32 border-4 border-indigo-100 shadow-md">
-            <AvatarImage src={imageFile ? URL.createObjectURL(imageFile) : imageUrl || undefined} alt="Group Image" />
-            <AvatarFallback className="bg-indigo-50 text-indigo-600 font-semibold text-4xl">
-              {/* Display initials or a placeholder icon if needed */}
-              G
-            </AvatarFallback>
-          </Avatar>
+        <CardContent className="flex flex-col items-center space-y-6 p-6">
+          <div className="relative">
+            <Avatar className="h-32 w-32 border-4 border-indigo-100 shadow-md">
+              <AvatarImage 
+                src={imageFile ? URL.createObjectURL(imageFile) : imageUrl || undefined} 
+                alt="Group Image"
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-indigo-50 text-indigo-600 font-semibold text-4xl">
+                {/* Display initials or a placeholder icon if needed */}
+                G
+              </AvatarFallback>
+            </Avatar>
+          </div>
           
           <input 
             type="file" 
@@ -54,13 +61,13 @@ const GroupImageUpload: React.FC<GroupImageUploadProps> = ({
             disabled={isUploading || isSaving}
           />
           
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 w-full max-w-md">
             <Button 
               type="button" 
               variant="outline"
               onClick={() => document.getElementById('imageUpload')?.click()} 
               disabled={isUploading || isSaving}
-              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+              className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 min-w-[120px]"
             >
               Choose Image
             </Button>
@@ -70,7 +77,7 @@ const GroupImageUpload: React.FC<GroupImageUploadProps> = ({
                 type="button" 
                 onClick={handleImageUpload} 
                 disabled={isUploading || isSaving}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]"
               >
                 {isUploading ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -95,7 +102,9 @@ const GroupImageUpload: React.FC<GroupImageUploadProps> = ({
             )}
           </div>
           {imageFile && (
-            <p className="text-xs text-gray-500 truncate max-w-[200px]">Selected: {imageFile.name}</p>
+            <p className="text-xs text-gray-500 truncate w-full text-center max-w-md">
+              Selected: {imageFile.name}
+            </p>
           )}
         </CardContent>
       </Card>

@@ -21,3 +21,12 @@ Key issue fixed: Debug UI now shows when NOWPayments API key is missing or not c
 
 Key issue fixed: Resolved module not found error for corsHeaders.ts in telegram-webhook edge function.
 
+## 2025-04-07 - Telegram Webhook Function Improvements
+
+- Added missing dataExtractor.ts utility for parsing Telegram Mini App data
+- Created comprehensive telegramTypes.ts with proper TypeScript interfaces
+- Fixed file structure and import paths in the webhook function
+- Enhanced error handling and logging for webhook requests
+
+Key issue fixed: Resolved module not found error for dataExtractor.ts in telegram-webhook edge function.
+

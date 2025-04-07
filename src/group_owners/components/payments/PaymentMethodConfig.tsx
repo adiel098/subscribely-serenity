@@ -125,7 +125,7 @@ export const PaymentMethodConfig = ({
 
       toast({
         title: "Settings Saved Successfully",
-        description: `Payment settings for ${provider} have been saved`,
+        description: `Payment settings for ${provider === 'crypto' ? 'NOWPayments' : provider} have been saved`,
         variant: "default",
       });
 
@@ -159,7 +159,7 @@ export const PaymentMethodConfig = ({
           { name: 'client_id', label: 'Client ID', type: 'text' },
           { name: 'client_secret', label: 'Client Secret', type: 'password' },
         ];
-      case 'nowpayments':
+      case 'crypto':
         return [
           { name: 'api_key', label: 'NOWPayments API Key', type: 'password' },
           { name: 'ipn_secret', label: 'IPN Secret Key', type: 'password' },
@@ -189,6 +189,8 @@ export const PaymentMethodConfig = ({
     );
   }
 
+  const displayTitle = provider === 'crypto' ? 'NOWPayments' : provider.charAt(0).toUpperCase() + provider.slice(1);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
       {error && (
@@ -210,7 +212,7 @@ export const PaymentMethodConfig = ({
               type={field.type}
               value={formData[field.name] || ''}
               onChange={handleInputChange}
-              required={field.name !== 'ipn_callback_url'} // רק שדה זה אופציונלי
+              required={field.name !== 'ipn_callback_url'} 
               className="text-base border-indigo-100 focus:border-indigo-300"
             />
           </div>

@@ -25,11 +25,11 @@ export const usePaymentMethodsPage = () => {
       try {
         console.log("Creating default payment methods for user:", user.id);
         
-        // Create default payment methods (stripe, paypal, nowpayments)
+        // Create default payment methods (stripe, paypal, crypto)
         const defaultMethods = [
           { provider: 'stripe', is_active: false, config: {}, owner_id: user.id },
           { provider: 'paypal', is_active: false, config: {}, owner_id: user.id },
-          { provider: 'nowpayments', is_active: false, config: {}, owner_id: user.id }
+          { provider: 'crypto', is_active: false, config: {}, owner_id: user.id }
         ];
 
         const { error } = await supabase
@@ -55,14 +55,14 @@ export const usePaymentMethodsPage = () => {
 
   const handleTogglePaymentMethod = async (id: string, isActive: boolean) => {
     try {
-      // Special handling for virtual NOWPayments ID
-      if (id === 'virtual-nowpayments-id' && user?.id) {
-        console.log(`Creating NOWPayments method for user ${user.id}`);
+      // Special handling for virtual crypto ID
+      if (id === 'virtual-crypto-id' && user?.id) {
+        console.log(`Creating crypto method for user ${user.id}`);
         
         const { data, error } = await supabase
           .from('payment_methods')
           .insert({
-            provider: 'nowpayments',
+            provider: 'crypto',
             is_active: isActive,
             config: {},
             owner_id: user.id
@@ -70,7 +70,7 @@ export const usePaymentMethodsPage = () => {
           .select();
           
         if (error) {
-          console.error("Error creating NOWPayments method:", error);
+          console.error("Error creating crypto method:", error);
           throw error;
         }
         
@@ -78,7 +78,7 @@ export const usePaymentMethodsPage = () => {
         
         toast({
           title: "Success",
-          description: `NOWPayments ${isActive ? 'activated' : 'deactivated'} successfully`,
+          description: `Crypto payments ${isActive ? 'activated' : 'deactivated'} successfully`,
         });
         
         return;

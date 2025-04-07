@@ -52,15 +52,15 @@ const PaymentMethods = () => {
   
   console.log("Payment methods available:", paymentMethods);
   
-  // Ensure nowpayments is always included
+  // Ensure crypto is always included
   const displayMethods = paymentMethods ? [...paymentMethods] : [];
-  const hasNowPayments = displayMethods.some(m => m.provider === 'nowpayments');
+  const hasCrypto = displayMethods.some(m => m.provider === 'crypto');
   
-  if (!hasNowPayments && user?.id) {
-    // Add nowpayments if it doesn't exist
+  if (!hasCrypto && user?.id) {
+    // Add crypto if it doesn't exist
     displayMethods.push({
-      id: 'virtual-nowpayments-id',
-      provider: 'nowpayments',
+      id: 'virtual-crypto-id',
+      provider: 'crypto',
       is_active: false,
       config: {},
       owner_id: user.id,
@@ -168,19 +168,19 @@ const PaymentMethods = () => {
                         </motion.div>
                       )}
                       
-                      {displayMethods.some(m => m.provider === 'nowpayments') && (
+                      {displayMethods.some(m => m.provider === 'crypto') && (
                         <motion.div variants={item} className="h-full w-full">
                           <PaymentMethodCard 
-                            title="NOWPayments" 
+                            title="Cryptocurrency" 
                             description="Accept cryptocurrency payments via NOWPayments 🪙" 
                             icon={Bitcoin} 
-                            isActive={displayMethods?.find(m => m.provider === 'nowpayments')?.is_active ?? false} 
-                            onToggle={active => handleTogglePaymentMethod(displayMethods?.find(m => m.provider === 'nowpayments')?.id || '', active)} 
-                            isConfigured={Object.keys(displayMethods?.find(m => m.provider === 'nowpayments')?.config || {}).length > 0} 
+                            isActive={displayMethods?.find(m => m.provider === 'crypto')?.is_active ?? false} 
+                            onToggle={active => handleTogglePaymentMethod(displayMethods?.find(m => m.provider === 'crypto')?.id || '', active)} 
+                            isConfigured={Object.keys(displayMethods?.find(m => m.provider === 'crypto')?.config || {}).length > 0} 
                             onConfigure={() => {}} 
                             imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png" 
-                            provider="nowpayments"
-                            ownerId={displayMethods?.find(m => m.provider === 'nowpayments')?.owner_id}
+                            provider="crypto"
+                            ownerId={displayMethods?.find(m => m.provider === 'crypto')?.owner_id}
                           />
                         </motion.div>
                       )}

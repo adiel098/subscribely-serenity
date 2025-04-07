@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
@@ -40,11 +39,26 @@ export const PaymentOptions = ({
         setIsLoadingConfig(true);
         setConfigError(null);
         try {
+          const { data: communityData, error: communityError } = await supabase
+            .from('communities')
+            .select('owner_id')
+            .eq('id', communityId)
+            .single();
+            
+          if (communityError) {
+            throw new Error(`Could not find community: ${communityError.message}`);
+          }
+          
+          if (!communityData?.owner_id) {
+            throw new Error('Community has no owner');
+          }
+          
           const { data, error } = await supabase
             .from('payment_methods')
             .select('config')
             .eq('provider', 'crypto')
             .eq('is_active', true)
+            .eq('owner_id', communityData.owner_id)
             .maybeSingle();
             
           if (error) {
@@ -69,7 +83,7 @@ export const PaymentOptions = ({
     };
     
     fetchNowPaymentsConfig();
-  }, [selectedPaymentMethod]);
+  }, [selectedPaymentMethod, communityId]);
 
   const container = {
     hidden: { opacity: 0 },

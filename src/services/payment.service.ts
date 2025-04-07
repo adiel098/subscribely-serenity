@@ -11,7 +11,7 @@ export class PaymentService {
   }
 
   private async initializeClients() {
-    // Get NOWPayments config
+    // Get NOWPayments config from any active crypto payment method (not specific to any community)
     const { data: cryptoConfig } = await supabase
       .from('payment_methods')
       .select('config')
@@ -140,7 +140,7 @@ export class PaymentService {
         throw new Error('Payment not found or missing external ID');
       }
       
-      // Get crypto config
+      // Get crypto config from any active crypto payment method
       const { data: cryptoConfig } = await supabase
         .from('payment_methods')
         .select('config')

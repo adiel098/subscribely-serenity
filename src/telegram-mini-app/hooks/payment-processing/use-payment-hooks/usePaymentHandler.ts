@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMembershipUpdate } from "../useMembershipUpdate";
 import { createPaymentToast, generateDemoPaymentId, validateAndLogPayment } from "./paymentUtils";
@@ -34,18 +33,36 @@ export const usePaymentHandler = ({
   const { fetchPlanDetails } = useFetchPlanDetails();
   
   /**
-   * Get NOWPayments API key from the database
+   * Get NOWPayments API key from the database using the community owner's payment method
    */
   const getNOWPaymentsConfig = async () => {
     try {
+      // First get the community owner ID
+      const { data: communityData, error: communityError } = await supabase
+        .from('communities')
+        .select('owner_id')
+        .eq('id', communityId)
+        .single();
+        
+      if (communityError || !communityData?.owner_id) {
+        console.error("Error fetching community owner:", communityError);
+        return null;
+      }
+      
+      // Then get the payment method by owner_id
       const { data, error } = await supabase
         .from('payment_methods')
         .select('config')
         .eq('provider', 'crypto')
         .eq('is_active', true)
+        .eq('owner_id', communityData.owner_id)
         .maybeSingle();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching NOWPayments config:", error);
+        throw error;
+      }
+      
       return data?.config || null;
     } catch (err) {
       console.error("Error fetching NOWPayments config:", err);

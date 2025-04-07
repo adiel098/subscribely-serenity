@@ -11,6 +11,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
+        // Get config from any active crypto payment method (not specific to any community)
         const { data, error } = await supabase
           .from('payment_methods')
           .select('config')

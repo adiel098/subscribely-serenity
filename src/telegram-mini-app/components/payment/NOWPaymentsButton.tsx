@@ -1,216 +1,112 @@
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, CreditCard, Bug, AlertCircle } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { NOWPaymentsClient } from '@/integrations/nowpayments/client';
-import { createLogger } from '@/telegram-mini-app/utils/debugUtils';
-
-const logger = createLogger('NOWPaymentsButton');
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2, ExternalLink } from "lucide-react";
 
 interface NOWPaymentsButtonProps {
   amount: number;
-  currency?: string;
-  orderId?: string;
-  description?: string;
   apiKey: string;
   ipnCallbackUrl?: string;
+  orderId: string;
+  description: string;
   onSuccess?: (paymentData: any) => void;
   onError?: (error: string) => void;
 }
 
-export const NOWPaymentsButton = ({
+export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
   amount,
-  currency = 'USD',
-  orderId,
-  description = 'Telegram Group Subscription',
   apiKey,
   ipnCallbackUrl,
+  orderId,
+  description,
   onSuccess,
   onError
-}: NOWPaymentsButtonProps) => {
-  const [loading, setLoading] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<{
-    lastAttempt: Date | null;
-    apiKeyPresent: boolean;
-    error: string | null;
-    response: any | null;
-  }>({
-    lastAttempt: null,
-    apiKeyPresent: !!apiKey,
-    error: null,
-    response: null
-  });
-  const [showDebug, setShowDebug] = useState(true); // Set to true by default for debugging
-  const { toast } = useToast();
-
-  useEffect(() => {
-    setDebugInfo(prev => ({
-      ...prev,
-      apiKeyPresent: !!apiKey
-    }));
-  }, [apiKey]);
-
-  const handlePayment = async () => {
-    // Update debug info at start
-    setDebugInfo(prev => ({
-      ...prev,
-      lastAttempt: new Date(),
-      error: null,
-      response: null
-    }));
-    
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  
+  // Create payment function
+  const createPayment = async () => {
     if (!apiKey) {
-      const errorMsg = 'NOWPayments API key is not configured';
-      setDebugInfo(prev => ({
-        ...prev,
-        error: errorMsg
-      }));
-      
-      toast({
-        title: 'Configuration Error',
-        description: errorMsg,
-        variant: 'destructive'
-      });
-      
-      if (onError) onError(errorMsg);
+      onError?.("NOWPayments API key is not configured");
       return;
     }
     
-    setLoading(true);
+    setIsLoading(true);
     try {
-      logger.log('Creating NOWPayments invoice:', {
-        amount,
-        currency,
-        orderId,
-        description,
-        apiKeyPresent: !!apiKey
+      const response = await fetch('https://api.nowpayments.io/v1/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          price_amount: amount,
+          price_currency: 'usd',
+          pay_currency: 'btc',
+          order_id: orderId,
+          order_description: description,
+          ipn_callback_url: ipnCallbackUrl || null
+        })
       });
       
-      // Create NOWPayments client
-      const client = new NOWPaymentsClient(apiKey);
+      const data = await response.json();
+      console.log("NOWPayments payment response:", data);
       
-      // Create payment invoice
-      const paymentData = await client.createPayment({
-        priceAmount: amount,
-        priceCurrency: currency,
-        orderId: orderId || `order-${Date.now()}`,
-        orderDescription: description,
-        ipnCallbackUrl
-      });
-      
-      logger.log('NOWPayments invoice created:', paymentData);
-      setDebugInfo(prev => ({
-        ...prev,
-        response: paymentData
-      }));
-      
-      // Store transaction data for status checking
-      localStorage.setItem('nowpayments_transaction', JSON.stringify({
-        paymentId: paymentData.payment_id,
-        status: paymentData.payment_status,
-        amount: paymentData.price_amount,
-        timestamp: Date.now()
-      }));
-      
-      // Open payment URL in new tab if available
-      if (paymentData.payment_url) {
-        window.open(paymentData.payment_url, '_blank');
-        
-        toast({
-          title: 'Payment Initiated',
-          description: 'You will be redirected to complete your crypto payment',
-        });
-      } else {
-        throw new Error('Payment URL not returned from NOWPayments');
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create payment');
       }
       
-      if (onSuccess) {
-        onSuccess(paymentData);
+      if (data.payment_url) {
+        setPaymentUrl(data.payment_url);
+        onSuccess?.(data);
+        
+        // Open payment page in new tab
+        window.open(data.payment_url, '_blank');
+      } else {
+        throw new Error('No payment URL received');
       }
     } catch (error) {
-      console.error('NOWPayments error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
-      setDebugInfo(prev => ({
-        ...prev,
-        error: errorMessage
-      }));
-      
-      toast({
-        title: 'Payment Error',
-        description: 'Failed to initiate crypto payment. Please try again.',
-        variant: 'destructive'
-      });
-      
-      if (onError) {
-        onError(errorMessage);
-      }
+      console.error("NOWPayments error:", error);
+      onError?.(error instanceof Error ? error.message : String(error));
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
+  
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <Button
-        onClick={handlePayment}
-        disabled={loading}
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+        onClick={createPayment}
+        disabled={isLoading || !apiKey}
+        className="w-full bg-amber-500 hover:bg-amber-600 text-white"
       >
-        {loading ? (
+        {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Processing...
           </>
         ) : (
-          <>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Pay with Crypto
-          </>
+          <>Pay with Crypto</>
         )}
       </Button>
       
-      {/* Always show debug information for now */}
-      <div className="mt-2 p-3 bg-gray-100 rounded-md text-xs border border-gray-300">
-        <h4 className="font-bold mb-1 flex items-center">
-          <Bug className="h-3 w-3 mr-1" /> Debug Information:
-        </h4>
-        <div className="space-y-1">
-          <p><strong>API Key Present:</strong> {debugInfo.apiKeyPresent ? '✅ Yes' : '❌ No'}</p>
-          <p><strong>API Key Value:</strong> {apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'Not provided'}</p>
-          <p><strong>Last Attempt:</strong> {debugInfo.lastAttempt ? debugInfo.lastAttempt.toLocaleString() : 'None'}</p>
-          <p><strong>Amount:</strong> {amount} {currency}</p>
-          <p><strong>Order ID:</strong> {orderId || 'Will be auto-generated'}</p>
-          
-          {!debugInfo.apiKeyPresent && (
-            <div className="mt-1 p-2 bg-red-100 border border-red-300 rounded flex items-start">
-              <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-1 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-red-700">Configuration Error:</p>
-                <p>NOWPayments API key is not configured. Please contact the administrator.</p>
-              </div>
-            </div>
-          )}
-          
-          {debugInfo.error && (
-            <div className="mt-1 p-2 bg-red-100 border border-red-300 rounded">
-              <p className="font-semibold text-red-700">Error:</p>
-              <p className="break-all">{debugInfo.error}</p>
-            </div>
-          )}
-          {debugInfo.response && (
-            <div className="mt-1">
-              <p className="font-semibold">Response:</p>
-              <div className="p-2 bg-green-50 border border-green-200 rounded overflow-auto max-h-32">
-                <pre className="whitespace-pre-wrap break-all">
-                  {JSON.stringify(debugInfo.response, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {paymentUrl && (
+        <Button
+          variant="outline"
+          onClick={() => window.open(paymentUrl!, '_blank')}
+          className="w-full mt-2 border-amber-300"
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Open Payment Page
+        </Button>
+      )}
+      
+      {!apiKey && (
+        <p className="text-xs text-red-600 mt-2">
+          Crypto payment is not fully configured. Please contact support.
+        </p>
+      )}
     </div>
   );
 };

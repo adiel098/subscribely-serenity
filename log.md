@@ -38,3 +38,13 @@ Key issue fixed: Resolved module not found error for dataExtractor.ts in telegra
 - Set up proper service structure for the telegram-webhook edge function
 
 Key issue fixed: Resolved module not found error for communityService.ts in telegram-webhook edge function.
+
+## 2025-04-07 - NOWPayments Configuration Update
+
+- Updated NOWPayments API key fetching logic to use owner_id instead of community_id
+- Fixed the PaymentOptions component to first fetch the community owner and then the payment method
+- Updated usePaymentHandler hook to get NOWPayments config from community owner's payment methods
+- Added better error handling and logging for NOWPayments configuration issues
+- Fixed debug components to display helpful error messages when configuration is missing
+
+Key issue fixed: NOWPayments API keys are now correctly fetched from the payment_methods table using the owner_id of the community owner.

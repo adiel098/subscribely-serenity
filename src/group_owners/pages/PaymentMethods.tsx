@@ -10,6 +10,8 @@ import { usePaymentMethodsPage } from "@/group_owners/hooks/usePaymentMethodsPag
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/ui/page-header";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DEFAULT_PAYMENT_METHODS } from "@/group_owners/data/paymentMethodsData";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 const PaymentMethods = () => {
   const {
@@ -22,6 +24,7 @@ const PaymentMethods = () => {
     setFilter,
     handleTogglePaymentMethod
   } = usePaymentMethodsPage();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
 
   // Animation variants
@@ -49,12 +52,30 @@ const PaymentMethods = () => {
   
   console.log("Payment methods available:", paymentMethods);
   
+  // Ensure nowpayments is always included
+  const displayMethods = paymentMethods ? [...paymentMethods] : [];
+  const hasNowPayments = displayMethods.some(m => m.provider === 'nowpayments');
+  
+  if (!hasNowPayments && user?.id) {
+    // Add nowpayments if it doesn't exist
+    displayMethods.push({
+      id: 'virtual-nowpayments-id',
+      provider: 'nowpayments',
+      is_active: false,
+      config: {},
+      owner_id: user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+  }
+  
   if (isLoading) {
     return <div className="flex flex-col items-center justify-center h-64">
         <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
         <p className="text-lg text-gray-600">Loading payment methods...</p>
       </div>;
   }
+  
   return (
     <div className="w-full">
       <div className="space-y-6">
@@ -101,7 +122,7 @@ const PaymentMethods = () => {
                   initial="hidden" 
                   animate="show"
                 >
-                  {!paymentMethods || paymentMethods.length === 0 ? (
+                  {!displayMethods || displayMethods.length === 0 ? (
                     <div className="col-span-3 py-10 text-center">
                       <motion.div variants={item} className="flex flex-col items-center gap-4">
                         <CreditCard className="h-16 w-16 text-gray-300" />
@@ -113,53 +134,53 @@ const PaymentMethods = () => {
                     </div>
                   ) : (
                     <>
-                      {paymentMethods.some(m => m.provider === 'stripe') && (
+                      {displayMethods.some(m => m.provider === 'stripe') && (
                         <motion.div variants={item} className="h-full w-full">
                           <PaymentMethodCard 
                             title="Stripe" 
                             description="Accept credit card payments securely with Stripe 💳" 
                             icon={CreditCard} 
-                            isActive={paymentMethods?.find(m => m.provider === 'stripe')?.is_active ?? false} 
-                            onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'stripe')?.id || '', active)} 
-                            isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'stripe')?.config || {}).length > 0} 
+                            isActive={displayMethods?.find(m => m.provider === 'stripe')?.is_active ?? false} 
+                            onToggle={active => handleTogglePaymentMethod(displayMethods?.find(m => m.provider === 'stripe')?.id || '', active)} 
+                            isConfigured={Object.keys(displayMethods?.find(m => m.provider === 'stripe')?.config || {}).length > 0} 
                             onConfigure={() => {}} 
                             imageSrc="/lovable-uploads/12cd3116-48b5-476e-9651-67911ca3116a.png" 
                             provider="stripe"
-                            ownerId={paymentMethods?.find(m => m.provider === 'stripe')?.owner_id}
+                            ownerId={displayMethods?.find(m => m.provider === 'stripe')?.owner_id}
                           />
                         </motion.div>
                       )}
                       
-                      {paymentMethods.some(m => m.provider === 'paypal') && (
+                      {displayMethods.some(m => m.provider === 'paypal') && (
                         <motion.div variants={item} className="h-full w-full">
                           <PaymentMethodCard 
                             title="PayPal" 
                             description="Accept PayPal payments easily and securely 🔄" 
                             icon={Wallet} 
-                            isActive={paymentMethods?.find(m => m.provider === 'paypal')?.is_active ?? false} 
-                            onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', active)} 
-                            isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'paypal')?.config || {}).length > 0} 
+                            isActive={displayMethods?.find(m => m.provider === 'paypal')?.is_active ?? false} 
+                            onToggle={active => handleTogglePaymentMethod(displayMethods?.find(m => m.provider === 'paypal')?.id || '', active)} 
+                            isConfigured={Object.keys(displayMethods?.find(m => m.provider === 'paypal')?.config || {}).length > 0} 
                             onConfigure={() => {}} 
                             imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png" 
                             provider="paypal"
-                            ownerId={paymentMethods?.find(m => m.provider === 'paypal')?.owner_id}
+                            ownerId={displayMethods?.find(m => m.provider === 'paypal')?.owner_id}
                           />
                         </motion.div>
                       )}
                       
-                      {paymentMethods.some(m => m.provider === 'nowpayments') && (
+                      {displayMethods.some(m => m.provider === 'nowpayments') && (
                         <motion.div variants={item} className="h-full w-full">
                           <PaymentMethodCard 
                             title="NOWPayments" 
                             description="Accept cryptocurrency payments via NOWPayments 🪙" 
                             icon={Bitcoin} 
-                            isActive={paymentMethods?.find(m => m.provider === 'nowpayments')?.is_active ?? false} 
-                            onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'nowpayments')?.id || '', active)} 
-                            isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'nowpayments')?.config || {}).length > 0} 
+                            isActive={displayMethods?.find(m => m.provider === 'nowpayments')?.is_active ?? false} 
+                            onToggle={active => handleTogglePaymentMethod(displayMethods?.find(m => m.provider === 'nowpayments')?.id || '', active)} 
+                            isConfigured={Object.keys(displayMethods?.find(m => m.provider === 'nowpayments')?.config || {}).length > 0} 
                             onConfigure={() => {}} 
                             imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png" 
                             provider="nowpayments"
-                            ownerId={paymentMethods?.find(m => m.provider === 'nowpayments')?.owner_id}
+                            ownerId={displayMethods?.find(m => m.provider === 'nowpayments')?.owner_id}
                           />
                         </motion.div>
                       )}

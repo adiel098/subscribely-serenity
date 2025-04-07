@@ -55,6 +55,35 @@ export const usePaymentMethodsPage = () => {
 
   const handleTogglePaymentMethod = async (id: string, isActive: boolean) => {
     try {
+      // Special handling for virtual NOWPayments ID
+      if (id === 'virtual-nowpayments-id' && user?.id) {
+        console.log(`Creating NOWPayments method for user ${user.id}`);
+        
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .insert({
+            provider: 'nowpayments',
+            is_active: isActive,
+            config: {},
+            owner_id: user.id
+          })
+          .select();
+          
+        if (error) {
+          console.error("Error creating NOWPayments method:", error);
+          throw error;
+        }
+        
+        await refetch();
+        
+        toast({
+          title: "Success",
+          description: `NOWPayments ${isActive ? 'activated' : 'deactivated'} successfully`,
+        });
+        
+        return;
+      }
+      
       console.log(`Toggling payment method ${id} to ${isActive}`);
       
       const { error } = await supabase

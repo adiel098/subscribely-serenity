@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -114,8 +115,8 @@ const PaymentMethods = () => {
                           <PaymentMethodCard title="PayPal" description="Accept PayPal payments easily and securely 🔄" icon={Wallet} isActive={paymentMethods?.find(m => m.provider === 'paypal')?.is_active ?? false} onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'paypal')?.id || '', active)} isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'paypal')?.config || {}).length > 0} onConfigure={() => {}} imageSrc="/lovable-uploads/780f23f9-a460-4b44-b9e8-f89fcbfe59d7.png" provider="paypal" />
                         </motion.div>}
                       
-                      {paymentMethods.some(m => m.provider === 'crypto') && <motion.div variants={item} className="h-full w-full">
-                          <PaymentMethodCard title="Crypto" description="Accept cryptocurrency payments for your groups 🪙" icon={Bitcoin} isActive={paymentMethods?.find(m => m.provider === 'crypto')?.is_active ?? false} onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'crypto')?.id || '', active)} isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'crypto')?.config || {}).length > 0} onConfigure={() => {}} imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png" provider="crypto" />
+                      {paymentMethods.some(m => m.provider === 'nowpayments') && <motion.div variants={item} className="h-full w-full">
+                          <PaymentMethodCard title="NOWPayments" description="Accept cryptocurrency payments via NOWPayments 🪙" icon={Bitcoin} isActive={paymentMethods?.find(m => m.provider === 'nowpayments')?.is_active ?? false} onToggle={active => handleTogglePaymentMethod(paymentMethods?.find(m => m.provider === 'nowpayments')?.id || '', active)} isConfigured={Object.keys(paymentMethods?.find(m => m.provider === 'nowpayments')?.config || {}).length > 0} onConfigure={() => {}} imageSrc="/lovable-uploads/32e0bb5b-2a97-4edf-9afb-8ac446b31afd.png" provider="nowpayments" />
                         </motion.div>}
                     </>}
                 </motion.div>

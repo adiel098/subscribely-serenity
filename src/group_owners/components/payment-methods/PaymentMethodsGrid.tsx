@@ -1,3 +1,4 @@
+
 import React from "react";
 import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
 import { CreditCard, Wallet, Bitcoin, LucideIcon } from "lucide-react";
@@ -31,7 +32,7 @@ export const PaymentMethodsGrid = ({
         return CreditCard;
       case 'paypal':
         return Wallet;
-      case 'crypto':
+      case 'nowpayments':
         return Bitcoin;
       default:
         return CreditCard;
@@ -79,13 +80,13 @@ export const PaymentMethodsGrid = ({
             title={
               method.provider === 'stripe' ? 'Stripe' : 
               method.provider === 'paypal' ? 'PayPal' : 
-              method.provider === 'crypto' ? 'Crypto' : 
+              method.provider === 'nowpayments' ? 'NOWPayments' : 
               method.provider
             }
             description={
               method.provider === 'stripe' ? 'Accept payments with credit cards' : 
               method.provider === 'paypal' ? 'Accept payments with PayPal' : 
-              method.provider === 'crypto' ? 'Accept payments with cryptocurrencies' : 
+              method.provider === 'nowpayments' ? 'Accept payments with cryptocurrencies via NOWPayments' : 
               'Payment method'
             }
             isActive={method.is_active || false}

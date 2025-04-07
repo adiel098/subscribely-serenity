@@ -159,10 +159,11 @@ export const PaymentMethodConfig = ({
           { name: 'client_id', label: 'Client ID', type: 'text' },
           { name: 'client_secret', label: 'Client Secret', type: 'password' },
         ];
-      case 'crypto':
+      case 'nowpayments':
         return [
-          { name: 'wallet_address', label: 'Wallet Address', type: 'text' },
-          { name: 'currency', label: 'Currency (BTC, ETH, etc.)', type: 'text' },
+          { name: 'api_key', label: 'NOWPayments API Key', type: 'password' },
+          { name: 'ipn_secret', label: 'IPN Secret Key', type: 'password' },
+          { name: 'ipn_callback_url', label: 'IPN Callback URL (Optional)', type: 'text' },
         ];
       default:
         return [];
@@ -209,7 +210,7 @@ export const PaymentMethodConfig = ({
               type={field.type}
               value={formData[field.name] || ''}
               onChange={handleInputChange}
-              required
+              required={field.name !== 'ipn_callback_url'} // רק שדה זה אופציונלי
               className="text-base border-indigo-100 focus:border-indigo-300"
             />
           </div>

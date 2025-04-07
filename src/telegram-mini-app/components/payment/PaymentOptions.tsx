@@ -77,10 +77,10 @@ export const PaymentOptions = ({
         
         <motion.div variants={item} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <TelegramPaymentOption
-            method="crypto"
-            title="Crypto"
-            isSelected={selectedPaymentMethod === 'crypto'}
-            onSelect={() => handlePaymentMethodSelect('crypto')}
+            method="nowpayments"
+            title="NOWPayments"
+            isSelected={selectedPaymentMethod === 'nowpayments'}
+            onSelect={() => handlePaymentMethodSelect('nowpayments')}
           />
         </motion.div>
       </motion.div>

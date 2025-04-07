@@ -25,11 +25,11 @@ export const usePaymentMethodsPage = () => {
       try {
         console.log("Creating default payment methods for user:", user.id);
         
-        // Create default payment methods (stripe, paypal, crypto)
+        // Create default payment methods (stripe, paypal, nowpayments)
         const defaultMethods = [
           { provider: 'stripe', is_active: false, config: {}, owner_id: user.id },
           { provider: 'paypal', is_active: false, config: {}, owner_id: user.id },
-          { provider: 'crypto', is_active: false, config: {}, owner_id: user.id }
+          { provider: 'nowpayments', is_active: false, config: {}, owner_id: user.id }
         ];
 
         const { error } = await supabase

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 interface TelegramPaymentOptionProps {
-  method: 'paypal' | 'stripe' | 'crypto';
+  method: 'paypal' | 'stripe' | 'nowpayments';
   title: string;
   isSelected: boolean;
   onSelect: () => void;
@@ -34,7 +34,7 @@ export const TelegramPaymentOption = ({
         return "/lovable-uploads/1c14e367-8c74-4444-a692-e038a608ead2.png";
       case 'stripe':
         return "/lovable-uploads/a668025a-d54c-42e4-947f-a7afcbcba732.png";
-      case 'crypto':
+      case 'nowpayments':
         return "/lovable-uploads/00dfb1e4-1cfc-4004-a311-baa4d7576c25.png";
       default:
         return "";
@@ -67,8 +67,8 @@ export const TelegramPaymentOption = ({
         return isSelected ? 'bg-blue-50' : 'bg-white';
       case 'stripe':
         return isSelected ? 'bg-indigo-50' : 'bg-white';
-      case 'crypto':
-        return isSelected ? 'bg-orange-50' : 'bg-white';
+      case 'nowpayments':
+        return isSelected ? 'bg-amber-50' : 'bg-white';
       default:
         return 'bg-white';
     }
@@ -80,8 +80,8 @@ export const TelegramPaymentOption = ({
         return isSelected ? 'border-blue-500' : 'border-gray-200';
       case 'stripe':
         return isSelected ? 'border-indigo-500' : 'border-gray-200';
-      case 'crypto':
-        return isSelected ? 'border-orange-500' : 'border-gray-200';
+      case 'nowpayments':
+        return isSelected ? 'border-amber-500' : 'border-gray-200';
       default:
         return 'border-gray-200';
     }

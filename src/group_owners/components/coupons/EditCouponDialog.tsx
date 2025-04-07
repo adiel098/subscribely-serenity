@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +46,7 @@ interface EditCouponDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: UpdateCouponData) => Promise<void>;
+  isProcessing?: boolean;
 }
 
 export const EditCouponDialog = ({
@@ -54,8 +54,10 @@ export const EditCouponDialog = ({
   open,
   onOpenChange,
   onSubmit,
+  isProcessing = false,
 }: EditCouponDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
+  const isSubmitting = isProcessing || localIsSubmitting;
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponFormSchema),
@@ -70,7 +72,6 @@ export const EditCouponDialog = ({
     },
   });
 
-  // Update form values when coupon changes
   useEffect(() => {
     if (coupon) {
       form.reset({
@@ -88,7 +89,7 @@ export const EditCouponDialog = ({
   const handleSubmit = async (data: CouponFormValues) => {
     if (!coupon) return;
 
-    setIsSubmitting(true);
+    setLocalIsSubmitting(true);
     try {
       const updateData: UpdateCouponData = {
         id: coupon.id,
@@ -107,7 +108,7 @@ export const EditCouponDialog = ({
     } catch (error) {
       console.error("Error updating coupon:", error);
     } finally {
-      setIsSubmitting(false);
+      setLocalIsSubmitting(false);
     }
   };
 

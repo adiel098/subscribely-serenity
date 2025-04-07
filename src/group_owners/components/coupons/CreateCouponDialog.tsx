@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +46,7 @@ interface CreateCouponDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateCouponData) => Promise<void>;
+  isProcessing?: boolean;
 }
 
 export const CreateCouponDialog = ({
@@ -54,8 +54,10 @@ export const CreateCouponDialog = ({
   open,
   onOpenChange,
   onSubmit,
+  isProcessing = false,
 }: CreateCouponDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
+  const isSubmitting = isProcessing || localIsSubmitting;
 
   const form = useForm<CouponFormValues>({
     resolver: zodResolver(couponFormSchema),
@@ -71,7 +73,7 @@ export const CreateCouponDialog = ({
   });
 
   const handleSubmit = async (data: CouponFormValues) => {
-    setIsSubmitting(true);
+    setLocalIsSubmitting(true);
     try {
       const couponData: CreateCouponData = {
         code: data.code,
@@ -91,7 +93,7 @@ export const CreateCouponDialog = ({
     } catch (error) {
       console.error("Error creating coupon:", error);
     } finally {
-      setIsSubmitting(false);
+      setLocalIsSubmitting(false);
     }
   };
 

@@ -10,19 +10,21 @@ import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
 interface CommunityAvatarProps {
   community: Community;
   photoUrl?: string;
-  isRefreshing: boolean;
-  onRefresh: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
+  isRefreshing?: boolean;
+  onRefresh?: (e: React.MouseEvent, communityId: string, chatId?: string | null) => void;
   size?: "sm" | "md" | "lg";
   showRefreshButton?: boolean;
+  className?: string; // Added className prop
 }
 
 export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
   community,
   photoUrl,
-  isRefreshing,
-  onRefresh,
+  isRefreshing = false,
+  onRefresh = () => {},
   size = "sm",
-  showRefreshButton = true
+  showRefreshButton = true,
+  className = "", // Default to empty string
 }) => {
   const [imageError, setImageError] = useState(false);
   
@@ -58,7 +60,7 @@ export const CommunityAvatar: React.FC<CommunityAvatarProps> = ({
 
   return (
     <div className="relative group">
-      <Avatar className={sizeClasses[size]}>
+      <Avatar className={`${sizeClasses[size]} ${className}`}>
         {processedPhotoUrl && !imageError ? (
           <AvatarImage 
             src={processedPhotoUrl} 

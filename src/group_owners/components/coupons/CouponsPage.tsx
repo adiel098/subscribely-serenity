@@ -25,8 +25,7 @@ export const CouponsPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Filter coupons based on search query
+
   const filteredCoupons = coupons?.filter(
     coupon => 
       coupon.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,7 +102,7 @@ export const CouponsPage = () => {
       setIsProcessing(false);
     }
   };
-  
+
   if (!entityId) {
     return (
       <EmptyCouponsState 
@@ -176,6 +175,7 @@ export const CouponsPage = () => {
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleCreateCoupon}
         isProcessing={isProcessing}
+        communityId={entityId}
       />
       
       {selectedCoupon && (

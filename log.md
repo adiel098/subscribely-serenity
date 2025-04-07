@@ -13,3 +13,11 @@
 
 Key issue fixed: Debug UI now shows when NOWPayments API key is missing or not configured correctly.
 
+## 2025-04-07 - Edge Function Path Fix
+
+- Fixed import path issue in telegram-webhook edge function
+- Created proper utils directory structure with corsHeaders.ts
+- Ensured consistent CORS header usage across edge functions
+
+Key issue fixed: Resolved module not found error for corsHeaders.ts in telegram-webhook edge function.
+

@@ -1,6 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import { corsHeaders } from "./utils/corsHeaders.ts";
+import { corsHeaders } from "./cors.ts"; // Fixed import path
 import { handleNowPaymentsIPN } from "./handlers/nowpaymentsHandler.ts";
 import { extractInitData } from "./utils/dataExtractor.ts";
 import { RequestBody } from "./utils/telegramTypes.ts";

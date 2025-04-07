@@ -3,6 +3,7 @@ import React from "react";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { useSearchParams } from "react-router-dom";
+import { NOWPaymentsDebugInfo } from "./NOWPaymentsDebugInfo";
 
 export interface DebugInfoProps {
   telegramUser: TelegramUser | null;
@@ -42,6 +43,9 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
   return (
     <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
       <p><strong>📊 Debug Info:</strong></p>
+      
+      <NOWPaymentsDebugInfo />
+      
       <div className="grid grid-cols-2 gap-1">
         <div>
           <p><strong>User ID:</strong> {telegramUser?.id || 'Not available'}</p>
@@ -68,6 +72,10 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({
         <p><strong>🔄 Current URL:</strong> {window.location.href}</p>
         <p><strong>📱 Development Mode:</strong> {process.env.NODE_ENV === 'development' ? '✅ Yes' : '❌ No'}</p>
         <p><strong>🚦 User Flow:</strong> {userFlowState}</p>
+      </div>
+      
+      <div className="mt-2 border-t border-yellow-400 pt-2">
+        <p><strong>📣 Troubleshooting:</strong> If crypto payments don't work, ensure API keys are configured in payment_methods table.</p>
       </div>
     </div>
   );

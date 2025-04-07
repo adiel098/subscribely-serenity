@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
 import { motion } from "framer-motion";
 import { NOWPaymentsButton } from "./NOWPaymentsButton";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2, AlertCircle } from "lucide-react";
 
 interface PaymentOptionsProps {
   selectedPaymentMethod: string | null;
@@ -24,6 +26,7 @@ export const PaymentOptions = ({
 }: PaymentOptionsProps) => {
   const [nowPaymentsConfig, setNowPaymentsConfig] = useState<any>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
   
   useEffect(() => {
     console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
@@ -35,6 +38,7 @@ export const PaymentOptions = ({
     const fetchNowPaymentsConfig = async () => {
       if (selectedPaymentMethod === 'nowpayments') {
         setIsLoadingConfig(true);
+        setConfigError(null);
         try {
           const { data, error } = await supabase
             .from('payment_methods')
@@ -43,11 +47,21 @@ export const PaymentOptions = ({
             .eq('is_active', true)
             .maybeSingle();
             
-          if (error) throw error;
-          console.log("[PaymentOptions] NOWPayments config:", data?.config);
+          if (error) {
+            throw error;
+          }
+          
+          if (!data || !data.config || !data.config.api_key) {
+            setConfigError("NOWPayments API key is not configured in the database");
+            console.error("[PaymentOptions] NOWPayments config missing or invalid:", data);
+          } else {
+            console.log("[PaymentOptions] NOWPayments config loaded successfully");
+          }
+          
           setNowPaymentsConfig(data?.config || {});
         } catch (err) {
           console.error("[PaymentOptions] Error fetching NOWPayments config:", err);
+          setConfigError(`Failed to load payment configuration: ${err instanceof Error ? err.message : 'Unknown error'}`);
         } finally {
           setIsLoadingConfig(false);
         }
@@ -173,6 +187,29 @@ export const PaymentOptions = ({
             <p className="text-sm text-gray-600 mb-4">
               Pay with your preferred cryptocurrency. You'll be redirected to a secure payment page.
             </p>
+            
+            {isLoadingConfig && (
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-amber-600 mr-2" /> 
+                <span>Loading payment configuration...</span>
+              </div>
+            )}
+            
+            {configError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-red-700">Configuration Error</p>
+                    <p className="text-red-600">{configError}</p>
+                    <p className="mt-1 text-gray-700">
+                      This payment method is not yet fully set up. Please try another payment option or contact support.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <NOWPaymentsButton
               amount={price}
               apiKey={nowPaymentsConfig?.api_key || ''}
@@ -180,8 +217,20 @@ export const PaymentOptions = ({
               orderId={`telegram-${communityId}-${Date.now()}`}
               description={`Telegram Group Subscription - $${price}`}
               onSuccess={handleNOWPaymentsSuccess}
-              onError={(error) => console.error("[PaymentOptions] NOWPayments error:", error)}
+              onError={(error) => {
+                console.error("[PaymentOptions] NOWPayments error:", error);
+                setConfigError(error);
+              }}
             />
+            
+            {/* Show configuration debug info */}
+            <div className="mt-4 p-2 bg-gray-100 rounded text-xs border border-gray-300">
+              <h4 className="font-bold">Config Debug:</h4>
+              <p><strong>API Key Present:</strong> {nowPaymentsConfig?.api_key ? '✅ Yes' : '❌ No'}</p>
+              <p><strong>IPN URL Configured:</strong> {nowPaymentsConfig?.ipn_callback_url ? '✅ Yes' : '❌ No'}</p>
+              <p><strong>Community ID:</strong> {communityId}</p>
+              <p><strong>Price:</strong> {price} USD</p>
+            </div>
           </div>
         </motion.div>
       )}

@@ -30,7 +30,10 @@ export class NOWPaymentsClient {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
-    console.log('NOWPaymentsClient initialized with API key present:', !!apiKey);
+    console.log('NOWPaymentsClient initialized with API key present:', !!apiKey, 'API key length:', apiKey?.length || 0);
+    if (!apiKey) {
+      console.warn('NOWPaymentsClient initialized without API key - this will cause errors when trying to make payments!');
+    }
   }
 
   /**
@@ -41,6 +44,10 @@ export class NOWPaymentsClient {
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
       console.log('Payment params:', params);
+      
+      if (!this.apiKey) {
+        console.error('NOWPayments API key is not configured. This would fail in production.');
+      }
       
       // For testing, create a mock payment URL that actually works - we'll use a sample payment gateway
       const testPaymentUrl = `https://nowpayments.io/payment/?amount=${params.priceAmount}&currency=${params.priceCurrency}`;
@@ -64,7 +71,13 @@ export class NOWPaymentsClient {
 
     // In production, make actual API call
     try {
-      console.log('Making API request to NOWPayments');
+      console.log('Making API request to NOWPayments with key:', this.apiKey ? `${this.apiKey.substring(0, 4)}...` : 'missing');
+      console.log('Request params:', {
+        price_amount: params.priceAmount,
+        price_currency: params.priceCurrency,
+        order_id: params.orderId,
+        has_ipn_callback_url: !!params.ipnCallbackUrl
+      });
       
       const response = await fetch(`${this.baseUrl}/payment`, {
         method: 'POST',
@@ -109,6 +122,7 @@ export class NOWPaymentsClient {
    */
   async getPaymentStatus(paymentId: string): Promise<NOWPaymentsResponse> {
     if (!this.apiKey) {
+      console.error('API key is not configured for NOWPayments client');
       throw new Error('API key is not configured');
     }
 

@@ -2,6 +2,7 @@
 import React from "react";
 import { DebugInfo } from "./DebugInfo";
 import { isDevelopment } from "../../utils/telegramUtils";
+import { useSearchParams } from "react-router-dom";
 
 interface DebugWrapperProps {
   telegramUser: any;
@@ -14,7 +15,11 @@ export const DebugWrapper: React.FC<DebugWrapperProps> = ({
   community,
   activeSubscription
 }) => {
-  if (!isDevelopment()) return null;
+  const [searchParams] = useSearchParams();
+  const forceDebug = searchParams.get("debug") === "true";
+  
+  // Show in development or if debug=true parameter is present
+  if (!isDevelopment() && !forceDebug) return null;
   
   return (
     <DebugInfo 

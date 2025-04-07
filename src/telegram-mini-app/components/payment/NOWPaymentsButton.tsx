@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, CreditCard, Bug } from 'lucide-react';
+import { Loader2, CreditCard, Bug, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { NOWPaymentsClient } from '@/integrations/nowpayments/client';
 import { createLogger } from '@/telegram-mini-app/utils/debugUtils';
@@ -41,7 +41,7 @@ export const NOWPaymentsButton = ({
     error: null,
     response: null
   });
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug, setShowDebug] = useState(true); // Set to true by default for debugging
   const { toast } = useToast();
 
   useEffect(() => {
@@ -171,45 +171,46 @@ export const NOWPaymentsButton = ({
         )}
       </Button>
       
-      <div className="flex justify-end">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setShowDebug(!showDebug)}
-          className="text-xs text-gray-500"
-        >
-          <Bug className="h-3 w-3 mr-1" />
-          Debug
-        </Button>
-      </div>
-      
-      {showDebug && (
-        <div className="mt-2 p-3 bg-gray-100 rounded-md text-xs border border-gray-300">
-          <h4 className="font-bold mb-1">Debug Information:</h4>
-          <div className="space-y-1">
-            <p><strong>API Key Present:</strong> {debugInfo.apiKeyPresent ? '✅ Yes' : '❌ No'}</p>
-            <p><strong>Last Attempt:</strong> {debugInfo.lastAttempt ? debugInfo.lastAttempt.toLocaleString() : 'None'}</p>
-            <p><strong>Amount:</strong> {amount} {currency}</p>
-            <p><strong>Order ID:</strong> {orderId || 'Will be auto-generated'}</p>
-            {debugInfo.error && (
-              <div className="mt-1 p-2 bg-red-100 border border-red-300 rounded">
-                <p className="font-semibold text-red-700">Error:</p>
-                <p className="break-all">{debugInfo.error}</p>
+      {/* Always show debug information for now */}
+      <div className="mt-2 p-3 bg-gray-100 rounded-md text-xs border border-gray-300">
+        <h4 className="font-bold mb-1 flex items-center">
+          <Bug className="h-3 w-3 mr-1" /> Debug Information:
+        </h4>
+        <div className="space-y-1">
+          <p><strong>API Key Present:</strong> {debugInfo.apiKeyPresent ? '✅ Yes' : '❌ No'}</p>
+          <p><strong>API Key Value:</strong> {apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'Not provided'}</p>
+          <p><strong>Last Attempt:</strong> {debugInfo.lastAttempt ? debugInfo.lastAttempt.toLocaleString() : 'None'}</p>
+          <p><strong>Amount:</strong> {amount} {currency}</p>
+          <p><strong>Order ID:</strong> {orderId || 'Will be auto-generated'}</p>
+          
+          {!debugInfo.apiKeyPresent && (
+            <div className="mt-1 p-2 bg-red-100 border border-red-300 rounded flex items-start">
+              <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-1 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-red-700">Configuration Error:</p>
+                <p>NOWPayments API key is not configured. Please contact the administrator.</p>
               </div>
-            )}
-            {debugInfo.response && (
-              <div className="mt-1">
-                <p className="font-semibold">Response:</p>
-                <div className="p-2 bg-green-50 border border-green-200 rounded overflow-auto max-h-32">
-                  <pre className="whitespace-pre-wrap break-all">
-                    {JSON.stringify(debugInfo.response, null, 2)}
-                  </pre>
-                </div>
+            </div>
+          )}
+          
+          {debugInfo.error && (
+            <div className="mt-1 p-2 bg-red-100 border border-red-300 rounded">
+              <p className="font-semibold text-red-700">Error:</p>
+              <p className="break-all">{debugInfo.error}</p>
+            </div>
+          )}
+          {debugInfo.response && (
+            <div className="mt-1">
+              <p className="font-semibold">Response:</p>
+              <div className="p-2 bg-green-50 border border-green-200 rounded overflow-auto max-h-32">
+                <pre className="whitespace-pre-wrap break-all">
+                  {JSON.stringify(debugInfo.response, null, 2)}
+                </pre>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

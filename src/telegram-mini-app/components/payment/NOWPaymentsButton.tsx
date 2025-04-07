@@ -43,14 +43,15 @@ export const NOWPaymentsButton = ({
     
     setLoading(true);
     try {
-      // Create NOWPayments client
-      const client = new NOWPaymentsClient(apiKey);
       console.log('Creating NOWPayments invoice:', {
         amount,
         currency,
         orderId,
         description
       });
+      
+      // Create NOWPayments client
+      const client = new NOWPaymentsClient(apiKey);
       
       // Create payment invoice
       const paymentData = await client.createPayment({
@@ -62,6 +63,14 @@ export const NOWPaymentsButton = ({
       });
       
       console.log('NOWPayments invoice created:', paymentData);
+      
+      // Store transaction data for status checking
+      localStorage.setItem('nowpayments_transaction', JSON.stringify({
+        paymentId: paymentData.payment_id,
+        status: paymentData.payment_status,
+        amount: paymentData.price_amount,
+        timestamp: Date.now()
+      }));
       
       // Open payment URL in new tab if available
       if (paymentData.payment_url) {

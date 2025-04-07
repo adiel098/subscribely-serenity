@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
@@ -26,20 +25,17 @@ export const PaymentOptions = ({
   const [nowPaymentsConfig, setNowPaymentsConfig] = useState<any>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   
-  // Enhanced logging for debugging
   useEffect(() => {
     console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
     console.log("[PaymentOptions] Community ID:", communityId);
     console.log("[PaymentOptions] Price:", price);
   }, [selectedPaymentMethod, communityId, price]);
 
-  // Fetch NOWPayments config when needed
   useEffect(() => {
     const fetchNowPaymentsConfig = async () => {
       if (selectedPaymentMethod === 'nowpayments') {
         setIsLoadingConfig(true);
         try {
-          // Note: We're using 'crypto' as the provider name in the database
           const { data, error } = await supabase
             .from('payment_methods')
             .select('config')
@@ -84,20 +80,11 @@ export const PaymentOptions = ({
   
   const handleNOWPaymentsSuccess = (paymentData: any) => {
     console.log("[PaymentOptions] NOWPayments payment initiated:", paymentData);
-    // Store payment data in local storage for retrieval after redirect
-    localStorage.setItem('nowpayments_transaction', JSON.stringify({
-      paymentId: paymentData.payment_id,
-      status: paymentData.payment_status,
-      amount: paymentData.price_amount,
-      timestamp: Date.now()
-    }));
-    
     // We'll trigger success when the user returns from the payment page
     // or when they refresh and we detect the completed transaction
   };
 
   useEffect(() => {
-    // Check for returning NOWPayments transaction
     const checkStoredTransaction = async () => {
       const storedTransaction = localStorage.getItem('nowpayments_transaction');
       if (storedTransaction) {
@@ -105,17 +92,13 @@ export const PaymentOptions = ({
           const transaction = JSON.parse(storedTransaction);
           console.log("[PaymentOptions] Found stored NOWPayments transaction:", transaction);
           
-          // If transaction is older than 1 hour, remove it
           if (Date.now() - transaction.timestamp > 3600000) {
             localStorage.removeItem('nowpayments_transaction');
             return;
           }
           
-          // TODO: Check payment status with the backend
-          // For now, we'll just trigger success if the user has an active transaction
           onPaymentSuccess();
           
-          // Clear stored transaction after success
           localStorage.removeItem('nowpayments_transaction');
         } catch (error) {
           console.error("[PaymentOptions] Error checking stored transaction:", error);

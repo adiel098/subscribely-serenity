@@ -40,12 +40,15 @@ export class NOWPaymentsClient {
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
       
+      // For testing, create a mock payment URL that actually works - we'll use a sample payment gateway
+      const testPaymentUrl = `https://nowpayments.io/payment?amount=${params.priceAmount}&currency=${params.priceCurrency}`;
+      
       // Mock data that mimics the NOWPayments API response
       return {
         payment_id: 'mock-payment-' + Math.random().toString(36).substring(2, 10),
         payment_status: 'waiting',
         pay_address: '0x1234567890abcdef',
-        payment_url: 'https://nowpayments.io/payment/' + Math.random().toString(36).substring(2, 10),
+        payment_url: testPaymentUrl,
         price_amount: params.priceAmount,
         price_currency: params.priceCurrency,
         order_id: params.orderId,

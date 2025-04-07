@@ -30,3 +30,11 @@ Key issue fixed: Resolved module not found error for corsHeaders.ts in telegram-
 
 Key issue fixed: Resolved module not found error for dataExtractor.ts in telegram-webhook edge function.
 
+## 2025-04-07 - Telegram Services Implementation
+
+- Created communityService.ts with functions to fetch and process community data
+- Added userService.ts with functionality to handle Telegram user information
+- Implemented errorHandler.ts for consistent error responses
+- Set up proper service structure for the telegram-webhook edge function
+
+Key issue fixed: Resolved module not found error for communityService.ts in telegram-webhook edge function.

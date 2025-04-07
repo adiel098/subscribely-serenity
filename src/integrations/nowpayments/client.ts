@@ -30,6 +30,7 @@ export class NOWPaymentsClient {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+    console.log('NOWPaymentsClient initialized with API key present:', !!apiKey);
   }
 
   /**
@@ -39,9 +40,10 @@ export class NOWPaymentsClient {
     // In development or without API key, return mock data
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
+      console.log('Payment params:', params);
       
       // For testing, create a mock payment URL that actually works - we'll use a sample payment gateway
-      const testPaymentUrl = `https://nowpayments.io/payment?amount=${params.priceAmount}&currency=${params.priceCurrency}`;
+      const testPaymentUrl = `https://nowpayments.io/payment/?amount=${params.priceAmount}&currency=${params.priceCurrency}`;
       
       // Mock data that mimics the NOWPayments API response
       return {
@@ -82,9 +84,15 @@ export class NOWPaymentsClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('NOWPayments API error response:', errorData);
-        throw new Error(errorData.message || `Failed to create payment: ${response.statusText}`);
+        let errorMessage = `Failed to create payment: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.error('NOWPayments API error response:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Could not parse error response as JSON:', e);
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -129,8 +137,14 @@ export class NOWPaymentsClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to get payment status');
+        let errorMessage = 'Failed to get payment status';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Could not parse error response as JSON:', e);
+        }
+        throw new Error(errorMessage);
       }
 
       return await response.json();

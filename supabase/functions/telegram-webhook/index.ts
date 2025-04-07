@@ -1,130 +1,139 @@
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { corsHeaders } from "./utils/corsHeaders.ts";
+import { handleNowPaymentsIPN } from "./handlers/nowpaymentsHandler.ts";
+import { extractInitData } from "./utils/dataExtractor.ts";
+import { RequestBody } from "./utils/telegramTypes.ts";
+import { fetchCommunityData, processCommunityData } from "./services/communityService.ts";
+import { processUserData } from "./services/userService.ts";
+import { createErrorResponse } from "./services/errorHandler.ts";
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { routeTelegramUpdate } from "./webhookRouter.ts";
-
-// Define CORS headers for preflight requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Main function to handle requests
 serve(async (req) => {
-  console.log("[webhook-main] Telegram webhook edge function initialized");
-  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    console.log("[webhook-main] Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
-  // For actual webhook requests, continue processing
-  console.log("[webhook-main] Received POST request to telegram-webhook");
-  
   try {
-    // Get the bot token from environment variables
-    const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
-    if (!botToken) {
-      throw new Error("TELEGRAM_BOT_TOKEN environment variable not set");
-    }
-    
-    // Initialize the Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    console.log("[webhook-main] Supabase client initialized");
 
-    // Parse the Telegram update from the request body
-    let telegramUpdate;
+    // Extract request body
+    let body: RequestBody;
     try {
-      telegramUpdate = await req.json();
-      console.log("[webhook-main] Received update:", JSON.stringify(telegramUpdate, null, 2));
-    } catch (e) {
-      console.error("[webhook-main] Failed to parse request body:", e);
+      body = await req.json();
+    } catch (error) {
+      console.error("Error parsing request body:", error);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Invalid JSON in request body" 
+        JSON.stringify({
+          error: "Invalid request body",
+          details: error.message,
         }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400 
-        }
+        { headers: corsHeaders, status: 400 }
       );
     }
 
-    // Process the Telegram update using the router
-    console.log("[webhook-main] Processing update with router");
-    const result = await routeTelegramUpdate(supabase, telegramUpdate, { BOT_TOKEN: botToken });
-    console.log("[webhook-main] Result from router:", JSON.stringify(result, null, 2));
+    // Check if this is a NOWPayments IPN callback
+    const isNowPaymentsIPN = req.headers.get('x-nowpayments-sig') || 
+                           (body && body.payment_id && body.payment_status);
     
-    // Log the webhook event to the database
-    try {
-      await supabase.from('telegram_events').insert({
-        event_type: 'WEBHOOK',
-        raw_data: telegramUpdate,
-        chat_id: telegramUpdate.message?.chat?.id?.toString() || 
-                telegramUpdate.channel_post?.chat?.id?.toString() || 
-                telegramUpdate.chat_member?.chat?.id?.toString() || 
-                telegramUpdate.my_chat_member?.chat?.id?.toString(),
-        user_id: telegramUpdate.message?.from?.id?.toString() || 
-                telegramUpdate.channel_post?.from?.id?.toString() || 
-                telegramUpdate.chat_member?.from?.id?.toString() || 
-                telegramUpdate.my_chat_member?.from?.id?.toString(),
-        username: telegramUpdate.message?.from?.username || 
-                telegramUpdate.channel_post?.from?.username || 
-                telegramUpdate.chat_member?.from?.username || 
-                telegramUpdate.my_chat_member?.from?.username,
-        message_id: telegramUpdate.message?.message_id?.toString() || 
-                    telegramUpdate.channel_post?.message_id?.toString(),
-        message_text: telegramUpdate.message?.text || 
-                     telegramUpdate.channel_post?.text
-      });
-      console.log("[webhook-main] Successfully logged webhook event to database");
-    } catch (logError) {
-      console.error("[webhook-main] Error logging webhook event:", logError);
-      // Continue processing even if logging fails
+    if (isNowPaymentsIPN) {
+      console.log("Detected NOWPayments IPN callback");
+      const result = await handleNowPaymentsIPN(supabase, body);
+      
+      return new Response(
+        JSON.stringify(result),
+        { headers: corsHeaders, status: result.success ? 200 : 400 }
+      );
     }
     
-    // Also add to system_logs
-    try {
-      await supabase.from('system_logs').insert({
-        event_type: 'TELEGRAM_WEBHOOK',
-        details: `Received update_id=${telegramUpdate.update_id}, handled=${result.success}`,
-        metadata: {
-          update_id: telegramUpdate.update_id,
-          result: result,
-          update_type: Object.keys(telegramUpdate).filter(key => key !== 'update_id')[0]
+    // Extract start parameter from body or URL
+    let start = body?.start || null;
+    
+    // If start is not in the body, try to get it from URL query parameters
+    if (!start) {
+      const url = new URL(req.url);
+      start = url.searchParams.get("start");
+      console.log("Extracted start parameter from URL:", start);
+    }
+    
+    const initData = body?.initData;
+    console.log("Request payload:", { start, initData, url: req.url });
+
+    if (!start) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing start parameter",
+          details: "No community identifier provided in the request",
+          requestUrl: req.url
+        }),
+        { headers: corsHeaders, status: 400 }
+      );
+    }
+
+    // Fetch community or group data based on the start parameter
+    const { communityQuery, entityId } = await fetchCommunityData(supabase, start);
+    const { data, error } = await communityQuery;
+
+    if (error) {
+      console.error(`❌ Error fetching entity with identifier "${entityId}":`, error);
+      console.error("Error details:", error.message, error.details);
+      
+      return new Response(
+        JSON.stringify({
+          error: `Failed to fetch community data`,
+          details: error.message,
+          param: start,
+          requestUrl: req.url
+        }),
+        { headers: corsHeaders, status: 500 }
+      );
+    }
+
+    // Process the community data
+    const displayCommunity = await processCommunityData(supabase, data);
+
+    // Process Telegram Mini App init data if provided
+    let userData = null;
+    if (initData) {
+      try {
+        const parsedInitData = extractInitData(initData);
+        console.log("Parsed initData:", parsedInitData);
+
+        if (parsedInitData.user) {
+          const telegramUser = parsedInitData.user;
+          // Set appropriate IDs based on community type
+          const communityId = displayCommunity.is_group ? null : displayCommunity.id;
+          const groupId = displayCommunity.is_group ? displayCommunity.id : null;
+          
+          userData = await processUserData(supabase, telegramUser, communityId, groupId);
         }
-      });
-      console.log("Logging webhook event: update_id=" + telegramUpdate.update_id + ", handled=" + result.success);
-    } catch (logError) {
-      console.error("[webhook-main] Error logging to system_logs:", logError);
+      } catch (error) {
+        console.error("Error processing initData:", error);
+        // Don't fail the request, just log the error and continue
+      }
     }
     
-    // Return the processing result
-    return new Response(
-      JSON.stringify(result),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: result.success ? 200 : 400
-      }
-    );
-  } catch (error) {
-    console.error("[webhook-main] Unhandled error:", error);
-    
-    // Return an error response
+    console.log("Final userData being returned:", userData);
+    console.log("Final community data being returned:", JSON.stringify(displayCommunity, null, 2));
+
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error.message || "Unknown error"
+        community: displayCommunity,
+        user: userData,
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500
-      }
+      { headers: corsHeaders }
+    );
+  } catch (error) {
+    console.error("Error processing webhook:", error);
+    
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        details: error.message,
+      }),
+      { headers: corsHeaders, status: 500 }
     );
   }
 });

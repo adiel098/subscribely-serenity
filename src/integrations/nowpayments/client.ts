@@ -5,9 +5,11 @@ interface CreatePaymentParams {
   orderId?: string;
   orderDescription?: string;
   ipnCallbackUrl?: string;
+  successUrl?: string;
+  cancelUrl?: string;
 }
 
-interface PaymentResponse {
+export interface NOWPaymentsResponse {
   payment_id: string;
   payment_status: string;
   pay_address: string;
@@ -17,6 +19,9 @@ interface PaymentResponse {
   order_id?: string;
   order_description?: string;
   created_at?: string;
+  pay_amount?: number;
+  pay_currency?: string;
+  network?: string;
 }
 
 export class NOWPaymentsClient {
@@ -30,11 +35,12 @@ export class NOWPaymentsClient {
   /**
    * Creates a new payment using the NOWPayments API
    */
-  async createPayment(params: CreatePaymentParams): Promise<PaymentResponse> {
-    // בסביבת פיתוח או ללא אמצעי גישה לשרת, נחזיר תשובה מדומה כדוגמה
+  async createPayment(params: CreatePaymentParams): Promise<NOWPaymentsResponse> {
+    // In development or without API key, return mock data
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
       
+      // Mock data that mimics the NOWPayments API response
       return {
         payment_id: 'mock-payment-' + Math.random().toString(36).substring(2, 10),
         payment_status: 'waiting',
@@ -44,12 +50,17 @@ export class NOWPaymentsClient {
         price_currency: params.priceCurrency,
         order_id: params.orderId,
         order_description: params.orderDescription,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        pay_amount: params.priceAmount,
+        pay_currency: 'BTC',
+        network: 'bitcoin'
       };
     }
 
-    // בסביבת ייצור, נבצע קריאה אמיתית לשרת
+    // In production, make actual API call
     try {
+      console.log('Making API request to NOWPayments');
+      
       const response = await fetch(`${this.baseUrl}/payment`, {
         method: 'POST',
         headers: {
@@ -62,17 +73,20 @@ export class NOWPaymentsClient {
           order_id: params.orderId,
           order_description: params.orderDescription,
           ipn_callback_url: params.ipnCallbackUrl,
-          success_url: window.location.origin + '/payment-success',
-          cancel_url: window.location.origin + '/payment-cancel'
+          success_url: params.successUrl || window.location.origin + '/payment-success',
+          cancel_url: params.cancelUrl || window.location.origin + '/payment-cancel'
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create payment');
+        console.error('NOWPayments API error response:', errorData);
+        throw new Error(errorData.message || `Failed to create payment: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('NOWPayments API response:', data);
+      return data;
     } catch (error) {
       console.error('NOWPayments API error:', error);
       throw error;
@@ -82,9 +96,25 @@ export class NOWPaymentsClient {
   /**
    * Gets the status of a payment
    */
-  async getPaymentStatus(paymentId: string): Promise<any> {
+  async getPaymentStatus(paymentId: string): Promise<NOWPaymentsResponse> {
     if (!this.apiKey) {
       throw new Error('API key is not configured');
+    }
+
+    // In development, return mock data
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        payment_id: paymentId,
+        payment_status: Math.random() > 0.5 ? 'finished' : 'waiting',
+        pay_address: '0x1234567890abcdef',
+        payment_url: 'https://nowpayments.io/payment/' + paymentId,
+        price_amount: 50,
+        price_currency: 'USD',
+        created_at: new Date().toISOString(),
+        pay_amount: 0.005,
+        pay_currency: 'BTC',
+        network: 'bitcoin'
+      };
     }
 
     try {

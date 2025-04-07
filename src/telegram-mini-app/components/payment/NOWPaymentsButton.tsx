@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { NOWPaymentsClient } from '@/integrations/nowpayments/client';
 
 interface NOWPaymentsButtonProps {
   amount: number;
@@ -10,7 +11,8 @@ interface NOWPaymentsButtonProps {
   orderId?: string;
   description?: string;
   apiKey: string;
-  onSuccess?: () => void;
+  ipnCallbackUrl?: string;
+  onSuccess?: (paymentData: any) => void;
   onError?: (error: string) => void;
 }
 
@@ -18,8 +20,9 @@ export const NOWPaymentsButton = ({
   amount,
   currency = 'USD',
   orderId,
-  description,
+  description = 'Telegram Group Subscription',
   apiKey,
+  ipnCallbackUrl,
   onSuccess,
   onError
 }: NOWPaymentsButtonProps) => {
@@ -40,8 +43,8 @@ export const NOWPaymentsButton = ({
     
     setLoading(true);
     try {
-      // תכלס בשלב זה אנחנו צריכים לעשות קריאה לאנדפוינט שיוצר חשבונית, 
-      // אבל כרגע נעשה סימולציה
+      // Create NOWPayments client
+      const client = new NOWPaymentsClient(apiKey);
       console.log('Creating NOWPayments invoice:', {
         amount,
         currency,
@@ -49,22 +52,32 @@ export const NOWPaymentsButton = ({
         description
       });
       
-      // סימולציה: נמתין מעט ואז נעדכן על הצלחה
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create payment invoice
+      const paymentData = await client.createPayment({
+        priceAmount: amount,
+        priceCurrency: currency,
+        orderId: orderId || `order-${Date.now()}`,
+        orderDescription: description,
+        ipnCallbackUrl
+      });
+      
+      console.log('NOWPayments invoice created:', paymentData);
+      
+      // Open payment URL in new tab if available
+      if (paymentData.payment_url) {
+        window.open(paymentData.payment_url, '_blank');
+      }
       
       toast({
         title: 'Payment Initiated',
         description: 'You will be redirected to complete your crypto payment',
       });
       
-      // פתיחת דף תשלום חדש או הפנייה לעמוד התשלום
-      // window.open('https://nowpayments.io/payment-page', '_blank');
-      
       if (onSuccess) {
-        onSuccess();
+        onSuccess(paymentData);
       }
     } catch (error) {
-      console.error('Payment failed:', error);
+      console.error('NOWPayments error:', error);
       toast({
         title: 'Payment Error',
         description: 'Failed to initiate crypto payment. Please try again.',

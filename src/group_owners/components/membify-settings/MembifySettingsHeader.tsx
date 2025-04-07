@@ -21,7 +21,7 @@ export const MembifySettingsHeader = () => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className={`font-bold ${isMobile ? 'text-lg' : 'text-2xl'} bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent`}>
-          Account Settings
+          Membify Settings
         </h1>
       </div>
       <div className="flex-shrink-0">

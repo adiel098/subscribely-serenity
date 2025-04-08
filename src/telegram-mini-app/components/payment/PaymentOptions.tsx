@@ -4,8 +4,10 @@ import StripePaymentForm from "./StripePaymentForm";
 import { motion } from "framer-motion";
 import { NOWPaymentsButton } from "./NOWPaymentsButton";
 import { NOWPaymentsLogs } from "../debug/NOWPaymentsLogs";
+import { NOWPaymentsDebugInfo } from "../debug/NOWPaymentsDebugInfo";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle, User } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface PaymentOptionsProps {
   selectedPaymentMethod: string | null;
@@ -249,6 +251,11 @@ export const PaymentOptions = ({
               onError={(error) => {
                 console.error("[PaymentOptions] NOWPayments error:", error);
                 setConfigError(error);
+                toast({
+                  title: "Error",
+                  description: "There was an error with your payment. Please try again.",
+                  variant: "destructive"
+                });
               }}
             />
             

@@ -10,10 +10,12 @@ interface CreatePaymentParams {
 }
 
 export interface NOWPaymentsResponse {
-  payment_id: string;
-  payment_status: string;
-  pay_address: string;
-  payment_url: string;
+  payment_id?: string;
+  id?: string;
+  payment_status?: string;
+  pay_address?: string;
+  payment_url?: string;
+  invoice_url?: string;
   price_amount: number;
   price_currency: string;
   order_id?: string;
@@ -129,6 +131,84 @@ export class NOWPaymentsClient {
       if (!data.payment_url) {
         console.error('NOWPayments response missing payment_url:', data);
         throw new Error('No payment URL received in response');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('NOWPayments API error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Creates a new invoice using the NOWPayments API
+   */
+  async createInvoice(params: CreatePaymentParams): Promise<NOWPaymentsResponse> {
+    console.log('NOWPayments createInvoice params:', params);
+
+    // In development or without API key, return mock data
+    if (process.env.NODE_ENV === 'development' || !this.apiKey) {
+      console.log('NOWPayments: Running in dev mode or missing API key, returning mock invoice');
+      
+      if (!this.apiKey) {
+        console.error('NOWPayments API key is not configured. This would fail in production.');
+      }
+      
+      // Mock data that mimics the NOWPayments Invoice API response
+      return {
+        id: 'mock-invoice-' + Math.random().toString(36).substring(2, 10),
+        invoice_url: `https://nowpayments.io/payment/?iid=mock${Date.now()}`,
+        price_amount: params.priceAmount,
+        price_currency: params.priceCurrency,
+        order_id: params.orderId,
+        order_description: params.orderDescription,
+        created_at: new Date().toISOString(),
+      };
+    }
+
+    try {
+      console.log('Making API request to NOWPayments invoice endpoint');
+      
+      const requestBody = {
+        price_amount: params.priceAmount,
+        price_currency: params.priceCurrency,
+        order_id: params.orderId,
+        order_description: params.orderDescription,
+        ipn_callback_url: params.ipnCallbackUrl,
+        success_url: params.successUrl || window.location.href,
+        cancel_url: params.cancelUrl || window.location.href
+      };
+      
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      
+      const response = await fetch(`${this.baseUrl}/invoice`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Failed to create invoice: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.error('NOWPayments API error response:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error('Could not parse error response as JSON:', e);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('NOWPayments invoice API response:', data);
+      
+      // Verify we got an invoice_url in the response
+      if (!data.invoice_url) {
+        console.error('NOWPayments response missing invoice_url:', data);
+        throw new Error('No invoice URL received in response');
       }
       
       return data;

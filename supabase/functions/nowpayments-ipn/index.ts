@@ -45,7 +45,8 @@ serve(async (req) => {
       );
     }
 
-    // Get the order ID and parse it to extract community ID and user ID
+    // Get the order ID from either payment_id or invoice_id
+    // Different endpoints use different fields
     const orderId = payload.order_id;
     if (!orderId) {
       console.error("Missing order ID in NOWPayments request");
@@ -157,12 +158,13 @@ serve(async (req) => {
       }
     }
     
-    // Check payment status
-    const paymentStatus = payload.payment_status;
+    // Check payment status - support both invoice and payment webhooks
+    // Invoice webhook uses 'payment_status', payment webhook uses 'status'
+    const paymentStatus = payload.payment_status || payload.status;
     console.log("Payment status:", paymentStatus);
     
-    // Only process if payment is finished or confirmed
-    if (paymentStatus === 'finished' || paymentStatus === 'confirmed') {
+    // Only process if payment is finished, confirmed, or completed
+    if (paymentStatus === 'finished' || paymentStatus === 'confirmed' || paymentStatus === 'completed') {
       // Create a new subscription
       const { error: subscriptionError } = await supabase
         .from('community_subscribers')
@@ -184,7 +186,8 @@ serve(async (req) => {
         );
       }
       
-      // Create payment record
+      // Create payment record - support both invoice and payment records
+      const paymentId = payload.payment_id || payload.id || `nowpayments-${Date.now()}`;
       const { error: paymentUpdateError } = await supabase
         .from('subscription_payments')
         .insert({
@@ -194,7 +197,7 @@ serve(async (req) => {
           status: 'completed',
           amount: payload.price_amount,
           currency: payload.price_currency,
-          payment_id: payload.payment_id,
+          payment_id: paymentId,
           details: payload
         });
         

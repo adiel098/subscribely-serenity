@@ -55,9 +55,13 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
       </div>
       
       <div className="space-y-1 font-mono">
-        <div><strong>Payment ID:</strong> {storedTransaction.paymentId}</div>
+        {storedTransaction.invoiceId && (
+          <div><strong>Invoice ID:</strong> {storedTransaction.invoiceId}</div>
+        )}
+        {storedTransaction.orderId && (
+          <div><strong>Order ID:</strong> {storedTransaction.orderId}</div>
+        )}
         <div><strong>Amount:</strong> ${storedTransaction.amount}</div>
-        <div><strong>Status:</strong> {storedTransaction.status}</div>
         <div><strong>Created:</strong> {timeAgo()}</div>
         {storedTransaction.paymentUrl && (
           <div className="pt-1">

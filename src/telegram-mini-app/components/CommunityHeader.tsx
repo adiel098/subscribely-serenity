@@ -40,8 +40,8 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   // Use the telegram description if available, otherwise fall back to the community description
   const displayDescription = description || community.description;
   
-  // Check if description is long (more than 150 characters)
-  const isLongDescription = displayDescription && displayDescription.length > 150;
+  // Check if description is long (more than 100 characters)
+  const isLongDescription = displayDescription && displayDescription.length > 100;
 
   // Check if description overflows the container after rendering
   useEffect(() => {
@@ -121,7 +121,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
               <div 
                 ref={descriptionRef} 
-                className={`${isExpanded ? '' : 'line-clamp-3'} relative text-sm text-indigo-700/90 leading-relaxed font-medium`}
+                className={`${isExpanded ? '' : 'line-clamp-2'} relative text-sm text-indigo-700/90 leading-relaxed font-medium`}
               >
                 <p className="italic">{displayDescription}</p>
               </div>
@@ -131,7 +131,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleExpand}
-                  className="mt-1 px-3 py-1 h-7 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-xs font-medium"
+                  className="mt-1 px-2 py-0.5 h-6 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-xs font-medium"
                 >
                   {isExpanded ? (
                     <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>

@@ -46,7 +46,7 @@ serve(async (req) => {
       );
     }
 
-    // Get the order ID and split it to extract community ID and user ID
+    // Get the order ID and parse it to extract community ID and user ID
     const orderId = payload.order_id;
     if (!orderId) {
       console.error("Missing order ID in NOWPayments request");
@@ -56,15 +56,36 @@ serve(async (req) => {
       );
     }
     
-    // Split the order ID format: {communityId}_{telegramUserId}
-    const [communityId, telegramUserId] = orderId.split('_');
+    // Handle different order ID formats
+    let communityId, telegramUserId;
+    
+    // Format 1: {communityId}_{telegramUserId}
+    if (orderId.includes('_')) {
+      [communityId, telegramUserId] = orderId.split('_');
+    } 
+    // Format 2: telegram-{communityId}-{telegramUserId}-{timestamp}
+    else if (orderId.startsWith('telegram-')) {
+      const parts = orderId.split('-');
+      if (parts.length >= 3) {
+        // Skip "telegram-" prefix, take communityId and telegramUserId
+        communityId = parts.slice(1, -2).join('-'); // In case communityId contains hyphens
+        telegramUserId = parts[parts.length - 2];
+      }
+    }
+    
     if (!communityId || !telegramUserId) {
       console.error("Invalid order ID format in NOWPayments request:", orderId);
       return new Response(
-        JSON.stringify({ error: 'Invalid order ID format' }),
+        JSON.stringify({ 
+          error: 'Invalid order ID format',
+          details: 'Could not extract communityId and telegramUserId from order ID',
+          orderId: orderId
+        }),
         { headers: corsHeaders, status: 400 }
       );
     }
+    
+    console.log(`Successfully parsed order ID: communityId=${communityId}, telegramUserId=${telegramUserId}`);
     
     // Find the community owner ID to get their payment methods configuration
     const { data: communityData, error: communityError } = await supabase

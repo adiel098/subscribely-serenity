@@ -37,12 +37,16 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
     
     setIsLoading(true);
     try {
+      // Format order ID to ensure consistency - use communityId_telegramUserId format
+      // If orderId already contains underscores, assume it's already in the correct format
+      const finalOrderId = orderId.includes('_') ? orderId : orderId.replace(/-/g, '_');
+      
       // Prepare request payload
       const payload = {
         price_amount: amount,
         price_currency: 'usd',
         pay_currency: 'btc',
-        order_id: orderId,
+        order_id: finalOrderId,
         order_description: description,
         ipn_callback_url: ipnCallbackUrl || null
       };

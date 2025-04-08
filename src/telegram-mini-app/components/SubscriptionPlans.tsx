@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock, Gift } from "lucide-react";
@@ -144,7 +145,7 @@ export const SubscriptionPlans = ({
                 </>
               )}
               
-              <div className="flex justify-between items-start mb-1 relative mt-6">
+              <div className={`flex justify-between items-start mb-1 relative ${isActive ? 'mt-6' : ''}`}>
                 <div>
                   <div className="flex flex-wrap gap-1 mb-1">
                     {hasTrial && (

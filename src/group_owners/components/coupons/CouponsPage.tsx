@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { EditCouponDialog } from "./EditCouponDialog";
 import { EmptyCouponsState } from "./EmptyCouponsState";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const CouponsPage = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -105,18 +107,32 @@ export const CouponsPage = () => {
 
   if (!entityId) {
     return (
-      <EmptyCouponsState 
-        title={`Select a ${isGroupSelected ? 'group' : 'community'} to manage coupons`}
-        description={`Choose a ${isGroupSelected ? 'group' : 'community'} from the dropdown above to start managing coupons.`}
-      />
+      <>
+        <PageHeader 
+          title="Discount Coupons" 
+          description="Create and manage discount codes for your subscribers"
+          icon={<TagIcon />}
+        />
+        <EmptyCouponsState 
+          title={`Select a ${isGroupSelected ? 'group' : 'community'} to manage coupons`}
+          description={`Choose a ${isGroupSelected ? 'group' : 'community'} from the dropdown above to start managing coupons.`}
+        />
+      </>
     );
   }
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
-      </div>
+      <>
+        <PageHeader 
+          title="Discount Coupons" 
+          description="Create and manage discount codes for your subscribers"
+          icon={<TagIcon />}
+        />
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        </div>
+      </>
     );
   }
 
@@ -124,6 +140,12 @@ export const CouponsPage = () => {
   
   return (
     <div className="space-y-6">
+      <PageHeader 
+        title="Discount Coupons" 
+        description="Create and manage discount codes for your subscribers"
+        icon={<TagIcon />}
+      />
+      
       {hasCoupons && (
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex-1 w-full md:w-auto">

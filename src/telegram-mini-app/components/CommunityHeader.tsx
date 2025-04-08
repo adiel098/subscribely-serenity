@@ -75,7 +75,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
       <div className="mx-auto max-w-xl px-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
           {/* Community avatar at the top of description box */}
-          <div className="flex items-center justify-center mb-3">
+          <div className="flex items-center justify-center mb-1">
             {photoLoading ? (
               <Skeleton className="h-16 w-16 rounded-full" />
             ) : (
@@ -104,8 +104,8 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             )}
           </div>
           
-          {/* Community name inside the description box */}
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-3">
+          {/* Community name inside the description box - now larger */}
+          <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-1">
             {community.name}
           </h2>
           
@@ -128,7 +128,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleExpand}
-                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[10px] font-medium"
+                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[9px] font-medium"
                 >
                   {isExpanded ? (
                     <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>

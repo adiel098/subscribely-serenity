@@ -106,83 +106,92 @@ export const SubscriptionPlans = ({
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`group relative py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer translucent-card ${
-              isSelected
-                ? 'border-indigo-500 border-2 shadow-md bg-indigo-50/50 ring-2 ring-indigo-300/30 ring-offset-1'
-                : isPremium 
-                  ? 'border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
-                  : 'border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
-            }`}
-            style={{ height: "auto" }}
-            onClick={() => onPlanSelect(plan)}
+            className="relative"
           >
             {isActive && (
-              <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full p-1 shadow-sm z-10">
-                <CheckCircle2 className="h-3 w-3" />
-              </div>
+              <Badge 
+                variant="success" 
+                className="absolute -top-2 -right-0 text-xs py-0 px-3 z-20 flex items-center gap-1 bg-green-500 text-white"
+                style={{
+                  borderRadius: "1rem 1rem 0 1rem",
+                  transform: "translateY(-35%)"
+                }}
+              >
+                Active
+                <div className="bg-white rounded-full p-0.5 -mr-1 -my-0.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                </div>
+              </Badge>
             )}
-            <div className="flex justify-between items-start mb-1">
-              <div>
-                <div className="flex flex-wrap gap-1 mb-1">
-                  {isActive && (
-                    <Badge variant="success" className="text-xs py-0 px-1.5 animate-pulse">
-                      Active
-                    </Badge>
-                  )}
-                  {hasTrial && (
-                    <Badge variant="outline" className="text-xs py-0 px-1.5 bg-rose-50 text-rose-700 border-rose-200 flex items-center gap-0.5">
-                      <Gift className="h-3 w-3 text-rose-500" />
-                      <span>{plan.trial_days}-day trial</span>
-                    </Badge>
-                  )}
-                  {isSelected && !isActive && (
-                    <Badge variant="outline" className="text-xs py-0 px-1.5 border-indigo-400 text-indigo-700 bg-indigo-100/50">
-                      Selected
-                    </Badge>
+            <div 
+              className={`group py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer translucent-card ${
+                isSelected
+                  ? 'border-indigo-500 border-2 shadow-md bg-indigo-50/50 ring-2 ring-indigo-300/30 ring-offset-1'
+                  : isPremium 
+                    ? 'border-indigo-200/70 hover:border-indigo-400/70 hover:shadow-sm' 
+                    : 'border-white/40 hover:border-indigo-300/70 hover:shadow-sm'
+              }`}
+              style={{ height: "auto" }}
+              onClick={() => onPlanSelect(plan)}
+            >
+              <div className="flex justify-between items-start mb-1">
+                <div>
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    {hasTrial && (
+                      <Badge variant="outline" className="text-xs py-0 px-1.5 bg-rose-50 text-rose-700 border-rose-200 flex items-center gap-0.5">
+                        <Gift className="h-3 w-3 text-rose-500" />
+                        <span>{plan.trial_days}-day trial</span>
+                      </Badge>
+                    )}
+                    {isSelected && !isActive && (
+                      <Badge variant="outline" className="text-xs py-0 px-1.5 border-indigo-400 text-indigo-700 bg-indigo-100/50">
+                        Selected
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-gray-900 group-hover:text-indigo-700'} transition-colors line-clamp-1`}>
+                    {plan.name}
+                  </h3>
+                  {plan.description && (
+                    <p className="text-xs text-gray-600 font-light line-clamp-1">{plan.description}</p>
                   )}
                 </div>
-                <h3 className={`text-sm font-bold ${isSelected ? 'text-indigo-700' : 'text-gray-900 group-hover:text-indigo-700'} transition-colors line-clamp-1`}>
-                  {plan.name}
-                </h3>
-                {plan.description && (
-                  <p className="text-xs text-gray-600 font-light line-clamp-1">{plan.description}</p>
-                )}
+                <div className="text-right flex flex-col items-end">
+                  <p className={`text-lg font-bold ${isSelected ? 'text-indigo-600' : 'bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
+                    ${plan.price}
+                  </p>
+                  <Badge variant="outline" className="flex items-center gap-0.5 text-[10px] py-0 px-1 mt-0.5 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
+                    {intervalDisplay.icon} 
+                    <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
+                  </Badge>
+                </div>
               </div>
-              <div className="text-right flex flex-col items-end">
-                <p className={`text-lg font-bold ${isSelected ? 'text-indigo-600' : 'bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
-                  ${plan.price}
-                </p>
-                <Badge variant="outline" className="flex items-center gap-0.5 text-[10px] py-0 px-1 mt-0.5 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
-                  {intervalDisplay.icon} 
-                  <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
-                </Badge>
-              </div>
+              
+              {hasTrial && (
+                <div className="mt-1 mb-1 bg-rose-50/70 backdrop-blur-sm p-1.5 rounded-lg border border-rose-100 flex items-center">
+                  <Gift className="h-4 w-4 text-rose-500 mr-1.5 flex-shrink-0" />
+                  <span className="text-xs text-rose-700">
+                    Start with a <span className="font-medium">{plan.trial_days}-day free trial</span>
+                  </span>
+                </div>
+              )}
+              
+              {plan.features && plan.features.length > 0 && (
+                <div className="mt-1 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
+                  <ul className="space-y-1">
+                    {plan.features.map((feature, index) => (
+                      <li 
+                        key={index} 
+                        className="flex items-center text-gray-700 text-xs p-1 rounded-md border border-indigo-100/30 shadow-sm bg-white/70"
+                      >
+                        {getFeatureIcon(index)}
+                        <span className="line-clamp-1">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-            
-            {hasTrial && (
-              <div className="mt-1 mb-1 bg-rose-50/70 backdrop-blur-sm p-1.5 rounded-lg border border-rose-100 flex items-center">
-                <Gift className="h-4 w-4 text-rose-500 mr-1.5 flex-shrink-0" />
-                <span className="text-xs text-rose-700">
-                  Start with a <span className="font-medium">{plan.trial_days}-day free trial</span>
-                </span>
-              </div>
-            )}
-            
-            {plan.features && plan.features.length > 0 && (
-              <div className="mt-1 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
-                <ul className="space-y-1">
-                  {plan.features.map((feature, index) => (
-                    <li 
-                      key={index} 
-                      className="flex items-center text-gray-700 text-xs p-1 rounded-md border border-indigo-100/30 shadow-sm bg-white/70"
-                    >
-                      {getFeatureIcon(index)}
-                      <span className="line-clamp-1">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </motion.div>
         );
       })}

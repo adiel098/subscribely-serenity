@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
@@ -67,7 +68,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
     <div className="text-center space-y-4 animate-fade-in">
       <div className="mx-auto max-w-xl px-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-center mb-1">
+          <div className="flex items-center justify-center mb-0.5">
             {photoLoading ? (
               <Skeleton className="h-16 w-16 rounded-full" />
             ) : (
@@ -95,7 +96,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             )}
           </div>
           
-          <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-1">
+          <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-0.5">
             {community.name}
           </h2>
           
@@ -118,7 +119,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleExpand}
-                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[8px] font-medium"
+                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[7px] font-medium"
                 >
                   {isExpanded ? (
                     <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>

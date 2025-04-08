@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
@@ -55,7 +56,9 @@ export const PaymentOptions = ({
           }
           
           setCommunityOwnerId(communityData.owner_id);
+          console.log("[PaymentOptions] Found community owner ID:", communityData.owner_id);
           
+          // Updated query: explicitly checking for 'crypto' provider (not 'nowpayments')
           const { data, error } = await supabase
             .from('payment_methods')
             .select('config')
@@ -67,6 +70,9 @@ export const PaymentOptions = ({
           if (error) {
             throw error;
           }
+          
+          // Log the retrieved data for debugging
+          console.log("[PaymentOptions] Retrieved payment method:", data);
           
           if (!data || !data.config || !data.config.api_key) {
             setConfigError("NOWPayments API key is not configured in the database");

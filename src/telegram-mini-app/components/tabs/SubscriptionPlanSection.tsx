@@ -35,6 +35,9 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
   // Safe guard against undefined or non-array plans
   const validPlans = Array.isArray(plans) ? plans : [];
   
+  // Sort plans from least expensive to most expensive
+  const sortedPlans = [...validPlans].sort((a, b) => a.price - b.price);
+  
   // Get channel information for this community
   const { channels, isGroup, isLoading: channelsLoading } = useCommunityChannels(communityId || null);
   
@@ -91,7 +94,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
           </motion.div>
           
           <SubscriptionPlans
-            plans={validPlans}
+            plans={sortedPlans}
             selectedPlan={selectedPlan}
             onPlanSelect={onPlanSelect}
             userSubscriptions={userSubscriptions}

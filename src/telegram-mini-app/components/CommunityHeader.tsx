@@ -72,53 +72,49 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
 
   return (
     <div className="text-center space-y-4 animate-fade-in">
-      {photoLoading ? (
-        <div className="relative mx-auto">
-          <Skeleton className="h-24 w-24 rounded-full mx-auto" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs text-gray-500">Loading...</span>
-          </div>
-        </div>
-      ) : (
-        <Avatar className="h-24 w-24 mx-auto border-4 border-primary/20">
-          {photoUrl ? (
-            <AvatarImage
-              src={photoUrl}
-              alt={community.name}
-              className="object-cover"
-              onError={(e) => {
-                console.error("[CommunityHeader] Error loading image:", e);
-                // Reset the src to force a fallback to the AvatarFallback
-                (e.target as HTMLImageElement).src = "";
-              }}
-            />
-          ) : (
-            <AvatarFallback className="bg-primary/10">
-              {photoError ? (
-                <div className="flex flex-col items-center justify-center">
-                  <ImageIcon className="h-8 w-8 text-primary mb-1" />
-                  <span className="text-xs text-gray-600">No photo</span>
-                </div>
-              ) : (
-                <Crown className="h-12 w-12 text-primary" />
-              )}
-            </AvatarFallback>
-          )}
-        </Avatar>
-      )}
       <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 px-4 mb-2">
         {community.name}
       </h1>
       
-      {descriptionLoading ? (
-        <div className="mx-auto max-w-xl">
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-3/4 mx-auto" />
-        </div>
-      ) : (
-        displayDescription ? (
-          <div className="mx-auto max-w-xl px-4">
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
+      <div className="mx-auto max-w-xl px-4">
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
+          {/* Community avatar and name at the top of description box */}
+          <div className="flex items-center justify-center mb-4">
+            {photoLoading ? (
+              <Skeleton className="h-16 w-16 rounded-full" />
+            ) : (
+              <Avatar className="h-16 w-16 border-4 border-white/90 shadow-sm">
+                {photoUrl ? (
+                  <AvatarImage
+                    src={photoUrl}
+                    alt={community.name}
+                    className="object-cover"
+                    onError={(e) => {
+                      console.error("[CommunityHeader] Error loading image:", e);
+                      // Reset the src to force a fallback to the AvatarFallback
+                      (e.target as HTMLImageElement).src = "";
+                    }}
+                  />
+                ) : (
+                  <AvatarFallback className="bg-primary/10">
+                    {photoError ? (
+                      <ImageIcon className="h-6 w-6 text-primary" />
+                    ) : (
+                      <Crown className="h-8 w-8 text-primary" />
+                    )}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+            )}
+          </div>
+          
+          {descriptionLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4 mx-auto" />
+            </div>
+          ) : displayDescription ? (
+            <div>
               <div 
                 ref={descriptionRef} 
                 className={`${isExpanded ? '' : 'line-clamp-2'} relative text-sm text-indigo-700/90 leading-relaxed font-medium`}
@@ -141,9 +137,9 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                 </Button>
               )}
             </div>
-          </div>
-        ) : null  // Don't show anything if there's no description
-      )}
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 };

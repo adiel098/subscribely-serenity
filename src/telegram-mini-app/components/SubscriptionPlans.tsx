@@ -43,7 +43,7 @@ export const SubscriptionPlans = ({
       case 'half-yearly':
         return { emoji: '📅', icon: <Calendar className="h-4 w-4 mr-1 text-purple-500" />, label: 'Half-Yearly' };
       case 'yearly':
-        return { emoji: '🗓️', icon: <Calendar className="h-4 w-4 mr-1 text-green-600" />, label: 'Yearly' };
+        return { emoji: '📆', icon: <Calendar className="h-4 w-4 mr-1 text-green-600" />, label: 'Yearly' };
       case 'lifetime':
         return { emoji: '♾️', icon: <Shield className="h-4 w-4 mr-1 text-indigo-600" />, label: 'Lifetime' };
       case 'one-time':
@@ -173,7 +173,7 @@ export const SubscriptionPlans = ({
                   </p>
                   <Badge variant="outline" className="flex items-center gap-0.5 text-[10px] py-0 px-1 mt-0.5 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
                     {intervalDisplay.icon} 
-                    <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
+                    <span>{intervalDisplay.label}</span>
                   </Badge>
                 </div>
               </div>

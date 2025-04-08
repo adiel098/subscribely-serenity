@@ -1,6 +1,15 @@
 
 # Development Log
 
+## 2025-04-08 - Enhanced NOWPayments Debug Information
+
+- Improved display of Community Owner ID in the NOWPaymentsDebugInfo component
+- Changed the formatting to show the complete owner ID for easier debugging
+- Applied monospace font to the owner ID for better readability and copy-pasting
+- Maintained all existing debug functionality for searching and displaying payment configuration
+
+Key issue fixed: Enhanced debugging to better track the owner_id used to locate NOWPayments configuration.
+
 ## 2025-04-08 - Fixed NOWPaymentsDebugInfo TypeScript Errors
 
 - Added proper TypeScript interface for the debug information object

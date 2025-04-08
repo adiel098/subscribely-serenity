@@ -169,7 +169,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
         <div className="space-y-1 text-xs">
           {communityOwner && (
             <div className="text-gray-600">
-              Community Owner ID: {communityOwner?.substring(0, 8)}...
+              Community Owner ID: <span className="font-mono text-xs">{communityOwner}</span>
             </div>
           )}
           

@@ -1,13 +1,14 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, CheckCircle, InfoIcon } from "lucide-react";
+import { AlertCircle, CheckCircle, InfoIcon, Loader2 } from "lucide-react";
 
 export const NOWPaymentsDebugInfo: React.FC = () => {
   const [config, setConfig] = useState<any>(null);
   const [communityOwner, setCommunityOwner] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>({});
   
   useEffect(() => {
     const fetchConfig = async () => {
@@ -16,8 +17,15 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const communityId = urlParams.get('communityId');
         
+        // Store debug information
+        const debug = {
+          lookupMethod: communityId ? 'specific_community' : 'any_active',
+          communityId: communityId || 'none',
+          steps: []
+        };
+        
         if (!communityId) {
-          console.log("No community ID found in URL, showing generic NOWPayments status");
+          debug.steps.push('No community ID in URL, looking for any active crypto payment method');
           
           // Get config from any active crypto payment method
           const { data, error } = await supabase
@@ -27,11 +35,21 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
             .eq('is_active', true)
             .maybeSingle();
             
+          debug.steps.push(`Query result: ${data ? 'Data found' : 'No data'}, Error: ${error ? error.message : 'None'}`);
+          
           if (error) throw error;
+          
+          if (!data) {
+            debug.steps.push('No active payment methods found');
+            throw new Error('No active crypto payment methods found');
+          }
+          
           setConfig(data?.config || null);
           setCommunityOwner(data?.owner_id || null);
+          debug.ownerId = data?.owner_id;
+          debug.hasConfig = !!data?.config;
         } else {
-          console.log(`Fetching NOWPayments config for community: ${communityId}`);
+          debug.steps.push(`Looking up config for community ID: ${communityId}`);
           
           // First get the community owner
           const { data: communityData, error: communityError } = await supabase
@@ -40,35 +58,64 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
             .eq('id', communityId)
             .single();
             
+          debug.communityName = communityData?.name;
+          
           if (communityError) {
+            debug.steps.push(`Error finding community: ${communityError.message}`);
             throw new Error(`Could not find community: ${communityError.message}`);
           }
           
-          setCommunityOwner(communityData?.owner_id || null);
-          
           if (!communityData?.owner_id) {
+            debug.steps.push('Community found but has no owner ID');
             throw new Error('Community has no owner');
           }
           
-          console.log(`Found community owner: ${communityData.owner_id} for community: ${communityData.name}`);
+          debug.steps.push(`Found community: ${communityData.name}`);
+          debug.steps.push(`Owner ID: ${communityData.owner_id}`);
+          debug.ownerId = communityData.owner_id;
+          
+          setCommunityOwner(communityData.owner_id);
           
           // Then get payment method by owner_id
-          const { data, error } = await supabase
+          const { data: paymentData, error: paymentError } = await supabase
             .from('payment_methods')
-            .select('config')
+            .select('config, id')
             .eq('provider', 'crypto')
-            .eq('is_active', true)
             .eq('owner_id', communityData.owner_id)
             .maybeSingle();
-            
-          if (error) throw error;
           
-          console.log(`Fetched payment method for owner: ${communityData.owner_id}`, data);
-          setConfig(data?.config || null);
+          debug.steps.push(`Looking for payment method with owner_id: ${communityData.owner_id}`);
+          debug.steps.push(`Payment method found: ${paymentData ? 'Yes' : 'No'}`);
+          debug.paymentMethodId = paymentData?.id;
+          
+          if (paymentError) {
+            debug.steps.push(`Error finding payment method: ${paymentError.message}`);
+            throw paymentError;
+          }
+          
+          if (!paymentData) {
+            debug.steps.push(`No crypto payment method found for owner: ${communityData.owner_id}`);
+            throw new Error(`No crypto payment method found for community owner: ${communityData.owner_id}`);
+          }
+          
+          debug.steps.push(`Config found: ${paymentData.config ? 'Yes' : 'No'}`);
+          debug.hasConfig = !!paymentData.config;
+          debug.hasApiKey = paymentData.config?.api_key ? 'Yes' : 'No';
+          
+          setConfig(paymentData.config || null);
         }
+        
+        setDebugInfo(debug);
       } catch (err) {
         console.error("Error fetching NOWPayments config:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch config");
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch config";
+        setError(errorMessage);
+        
+        // If debugging, include the error in debug info
+        setDebugInfo(prev => ({
+          ...prev,
+          error: errorMessage
+        }));
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +126,8 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="p-2 bg-gray-100 rounded">
+      <div className="p-2 bg-gray-100 rounded flex items-center gap-2">
+        <Loader2 className="h-3 w-3 animate-spin" />
         <p className="text-xs">Loading NOWPayments config...</p>
       </div>
     );
@@ -125,6 +173,18 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
             )}
             <span>IPN URL: {hasIpnUrl ? config.ipn_callback_url : 'Not configured'}</span>
           </div>
+          
+          {/* Debug information section for development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 pt-2 border-t border-gray-300">
+              <div className="font-semibold">Debug Steps:</div>
+              <div className="text-xs space-y-0.5 ml-1">
+                {debugInfo.steps?.map((step: string, i: number) => (
+                  <div key={i} className="text-gray-600">{i+1}. {step}</div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {!hasApiKey && (
             <div className="text-red-600 text-xs mt-1">

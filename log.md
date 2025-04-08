@@ -1,6 +1,15 @@
 
 # Development Log
 
+## 2025-04-08 - NOWPayments Configuration Debugging Improved
+
+- Enhanced NOWPaymentsDebugInfo component to show detailed debugging steps
+- Fixed payment_methods lookup logic to properly find crypto payment configuration
+- Added step-by-step logging of the lookup process for easier troubleshooting
+- Improved error messages and display of configuration status
+
+Key issue fixed: More detailed debugging to track exactly why NOWPayments API key is not being found correctly.
+
 ## 2025-04-08 - NOWPayments Configuration Debugging
 
 - Enhanced NOWPaymentsDebugInfo component to provide more detailed information

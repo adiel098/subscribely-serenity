@@ -1,183 +1,121 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Trash2, Clock, AlertCircle, CheckCircle, RefreshCw, CircleHelp } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-// גודל מקסימלי של היסטוריית הלוגים
-const MAX_LOG_HISTORY = 50;
-
-// שומר את הלוגים בזיכרון כך שהם לא יאבדו בין רינדורים
-let logHistory: {
-  type: 'info' | 'error' | 'request' | 'response';
-  message: string;
-  timestamp: Date;
-  data?: any;
-}[] = [];
-
-// פונקציה לרישום פעולות שקשורות ל-NOWPayments
 export const logNOWPaymentsOperation = (
-  type: 'info' | 'error' | 'request' | 'response',
+  type: 'info' | 'error' | 'request' | 'response', 
   message: string,
   data?: any
 ) => {
-  console.log(`[NOWPayments ${type}]`, message, data || '');
-  
-  // מוסיף את הלוג להיסטוריה
-  logHistory.unshift({
-    type,
-    message,
-    timestamp: new Date(),
-    data: data || undefined
-  });
-  
-  // שומר על גודל מקסימלי של היסטוריה
-  if (logHistory.length > MAX_LOG_HISTORY) {
-    logHistory = logHistory.slice(0, MAX_LOG_HISTORY);
-  }
-  
-  // נשמור את הלוגים האחרונים בלוקל סטורג' כדי שנוכל לראות אותם גם אחרי רענון הדף
   try {
-    localStorage.setItem('nowpayments_logs', JSON.stringify(logHistory));
-  } catch (e) {
-    console.error('Error saving logs to localStorage', e);
-  }
-
-  // שולח שגיאות חמורות לשרת
-  if (type === 'error') {
-    try {
-      fetch('/api/log-error', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source: 'nowpayments',
-          message,
-          data,
-          timestamp: new Date().toISOString()
-        })
-      }).catch(() => {
-        // לא עושים כלום אם השליחה נכשלת
+    const timestamp = Date.now();
+    console.log(`[NOWPayments] ${type.toUpperCase()} - ${message}`, data || '');
+    
+    // שמירה בlocal storage
+    const existingLogsStr = localStorage.getItem('nowpayments_logs');
+    const existingLogs = existingLogsStr ? JSON.parse(existingLogsStr) : [];
+    
+    // הגבלת מספר הלוגים ל-50
+    const updatedLogs = [
+      ...existingLogs,
+      { type, message, data, timestamp }
+    ].slice(-50);
+    
+    localStorage.setItem('nowpayments_logs', JSON.stringify(updatedLogs));
+    
+    // שידור אירוע אם יש מאזינים
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('nowpayments_log', {
+        detail: { type, message, data, timestamp }
       });
-    } catch (e) {
-      // לא עושים כלום עם שגיאות כדי למנוע לולאת שגיאות
+      window.dispatchEvent(event);
     }
-  }
-
-  // מפעיל קוסטום איוונט שקומפוננטת הלוגים יכולה להאזין לו
-  try {
-    window.dispatchEvent(new CustomEvent('nowpayments_log_update', {
-      detail: { type, message, data }
-    }));
-  } catch (e) {
-    // לא עושים כלום עם שגיאות
+  } catch (error) {
+    console.error('Error logging NOWPayments operation:', error);
   }
 };
 
 export const NOWPaymentsLogs = () => {
-  const [logs, setLogs] = useState<typeof logHistory>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // טוען לוגים שמורים והאזנה לאירוע עדכון לוגים
   useEffect(() => {
-    // טוען לוגים קיימים
-    try {
-      const savedLogs = localStorage.getItem('nowpayments_logs');
-      if (savedLogs) {
-        const parsedLogs = JSON.parse(savedLogs);
-        // ממיר את הטיימסטאמפ בחזרה לאובייקט תאריך
-        parsedLogs.forEach((log: any) => {
-          log.timestamp = new Date(log.timestamp);
-        });
-        logHistory = parsedLogs;
+    // טעינת לוגים קיימים
+    const loadLogs = () => {
+      const existingLogsStr = localStorage.getItem('nowpayments_logs');
+      if (existingLogsStr) {
+        try {
+          const existingLogs = JSON.parse(existingLogsStr);
+          setLogs(existingLogs || []);
+        } catch (error) {
+          console.error('Error parsing logs:', error);
+        }
       }
-    } catch (e) {
-      console.error('Error loading logs from localStorage', e);
-    }
-    
-    setLogs([...logHistory]);
-    
-    // מאזין לאירועי לוג חדשים
-    const handleLogUpdate = () => {
-      setLogs([...logHistory]);
+      setIsLoading(false);
     };
     
-    window.addEventListener('nowpayments_log_update', handleLogUpdate);
+    loadLogs();
+    
+    // מאזין לאירועי לוג חדשים
+    const handleNewLog = () => {
+      loadLogs();
+    };
+    
+    window.addEventListener('nowpayments_log', handleNewLog);
+    
     return () => {
-      window.removeEventListener('nowpayments_log_update', handleLogUpdate);
+      window.removeEventListener('nowpayments_log', handleNewLog);
     };
   }, []);
   
-  const clearLogs = () => {
-    logHistory = [];
-    localStorage.removeItem('nowpayments_logs');
-    setLogs([]);
-  };
-  
-  // מציג אייקון מתאים לסוג הלוג
-  const getLogIcon = (type: string) => {
-    switch (type) {
-      case 'error': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'info': return <CircleHelp className="h-4 w-4 text-blue-500" />;
-      case 'request': return <RefreshCw className="h-4 w-4 text-purple-500" />;
-      case 'response': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      default: return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  if (logs.length === 0) {
-    return (
-      <div className="text-sm p-2 bg-gray-50 rounded border text-center text-gray-500">
-        אין לוגים של תשלומי קריפטו זמינים
-      </div>
-    );
-  }
-
   return (
-    <div className="text-xs">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="font-semibold text-sm">לוגים של תשלומי קריפטו ({logs.length})</h4>
-        <Button size="sm" variant="outline" className="h-6 py-0 px-2" onClick={clearLogs}>
-          <Trash2 className="h-3 w-3 mr-1" /> נקה הכל
-        </Button>
-      </div>
-      
-      <div className="max-h-48 overflow-y-auto border rounded">
-        {logs.map((log, i) => (
-          <div 
-            key={i} 
-            className={`p-1 border-b text-sm ${
-              log.type === 'error' ? 'bg-red-50' : 
-              log.type === 'response' ? 'bg-green-50' : 
-              log.type === 'request' ? 'bg-purple-50' : 'bg-blue-50'
-            }`}
-          >
-            <div className="flex items-start">
-              <span className="mr-1 mt-1 flex-shrink-0">{getLogIcon(log.type)}</span>
-              <div>
-                <div className="flex items-center">
-                  <span className={`font-medium ${
-                    log.type === 'error' ? 'text-red-700' : 
-                    log.type === 'response' ? 'text-green-700' : 
-                    log.type === 'request' ? 'text-purple-700' : 'text-blue-700'
-                  }`}>
-                    {log.message}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-500">
-                  {log.timestamp.toLocaleTimeString()}
-                </div>
-                {log.data && (
-                  <div className="text-xs bg-white/70 rounded p-1 mt-1 overflow-x-auto max-w-full">
-                    <pre className="whitespace-pre-wrap break-words">
-                      {typeof log.data === 'string' 
-                        ? log.data 
-                        : JSON.stringify(log.data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </div>
+    <Card className="border-indigo-200 bg-indigo-50 mt-4">
+      <CardHeader className="bg-indigo-100 border-b border-indigo-200 pb-2">
+        <CardTitle className="text-sm font-medium text-indigo-800">לוגים של NOWPayments</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0 text-xs">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
           </div>
-        ))}
-      </div>
-    </div>
+        ) : logs.length > 0 ? (
+          <Accordion type="single" collapsible className="w-full">
+            {logs.slice().reverse().map((log, i) => (
+              <AccordionItem value={`log-${i}`} key={i} className="border-b border-indigo-100">
+                <AccordionTrigger className={`px-3 py-2 text-xs hover:no-underline ${
+                  log.type === 'error' ? 'text-red-700 font-medium' : 
+                  log.type === 'response' ? 'text-green-700' : 'text-indigo-700'
+                }`}>
+                  <div className="flex items-center w-full justify-between">
+                    <span className="truncate max-w-[250px]">{log.message}</span>
+                    <span className="text-xs opacity-60 font-mono">
+                      {new Date(log.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="p-2 bg-white">
+                    <div className="mb-1 text-gray-500">
+                      סוג: <span className="font-medium">{log.type}</span>
+                    </div>
+                    {log.data && (
+                      <pre className="bg-indigo-50 p-2 rounded whitespace-pre-wrap break-all text-[10px] max-h-40 overflow-auto font-mono">
+                        {typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : String(log.data)}
+                      </pre>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="py-6 text-center text-gray-500">
+            אין לוגים זמינים
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

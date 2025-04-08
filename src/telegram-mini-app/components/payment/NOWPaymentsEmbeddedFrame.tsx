@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { logNOWPaymentsOperation } from "../debug/NOWPaymentsLogs";
+import { Button } from "@/components/ui/button";
 
 interface NOWPaymentsEmbeddedFrameProps {
   invoiceId: string | null;
@@ -14,12 +15,26 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
 }) => {
   const [iframeLoading, setIframeLoading] = useState(true);
   const [iframeError, setIframeError] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   
   useEffect(() => {
     if (invoiceId) {
+      console.log("[NOWPaymentsEmbeddedFrame] Rendering frame with invoiceId:", invoiceId);
       logNOWPaymentsOperation('info', `מציג מסגרת תשלום עם מזהה: ${invoiceId}`);
       setIframeLoading(true);
       setIframeError(null);
+      
+      // בניית URL תשלום
+      let url;
+      if (invoiceId.startsWith('mock')) {
+        url = `https://nowpayments.io/payment/?iid=${invoiceId}`;
+      } else if (invoiceId.includes('iid=')) {
+        url = `https://nowpayments.io/payment/?${invoiceId}`;
+      } else {
+        url = `https://nowpayments.io/payment/?iid=${invoiceId}`;
+      }
+      
+      setPaymentUrl(url);
       
       // מאפס את מצב השגיאה אחרי 15 שניות אם האייפריים לא נטען
       const timer = setTimeout(() => {
@@ -39,12 +54,14 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
   }, [invoiceId]);
 
   const handleIframeLoad = () => {
+    console.log("[NOWPaymentsEmbeddedFrame] iframe loaded successfully");
     logNOWPaymentsOperation('info', `מסגרת התשלום נטענה בהצלחה עבור: ${invoiceId}`);
     setIframeLoading(false);
     setIframeError(null);
   };
   
   const handleIframeError = () => {
+    console.error("[NOWPaymentsEmbeddedFrame] iframe failed to load");
     const errorMsg = "שגיאה בטעינת מסגרת התשלום";
     logNOWPaymentsOperation('error', errorMsg, { invoiceId });
     setIframeLoading(false);
@@ -53,7 +70,7 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[500px] bg-gray-50 border rounded-lg">
+      <div className="flex items-center justify-center h-[300px] bg-gray-50 border rounded-lg">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500 mb-2" />
           <p className="text-gray-500">יוצר חשבונית תשלום...</p>
@@ -83,7 +100,7 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
     <div className="w-full overflow-hidden rounded-lg border border-amber-200 bg-white">
       <div className="p-3 bg-amber-50 border-b border-amber-200">
         <h3 className="font-medium text-amber-800">השלם את תשלום הקריפטו</h3>
-        <p className="text-sm text-amber-700">השלם את התשלום שלך בממשק המאובטח למטה</p>
+        <p className="text-sm text-amber-700">השלם את התשלום שלך בממשק המאובטח</p>
       </div>
       
       {iframeLoading && (
@@ -98,6 +115,20 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
           <div>
             <p className="font-medium">שגיאה בהצגת ממשק התשלום</p>
             <p className="text-sm mt-1">{iframeError}</p>
+            
+            {paymentUrl && (
+              <div className="mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-white text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => window.open(paymentUrl, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" /> פתח בחלון חדש
+                </Button>
+              </div>
+            )}
+            
             <p className="text-xs mt-3">מזהה חשבונית: {invoiceId}</p>
             <p className="text-xs">נסה לפתוח את העמוד בדפדפן חיצוני או צור קשר עם התמיכה.</p>
           </div>
@@ -108,7 +139,7 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
         <iframe 
           src={iframeUrl}
           width="100%" 
-          height="600" 
+          height="500" 
           frameBorder="0" 
           scrolling="no"
           className="mx-auto block"

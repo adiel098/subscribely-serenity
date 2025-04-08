@@ -109,10 +109,17 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
           body: JSON.stringify(payload)
         });
         
+        // מדפיס את הסטטוס והתוכן של התשובה לצרכי דיבאג
+        console.log('[NOWPayments] Status:', response.status, response.statusText);
+        
         // התמודדות עם תשובות שאינן JSON
         const contentType = response.headers.get('content-type');
+        console.log('[NOWPayments] Content-Type:', contentType);
+        
         if (!contentType || !contentType.includes('application/json')) {
           const text = await response.text();
+          console.log('[NOWPayments] Non-JSON response:', text);
+          
           const errorMsg = `NOWPayments API החזיר תוכן שאינו JSON: ${response.status} ${response.statusText}`;
           logNOWPaymentsOperation(
             'error',
@@ -123,6 +130,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         }
         
         const data = await response.json();
+        console.log('[NOWPayments] Response data:', data);
         
         // רישום התשובה
         logNOWPaymentsOperation(
@@ -139,21 +147,45 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         
         handleSuccessResponse(data);
       } catch (requestError) {
+        console.error("[NOWPayments] Error details:", requestError);
+        
         // שגיאת רשת או פארסינג
-        console.error("שגיאת בקשת NOWPayments:", requestError);
         logNOWPaymentsOperation(
           'error',
           `שגיאת רשת בעת יצירת חשבונית: ${requestError instanceof Error ? requestError.message : String(requestError)}`,
           { requestError }
         );
         
-        // מנסה שיטה חלופית - API תשלום ישיר
+        // מנסה שיטה חלופית - יצירת קישור ישירות
         try {
+          console.log("[NOWPayments] Falling back to direct payment creation");
           logNOWPaymentsOperation(
             'request', 
             'מנסה ליצור תשלום ישיר כמוצא אחרון',
             { endpoint: 'https://api.nowpayments.io/v1/payment' }
           );
+          
+          // במצב פיתוח יוצרים URL מזויף לדמות תשלום מוצלח
+          if (process.env.NODE_ENV === 'development') {
+            const mockPaymentData = {
+              payment_id: `mockpayment-${Date.now()}`,
+              payment_status: 'waiting',
+              pay_address: '1234mock5678address',
+              payment_url: `https://demo.nowpayments.io/payment?id=mock${Date.now()}`,
+              price_amount: amount,
+              price_currency: 'usd'
+            };
+            
+            handleSuccessResponse({
+              id: mockPaymentData.payment_id,
+              invoice_url: mockPaymentData.payment_url,
+              payment_id: mockPaymentData.payment_id,
+              order_id: finalOrderId,
+              price_amount: amount,
+              price_currency: 'usd',
+            });
+            return;
+          }
           
           const paymentResponse = await fetch('https://api.nowpayments.io/v1/payment', {
             method: 'POST',
@@ -168,12 +200,17 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
             })
           });
           
+          console.log('[NOWPayments] Direct payment status:', paymentResponse.status);
+          
           if (!paymentResponse.ok) {
             const errorText = await paymentResponse.text();
+            console.error('[NOWPayments] Direct payment error:', errorText);
             throw new Error(`שגיאת API תשלום: ${paymentResponse.status} ${paymentResponse.statusText} - ${errorText}`);
           }
           
           const paymentData = await paymentResponse.json();
+          console.log('[NOWPayments] Direct payment response:', paymentData);
+          
           logNOWPaymentsOperation('response', 'קיבלנו תשובת תשלום ישיר', paymentData);
           
           // מטפל בתשובת תשלום
@@ -190,8 +227,9 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
             throw new Error('חסר URL לתשלום בתשובה');
           }
         } catch (paymentError) {
+          console.error("[NOWPayments] Fallback payment error:", paymentError);
+          
           // שתי השיטות נכשלו
-          console.error("שגיאת תשלום ישיר:", paymentError);
           const errorMsg = `נכשלו כל ניסיונות התשלום: ${paymentError instanceof Error ? paymentError.message : String(paymentError)}`;
           logNOWPaymentsOperation('error', errorMsg);
           
@@ -224,6 +262,8 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
   const handleSuccessResponse = (data: any) => {
     if (data.invoice_url || data.payment_url) {
       const url = data.invoice_url || data.payment_url;
+      console.log('[NOWPayments] Success - payment URL:', url);
+      
       logNOWPaymentsOperation(
         'response', 
         `URL לתשלום התקבל: ${url}`, 
@@ -235,6 +275,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
       // חילוץ מזהה חשבונית מה-URL או שימוש במזהה ישירות
       const invoiceIdFromUrl = url.split('iid=')[1]?.split('&')[0] || url.split('payment=')[1]?.split('&')[0];
       const finalInvoiceId = invoiceIdFromUrl || data.id || data.payment_id;
+      console.log('[NOWPayments] Invoice/Payment ID:', finalInvoiceId);
       
       setInvoiceId(finalInvoiceId);
       onSuccess?.(data);
@@ -247,8 +288,15 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         timestamp: Date.now(),
         paymentUrl: url
       }));
+      
+      // פתיחת חלון חדש עם הקישור לתשלום
+      if (url) {
+        console.log('[NOWPayments] Opening payment URL in new window:', url);
+        window.open(url, '_blank');
+      }
     } else {
       const errorMessage = 'לא התקבלה כתובת URL לחשבונית';
+      console.error('[NOWPayments] Error - no payment URL in response');
       logNOWPaymentsOperation('error', errorMessage, data);
       setErrorMessage(errorMessage);
       onError?.(errorMessage);
@@ -295,6 +343,13 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         </Button>
       ) : (
         <div className="space-y-3">
+          {paymentUrl && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+              <p className="text-green-800 font-medium">קישור לתשלום נוצר בהצלחה!</p>
+              <p className="text-sm text-green-700 mt-1">ניתן לבצע את התשלום בחלון שנפתח או באמצעות הכפתור למטה.</p>
+            </div>
+          )}
+          
           {/* מציג את האייפריים המוטמע לתשלום */}
           <NOWPaymentsEmbeddedFrame 
             invoiceId={invoiceId} 

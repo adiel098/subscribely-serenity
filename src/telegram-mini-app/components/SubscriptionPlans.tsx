@@ -135,7 +135,6 @@ export const SubscriptionPlans = ({
                       <span>{plan.trial_days}-day trial</span>
                     </Badge>
                   )}
-                  {/* Removed the Recommended badge for premium plans */}
                   {isSelected && !isActive && (
                     <Badge variant="outline" className="text-xs py-0 px-1.5 border-indigo-400 text-indigo-700 bg-indigo-100/50">
                       Selected
@@ -171,10 +170,6 @@ export const SubscriptionPlans = ({
             
             {plan.features && plan.features.length > 0 && (
               <div className="mt-1 bg-white/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/50">
-                <h4 className="text-xs font-medium text-indigo-700 mb-1 flex items-center">
-                  <Star className="h-3 w-3 text-amber-500 mr-1" />
-                  Features:
-                </h4>
                 <ul className="space-y-1">
                   {plan.features.map((feature, index) => (
                     <li 

@@ -2,7 +2,17 @@
 
 
 
+
 # Development Log
+
+## 2025-04-08 - Removed "Features:" Label from Subscription Plans
+
+- Removed the "Features:" text and Star icon from the features section in subscription plans
+- Kept all feature items and their individual icons
+- Maintained all existing styling and functionality
+- Simplified the visual presentation of subscription plan cards
+
+Key issue fixed: Streamlined subscription plan display by removing redundant "Features:" label.
 
 ## 2025-04-08 - Enhanced Community Header Styling in Mini App
 
@@ -133,6 +143,7 @@ Key issue fixed: Resolved module not found error for communityService.ts in tele
 - Fixed debug components to display helpful error messages when configuration is missing
 
 Key issue fixed: NOWPayments API keys are now correctly fetched from the payment_methods table using the owner_id of the community owner.
+
 
 
 

@@ -64,47 +64,6 @@ export const SubscriptionPlanCard = ({
 
   return (
     <Card className="border shadow-sm hover:shadow-md transition-shadow h-full flex flex-col relative group">
-      {/* Action buttons in top right corner */}
-      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(plan)}
-                className="h-7 w-7 p-0 rounded-full bg-white text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
-              >
-                <EditIcon className="h-3.5 w-3.5" />
-                <span className="sr-only">Edit plan</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Edit plan</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(plan.id)}
-                className="h-7 w-7 p-0 rounded-full bg-white text-muted-foreground hover:text-destructive hover:bg-red-50"
-              >
-                <Trash2Icon className="h-3.5 w-3.5" />
-                <span className="sr-only">Delete plan</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Delete plan</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
       <CardHeader className="pb-2 sm:pb-4 pt-2 sm:pt-6 px-2 sm:px-6">
         <div className="flex justify-between items-start gap-1">
           <div>
@@ -156,11 +115,95 @@ export const SubscriptionPlanCard = ({
                 </li>
               ))}
             </ul>
+            
+            {/* Action buttons positioned at the bottom-right */}
+            <div className="mt-auto pt-3 flex justify-end gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(plan)}
+                      className="h-7 w-7 p-0 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 border-indigo-200"
+                    >
+                      <EditIcon className="h-3.5 w-3.5" />
+                      <span className="sr-only">Edit plan</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDelete(plan.id)}
+                      className="h-7 w-7 p-0 rounded-full bg-white text-red-500 hover:bg-red-50 border-red-200"
+                    >
+                      <Trash2Icon className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete plan</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-[10px] sm:text-sm italic">
-            No features specified
-          </p>
+          <div className="flex flex-col flex-1">
+            <p className="text-muted-foreground text-[10px] sm:text-sm italic">
+              No features specified
+            </p>
+            
+            {/* Action buttons positioned at the bottom-right */}
+            <div className="mt-auto pt-3 flex justify-end gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(plan)}
+                      className="h-7 w-7 p-0 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 border-indigo-200"
+                    >
+                      <EditIcon className="h-3.5 w-3.5" />
+                      <span className="sr-only">Edit plan</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDelete(plan.id)}
+                      className="h-7 w-7 p-0 rounded-full bg-white text-red-500 hover:bg-red-50 border-red-200"
+                    >
+                      <Trash2Icon className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete plan</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

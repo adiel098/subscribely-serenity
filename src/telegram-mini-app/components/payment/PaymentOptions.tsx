@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
 import { motion } from "framer-motion";
 import { NOWPaymentsButton } from "./NOWPaymentsButton";
+import { NOWPaymentsLogs } from "../debug/NOWPaymentsLogs";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle, User } from "lucide-react";
 
@@ -58,7 +58,6 @@ export const PaymentOptions = ({
           setCommunityOwnerId(communityData.owner_id);
           console.log("[PaymentOptions] Found community owner ID:", communityData.owner_id);
           
-          // Updated query: explicitly checking for 'crypto' provider (not 'nowpayments')
           const { data, error } = await supabase
             .from('payment_methods')
             .select('config')
@@ -71,7 +70,6 @@ export const PaymentOptions = ({
             throw error;
           }
           
-          // Log the retrieved data for debugging
           console.log("[PaymentOptions] Retrieved payment method:", data);
           
           if (!data || !data.config || !data.config.api_key) {
@@ -147,8 +145,16 @@ export const PaymentOptions = ({
     checkStoredTransaction();
   }, [onPaymentSuccess]);
 
+  const getNOWPaymentsOrderId = () => {
+    return `${communityId}_${Date.now()}`;
+  };
+
   return (
     <div className="space-y-8">
+      {(process.env.NODE_ENV === 'development' || new URLSearchParams(window.location.search).get('debug') === 'true') && (
+        <NOWPaymentsLogs />
+      )}
+      
       <motion.div
         className="grid grid-cols-3 gap-4"
         variants={container}
@@ -237,7 +243,7 @@ export const PaymentOptions = ({
               amount={price}
               apiKey={nowPaymentsConfig?.api_key || ''}
               ipnCallbackUrl={nowPaymentsConfig?.ipn_callback_url}
-              orderId={`telegram-${communityId}-${Date.now()}`}
+              orderId={getNOWPaymentsOrderId()}
               description={`Telegram Group Subscription - $${price}`}
               onSuccess={handleNOWPaymentsSuccess}
               onError={(error) => {

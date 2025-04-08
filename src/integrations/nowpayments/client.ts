@@ -40,6 +40,15 @@ export class NOWPaymentsClient {
    * Creates a new payment using the NOWPayments API
    */
   async createPayment(params: CreatePaymentParams): Promise<NOWPaymentsResponse> {
+    // Log details of the request for debugging
+    console.log('NOWPayments createPayment params:', {
+      price_amount: params.priceAmount,
+      price_currency: params.priceCurrency,
+      order_id: params.orderId,
+      order_description: params.orderDescription,
+      ipn_callback_url: params.ipnCallbackUrl
+    });
+
     // In development or without API key, return mock data
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
@@ -79,21 +88,26 @@ export class NOWPaymentsClient {
         has_ipn_callback_url: !!params.ipnCallbackUrl
       });
       
+      const requestBody = {
+        price_amount: params.priceAmount,
+        price_currency: params.priceCurrency,
+        pay_currency: 'btc', // Default to BTC, can be made configurable
+        order_id: params.orderId,
+        order_description: params.orderDescription,
+        ipn_callback_url: params.ipnCallbackUrl,
+        success_url: params.successUrl || window.location.origin + '/payment-success',
+        cancel_url: params.cancelUrl || window.location.origin + '/payment-cancel'
+      };
+      
+      console.log('Final request body to NOWPayments:', JSON.stringify(requestBody, null, 2));
+      
       const response = await fetch(`${this.baseUrl}/payment`, {
         method: 'POST',
         headers: {
           'x-api-key': this.apiKey,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          price_amount: params.priceAmount,
-          price_currency: params.priceCurrency,
-          order_id: params.orderId,
-          order_description: params.orderDescription,
-          ipn_callback_url: params.ipnCallbackUrl,
-          success_url: params.successUrl || window.location.origin + '/payment-success',
-          cancel_url: params.cancelUrl || window.location.origin + '/payment-cancel'
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -110,6 +124,13 @@ export class NOWPaymentsClient {
 
       const data = await response.json();
       console.log('NOWPayments API response:', data);
+      
+      // Verify we got a payment_url in the response
+      if (!data.payment_url) {
+        console.error('NOWPayments response missing payment_url:', data);
+        throw new Error('No payment URL received in response');
+      }
+      
       return data;
     } catch (error) {
       console.error('NOWPayments API error:', error);

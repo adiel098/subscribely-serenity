@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from "react";
 import { Loader2, AlertCircle, ExternalLink } from "lucide-react";
-import { logNOWPaymentsOperation } from "../debug/NOWPaymentsLogs";
 import { Button } from "@/components/ui/button";
 
 interface NOWPaymentsEmbeddedFrameProps {
@@ -19,33 +17,14 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
   
   useEffect(() => {
     if (invoiceId) {
-      console.log("[NOWPaymentsEmbeddedFrame] Rendering frame with invoiceId:", invoiceId);
-      logNOWPaymentsOperation('info', `מציג מסגרת תשלום עם מזהה: ${invoiceId}`);
       setIframeLoading(true);
       setIframeError(null);
+      setPaymentUrl(invoiceId);
       
-      // בניית URL תשלום
-      let url;
-      if (invoiceId.startsWith('mock')) {
-        url = `https://nowpayments.io/payment/?iid=${invoiceId}`;
-      } else if (invoiceId.includes('iid=')) {
-        url = `https://nowpayments.io/payment/?${invoiceId}`;
-      } else {
-        url = `https://nowpayments.io/payment/?iid=${invoiceId}`;
-      }
-      
-      setPaymentUrl(url);
-      
-      // מאפס את מצב השגיאה אחרי 15 שניות אם האייפריים לא נטען
       const timer = setTimeout(() => {
         if (iframeLoading) {
-          setIframeError("האייפריים לא נטען תוך 15 שניות. ייתכן שיש חסימה של חוסם תוכן או בעיית חיבור.");
+          setIframeError("לא ניתן לטעון את דף התשלום. אנא נסה שוב או פתח בחלון חדש.");
           setIframeLoading(false);
-          logNOWPaymentsOperation(
-            'error', 
-            'תקלה בטעינת האייפריים - תם הזמן המוקצב',
-            { invoiceId }
-          );
         }
       }, 15000);
       
@@ -54,26 +33,21 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
   }, [invoiceId]);
 
   const handleIframeLoad = () => {
-    console.log("[NOWPaymentsEmbeddedFrame] iframe loaded successfully");
-    logNOWPaymentsOperation('info', `מסגרת התשלום נטענה בהצלחה עבור: ${invoiceId}`);
     setIframeLoading(false);
     setIframeError(null);
   };
   
   const handleIframeError = () => {
-    console.error("[NOWPaymentsEmbeddedFrame] iframe failed to load");
-    const errorMsg = "שגיאה בטעינת מסגרת התשלום";
-    logNOWPaymentsOperation('error', errorMsg, { invoiceId });
     setIframeLoading(false);
-    setIframeError(errorMsg);
+    setIframeError("שגיאה בטעינת דף התשלום");
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[300px] bg-gray-50 border rounded-lg">
+      <div className="flex items-center justify-center h-[300px] bg-gray-50 rounded-lg border border-gray-200">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500 mb-2" />
-          <p className="text-gray-500">יוצר חשבונית תשלום...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary mb-2" />
+          <p className="text-gray-500">מכין את דף התשלום...</p>
         </div>
       </div>
     );
@@ -83,77 +57,59 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
     return null;
   }
 
-  // בדיקה אם מדובר במזהה תשלום או חשבונית ובניית URL בהתאם
-  let iframeUrl;
-  if (invoiceId.startsWith('mock')) {
-    // במצב פיתוח, משתמשים בדף דמה
-    iframeUrl = `https://nowpayments.io/embeds/payment-widget?iid=${invoiceId}`;
-  } else if (invoiceId.includes('iid=')) {
-    // אם ה-ID כבר מכיל את הפרמטר iid
-    iframeUrl = `https://nowpayments.io/embeds/payment-widget?${invoiceId}`;
-  } else {
-    // אחרת מניחים שזהו מזהה חשבונית רגיל
-    iframeUrl = `https://nowpayments.io/embeds/payment-widget?iid=${invoiceId}`;
-  }
-
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-amber-200 bg-white">
-      <div className="p-3 bg-amber-50 border-b border-amber-200">
-        <h3 className="font-medium text-amber-800">השלם את תשלום הקריפטו</h3>
-        <p className="text-sm text-amber-700">השלם את התשלום שלך בממשק המאובטח</p>
+    <div className="w-full bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+        <h3 className="text-base font-semibold text-gray-900 mb-1">
+          תשלום באמצעות קריפטו
+        </h3>
+        <p className="text-sm text-gray-600">
+          בחר את המטבע המועדף עליך לתשלום מבין מגוון האפשרויות
+        </p>
       </div>
       
-      {iframeLoading && (
-        <div className="flex items-center justify-center h-[200px]">
-          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-        </div>
-      )}
-      
-      {iframeError && (
-        <div className="p-4 bg-red-50 text-red-800 flex items-start">
-          <AlertCircle className="h-5 w-5 mr-2 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">שגיאה בהצגת ממשק התשלום</p>
-            <p className="text-sm mt-1">{iframeError}</p>
+      <div className="relative">
+        {iframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
+            <div className="text-center">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary mb-2" />
+              <p className="text-sm text-gray-600">טוען את אפשרויות התשלום...</p>
+            </div>
+          </div>
+        )}
+        
+        {iframeError ? (
+          <div className="p-6 text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-3" />
+            <h4 className="text-base font-medium text-gray-900 mb-2">{iframeError}</h4>
             
             {paymentUrl && (
-              <div className="mt-3">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-white text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => window.open(paymentUrl, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-1" /> פתח בחלון חדש
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="mt-4 w-full sm:w-auto"
+                onClick={() => window.open(paymentUrl, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                המשך לדף התשלום
+              </Button>
             )}
-            
-            <p className="text-xs mt-3">מזהה חשבונית: {invoiceId}</p>
-            <p className="text-xs">נסה לפתוח את העמוד בדפדפן חיצוני או צור קשר עם התמיכה.</p>
           </div>
-        </div>
-      )}
-      
-      <div className={`flex items-center justify-center w-full ${iframeLoading ? 'hidden' : 'block'}`}>
-        <iframe 
-          src={iframeUrl}
-          width="100%" 
-          height="500" 
-          frameBorder="0" 
-          scrolling="no"
-          className="mx-auto block"
-          style={{ overflowY: 'hidden', maxWidth: '420px' }}
-          title="NOWPayments checkout"
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
-        >
-          לא ניתן לטעון את ממשק התשלום
-        </iframe>
+        ) : (
+          <iframe
+            src={invoiceId}
+            className="w-full h-[600px] border-0"
+            onLoad={handleIframeLoad}
+            onError={handleIframeError}
+            allow="payment"
+          />
+        )}
       </div>
       
-      <div className="p-2 bg-amber-50 text-center text-xs text-amber-700">
-        מנוע התשלום מופעל על ידי NOWPayments - מאובטח ומוגן
+      <div className="p-3 bg-gray-50 border-t text-center">
+        <p className="text-xs text-gray-500">
+          מאובטח על ידי NOWPayments - פתרון תשלומי קריפטו מוביל
+        </p>
       </div>
     </div>
   );

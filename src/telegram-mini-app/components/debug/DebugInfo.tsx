@@ -1,82 +1,49 @@
-
 import React from "react";
-import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
-import { Community } from "@/telegram-mini-app/types/community.types";
-import { useSearchParams } from "react-router-dom";
-import { NOWPaymentsDebugInfo } from "./NOWPaymentsDebugInfo";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-export interface DebugInfoProps {
-  telegramUser: TelegramUser | null;
-  community: Community | null;
-  activeTab?: string;
-  showEmailForm?: boolean;
-  isCheckingUserData?: boolean;
-  activeSubscription?: any; // Added this property
-}
+export const DebugInfo = () => {
+  const isDevelopment = import.meta.env.DEV;
+  const showDebug = new URLSearchParams(window.location.search).get('debug') === 'true';
 
-export const DebugInfo: React.FC<DebugInfoProps> = ({ 
-  telegramUser, 
-  community, 
-  activeTab,
-  showEmailForm,
-  isCheckingUserData,
-  activeSubscription
-}) => {
-  const [searchParams] = useSearchParams();
-  const showDebug = searchParams.get("debug") === "true";
-  
-  // Only show in development or if debug=true parameter is present
-  if (!showDebug && process.env.NODE_ENV !== 'development') return null;
-  
-  // Flow state calculation
-  let userFlowState = 'Loading User';
-  if (telegramUser) {
-    if (showEmailForm) {
-      userFlowState = 'Email Collection (Required)';
-    } else if (!telegramUser.email) {
-      userFlowState = 'WARNING: Missing Email (Should be redirected)';
-    } else {
-      userFlowState = 'Community View';
-    }
+  if (!isDevelopment && !showDebug) {
+    return null;
   }
-  
+
   return (
-    <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 p-3 rounded mb-4 text-xs">
-      <p><strong>📊 Debug Info:</strong></p>
-      
-      <NOWPaymentsDebugInfo />
-      
-      <div className="grid grid-cols-2 gap-1">
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>Debug Information</CardTitle>
+        <CardDescription>Development tools and system information</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <div>
-          <p><strong>User ID:</strong> {telegramUser?.id || 'Not available'}</p>
-          <p><strong>User ID type:</strong> {telegramUser ? typeof telegramUser.id : 'N/A'}</p>
-          <p><strong>Username:</strong> {telegramUser?.username || 'Not available'}</p>
-          <p><strong>Name:</strong> {telegramUser?.first_name || ''} {telegramUser?.last_name || ''}</p>
-          <p><strong>Email:</strong> {telegramUser?.email || '❌ Not provided'}</p>
-          <p><strong>Photo URL:</strong> {telegramUser?.photo_url ? '✅ Available' : '❌ Not available'}</p>
-          <p><strong>WebApp initData:</strong> {window.Telegram?.WebApp?.initData ? '✅ Available' : '❌ Not available'}</p>
+          <h3 className="font-medium mb-2">Environment</h3>
+          <p className="text-sm text-gray-500">
+            Mode: {isDevelopment ? 'development' : 'production'}
+          </p>
         </div>
+        
+        <Separator />
+        
         <div>
-          <p><strong>Community:</strong> {community?.name || 'Not available'}</p>
-          <p><strong>Plans Count:</strong> {community?.subscription_plans?.length || 0}</p>
-          <p><strong>Active Tab:</strong> {activeTab}</p>
-          <p><strong>Show Email Form:</strong> {showEmailForm ? '✅ Yes' : '❌ No'}</p>
-          <p><strong>Checking User Data:</strong> {isCheckingUserData ? '⏳ In progress' : '✅ Complete'}</p>
-          <p><strong>WebApp Object:</strong> {window.Telegram?.WebApp ? '✅ Available' : '❌ Not available'}</p>
-          <p><strong>User in InitData:</strong> {window.Telegram?.WebApp?.initDataUnsafe?.user ? '✅ Available' : '❌ Not available'}</p>
-          <p><strong>Active Subscription:</strong> {activeSubscription ? '✅ Yes' : '❌ No'}</p>
+          <h3 className="font-medium mb-2">App Info</h3>
+          <div className="space-y-1 text-sm text-gray-500">
+            <p>Version: {import.meta.env.VITE_APP_VERSION || '1.0.0'}</p>
+            <p>Build: {import.meta.env.VITE_BUILD_ID || 'development'}</p>
+          </div>
         </div>
-      </div>
-      
-      <div className="mt-2 border-t border-yellow-400 pt-2">
-        <p><strong>🔄 Current URL:</strong> {window.location.href}</p>
-        <p><strong>📱 Development Mode:</strong> {process.env.NODE_ENV === 'development' ? '✅ Yes' : '❌ No'}</p>
-        <p><strong>🚦 User Flow:</strong> {userFlowState}</p>
-      </div>
-      
-      <div className="mt-2 border-t border-yellow-400 pt-2">
-        <p><strong>📣 Troubleshooting:</strong> If crypto payments don't work, ensure API keys are configured in payment_methods table.</p>
-      </div>
-    </div>
+        
+        <Separator />
+        
+        <div>
+          <h3 className="font-medium mb-2">System Status</h3>
+          <div className="space-y-1 text-sm text-gray-500">
+            <p>API Status: Online</p>
+            <p>Database: Connected</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

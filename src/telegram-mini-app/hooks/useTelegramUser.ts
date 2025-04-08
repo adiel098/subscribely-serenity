@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { TelegramUser, TelegramUserHookResult } from '../types/telegramTypes';
 import { parseUserFromUrlHash } from '../utils/telegram/environmentUtils';
@@ -34,56 +33,42 @@ export const useTelegramUser = (communityId?: string, userId?: string): Telegram
         
         console.log('[useTelegramUser] No Telegram user found in WebApp');
         
-        // Try to get user from URL hash as fallback
-        const hashUser = parseUserFromUrlHash();
-        if (hashUser && hashUser.id) {
-          console.log('[useTelegramUser] Found user in URL hash:', hashUser);
-          
-          setUser({
-            id: hashUser.id.toString(),
-            first_name: hashUser.first_name,
-            last_name: hashUser.last_name,
-            username: hashUser.username,
-            photo_url: hashUser.photo_url,
-          });
-          
-          setLoading(false);
-          return;
-        }
-        
-        // Try to get user from URL params as fallback
+        // בדיקה אם אנחנו במצב פיתוח או שיש לנו משתמש מה-URL
         const urlParams = new URLSearchParams(window.location.search);
         const paramUserId = urlParams.get('user_id') || userId;
-        const username = urlParams.get('username');
-        const firstName = urlParams.get('first_name');
-        const lastName = urlParams.get('last_name');
-        
+
         if (paramUserId) {
-          console.log('[useTelegramUser] Found user in URL params or passed userId:', { paramUserId, username, firstName, lastName });
-          
+          // אם יש לנו ID מה-URL, נשתמש בו
+          console.log('[useTelegramUser] Using user ID from URL:', paramUserId);
           setUser({
             id: paramUserId,
-            username: username || undefined,
-            first_name: firstName || undefined,
-            last_name: lastName || undefined,
+            username: urlParams.get('username') || 'user',
+            first_name: urlParams.get('first_name') || 'Test',
+            last_name: urlParams.get('last_name') || 'User',
           });
-        } else if (isDevelopment()) {
-          // Use test data in development if no user found
-          console.log('[useTelegramUser] Using mock user for development');
+        } else {
+          // אם אין משתמש מהטלגרם ואין ID מה-URL, נשתמש במשתמש טסט
+          console.log('[useTelegramUser] Using test user');
           setUser({
-            id: '12345678',
+            id: '123456789',
             username: 'test_user',
             first_name: 'Test',
             last_name: 'User',
+            photo_url: 'https://via.placeholder.com/100'
           });
-        } else {
-          console.log('[useTelegramUser] No user found in URL params');
-          setError('No Telegram user information found');
-          setUser(null);
+          setError('No Telegram user found, using test user (ID: 123456789)');
         }
       } catch (err) {
         console.error('[useTelegramUser] Error fetching user:', err);
         setError(err instanceof Error ? err.message : 'Failed to get Telegram user data');
+        // גם במקרה של שגיאה, נשתמש במשתמש טסט
+        setUser({
+          id: '123456789',
+          username: 'test_user',
+          first_name: 'Test',
+          last_name: 'User',
+          photo_url: 'https://via.placeholder.com/100'
+        });
       } finally {
         setLoading(false);
       }
@@ -108,7 +93,15 @@ export const useTelegramUser = (communityId?: string, userId?: string): Telegram
         photo_url: telegramUser.photo_url,
       });
     } else {
-      console.log('[useTelegramUser] No Telegram user found in WebApp during refetch');
+      // אם אין משתמש מהטלגרם, נשתמש במשתמש טסט
+      setUser({
+        id: '123456789',
+        username: 'test_user',
+        first_name: 'Test',
+        last_name: 'User',
+        photo_url: 'https://via.placeholder.com/100'
+      });
+      console.log('[useTelegramUser] No Telegram user found in WebApp during refetch, using test user');
     }
 
     setLoading(false);

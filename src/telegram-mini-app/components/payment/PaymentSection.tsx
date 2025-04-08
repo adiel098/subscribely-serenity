@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { PaymentMethods } from "../PaymentMethods";
 import { CouponInput } from "../coupon/CouponInput";
 import { PricingSummary } from "./PricingSummary";
 import { CheckCouponResult } from "@/group_owners/hooks/types/coupon.types";
-import { Card } from "@/components/ui/card";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { useApplyCoupon } from "@/group_owners/hooks/coupon/useApplyCoupon";
 import { CreditCard, Sparkles } from "lucide-react";

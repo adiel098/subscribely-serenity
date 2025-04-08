@@ -169,7 +169,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
         <div className="space-y-1 text-xs">
           {communityOwner && (
             <div className="text-gray-600">
-              Community Owner ID: <span className="font-mono text-xs">{communityOwner}</span>
+              Community Owner ID: <span className="font-mono text-xs bg-gray-200 px-1 rounded">{communityOwner}</span>
             </div>
           )}
           
@@ -200,6 +200,11 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
                   <div key={i} className="text-gray-600">{i+1}. {step}</div>
                 ))}
               </div>
+              {debugInfo.ownerId && (
+                <div className="mt-1 text-indigo-700 bg-indigo-50 p-1 rounded border border-indigo-100">
+                  <span className="font-semibold">Owner ID:</span> {debugInfo.ownerId}
+                </div>
+              )}
             </div>
           )}
           

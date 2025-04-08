@@ -167,9 +167,9 @@ export const SubscriptionPlans = ({
                       Active
                     </Badge>
                     
-                    {/* Circle with checkmark on the right side of the badge */}
+                    {/* Circle with checkmark moved to the top-right corner */}
                     <div 
-                      className="absolute -top-2 left-[70px] bg-white rounded-full p-0.5 border-2 border-white z-20"
+                      className="absolute -top-2 -right-1 bg-white rounded-full p-0.5 border-2 border-white z-20"
                       style={{
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
                       }}

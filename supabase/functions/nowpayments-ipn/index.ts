@@ -1,147 +1,181 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import { corsHeaders } from "../_shared/cors.ts";
+import crypto from "https://esm.sh/crypto@1.0.1";
+
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Extract request body
-    const requestBody = await req.json();
-    console.log("NOWPayments IPN webhook received:", requestBody);
-
-    // Basic validation
-    if (!requestBody.payment_id || !requestBody.payment_status) {
+    let payload;
+    try {
+      payload = await req.json();
+    } catch (error) {
+      console.error("Error parsing request body:", error);
       return new Response(
-        JSON.stringify({ error: "Invalid IPN notification format" }),
-        { 
-          status: 400,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        }
+        JSON.stringify({
+          error: "Invalid request body",
+          details: error.message,
+        }),
+        { headers: corsHeaders, status: 400 }
       );
     }
 
-    // Find the matching payment in our database
-    const { data: paymentData, error: paymentError } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('external_id', requestBody.payment_id)
-      .maybeSingle();
+    console.log("NOWPayments IPN webhook received:", payload);
 
-    if (paymentError) {
-      console.error("Error fetching payment:", paymentError);
+    const signature = req.headers.get('x-nowpayments-sig');
+    if (!signature) {
+      console.error("Missing signature header in NOWPayments request");
       return new Response(
-        JSON.stringify({ error: "Database error", details: paymentError.message }),
-        { 
-          status: 500,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        }
+        JSON.stringify({ error: 'Missing signature header' }),
+        { headers: corsHeaders, status: 401 }
       );
     }
 
-    if (!paymentData) {
-      console.warn(`Payment with external_id ${requestBody.payment_id} not found in database`);
+    // Get the order ID and split it to extract community ID and user ID
+    const orderId = payload.order_id;
+    if (!orderId) {
+      console.error("Missing order ID in NOWPayments request");
       return new Response(
-        JSON.stringify({ error: "Payment not found" }),
-        { 
-          status: 404,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        }
+        JSON.stringify({ error: 'Missing order ID' }),
+        { headers: corsHeaders, status: 400 }
       );
     }
-
-    // Update payment status based on NOWPayments status
-    let status = 'pending';
-    if (requestBody.payment_status === 'confirmed' || 
-        requestBody.payment_status === 'finished') {
-      status = 'completed';
-    } else if (requestBody.payment_status === 'failed' || 
-               requestBody.payment_status === 'expired') {
-      status = 'failed';
-    }
-
-    // Update payment in database
-    const { data: updatedPayment, error: updateError } = await supabase
-      .from('payments')
-      .update({
-        status,
-        metadata: {
-          ...paymentData.metadata,
-          nowpayments: {
-            ...paymentData.metadata?.nowpayments,
-            ipn_received: true,
-            ipn_data: requestBody,
-            updated_at: new Date().toISOString()
-          }
-        }
-      })
-      .eq('id', paymentData.id)
-      .select();
-
-    if (updateError) {
-      console.error("Error updating payment:", updateError);
+    
+    // Split the order ID format: {communityId}_{telegramUserId}
+    const [communityId, telegramUserId] = orderId.split('_');
+    if (!communityId || !telegramUserId) {
+      console.error("Invalid order ID format in NOWPayments request:", orderId);
       return new Response(
-        JSON.stringify({ error: "Failed to update payment", details: updateError.message }),
-        { 
-          status: 500,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        }
+        JSON.stringify({ error: 'Invalid order ID format' }),
+        { headers: corsHeaders, status: 400 }
       );
     }
-
-    console.log("Payment status updated successfully:", {
-      payment_id: paymentData.id,
-      external_id: requestBody.payment_id,
-      old_status: paymentData.status,
-      new_status: status
-    });
-
-    // Return success response
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: "IPN processed successfully",
-        payment_id: paymentData.id
-      }),
-      { 
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
+    
+    // Find the community owner ID to get their payment methods configuration
+    const { data: communityData, error: communityError } = await supabase
+      .from('communities')
+      .select('owner_id')
+      .eq('id', communityId)
+      .single();
+      
+    if (communityError || !communityData) {
+      console.error("Error fetching community:", communityError || "Community not found");
+      return new Response(
+        JSON.stringify({ error: 'Community not found' }),
+        { headers: corsHeaders, status: 404 }
+      );
+    }
+    
+    // Get the NOWPayments API configuration using the owner ID
+    const { data: paymentMethodData, error: paymentMethodError } = await supabase
+      .from('payment_methods')
+      .select('config')
+      .eq('provider', 'nowpayments')
+      .eq('owner_id', communityData.owner_id)
+      .single();
+      
+    if (paymentMethodError || !paymentMethodData?.config?.ipn_secret) {
+      console.error("Error fetching IPN secret:", paymentMethodError || "IPN secret not found");
+      return new Response(
+        JSON.stringify({ error: 'Failed to validate webhook' }),
+        { headers: corsHeaders, status: 500 }
+      );
+    }
+    
+    // Validate the signature using the IPN secret
+    const ipnSecret = paymentMethodData.config.ipn_secret;
+    const calculatedSignature = crypto
+      .createHmac('sha512', ipnSecret)
+      .update(JSON.stringify(payload))
+      .digest('hex');
+    
+    if (signature !== calculatedSignature) {
+      console.error("Invalid signature in NOWPayments request");
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { headers: corsHeaders, status: 401 }
+      );
+    }
+    
+    // Check payment status
+    const paymentStatus = payload.payment_status;
+    console.log("Payment status:", paymentStatus);
+    
+    // Only process if payment is finished or confirmed
+    if (paymentStatus === 'finished' || paymentStatus === 'confirmed') {
+      // Create a new subscription
+      const { error: subscriptionError } = await supabase
+        .from('community_subscribers')
+        .upsert({
+          community_id: communityId,
+          telegram_user_id: telegramUserId,
+          subscription_status: 'active',
+          is_active: true,
+          subscription_start_date: new Date().toISOString(),
+          subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days default subscription
+          subscription_plan_id: payload.subscription_plan_id || null
+        });
+        
+      if (subscriptionError) {
+        console.error("Error creating subscription:", subscriptionError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to create subscription' }),
+          { headers: corsHeaders, status: 500 }
+        );
       }
+      
+      // Create payment record
+      const { error: paymentUpdateError } = await supabase
+        .from('subscription_payments')
+        .insert({
+          community_id: communityId,
+          telegram_user_id: telegramUserId,
+          payment_method: 'nowpayments',
+          status: 'completed',
+          amount: payload.price_amount,
+          currency: payload.price_currency,
+          payment_id: payload.payment_id,
+          details: payload
+        });
+        
+      if (paymentUpdateError) {
+        console.error("Error recording payment:", paymentUpdateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to update payment record' }),
+          { headers: corsHeaders, status: 500 }
+        );
+      }
+      
+      console.log("NOWPayments payment processed successfully");
+    } else {
+      console.log(`NOWPayments payment status '${paymentStatus}' not processed`);
+    }
+    
+    // Always return success to NOWPayments
+    return new Response(
+      JSON.stringify({ success: true }),
+      { headers: corsHeaders, status: 200 }
     );
   } catch (error) {
-    console.error("IPN webhook error:", error);
+    console.error("Error processing NOWPayments webhook:", error);
     return new Response(
-      JSON.stringify({ error: "Internal server error", message: error.message }),
-      { 
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      }
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { headers: corsHeaders, status: 500 }
     );
   }
 });

@@ -3,8 +3,8 @@
  * Configuration constants for the application
  */
 
-// Base URL for the mini app platform
-export const PLATFORM_BASE_URL = "https://preview--subscribely-serenity.lovable.app";
+// Base URL for the mini app platform - dynamically determining the URL based on the environment
+export const PLATFORM_BASE_URL = "https://trkiniaqliiwdkrvvuky.lovable.app";
 
 // Full URL for the Telegram mini app - this is for the t.me link
 export const TELEGRAM_MINI_APP_URL = `https://t.me/membifybot/app`;

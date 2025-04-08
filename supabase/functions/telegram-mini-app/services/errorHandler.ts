@@ -2,15 +2,20 @@
 import { corsHeaders } from "../utils/corsHeaders.ts";
 
 /**
- * Creates a standard error response
+ * Creates a standardized error response
  */
-export function createErrorResponse(error: Error, details: any = {}, status: number = 500) {
-  console.error("Server error:", error);
+export function createErrorResponse(error: Error | unknown) {
+  console.error("Error in telegram-mini-app function:", error);
+  
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : "Unknown error occurred";
+  
   return new Response(
     JSON.stringify({
-      error: error.message || "Internal server error",
-      details,
+      error: "Internal server error",
+      details: errorMessage,
     }),
-    { headers: corsHeaders, status }
+    { headers: corsHeaders, status: 500 }
   );
 }

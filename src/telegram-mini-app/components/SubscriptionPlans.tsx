@@ -124,10 +124,6 @@ export const SubscriptionPlans = ({
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="flex flex-wrap gap-1 mb-1">
-                  <Badge variant="outline" className="flex items-center gap-0.5 text-xs py-0 px-1.5 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
-                    {intervalDisplay.icon} 
-                    <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
-                  </Badge>
                   {isActive && (
                     <Badge variant="success" className="text-xs py-0 px-1.5 animate-pulse">
                       Active
@@ -157,15 +153,14 @@ export const SubscriptionPlans = ({
                   <p className="text-xs text-gray-600 font-light line-clamp-1">{plan.description}</p>
                 )}
               </div>
-              <div className="text-right">
+              <div className="text-right flex flex-col items-end">
                 <p className={`text-lg font-bold ${isSelected ? 'text-indigo-600' : 'bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
                   ${plan.price}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {plan.interval === 'lifetime' || plan.interval === 'one-time' 
-                    ? 'one-time' 
-                    : `per ${plan.interval.replace('ly', '')}`}
-                </p>
+                <Badge variant="outline" className="flex items-center gap-0.5 text-xs py-0 px-1.5 mt-1 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
+                  {intervalDisplay.icon} 
+                  <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
+                </Badge>
               </div>
             </div>
             

@@ -1,6 +1,16 @@
 
 
+
 # Development Log
+
+## 2025-04-08 - Improved Subscription Plan Interval Display
+
+- Updated subscription plan cards to show interval badge beneath the price
+- Removed redundant interval information that was displaying twice
+- Moved the interval badge to be directly under the price for better visual organization
+- Maintained all existing functionality while improving the visual presentation
+
+Key issue fixed: Eliminated duplicate display of subscription interval information by consolidating it into a single badge.
 
 ## 2025-04-08 - Enhanced NOWPayments Debug Info with Owner ID Display
 
@@ -103,4 +113,5 @@ Key issue fixed: Resolved module not found error for communityService.ts in tele
 - Fixed debug components to display helpful error messages when configuration is missing
 
 Key issue fixed: NOWPayments API keys are now correctly fetched from the payment_methods table using the owner_id of the community owner.
+
 

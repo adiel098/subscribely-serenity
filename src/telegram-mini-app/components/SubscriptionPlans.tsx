@@ -135,11 +135,7 @@ export const SubscriptionPlans = ({
                       <span>{plan.trial_days}-day trial</span>
                     </Badge>
                   )}
-                  {isPremium && !isActive && (
-                    <Badge variant="secondary" className="text-xs py-0 px-1.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20">
-                      Recommended
-                    </Badge>
-                  )}
+                  {/* Removed the Recommended badge for premium plans */}
                   {isSelected && !isActive && (
                     <Badge variant="outline" className="text-xs py-0 px-1.5 border-indigo-400 text-indigo-700 bg-indigo-100/50">
                       Selected
@@ -157,7 +153,7 @@ export const SubscriptionPlans = ({
                 <p className={`text-lg font-bold ${isSelected ? 'text-indigo-600' : 'bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent'}`}>
                   ${plan.price}
                 </p>
-                <Badge variant="outline" className="flex items-center gap-0.5 text-xs py-0 px-1.5 mt-1 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
+                <Badge variant="outline" className="flex items-center gap-0.5 text-[10px] py-0 px-1 mt-0.5 bg-transparent backdrop-blur-sm border border-indigo-100/50 text-black">
                   {intervalDisplay.icon} 
                   <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
                 </Badge>
@@ -206,4 +202,3 @@ export const SubscriptionPlans = ({
     </motion.div>
   );
 };
-

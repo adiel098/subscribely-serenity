@@ -3,6 +3,15 @@
 
 # Development Log
 
+## 2025-04-08 - Modified Subscription Plan Badge Display
+
+- Removed "Recommended" badge from premium subscription plans
+- Made the interval badge below price smaller with reduced padding and font size
+- Maintained all existing functionality while improving the visual presentation
+- Kept consistent design language across subscription plan cards
+
+Key issue fixed: Simplified subscription plan cards by removing the "Recommended" badge and reducing the size of interval badges.
+
 ## 2025-04-08 - Improved Subscription Plan Interval Display
 
 - Updated subscription plan cards to show interval badge beneath the price
@@ -113,5 +122,6 @@ Key issue fixed: Resolved module not found error for communityService.ts in tele
 - Fixed debug components to display helpful error messages when configuration is missing
 
 Key issue fixed: NOWPayments API keys are now correctly fetched from the payment_methods table using the owner_id of the community owner.
+
 
 

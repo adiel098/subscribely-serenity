@@ -1,6 +1,15 @@
 
 # Development Log
 
+## 2025-04-08 - Updated Plan Selection Text Size
+
+- Increased the "Choose Your Plan" text size in the SubscriptionPlanSection component
+- Made the header styling consistent with the payment methods section
+- Updated Badge styling for better visual hierarchy and consistency
+- Changed spacing to match other section headers
+
+Key issue fixed: Made text sizes consistent between the plan selection and payment method sections.
+
 ## 2025-04-08 - Enhanced NOWPayments Debug Information
 
 - Improved display of Community Owner ID in the NOWPaymentsDebugInfo component

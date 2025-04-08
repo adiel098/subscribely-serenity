@@ -78,16 +78,16 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       <div id="subscription-plans" className="scroll-mt-4">
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-0 max-w-sm mx-auto">
           <motion.div 
-            className="text-center space-y-1 mb-1"
+            className="text-center space-y-3 mb-1"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="secondary" className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
-              Choose Your Plan ✨ <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
-
+            <Badge variant="secondary" className="px-5 py-2 text-base font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+              <Sparkles className="h-5 w-5 mr-2 text-indigo-600" />
+              Choose Your Plan <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
             </Badge>
-            <p className="text-xs text-gray-600">Select the perfect plan for your needs 🚀</p>
+            <p className="text-sm text-gray-600">Select the perfect plan for your needs 🚀</p>
           </motion.div>
           
           <SubscriptionPlans

@@ -108,21 +108,6 @@ export const SubscriptionPlans = ({
             whileTap={{ scale: 0.98 }}
             className="relative"
           >
-            {isActive && (
-              <Badge 
-                variant="success" 
-                className="absolute -top-2 -right-0 text-xs py-0 px-3 z-20 flex items-center gap-1 bg-green-500 text-white"
-                style={{
-                  borderRadius: "1rem 1rem 0 1rem",
-                  transform: "translateY(-35%)"
-                }}
-              >
-                Active
-                <div className="bg-white rounded-full p-0.5 -mr-1 -my-0.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                </div>
-              </Badge>
-            )}
             <div 
               className={`group py-2 px-2.5 rounded-lg transition-all duration-300 cursor-pointer translucent-card ${
                 isSelected
@@ -134,7 +119,7 @@ export const SubscriptionPlans = ({
               style={{ height: "auto" }}
               onClick={() => onPlanSelect(plan)}
             >
-              <div className="flex justify-between items-start mb-1">
+              <div className="flex justify-between items-start mb-1 relative">
                 <div>
                   <div className="flex flex-wrap gap-1 mb-1">
                     {hasTrial && (
@@ -165,6 +150,21 @@ export const SubscriptionPlans = ({
                     <span>{intervalDisplay.emoji} {intervalDisplay.label}</span>
                   </Badge>
                 </div>
+
+                {isActive && (
+                  <Badge 
+                    variant="success" 
+                    className="absolute -top-2 -right-1 text-xs py-0 px-3 z-20 flex items-center gap-1 bg-green-500 text-white"
+                    style={{
+                      borderRadius: "1rem 1rem 0 1rem"
+                    }}
+                  >
+                    Active
+                    <div className="bg-white rounded-full p-0.5 -mr-1 -my-0.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                    </div>
+                  </Badge>
+                )}
               </div>
               
               {hasTrial && (

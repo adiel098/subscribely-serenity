@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Crown, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
@@ -37,17 +36,13 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
     console.log("[CommunityHeader] Description details - Value:", description, "Loading:", descriptionLoading, "Error:", descriptionError);
   }, [photoUrl, photoLoading, photoError, description, descriptionLoading, descriptionError]);
 
-  // Use the telegram description if available, otherwise fall back to the community description
   const displayDescription = description || community.description;
   
-  // Check if description is long (more than 100 characters)
   const isLongDescription = displayDescription && displayDescription.length > 100;
 
-  // Check if description overflows the container after rendering
   useEffect(() => {
     if (descriptionRef.current && displayDescription) {
       const element = descriptionRef.current;
-      // Check if the content height is greater than the visible height
       const isOverflowing = element.scrollHeight > element.clientHeight;
       setShouldShowReadMore(isOverflowing || isLongDescription);
       
@@ -60,11 +55,9 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
     }
   }, [displayDescription, isLongDescription]);
   
-  // Toggle description expansion
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
     
-    // Add haptic feedback
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
@@ -74,7 +67,6 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
     <div className="text-center space-y-4 animate-fade-in">
       <div className="mx-auto max-w-xl px-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
-          {/* Community avatar at the top of description box */}
           <div className="flex items-center justify-center mb-1">
             {photoLoading ? (
               <Skeleton className="h-16 w-16 rounded-full" />
@@ -87,7 +79,6 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                     className="object-cover"
                     onError={(e) => {
                       console.error("[CommunityHeader] Error loading image:", e);
-                      // Reset the src to force a fallback to the AvatarFallback
                       (e.target as HTMLImageElement).src = "";
                     }}
                   />
@@ -104,7 +95,6 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
             )}
           </div>
           
-          {/* Community name inside the description box - now larger */}
           <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-1">
             {community.name}
           </h2>
@@ -128,7 +118,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleExpand}
-                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[9px] font-medium"
+                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[8px] font-medium"
                 >
                   {isExpanded ? (
                     <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>

@@ -167,6 +167,18 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-1 text-xs">
+          {/* Owner ID section - Display prominently */}
+          {debugInfo.ownerId && (
+            <div className="bg-indigo-50 p-1.5 rounded-md border border-indigo-100 mb-2">
+              <div className="text-indigo-700 font-semibold flex items-center">
+                <span className="mr-1">👤</span> Owner ID:
+              </div>
+              <div className="font-mono text-xs bg-white/70 px-1.5 py-0.5 rounded mt-0.5 text-indigo-900 border border-indigo-50">
+                {debugInfo.ownerId}
+              </div>
+            </div>
+          )}
+          
           {communityOwner && (
             <div className="text-gray-600">
               Community Owner ID: <span className="font-mono text-xs bg-gray-200 px-1 rounded">{communityOwner}</span>

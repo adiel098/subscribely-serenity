@@ -72,14 +72,10 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
 
   return (
     <div className="text-center space-y-4 animate-fade-in">
-      <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 px-4 mb-2">
-        {community.name}
-      </h1>
-      
       <div className="mx-auto max-w-xl px-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
-          {/* Community avatar and name at the top of description box */}
-          <div className="flex items-center justify-center mb-4">
+          {/* Community avatar at the top of description box */}
+          <div className="flex items-center justify-center mb-3">
             {photoLoading ? (
               <Skeleton className="h-16 w-16 rounded-full" />
             ) : (
@@ -107,6 +103,11 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
               </Avatar>
             )}
           </div>
+          
+          {/* Community name inside the description box */}
+          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 mb-3">
+            {community.name}
+          </h2>
           
           {descriptionLoading ? (
             <div className="space-y-2">

@@ -75,7 +75,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
         />
       )}
       
-      <div id="subscription-plans" className="scroll-mt-4">
+      <div id="subscription-plans" className="scroll-mt-4 pt-2">
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-0 max-w-sm mx-auto">
           <motion.div 
             className="text-center space-y-3 mb-1"

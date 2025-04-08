@@ -33,24 +33,48 @@ serve(async (req) => {
         }
       )
     }
-
-    // Prepare query to get Stripe config
-    let query = supabase
+    
+    // Get community owner information
+    let ownerId;
+    
+    if (communityId) {
+      const { data: communityData, error: communityError } = await supabase
+        .from('communities')
+        .select('owner_id')
+        .eq('id', communityId)
+        .single();
+        
+      if (communityError) {
+        console.error('Error fetching community data:', communityError);
+        return new Response(
+          JSON.stringify({ error: 'Community not found' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        );
+      }
+      
+      ownerId = communityData.owner_id;
+    } else if (groupId) {
+      // Similar logic for groups if needed
+      // ...
+    }
+    
+    if (!ownerId) {
+      return new Response(
+        JSON.stringify({ error: 'Could not determine owner ID' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Get payment method for the owner
+    const { data: paymentMethod, error: configError } = await supabase
       .from('payment_methods')
       .select('config')
       .eq('provider', 'stripe')
-      .eq('is_active', true);
-      
-    // Filter by either community or group ID
-    if (communityId) {
-      query = query.eq('community_id', communityId);
-    } else if (groupId) {
-      query = query.eq('group_id', groupId);
-    }
-    
-    const { data: paymentMethod, error: configError } = await query.single();
+      .eq('is_active', true)
+      .eq('owner_id', ownerId)
+      .maybeSingle();
 
-    if (configError || !paymentMethod?.config?.secret_key) {
+    if (configError || !paymentMethod) {
       console.error('Error fetching Stripe config:', configError)
       
       // Try to get a default Stripe configuration
@@ -77,7 +101,34 @@ serve(async (req) => {
       paymentMethod = defaultMethod;
     }
 
-    const stripe = new Stripe(paymentMethod.config.secret_key, {
+    // Check if using Stripe Connect or API keys
+    const useConnect = paymentMethod?.config?.stripe_account_id && paymentMethod?.config?.is_connected;
+    const stripeAccountId = useConnect ? paymentMethod.config.stripe_account_id : null;
+    
+    // Get appropriate secret key
+    let secretKey;
+    
+    if (useConnect) {
+      // Use platform key for connected accounts
+      secretKey = Deno.env.get('STRIPE_SECRET_KEY');
+      console.log('Using Stripe Connect with account:', stripeAccountId);
+    } else {
+      // Use merchant's direct API key
+      secretKey = paymentMethod.config?.secret_key;
+      console.log('Using direct API key integration');
+    }
+
+    if (!secretKey) {
+      return new Response(
+        JSON.stringify({ error: 'Stripe secret key not configured' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 400 
+        }
+      );
+    }
+
+    const stripe = new Stripe(secretKey, {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),
     })
@@ -88,8 +139,8 @@ serve(async (req) => {
     if (groupId) metadata.groupId = groupId;
     if (telegramUserId) metadata.telegramUserId = telegramUserId;
 
-    // Create Stripe session
-    const session = await stripe.checkout.sessions.create({
+    // Create Stripe session params
+    const sessionParams: any = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -107,7 +158,22 @@ serve(async (req) => {
       success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get('origin')}/payment-cancel`,
       metadata,
-    })
+    };
+    
+    // If using Connect, specify the connected account and application fee
+    if (stripeAccountId) {
+      sessionParams.stripe_account = stripeAccountId;
+      
+      // Optional: Add platform fee - typically a percentage of the transaction
+      // For example, 10% of the transaction amount:
+      // const applicationFeeAmount = Math.round(amount * 100 * 0.1); 
+      // sessionParams.payment_intent_data = {
+      //   application_fee_amount: applicationFeeAmount,
+      // };
+    }
+
+    // Create Stripe session
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     console.log('Created Stripe session:', session.id)
 

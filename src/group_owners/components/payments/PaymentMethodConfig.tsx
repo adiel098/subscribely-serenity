@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/auth/contexts/AuthContext";
+import { StripeConnectButton } from "./StripeConnectButton";
 
 interface PaymentMethodConfigProps {
   provider: string;
@@ -149,11 +150,7 @@ export const PaymentMethodConfig = ({
   const getFieldsForProvider = () => {
     switch (provider) {
       case 'stripe':
-        return [
-          { name: 'api_key', label: 'Stripe API Key', type: 'password' },
-          { name: 'public_key', label: 'Stripe Public Key', type: 'text' },
-          { name: 'webhook_secret', label: 'Webhook Secret', type: 'password' },
-        ];
+        return []; // No fields needed for Stripe Connect
       case 'paypal':
         return [
           { name: 'client_id', label: 'Client ID', type: 'text' },
@@ -190,6 +187,43 @@ export const PaymentMethodConfig = ({
   }
 
   const displayTitle = provider === 'crypto' ? 'NOWPayments' : provider.charAt(0).toUpperCase() + provider.slice(1);
+
+  // For Stripe, show the Stripe Connect button
+  if (provider === 'stripe') {
+    return (
+      <div className="space-y-6 py-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </div>
+        )}
+
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-md space-y-4">
+          <h3 className="text-lg font-medium">Connect Your Stripe Account</h3>
+          <p className="text-sm text-gray-600">
+            Connect your Stripe account to process payments directly. Your Stripe account will be used
+            to handle all transactions securely without needing to manually enter API keys.
+          </p>
+          
+          <StripeConnectButton 
+            ownerId={ownerId || user?.id} 
+            onSuccess={onSuccess}
+            stripeConfig={formData}
+          />
+        </div>
+
+        <div className={cn(
+          "flex items-center gap-2 p-3 rounded-lg border bg-indigo-50/50 border-indigo-100"
+        )}>
+          <AlertCircle className="h-5 w-5 text-indigo-500" />
+          <p className="text-sm text-indigo-700">
+            These payment settings will apply to all your communities and groups
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">

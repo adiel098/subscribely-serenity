@@ -51,25 +51,49 @@ serve(async (req) => {
       )
     }
 
-    // Prepare the query to get the Stripe configuration
-    let query = supabase
+    // First, get community owner information
+    let ownerId;
+    
+    if (communityId) {
+      const { data: communityData, error: communityError } = await supabase
+        .from('communities')
+        .select('owner_id')
+        .eq('id', communityId)
+        .single();
+        
+      if (communityError) {
+        console.error('Error fetching community data:', communityError);
+        return new Response(
+          JSON.stringify({ error: 'Community not found' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        );
+      }
+      
+      ownerId = communityData.owner_id;
+    } else if (groupId) {
+      // Similar logic for groups if needed
+      // ...
+    }
+    
+    if (!ownerId) {
+      return new Response(
+        JSON.stringify({ error: 'Could not determine owner ID' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Prepare the query to get the Stripe configuration for the owner
+    const { data: paymentMethod, error: configError } = await supabase
       .from('payment_methods')
       .select('config')
       .eq('provider', 'stripe')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('owner_id', ownerId)
+      .maybeSingle();
       
-    // Filter by either community or group ID
-    if (communityId) {
-      query = query.eq('community_id', communityId);
-    } else if (groupId) {
-      query = query.eq('group_id', groupId);
-    }
-    
-    const { data: paymentMethod, error: configError } = await query.single();
-
     console.log('Stripe config query result:', paymentMethod, configError)
 
-    if (configError) {
+    if (configError || !paymentMethod) {
       console.error('Error fetching Stripe config:', configError)
       
       // Try to get a default Stripe configuration
@@ -93,15 +117,30 @@ serve(async (req) => {
       paymentMethod = defaultMethod;
     }
 
-    if (!paymentMethod?.config?.secret_key) {
+    // Check if using Stripe Connect or API keys
+    const useConnect = paymentMethod?.config?.stripe_account_id && paymentMethod?.config?.is_connected;
+    const stripeAccountId = useConnect ? paymentMethod.config.stripe_account_id : null;
+    
+    // Get appropriate secret key
+    let secretKey;
+    
+    if (useConnect) {
+      // Use platform key for connected accounts
+      secretKey = Deno.env.get('STRIPE_SECRET_KEY');
+      console.log('Using Stripe Connect with account:', stripeAccountId);
+    } else {
+      // Use merchant's direct API key
+      secretKey = paymentMethod.config?.secret_key;
+      console.log('Using direct API key integration');
+    }
+    
+    if (!secretKey) {
       console.error('No Stripe secret key found in config:', paymentMethod)
       return new Response(
         JSON.stringify({ error: 'Stripe secret key not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
-
-    const secretKey = paymentMethod.config.secret_key;
 
     const stripe = new Stripe(secretKey, {
       apiVersion: '2023-10-16',
@@ -117,11 +156,23 @@ serve(async (req) => {
       if (communityId) metadata.communityId = communityId;
       if (groupId) metadata.groupId = groupId;
       
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentParams: any = {
         amount: amountInCents,
         currency: 'usd',
         metadata
-      })
+      };
+      
+      // If using Connect, specify the connected account
+      if (stripeAccountId) {
+        paymentIntentParams.stripe_account = stripeAccountId;
+        
+        // For Connect accounts, we use the application fee amount
+        // to take a platform fee. For example, 10% of the transaction:
+        // const applicationFeeAmount = Math.round(amountInCents * 0.1); 
+        // paymentIntentParams.application_fee_amount = applicationFeeAmount;
+      }
+      
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
       console.log('Created payment intent:', paymentIntent.id)
 

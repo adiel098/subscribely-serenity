@@ -32,6 +32,21 @@ export const PaymentOptions = ({
   const [showIframe, setShowIframe] = useState(false);
 
   useEffect(() => {
+    if (selectedPaymentMethod === 'stripe') {
+      console.log('Selected Stripe payment method, config:', stripeConfig);
+      if (stripeConfig?.error) {
+        setConfigError(stripeConfig.error);
+      } else if (!stripeConfig?.public_key) {
+        setConfigError('Stripe configuration is missing');
+      } else {
+        setConfigError(null);
+      }
+    } else {
+      setConfigError(null);
+    }
+  }, [selectedPaymentMethod, stripeConfig]);
+
+  useEffect(() => {
     const fetchNowPaymentsConfig = async () => {
       if (selectedPaymentMethod === 'nowpayments') {
         setIsLoadingConfig(true);
@@ -163,6 +178,13 @@ export const PaymentOptions = ({
         </div>
       )}
       
+      {configError && (
+        <div className="flex items-center gap-2 p-4 text-sm text-red-500 bg-red-50 rounded-lg">
+          <AlertCircle className="w-4 h-4" />
+          <span>{configError}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-4">
         <div>
           <TelegramPaymentOption
@@ -179,6 +201,7 @@ export const PaymentOptions = ({
             title="Stripe"
             isSelected={selectedPaymentMethod === 'stripe'}
             onSelect={() => handlePaymentMethodSelect('stripe')}
+            error={selectedPaymentMethod === 'stripe' ? configError : undefined}
           />
         </div>
         
@@ -189,17 +212,17 @@ export const PaymentOptions = ({
             isSelected={selectedPaymentMethod === 'nowpayments'}
             onSelect={() => handlePaymentMethodSelect('nowpayments')}
             isLoading={isLoadingConfig}
-            error={configError}
+            error={selectedPaymentMethod === 'nowpayments' ? configError : undefined}
           />
         </div>
       </div>
 
-      {selectedPaymentMethod === 'stripe' && (
+      {selectedPaymentMethod === 'stripe' && stripeConfig?.public_key && (
         <div className="mt-8">
           <StripePaymentForm
-            communityId={communityId}
-            onSuccess={onPaymentSuccess}
+            stripeConfig={stripeConfig}
             price={price}
+            onSuccess={onPaymentSuccess}
           />
         </div>
       )}

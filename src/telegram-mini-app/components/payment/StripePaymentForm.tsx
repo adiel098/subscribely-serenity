@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -6,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AlertCircle } from 'lucide-react';
 
 // This is the form that will be used inside the Elements provider
 const CheckoutForm = ({ onSuccess, price }) => {
@@ -18,7 +18,6 @@ const CheckoutForm = ({ onSuccess, price }) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      // Stripe.js hasn't loaded yet
       return;
     }
 
@@ -49,13 +48,8 @@ const CheckoutForm = ({ onSuccess, price }) => {
         onSuccess();
       }
     } catch (err) {
-      console.error('Stripe payment error:', err);
+      console.error('Error confirming payment:', err);
       setErrorMessage('An unexpected error occurred. Please try again.');
-      toast({
-        title: 'Payment Error',
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -64,15 +58,15 @@ const CheckoutForm = ({ onSuccess, price }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
-      
       {errorMessage && (
-        <div className="text-sm font-medium text-destructive">{errorMessage}</div>
+        <div className="text-sm text-red-500">
+          {errorMessage}
+        </div>
       )}
-      
       <Button 
         type="submit" 
-        className="w-full" 
         disabled={!stripe || isLoading}
+        className="w-full"
       >
         {isLoading ? (
           <>
@@ -88,52 +82,33 @@ const CheckoutForm = ({ onSuccess, price }) => {
 };
 
 // The main component that loads Stripe and renders the form
-const StripePaymentForm = ({ communityId, onSuccess, price }) => {
+const StripePaymentForm = ({ stripeConfig, onSuccess, price }) => {
   const [stripePromise, setStripePromise] = useState(null);
   const [clientSecret, setClientSecret] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchStripeConfig = async () => {
+    const initializeStripe = async () => {
       try {
         setIsLoading(true);
         setError('');
         
-        console.log('Fetching Stripe config for community:', communityId);
-        
-        // Fetch the Stripe public key from the payment_methods table
-        const { data, error } = await supabase
-          .from('payment_methods')
-          .select('config')
-          .eq('community_id', communityId)
-          .eq('provider', 'stripe')
-          .eq('is_active', true)
-          .single();
-
-        if (error) {
-          console.error('Error fetching Stripe config:', error);
-          setError('Unable to load payment configuration');
-          return;
-        }
-
-        if (!data?.config?.public_key) {
-          console.error('No Stripe public key found in config:', data);
+        if (!stripeConfig?.public_key) {
+          console.error('No Stripe public key found in config:', stripeConfig);
           setError('Payment method not properly configured');
           return;
         }
 
-        console.log('Found Stripe public key, initializing Stripe...');
-        
-        // Initialize Stripe with the public key
-        setStripePromise(loadStripe(data.config.public_key));
+        console.log('Initializing Stripe with public key...');
+        setStripePromise(loadStripe(stripeConfig.public_key));
         
         // Create a payment intent
-        console.log('Creating payment intent with params:', { communityId, amount: price });
+        console.log('Creating payment intent with amount:', price);
         const { data: intentData, error: intentError } = await supabase.functions.invoke('create-stripe-payment-intent', {
           body: { 
-            communityId,
-            amount: price
+            amount: price,
+            config: stripeConfig
           }
         });
 
@@ -151,58 +126,70 @@ const StripePaymentForm = ({ communityId, onSuccess, price }) => {
           return;
         }
 
-        console.log('Payment intent created successfully');
         setClientSecret(intentData.clientSecret);
       } catch (err) {
-        console.error('Unexpected error in fetchStripeConfig:', err);
-        setError('An unexpected error occurred');
+        console.error('Error in initializeStripe:', err);
+        setError('Failed to initialize payment');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (communityId) {
-      fetchStripeConfig();
-    }
-  }, [communityId, price]);
+    initializeStripe();
+  }, [stripeConfig, price]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-sm text-muted-foreground">Initializing payment...</p>
+      <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-sm">
+        <div className="relative">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <div className="absolute inset-0 animate-pulse opacity-50">
+            <Loader2 className="w-8 h-8 text-blue-300" />
+          </div>
+        </div>
+        <div className="text-center space-y-1">
+          <h3 className="text-lg font-semibold text-blue-700">
+            Initializing Payment
+          </h3>
+          <p className="text-sm text-blue-600/80">
+            Please wait while we prepare your secure payment form...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-md bg-destructive/10 p-4">
-        <div className="text-sm font-medium text-destructive">{error}</div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Please try another payment method or contact support.
-        </p>
+      <div className="p-6 bg-red-50 rounded-xl border border-red-200">
+        <div className="flex items-start space-x-3">
+          <div className="mt-0.5">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-red-800">
+              Payment Initialization Failed
+            </h3>
+            <p className="mt-1 text-sm text-red-700">
+              {error}
+            </p>
+            <p className="mt-3 text-sm text-gray-600">
+              Please try refreshing the page or contact support if the issue persists.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!stripePromise || !clientSecret) {
-    return (
-      <div className="rounded-md bg-muted p-4">
-        <p className="text-sm text-muted-foreground">
-          Payment configuration incomplete. Please try another method.
-        </p>
-      </div>
-    );
+    return null;
   }
 
-  console.log('Rendering Stripe Elements with client secret');
   return (
-    <div className="w-full max-w-md mx-auto">
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <CheckoutForm onSuccess={onSuccess} price={price} />
-      </Elements>
-    </div>
+    <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <CheckoutForm onSuccess={onSuccess} price={price} />
+    </Elements>
   );
 };
 

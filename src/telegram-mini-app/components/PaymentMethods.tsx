@@ -45,7 +45,7 @@ export const PaymentMethods = ({
   activeSubscription,
   communityId
 }: PaymentMethodsProps) => {
-  const stripeConfig = useStripeConfig(selectedPlan);
+  const { stripeConfig: stripeConfigData, error: stripeError, isLoading: isLoadingStripe } = useStripeConfig(selectedPlan);
   const { processPayment, isLoading, isSuccess, error, inviteLink, resetState } = usePaymentProcessing({
     communityId: communityId || selectedPlan.community_id,
     planId: selectedPlan.id,
@@ -115,36 +115,32 @@ export const PaymentMethods = ({
   };
 
   const handlePaymentSuccess = () => {
-    console.log('[PaymentMethods] Payment success callback triggered');
-    onCompletePurchase();
+    console.log('[PaymentMethods] Payment successful');
+    processPayment(selectedPaymentMethod);
   };
 
-  if (showSuccess) {
-    console.log('[PaymentMethods] Showing success screen with invite link:', inviteLink || communityInviteLink);
-    return <SuccessScreen communityInviteLink={inviteLink || communityInviteLink} />;
-  }
-
-  return (
+  return showSuccess ? (
+    <SuccessScreen inviteLink={inviteLink || communityInviteLink} />
+  ) : (
     <div id="payment-methods" className="space-y-8 animate-fade-in pb-12">
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl mb-6">
-        <PaymentHeader>
-          <PaymentOptions
-            selectedPaymentMethod={selectedPaymentMethod}
-            onPaymentMethodSelect={(method) => {
-              console.log(`[PaymentMethods] Payment method selected: ${method}`);
-              onPaymentMethodSelect(method);
-            }}
-            stripeConfig={stripeConfig}
-            communityId={selectedPlan.community_id}
-            price={selectedPlan.price}
-            onPaymentSuccess={handlePaymentSuccess}
-          />
-        </PaymentHeader>
+        <PaymentHeader selectedPlan={selectedPlan} />
+        <PaymentOptions
+          selectedPaymentMethod={selectedPaymentMethod}
+          onPaymentMethodSelect={(method) => {
+            console.log(`[PaymentMethods] Payment method selected: ${method}`);
+            onPaymentMethodSelect(method);
+          }}
+          stripeConfig={stripeConfigData}
+          communityId={selectedPlan.community_id}
+          price={selectedPlan.price}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       </div>
 
       {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
         <div className="mt-8">
-          {/* Removed PaymentButton */}
+          {/* Payment button for other methods if needed */}
         </div>
       )}
     </div>

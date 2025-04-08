@@ -30,6 +30,7 @@ export const PaymentOptions = ({
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
   const [communityOwnerId, setCommunityOwnerId] = useState<string | null>(null);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   
   useEffect(() => {
     console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
@@ -42,7 +43,11 @@ export const PaymentOptions = ({
       if (selectedPaymentMethod === 'nowpayments') {
         setIsLoadingConfig(true);
         setConfigError(null);
+        setLoadingError(null);
+        
         try {
+          logNOWPaymentsOperation('info', 'טוען קונפיגורציית תשלומי קריפטו', { communityId });
+          
           const { data: communityData, error: communityError } = await supabase
             .from('communities')
             .select('owner_id')
@@ -51,16 +56,21 @@ export const PaymentOptions = ({
             
           if (communityError) {
             console.error("[PaymentOptions] Community error:", communityError);
+            logNOWPaymentsOperation('error', 'שגיאה בטעינת פרטי קהילה', { error: communityError });
+            setLoadingError(`שגיאה בטעינת פרטי קהילה: ${communityError.message || 'שגיאת שרת'}`);
             throw new Error(`Could not find community: ${communityError.message}`);
           }
           
           if (!communityData?.owner_id) {
             console.error("[PaymentOptions] Missing owner_id for community:", communityId);
+            logNOWPaymentsOperation('error', 'קהילה חסרת בעלים', { communityId });
+            setLoadingError(`קהילה חסרת בעלים: ${communityId}`);
             throw new Error('Community has no owner');
           }
           
           setCommunityOwnerId(communityData.owner_id);
           console.log("[PaymentOptions] Found community owner ID:", communityData.owner_id);
+          logNOWPaymentsOperation('info', 'מצא מזהה בעלי קהילה', { ownerId: communityData.owner_id });
           
           const { data, error } = await supabase
             .from('payment_methods')
@@ -72,6 +82,8 @@ export const PaymentOptions = ({
             
           if (error) {
             console.error("[PaymentOptions] Error fetching payment methods:", error);
+            logNOWPaymentsOperation('error', 'שגיאה בטעינת שיטות תשלום', { error });
+            setLoadingError(`שגיאה בטעינת שיטות תשלום: ${error.message || 'שגיאת שרת'}`);
             throw error;
           }
           
@@ -80,14 +92,22 @@ export const PaymentOptions = ({
           if (!data || !data.config || !data.config.api_key) {
             const errorMsg = "NOWPayments API key is not configured in the database";
             console.error("[PaymentOptions] NOWPayments config missing or invalid:", data);
+            logNOWPaymentsOperation('error', 'מפתח API של NOWPayments חסר או לא תקין', { 
+              configExists: !!data,
+              hasConfigObject: !!(data && data.config)
+            });
             setConfigError(errorMsg);
             toast({
               title: "שגיאת תצורה",
-              description: errorMsg,
+              description: "מפתח ה-API של NOWPayments אינו מוגדר כראוי. יש ליצור קשר עם מנהל המערכת.",
               variant: "destructive"
             });
           } else {
             console.log("[PaymentOptions] NOWPayments config loaded successfully");
+            logNOWPaymentsOperation('info', 'קונפיגורציית NOWPayments נטענה בהצלחה', {
+              hasApiKey: !!data.config.api_key,
+              hasIpnUrl: !!data.config.ipn_callback_url
+            });
           }
           
           setNowPaymentsConfig(data?.config || {});
@@ -95,9 +115,15 @@ export const PaymentOptions = ({
           console.error("[PaymentOptions] Error fetching NOWPayments config:", err);
           const errorMsg = `Failed to load payment configuration: ${err instanceof Error ? err.message : 'Unknown error'}`;
           setConfigError(errorMsg);
+          logNOWPaymentsOperation('error', 'שגיאה בטעינת קונפיגורציית תשלומי קריפטו', { 
+            error: err instanceof Error ? err.message : String(err)
+          });
+          if (!loadingError) {
+            setLoadingError(`שגיאה בטעינת הגדרות תשלום: ${err instanceof Error ? err.message : 'שגיאה לא ידועה'}`);
+          }
           toast({
             title: "שגיאה",
-            description: errorMsg,
+            description: "לא ניתן לטעון את הגדרות תשלומי הקריפטו. נסה לבחור שיטת תשלום אחרת.",
             variant: "destructive"
           });
         } finally {
@@ -132,6 +158,7 @@ export const PaymentOptions = ({
   
   const handleNOWPaymentsSuccess = (paymentData: any) => {
     console.log("[PaymentOptions] NOWPayments payment initiated:", paymentData);
+    logNOWPaymentsOperation('info', 'עסקת NOW Payments נוצרה בהצל��ה', paymentData);
     
     toast({
       title: "חשבונית נוצרה",
@@ -150,6 +177,9 @@ export const PaymentOptions = ({
           }
         } catch (error) {
           console.error("[PaymentOptions] Error checking stored transaction:", error);
+          logNOWPaymentsOperation('error', 'שגיאה בבדיקת עסקה מאוחסנת', { 
+            error: error instanceof Error ? error.message : String(error)
+          });
         }
       }
     }, 30000);
@@ -192,6 +222,21 @@ export const PaymentOptions = ({
           <NOWPaymentsDebugInfo />
           <NOWPaymentsLogs />
         </>
+      )}
+      
+      {loadingError && (
+        <div className="p-3 bg-red-50 rounded-md border border-red-200 mb-4">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-red-800 font-medium">שגיאה בטעינת הגדרות תשלום</p>
+              <p className="text-red-700 text-sm mt-1">{loadingError}</p>
+              <p className="text-sm text-gray-700 mt-2">
+                נסה לבחור שיטת תשלום אחרת או צור קשר עם מנהל הקבוצה.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
       
       <motion.div
@@ -281,12 +326,13 @@ export const PaymentOptions = ({
             <NOWPaymentsButton
               amount={price}
               apiKey={nowPaymentsConfig?.api_key || ''}
-              ipnCallbackUrl={nowPaymentsConfig?.ipn_callback_url}
+              ipnCallbackUrl={nowPaymentsConfig?.ipn_callback_url || `${window.location.origin}/functions/v1/nowpayments-ipn`}
               orderId={getNOWPaymentsOrderId()}
               description={`מנוי לקבוצת טלגרם - $${price}`}
               onSuccess={handleNOWPaymentsSuccess}
               onError={(error) => {
                 console.error("[PaymentOptions] NOWPayments error:", error);
+                logNOWPaymentsOperation('error', 'שגיאה בתהליך תשלום', { error });
                 setConfigError(error);
                 toast({
                   title: "שגיאה",

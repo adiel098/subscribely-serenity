@@ -277,7 +277,7 @@ export const PaymentOptions = ({
             {isLoadingConfig ? (
               <div className="flex items-center">
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                <span>טוען...</span>
+                <span>loading...</span>
               </div>
             ) : (
               <div className="flex items-center">

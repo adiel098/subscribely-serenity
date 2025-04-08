@@ -138,58 +138,58 @@ const StripePaymentForm = ({ stripeConfig, onSuccess, price }) => {
     initializeStripe();
   }, [stripeConfig, price]);
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-sm">
-        <div className="relative">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-          <div className="absolute inset-0 animate-pulse opacity-50">
-            <Loader2 className="w-8 h-8 text-blue-300" />
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8 space-y-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 animate-fadeIn">
+          <div className="relative">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <div className="absolute inset-0 animate-pulse opacity-50">
+              <Loader2 className="w-8 h-8 text-blue-300" />
+            </div>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-blue-700 font-medium">Initializing Payment</p>
+            <p className="text-sm text-blue-600/70">Please wait while we set up your secure payment form...</p>
           </div>
         </div>
-        <div className="text-center space-y-1">
-          <h3 className="text-lg font-semibold text-blue-700">
-            Initializing Payment
-          </h3>
-          <p className="text-sm text-blue-600/80">
-            Please wait while we prepare your secure payment form...
-          </p>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-6 bg-red-50 rounded-xl border border-red-200 animate-fadeIn">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium text-red-800">Payment Setup Error</p>
+              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-gray-600 mt-2">
+                Please try refreshing the page or contact support if the issue persists.
+              </p>
+            </div>
+          </div>
         </div>
+      );
+    }
+
+    if (!stripePromise || !clientSecret) {
+      return null;
+    }
+
+    return (
+      <div className="animate-fadeIn">
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <CheckoutForm onSuccess={onSuccess} price={price} />
+        </Elements>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 bg-red-50 rounded-xl border border-red-200">
-        <div className="flex items-start space-x-3">
-          <div className="mt-0.5">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-medium text-red-800">
-              Payment Initialization Failed
-            </h3>
-            <p className="mt-1 text-sm text-red-700">
-              {error}
-            </p>
-            <p className="mt-3 text-sm text-gray-600">
-              Please try refreshing the page or contact support if the issue persists.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stripePromise || !clientSecret) {
-    return null;
-  }
+  };
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
-      <CheckoutForm onSuccess={onSuccess} price={price} />
-    </Elements>
+    <div className="min-h-[200px] transition-all duration-300">
+      {renderContent()}
+    </div>
   );
 };
 

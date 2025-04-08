@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
 import { SuccessScreen } from "./success-screen/SuccessScreen";
@@ -6,7 +5,6 @@ import { useStripeConfig } from "../hooks/useStripeConfig";
 import { usePaymentProcessing } from "../hooks/payment-processing/usePaymentProcessing";
 import { PaymentHeader } from "./payment/PaymentHeader";
 import { PaymentOptions } from "./payment/PaymentOptions";
-import { PaymentButton } from "./payment/PaymentButton";
 import { toast } from "@/components/ui/use-toast";
 import { Subscription } from "../services/memberService";
 
@@ -146,11 +144,7 @@ export const PaymentMethods = ({
 
       {selectedPaymentMethod && selectedPaymentMethod !== 'stripe' && (
         <div className="mt-8">
-          <PaymentButton
-            price={selectedPlan.price}
-            isProcessing={isLoading}
-            onClick={handlePayment}
-          />
+          {/* Removed PaymentButton */}
         </div>
       )}
     </div>

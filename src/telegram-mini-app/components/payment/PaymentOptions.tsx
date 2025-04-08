@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, CreditCard, Loader2 } from "lucide-react";
 import { createNowPaymentsInvoice } from "@/integrations/nowpayments/api";
-import { NOWPaymentsModal } from "./NOWPaymentsModal";
 
 interface PaymentOptionsProps {
   selectedPaymentMethod: string | null;
@@ -29,9 +28,8 @@ export const PaymentOptions = ({
   const [configError, setConfigError] = useState<string | null>(null);
   const [communityOwnerId, setCommunityOwnerId] = useState<string | null>(null);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showIframe, setShowIframe] = useState(false);
 
   useEffect(() => {
     const fetchNowPaymentsConfig = async () => {
@@ -95,6 +93,10 @@ export const PaymentOptions = ({
 
   const handlePaymentMethodSelect = (method: string) => {
     onPaymentMethodSelect(method);
+    if (method !== 'nowpayments') {
+      setShowIframe(false);
+      setInvoiceUrl(null);
+    }
   };
   
   const handleNOWPaymentsSuccess = (paymentData: any) => {
@@ -183,9 +185,11 @@ export const PaymentOptions = ({
         <div>
           <TelegramPaymentOption
             method="nowpayments"
-            title="קריפטו"
+            title="Crypto"
             isSelected={selectedPaymentMethod === 'nowpayments'}
             onSelect={() => handlePaymentMethodSelect('nowpayments')}
+            isLoading={isLoadingConfig}
+            error={configError}
           />
         </div>
       </div>
@@ -199,26 +203,10 @@ export const PaymentOptions = ({
           />
         </div>
       )}
-      
-      {selectedPaymentMethod === 'nowpayments' && (
-        <div className="mt-8">
-          {configError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm">
-              <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-red-700">שגיאת תצורה</p>
-                  <p className="text-red-600">{configError}</p>
-                  <p className="mt-1 text-gray-700">
-                    שיטת התשלום הזו לא מוגדרת במלואה. אנא נסה אמצעי תשלום אחר או צור קשר עם התמיכה.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <Button 
-            className="w-full max-w-md bg-gradient-to-r from-blue-600 to-indigo-600 py-6 text-lg font-medium shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+
+      {selectedPaymentMethod === 'nowpayments' && !showIframe && (
+        <div className="mt-8 flex justify-center">
+          <Button
             onClick={async () => {
               if (!nowPaymentsConfig?.api_key) {
                 setConfigError("NOWPayments API key is not configured");
@@ -248,9 +236,10 @@ export const PaymentOptions = ({
                   timestamp: Date.now()
                 }));
 
-                // הצגת המודל עם ה-iframe
-                setIsModalOpen(true);
+                // הצגת ה-iframe
                 setInvoiceUrl(response.invoice_url);
+                setShowIframe(true);
+                console.log('Opening iframe with URL:', response.invoice_url);
 
               } catch (error) {
                 console.error('Error creating NOWPayments invoice:', error);
@@ -259,27 +248,32 @@ export const PaymentOptions = ({
                 setIsLoadingConfig(false);
               }
             }}
-            disabled={isLoadingConfig || !!configError}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md"
+            disabled={isLoadingConfig}
           >
             {isLoadingConfig ? (
-              <span className="flex items-center">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                טוען...
-              </span>
+              <div className="flex items-center">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                <span>טוען...</span>
+              </div>
             ) : (
-              <>
-                <CreditCard className="mr-2 h-5 w-5" />
-                שלם ${price}
-              </>
+              <div className="flex items-center">
+                <CreditCard className="h-5 w-5 mr-2" />
+                <span>Pay ${price}</span>
+              </div>
             )}
           </Button>
+        </div>
+      )}
 
-          {isModalOpen && invoiceUrl && (
-            <NOWPaymentsModal
-              invoiceUrl={invoiceUrl}
-              onClose={() => setIsModalOpen(false)}
-            />
-          )}
+      {showIframe && invoiceUrl && (
+        <div className="mt-8 bg-white rounded-lg shadow-lg overflow-hidden">
+          <iframe
+            src={invoiceUrl}
+            className="w-full h-[600px] border-none"
+            title="NOWPayments Invoice"
+            onLoad={() => console.log('iframe loaded with URL:', invoiceUrl)}
+          />
         </div>
       )}
     </div>

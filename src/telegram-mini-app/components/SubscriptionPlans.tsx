@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Star, Zap, Shield, Award, Calendar, Clock, Gift } from "lucide-react";
@@ -167,9 +166,9 @@ export const SubscriptionPlans = ({
                       Active
                     </Badge>
                     
-                    {/* Circle with checkmark moved to the top-right corner */}
+                    {/* Circle with checkmark positioned higher and more to the right */}
                     <div 
-                      className="absolute -top-2 -right-1 bg-white rounded-full p-0.5 border-2 border-white z-20"
+                      className="absolute -top-3.5 -right-2 bg-white rounded-full p-0.5 border-2 border-white z-20"
                       style={{
                         boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
                       }}
@@ -209,7 +208,6 @@ export const SubscriptionPlans = ({
         );
       })}
       
-      {/* Subscription Duration component that shows only when a plan is selected */}
       {selectedPlan && (
         <SubscriptionDuration 
           selectedPlan={selectedPlan} 

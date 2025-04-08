@@ -4,7 +4,7 @@ import StripePaymentForm from "./StripePaymentForm";
 import { motion } from "framer-motion";
 import { NOWPaymentsButton } from "./NOWPaymentsButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, User } from "lucide-react";
 
 interface PaymentOptionsProps {
   selectedPaymentMethod: string | null;
@@ -26,6 +26,7 @@ export const PaymentOptions = ({
   const [nowPaymentsConfig, setNowPaymentsConfig] = useState<any>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [communityOwnerId, setCommunityOwnerId] = useState<string | null>(null);
   
   useEffect(() => {
     console.log("[PaymentOptions] Rendering with selectedMethod:", selectedPaymentMethod);
@@ -52,6 +53,8 @@ export const PaymentOptions = ({
           if (!communityData?.owner_id) {
             throw new Error('Community has no owner');
           }
+          
+          setCommunityOwnerId(communityData.owner_id);
           
           const { data, error } = await supabase
             .from('payment_methods')
@@ -237,13 +240,32 @@ export const PaymentOptions = ({
               }}
             />
             
-            {/* Show configuration debug info */}
-            <div className="mt-4 p-2 bg-gray-100 rounded text-xs border border-gray-300">
-              <h4 className="font-bold">Config Debug:</h4>
-              <p><strong>API Key Present:</strong> {nowPaymentsConfig?.api_key ? '✅ Yes' : '❌ No'}</p>
-              <p><strong>IPN URL Configured:</strong> {nowPaymentsConfig?.ipn_callback_url ? '✅ Yes' : '❌ No'}</p>
-              <p><strong>Community ID:</strong> {communityId}</p>
-              <p><strong>Price:</strong> {price} USD</p>
+            <div className="mt-4 p-2 bg-gray-100 rounded-lg border border-gray-300">
+              <h4 className="font-bold text-sm flex items-center mb-1">
+                <span className="mr-1">🔍</span> Config Debug:
+              </h4>
+              
+              {communityOwnerId && (
+                <div className="bg-indigo-50 p-2 rounded-md border border-indigo-100 mb-2">
+                  <div className="flex items-center text-indigo-800 font-medium">
+                    <User className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+                    <span>Owner ID:</span>
+                  </div>
+                  <div className="font-mono text-xs bg-white/70 px-1.5 py-0.5 rounded mt-0.5 text-indigo-900 border border-indigo-50 break-all">
+                    {communityOwnerId}
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-1">
+                <p className="flex items-center">
+                  <strong>API Key Present:</strong> 
+                  <span className="ml-1">{nowPaymentsConfig?.api_key ? '✅ Yes' : '❌ No'}</span>
+                </p>
+                <p><strong>IPN URL Configured:</strong> {nowPaymentsConfig?.ipn_callback_url ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>Community ID:</strong> {communityId}</p>
+                <p><strong>Price:</strong> {price} USD</p>
+              </div>
             </div>
           </div>
         </motion.div>

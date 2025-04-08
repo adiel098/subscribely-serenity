@@ -1,6 +1,15 @@
 
 # Development Log
 
+## 2025-04-08 - NOWPayments Configuration Debugging
+
+- Enhanced NOWPaymentsDebugInfo component to provide more detailed information
+- Added community owner ID display in debug component
+- Improved error handling and logging for NOWPayments configuration issues
+- Added clear visual indicators for configuration status
+
+Key issue fixed: Improved debugging to understand why NOWPayments API key is not being found correctly.
+
 ## 2025-04-07 - NOWPayments Integration Improvements
 
 - Enhanced debug UI for the "Pay with Crypto" button

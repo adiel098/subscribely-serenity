@@ -71,7 +71,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   };
 
   return (
-    <div className="text-center space-y-6 animate-fade-in">
+    <div className="text-center space-y-4 animate-fade-in">
       {photoLoading ? (
         <div className="relative mx-auto">
           <Skeleton className="h-24 w-24 rounded-full mx-auto" />
@@ -106,7 +106,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
           )}
         </Avatar>
       )}
-      <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 px-4">
+      <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-indigo-600 px-4 mb-2">
         {community.name}
       </h1>
       
@@ -131,7 +131,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleExpand}
-                  className="mt-1 px-2 py-0.5 h-6 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-xs font-medium"
+                  className="mt-1 px-2 py-0.5 h-5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/70 text-[10px] font-medium"
                 >
                   {isExpanded ? (
                     <>Read less <ChevronDown className="ml-1 h-3 w-3" /></>

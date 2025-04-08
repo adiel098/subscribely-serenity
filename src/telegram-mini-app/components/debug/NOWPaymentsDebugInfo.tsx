@@ -3,12 +3,29 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, CheckCircle, InfoIcon, Loader2 } from "lucide-react";
 
+// Define a proper type for the debug info object
+interface DebugInfo {
+  lookupMethod: string;
+  communityId: string;
+  steps: string[];
+  ownerId?: string;
+  hasConfig?: boolean;
+  communityName?: string;
+  paymentMethodId?: string;
+  hasApiKey?: boolean | string;
+  error?: string;
+}
+
 export const NOWPaymentsDebugInfo: React.FC = () => {
   const [config, setConfig] = useState<any>(null);
   const [communityOwner, setCommunityOwner] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({
+    lookupMethod: '',
+    communityId: '',
+    steps: []
+  });
   
   useEffect(() => {
     const fetchConfig = async () => {
@@ -18,7 +35,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
         const communityId = urlParams.get('communityId');
         
         // Store debug information
-        const debug = {
+        const debug: DebugInfo = {
           lookupMethod: communityId ? 'specific_community' : 'any_active',
           communityId: communityId || 'none',
           steps: []

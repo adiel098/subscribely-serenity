@@ -154,13 +154,15 @@ export const SubscriptionPlans = ({
                 {isActive && (
                   <Badge 
                     variant="success" 
-                    className="absolute -top-2 -right-1 text-xs py-0 px-3 z-20 flex items-center gap-1 bg-green-500 text-white"
+                    className="absolute -top-2 -right-1 text-xs py-0 px-3 z-20 flex items-center justify-between bg-green-500 text-white"
                     style={{
-                      borderRadius: "1rem 1rem 0 1rem"
+                      borderRadius: "1rem 1rem 0 1rem",
+                      paddingRight: "0.6rem",
+                      minWidth: "75px"
                     }}
                   >
-                    Active
-                    <div className="bg-white rounded-full p-0.5 -mr-1 -my-0.5">
+                    <span>Active</span>
+                    <div className="bg-white rounded-full p-0.5 -right-1.5 absolute">
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
                     </div>
                   </Badge>

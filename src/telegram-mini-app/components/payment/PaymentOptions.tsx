@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { TelegramPaymentOption } from "@/telegram-mini-app/components/TelegramPaymentOption";
 import StripePaymentForm from "./StripePaymentForm";
@@ -5,6 +6,7 @@ import { motion } from "framer-motion";
 import { NOWPaymentsButton } from "./NOWPaymentsButton";
 import { NOWPaymentsLogs } from "../debug/NOWPaymentsLogs";
 import { NOWPaymentsDebugInfo } from "../debug/NOWPaymentsDebugInfo";
+import { logNOWPaymentsOperation } from "../debug/NOWPaymentsLogs";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle, User } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";

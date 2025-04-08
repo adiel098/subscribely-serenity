@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import crypto from "https://esm.sh/crypto@1.0.1";
+// Remove the crypto import and use Deno's built-in crypto module
 
 // Define CORS headers
 const corsHeaders = {
@@ -97,12 +97,29 @@ serve(async (req) => {
       );
     }
     
-    // Validate the signature using the IPN secret
+    // Validate the signature using the IPN secret and Deno's built-in crypto
     const ipnSecret = paymentMethodData.config.ipn_secret;
-    const calculatedSignature = crypto
-      .createHmac('sha512', ipnSecret)
-      .update(JSON.stringify(payload))
-      .digest('hex');
+    
+    // Using Deno's built-in crypto for HMAC calculation
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(ipnSecret),
+      { name: "HMAC", hash: "SHA-512" },
+      false,
+      ["sign"]
+    );
+    
+    const signatureData = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(JSON.stringify(payload))
+    );
+    
+    // Convert to hex string
+    const calculatedSignature = Array.from(new Uint8Array(signatureData))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
     
     if (signature !== calculatedSignature) {
       console.error("Invalid signature in NOWPayments request");

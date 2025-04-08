@@ -65,7 +65,7 @@ export const CommunityHeader = ({ community }: CommunityHeaderProps) => {
   };
 
   return (
-    <div className="text-center space-y-4 animate-fade-in pt-4">
+    <div className="text-center space-y-4 animate-fade-in pt-4 pb-4">
       <div className="mx-auto max-w-xl px-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-center mb-0.5">

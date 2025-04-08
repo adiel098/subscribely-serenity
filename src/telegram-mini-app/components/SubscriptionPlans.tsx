@@ -154,10 +154,10 @@ export const SubscriptionPlans = ({
                 {isActive && (
                   <Badge 
                     variant="success" 
-                    className="absolute -top-2 -right-1 text-xs py-0 px-3 z-20 flex items-center justify-between bg-green-500 text-white"
+                    className="absolute -top-2 -left-1 text-xs py-0 px-3 z-20 flex items-center justify-between bg-green-500 text-white"
                     style={{
-                      borderRadius: "1rem 1rem 0 1rem",
-                      paddingRight: "0.6rem",
+                      borderRadius: "1rem 1rem 1rem 0",
+                      paddingLeft: "0.6rem",
                       minWidth: "75px"
                     }}
                   >

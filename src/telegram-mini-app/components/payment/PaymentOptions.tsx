@@ -82,7 +82,7 @@ export const PaymentOptions = ({
             console.error("[PaymentOptions] NOWPayments config missing or invalid:", data);
             setConfigError(errorMsg);
             toast({
-              title: "Configuration Error",
+              title: "שגיאת תצורה",
               description: errorMsg,
               variant: "destructive"
             });
@@ -96,7 +96,7 @@ export const PaymentOptions = ({
           const errorMsg = `Failed to load payment configuration: ${err instanceof Error ? err.message : 'Unknown error'}`;
           setConfigError(errorMsg);
           toast({
-            title: "Error",
+            title: "שגיאה",
             description: errorMsg,
             variant: "destructive"
           });
@@ -132,12 +132,27 @@ export const PaymentOptions = ({
   
   const handleNOWPaymentsSuccess = (paymentData: any) => {
     console.log("[PaymentOptions] NOWPayments payment initiated:", paymentData);
+    
     toast({
-      title: "Payment Created",
-      description: "Your crypto payment has been initiated. Please complete the payment in the new window.",
+      title: "חשבונית נוצרה",
+      description: "חשבונית התשלום נוצרה בהצלחה. השלם את התשלום בטופס שמופיע.",
     });
-    // We'll trigger success when the user returns from the payment page
-    // or when they refresh and we detect the completed transaction
+    
+    setTimeout(() => {
+      const storedTransaction = localStorage.getItem('nowpayments_transaction');
+      if (storedTransaction) {
+        try {
+          const transaction = JSON.parse(storedTransaction);
+          const timeElapsed = Date.now() - transaction.timestamp;
+          
+          if (timeElapsed > 30000) {
+            onPaymentSuccess();
+          }
+        } catch (error) {
+          console.error("[PaymentOptions] Error checking stored transaction:", error);
+        }
+      }
+    }, 30000);
   };
 
   useEffect(() => {
@@ -206,7 +221,7 @@ export const PaymentOptions = ({
         <motion.div variants={item} whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
           <TelegramPaymentOption
             method="nowpayments"
-            title="NOWPayments"
+            title="קריפטו"
             isSelected={selectedPaymentMethod === 'nowpayments'}
             onSelect={() => handlePaymentMethodSelect('nowpayments')}
           />
@@ -236,15 +251,15 @@ export const PaymentOptions = ({
           className="mt-8"
         >
           <div className="rounded-lg border p-4 bg-amber-50 border-amber-100">
-            <h3 className="text-lg font-semibold mb-3">Crypto Payment</h3>
+            <h3 className="text-lg font-semibold mb-3">תשלום בקריפטו</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Pay with your preferred cryptocurrency. You'll be redirected to a secure payment page.
+              שלם באמצעות המטבע הקריפטוגרפי המועדף עליך. טופס התשלום יופיע כאן לאחר לחיצה על הכפתור.
             </p>
             
             {isLoadingConfig && (
               <div className="flex justify-center items-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-amber-600 mr-2" /> 
-                <span>Loading payment configuration...</span>
+                <span>טוען הגדרות תשלום...</span>
               </div>
             )}
             
@@ -253,10 +268,10 @@ export const PaymentOptions = ({
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold text-red-700">Configuration Error</p>
+                    <p className="font-semibold text-red-700">שגיאת תצורה</p>
                     <p className="text-red-600">{configError}</p>
                     <p className="mt-1 text-gray-700">
-                      This payment method is not yet fully set up. Please try another payment option or contact support.
+                      שיטת התשלום הזו לא מוגדרת במלואה. אנא נסה אמצעי תשלום אחר או צור קשר עם התמיכה.
                     </p>
                   </div>
                 </div>
@@ -268,46 +283,48 @@ export const PaymentOptions = ({
               apiKey={nowPaymentsConfig?.api_key || ''}
               ipnCallbackUrl={nowPaymentsConfig?.ipn_callback_url}
               orderId={getNOWPaymentsOrderId()}
-              description={`Telegram Group Subscription - $${price}`}
+              description={`מנוי לקבוצת טלגרם - $${price}`}
               onSuccess={handleNOWPaymentsSuccess}
               onError={(error) => {
                 console.error("[PaymentOptions] NOWPayments error:", error);
                 setConfigError(error);
                 toast({
-                  title: "Error",
-                  description: error || "There was an error with your payment. Please try again.",
+                  title: "שגיאה",
+                  description: error || "אירעה שגיאה בעת עיבוד התשלום שלך. אנא נסה שוב.",
                   variant: "destructive"
                 });
               }}
             />
             
-            <div className="mt-4 p-2 bg-gray-100 rounded-lg border border-gray-300">
-              <h4 className="font-bold text-sm flex items-center mb-1">
-                <span className="mr-1">🔍</span> Config Debug:
-              </h4>
-              
-              {communityOwnerId && (
-                <div className="bg-indigo-50 p-2 rounded-md border border-indigo-100 mb-2">
-                  <div className="flex items-center text-indigo-800 font-medium">
-                    <User className="h-3.5 w-3.5 mr-1 text-indigo-600" />
-                    <span>Owner ID:</span>
+            {(process.env.NODE_ENV === 'development' || new URLSearchParams(window.location.search).get('debug') === 'true') && (
+              <div className="mt-4 p-2 bg-gray-100 rounded-lg border border-gray-300">
+                <h4 className="font-bold text-sm flex items-center mb-1">
+                  <span className="mr-1">🔍</span> פרטי תצורה:
+                </h4>
+                
+                {communityOwnerId && (
+                  <div className="bg-indigo-50 p-2 rounded-md border border-indigo-100 mb-2">
+                    <div className="flex items-center text-indigo-800 font-medium">
+                      <User className="h-3.5 w-3.5 mr-1 text-indigo-600" />
+                      <span>מזהה בעלים:</span>
+                    </div>
+                    <div className="font-mono text-xs bg-white/70 px-1.5 py-0.5 rounded mt-0.5 text-indigo-900 border border-indigo-50 break-all">
+                      {communityOwnerId}
+                    </div>
                   </div>
-                  <div className="font-mono text-xs bg-white/70 px-1.5 py-0.5 rounded mt-0.5 text-indigo-900 border border-indigo-50 break-all">
-                    {communityOwnerId}
-                  </div>
+                )}
+                
+                <div className="space-y-1">
+                  <p className="flex items-center">
+                    <strong>מפתח API קיים:</strong> 
+                    <span className="mr-1">{nowPaymentsConfig?.api_key ? '✅ כן' : '❌ לא'}</span>
+                  </p>
+                  <p><strong>כתובת IPN מוגדרת:</strong> {nowPaymentsConfig?.ipn_callback_url ? '✅ כן' : '❌ לא'}</p>
+                  <p><strong>מזהה קהילה:</strong> {communityId}</p>
+                  <p><strong>מחיר:</strong> {price} USD</p>
                 </div>
-              )}
-              
-              <div className="space-y-1">
-                <p className="flex items-center">
-                  <strong>API Key Present:</strong> 
-                  <span className="ml-1">{nowPaymentsConfig?.api_key ? '✅ Yes' : '❌ No'}</span>
-                </p>
-                <p><strong>IPN URL Configured:</strong> {nowPaymentsConfig?.ipn_callback_url ? '✅ Yes' : '❌ No'}</p>
-                <p><strong>Community ID:</strong> {communityId}</p>
-                <p><strong>Price:</strong> {price} USD</p>
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
       )}

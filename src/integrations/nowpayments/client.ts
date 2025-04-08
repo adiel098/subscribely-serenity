@@ -1,4 +1,3 @@
-
 interface CreatePaymentParams {
   priceAmount: number;
   priceCurrency: string;
@@ -42,7 +41,6 @@ export class NOWPaymentsClient {
    * Creates a new payment using the NOWPayments API
    */
   async createPayment(params: CreatePaymentParams): Promise<NOWPaymentsResponse> {
-    // Log details of the request for debugging
     console.log('NOWPayments createPayment params:', {
       price_amount: params.priceAmount,
       price_currency: params.priceCurrency,
@@ -51,7 +49,6 @@ export class NOWPaymentsClient {
       ipn_callback_url: params.ipnCallbackUrl
     });
 
-    // In development or without API key, return mock data
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock payment');
       console.log('Payment params:', params);
@@ -60,10 +57,8 @@ export class NOWPaymentsClient {
         console.error('NOWPayments API key is not configured. This would fail in production.');
       }
       
-      // For testing, create a mock payment URL that actually works - we'll use a sample payment gateway
       const testPaymentUrl = `https://nowpayments.io/payment/?amount=${params.priceAmount}&currency=${params.priceCurrency}`;
       
-      // Mock data that mimics the NOWPayments API response
       return {
         payment_id: 'mock-payment-' + Math.random().toString(36).substring(2, 10),
         payment_status: 'waiting',
@@ -80,7 +75,6 @@ export class NOWPaymentsClient {
       };
     }
 
-    // In production, make actual API call
     try {
       console.log('Making API request to NOWPayments with key:', this.apiKey ? `${this.apiKey.substring(0, 4)}...` : 'missing');
       console.log('Request params:', {
@@ -93,7 +87,7 @@ export class NOWPaymentsClient {
       const requestBody = {
         price_amount: params.priceAmount,
         price_currency: params.priceCurrency,
-        pay_currency: 'btc', // Default to BTC, can be made configurable
+        pay_currency: 'btc',
         order_id: params.orderId,
         order_description: params.orderDescription,
         ipn_callback_url: params.ipnCallbackUrl,
@@ -127,7 +121,6 @@ export class NOWPaymentsClient {
       const data = await response.json();
       console.log('NOWPayments API response:', data);
       
-      // Verify we got a payment_url in the response
       if (!data.payment_url) {
         console.error('NOWPayments response missing payment_url:', data);
         throw new Error('No payment URL received in response');
@@ -146,7 +139,6 @@ export class NOWPaymentsClient {
   async createInvoice(params: CreatePaymentParams): Promise<NOWPaymentsResponse> {
     console.log('NOWPayments createInvoice params:', params);
 
-    // In development or without API key, return mock data
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       console.log('NOWPayments: Running in dev mode or missing API key, returning mock invoice');
       
@@ -154,7 +146,6 @@ export class NOWPaymentsClient {
         console.error('NOWPayments API key is not configured. This would fail in production.');
       }
       
-      // Mock data that mimics the NOWPayments Invoice API response
       return {
         id: 'mock-invoice-' + Math.random().toString(36).substring(2, 10),
         invoice_url: `https://nowpayments.io/payment/?iid=mock${Date.now()}`,
@@ -185,31 +176,49 @@ export class NOWPaymentsClient {
         method: 'POST',
         headers: {
           'x-api-key': this.apiKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(requestBody)
       });
 
-      if (!response.ok) {
-        let errorMessage = `Failed to create invoice: ${response.statusText}`;
-        const responseText = await response.text();
-        console.error('NOWPayments API error response (raw):', responseText);
+      const statusCode = response.status;
+      const statusText = response.statusText;
+      
+      console.error(`NOWPayments API error: HTTP ${statusCode} ${statusText}`);
+      
+      let errorMessage = `Failed to create invoice: ${statusText} (${statusCode})`;
+      let responseBody;
+      
+      try {
+        responseBody = await response.text();
+        console.error('NOWPayments API error response (raw):', responseBody);
         
         try {
-          const errorData = JSON.parse(responseText);
+          const errorData = JSON.parse(responseBody);
           console.error('NOWPayments API error response (parsed):', errorData);
           errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error('Could not parse error response as JSON:', e);
+        } catch (parseError) {
+          console.error('Could not parse error response as JSON:', parseError);
         }
-        
-        throw new Error(`${errorMessage} (Status: ${response.status})`);
+      } catch (readError) {
+        console.error('Could not read error response body:', readError);
+      }
+      
+      if (!response.ok) {
+        throw new Error(`${errorMessage} (Status: ${statusCode})`);
       }
 
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('NOWPayments API returned non-JSON response:', text);
+        throw new Error(`Invalid response format: ${contentType || 'unknown'}`);
+      }
+      
       const data = await response.json();
       console.log('NOWPayments invoice API response:', data);
       
-      // Verify we got an invoice_url in the response
       if (!data.invoice_url) {
         console.error('NOWPayments response missing invoice_url:', data);
         throw new Error('No invoice URL received in response');
@@ -231,7 +240,6 @@ export class NOWPaymentsClient {
       throw new Error('API key is not configured');
     }
 
-    // In development, return mock data
     if (process.env.NODE_ENV === 'development') {
       return {
         payment_id: paymentId,

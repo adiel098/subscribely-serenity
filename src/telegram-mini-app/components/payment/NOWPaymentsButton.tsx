@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ExternalLink } from "lucide-react";
 import { logNOWPaymentsOperation } from "../debug/NOWPaymentsLogs";
+import { NOWPaymentsEmbeddedFrame } from "./NOWPaymentsEmbeddedFrame";
 
 interface NOWPaymentsButtonProps {
   amount: number;
@@ -25,6 +26,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [invoiceId, setInvoiceId] = useState<string | null>(null);
   
   // Create invoice function
   const createInvoice = async () => {
@@ -38,7 +40,6 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
     setIsLoading(true);
     try {
       // Format order ID to ensure consistency - use communityId_telegramUserId format
-      // If orderId already contains underscores, assume it's already in the correct format
       const finalOrderId = orderId.includes('_') ? orderId : orderId.replace(/-/g, '_');
       
       // Get the current URL for success and cancel URLs
@@ -75,6 +76,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         const mockResponse = {
           id: `mock-${Math.random().toString(36).substring(2, 10)}`,
           invoice_url: `https://nowpayments.io/payment/?iid=mock${Date.now()}`,
+          invoice_id: `mock${Date.now()}`,
           order_id: finalOrderId,
           price_amount: amount,
           price_currency: 'usd',
@@ -88,7 +90,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         return;
       }
       
-      // Make the API call
+      // Make the API call - NOTE: USING INVOICE API ENDPOINT
       const response = await fetch('https://api.nowpayments.io/v1/invoice', {
         method: 'POST',
         headers: {
@@ -147,6 +149,12 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
       );
       
       setPaymentUrl(data.invoice_url);
+      
+      // Extract invoice ID from the URL or use the ID directly
+      const invoiceIdFromUrl = data.invoice_url.split('iid=')[1]?.split('&')[0];
+      const finalInvoiceId = invoiceIdFromUrl || data.id;
+      
+      setInvoiceId(finalInvoiceId);
       onSuccess?.(data);
       
       // Save transaction data to localStorage
@@ -165,8 +173,8 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
   };
   
   return (
-    <div className="space-y-2">
-      {!paymentUrl ? (
+    <div className="space-y-6">
+      {!invoiceId ? (
         <Button
           onClick={createInvoice}
           disabled={isLoading}
@@ -175,50 +183,52 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating payment...
+              יוצר תשלום...
             </>
           ) : (
-            <>Pay with Crypto</>
+            <>שלם באמצעות קריפטו</>
           )}
         </Button>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <h4 className="font-medium mb-2">Payment Invoice Created!</h4>
-            <p className="text-sm text-amber-800 mb-3">
-              Click the button below to open the payment page in a new window, then return here after completing your payment.
-            </p>
-            
-            <Button
-              onClick={() => window.open(paymentUrl, '_blank')}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Open Payment Page
-            </Button>
-          </div>
+          {/* Display the embedded iframe for payment */}
+          <NOWPaymentsEmbeddedFrame 
+            invoiceId={invoiceId} 
+          />
           
-          <Button
-            variant="outline"
-            onClick={createInvoice}
-            disabled={isLoading}
-            className="w-full border-amber-300"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>Create New Invoice</>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={createInvoice}
+              disabled={isLoading}
+              className="flex-1 border-amber-300"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מעבד...
+                </>
+              ) : (
+                <>צור חשבונית חדשה</>
+              )}
+            </Button>
+            
+            {paymentUrl && (
+              <Button
+                onClick={() => window.open(paymentUrl, '_blank')}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                פתח בחלון חדש
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       )}
       
       {!apiKey && (
         <p className="text-xs text-red-600 mt-2">
-          Crypto payment is not fully configured. Please contact support.
+          תשלומי קריפטו לא מוגדרים כראוי. אנא צור קשר עם התמיכה.
         </p>
       )}
     </div>

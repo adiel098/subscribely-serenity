@@ -192,14 +192,18 @@ export class NOWPaymentsClient {
 
       if (!response.ok) {
         let errorMessage = `Failed to create invoice: ${response.statusText}`;
+        const responseText = await response.text();
+        console.error('NOWPayments API error response (raw):', responseText);
+        
         try {
-          const errorData = await response.json();
-          console.error('NOWPayments API error response:', errorData);
+          const errorData = JSON.parse(responseText);
+          console.error('NOWPayments API error response (parsed):', errorData);
           errorMessage = errorData.message || errorMessage;
         } catch (e) {
           console.error('Could not parse error response as JSON:', e);
         }
-        throw new Error(errorMessage);
+        
+        throw new Error(`${errorMessage} (Status: ${response.status})`);
       }
 
       const data = await response.json();

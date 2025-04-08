@@ -78,7 +78,17 @@ export const NOWPaymentsLogs: React.FC = () => {
   if (logs.length === 0) {
     return (
       <div className="text-xs p-2 bg-gray-50 rounded border">
-        <p className="text-gray-500">No NOWPayments logs available.</p>
+        <div className="flex justify-between">
+          <p className="text-gray-500">No NOWPayments logs available.</p>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={loadLogs}
+            className="h-6 w-6 p-0"
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     );
   }

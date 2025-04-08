@@ -98,6 +98,18 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
         body: JSON.stringify(payload)
       });
       
+      // Handle non-JSON responses
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        logNOWPaymentsOperation(
+          'error',
+          `NOWPayments API responded with non-JSON content: ${response.status} ${response.statusText}`,
+          { contentType, responseText: text }
+        );
+        throw new Error(`Invalid response from NOWPayments API: ${text.substring(0, 100)}`);
+      }
+      
       const data = await response.json();
       
       // Log the response

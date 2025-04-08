@@ -50,10 +50,12 @@ export const PaymentOptions = ({
             .single();
             
           if (communityError) {
+            console.error("[PaymentOptions] Community error:", communityError);
             throw new Error(`Could not find community: ${communityError.message}`);
           }
           
           if (!communityData?.owner_id) {
+            console.error("[PaymentOptions] Missing owner_id for community:", communityId);
             throw new Error('Community has no owner');
           }
           
@@ -69,14 +71,21 @@ export const PaymentOptions = ({
             .maybeSingle();
             
           if (error) {
+            console.error("[PaymentOptions] Error fetching payment methods:", error);
             throw error;
           }
           
           console.log("[PaymentOptions] Retrieved payment method:", data);
           
           if (!data || !data.config || !data.config.api_key) {
-            setConfigError("NOWPayments API key is not configured in the database");
+            const errorMsg = "NOWPayments API key is not configured in the database";
             console.error("[PaymentOptions] NOWPayments config missing or invalid:", data);
+            setConfigError(errorMsg);
+            toast({
+              title: "Configuration Error",
+              description: errorMsg,
+              variant: "destructive"
+            });
           } else {
             console.log("[PaymentOptions] NOWPayments config loaded successfully");
           }
@@ -84,7 +93,13 @@ export const PaymentOptions = ({
           setNowPaymentsConfig(data?.config || {});
         } catch (err) {
           console.error("[PaymentOptions] Error fetching NOWPayments config:", err);
-          setConfigError(`Failed to load payment configuration: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          const errorMsg = `Failed to load payment configuration: ${err instanceof Error ? err.message : 'Unknown error'}`;
+          setConfigError(errorMsg);
+          toast({
+            title: "Error",
+            description: errorMsg,
+            variant: "destructive"
+          });
         } finally {
           setIsLoadingConfig(false);
         }
@@ -117,6 +132,10 @@ export const PaymentOptions = ({
   
   const handleNOWPaymentsSuccess = (paymentData: any) => {
     console.log("[PaymentOptions] NOWPayments payment initiated:", paymentData);
+    toast({
+      title: "Payment Created",
+      description: "Your crypto payment has been initiated. Please complete the payment in the new window.",
+    });
     // We'll trigger success when the user returns from the payment page
     // or when they refresh and we detect the completed transaction
   };
@@ -154,7 +173,10 @@ export const PaymentOptions = ({
   return (
     <div className="space-y-8">
       {(process.env.NODE_ENV === 'development' || new URLSearchParams(window.location.search).get('debug') === 'true') && (
-        <NOWPaymentsLogs />
+        <>
+          <NOWPaymentsDebugInfo />
+          <NOWPaymentsLogs />
+        </>
       )}
       
       <motion.div
@@ -253,7 +275,7 @@ export const PaymentOptions = ({
                 setConfigError(error);
                 toast({
                   title: "Error",
-                  description: "There was an error with your payment. Please try again.",
+                  description: error || "There was an error with your payment. Please try again.",
                   variant: "destructive"
                 });
               }}

@@ -40,18 +40,33 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
     return `${Math.floor(seconds/86400)} days ago`;
   };
   
+  const clearTransaction = () => {
+    localStorage.removeItem('nowpayments_transaction');
+    setStoredTransaction(null);
+  };
+  
   return (
     <div className="text-xs p-2 bg-gray-50 rounded border">
       <div className="flex justify-between mb-2">
         <h4 className="font-semibold">Active Payment Transaction</h4>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-6 w-6 p-0"
-          onClick={loadStoredTransaction}
-        >
-          <RefreshCw className="h-3 w-3" />
-        </Button>
+        <div className="flex gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={loadStoredTransaction}
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 text-red-500"
+            onClick={clearTransaction}
+          >
+            <span className="text-xs">❌</span>
+          </Button>
+        </div>
       </div>
       
       <div className="space-y-1 font-mono">

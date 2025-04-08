@@ -26,20 +26,20 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
   if (!storedTransaction) {
     return (
       <div className="text-sm p-2 bg-gray-50 rounded border">
-        <p className="text-gray-500">לא נמצאה עסקת תשלום קריפטו פעילה.</p>
+        <p className="text-gray-500">No active crypto payment transaction found.</p>
       </div>
     );
   }
   
   const timeAgo = () => {
-    if (!storedTransaction?.timestamp) return 'זמן לא ידוע';
+    if (!storedTransaction?.timestamp) return 'Unknown time';
     
     const seconds = Math.floor((Date.now() - storedTransaction.timestamp) / 1000);
     
-    if (seconds < 60) return 'כרגע';
-    if (seconds < 3600) return `לפני ${Math.floor(seconds/60)} דקות`;
-    if (seconds < 86400) return `לפני ${Math.floor(seconds/3600)} שעות`;
-    return `לפני ${Math.floor(seconds/86400)} ימים`;
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return `${Math.floor(seconds/60)} minutes ago`;
+    if (seconds < 86400) return `${Math.floor(seconds/3600)} hours ago`;
+    return `${Math.floor(seconds/86400)} days ago`;
   };
   
   const clearTransaction = () => {
@@ -63,7 +63,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
   return (
     <div className="text-xs p-2 bg-gray-50 rounded border">
       <div className="flex justify-between mb-2">
-        <h4 className="font-semibold">עסקת תשלום פעילה</h4>
+        <h4 className="font-semibold">Active Payment Transaction</h4>
         <div className="flex gap-1">
           <Button 
             variant="ghost" 
@@ -86,13 +86,13 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
       
       <div className="space-y-1 font-mono">
         {storedTransaction.invoiceId && (
-          <div><strong>מזהה חשבונית:</strong> {storedTransaction.invoiceId}</div>
+          <div><strong>Invoice ID:</strong> {storedTransaction.invoiceId}</div>
         )}
         {storedTransaction.orderId && (
-          <div><strong>מזהה הזמנה:</strong> {storedTransaction.orderId}</div>
+          <div><strong>Order ID:</strong> {storedTransaction.orderId}</div>
         )}
-        <div><strong>סכום:</strong> ${storedTransaction.amount}</div>
-        <div><strong>נוצר:</strong> {timeAgo()}</div>
+        <div><strong>Amount:</strong> ${storedTransaction.amount}</div>
+        <div><strong>Created:</strong> {timeAgo()}</div>
         {invoiceId && (
           <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
             <div className="font-normal mb-1">iframe URL:</div>
@@ -110,7 +110,7 @@ export const NOWPaymentsDebugInfo: React.FC = () => {
               onClick={() => window.open(storedTransaction.paymentUrl, '_blank')}
             >
               <ExternalLink className="h-3 w-3 mr-1" />
-              פתח דף תשלום
+              Open payment page
             </Button>
           </div>
         )}

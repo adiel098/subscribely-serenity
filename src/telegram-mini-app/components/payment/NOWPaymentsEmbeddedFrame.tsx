@@ -16,7 +16,7 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
       <div className="flex items-center justify-center h-[500px] bg-gray-50 border rounded-lg">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500 mb-2" />
-          <p className="text-gray-500">יוצר חשבונית תשלום...</p>
+          <p className="text-gray-500">Creating payment invoice...</p>
         </div>
       </div>
     );
@@ -31,8 +31,8 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
   return (
     <div className="w-full overflow-hidden rounded-lg border border-amber-200 bg-white">
       <div className="p-3 bg-amber-50 border-b border-amber-200">
-        <h3 className="font-medium text-amber-800">בצע תשלום בקריפטו</h3>
-        <p className="text-sm text-amber-700">השלם את התשלום בממשק המאובטח למטה</p>
+        <h3 className="font-medium text-amber-800">Complete Crypto Payment</h3>
+        <p className="text-sm text-amber-700">Complete your payment in the secure interface below</p>
       </div>
       <div className="flex items-center justify-center w-full">
         <iframe 
@@ -45,7 +45,7 @@ export const NOWPaymentsEmbeddedFrame: React.FC<NOWPaymentsEmbeddedFrameProps> =
           style={{ overflowY: 'hidden', maxWidth: '420px' }}
           title="NOWPayments checkout"
         >
-          לא ניתן לטעון את ממשק התשלום
+          Unable to load payment interface
         </iframe>
       </div>
     </div>

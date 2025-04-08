@@ -183,10 +183,10 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              יוצר תשלום...
+              Creating payment...
             </>
           ) : (
-            <>שלם באמצעות קריפטו</>
+            <>Pay with Crypto</>
           )}
         </Button>
       ) : (
@@ -206,10 +206,10 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מעבד...
+                  Processing...
                 </>
               ) : (
-                <>צור חשבונית חדשה</>
+                <>Create new invoice</>
               )}
             </Button>
             
@@ -219,7 +219,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
                 className="bg-amber-500 hover:bg-amber-600 text-white"
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
-                פתח בחלון חדש
+                Open in new window
               </Button>
             )}
           </div>
@@ -228,7 +228,7 @@ export const NOWPaymentsButton: React.FC<NOWPaymentsButtonProps> = ({
       
       {!apiKey && (
         <p className="text-xs text-red-600 mt-2">
-          תשלומי קריפטו לא מוגדרים כראוי. אנא צור קשר עם התמיכה.
+          Crypto payments are not properly configured. Please contact support.
         </p>
       )}
     </div>

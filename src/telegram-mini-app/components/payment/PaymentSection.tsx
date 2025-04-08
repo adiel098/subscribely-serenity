@@ -5,9 +5,12 @@ import { PaymentMethods } from "../PaymentMethods";
 import { CouponInput } from "../coupon/CouponInput";
 import { PricingSummary } from "./PricingSummary";
 import { CheckCouponResult } from "@/group_owners/hooks/types/coupon.types";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Subscription } from "@/telegram-mini-app/services/memberService";
 import { useApplyCoupon } from "@/group_owners/hooks/coupon/useApplyCoupon";
+import { CreditCard, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 interface PaymentSectionProps {
   selectedPlan: Plan;
@@ -85,25 +88,33 @@ export const PaymentSection = ({
     : selectedPlan.price;
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="text-xl font-bold mb-4">Payment Details</h2>
+    <div className="space-y-4">
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100/50 rounded-xl p-4 shadow-sm">
+        <motion.div
+          className="text-center space-y-3 mb-3"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Badge variant="secondary" className="px-5 py-2 text-base font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+            <CreditCard className="h-5 w-5 mr-2 text-indigo-600" />
+            Payment Details <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
+          </Badge>
+        </motion.div>
           
-          <PricingSummary 
-            plan={selectedPlan} 
-            appliedCoupon={appliedCoupon} 
-          />
-          
-          <CouponInput 
-            communityId={communityId}
-            planPrice={selectedPlan.price}
-            onApplyCoupon={handleApplyCoupon}
-            onRemoveCoupon={handleRemoveCoupon}
-            appliedCoupon={appliedCoupon}
-          />
-        </CardContent>
-      </Card>
+        <PricingSummary 
+          plan={selectedPlan} 
+          appliedCoupon={appliedCoupon} 
+        />
+        
+        <CouponInput 
+          communityId={communityId}
+          planPrice={selectedPlan.price}
+          onApplyCoupon={handleApplyCoupon}
+          onRemoveCoupon={handleRemoveCoupon}
+          appliedCoupon={appliedCoupon}
+        />
+      </div>
       
       <PaymentMethods
         selectedPlan={{

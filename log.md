@@ -1,5 +1,15 @@
 
+
 # Development Log
+
+## 2025-04-08 - Enhanced NOWPayments Debug Info with Owner ID Display
+
+- Improved display of Community Owner ID in the NOWPaymentsDebugInfo component
+- Applied monospace font to the owner ID for better readability and copy-pasting
+- Made the owner ID more prominent in the debug information
+- Enhanced debug interface for crypto payment configuration troubleshooting
+
+Key issue fixed: Added clear display of the owner_id being used to locate NOWPayments configuration.
 
 ## 2025-04-08 - Updated Plan Selection Text Size
 
@@ -93,3 +103,4 @@ Key issue fixed: Resolved module not found error for communityService.ts in tele
 - Fixed debug components to display helpful error messages when configuration is missing
 
 Key issue fixed: NOWPayments API keys are now correctly fetched from the payment_methods table using the owner_id of the community owner.
+

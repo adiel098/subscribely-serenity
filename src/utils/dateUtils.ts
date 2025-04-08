@@ -54,7 +54,7 @@ export const getDetailedTimeRemaining = (endDateStr: string | null | undefined):
     
     // Format the string based on what values are available
     if (days > 0) {
-      return `${days} days ${remainingHours} hours ${remainingMinutes} minutes`;
+      return `${days} days`;
     } else if (remainingHours > 0) {
       return `${remainingHours} hours ${remainingMinutes} minutes`;
     } else {

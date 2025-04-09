@@ -39,7 +39,6 @@ const NewProject = () => {
       await createProjectMutation.mutateAsync({
         name: values.name,
         description: values.description || null,
-        is_custom_bot: false,
         bot_token: null,
       });
       navigate("/dashboard");

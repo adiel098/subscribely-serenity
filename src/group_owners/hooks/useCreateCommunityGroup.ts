@@ -102,9 +102,10 @@ export const useCreateCommunityGroup = () => {
 
 // Function to commit all temporary data at the end of onboarding
 export const commitOnboardingData = async () => {
-  const { user } = await supabase.auth.getUser();
+  // Get the current user
+  const { data: userData, error: userError } = await supabase.auth.getUser();
   
-  if (!user?.data?.user) {
+  if (userError || !userData.user) {
     console.error("User not authenticated when committing onboarding data");
     return false;
   }
@@ -122,7 +123,7 @@ export const commitOnboardingData = async () => {
       .insert({
         name: tempData.project.name,
         description: tempData.project.description || null,
-        owner_id: user.data.user.id,
+        owner_id: userData.user.id,
         bot_token: tempData.project.bot_token || null
       })
       .select("*")

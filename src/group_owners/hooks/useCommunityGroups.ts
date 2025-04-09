@@ -41,8 +41,9 @@ export const useCommunityGroups = () => {
 
         // Transform the data to match the expected format with all required properties
         const formattedGroups = relationships
-          .filter(rel => rel.communities)
+          .filter(rel => rel.communities) // Filter out any records without valid communities data
           .map(rel => {
+            // Access the nested communities object directly
             const community = rel.communities;
             return {
               id: community.id,

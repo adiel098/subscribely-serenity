@@ -19,7 +19,7 @@ export const usePaymentMethods = () => {
       try {
         // Get all payment methods for the current user using owner_id
         const { data, error } = await supabase
-          .from('owner_payment_methods') // Updated table name from 'payment_methods'
+          .from('owner_payment_methods') 
           .select('*')
           .eq('owner_id', user.id);
           
@@ -40,7 +40,7 @@ export const usePaymentMethods = () => {
           }));
           
           const { data: newMethods, error: insertError } = await supabase
-            .from('owner_payment_methods') // Updated table name
+            .from('owner_payment_methods')
             .insert(defaultMethods)
             .select();
             

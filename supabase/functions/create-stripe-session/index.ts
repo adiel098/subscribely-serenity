@@ -67,7 +67,7 @@ serve(async (req) => {
     
     // Get payment method for the owner
     const { data: paymentMethod, error: configError } = await supabase
-      .from('payment_methods')
+      .from('owner_payment_methods')
       .select('config')
       .eq('provider', 'stripe')
       .eq('is_active', true)
@@ -79,7 +79,7 @@ serve(async (req) => {
       
       // Try to get a default Stripe configuration
       const { data: defaultMethod, error: defaultError } = await supabase
-        .from('payment_methods')
+        .from('owner_payment_methods')
         .select('config')
         .eq('provider', 'stripe')
         .eq('is_default', true)

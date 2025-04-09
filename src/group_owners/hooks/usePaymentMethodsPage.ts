@@ -33,7 +33,7 @@ export const usePaymentMethodsPage = () => {
         ];
 
         const { error } = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .insert(defaultMethods);
 
         if (error) {
@@ -60,7 +60,7 @@ export const usePaymentMethodsPage = () => {
         console.log(`Creating crypto method for user ${user.id}`);
         
         const { data, error } = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .insert({
             provider: 'crypto',
             is_active: isActive,
@@ -87,7 +87,7 @@ export const usePaymentMethodsPage = () => {
       console.log(`Toggling payment method ${id} to ${isActive}`);
       
       const { error } = await supabase
-        .from('payment_methods')
+        .from('owner_payment_methods')
         .update({ is_active: isActive })
         .eq('id', id);
 

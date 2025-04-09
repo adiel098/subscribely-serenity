@@ -43,7 +43,7 @@ export const PaymentMethodConfig = ({
         }
         
         const { data, error } = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .select('config')
           .eq('owner_id', currentUserId)
           .eq('provider', provider)
@@ -92,7 +92,7 @@ export const PaymentMethodConfig = ({
       
       // Check if the payment method already exists
       const { data: existingMethods, error: checkError } = await supabase
-        .from('payment_methods')
+        .from('owner_payment_methods')
         .select('id')
         .eq('owner_id', currentUserId)
         .eq('provider', provider);
@@ -104,7 +104,7 @@ export const PaymentMethodConfig = ({
       if (existingMethods?.length) {
         // Update existing payment method
         result = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .update({ 
             config: formData,
           })
@@ -113,7 +113,7 @@ export const PaymentMethodConfig = ({
       } else {
         // Create new payment method
         result = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .insert({
             provider,
             config: formData,

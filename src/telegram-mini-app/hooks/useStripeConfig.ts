@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Plan } from "@/telegram-mini-app/types/community.types";
@@ -40,7 +41,7 @@ export const useStripeConfig = (selectedPlan: Plan) => {
 
         // Then, get the Stripe config for this owner
         const { data: paymentMethodData, error: paymentError } = await supabase
-          .from('payment_methods')
+          .from('owner_payment_methods')
           .select('config')
           .eq('owner_id', communityData.owner_id)
           .eq('provider', 'stripe')

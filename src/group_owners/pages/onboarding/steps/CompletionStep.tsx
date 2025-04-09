@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight, ArrowLeft, Gauge, CreditCard, Users, Settings } from "lucide-react";
@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { Card } from "@/components/ui/card";
+import { commitOnboardingData, getTempOnboardingData } from "@/group_owners/hooks/useCreateCommunityGroup";
 
 interface CompletionStepProps {
   onComplete: () => Promise<void>;
@@ -21,6 +22,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isConfettiTriggered, setIsConfettiTriggered] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
     if (!isConfettiTriggered) {
@@ -35,13 +37,31 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
   }, [isConfettiTriggered]);
 
   const handleCompleteOnboarding = async () => {
+    setIsSubmitting(true);
     try {
+      // First commit all temporary data to the database
+      const commitSuccess = await commitOnboardingData();
+      
+      if (!commitSuccess) {
+        console.error("Failed to commit onboarding data");
+        // Continue with onboarding completion even if commit fails
+      } else {
+        console.log("Successfully committed all onboarding data");
+      }
+      
+      // Complete the onboarding process
       await onComplete();
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error("Failed to complete onboarding:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Check if we have temporary data
+  const tempData = getTempOnboardingData();
+  const projectName = tempData.project?.name || "your project";
 
   const nextSteps = [
     {
@@ -66,7 +86,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
 
   return (
     <OnboardingLayout
-      currentStep="complete"
+      currentStep="completion"
       title="You're All Set! 🎉"
       description="Your Telegram community is ready to accept paid memberships"
       icon={<CheckCircle className="w-6 h-6 text-green-500" />}
@@ -97,7 +117,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            Success! Your Community is Ready!
+            Success! {projectName} is Ready!
           </motion.h2>
           
           <motion.p 
@@ -179,8 +199,9 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
           <Button 
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-6 text-lg font-medium shadow-md hover:shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300"
             onClick={handleCompleteOnboarding}
+            disabled={isSubmitting}
           >
-            Go to Dashboard
+            {isSubmitting ? "Saving..." : "Go to Dashboard"}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </motion.div>

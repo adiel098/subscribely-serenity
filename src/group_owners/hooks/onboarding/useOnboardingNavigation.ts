@@ -118,7 +118,7 @@ export const useOnboardingNavigation = (
         nextStep = "project-creation";
         break;
       case "project-creation":
-        // Directly go to custom bot setup, skipping the selection step
+        // Directly go to custom bot setup
         nextStep = "custom-bot-setup";
         break;
       case "custom-bot-setup":

@@ -2,164 +2,127 @@
 import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
-import { 
-  FolderPlus, 
-  ArrowLeft, 
-  ChevronRight, 
-  Loader2, 
-  Check,
-  PlusCircle
-} from "lucide-react";
-import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { useCreateProject } from "@/group_owners/hooks/useProjects";
-import { localStorageService } from "@/utils/localStorageService";
+import { FolderPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { setTempProjectData, getTempOnboardingData } from "@/group_owners/hooks/useCreateCommunityGroup";
+import { toast } from "sonner";
+
+const projectSchema = z.object({
+  name: z.string().min(3, "Project name must be at least 3 characters long"),
+  description: z.string().optional()
+});
+
+type ProjectFormData = z.infer<typeof projectSchema>;
 
 interface ProjectCreationStepProps {
   onComplete: () => void;
-  activeStep: boolean;
   goToPreviousStep: () => void;
+  activeStep: boolean;
 }
 
-const ProjectCreationStep: React.FC<ProjectCreationStepProps> = ({
-  onComplete,
-  activeStep,
-  goToPreviousStep
+const ProjectCreationStep: React.FC<ProjectCreationStepProps> = ({ 
+  onComplete, 
+  goToPreviousStep,
+  activeStep 
 }) => {
-  const [projectName, setProjectName] = useState<string>("");
-  const [projectDescription, setProjectDescription] = useState<string>("");
-  const { toast } = useToast();
-  const { mutate: createProject, isPending } = useCreateProject();
-
-  const handleCreateProject = () => {
-    if (!projectName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Project name required",
-        description: "Please enter a name for your project"
-      });
-      return;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const tempData = getTempOnboardingData();
+  
+  const form = useForm<ProjectFormData>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      name: tempData.project?.name || "",
+      description: tempData.project?.description || ""
     }
+  });
 
-    createProject(
-      { 
-        name: projectName.trim(),
-        description: projectDescription.trim() || null
-      },
-      {
-        onSuccess: (data) => {
-          // Store the current project ID in localStorage
-          localStorageService.setCurrentProjectId(data.id);
-          toast({
-            title: "Project created!",
-            description: "Your project has been created successfully",
-            duration: 3000,
-          });
-          onComplete();
-        },
-        onError: (error) => {
-          console.error("Error creating project:", error);
-          toast({
-            variant: "destructive",
-            title: "Failed to create project",
-            description: error.message || "Please try again",
-          });
-        }
+  const onSubmit = async (data: ProjectFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Store data temporarily but don't save to database yet
+      const saved = setTempProjectData({
+        name: data.name,
+        description: data.description,
+      });
+      
+      if (saved) {
+        console.log("Project data stored temporarily:", data);
+        onComplete();
+      } else {
+        toast.error("Failed to store project data");
       }
-    );
+    } catch (error) {
+      console.error("Error in project creation step:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <OnboardingLayout
       currentStep="project-creation"
-      title="Create Your First Project 🚀"
-      description="Projects help you organize your communities and bots"
-      icon={<FolderPlus className="w-6 h-6" />}
+      title="Create Your Project"
+      description="Set up the main container for your community groups"
+      icon={<FolderPlus className="w-6 h-6 text-indigo-500" />}
       showBackButton={true}
       onBack={goToPreviousStep}
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="space-y-6"
-      >
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="project-name" className="text-gray-700">
-                Project Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="project-name"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="My Awesome Community"
-                className="border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                disabled={isPending}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="project-description" className="text-gray-700">
-                Description <span className="text-gray-400">(optional)</span>
-              </Label>
-              <Textarea
-                id="project-description"
-                value={projectDescription}
-                onChange={(e) => setProjectDescription(e.target.value)}
-                placeholder="A brief description of your project..."
-                className="border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
-                disabled={isPending}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-blue-50 rounded-lg border border-blue-100 p-4">
-          <h3 className="flex items-center font-medium text-blue-800 mb-2">
-            <Check className="h-5 w-5 text-blue-600 mr-2" />
-            What is a Project?
-          </h3>
-          <p className="text-sm text-blue-700">
-            A project helps you organize multiple communities under one umbrella. 
-            You can have different bots, payment methods, and settings for each project.
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between pt-4">
-          <Button
-            variant="outline"
-            onClick={goToPreviousStep}
-            disabled={isPending}
-            className="flex items-center gap-1"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          
-          <Button
-            onClick={handleCreateProject}
-            disabled={isPending || !projectName.trim()}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                Continue
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="My Awesome Community" 
+                    {...field} 
+                    className="py-6"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </Button>
-        </div>
-      </motion.div>
+          />
+          
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Tell us about your project..."
+                    {...field}
+                    className="min-h-[100px]"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="pt-4 flex justify-end">
+            <Button 
+              type="submit" 
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-6"
+              disabled={isSubmitting}
+            >
+              Continue
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </form>
+      </Form>
     </OnboardingLayout>
   );
 };

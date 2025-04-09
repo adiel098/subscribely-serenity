@@ -12,6 +12,18 @@ export interface CreateCommunityGroupData {
   bot_token?: string | null;
 }
 
+// Create a temporary storage for onboarding data
+const onboardingTempData: {
+  project?: CreateCommunityGroupData;
+} = {};
+
+export const getTempOnboardingData = () => onboardingTempData;
+export const setTempProjectData = (data: CreateCommunityGroupData) => {
+  onboardingTempData.project = data;
+  console.log("Temporary project data saved:", data);
+  return true;
+};
+
 export const useCreateCommunityGroup = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -86,4 +98,62 @@ export const useCreateCommunityGroup = () => {
       toast.error(errorMessage);
     }
   });
+};
+
+// Function to commit all temporary data at the end of onboarding
+export const commitOnboardingData = async () => {
+  const { user } = await supabase.auth.getUser();
+  
+  if (!user?.data?.user) {
+    console.error("User not authenticated when committing onboarding data");
+    return false;
+  }
+  
+  try {
+    const tempData = getTempOnboardingData();
+    if (!tempData.project) {
+      console.error("No temporary project data found");
+      return false;
+    }
+    
+    // Create the project
+    const { data: newProject, error } = await supabase
+      .from("projects")
+      .insert({
+        name: tempData.project.name,
+        description: tempData.project.description || null,
+        owner_id: user.data.user.id,
+        bot_token: tempData.project.bot_token || null
+      })
+      .select("*")
+      .single();
+    
+    if (error) {
+      console.error("Error creating project at the end of onboarding:", error);
+      throw error;
+    }
+    
+    // Link communities if any
+    if (tempData.project.communities && tempData.project.communities.length > 0) {
+      const { error: communitiesError } = await supabase
+        .from("communities")
+        .update({ project_id: newProject.id })
+        .in("id", tempData.project.communities);
+      
+      if (communitiesError) {
+        console.error("Error linking communities at the end of onboarding:", communitiesError);
+        // Continue even if there's an error with communities
+      }
+    }
+    
+    console.log("Successfully committed onboarding data:", newProject);
+    
+    // Clear temporary storage
+    onboardingTempData.project = undefined;
+    
+    return true;
+  } catch (error) {
+    console.error("Error committing onboarding data:", error);
+    return false;
+  }
 };

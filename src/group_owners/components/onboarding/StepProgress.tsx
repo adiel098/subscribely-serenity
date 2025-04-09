@@ -12,7 +12,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({ currentStep }) => {
   const steps = [
     { id: "welcome", label: "Welcome", icon: <Rocket size={18} /> },
     { id: "project-creation", label: "Project", icon: <FolderPlus size={18} /> },
-    { id: "bot-setup", label: "Bot Setup", icon: <Bot size={18} /> },
+    { id: "custom-bot-setup", label: "Bot Setup", icon: <Bot size={18} /> },
     { id: "connect-telegram", label: "Connect", icon: <MessageSquare size={18} /> },
     { id: "completion", label: "Complete", icon: <CheckCircle size={18} /> },
   ];

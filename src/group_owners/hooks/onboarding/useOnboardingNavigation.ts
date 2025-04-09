@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -35,7 +36,7 @@ export const useOnboardingNavigation = (
       let validStep: OnboardingStep = "welcome";
       
       // Only use the step if it's a valid OnboardingStep
-      if (["welcome", "bot-selection", "custom-bot-setup", "connect-telegram", "completion", "complete"].includes(step)) {
+      if (["welcome", "bot-selection", "bot-setup", "custom-bot-setup", "project-creation", "connect-telegram", "completion", "complete"].includes(step)) {
         validStep = step as OnboardingStep;
       } else {
         console.warn(`Invalid step "${step}" provided, defaulting to "welcome"`);

@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { OnboardingState } from "./types";
+import { OnboardingStep, OnboardingState } from "./types";
 import { 
   fetchOnboardingProfile, 
   fetchCommunities, 
@@ -23,7 +24,8 @@ export const useOnboardingStatus = () => {
     
     if (savedStatus && savedHasCommunity !== null) {
       return {
-        ...savedStatus,
+        currentStep: savedStatus.lastStep as OnboardingStep || "welcome",
+        isCompleted: savedStatus.isCompleted,
         isTelegramConnected: savedHasCommunity,
         hasPlatformPlan: false,
         hasPaymentMethod: false,
@@ -121,7 +123,7 @@ export const useOnboardingStatus = () => {
   // Clear localStorage when user logs out
   useEffect(() => {
     if (!user) {
-      localStorageService.clearAll();
+      localStorageService.clearAllData();
     }
   }, [user]);
 

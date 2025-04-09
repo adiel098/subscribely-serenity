@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,6 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     setVerificationError(null);
     
     try {
-      // Verify the bot token
       const response = await supabase.functions.invoke("validate-bot-token", {
         body: { botToken: botToken.trim() }
       });
@@ -53,7 +51,6 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
       }
       
       if (response.data.valid) {
-        // Save the token in the database
         const { error: saveError } = await supabase.rpc('set_bot_preference', { 
           use_custom: true,
           custom_token: botToken.trim()
@@ -70,7 +67,6 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
           duration: 3000,
         });
         
-        // Continue to the next step after a brief delay
         setTimeout(() => {
           onComplete();
         }, 1500);
@@ -146,7 +142,7 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
         )}
 
         {isVerified && (
-          <Alert variant="success" className="bg-green-50 border-green-200 text-green-800">
+          <Alert className="bg-green-50 border-green-200 text-green-800">
             <Check className="h-4 w-4 text-green-600" />
             <AlertTitle>Bot Verified Successfully!</AlertTitle>
             <AlertDescription>

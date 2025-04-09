@@ -1,15 +1,14 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
 import ProjectCreationStep from "@/group_owners/pages/onboarding/steps/ProjectCreationStep";
 import BotSetupStep from "@/group_owners/pages/onboarding/steps/BotSetupStep";
+import BotSelectionStep from "@/group_owners/pages/onboarding/steps/BotSelectionStep";
+import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
-import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 interface StepRendererProps {
   currentStep: OnboardingStep;
@@ -29,23 +28,20 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   const navigate = useNavigate();
   const [isRedirecting, setIsRedirecting] = React.useState(false);
 
-  // Handle the "complete" step explicitly with useEffect
   React.useEffect(() => {
     if (currentStep === "complete" && !isRedirecting) {
       console.log("Onboarding complete in StepRenderer, preparing redirect to dashboard...");
       setIsRedirecting(true);
       
-      // Use a slight delay to allow React to finish its current render cycle
       const redirectTimer = setTimeout(() => {
         console.log("Executing dashboard redirect...");
         navigate('/dashboard', { replace: true });
-      }, 300); // Increased timeout to ensure all state updates complete
+      }, 300);
       
       return () => clearTimeout(redirectTimer);
     }
   }, [currentStep, navigate, isRedirecting]);
   
-  // If we're redirecting or step is complete, show loading state
   if (isRedirecting && currentStep !== "completion") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gradient-to-b from-blue-50 to-indigo-50 p-4">
@@ -65,15 +61,27 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   };
   
   const handleProjectCreationComplete = () => {
-    console.log("Project creation completed, going to bot setup step");
-    navigate('/onboarding/bot-setup');
+    console.log("Project creation completed, going to bot selection step");
+    navigate('/onboarding/bot-selection');
     goToNextStep("project-creation");
+  };
+  
+  const handleBotSelectionComplete = () => {
+    console.log("Bot selection completed, going to bot setup step");
+    navigate('/onboarding/bot-setup');
+    goToNextStep("bot-selection");
   };
 
   const handleBotSetupComplete = () => {
     console.log("Bot setup completed, going to connect telegram step");
     navigate('/onboarding/connect-telegram');
     goToNextStep("bot-setup");
+  };
+  
+  const handleCustomBotSetupComplete = () => {
+    console.log("Custom bot setup completed, going to connect telegram step");
+    navigate('/onboarding/connect-telegram');
+    goToNextStep("custom-bot-setup");
   };
   
   switch(currentStep) {
@@ -92,8 +100,21 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           activeStep={true}
           goToPreviousStep={() => {
             console.log("Going back to welcome step");
-            goToPreviousStep("welcome");
+            goToPreviousStep("project-creation");
             navigate('/onboarding/welcome');
+          }}
+        />
+      );
+    
+    case "bot-selection":
+      return (
+        <BotSelectionStep 
+          onComplete={handleBotSelectionComplete} 
+          activeStep={true}
+          goToPreviousStep={() => {
+            console.log("Going back to project creation step");
+            goToPreviousStep("bot-selection");
+            navigate('/onboarding/project-creation');
           }}
         />
       );
@@ -104,9 +125,22 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           onComplete={handleBotSetupComplete} 
           activeStep={true}
           goToPreviousStep={() => {
-            console.log("Going back to project creation step");
-            goToPreviousStep("project-creation");
-            navigate('/onboarding/project-creation');
+            console.log("Going back to bot selection step");
+            goToPreviousStep("bot-setup");
+            navigate('/onboarding/bot-selection');
+          }}
+        />
+      );
+      
+    case "custom-bot-setup":
+      return (
+        <CustomBotSetupStep 
+          onComplete={handleCustomBotSetupComplete} 
+          activeStep={true}
+          goToPreviousStep={() => {
+            console.log("Going back to bot selection step");
+            goToPreviousStep("custom-bot-setup");
+            navigate('/onboarding/bot-selection');
           }}
         />
       );

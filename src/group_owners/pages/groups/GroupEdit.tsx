@@ -126,13 +126,13 @@ const GroupEdit = () => {
     if (!groupId) return;
     try {
       const { data, error } = await supabase
-        .from('community_relationships')
-        .select('member_id')
-        .eq('community_id', groupId);
+        .from('communities')
+        .select('id')
+        .eq('project_id', groupId);
         
       if (error) throw error;
       
-      const linkedIds = data ? data.map(rel => rel.member_id) : [];
+      const linkedIds = data ? data.map(comm => comm.id) : [];
       console.log("Fetched linked community IDs:", linkedIds);
       setSelectedCommunities(linkedIds);
       
@@ -168,7 +168,6 @@ const GroupEdit = () => {
       setCustomLink(groupData.custom_link || "");
       setImageUrl(groupData.telegram_photo_url || null);
       
-      // Fetch both linked and available communities
       fetchLinkedCommunities();
       fetchAvailableCommunities();
       
@@ -200,40 +199,33 @@ const GroupEdit = () => {
         telegram_photo_url: imageUrl,
       });
 
-      // Save communities relationships
-      const { data: existingRels, error: fetchError } = await supabase
-        .from('community_relationships')
-        .select('member_id')
-        .eq('community_id', groupId);
+      // Get currently linked communities
+      const { data: existingLinks, error: fetchError } = await supabase
+        .from('communities')
+        .select('id')
+        .eq('project_id', groupId);
 
       if (fetchError) throw fetchError;
-      const existingMemberIds = existingRels ? existingRels.map(r => r.member_id) : [];
+      const existingCommunityIds = existingLinks ? existingLinks.map(c => c.id) : [];
 
-      const relationshipsToAdd = selectedCommunities
-        .filter(id => !existingMemberIds.includes(id))
-        .map(member_id => ({ community_id: groupId, member_id }));
-
-      const relationshipsToRemove = existingMemberIds
-        .filter(id => !selectedCommunities.includes(id));
-
-      // Remove old relationships
-      if (relationshipsToRemove.length > 0) {
-        const { error: removeError } = await supabase
-          .from('community_relationships')
-          .delete()
-          .eq('community_id', groupId)
-          .in('member_id', relationshipsToRemove);
-
-        if (removeError) throw removeError;
-      }
-
-      // Add new relationships
-      if (relationshipsToAdd.length > 0) {
+      // Communities to add (set project_id)
+      for (const commId of selectedCommunities.filter(id => !existingCommunityIds.includes(id))) {
         const { error: addError } = await supabase
-          .from('community_relationships')
-          .insert(relationshipsToAdd);
+          .from('communities')
+          .update({ project_id: groupId })
+          .eq('id', commId);
 
         if (addError) throw addError;
+      }
+
+      // Communities to remove (unset project_id)
+      for (const commId of existingCommunityIds.filter(id => !selectedCommunities.includes(id))) {
+        const { error: removeError } = await supabase
+          .from('communities')
+          .update({ project_id: null })
+          .eq('id', commId);
+
+        if (removeError) throw removeError;
       }
 
       toast.success("Group updated successfully!");

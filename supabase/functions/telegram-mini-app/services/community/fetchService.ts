@@ -42,18 +42,6 @@ export async function fetchCommunityData(
           interval, 
           features, 
           is_active
-        ),
-        community_relationships(
-          member_id,
-          communities:member_id (
-            id, 
-            name,
-            description,
-            telegram_photo_url,
-            telegram_chat_id,
-            custom_link,
-            is_group
-          )
         )
       `)
       .eq('id', entityId)
@@ -80,18 +68,6 @@ export async function fetchCommunityData(
           interval, 
           features, 
           is_active
-        ),
-        community_relationships(
-          member_id,
-          communities:member_id (
-            id, 
-            name,
-            description,
-            telegram_photo_url,
-            telegram_chat_id,
-            custom_link,
-            is_group
-          )
         )
       `)
       .eq('custom_link', identifier)

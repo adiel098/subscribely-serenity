@@ -66,69 +66,37 @@ serve(async (req) => {
       );
     }
     
-    // Get member communities for this group from community_relationships table
-    // In this table, community_id is the GROUP ID, and member_id is the COMMUNITY ID
-    console.log(`Querying community_relationships where community_id = ${communityId} and relationship_type = 'group'`);
+    // Get member communities using project_id instead of relationships
+    console.log(`Querying communities where project_id = ${communityId}`);
     
-    const { data: relationships, error: relationshipsError } = await supabase
-      .from("community_relationships")
+    const { data: memberCommunities, error: memberError } = await supabase
+      .from("communities")
       .select(`
-        member_id,
-        communities:member_id (
-          id, 
-          name,
-          description,
-          telegram_chat_id,
-          telegram_photo_url,
-          custom_link,
-          owner_id,
-          created_at,
-          updated_at,
-          is_group
-        )
+        id, 
+        name,
+        description,
+        telegram_chat_id,
+        telegram_photo_url,
+        custom_link,
+        owner_id,
+        created_at,
+        updated_at,
+        is_group
       `)
-      .eq("community_id", communityId)
-      .eq("relationship_type", "group");
+      .eq("project_id", communityId)
+      .eq("is_group", false); // Only get non-group communities
       
-    if (relationshipsError) {
-      console.error("Error fetching relationships:", relationshipsError);
+    if (memberError) {
+      console.error("Error fetching member communities:", memberError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch group relationships", isGroup: true, channels: [] }),
+        JSON.stringify({ error: "Failed to fetch group member communities", isGroup: true, channels: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
     
-    console.log("Raw relationships data:", JSON.stringify(relationships));
+    console.log("Raw communities data:", JSON.stringify(memberCommunities));
     
-    if (!relationships || !Array.isArray(relationships)) {
-      console.error("Relationships is not an array or null:", relationships);
-      return new Response(
-        JSON.stringify({ isGroup: true, channels: [] }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    // Process relationships into channels format
-    let channels = [];
-    
-    if (relationships && Array.isArray(relationships)) {
-      channels = relationships
-        .filter(rel => rel.communities) // Filter out any null communities
-        .map(rel => rel.communities); // Return the complete community object
-      
-      console.log(`Mapped ${channels.length} channels from relationships`);
-    } else {
-      console.error("Relationships is not an array or is null:", relationships);
-    }
-    
-    // Double check that channels is an array
-    if (!Array.isArray(channels)) {
-      console.error("Warning: channels is not an array after mapping!", channels);
-      channels = []; // Ensure we always return an array
-    }
-    
-    // Filter out any null entries
-    channels = channels.filter(channel => channel !== null && typeof channel === 'object');
+    let channels = memberCommunities || [];
     
     // Now get invite links from subscription_payments table for each channel
     const enrichedChannels = await Promise.all(channels.map(async (channel) => {

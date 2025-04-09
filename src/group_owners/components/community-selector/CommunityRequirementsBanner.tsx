@@ -1,66 +1,41 @@
-import { AnimatePresence } from "framer-motion";
-import { useCommunityRequirements } from "@/group_owners/hooks/useCommunityRequirements";
-import { LinkEditDialog } from "./LinkEditDialog";
-import { SuccessBanner } from "./banners/SuccessBanner";
-import { RequirementsBanner } from "./banners/RequirementsBanner";
+
 import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useCommunityRequirements } from "@/group_owners/hooks/useCommunityRequirements";
+import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export const CommunityRequirementsBanner = () => {
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
-  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const { selectedCommunityId, selectedProjectId } = useCommunityContext();
+  const { hasActivePlan, hasActivePaymentMethod } = useCommunityRequirements(selectedCommunityId);
   
-  const {
-    selectedCommunity,
-    hasActivePaymentMethods,
-    hasPlans,
-    isFullyConfigured,
-    isLoading,
-    isEditDialogOpen,
-    navigateToPaymentMethods,
-    navigateToSubscriptions,
-    openEditDialog,
-    closeEditDialog,
-    handleLinkUpdated
-  } = useCommunityRequirements();
-
-  if (isLoading || !entityId) return null;
+  // Don't show for projects or if everything is set up
+  if (selectedProjectId || (hasActivePlan && hasActivePaymentMethod)) {
+    return null;
+  }
 
   return (
-    <>
-      <AnimatePresence mode="sync">
-        {isFullyConfigured ? (
-          <SuccessBanner
-            key="success-banner"
-            communityId={entityId}
-            customLink={selectedCommunity?.custom_link || null}
-            onOpenEditDialog={openEditDialog}
-            entityType={isGroupSelected ? 'group' : 'community'}
-          />
-        ) : (
-          <RequirementsBanner
-            key="requirements-banner"
-            hasPlans={hasPlans}
-            hasActivePaymentMethods={hasActivePaymentMethods}
-            onNavigateToSubscriptions={navigateToSubscriptions}
-            onNavigateToPaymentMethods={navigateToPaymentMethods}
-            entityType={isGroupSelected ? 'group' : 'community'}
-          />
-        )}
-      </AnimatePresence>
-      
-      <AnimatePresence>
-        {isEditDialogOpen && (
-          <LinkEditDialog 
-            key="link-edit-dialog"
-            isOpen={isEditDialogOpen}
-            onClose={closeEditDialog}
-            communityId={entityId}
-            currentCustomLink={selectedCommunity?.custom_link || null}
-            onLinkUpdated={handleLinkUpdated}
-            entityType={isGroupSelected ? 'group' : 'community'}
-          />
-        )}
-      </AnimatePresence>
-    </>
+    <motion.div
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm"
+    >
+      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+      {!hasActivePlan && !hasActivePaymentMethod && (
+        <span className="text-xs text-amber-700 font-medium">
+          Set up plans and payment methods!
+        </span>
+      )}
+      {!hasActivePlan && hasActivePaymentMethod && (
+        <span className="text-xs text-amber-700 font-medium">
+          Add subscription plans!
+        </span>
+      )}
+      {hasActivePlan && !hasActivePaymentMethod && (
+        <span className="text-xs text-amber-700 font-medium">
+          Add payment methods!
+        </span>
+      )}
+    </motion.div>
   );
 };

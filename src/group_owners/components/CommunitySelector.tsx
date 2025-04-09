@@ -1,8 +1,9 @@
+
 import { useNavigate } from "react-router-dom";
 import { Bell, PlusCircle, FolderPlus, Plus, Copy, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
-import { useCommunityGroups } from "@/group_owners/hooks/useCommunityGroups";
+import { useProjects } from "@/group_owners/hooks/useProjects";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,9 +14,7 @@ import { MiniAppLinkButton } from "./community-selector/MiniAppLinkButton";
 import { HeaderActions } from "./community-selector/HeaderActions";
 import { AlertMessage } from "./community-selector/AlertMessage";
 import { CommunityRequirementsBanner } from "./community-selector/CommunityRequirementsBanner";
-import { CreateGroupDialog } from "./community-groups/CreateGroupDialog";
-import { GroupMiniAppLinkButton } from "./community-groups/GroupMiniAppLinkButton";
-import { useGroupMemberCommunities } from "../hooks/useGroupMemberCommunities";
+import { useProjectCommunities } from "../hooks/useProjectCommunities";
 import { useBotSettings } from "../hooks/useBotSettings";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -28,42 +27,44 @@ import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUt
 
 export const CommunitySelector = () => {
   const { data: communities } = useCommunities();
-  const { data: groups } = useCommunityGroups();
+  const { data: projects } = useProjects();
   const navigate = useNavigate();
   const { 
     selectedCommunityId, 
     setSelectedCommunityId,
-    selectedGroupId,
-    setSelectedGroupId,
-    isGroupSelected
+    selectedProjectId,
+    setSelectedProjectId,
+    isProjectSelected
   } = useCommunityContext();
   
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const [createGroupDialogOpen, setCreateGroupDialogOpen] = useState(false);
+  const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const selectedGroup = groups?.find(group => group.id === selectedGroupId);
-  const { communities: groupCommunities } = useGroupMemberCommunities(selectedGroupId);
+  const selectedProject = projects?.find(project => project.id === selectedProjectId);
+  const { data: projectCommunities } = useProjectCommunities(selectedProjectId);
   const selectedCommunity = communities?.find(comm => comm.id === selectedCommunityId);
   const botUsername = getBotUsername();
   
-  const handleCreateGroup = () => {
-    setCreateGroupDialogOpen(true);
+  const handleCreateProject = () => {
+    navigate("/projects/new");
   };
 
   const handleCopyLink = () => {
-    if (!selectedCommunityId && !selectedGroupId) {
-      toast.error("Please select a community or group first");
+    if (!selectedCommunityId && !selectedProjectId) {
+      toast.error("Please select a community or project first");
       return;
     }
 
     let linkParam = "";
     let entityName = "";
 
-    if (isGroupSelected && selectedGroup) {
-      linkParam = selectedGroup.custom_link || selectedGroup.id;
-      entityName = "group";
+    if (isProjectSelected && selectedProject) {
+      // For projects, we might want to handle multiple communities
+      // For now, just use the project ID
+      linkParam = selectedProject.id;
+      entityName = "project";
     } else if (selectedCommunity) {
       linkParam = selectedCommunity.custom_link || selectedCommunity.id;
       entityName = "community";
@@ -82,13 +83,13 @@ export const CommunitySelector = () => {
   };
 
   const handleEditLink = () => {
-    if (!selectedCommunityId && !selectedGroupId) {
-      toast.error("Please select a community or group first");
+    if (!selectedCommunityId && !selectedProjectId) {
+      toast.error("Please select a community or project first");
       return;
     }
 
-    if (isGroupSelected && selectedGroup) {
-      navigate(`/groups/${selectedGroup.id}/edit`);
+    if (isProjectSelected && selectedProject) {
+      navigate(`/projects/${selectedProject.id}/settings`);
     } else if (selectedCommunity) {
       navigate(`/communities/${selectedCommunity.id}/edit`);
     }
@@ -108,11 +109,11 @@ export const CommunitySelector = () => {
               <div className="flex-1 max-w-[60%]">
                 <CommunityDropdown 
                   communities={communities} 
-                  groups={groups}
+                  projects={projects}
                   selectedCommunityId={selectedCommunityId}
                   setSelectedCommunityId={setSelectedCommunityId}
-                  selectedGroupId={selectedGroupId}
-                  setSelectedGroupId={setSelectedGroupId}
+                  selectedProjectId={selectedProjectId}
+                  setSelectedProjectId={setSelectedProjectId}
                   isMobile={isMobile}
                 />
               </div>
@@ -152,9 +153,9 @@ export const CommunitySelector = () => {
                       <PlusCircle className="h-4 w-4 mr-2 text-blue-600" />
                       Add Community
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCreateGroup}>
+                    <DropdownMenuItem onClick={handleCreateProject}>
                       <FolderPlus className="h-4 w-4 mr-2 text-purple-600" />
-                      Add Group
+                      Add Project
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -168,22 +169,21 @@ export const CommunitySelector = () => {
             <div className="flex items-center gap-2 md:gap-4 ml-[230px]">
               <CommunityDropdown 
                 communities={communities} 
-                groups={groups}
+                projects={projects}
                 selectedCommunityId={selectedCommunityId}
                 setSelectedCommunityId={setSelectedCommunityId}
-                selectedGroupId={selectedGroupId}
-                setSelectedGroupId={setSelectedGroupId}
+                selectedProjectId={selectedProjectId}
+                setSelectedProjectId={setSelectedProjectId}
                 isMobile={isMobile}
               />
 
               <PlatformSubscriptionBanner />
               
-              {!isGroupSelected && <CommunityRequirementsBanner />}
+              {!isProjectSelected && <CommunityRequirementsBanner />}
               
-              {isGroupSelected && selectedGroup && (
-                <GroupMiniAppLinkButton 
-                  group={selectedGroup}
-                  communities={groupCommunities}
+              {isProjectSelected && selectedProject && projectCommunities && projectCommunities.length > 0 && (
+                <MiniAppLinkButton 
+                  community={projectCommunities[0]}
                 />
               )}
             </div>
@@ -195,12 +195,12 @@ export const CommunitySelector = () => {
               >
                 <Button 
                   variant="outline" 
-                  onClick={handleCreateGroup}
+                  onClick={handleCreateProject}
                   className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-2 shadow-sm hover:shadow transition-all duration-300 text-xs py-1 h-8 w-[130px]"
                   size="sm"
                 >
                   <FolderPlus className="h-3.5 w-3.5" />
-                  New Group
+                  New Project
                 </Button>
               </motion.div>
               
@@ -214,11 +214,6 @@ export const CommunitySelector = () => {
         showAlert={showAlert}
         setShowAlert={setShowAlert}
         alertMessage={alertMessage}
-      />
-      
-      <CreateGroupDialog 
-        isOpen={createGroupDialogOpen}
-        onOpenChange={setCreateGroupDialogOpen}
       />
     </>
   );

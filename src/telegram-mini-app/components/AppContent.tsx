@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { CommunityHeader } from "./CommunityHeader";
 import { SubscriptionPlansList } from "./SubscriptionPlansList";
 import { Loader2 } from "lucide-react";
 import { createLogger } from "../utils/debugUtils";
+import { convertToGlobalPlans } from "../utils/subscription-converters";
 
 interface AppContentProps {
   communityId?: string;
@@ -70,11 +70,14 @@ const AppContent: React.FC<AppContentProps> = ({
     hasPlans: community.subscription_plans?.length > 0
   });
 
+  // Convert the subscription plans to the global format
+  const globalPlans = convertToGlobalPlans(community.subscription_plans || []);
+
   return (
     <div className="flex flex-col gap-6">
       <CommunityHeader community={community} />
       <SubscriptionPlansList 
-        plans={community.subscription_plans || []} 
+        plans={globalPlans} 
         communityId={community.id}
         telegramUserId={telegramUserId} 
       />

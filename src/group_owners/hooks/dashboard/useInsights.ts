@@ -113,17 +113,23 @@ export const useInsights = (
     return insights;
   }, [subscribers, plans]);
 
-  // Format insights for InsightPanel component
-  const insightsData: InsightData = {
-    averageSubscriptionDuration: insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") ? 
-      parseInt(insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") || "0") : 0,
-    mostPopularPlan: insights.find(i => i.title === "Most popular plan")?.value?.toString() || "No Plan",
-    mostPopularPlanPrice: insights.find(i => i.title === "Most popular plan price")?.value?.toString().replace("$", "") ? 
-      parseFloat(insights.find(i => i.title === "Most popular plan price")?.value?.toString().replace("$", "") || "0") : 0,
-    renewalRate: insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") ? 
-      parseInt(insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") || "0") : 0,
-    potentialRevenue: (activeSubscribers.length || 0) * (insightsData?.mostPopularPlanPrice || 0)
-  };
+  // Initialize insightsData first, before using it
+  const insightsData: InsightData = useMemo(() => {
+    // Extract the most popular plan price from insights
+    const mostPopularPlanPriceInsight = insights.find(i => i.title === "Most popular plan price");
+    const mostPopularPlanPrice = mostPopularPlanPriceInsight?.value?.toString().replace("$", "") ? 
+      parseFloat(mostPopularPlanPriceInsight.value.toString().replace("$", "")) : 0;
+      
+    return {
+      averageSubscriptionDuration: insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") ? 
+        parseInt(insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") || "0") : 0,
+      mostPopularPlan: insights.find(i => i.title === "Most popular plan")?.value?.toString() || "No Plan",
+      mostPopularPlanPrice: mostPopularPlanPrice,
+      renewalRate: insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") ? 
+        parseInt(insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") || "0") : 0,
+      potentialRevenue: (activeSubscribers.length || 0) * mostPopularPlanPrice
+    };
+  }, [insights, activeSubscribers]);
 
   return { insights, insightsData };
 };

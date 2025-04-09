@@ -1,8 +1,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { TelegramUser, TelegramUserHookResult } from '../types/telegramTypes';
-import { parseUserFromUrlHash } from '../utils/telegram/environmentUtils';
 import { isDevelopment } from '../utils/telegram/environmentUtils';
+import { getWebAppData } from '../utils/webAppDataExtractor';
+import { TEST_USER } from '../utils/development/testData';
+import { createLogger } from '../utils/debugUtils';
+
+const logger = createLogger('useTelegramUser');
 
 export const useTelegramUser = (communityId?: string, userId?: string): TelegramUserHookResult => {
   const [user, setUser] = useState<TelegramUser | null>(null);
@@ -10,50 +14,46 @@ export const useTelegramUser = (communityId?: string, userId?: string): Telegram
   const [error, setError] = useState<string | null>(null);
 
   const fetchTelegramUser = useCallback(async () => {
+    logger.log('fetchTelegramUser called with communityId:', communityId, 'userId:', userId);
     setLoading(true);
     setError(null);
     
     try {
-      // Try to get user from Telegram WebApp
-      if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        const telegramUser = window.Telegram.WebApp.initDataUnsafe.user;
-        console.log('[useTelegramUser] Found Telegram user:', telegramUser);
-        
-        setUser({
-          id: telegramUser.id.toString(),
-          first_name: telegramUser.first_name,
-          last_name: telegramUser.last_name,
-          username: telegramUser.username,
-          photo_url: telegramUser.photo_url,
-        });
-        
+      // First try to extract user data directly from Telegram WebApp
+      const telegramUser = getWebAppData(userId);
+      
+      if (telegramUser) {
+        logger.log('User found from WebApp data:', telegramUser);
+        setUser(telegramUser);
         setLoading(false);
         return;
       }
       
-      console.log('[useTelegramUser] No Telegram user found in WebApp');
+      logger.log('No Telegram user found in WebApp, checking URL params');
       
-      // בדיקה אם אנחנו במצב פיתוח או שיש לנו משתמש מה-URL
+      // Check URL parameters for user data
       const urlParams = new URLSearchParams(window.location.search);
       const paramUserId = urlParams.get('user_id') || userId;
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-      if (paramUserId || isLocalhost) {
-        // אם יש לנו ID מה-URL או שאנחנו בלוקאלהוסט, נשתמש במשתמש טסט
-        console.log('[useTelegramUser] Using test user data');
+      if (paramUserId) {
+        logger.log('Using user ID from URL parameters or props:', paramUserId);
         setUser({
-          id: paramUserId || '123456789',
+          id: paramUserId,
           username: urlParams.get('username') || 'testuser',
           first_name: urlParams.get('first_name') || 'Test',
           last_name: urlParams.get('last_name') || 'User',
         });
+      } else if (isLocalhost || isDevelopment()) {
+        // Use demo user for development or localhost
+        logger.log('Using TEST_USER for development environment');
+        setUser(TEST_USER);
       } else {
-        // אם אנחנו לא בלוקאלהוסט ואין לנו משתמש מהטלגרם, נחזיר שגיאה
+        // No user data found and not in development mode
         throw new Error('No Telegram user found');
       }
-
     } catch (err) {
-      console.error('[useTelegramUser] Error:', err);
+      logger.error('Error retrieving Telegram user:', err);
       setError(err instanceof Error ? err.message : 'Failed to get Telegram user');
     } finally {
       setLoading(false);
@@ -65,6 +65,7 @@ export const useTelegramUser = (communityId?: string, userId?: string): Telegram
   }, [fetchTelegramUser]);
 
   const refetch = useCallback(() => {
+    logger.log('Manually refetching user data');
     fetchTelegramUser();
   }, [fetchTelegramUser]);
 

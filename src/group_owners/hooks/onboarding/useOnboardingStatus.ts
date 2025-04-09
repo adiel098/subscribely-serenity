@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { OnboardingStep, OnboardingState } from "./types";
+import { OnboardingStep, OnboardingStatus } from "./types";
 import { 
   fetchOnboardingProfile, 
   fetchCommunities, 
@@ -11,12 +12,21 @@ import {
 import { toast } from "sonner";
 import { localStorageService } from "@/utils/localStorageService";
 
+// Define a local interface for the state
+interface OnboardingStateData {
+  currentStep: OnboardingStep;
+  isCompleted: boolean;
+  isTelegramConnected: boolean;
+  hasPlatformPlan: boolean;
+  hasPaymentMethod: boolean;
+}
+
 export const useOnboardingStatus = () => {
   const { user } = useAuth();
   const { toast: uiToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const hasFetchedRef = useRef(false);
-  const [state, setState] = useState<OnboardingState>(() => {
+  const [state, setState] = useState<OnboardingStateData>(() => {
     // Try to get initial state from localStorage
     const savedStatus = localStorageService.getOnboardingStatus();
     const savedHasCommunity = localStorageService.getHasCommunity();

@@ -17,7 +17,7 @@ const OfficialBotSetupStep: React.FC<OfficialBotSetupStepProps> = ({
 }) => {
   return (
     <OnboardingLayout
-      currentStep="connect-telegram"
+      currentStep="custom-bot-setup"
       title="Set Up Official Bot"
       description="Configure the Membify official bot for your community"
       showBackButton={true}

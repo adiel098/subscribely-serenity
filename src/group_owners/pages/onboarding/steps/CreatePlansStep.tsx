@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -128,7 +129,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
   };
 
   const handleContinue = async () => {
-    saveCurrentStep("connect-telegram");
+    saveCurrentStep("completion");
     goToNextStep();
   };
 
@@ -149,7 +150,7 @@ const CreatePlansStep: React.FC<CreatePlansStepProps> = ({
 
   return (
     <OnboardingLayout 
-      currentStep="connect-telegram"
+      currentStep="custom-bot-setup"
       title="Create Subscription Plans"
       description="Define subscription plans for members of your new community"
       icon={<SparklesIcon size={24} />}

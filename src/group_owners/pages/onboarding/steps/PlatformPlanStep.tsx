@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
     setIsProcessing(true);
     try {
       await processPayment(selectedPlan!, 'card');
-      saveCurrentStep("connect-telegram");
+      saveCurrentStep("completion");
       goToNextStep();
     } catch (error) {
       console.error("Error processing plan selection:", error);
@@ -135,7 +136,7 @@ export const PlatformPlanStep: React.FC<PlatformPlanStepProps> = ({
 
   return (
     <OnboardingLayout 
-      currentStep="connect-telegram"
+      currentStep="custom-bot-setup"
       title="Choose Your Platform Plan"
       description="Select a subscription plan that fits your community needs"
       icon={<Zap size={24} />}

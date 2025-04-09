@@ -47,7 +47,7 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
 
     setIsSubmitting(true);
     try {
-      saveCurrentStep("connect-telegram"); // Use a valid OnboardingStep
+      saveCurrentStep("completion"); // Use a valid OnboardingStep
       goToNextStep();
     } catch (error) {
       console.error("Error saving payment method step:", error);
@@ -79,7 +79,7 @@ export const PaymentMethodStep: React.FC<PaymentMethodStepProps> = ({
 
   return (
     <OnboardingLayout 
-      currentStep="connect-telegram" // Use a valid OnboardingStep
+      currentStep="custom-bot-setup" // Use a valid OnboardingStep
       title="Set Up Payment Methods"
       description="Add payment options for your subscribers"
       icon={<CreditCard size={24} />}

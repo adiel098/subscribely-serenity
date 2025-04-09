@@ -6,60 +6,34 @@ import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useGroupMemberCommunities");
 
-export const useGroupMemberCommunities = (groupId: string | null) => {
+export const useGroupMemberCommunities = (projectId: string | null) => {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["community-group-members", groupId],
+    queryKey: ["project-communities", projectId],
     queryFn: async (): Promise<Community[]> => {
-      if (!groupId) {
-        logger.log("No group ID provided, returning empty array");
+      if (!projectId) {
+        logger.log("No project ID provided, returning empty array");
         return [];
       }
       
       try {
-        logger.log("Fetching member communities for group ID:", groupId);
+        logger.log("Fetching member communities for project ID:", projectId);
         
-        // Fetch the communities that are members of this group
-        // The relationship is:
-        // - community_id = the GROUP ID 
-        // - member_id = the COMMUNITY ID that belongs to the group
-        const { data: relationships, error: relError } = await supabase
-          .from("community_relationships")
-          .select(`
-            member_id,
-            display_order
-          `)
-          .eq("community_id", groupId) // Filtering by groupId as community_id to get child communities
-          .eq("relationship_type", "group");
-        
-        if (relError) {
-          logger.error("Error fetching group member relationships:", relError);
-          throw relError;
-        }
-        
-        if (!relationships || relationships.length === 0) {
-          logger.log("No member communities found for group", groupId);
-          return [];
-        }
-        
-        // Get the actual community details
-        const communityIds = relationships.map(rel => rel.member_id);
-        logger.log(`Found ${communityIds.length} member communities for group ${groupId}: ${JSON.stringify(communityIds)}`);
-        
-        const { data: communities, error: comError } = await supabase
+        // Fetch communities that belong to this project
+        const { data: communities, error } = await supabase
           .from("communities")
           .select(`
             *,
             member_count,
             subscription_count
           `)
-          .in("id", communityIds);
+          .eq("project_id", projectId);
         
-        if (comError) {
-          logger.error("Error fetching group member communities:", comError);
-          throw comError;
+        if (error) {
+          logger.error("Error fetching project communities:", error);
+          throw error;
         }
         
-        logger.log(`Retrieved ${communities?.length || 0} communities from IDs`);
+        logger.log(`Retrieved ${communities?.length || 0} communities from project ${projectId}`);
         
         return communities || [];
       } catch (error) {
@@ -67,7 +41,7 @@ export const useGroupMemberCommunities = (groupId: string | null) => {
         return []; // Return empty array instead of throwing to prevent infinite loops
       }
     },
-    enabled: !!groupId,
+    enabled: !!projectId,
     refetchOnWindowFocus: false, // Prevent unexpected refetches
     staleTime: 30000, // Data stays fresh for 30 seconds
     retry: 1, // Only retry once to avoid excessive retries

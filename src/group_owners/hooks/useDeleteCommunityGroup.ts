@@ -7,39 +7,50 @@ export const useDeleteCommunityGroup = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (groupId: string) => {
-      console.log("Deleting community group:", groupId);
+    mutationFn: async (projectId: string) => {
+      console.log("Deleting project:", projectId);
       
-      if (!groupId) {
-        throw new Error("Group ID is required for deletion");
+      if (!projectId) {
+        throw new Error("Project ID is required for deletion");
       }
       
       try {
-        // Delete the group (cascade will remove group members)
+        // First, unlink all communities from this project
+        const { error: unlinkError } = await supabase
+          .from("communities")
+          .update({ project_id: null })
+          .eq("project_id", projectId);
+          
+        if (unlinkError) {
+          console.error("Error unlinking communities from project:", unlinkError);
+          // Continue with deletion anyway
+        }
+        
+        // Delete the project
         const { error } = await supabase
-          .from("community_groups")
+          .from("projects")
           .delete()
-          .eq("id", groupId);
+          .eq("id", projectId);
         
         if (error) {
-          console.error("Error deleting community group:", error);
+          console.error("Error deleting project:", error);
           throw error;
         }
         
-        return { id: groupId };
+        return { id: projectId };
       } catch (error) {
-        console.error("Error in deleteCommunityGroup mutation:", error);
+        console.error("Error in deleteProject mutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-groups"] });
-      queryClient.invalidateQueries({ queryKey: ["community-group-members"] });
-      toast.success("Community group deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-communities"] });
+      toast.success("Project deleted successfully!");
     },
     onError: (error: any) => {
-      console.error("Error deleting community group:", error);
-      toast.error("Failed to delete community group");
+      console.error("Error deleting project:", error);
+      toast.error("Failed to delete project");
     }
   });
 };

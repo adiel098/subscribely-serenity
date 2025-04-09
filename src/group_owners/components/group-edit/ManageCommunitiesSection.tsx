@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -49,7 +50,7 @@ const ManageCommunitiesSection: React.FC<ManageCommunitiesSectionProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-indigo-700">Manage Communities</CardTitle>
-          <CardDescription>Link existing communities to this group.</CardDescription>
+          <CardDescription>Link existing communities to this project.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -70,10 +71,10 @@ const ManageCommunitiesSection: React.FC<ManageCommunitiesSectionProps> = ({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-indigo-700">
               <Users className="h-5 w-5" />
-              <span>Manage Group Communities</span>
+              <span>Manage Project Communities</span>
             </DialogTitle>
             <DialogDescription>
-              Select communities to include in this group. Users with access to the group will have access to all selected communities.
+              Select communities to include in this project. Users with access to the project will have access to all selected communities.
             </DialogDescription>
           </DialogHeader>
           

@@ -1,9 +1,16 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreateCommunityGroupData } from "./types/communityGroup.types";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/contexts/AuthContext";
+
+export interface CreateCommunityGroupData {
+  name: string;
+  description?: string;
+  custom_link?: string;
+  communities?: string[];
+  bot_token?: string | null;
+}
 
 export const useCreateCommunityGroup = () => {
   const queryClient = useQueryClient();
@@ -11,71 +18,67 @@ export const useCreateCommunityGroup = () => {
 
   return useMutation({
     mutationFn: async (data: CreateCommunityGroupData) => {
-      console.log("Creating new community group:", data);
+      console.log("Creating new project:", data);
       
       if (!user) {
         throw new Error("User is not authenticated");
       }
       
       try {
-        // Insert into communities table with is_group flag set to true
-        const { data: newGroup, error } = await supabase
-          .from("communities")
+        // Insert into projects table
+        const { data: newProject, error } = await supabase
+          .from("projects")
           .insert({
             name: data.name,
             description: data.description || null,
-            custom_link: data.custom_link || null,
             owner_id: user.id,
-            is_group: true // Mark this as a group
+            bot_token: data.bot_token || null
           })
           .select("*")
           .single();
         
         if (error) {
-          console.error("Error creating community group:", error);
+          console.error("Error creating project:", error);
           throw error;
         }
         
-        if (!newGroup) {
-          throw new Error("Failed to create community group");
+        if (!newProject) {
+          throw new Error("Failed to create project");
         }
         
-        console.log("Successfully created community group:", newGroup);
+        console.log("Successfully created project:", newProject);
         
-        // Insert community members if provided
+        // Link communities to this project if provided
         if (data.communities && data.communities.length > 0) {
-          // Use the edge function to add communities to the group
-          const { error: membersError } = await supabase.functions.invoke("add-communities-to-group", {
-            body: { 
-              groupId: newGroup.id,
-              communityIds: data.communities,
-              userId: user.id
-            }
-          });
+          // Update the communities to associate them with this project
+          const { error: communitiesError } = await supabase
+            .from("communities")
+            .update({ project_id: newProject.id })
+            .in("id", data.communities);
           
-          if (membersError) {
-            console.error("Error adding communities to group:", membersError);
-            toast.error("Warning: Some communities could not be added to the group");
+          if (communitiesError) {
+            console.error("Error linking communities to project:", communitiesError);
+            toast.error("Warning: Some communities could not be linked to the project");
           }
         }
         
-        return newGroup;
+        return newProject;
       } catch (error) {
-        console.error("Error in createCommunityGroup mutation:", error);
+        console.error("Error in createProject mutation:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-groups"] });
-      toast.success("Community group created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Project created successfully!");
     },
     onError: (error: any) => {
-      console.error("Error creating community group:", error);
+      console.error("Error creating project:", error);
       
-      let errorMessage = "Failed to create community group";
+      let errorMessage = "Failed to create project";
       
       if (error.code === "23505") {
-        errorMessage = "A group with this custom link already exists";
+        errorMessage = "A project with this name already exists";
       } else if (error.message && typeof error.message === 'string') {
         errorMessage = error.message;
       }

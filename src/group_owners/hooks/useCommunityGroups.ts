@@ -2,68 +2,68 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { CommunityGroup } from "./types/communityGroup.types";
 import { toast } from "sonner";
+
+export interface CommunityGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  owner_id: string;
+  telegram_chat_id?: string | null;
+  telegram_photo_url?: string | null;
+  custom_link?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  is_group?: boolean;
+}
 
 export const useCommunityGroups = () => {
   const { user } = useAuth();
 
   const query = useQuery({
-    queryKey: ["community-groups", user?.id],
+    queryKey: ["projects", user?.id],
     queryFn: async () => {
       if (!user) {
         console.log("No user found, returning empty array");
         return [];
       }
       
-      console.log("Fetching community groups for user:", user.id);
+      console.log("Fetching projects for user:", user.id);
       
       try {
-        // Query community_relationships table to find groups
-        const { data: relationships, error } = await supabase
-          .from("community_relationships")
+        // Query projects table
+        const { data: projects, error } = await supabase
+          .from("projects")
           .select(`
-            community_id,
-            member_id,
-            communities:community_id (
-              id, name, description, owner_id, telegram_photo_url, 
-              telegram_chat_id, custom_link, created_at, updated_at
-            )
+            id, name, description, owner_id, 
+            created_at, updated_at, bot_token
           `)
-          .eq("relationship_type", "group")
           .eq("owner_id", user.id);
 
         if (error) {
-          console.error("Error fetching community groups:", error);
-          toast.error("Failed to fetch community groups");
+          console.error("Error fetching projects:", error);
+          toast.error("Failed to fetch projects");
           throw error;
         }
 
         // Transform the data to match the expected format with all required properties
-        const formattedGroups = relationships
-          .filter(rel => rel.communities) // Filter out any records without valid communities data
-          .map(rel => {
-            // Access the nested communities object directly
-            const community = rel.communities as any;
-            return {
-              id: community.id,
-              name: community.name,
-              description: community.description,
-              owner_id: community.owner_id,
-              telegram_chat_id: community.telegram_chat_id,
-              telegram_photo_url: community.telegram_photo_url,
-              custom_link: community.custom_link,
-              created_at: community.created_at,
-              updated_at: community.updated_at,
-              is_group: true // Add this virtual property
-            };
-          });
+        const formattedGroups = projects.map(project => {
+          return {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+            owner_id: project.owner_id,
+            created_at: project.created_at,
+            updated_at: project.updated_at,
+            is_group: true // Add this virtual property for compatibility
+          };
+        });
 
-        console.log("Successfully fetched community groups:", formattedGroups);
+        console.log("Successfully fetched projects:", formattedGroups);
         return formattedGroups as CommunityGroup[];
       } catch (error) {
-        console.error("Error in community groups query:", error);
-        toast.error("An error occurred while fetching community groups");
+        console.error("Error in projects query:", error);
+        toast.error("An error occurred while fetching projects");
         return [];
       }
     },

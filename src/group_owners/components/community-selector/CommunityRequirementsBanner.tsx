@@ -13,7 +13,7 @@ export const CommunityRequirementsBanner: React.FC = () => {
   if (isLoading || !hasRequirements) return null;
   
   return (
-    <Alert variant="destructive" className="py-1.5 px-3 flex items-center h-9 bg-amber-50 border-amber-200">
+    <Alert variant="default" className="py-1.5 px-3 flex items-center h-9 bg-amber-50 border-amber-200">
       <AlertCircle className="h-4 w-4 text-amber-500" />
       <AlertTitle className="text-xs ml-2 font-medium">Action required</AlertTitle>
       <AlertDescription className="text-xs ml-1">

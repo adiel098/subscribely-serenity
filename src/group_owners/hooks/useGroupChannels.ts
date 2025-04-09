@@ -12,76 +12,47 @@ interface ChannelsResponse {
   error?: string;
 }
 
-export const useGroupChannels = (groupId: string | null) => {
+export const useGroupChannels = (projectId: string | null) => {
   const queryClient = useQueryClient();
 
   const { data: result, isLoading, error } = useQuery({
-    queryKey: ["community-group-members", groupId],
+    queryKey: ["project-communities", projectId],
     queryFn: async () => {
-      if (!groupId) {
-        logger.log("No group ID provided");
+      if (!projectId) {
+        logger.log("No project ID provided");
         return { channels: [], channelIds: [] };
       }
       
       try {
-        logger.log(`Fetching channels for group: ${groupId} using edge function`);
+        logger.log(`Fetching channels for project: ${projectId}`);
         
-        // Call the edge function to get communities in this group
-        const { data, error } = await supabase.functions.invoke("get-community-channels", {
-          body: { communityId: groupId }
-        });
+        // Fetch communities that belong to this project
+        const { data: communities, error } = await supabase
+          .from("communities")
+          .select("*")
+          .eq("project_id", projectId);
         
         if (error) {
-          logger.error("Error fetching group channels from edge function:", error);
+          logger.error("Error fetching project communities:", error);
           return { channels: [], channelIds: [] };
         }
         
         // Debug the raw response data
-        logger.debug("Raw response from edge function:", data);
+        logger.debug("Raw communities from project:", communities);
         
-        // Ensure we have valid data
-        if (!data) {
-          logger.error("No data returned from edge function");
+        if (!communities || !Array.isArray(communities)) {
+          logger.error("No communities returned or invalid format");
           return { channels: [], channelIds: [] };
         }
         
-        // Process the response
-        const response = data as ChannelsResponse;
+        logger.log(`Retrieved ${communities.length} communities from project ${projectId}`);
         
-        if (response.error) {
-          logger.error("Error from edge function:", response.error);
-          return { channels: [], channelIds: [] };
-        }
-        
-        // Check if channels exists and is actually an array
-        if (!response.channels) {
-          logger.error("No channels property in response", response);
-          return { channels: [], channelIds: [] };
-        }
-        
-        if (!Array.isArray(response.channels)) {
-          logger.error("Channels is not an array! Actual value:", response.channels);
-          // Return empty arrays to prevent mapping errors
-          return { channels: [], channelIds: [] };
-        }
-        
-        // Ensure channels is an array and not null/undefined
-        const channels = Array.isArray(response.channels) ? response.channels : [];
-        
-        logger.log(`Retrieved ${channels.length} channels from edge function:`, channels);
-        
-        // Add additional safety check before mapping
-        if (!channels || !Array.isArray(channels)) {
-          logger.error("Channels is still not an array after validation:", channels);
-          return { channels: [], channelIds: [] };
-        }
-        
-        // Extract channel IDs only if channels is valid
-        const channelIds = channels.map(channel => channel.id);
+        // Extract channel IDs
+        const channelIds = communities.map(community => community.id);
         logger.log(`Extracted ${channelIds.length} channel IDs:`, channelIds);
         
         return { 
-          channels,
+          channels: communities,
           channelIds
         };
       } catch (error) {
@@ -89,7 +60,7 @@ export const useGroupChannels = (groupId: string | null) => {
         return { channels: [], channelIds: [] };
       }
     },
-    enabled: !!groupId,
+    enabled: !!projectId,
     staleTime: 0, // Set to 0 to always fetch fresh data
     gcTime: 300000, // 5 minutes garbage collection time
     refetchOnWindowFocus: false
@@ -106,11 +77,11 @@ export const useGroupChannels = (groupId: string | null) => {
     error
   });
   
-  // This function can be called after successful updates to the group communities
+  // This function can be called after successful updates to the project communities
   const invalidateCache = () => {
-    if (groupId) {
-      logger.log(`Invalidating cache for group: ${groupId}`);
-      queryClient.invalidateQueries({ queryKey: ["community-group-members", groupId] });
+    if (projectId) {
+      logger.log(`Invalidating cache for project: ${projectId}`);
+      queryClient.invalidateQueries({ queryKey: ["project-communities", projectId] });
     }
   };
   

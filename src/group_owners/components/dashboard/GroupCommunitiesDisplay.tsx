@@ -14,7 +14,7 @@ export const GroupCommunitiesDisplay: React.FC<GroupCommunitiesDisplayProps> = (
   
   return (
     <div className="space-y-3">
-      <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-medium text-gray-800`}>Communities in this Group</h3>
+      <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-medium text-gray-800`}>Communities in this Project</h3>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {communities && communities.length > 0 ? (
           communities.map(community => (
@@ -37,7 +37,7 @@ export const GroupCommunitiesDisplay: React.FC<GroupCommunitiesDisplayProps> = (
             </Card>
           ))
         ) : (
-          <p className={`text-sm text-gray-500 col-span-full ${isMobile ? 'p-2 text-xs' : 'p-4'}`}>No communities in this group</p>
+          <p className={`text-sm text-gray-500 col-span-full ${isMobile ? 'p-2 text-xs' : 'p-4'}`}>No communities in this project</p>
         )}
       </div>
     </div>

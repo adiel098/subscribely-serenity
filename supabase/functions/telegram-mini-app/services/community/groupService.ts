@@ -8,14 +8,24 @@ export async function processGroupCommunities(
   supabase: ReturnType<typeof createClient>,
   communityData
 ) {
-  // Extract communities from relationships
+  // Extract communities but don't rely on community_relationships
   let groupCommunities = [];
   
-  if (communityData.community_relationships && Array.isArray(communityData.community_relationships)) {
-    groupCommunities = communityData.community_relationships
-      .map(rel => rel.communities)
-      .filter(Boolean);
-    console.log(`📝 Group has ${groupCommunities.length} communities`);
+  if (communityData.project_id) {
+    // Get communities belonging to this project instead
+    try {
+      const { data: projectCommunities, error } = await supabase
+        .from("communities")
+        .select("*")
+        .eq("project_id", communityData.project_id);
+      
+      if (!error && projectCommunities) {
+        groupCommunities = projectCommunities;
+        console.log(`📝 Project has ${groupCommunities.length} communities`);
+      }
+    } catch (err) {
+      console.error(`❌ Error fetching project communities: ${err.message}`);
+    }
   }
   
   return groupCommunities;
@@ -29,39 +39,28 @@ export async function fetchGroupMemberCommunities(
   groupId: string
 ) {
   try {
-    // In community_relationships:
-    // - community_id = the GROUP id
-    // - member_id = the COMMUNITY id that belongs to the group
-    const { data: relationships, error: relationshipsError } = await supabase
-      .from("community_relationships")
+    // Directly query communities by project_id instead of using relationships table
+    const { data: communities, error } = await supabase
+      .from("communities")
       .select(`
-        member_id,
-        communities:member_id (
-          id, 
-          name,
-          description,
-          telegram_photo_url,
-          telegram_chat_id,
-          custom_link
-        )
+        id, 
+        name,
+        description,
+        telegram_photo_url,
+        telegram_chat_id,
+        custom_link
       `)
-      .eq("community_id", groupId) // This is correct - we're looking for communities where this group is the parent
-      .eq("relationship_type", "group");
+      .eq("project_id", groupId);
     
-    if (relationshipsError) {
-      console.error(`❌ Error fetching group relationships: ${relationshipsError.message}`);
+    if (error) {
+      console.error(`❌ Error fetching group communities: ${error.message}`);
       return [];
     } else {
-      // Process the communities within the group
-      const memberCommunities = relationships
-        ?.map(item => item.communities)
-        .filter(Boolean) || [];
-      
-      console.log(`✅ Group has ${memberCommunities.length} communities`);
-      return memberCommunities;
+      console.log(`✅ Group has ${communities?.length || 0} communities`);
+      return communities || [];
     }
-  } catch (relError) {
-    console.error(`❌ Unexpected error fetching group relationships: ${relError.message}`);
+  } catch (error) {
+    console.error(`❌ Unexpected error fetching group communities: ${error.message}`);
     return [];
   }
 }

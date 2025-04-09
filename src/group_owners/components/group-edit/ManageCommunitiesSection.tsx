@@ -13,6 +13,7 @@ interface Community {
   id: string;
   name: string;
   created_at: string;
+  project_id?: string | null;
   // Add other relevant fields if necessary
 }
 

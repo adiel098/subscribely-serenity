@@ -18,7 +18,7 @@ export const useGroupMemberCommunities = (projectId: string | null) => {
       try {
         logger.log("Fetching member communities for project ID:", projectId);
         
-        // Fetch communities that belong to this project
+        // Fetch communities that belong to this project directly
         const { data: communities, error } = await supabase
           .from("communities")
           .select(`

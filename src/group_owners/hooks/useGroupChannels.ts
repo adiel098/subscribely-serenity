@@ -26,7 +26,7 @@ export const useGroupChannels = (projectId: string | null) => {
       try {
         logger.log(`Fetching channels for project: ${projectId}`);
         
-        // Fetch communities that belong to this project
+        // Using direct project_id relation instead of community_relationships
         const { data: communities, error } = await supabase
           .from("communities")
           .select("*")

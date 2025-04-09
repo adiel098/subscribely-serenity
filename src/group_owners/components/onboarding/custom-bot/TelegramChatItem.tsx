@@ -1,88 +1,119 @@
 
 import React from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Hash, MessageSquare } from "lucide-react";
-import { getProxiedImageUrl } from "@/admin/services/imageProxyService";
+import { AlertCircle, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface TelegramChat {
-  id: number;
+  id: string;
   title: string;
-  type: "channel" | "group" | "supergroup" | "private";
-  username?: string;
-  photo_url?: string;
+  type: string;
+  photo_url?: string | null;
+  username?: string | null;
+  description?: string | null;
+  member_count?: number;
+  is_verified?: boolean;
 }
 
 interface TelegramChatItemProps {
   chat: TelegramChat;
+  onRefreshPhoto?: (chatId: string) => void;
+  isRefreshing?: boolean;
+  disabled?: boolean;
 }
 
-export const TelegramChatItem: React.FC<TelegramChatItemProps> = ({ chat }) => {
-  // Get the appropriate icon based on chat type
-  const getChatIcon = () => {
-    switch (chat.type) {
-      case "channel":
-        return <Hash className="h-4 w-4 text-blue-500" />;
-      case "group":
-      case "supergroup":
-        return <Users className="h-4 w-4 text-indigo-500" />;
-      default:
-        return <MessageSquare className="h-4 w-4 text-gray-500" />;
+export const TelegramChatItem: React.FC<TelegramChatItemProps> = ({ 
+  chat, 
+  onRefreshPhoto,
+  isRefreshing = false,
+  disabled = false
+}) => {
+  // Default placeholder for photos
+  const photoPlaceholder = chat.type === 'channel' 
+    ? '📢' // Channel icon
+    : '👥'; // Group icon
+    
+  const handleRefresh = () => {
+    if (onRefreshPhoto) {
+      onRefreshPhoto(chat.id);
     }
   };
-
-  // Get the chat type display text
-  const getChatTypeText = () => {
-    switch (chat.type) {
-      case "channel":
-        return "Channel";
-      case "supergroup":
-        return "Supergroup";
-      case "group":
-        return "Group";
-      default:
-        return chat.type.charAt(0).toUpperCase() + chat.type.slice(1);
-    }
-  };
-
-  // Format avatar fallback text from title
-  const getAvatarFallback = () => {
-    return chat.title
-      .split(" ")
-      .map(word => word[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  // Process photo URL if exists
-  const photoUrl = chat.photo_url ? getProxiedImageUrl(chat.photo_url) : null;
-
+  
   return (
-    <div className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-50 transition-colors">
-      <Avatar className="h-10 w-10 border border-gray-200">
-        {photoUrl ? (
-          <AvatarImage src={photoUrl} alt={chat.title} />
+    <div className="flex items-start gap-3 p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50">
+      <div className="relative flex-shrink-0">
+        {chat.photo_url ? (
+          <img 
+            src={chat.photo_url} 
+            alt={chat.title} 
+            className="w-10 h-10 rounded-md object-cover"
+            onError={(e) => {
+              // If image fails to load, replace with placeholder
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+            }}
+          />
         ) : null}
-        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-          {getAvatarFallback()}
-        </AvatarFallback>
-      </Avatar>
+        
+        {/* Placeholder shown when no photo or on error */}
+        <div 
+          className={`${chat.photo_url ? 'hidden' : 'flex'} w-10 h-10 rounded-md bg-indigo-100 items-center justify-center text-xl`}
+          aria-hidden="true"
+        >
+          {photoPlaceholder}
+        </div>
+        
+        {/* Chat type indicator */}
+        <div className="absolute -bottom-1 -right-1 bg-gray-100 rounded-full px-1.5 py-0.5 text-xs font-medium border border-gray-200">
+          {chat.type === 'channel' ? 'Channel' : 'Group'}
+        </div>
+      </div>
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h4 className="font-medium text-gray-800 truncate">{chat.title}</h4>
-          {chat.username && (
-            <span className="text-xs text-gray-500">@{chat.username}</span>
+        <div className="flex justify-between items-start">
+          <h4 className="font-medium text-gray-900 truncate">{chat.title}</h4>
+          
+          {onRefreshPhoto && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={handleRefresh}
+              disabled={isRefreshing || disabled}
+            >
+              <RefreshCcw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Refresh photo</span>
+            </Button>
           )}
         </div>
         
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {getChatIcon()}
-          <span className="text-xs text-gray-600">{getChatTypeText()}</span>
-          {chat.id && (
-            <span className="text-xs text-gray-400 ml-1">ID: {chat.id}</span>
-          )}
-        </div>
+        <p className="text-sm text-gray-500 truncate">
+          ID: {chat.id}
+        </p>
+        
+        {chat.username && (
+          <p className="text-xs text-gray-500">
+            @{chat.username}
+          </p>
+        )}
+        
+        {chat.member_count !== undefined && (
+          <div className="text-xs text-gray-500 mt-1">
+            {chat.member_count} members
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const TelegramChatSkeleton: React.FC = () => {
+  return (
+    <div className="flex items-start gap-3 p-2 rounded-lg border border-gray-200 bg-white">
+      <Skeleton className="w-10 h-10 rounded-md" />
+      <div className="flex-1 space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
       </div>
     </div>
   );

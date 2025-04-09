@@ -1,149 +1,174 @@
 
 import React, { useState } from "react";
-import { TelegramChat, TelegramChatItem } from "./TelegramChatItem";
-import { motion } from "framer-motion";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Shield, AlertCircle, RefreshCw, Check } from "lucide-react";
+import { TelegramChat, TelegramChatItem, TelegramChatSkeleton } from "./TelegramChatItem";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface TelegramChatsListProps {
   chats: TelegramChat[];
-  botToken?: string;
+  botToken: string;
   onChatsRefresh?: (newChats: TelegramChat[]) => void;
   disabled?: boolean;
 }
 
-export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({ 
-  chats, 
+export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
+  chats,
   botToken,
   onChatsRefresh,
   disabled = false
 }) => {
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshingPhotoId, setRefreshingPhotoId] = useState<string | null>(null);
+  const [isRefreshingAll, setIsRefreshingAll] = useState<boolean>(false);
   
-  const handleRefreshChats = async () => {
-    if (!botToken) {
-      toast.error("Bot token is required for refreshing chats");
-      return;
-    }
+  // Refresh photo for a specific chat
+  const handleRefreshPhoto = async (chatId: string) => {
+    setRefreshingPhotoId(chatId);
     
-    setIsRefreshing(true);
     try {
-      const response = await supabase.functions.invoke("validate-bot-token", {
-        body: { botToken }
+      const response = await supabase.functions.invoke("get-telegram-channel-info", {
+        body: { 
+          botToken, 
+          chatId 
+        }
       });
       
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
+      if (response.error) throw new Error(response.error.message);
       
-      if (response.data.valid && response.data.chatList) {
+      if (response.data && response.data.success) {
+        // Update the specific chat in the list
+        const updatedChats = chats.map(chat => 
+          chat.id === chatId ? { 
+            ...chat, 
+            photo_url: response.data.photoUrl || chat.photo_url,
+            member_count: response.data.memberCount || chat.member_count,
+            description: response.data.description || chat.description
+          } : chat
+        );
+        
         if (onChatsRefresh) {
-          onChatsRefresh(response.data.chatList);
+          onChatsRefresh(updatedChats);
         }
-        toast.success(`Found ${response.data.chatList.length} chats`);
+        
+        toast.success("Channel information updated");
       } else {
-        toast.error("Failed to refresh chats");
+        toast.error("Could not update channel photo");
       }
-    } catch (error: any) {
-      console.error("Error refreshing chats:", error);
-      toast.error("An error occurred while refreshing chats");
+    } catch (error) {
+      console.error("Error refreshing chat photo:", error);
+      toast.error("Failed to update channel information");
     } finally {
-      setIsRefreshing(false);
+      setRefreshingPhotoId(null);
     }
   };
   
-  if (!chats || chats.length === 0) {
-    return (
-      <Alert className="mt-4 bg-amber-50 border-amber-100">
-        <AlertCircle className="h-4 w-4 text-amber-600" />
-        <AlertTitle className="text-amber-800">No New Groups or Channels Found</AlertTitle>
-        <AlertDescription className="text-amber-700">
-          <p className="mb-3">
-            No new communities were found. This can happen if:
-            <ul className="list-disc ml-5 mt-2">
-              <li>All your bot's communities are already added to your account</li>
-              <li>Your bot isn't added to any new groups or channels yet</li>
-              <li>Your bot doesn't have admin privileges in any new communities</li>
-            </ul>
-          </p>
-          
-          {botToken && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefreshChats}
-              disabled={isRefreshing || disabled}
-              className="flex items-center gap-1.5"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Searching...' : 'Refresh & Search for Chats'}
-            </Button>
-          )}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Count each type
-  const channelCount = chats.filter(chat => chat.type === 'channel').length;
-  const groupCount = chats.filter(chat => chat.type !== 'channel').length;
-
+  // Refresh all chats
+  const handleRefreshAll = async () => {
+    setIsRefreshingAll(true);
+    
+    try {
+      const response = await supabase.functions.invoke("validate-bot-token", {
+        body: { 
+          botToken,
+          communityId: null
+        }
+      });
+      
+      if (response.error) throw new Error(response.error.message);
+      
+      if (response.data && response.data.valid) {
+        const newChats = response.data.chatList || [];
+        
+        if (onChatsRefresh) {
+          onChatsRefresh(newChats);
+        }
+        
+        toast.success("Refreshed chat list successfully");
+      } else {
+        toast.error("Could not refresh chat list. Please check your bot token.");
+      }
+    } catch (error) {
+      console.error("Error refreshing chat list:", error);
+      toast.error("Failed to refresh chat list");
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+  
+  // Divide chats into channels and groups
+  const channels = chats.filter(chat => chat.type === 'channel');
+  const groups = chats.filter(chat => chat.type !== 'channel');
+  
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="mt-4"
-    >
-      <div className="p-4 bg-white border border-green-100 rounded-lg shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-green-600" />
-            <h4 className="font-medium text-green-700">
-              Bot Connected Successfully
-            </h4>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-gray-900">
+          {chats.length === 0 ? 'No chats found' : `Found ${chats.length} chat${chats.length > 1 ? 's' : ''}`}
+        </h3>
+        
+        {chats.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshAll}
+            disabled={isRefreshingAll || disabled}
+            className="text-xs flex items-center gap-1"
+          >
+            <RefreshCw className={`h-3 w-3 ${isRefreshingAll ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        )}
+      </div>
+      
+      {isRefreshingAll ? (
+        <div className="space-y-2">
+          <TelegramChatSkeleton />
+          <TelegramChatSkeleton />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {channels.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Channels</h4>
+              <div className="space-y-2">
+                {channels.map(chat => (
+                  <TelegramChatItem
+                    key={chat.id}
+                    chat={chat}
+                    onRefreshPhoto={handleRefreshPhoto}
+                    isRefreshing={refreshingPhotoId === chat.id}
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           
-          {botToken && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefreshChats}
-              disabled={isRefreshing || disabled}
-              className="flex items-center gap-1.5"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </Button>
+          {groups.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Groups</h4>
+              <div className="space-y-2">
+                {groups.map(chat => (
+                  <TelegramChatItem
+                    key={chat.id}
+                    chat={chat}
+                    onRefreshPhoto={handleRefreshPhoto}
+                    isRefreshing={refreshingPhotoId === chat.id}
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {chats.length === 0 && (
+            <p className="text-center text-gray-500 py-4">
+              No Telegram channels or groups found. Make sure your bot is an admin in at least one group or channel.
+            </p>
           )}
         </div>
-        
-        <div className="p-3 bg-green-50 rounded border border-green-100 mb-3">
-          <div className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-green-600 mt-0.5" />
-            <div className="text-sm text-green-700">
-              <p className="font-medium">Verification Successful!</p>
-              <p>Found {chats.length} new communities you can add. Click <strong>Save Communities</strong> to proceed.</p>
-            </div>
-          </div>
-        </div>
-        
-        <p className="text-sm text-gray-600 mb-3">
-          New communities available to add: {chats.length} {chats.length === 1 ? 'chat' : 'chats'}
-          {channelCount > 0 && groupCount > 0 ? ` (${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'})` : 
-           channelCount > 0 ? ` (${channelCount} ${channelCount === 1 ? 'channel' : 'channels'})` :
-           groupCount > 0 ? ` (${groupCount} ${groupCount === 1 ? 'group' : 'groups'})` : ''}:
-        </p>
-        
-        <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
-          {chats.map((chat, index) => (
-            <TelegramChatItem key={index} chat={chat} />
-          ))}
-        </div>
-      </div>
-    </motion.div>
+      )}
+    </div>
   );
 };

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
+import { setTempProjectData } from "@/group_owners/hooks/useCreateCommunityGroup";
 
 interface CustomBotSetupStepProps {
   onComplete: () => void;
@@ -62,76 +63,24 @@ const CustomBotSetupStep = ({
       
       console.log("Bot token saved successfully");
       
-      // Save each detected community/channel to the database
-      const savedCommunities = [];
-      for (const chat of verificationResults) {
-        try {
-          // Check if community already exists with this chat ID
-          const { data: existingCommunity } = await supabase
-            .from('communities')
-            .select('id')
-            .eq('telegram_chat_id', chat.id)
-            .eq('owner_id', user.id)
-            .maybeSingle();
-            
-          if (!existingCommunity) {
-            // Create new community record
-            // החלק החשוב: לשמור את כל סוגי הצ'אטים כקהילות רגילות (is_group: false)
-            // גם ערוצים וגם קבוצות טלגרם - כולם הם סוגים של קהילות במערכת שלך
-            console.log("Creating new community:", chat.title);
-            const { data: newCommunity, error: communityError } = await supabase
-              .from('communities')
-              .insert({
-                name: chat.title,
-                telegram_chat_id: chat.id,
-                telegram_photo_url: chat.photo_url || null,
-                is_group: false, // תמיד false, גם עבור קבוצות טלגרם
-                owner_id: user.id
-              })
-              .select('id')
-              .single();
-              
-            if (communityError) {
-              console.error("Error saving community:", communityError);
-              toast.error(`Failed to save community: ${chat.title}`);
-              // Continue with other communities even if one fails
-            } else {
-              savedCommunities.push(newCommunity);
-              console.log("Community saved successfully:", newCommunity);
-            }
-          } else {
-            console.log("Community already exists:", existingCommunity);
-            savedCommunities.push(existingCommunity);
-          }
-        } catch (communityError) {
-          console.error("Error processing community:", chat.title, communityError);
-          // Continue with other communities
-        }
-      }
+      // Important: We DON'T save communities to the database yet
+      // Instead, store them in temporary storage to be committed at the end of onboarding
+      const tempProjectData = {
+        name: "My Project", // Default name that will be updated later
+        description: "Created with custom bot", // Default description
+        bot_token: customTokenInput,
+        communities: verificationResults.map(chat => chat.id)
+      };
       
-      if (savedCommunities.length === 0 && verificationResults.length > 0) {
-        toast.warning("No communities were saved. Please try again.");
-        setIsSaving(false);
-        return;
-      }
+      // Save project data temporarily
+      setTempProjectData(tempProjectData);
       
-      // Mark onboarding as completed
-      await supabase.from('profiles')
-        .update({ 
-          onboarding_completed: true,
-          onboarding_step: 'complete'
-        })
-        .eq('id', user.id);
+      console.log("Temporary project data saved:", tempProjectData);
       
-      toast.success("Setup completed successfully!");
+      toast.success("Bot verified successfully!");
       
-      // Use the onComplete callback to ensure proper state updates in parent components
+      // Call onComplete to move to the next step
       onComplete();
-      
-      // Navigate to dashboard after a short delay to allow state updates
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 500);
     } catch (error) {
       console.error("Error saving bot token and communities:", error);
       toast.error("Failed to complete setup");

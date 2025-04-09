@@ -38,7 +38,5 @@ export const TEST_COMMUNITY: Community = {
       is_active: true,
       community_id: '27052464-6e68-4116-bd79-6af069fe67cd'
     }
-  ],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
+  ]
 };

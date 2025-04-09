@@ -35,7 +35,7 @@ import { createElement } from "react";
 
 // Helper function to wrap elements with AppProviders
 const wrapWithProviders = (element: React.ReactNode) => {
-  return createElement(AppProviders, {}, element);
+  return createElement(AppProviders, { children: element });
 };
 
 export const router = createBrowserRouter([

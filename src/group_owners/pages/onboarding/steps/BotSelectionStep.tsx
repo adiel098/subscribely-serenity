@@ -26,7 +26,7 @@ const BotSelectionStep = ({
 
   return (
     <OnboardingLayout
-      currentStep="bot-selection"
+      currentStep="project-creation"  // Changed from "bot-selection" to a valid step
       title="Choose Your Bot"
       description="Select which Telegram bot you want to use for your communities"
       icon={<Bot className="w-6 h-6" />}

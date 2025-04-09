@@ -88,7 +88,7 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
 
   return (
     <OnboardingLayout
-      currentStep="bot-setup"
+      currentStep="custom-bot-setup"
       title="Connect Your Telegram Bot 🤖"
       description="Your bot will manage access to your communities"
       icon={<Bot className="w-6 h-6" />}

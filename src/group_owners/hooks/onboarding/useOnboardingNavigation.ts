@@ -1,156 +1,153 @@
 
-import { useState, useCallback, useRef } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { OnboardingStep, ONBOARDING_STEPS } from "./types";
-import { saveOnboardingStep, completeOnboardingProcess } from "../../services/onboardingService";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { OnboardingStep } from "./types";
+import { localStorageService } from "@/utils/localStorageService";
 
 export const useOnboardingNavigation = (
   currentStep: OnboardingStep,
   setCurrentStep: (step: OnboardingStep) => void,
   setIsCompleted: (completed: boolean) => void
 ) => {
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const lastSavedStepRef = useRef<OnboardingStep | null>(null);
-  const isCompletingRef = useRef(false);
-  const completionInProgressRef = useRef(false);
-  const hasCompletedRef = useRef(false);
 
-  // Allow any step string to be passed, but save only valid OnboardingStep values
+  // Save the current step to the database and localStorage
   const saveCurrentStep = useCallback(async (step: string) => {
-    if (!user || hasCompletedRef.current) return;
-    
-    // Prevent duplicate save operations for the same step
-    if (step === lastSavedStepRef.current) {
-      console.log("Step already saved, skipping duplicate save:", step);
-      return;
-    }
-    
+    setIsSubmitting(true);
     try {
-      console.log("Saving current step:", step);
-      setIsSubmitting(true);
+      const validStep = step as OnboardingStep;
+      console.log(`Saving current step: ${step}`);
       
-      // Map any incoming step to a valid OnboardingStep
-      let validStep: OnboardingStep = "welcome";
-      
-      // Only use the step if it's a valid OnboardingStep
-      if (["welcome", "bot-selection", "bot-setup", "custom-bot-setup", "project-creation", "connect-telegram", "completion", "complete"].includes(step)) {
-        validStep = step as OnboardingStep;
-      } else {
-        console.warn(`Invalid step "${step}" provided, defaulting to "welcome"`);
-      }
-      
-      await saveOnboardingStep(user.id, validStep);
-      console.log("Setting current step to:", validStep);
+      // Update the local state
       setCurrentStep(validStep);
-      lastSavedStepRef.current = validStep;
       
-      // If the step is "complete", also mark as completed
-      if (validStep === "complete" && !isCompletingRef.current) {
-        console.log("Step is 'complete', setting isCompleted to true");
+      // Save to localStorage
+      const status = localStorageService.getOnboardingStatus() || { isCompleted: false };
+      localStorageService.setOnboardingStatus({
+        ...status,
+        lastStep: step,
+        currentStep: step
+      });
+      
+      // Save to database
+      const { error } = await supabase.from('profiles')
+        .update({ 
+          onboarding_step: step === "complete" ? "complete" : step,
+          onboarding_completed: step === "complete" 
+        })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+      
+      if (error) throw error;
+      
+      // Update completion status if step is "complete"
+      if (step === "complete") {
         setIsCompleted(true);
-        hasCompletedRef.current = true;
       }
       
-      console.log("Step saved successfully");
+      return true;
     } catch (error) {
-      console.error("Error saving onboarding step:", error);
-      toast.error("Failed to save your progress");
+      console.error("Error saving step:", error);
+      toast.error("Failed to save your progress. Please try again.");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, setCurrentStep, setIsCompleted]);
+  }, [setCurrentStep, setIsCompleted]);
 
-  const completeOnboarding = useCallback(async (): Promise<void> => {
-    if (!user || isCompletingRef.current || completionInProgressRef.current || hasCompletedRef.current) {
-      console.log("Onboarding already completed or in progress, skipping");
-      return Promise.resolve();
-    }
-    
+  // Mark onboarding as complete
+  const completeOnboarding = useCallback(async () => {
+    setIsSubmitting(true);
     try {
-      console.log("Completing onboarding for user:", user.id);
-      isCompletingRef.current = true;
-      completionInProgressRef.current = true;
-      hasCompletedRef.current = true;
-      setIsSubmitting(true);
+      console.log("Completing onboarding");
       
-      await completeOnboardingProcess(user.id);
-      
-      console.log("Onboarding completed successfully");
-      
-      // Set state variables to indicate completion
-      // This should trigger the router to redirect to dashboard
+      // Update local state
       setCurrentStep("complete");
       setIsCompleted(true);
-
-      console.log("Current step set to 'complete' and isCompleted set to true");
       
-      return Promise.resolve();
+      // Save to localStorage
+      localStorageService.setOnboardingStatus({
+        isCompleted: true,
+        lastStep: "complete",
+        currentStep: "complete"
+      });
+      
+      // Save to database
+      const { error } = await supabase.from('profiles')
+        .update({ 
+          onboarding_step: "complete",
+          onboarding_completed: true 
+        })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+      
+      if (error) throw error;
+      
+      // Also set has_community so user can access dashboard
+      localStorageService.setHasCommunity(true);
+      
+      return true;
     } catch (error) {
       console.error("Error completing onboarding:", error);
-      toast.error("Failed to complete onboarding");
-      completionInProgressRef.current = false;
-      hasCompletedRef.current = false;
-      return Promise.reject(error);
+      toast.error("Failed to complete onboarding. Please try again.");
+      return false;
     } finally {
       setIsSubmitting(false);
-      // Keep isCompletingRef true to prevent repeated completions
     }
-  }, [user, setCurrentStep, setIsCompleted]);
+  }, [setCurrentStep, setIsCompleted]);
 
-  const goToNextStep = useCallback((currentStep: OnboardingStep = "welcome") => {
-    if (!user) return;
+  // Navigation functions
+  const goToNextStep = useCallback((currentStep: OnboardingStep) => {
+    let nextStep: OnboardingStep;
     
-    console.log("Current step in goToNextStep:", currentStep);
-    console.log("All onboarding steps:", ONBOARDING_STEPS);
-    
-    const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
-    console.log("Current step index:", currentIndex);
-    
-    const nextStep = ONBOARDING_STEPS[currentIndex + 1];
-    console.log("Next step calculated:", nextStep);
-    
-    if (nextStep) {
-      console.log("Moving to next step:", nextStep);
-      if (nextStep !== lastSavedStepRef.current) {
-        saveCurrentStep(nextStep);
-        
-        // Add a direct navigation fallback using window.location for critical transitions
-        if (currentStep === "welcome" && nextStep === "bot-selection") {
-          console.log("Critical transition from welcome to bot-selection");
-          setTimeout(() => {
-            window.location.href = '/onboarding/bot-selection';
-          }, 500);
-        }
-      } else {
-        // Just update the UI without saving to the database
-        setCurrentStep(nextStep);
-      }
-    } else {
-      console.warn("No next step available from:", currentStep);
+    switch (currentStep) {
+      case "welcome":
+        nextStep = "project-creation";
+        break;
+      case "project-creation":
+        nextStep = "custom-bot-setup";
+        break;
+      case "custom-bot-setup":
+        nextStep = "connect-telegram";
+        break;
+      case "connect-telegram":
+        nextStep = "completion";
+        break;
+      case "completion":
+        nextStep = "complete";
+        break;
+      default:
+        // Default to the first step if we get an invalid step
+        nextStep = "welcome";
     }
-  }, [user, saveCurrentStep, setCurrentStep]);
+    
+    console.log(`Going from ${currentStep} to next step: ${nextStep}`);
+    return saveCurrentStep(nextStep);
+  }, [saveCurrentStep]);
 
-  const goToPreviousStep = useCallback((currentStep: OnboardingStep = "welcome") => {
-    if (!user) return;
+  const goToPreviousStep = useCallback((currentStep: OnboardingStep) => {
+    let previousStep: OnboardingStep;
     
-    const currentIndex = ONBOARDING_STEPS.indexOf(currentStep);
-    
-    if (currentIndex > 0) {
-      const previousStep = ONBOARDING_STEPS[currentIndex - 1];
-      console.log("Moving to previous step:", previousStep);
-      if (previousStep !== lastSavedStepRef.current) {
-        saveCurrentStep(previousStep);
-      } else {
-        // Just update the UI without saving to the database
-        setCurrentStep(previousStep);
-      }
-    } else {
-      console.warn("No previous step available from:", currentStep);
+    switch (currentStep) {
+      case "project-creation":
+        previousStep = "welcome";
+        break;
+      case "custom-bot-setup":
+        previousStep = "project-creation";
+        break;
+      case "connect-telegram":
+        previousStep = "custom-bot-setup";
+        break;
+      case "completion":
+        previousStep = "connect-telegram";
+        break;
+      default:
+        // Default to the welcome step if we get an invalid step
+        previousStep = "welcome";
     }
-  }, [user, saveCurrentStep, setCurrentStep]);
+    
+    console.log(`Going from ${currentStep} to previous step: ${previousStep}`);
+    return saveCurrentStep(previousStep);
+  }, [saveCurrentStep]);
 
   return {
     isSubmitting,

@@ -1,10 +1,9 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
 import ProjectCreationStep from "@/group_owners/pages/onboarding/steps/ProjectCreationStep";
-import BotSetupStep from "@/group_owners/pages/onboarding/steps/BotSetupStep";
-import BotSelectionStep from "@/group_owners/pages/onboarding/steps/BotSelectionStep";
 import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
@@ -61,23 +60,11 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   };
   
   const handleProjectCreationComplete = () => {
-    console.log("Project creation completed, going to bot selection step");
-    navigate('/onboarding/bot-selection');
+    console.log("Project creation completed, going to custom bot setup step");
+    navigate('/onboarding/custom-bot-setup');
     goToNextStep("project-creation");
   };
-  
-  const handleBotSelectionComplete = () => {
-    console.log("Bot selection completed, going to bot setup step");
-    navigate('/onboarding/bot-setup');
-    goToNextStep("bot-selection");
-  };
 
-  const handleBotSetupComplete = () => {
-    console.log("Bot setup completed, going to connect telegram step");
-    navigate('/onboarding/connect-telegram');
-    goToNextStep("bot-setup");
-  };
-  
   const handleCustomBotSetupComplete = () => {
     console.log("Custom bot setup completed, going to connect telegram step");
     navigate('/onboarding/connect-telegram');
@@ -105,32 +92,6 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           }}
         />
       );
-    
-    case "bot-selection":
-      return (
-        <BotSelectionStep 
-          onComplete={handleBotSelectionComplete} 
-          activeStep={true}
-          goToPreviousStep={() => {
-            console.log("Going back to project creation step");
-            goToPreviousStep("bot-selection");
-            navigate('/onboarding/project-creation');
-          }}
-        />
-      );
-    
-    case "bot-setup":
-      return (
-        <BotSetupStep 
-          onComplete={handleBotSetupComplete} 
-          activeStep={true}
-          goToPreviousStep={() => {
-            console.log("Going back to bot selection step");
-            goToPreviousStep("bot-setup");
-            navigate('/onboarding/bot-selection');
-          }}
-        />
-      );
       
     case "custom-bot-setup":
       return (
@@ -138,9 +99,9 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           onComplete={handleCustomBotSetupComplete} 
           activeStep={true}
           goToPreviousStep={() => {
-            console.log("Going back to bot selection step");
+            console.log("Going back to project creation step");
             goToPreviousStep("custom-bot-setup");
-            navigate('/onboarding/bot-selection');
+            navigate('/onboarding/project-creation');
           }}
         />
       );
@@ -155,9 +116,9 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           }}
           activeStep={true}
           goToPreviousStep={() => {
-            console.log("Going back to bot setup step");
+            console.log("Going back to custom bot setup step");
             goToPreviousStep("connect-telegram");
-            navigate('/onboarding/bot-setup');
+            navigate('/onboarding/custom-bot-setup');
           }}
         />
       );

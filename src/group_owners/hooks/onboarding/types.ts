@@ -1,30 +1,17 @@
 
-// Onboarding step types
 export type OnboardingStep = 
-  | "welcome" 
-  | "bot-setup"
-  | "bot-selection"
-  | "custom-bot-setup"
+  | "welcome"
   | "project-creation"
-  | "connect-telegram"
+  | "custom-bot-setup"
+  | "connect-telegram" 
   | "completion"
   | "complete";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "project-creation",
-  "bot-selection", // Added bot-selection step
-  "bot-setup",
+  "custom-bot-setup",
   "connect-telegram",
   "completion",
   "complete"
 ];
-
-// Define the OnboardingState interface for useOnboardingStatus
-export interface OnboardingState {
-  currentStep: OnboardingStep;
-  isCompleted: boolean;
-  isTelegramConnected?: boolean;
-  hasPlatformPlan?: boolean;
-  hasPaymentMethod?: boolean;
-}

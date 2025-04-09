@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OnboardingStep } from "./types";
@@ -127,7 +128,7 @@ export const useOnboardingRouter = (
     if (
       pathStep && 
       pathStep !== onboardingState.currentStep && 
-      ["welcome", "bot-selection", "custom-bot-setup", "official-bot-setup", "connect-telegram", "complete"].includes(pathStep) &&
+      ["welcome", "project-creation", "custom-bot-setup", "connect-telegram", "completion", "complete"].includes(pathStep) &&
       !onboardingHookLoading &&
       !isLoading
     ) {
@@ -148,16 +149,8 @@ export const useOnboardingRouter = (
     }
   }, [location.pathname, onboardingState.currentStep, onboardingHookLoading, isLoading, saveCurrentStep, navigate]);
 
-  // Handle special case for official-bot-setup
-  const handleOfficialBotSetup = () => {
-    console.log("Official bot setup detected, redirecting to connect-telegram");
-    navigate('/onboarding/connect-telegram', { replace: true });
-    return null;
-  };
-
   return {
     isLoading,
-    isUrlProcessed,
-    handleOfficialBotSetup
+    isUrlProcessed
   };
 };

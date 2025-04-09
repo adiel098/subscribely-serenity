@@ -44,7 +44,7 @@ export const useCommunityGroups = () => {
           .filter(rel => rel.communities) // Filter out any records without valid communities data
           .map(rel => {
             // Access the nested communities object directly
-            const community = rel.communities;
+            const community = rel.communities as any;
             return {
               id: community.id,
               name: community.name,

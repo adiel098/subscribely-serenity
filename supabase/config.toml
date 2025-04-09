@@ -1,72 +1,120 @@
 
+# A string used to distinguish different Supabase projects on the same host. Defaults to the working
+# directory name when running `supabase init`.
 project_id = "trkiniaqliiwdkrvvuky"
+org_id = "trkiniaqliiwdkrvvuky"
 
 [api]
-enabled = true
+# Port to use for the API URL.
 port = 54321
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
+# endpoints. public and storage are always included.
 schemas = ["public", "storage", "graphql_public"]
+# Extra schemas to add to the search_path of every request. public is always included.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
+# for accidental or malicious requests.
+max_rows = 1000
 
 [db]
+# Port to use for the local database URL.
 port = 54322
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 15
 
 [studio]
-enabled = true
+# Port to use for Supabase Studio.
 port = 54323
 
+# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent from the web interface.
 [inbucket]
-enabled = true
+# Port to use for the email testing server web interface.
 port = 54324
+smtp_port = 54325
+pop3_port = 54326
 
 [storage]
-enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "50MiB"
 
 [auth]
+# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
+# in emails.
+site_url = "https://membify.app"
+# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+additional_redirect_urls = ["https://localhost:8080", "https://192.168.1.1"]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 seconds (one
+# week).
+jwt_expiry = 3600
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# If disabled, the following claims will not be applied to the generated user JWT tokens.
+# - exp: expiry timestamp for the user's access token
+# - iat: issuance timestamp for the user's access token
+# - nbf: not before timestamp for the user's access token
+enable_standard_jwt_claims = true
+# If enabled, exposes a set of JSON endpoints for SignUp, SignIn and ResetPassword
+enable_oauth_enforcement = false
+
+[auth.email]
+# Allow/disallow new user signups via email to your project.
+enable_signup = true
+# If enabled, a user will be required to confirm any email change on both the old, and new email
+# addresses. If disabled, only the new email is required to confirm.
+double_confirm_changes = true
+# If enabled, users need to confirm their email address before signing in.
+enable_confirmations = false
+
+# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
+# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin`, `notion`, `twitch`,
+# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = ""
+# Overrides the default auth redirectUrl.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
+
+[analytics]
+enabled = false
+port = 54327
+vector_port = 54328
+# Setup BigQuery project to enable log viewer on local development stack.
+# See: https://supabase.com/docs/guides/analytics/introduction
+gcp_project_id = ""
+gcp_project_number = ""
+gcp_jwt_path = "supabase/gcloud.json"
+
+# Configure one of the supported email testing services.
+[email.testing]
+# Use Inbucket to catch emails. This is the default behavior.
+[email.testing.inbucket]
 enabled = true
+# Use MailHog to catch emails.
+[email.testing.mailhog]
+enabled = false
+# Use a custom smtp server to catch emails. Recommended for enterprise setups.
+[email.testing.smtp]
+enabled = false
+host = ""
+port = ""
+user = ""
+pass = ""
+tls_enabled = false
+# Self-signed TLS certificates. IP addresses and wildcard domains are not supported.
+tls_server_name = ""
+# Optionally specify a sender address. This is useful for forwarding emails.
+sender_address = ""
 
-[realtime]
-enabled = true
+[functions]
+[functions.project-migration]
+verify_jwt = true
 
-[functions.telegram-webhook]
-verify_jwt = false
-
-[functions.check-subscriptions]
-verify_jwt = false
-
-[functions.database-diagnostics]
-verify_jwt = false
-
-[functions.create-stripe-payment-intent]
-verify_jwt = false
-
-[functions.update-community-counts]
-verify_jwt = false
-
-[functions.telegram-image-proxy]
-verify_jwt = false
-
-[functions.check-community-photo]
-verify_jwt = false
-
-[functions.create-invite-link]
-verify_jwt = false
-
-[functions.create-stripe-session]
-verify_jwt = false
-
-[functions.telegram-user-manager]
-verify_jwt = false
-
-[functions.telegram-community-data]
-verify_jwt = false
-
-[functions.telegram-mini-app]
-verify_jwt = false
-
-[functions.send-broadcast]
-verify_jwt = false
-
-[functions.validate-bot-token]
-verify_jwt = false
-
-[functions.nowpayments-ipn]
-verify_jwt = false
+[monitoring]
+enabled = false
+port = 54329

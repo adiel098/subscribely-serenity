@@ -111,6 +111,7 @@ export type Database = {
           is_group: boolean | null
           name: string
           owner_id: string
+          project_id: string | null
           telegram_chat_id: string | null
           telegram_photo_url: string | null
           updated_at: string
@@ -123,6 +124,7 @@ export type Database = {
           is_group?: boolean | null
           name: string
           owner_id: string
+          project_id?: string | null
           telegram_chat_id?: string | null
           telegram_photo_url?: string | null
           updated_at?: string
@@ -135,6 +137,7 @@ export type Database = {
           is_group?: boolean | null
           name?: string
           owner_id?: string
+          project_id?: string | null
           telegram_chat_id?: string | null
           telegram_photo_url?: string | null
           updated_at?: string
@@ -145,6 +148,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -570,6 +580,39 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          bot_token: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_custom_bot: boolean
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          bot_token?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom_bot?: boolean
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          bot_token?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom_bot?: boolean
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_activity_logs: {
         Row: {
           activity_type: string
@@ -899,6 +942,7 @@ export type Database = {
           is_admin: boolean | null
           language: string | null
           max_messages_per_day: number | null
+          project_id: string | null
           renewal_discount_enabled: boolean | null
           renewal_discount_percentage: number | null
           second_reminder_days: number | null
@@ -927,6 +971,7 @@ export type Database = {
           is_admin?: boolean | null
           language?: string | null
           max_messages_per_day?: number | null
+          project_id?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
           second_reminder_days?: number | null
@@ -955,6 +1000,7 @@ export type Database = {
           is_admin?: boolean | null
           language?: string | null
           max_messages_per_day?: number | null
+          project_id?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
           second_reminder_days?: number | null
@@ -981,6 +1027,13 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: true
             referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_bot_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1208,6 +1261,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_project_bot_token: {
+        Args: { project_id_param: string }
+        Returns: string
       }
       get_system_logs: {
         Args: { event_types?: string[]; limit_count?: number }

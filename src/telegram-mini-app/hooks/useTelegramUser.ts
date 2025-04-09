@@ -5,16 +5,17 @@ import { isDevelopment } from '../utils/telegram/environmentUtils';
 import { getWebAppData } from '../utils/webAppDataExtractor';
 import { TEST_USER } from '../utils/development/testData';
 import { createLogger } from '../utils/debugUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('useTelegramUser');
 
-export const useTelegramUser = (communityId?: string, userId?: string): TelegramUserHookResult => {
+export const useTelegramUser = (projectIdOrCommunityId?: string, userId?: string): TelegramUserHookResult => {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTelegramUser = useCallback(async () => {
-    logger.log('fetchTelegramUser called with communityId:', communityId, 'userId:', userId);
+    logger.log('fetchTelegramUser called with identifier:', projectIdOrCommunityId, 'userId:', userId);
     setLoading(true);
     setError(null);
     
@@ -52,13 +53,35 @@ export const useTelegramUser = (communityId?: string, userId?: string): Telegram
         // No user data found and not in development mode
         throw new Error('No Telegram user found');
       }
+
+      // If we have a projectIdOrCommunityId, check if it starts with "project_" and remove the prefix
+      if (projectIdOrCommunityId && projectIdOrCommunityId.startsWith('project_')) {
+        const projectId = projectIdOrCommunityId.replace('project_', '');
+        logger.log('Detected project ID:', projectId);
+        
+        // Get all communities for this project
+        try {
+          const { data: communities, error: commError } = await supabase
+            .from('communities')
+            .select('id')
+            .eq('project_id', projectId);
+            
+          if (commError) {
+            logger.error('Error fetching communities for project:', commError);
+          } else {
+            logger.log(`Project ${projectId} has ${communities?.length || 0} communities`);
+          }
+        } catch (err) {
+          logger.error('Error querying communities by project:', err);
+        }
+      }
     } catch (err) {
       logger.error('Error retrieving Telegram user:', err);
       setError(err instanceof Error ? err.message : 'Failed to get Telegram user');
     } finally {
       setLoading(false);
     }
-  }, [communityId, userId]);
+  }, [projectIdOrCommunityId, userId]);
 
   useEffect(() => {
     fetchTelegramUser();

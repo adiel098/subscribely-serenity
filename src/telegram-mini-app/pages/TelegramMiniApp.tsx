@@ -8,7 +8,7 @@ import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInit
 import AppContent from "@/telegram-mini-app/components/AppContent"; 
 import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 import { DebugMenu } from "../components/debug/DebugMenu";
-import { getWebAppData } from "../utils/webAppDataExtractor";
+import { getWebAppData, getProjectIdFromStartParam } from "../utils/webAppDataExtractor";
 import { createLogger } from "../utils/debugUtils";
 
 const logger = createLogger("TelegramMiniApp");
@@ -31,6 +31,10 @@ const TelegramMiniApp = () => {
   logger.log('📌 isDevelopmentMode:', isDevelopmentMode);
   logger.log('📌 retryCount:', retryCount);
   logger.log('📌 User Agent:', navigator.userAgent);
+
+  // Check if startParam is a project ID
+  const projectId = getProjectIdFromStartParam(startParam);
+  logger.log('📌 Extracted projectId:', projectId);
 
   useEffect(() => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -73,7 +77,8 @@ const TelegramMiniApp = () => {
     ensureFullScreen();
   };
 
-  const effectiveStartParam = startParam || "";
+  // Determine what to pass to hooks - project ID or community ID
+  const effectiveStartParam = projectId ? `project_${projectId}` : (startParam || "");
   
   const finalStartParam = isDevelopmentMode && !effectiveStartParam 
     ? "27052464-6e68-4116-bd79-6af069fe67cd"
@@ -137,7 +142,8 @@ const TelegramMiniApp = () => {
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
       
       <AppContent
-        communityId={finalStartParam}
+        communityId={projectId ? undefined : finalStartParam}
+        projectId={projectId}
         telegramUserId={telegramUser?.id || directTelegramUserId}
       />
       

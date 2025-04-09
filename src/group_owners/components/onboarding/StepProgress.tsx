@@ -2,7 +2,7 @@
 import React from "react";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { motion } from "framer-motion";
-import { Bot, MessageSquare, Rocket, FolderPlus, CheckCircle } from "lucide-react";
+import { Bot, Rocket, FolderPlus, CheckCircle } from "lucide-react";
 
 interface StepProgressProps {
   currentStep: OnboardingStep;
@@ -13,7 +13,6 @@ export const StepProgress: React.FC<StepProgressProps> = ({ currentStep }) => {
     { id: "welcome", label: "Welcome", icon: <Rocket size={18} /> },
     { id: "project-creation", label: "Project", icon: <FolderPlus size={18} /> },
     { id: "custom-bot-setup", label: "Bot Setup", icon: <Bot size={18} /> },
-    { id: "connect-telegram", label: "Connect", icon: <MessageSquare size={18} /> },
     { id: "completion", label: "Complete", icon: <CheckCircle size={18} /> },
   ];
 

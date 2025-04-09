@@ -1,25 +1,23 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 const logger = createLogger("useMiniAppUsers");
 
-export const useMiniAppUsers = (
-  communityId: string,
-  activeUserIds: string[]
-) => {
+export const useMiniAppUsers = (communityId: string | null, activeUserIds: string[]) => {
   return useQuery({
-    queryKey: ["miniAppUsers", communityId],
+    queryKey: ["mini-app-users", communityId],
     queryFn: async () => {
       if (!communityId) return { count: 0, nonSubscribers: 0 };
       
-      console.log("🔍 Fetching mini app users for community ID:", communityId);
+      logger.log("Fetching mini app users data for community:", communityId);
       
       try {
+        // Query mini app users for this community
         const { data: miniAppUsers, error } = await supabase
-          .from("telegram_mini_app_users")
-          .select("*")
+          .from("mini_app_users")
+          .select("telegram_user_id")
           .eq("community_id", communityId);
         
         if (error) {
@@ -27,23 +25,20 @@ export const useMiniAppUsers = (
           return { count: 0, nonSubscribers: 0 };
         }
         
-        console.log("📱 Fetched mini app users:", miniAppUsers.length);
+        // Count total mini app users
+        const count = miniAppUsers?.length || 0;
         
-        // Count non-subscribers (users who have used the mini app but aren't active subscribers)
-        const nonSubscribersCount = miniAppUsers.filter(
-          user => !activeUserIds.includes(user.telegram_id)
-        ).length;
+        // Count mini app users who aren't subscribers
+        const nonSubscribers = miniAppUsers?.filter(
+          user => !activeUserIds.includes(user.telegram_user_id)
+        ).length || 0;
         
-        return {
-          count: miniAppUsers.length,
-          nonSubscribers: nonSubscribersCount,
-          users: miniAppUsers
-        };
+        return { count, nonSubscribers };
       } catch (error) {
-        logger.error("Exception fetching mini app users:", error);
+        logger.error("Exception in mini app users fetch:", error);
         return { count: 0, nonSubscribers: 0 };
       }
     },
-    enabled: !!communityId && activeUserIds.length > 0
+    enabled: !!communityId
   });
 };

@@ -1,43 +1,36 @@
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { subDays } from "date-fns";
-import { TimeRange } from "./types";
 
 export const useTimeRange = () => {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
-
-  const timeRangeStartDate = useMemo(() => {
-    const now = new Date();
-    switch (timeRange) {
-      case "7d":
-        return subDays(now, 7);
-      case "30d":
-        return subDays(now, 30);
-      case "90d":
-        return subDays(now, 90);
-      case "all":
-      default:
-        return new Date(0); // Beginning of time
-    }
-  }, [timeRange]);
+  const [timeRange, setTimeRange] = useState<string>("all");
   
-  const timeRangeLabel = useMemo(() => {
+  const getTimeRangeLabel = () => {
     switch (timeRange) {
-      case "7d":
-        return "Last 7 days";
-      case "30d":
-        return "Last 30 days";
-      case "90d":
-        return "Last 90 days";
-      case "all":
-        return "All time";
+      case "7d": return "Last 7 days";
+      case "30d": return "Last 30 days";
+      case "90d": return "Last 90 days";
+      case "1y": return "Last year";
+      default: return "All time";
     }
-  }, [timeRange]);
-
+  };
+  
+  const getTimeRangeStartDate = () => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case "7d": return subDays(now, 7);
+      case "30d": return subDays(now, 30);
+      case "90d": return subDays(now, 90);
+      case "1y": return subDays(now, 365);
+      default: return null; // All time
+    }
+  };
+  
   return {
     timeRange,
     setTimeRange,
-    timeRangeLabel,
-    timeRangeStartDate
+    timeRangeLabel: getTimeRangeLabel(),
+    timeRangeStartDate: getTimeRangeStartDate()
   };
 };

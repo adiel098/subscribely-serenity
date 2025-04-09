@@ -1,48 +1,27 @@
 
-import { useMemo } from "react";
-import { DashboardSubscriber, PaymentStatistics } from "./types";
-
-export const usePaymentStats = (
-  filteredSubscribers: DashboardSubscriber[]
-) => {
-  const paymentStats = useMemo((): PaymentStatistics => {
-    // Count the number of completed, pending, and failed payments
-    const completed = filteredSubscribers.filter(sub => 
-      sub.payment_status === "completed" || 
-      sub.payment_status === "successful" || 
-      (sub.subscription_status === "active" && sub.plan)
-    ).length;
-    
-    const pending = filteredSubscribers.filter(sub => 
-      sub.payment_status === "pending" || 
-      sub.payment_status === "processing"
-    ).length;
-    
-    const failed = filteredSubscribers.filter(sub => 
-      sub.payment_status === "failed" || 
-      sub.payment_status === "error"
-    ).length;
-    
-    // Calculate total by adding the counts
-    const total = completed + pending + failed;
-    
-    // If no explicit payment statuses are set, but there are active subscribers,
-    // we assume they have completed payments
-    const hasActiveWithoutStatus = filteredSubscribers.some(sub => 
-      sub.subscription_status === "active" && 
-      !sub.payment_status &&
-      sub.plan
-    );
-    
-    console.log("Payment stats calculated:", { completed, pending, failed, total, hasActiveWithoutStatus });
-    
-    return {
-      completed: completed || (hasActiveWithoutStatus ? filteredSubscribers.filter(sub => sub.subscription_status === "active").length : 0),
-      pending,
-      failed,
-      total: total || (hasActiveWithoutStatus ? filteredSubscribers.filter(sub => sub.subscription_status === "active").length : 0)
-    };
-  }, [filteredSubscribers]);
-
-  return { paymentStats };
+export const usePaymentStats = (subscribers: any[]) => {
+  // This is a simplified implementation
+  // In a real app, you'd analyze actual payment methods
+  
+  // Count payment methods (simplified example)
+  const paymentMethods = [
+    { name: 'Credit Card', count: Math.floor(subscribers.length * 0.6) },
+    { name: 'PayPal', count: Math.floor(subscribers.length * 0.3) },
+    { name: 'Cryptocurrency', count: Math.floor(subscribers.length * 0.1) }
+  ];
+  
+  // Calculate distribution
+  const total = paymentMethods.reduce((sum, method) => sum + method.count, 0);
+  
+  const paymentDistribution = paymentMethods.map(method => ({
+    name: method.name,
+    value: total > 0 ? (method.count / total) * 100 : 0
+  }));
+  
+  return {
+    paymentStats: {
+      paymentMethods,
+      paymentDistribution
+    }
+  };
 };

@@ -1,28 +1,27 @@
 
-import { useMemo } from "react";
-import { isAfter } from "date-fns";
-import { DashboardSubscriber } from "./types";
-
-export const useFilteredSubscribers = (
-  subscribers: DashboardSubscriber[] | undefined,
-  timeRangeStartDate: Date
-) => {
-  const filteredSubscribers = useMemo(() => {
-    if (!subscribers) return [];
+export const useFilteredSubscribers = (subscribers: any[], timeRangeStartDate: Date | null) => {
+  // Filter subscribers based on time range
+  const filteredSubscribers = subscribers.filter(subscriber => {
+    if (!timeRangeStartDate) return true; // All time
     
-    return subscribers.filter(sub => 
-      isAfter(new Date(sub.joined_at), timeRangeStartDate)
-    );
-  }, [subscribers, timeRangeStartDate]);
-
-  const activeSubscribers = useMemo(() => {
-    return filteredSubscribers.filter(sub => sub.subscription_status === "active" && sub.is_active);
-  }, [filteredSubscribers]);
-
-  const inactiveSubscribers = useMemo(() => {
-    return filteredSubscribers.filter(sub => sub.subscription_status !== "active" || !sub.is_active);
-  }, [filteredSubscribers]);
-
+    const joinedDate = subscriber.joined_at ? new Date(subscriber.joined_at) : null;
+    if (!joinedDate) return true; // Include if no join date
+    
+    return joinedDate >= timeRangeStartDate;
+  });
+  
+  // Separate active and inactive subscribers
+  const activeSubscribers = filteredSubscribers.filter(subscriber => 
+    subscriber.subscription_status === true || 
+    subscriber.subscription_status === 'active'
+  );
+  
+  const inactiveSubscribers = filteredSubscribers.filter(subscriber => 
+    subscriber.subscription_status === false || 
+    subscriber.subscription_status === 'inactive' || 
+    subscriber.subscription_status === null
+  );
+  
   return {
     filteredSubscribers,
     activeSubscribers,

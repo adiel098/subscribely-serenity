@@ -5,46 +5,42 @@ import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useOwnerInfo");
 
-export const useOwnerInfo = (communityId: string) => {
+export const useOwnerInfo = (communityId: string | null) => {
   return useQuery({
-    queryKey: ["communityOwner", communityId],
+    queryKey: ["community-owner", communityId],
     queryFn: async () => {
-      if (!communityId) {
-        logger.log("Cannot fetch owner: No community ID provided");
-        return null;
-      }
+      if (!communityId) return null;
       
-      logger.log("Fetching community owner for community ID:", communityId);
+      logger.log("Fetching owner info for community:", communityId);
       
       try {
-        const { data: community, error } = await supabase
+        // First, get the owner ID from the community
+        const { data: community, error: communityError } = await supabase
           .from("communities")
           .select("owner_id")
           .eq("id", communityId)
-          .maybeSingle();
-
-        if (error || !community) {
-          logger.error("Error fetching community owner:", error);
+          .single();
+        
+        if (communityError) {
+          logger.error("Error fetching community:", communityError);
           return null;
         }
-
-        logger.log("Found owner_id:", community.owner_id);
-
+        
+        // Then, get the owner details
         const { data: owner, error: ownerError } = await supabase
-          .from("profiles")
-          .select("first_name, last_name")
+          .from("users")
+          .select("id, email, telegram_username, telegram_user_id")
           .eq("id", community.owner_id)
-          .maybeSingle();
-
+          .single();
+        
         if (ownerError) {
-          logger.error("Error fetching owner profile:", ownerError);
+          logger.error("Error fetching owner:", ownerError);
           return null;
         }
-
-        logger.log("Successfully fetched owner profile:", owner);
+        
         return owner;
       } catch (error) {
-        logger.error("Exception fetching owner info:", error);
+        logger.error("Exception in owner info fetch:", error);
         return null;
       }
     },

@@ -19,12 +19,12 @@ export const useCommunityGroups = () => {
       console.log("Fetching community groups for user:", user.id);
       
       try {
-        // Instead of filtering on is_group column which doesn't exist anymore, 
-        // we'll query community_relationships table to find groups
-        const { data: groups, error } = await supabase
+        // Query community_relationships table to find groups
+        const { data: relationships, error } = await supabase
           .from("community_relationships")
           .select(`
             community_id,
+            member_id,
             communities:community_id (
               id, name, description, owner_id, telegram_photo_url, 
               telegram_chat_id, custom_link, created_at, updated_at
@@ -40,10 +40,10 @@ export const useCommunityGroups = () => {
         }
 
         // Transform the data to match the expected format with all required properties
-        const formattedGroups = groups
-          .filter(group => group.communities)
-          .map(group => {
-            const community = group.communities;
+        const formattedGroups = relationships
+          .filter(rel => rel.communities)
+          .map(rel => {
+            const community = rel.communities;
             return {
               id: community.id,
               name: community.name,

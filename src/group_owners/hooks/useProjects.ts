@@ -10,7 +10,6 @@ export interface Project {
   description: string | null;
   owner_id: string;
   bot_token: string | null;
-  is_custom_bot: boolean;
   created_at: string;
   updated_at: string;
 }

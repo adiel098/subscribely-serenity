@@ -18,7 +18,7 @@ export const PaymentMethodsPage = () => {
       console.log(`Toggling payment method ${id} to ${isActive}`);
       
       const { error } = await supabase
-        .from('payment_methods')
+        .from('owner_payment_methods') // Updated table name
         .update({ is_active: isActive })
         .eq('id', id);
 

@@ -51,7 +51,8 @@ const ProjectSettings = () => {
       form.reset({
         name: project.name,
         description: project.description || "",
-        is_custom_bot: project.is_custom_bot,
+        // Check if bot_token exists to determine if it's a custom bot
+        is_custom_bot: !!project.bot_token,
         bot_token: project.bot_token || "",
       });
     }
@@ -88,7 +89,6 @@ const ProjectSettings = () => {
         updates: {
           name: values.name,
           description: values.description || null,
-          is_custom_bot: values.is_custom_bot,
           bot_token: values.is_custom_bot ? values.bot_token || null : null,
         }
       });

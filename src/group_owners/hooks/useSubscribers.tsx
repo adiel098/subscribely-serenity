@@ -45,12 +45,12 @@ export const useSubscribers = (communityId: string) => {
       
       console.log("Fetching subscribers for community:", communityId);
       
-      // שאילתה מעודכנת לחיבור עם טבלת subscription_plans
+      // Updated query to use project_subscribers table instead of community_subscribers
       const { data, error } = await supabase
-        .from('community_subscribers')
+        .from('project_subscribers')
         .select(`
           *,
-          plan:subscription_plans(
+          plan:subscription_plan_id (
             id,
             name,
             price,
@@ -58,7 +58,7 @@ export const useSubscribers = (communityId: string) => {
             features
           )
         `)
-        .eq('community_id', communityId)
+        .eq('project_id', communityId)
         .order('joined_at', { ascending: false });
         
       if (error) {
@@ -92,21 +92,20 @@ export const useSubscribers = (communityId: string) => {
         });
       }
       
-      // עיבוד מתקדם של נתוני התוכנית (plan)
+      // Process plan data
       const processedData = data.map(subscriber => {
-        // טיפול בנתוני התוכנית מהחיבור
+        // Handle plan data
         let plan = null;
         
-        // טיפול במקרה שהתוכנית מגיעה כמערך 
+        // Handle case where plan is returned as an array
         if (subscriber.plan && Array.isArray(subscriber.plan) && subscriber.plan.length > 0) {
           plan = subscriber.plan[0];
         } 
-        // טיפול במקרה שהתוכנית מגיעה כאובייקט
+        // Handle case where plan is returned as an object
         else if (subscriber.plan && typeof subscriber.plan === 'object' && !Array.isArray(subscriber.plan)) {
           plan = subscriber.plan;
         }
         
-        // אם יש subscription_plan_id אבל אין plan, ננסה לחלץ מידע בסיסי לגביו
         if (!plan && subscriber.subscription_plan_id) {
           console.log(`Subscriber ${subscriber.id} has subscription_plan_id ${subscriber.subscription_plan_id} but no plan data`);
         }

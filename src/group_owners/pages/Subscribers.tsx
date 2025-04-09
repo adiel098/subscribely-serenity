@@ -29,20 +29,20 @@ const Subscribers = () => {
   const projectSubscribersQuery = useProjectSubscribers(projectId || null);
   
   // Use the appropriate data based on what's selected
-  const { subscribers, isLoading } = isProjectSelected
-    ? projectSubscribersQuery
-    : communitySubscribersQuery;
+  const subscribersQuery = isProjectSelected ? projectSubscribersQuery : communitySubscribersQuery;
+  const subscribers = isProjectSelected ? projectSubscribersQuery.data : communitySubscribersQuery.subscribers;
+  const isLoading = isProjectSelected ? projectSubscribersQuery.isLoading : communitySubscribersQuery.isLoading;
   
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus>(SubscriptionStatus.ALL);
   const [searchQuery, setSearchQuery] = useState("");
   
   const filteredSubscribers = subscribers?.filter((subscriber) => {
     // Apply status filter
-    if (statusFilter === SubscriptionStatus.ACTIVE && !subscriber.subscription_status) {
+    if (statusFilter === SubscriptionStatus.ACTIVE && subscriber.subscription_status !== "active") {
       return false;
     }
     
-    if (statusFilter === SubscriptionStatus.INACTIVE && subscriber.subscription_status) {
+    if (statusFilter === SubscriptionStatus.INACTIVE && subscriber.subscription_status !== "inactive") {
       return false;
     }
     
@@ -105,7 +105,6 @@ const Subscribers = () => {
 
             <SubscribersTable
               subscribers={filteredSubscribers || []}
-              isProjectSelected={isProjectSelected}
             />
           </div>
         ) : (

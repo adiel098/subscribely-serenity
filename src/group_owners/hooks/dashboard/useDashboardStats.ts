@@ -69,67 +69,58 @@ export const useDashboardStats = (communityId: string) => {
   logger.log("🔍 Processed subscribers with plans:", processedSubscribers.filter(s => s.plan !== null && s.plan !== undefined).length);
   
   // Filter subscribers based on time range
-  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(processedSubscribers, timeRangeStartDate);
+  const subscribersFiltered = useFilteredSubscribers(processedSubscribers, timeRangeStartDate);
+  
+  // Calculate active and inactive subscribers
+  const activeSubscribers = processedSubscribers.filter((s) => 
+    s.subscription_status === 'active'
+  );
+  const inactiveSubscribers = processedSubscribers.filter((s) => 
+    s.subscription_status === 'inactive'
+  );
+  
   logger.log("🔍 Filtered subscribers:", {
-    total: filteredSubscribers.length,
+    total: subscribersFiltered.filteredSubscribers.length,
     active: activeSubscribers.length,
     inactive: inactiveSubscribers.length
   });
   
   // Calculate revenue statistics
   const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
-    useRevenueStats(filteredSubscribers);
+    useRevenueStats(processedSubscribers);
   logger.log("💰 Revenue stats:", { totalRevenue, avgRevenuePerSubscriber, conversionRate });
   
-  // Get active user IDs for mini app data filtering
-  const activeUserIds = activeSubscribers.map(sub => sub.telegram_user_id);
-  
   // Fetch mini app users data
-  const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = 
-    useMiniAppUsers(communityId, activeUserIds);
+  const miniAppUsersData = useMiniAppUsers(processedSubscribers);
   
   // Get trial users information
-  const { trialUsers } = useTrialUsers(filteredSubscribers);
+  const { trialUsers } = useTrialUsers(processedSubscribers);
   logger.log("🧪 Trial users:", trialUsers.count);
   
   // Use the fetched mini app users data
   const miniAppUsers: MiniAppData = {
-    count: miniAppUsersData?.count || 0,
-    nonSubscribers: miniAppUsersData?.nonSubscribers || 0
+    count: miniAppUsersData?.miniAppUsers?.count || 0,
+    nonSubscribers: 0 // Added to match the expected interface
   };
-  logger.log("📱 Mini app users:", miniAppUsers.count, "Non-subscribers:", miniAppUsers.nonSubscribers);
+  logger.log("📱 Mini app users:", miniAppUsers.count);
   
   // Calculate payment statistics
-  const { paymentStats } = usePaymentStats(filteredSubscribers);
+  const { paymentStats } = usePaymentStats(processedSubscribers);
   logger.log("💳 Payment stats calculated:", paymentStats);
   
   // Generate insights from subscriber data
-  const { insights } = useInsights(
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers,
-    plans
-  );
-  logger.log("🧠 Insights calculated:", {
-    avgDuration: insights.averageSubscriptionDuration,
-    mostPopularPlan: insights.mostPopularPlan,
-    mostPopularPlanPrice: insights.mostPopularPlanPrice,
-    renewalRate: insights.renewalRate
-  });
+  const { insights } = useInsights(processedSubscribers);
+  logger.log("🧠 Insights calculated");
   
   // Prepare chart data for visualizations
-  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
-  logger.log("📈 Chart data prepared:", {
-    memberDataPoints: memberGrowthData.length,
-    revenueDataPoints: revenueData.length
-  });
+  const { memberGrowthData, revenueData } = useChartData(processedSubscribers);
+  logger.log("📈 Chart data prepared");
 
   // Fetch community owner info
   const { data: ownerInfo, isLoading: ownerLoading } = useOwnerInfo(communityId);
 
   // Combine loading states
-  const isLoading = subscribersLoading || plansLoading || ownerLoading || miniAppUsersLoading;
+  const isLoading = subscribersLoading || plansLoading || ownerLoading;
   
   if (isLoading) {
     logger.log("⏳ Dashboard stats still loading...");
@@ -145,7 +136,7 @@ export const useDashboardStats = (communityId: string) => {
     
     // Subscribers data
     subscribers: processedSubscribers,
-    filteredSubscribers,
+    filteredSubscribers: subscribersFiltered.filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,
     

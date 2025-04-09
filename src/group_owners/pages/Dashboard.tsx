@@ -96,7 +96,7 @@ const Dashboard = () => {
               </div>
             </div>
             
-            {filteredSubscribers.length === 0 && (
+            {filteredSubscribers && filteredSubscribers.length === 0 && (
               <FirstTimeSetupHelp isProject={isProjectSelected} />
             )}
           </div>

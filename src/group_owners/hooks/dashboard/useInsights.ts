@@ -1,47 +1,115 @@
+
+import { useMemo } from "react";
+
+// Define a simple insight type
+export interface Insight {
+  title: string;
+  description: string;
+  type: "positive" | "negative" | "info" | "warning";
+  value?: number | string;
+  trend?: number;
+}
+
 export const useInsights = (
-  filteredSubscribers: any[],
-  activeSubscribers: any[],
-  inactiveSubscribers: any[],
-  plans: any[]
+  subscribers: any[] = [],
+  activeSubscribers: any[] = [],
+  inactiveSubscribers: any[] = [],
+  plans: any[] = []
 ) => {
-  // Calculate average subscription duration (simplified)
-  const avgDuration = 30; // Placeholder value
-  
-  // Find most popular plan
-  const planCounts: Record<string, number> = {};
-  let mostPopularPlanId = '';
-  let mostPopularPlanCount = 0;
-  
-  filteredSubscribers.forEach(sub => {
-    const planId = sub.subscription_plan_id || sub.plan?.id;
-    if (planId) {
-      planCounts[planId] = (planCounts[planId] || 0) + 1;
-      if (planCounts[planId] > mostPopularPlanCount) {
-        mostPopularPlanCount = planCounts[planId];
-        mostPopularPlanId = planId;
+  const insights = useMemo<Insight[]>(() => {
+    const insights: Insight[] = [];
+
+    // Calculate average subscription duration
+    let totalSubscriptionDays = 0;
+    let subscribersWithEndDate = 0;
+    
+    for (const subscriber of subscribers) {
+      if (subscriber.subscription_start_date && subscriber.subscription_end_date) {
+        const startDate = new Date(subscriber.subscription_start_date);
+        const endDate = new Date(subscriber.subscription_end_date);
+        const durationDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (durationDays > 0) {
+          totalSubscriptionDays += durationDays;
+          subscribersWithEndDate++;
+        }
       }
     }
-  });
-  
-  // Get details of most popular plan
-  const mostPopularPlan = plans.find(plan => plan.id === mostPopularPlanId);
-  
-  // Calculate renewal rate (simplified)
-  const renewalRate = 75; // Placeholder percentage
-  
-  // Calculate potential revenue (simplified)
-  const potentialRevenue = activeSubscribers.reduce((sum, sub) => {
-    const planPrice = sub.plan?.price || 0;
-    return sum + planPrice;
-  }, 0);
-  
-  return {
-    insights: {
-      averageSubscriptionDuration: avgDuration,
-      mostPopularPlan: mostPopularPlan?.name || 'None',
-      mostPopularPlanPrice: mostPopularPlan?.price || 0,
-      renewalRate,
-      potentialRevenue
+    
+    const averageSubscriptionDuration = subscribersWithEndDate > 0 
+      ? Math.round(totalSubscriptionDays / subscribersWithEndDate)
+      : 0;
+    
+    if (averageSubscriptionDuration > 0) {
+      insights.push({
+        title: "Average subscription duration",
+        description: "The average number of days that subscribers stay subscribed",
+        type: "info",
+        value: averageSubscriptionDuration + " days"
+      });
     }
-  };
+    
+    // Find the most popular subscription plan
+    const planCounts: Record<string, number> = {};
+    
+    for (const subscriber of subscribers) {
+      if (subscriber.plan?.id) {
+        planCounts[subscriber.plan.id] = (planCounts[subscriber.plan.id] || 0) + 1;
+      }
+    }
+    
+    let mostPopularPlanId: string | null = null;
+    let mostPopularPlanCount = 0;
+    
+    for (const planId in planCounts) {
+      if (planCounts[planId] > mostPopularPlanCount) {
+        mostPopularPlanId = planId;
+        mostPopularPlanCount = planCounts[planId];
+      }
+    }
+    
+    const mostPopularPlan = plans?.find(plan => plan.id === mostPopularPlanId);
+    
+    if (mostPopularPlan) {
+      insights.push({
+        title: "Most popular plan",
+        description: "The subscription plan most subscribers choose",
+        type: "positive",
+        value: mostPopularPlan.name,
+      });
+      
+      insights.push({
+        title: "Most popular plan price",
+        description: "The price of the most popular subscription plan",
+        type: "info",
+        value: `$${mostPopularPlan.price}`
+      });
+    }
+    
+    // Calculate renewal rate
+    const totalExpired = subscribers.filter(sub => 
+      sub.subscription_end_date && new Date(sub.subscription_end_date) < new Date()
+    ).length;
+    
+    const renewedSubscribers = subscribers.filter(sub => 
+      sub.subscription_end_date && 
+      new Date(sub.subscription_end_date) < new Date() && 
+      sub.subscription_status === 'active'
+    ).length;
+    
+    const renewalRate = totalExpired > 0 ? (renewedSubscribers / totalExpired) * 100 : 0;
+    
+    if (totalExpired > 0) {
+      insights.push({
+        title: "Renewal rate",
+        description: "Percentage of expired subscriptions that were renewed",
+        type: renewalRate >= 70 ? "positive" : renewalRate >= 40 ? "info" : "warning",
+        value: `${Math.round(renewalRate)}%`
+      });
+    }
+    
+    return insights;
+  }, [subscribers, plans]);
+
+  return { insights };
 };

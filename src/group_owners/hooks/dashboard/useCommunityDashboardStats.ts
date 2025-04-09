@@ -13,49 +13,52 @@ import { useState, useEffect } from 'react';
 
 export const useCommunityDashboardStats = (communityId: string | null) => {
   const [isLoading, setIsLoading] = useState(true);
-  const { timeRange, setTimeRange, timeRangeLabel } = useTimeRange();
+  const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
 
   // Fetch subscribers for the community
   const subscribersResult = useSubscribers(communityId || '');
   const { subscribers } = subscribersResult;
 
   // Filter subscribers based on time range
-  const filteredSubscribers = useFilteredSubscribers(subscribers, timeRange);
+  const subscribersFiltered = useFilteredSubscribers(subscribers, timeRangeStartDate);
   
   // Calculate active and inactive subscribers
-  const activeSubscribers = filteredSubscribers.filter((s) => 
-    s.subscription_status === true || s.subscription_status === 'active'
+  const activeSubscribers = subscribers.filter((s) => 
+    s.subscription_status === 'active'
   );
-  const inactiveSubscribers = filteredSubscribers.filter((s) => 
-    s.subscription_status === false || s.subscription_status === 'inactive'
+  const inactiveSubscribers = subscribers.filter((s) => 
+    s.subscription_status === 'inactive'
   );
 
   // Get calculated stats
-  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = useRevenueStats(filteredSubscribers);
-  const { trialUsers } = useTrialUsers(filteredSubscribers);
-  const miniAppStats = useMiniAppUsers(filteredSubscribers);
-  const { paymentStats } = usePaymentStats(filteredSubscribers);
-  const { insights } = useInsights(filteredSubscribers, totalRevenue);
-  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers, timeRange);
-  const ownerInfo = useOwnerInfo(communityId);
+  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = useRevenueStats(subscribers);
+  const { trialUsers } = useTrialUsers(subscribers);
+  const miniAppStats = useMiniAppUsers(subscribers);
+  const { paymentStats } = usePaymentStats(subscribers);
+  const { insights } = useInsights(subscribers);
+  const { memberGrowthData, revenueData } = useChartData(subscribers);
+  const { data: ownerInfo, isLoading: ownerLoading } = useOwnerInfo(communityId);
   
   // Update loading state
   useEffect(() => {
-    setIsLoading(subscribersResult.isLoading);
-  }, [subscribersResult.isLoading]);
+    setIsLoading(subscribersResult.isLoading || ownerLoading);
+  }, [subscribersResult.isLoading, ownerLoading]);
 
   return {
     timeRange,
     setTimeRange,
     timeRangeLabel,
-    filteredSubscribers,
+    filteredSubscribers: subscribersFiltered.filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,
     totalRevenue,
     avgRevenuePerSubscriber,
     conversionRate,
     trialUsers,
-    miniAppUsers: miniAppStats?.miniAppUsers || { count: 0, percentage: 0 },
+    miniAppUsers: {
+      count: miniAppStats?.miniAppUsers?.count || 0,
+      nonSubscribers: 0 // Added this to match the expected type
+    },
     paymentStats,
     insights,
     memberGrowthData,

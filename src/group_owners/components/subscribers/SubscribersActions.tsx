@@ -1,34 +1,25 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, UserPlus, Download } from "lucide-react";
+import { RefreshCcw, Download } from "lucide-react";
 
 interface SubscribersActionsProps {
   onRefresh: () => void;
 }
 
 export const SubscribersActions: React.FC<SubscribersActionsProps> = ({
-  onRefresh
+  onRefresh,
 }) => {
   return (
-    <div className="flex gap-2">
-      <Button 
-        variant="outline" 
-        size="sm"
-        onClick={onRefresh}
-        className="flex items-center gap-1"
-      >
-        <RefreshCw className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Refresh</span>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={onRefresh}>
+        <RefreshCcw className="mr-2 h-4 w-4" />
+        Refresh
       </Button>
       
-      <Button 
-        variant="outline" 
-        size="sm"
-        className="flex items-center gap-1"
-      >
-        <Download className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Export</span>
+      <Button variant="outline" size="sm">
+        <Download className="mr-2 h-4 w-4" />
+        Export
       </Button>
     </div>
   );

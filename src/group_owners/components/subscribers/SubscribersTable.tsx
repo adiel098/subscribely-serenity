@@ -1,94 +1,93 @@
 
-import React from 'react';
-import { Subscriber } from "@/group_owners/hooks/useSubscribers";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+
+export interface Subscriber {
+  id: string;
+  telegram_user_id?: string;
+  telegram_username?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  subscription_status?: string;
+  subscription_end_date?: string;
+  joined_at?: string;
+  is_trial?: boolean;
+}
 
 export interface SubscribersTableProps {
   subscribers: Subscriber[];
   isProjectSelected?: boolean;
-  onEdit?: (subscriber: Subscriber) => void;
-  onRemove?: (subscriber: Subscriber) => void;
-  onUnblock?: (subscriber: Subscriber) => void;
-  onAssignPlan?: (subscriber: Subscriber) => void;
 }
 
 export const SubscribersTable: React.FC<SubscribersTableProps> = ({
   subscribers,
-  isProjectSelected,
-  onEdit,
-  onRemove,
-  onUnblock,
-  onAssignPlan
+  isProjectSelected = false,
 }) => {
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Plan</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Joined</th>
-            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead>Expires</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {subscribers.map((subscriber) => (
-            <tr key={subscriber.id} className="bg-white">
-              <td className="px-4 py-3 text-sm text-gray-900 flex items-center gap-3">
-                {subscriber.first_name} {subscriber.last_name}
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  subscriber.is_blocked ? "bg-red-100 text-red-800" :
-                  subscriber.subscription_status === true || subscriber.subscription_status === "active" 
-                    ? "bg-green-100 text-green-800" 
-                    : "bg-gray-100 text-gray-800"
-                }`}>
-                  {subscriber.is_blocked ? "Blocked" :
-                   subscriber.is_trial ? "Trial" :
-                   subscriber.subscription_status === true || subscriber.subscription_status === "active" 
-                    ? "Active" 
-                    : "Inactive"}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                {subscriber.plan?.name || "No plan"}
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                {subscriber.joined_at ? new Date(subscriber.joined_at).toLocaleDateString() : "Unknown"}
-              </td>
-              <td className="px-4 py-3 text-sm text-right">
-                <div className="flex gap-2 justify-end">
-                  {onEdit && (
-                    <button 
-                      className="text-blue-600 hover:text-blue-800"
-                      onClick={() => onEdit(subscriber)}
-                    >
-                      Edit
-                    </button>
-                  )}
-                  {subscriber.is_blocked && onUnblock && (
-                    <button 
-                      className="text-green-600 hover:text-green-800"
-                      onClick={() => onUnblock(subscriber)}
-                    >
-                      Unblock
-                    </button>
-                  )}
-                  {!subscriber.is_blocked && onRemove && (
-                    <button 
-                      className="text-red-600 hover:text-red-800"
-                      onClick={() => onRemove(subscriber)}
-                    >
-                      Remove
-                    </button>
+            <TableRow key={subscriber.id}>
+              <TableCell className="font-medium">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {subscriber.first_name || "User"} {subscriber.last_name || ""}
+                  </span>
+                  {subscriber.telegram_username && (
+                    <span className="text-xs text-gray-500">@{subscriber.telegram_username}</span>
                   )}
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell>
+                {subscriber.subscription_status === "active" ? (
+                  <Badge variant="success">Active</Badge>
+                ) : subscriber.subscription_status === "inactive" ? (
+                  <Badge variant="destructive">Inactive</Badge>
+                ) : subscriber.is_trial ? (
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700">Trial</Badge>
+                ) : (
+                  <Badge variant="secondary">Unknown</Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {subscriber.joined_at
+                  ? format(new Date(subscriber.joined_at), "MMM d, yyyy")
+                  : "—"}
+              </TableCell>
+              <TableCell>
+                {subscriber.subscription_end_date
+                  ? format(new Date(subscriber.subscription_end_date), "MMM d, yyyy")
+                  : "—"}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+          {subscribers.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                No subscribers found
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };

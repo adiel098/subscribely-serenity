@@ -13,7 +13,8 @@ export const useMiniAppUsers = (subscribers: any[]) => {
   return {
     miniAppUsers: {
       count: miniAppUsersCount,
-      percentage: miniAppPercentage
+      percentage: miniAppPercentage,
+      nonSubscribers: 0 // Added to match expected interface
     }
   };
 };

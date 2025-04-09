@@ -1,30 +1,32 @@
 
-export const useFilteredSubscribers = (subscribers: any[], timeRangeStartDate: Date | null) => {
-  // Filter subscribers based on time range
-  const filteredSubscribers = subscribers.filter(subscriber => {
-    if (!timeRangeStartDate) return true; // All time
+import { useMemo } from "react";
+
+export const useFilteredSubscribers = (subscribers: any[] = [], timeRangeStartDate: Date) => {
+  return useMemo(() => {
+    // Filter subscribers based on time range
+    const filteredSubscribers = subscribers.filter((subscriber) => {
+      // If no join date, include anyway
+      if (!subscriber.joined_at) return true;
+      
+      // Include if join date is after the time range start date
+      const joinedAt = new Date(subscriber.joined_at);
+      return joinedAt >= timeRangeStartDate;
+    });
     
-    const joinedDate = subscriber.joined_at ? new Date(subscriber.joined_at) : null;
-    if (!joinedDate) return true; // Include if no join date
+    // Calculate active subscribers (with active subscription)
+    const activeSubscribers = filteredSubscribers.filter(
+      (sub) => sub.subscription_status === "active"
+    );
     
-    return joinedDate >= timeRangeStartDate;
-  });
-  
-  // Separate active and inactive subscribers
-  const activeSubscribers = filteredSubscribers.filter(subscriber => 
-    subscriber.subscription_status === true || 
-    subscriber.subscription_status === 'active'
-  );
-  
-  const inactiveSubscribers = filteredSubscribers.filter(subscriber => 
-    subscriber.subscription_status === false || 
-    subscriber.subscription_status === 'inactive' || 
-    subscriber.subscription_status === null
-  );
-  
-  return {
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers
-  };
+    // Calculate inactive subscribers (without active subscription)
+    const inactiveSubscribers = filteredSubscribers.filter(
+      (sub) => sub.subscription_status !== "active"
+    );
+    
+    return {
+      filteredSubscribers,
+      activeSubscribers,
+      inactiveSubscribers
+    };
+  }, [subscribers, timeRangeStartDate]);
 };

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -75,12 +76,20 @@ export const useProject = (projectId?: string) => {
 // Add the missing useCreateProject hook
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (newProject: Omit<Project, 'id' | 'created_at' | 'owner_id'>) => {
+    mutationFn: async (newProject: Omit<Project, 'id' | 'created_at' | 'owner_id' | 'updated_at'>) => {
+      if (!user?.id) throw new Error('User ID not available');
+      
+      const projectData = {
+        ...newProject,
+        owner_id: user.id
+      };
+      
       const { data, error } = await supabase
         .from('projects')
-        .insert([newProject])
+        .insert([projectData])
         .select()
         .single();
         

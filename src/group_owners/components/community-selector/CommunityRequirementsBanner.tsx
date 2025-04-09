@@ -1,41 +1,24 @@
 
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import React from "react";
+import { AlertCircle } from "lucide-react";
 import { useCommunityRequirements } from "@/group_owners/hooks/useCommunityRequirements";
-import { Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
-export const CommunityRequirementsBanner = () => {
-  const { selectedCommunityId, selectedProjectId } = useCommunityContext();
-  const { hasActivePlan, hasActivePaymentMethod } = useCommunityRequirements(selectedCommunityId);
+export const CommunityRequirementsBanner: React.FC = () => {
+  const { data: requirements, isLoading } = useCommunityRequirements();
   
-  // Don't show for projects or if everything is set up
-  if (selectedProjectId || (hasActivePlan && hasActivePaymentMethod)) {
-    return null;
-  }
-
+  // Check if we have any requirements that are not met
+  const hasRequirements = requirements && requirements.length > 0;
+  
+  if (isLoading || !hasRequirements) return null;
+  
   return (
-    <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.2 }}
-      className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm"
-    >
-      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-      {!hasActivePlan && !hasActivePaymentMethod && (
-        <span className="text-xs text-amber-700 font-medium">
-          Set up plans and payment methods!
-        </span>
-      )}
-      {!hasActivePlan && hasActivePaymentMethod && (
-        <span className="text-xs text-amber-700 font-medium">
-          Add subscription plans!
-        </span>
-      )}
-      {hasActivePlan && !hasActivePaymentMethod && (
-        <span className="text-xs text-amber-700 font-medium">
-          Add payment methods!
-        </span>
-      )}
-    </motion.div>
+    <Alert variant="warning" className="py-1.5 px-3 flex items-center h-9 bg-amber-50 border-amber-200">
+      <AlertCircle className="h-4 w-4 text-amber-500" />
+      <AlertTitle className="text-xs ml-2 font-medium">Action required</AlertTitle>
+      <AlertDescription className="text-xs ml-1">
+        Complete your setup to accept payments
+      </AlertDescription>
+    </Alert>
   );
 };

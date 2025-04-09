@@ -49,8 +49,11 @@ export const TelegramChatItem: React.FC<TelegramChatItemProps> = ({
             className="w-10 h-10 rounded-md object-cover"
             onError={(e) => {
               // If image fails to load, replace with placeholder
-              (e.target as HTMLImageElement).style.display = 'none';
-              (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              if (target.nextElementSibling) {
+                (target.nextElementSibling as HTMLElement).style.display = 'flex';
+              }
             }}
           />
         ) : null}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -100,9 +99,9 @@ export const useOnboardingStatus = () => {
         hasPaymentMethod: paymentMethods && paymentMethods.length > 0
       };
 
-      // Save to localStorage
+      // Save to localStorage - using lastStep property to match the interface
       localStorageService.setOnboardingStatus({
-        currentStep: newState.currentStep,
+        lastStep: newState.currentStep,
         isCompleted: newState.isCompleted
       });
       localStorageService.setHasCommunity(hasCommunity);

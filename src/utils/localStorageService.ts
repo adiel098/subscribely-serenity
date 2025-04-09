@@ -4,6 +4,7 @@
 interface OnboardingStatus {
   isCompleted: boolean;
   lastStep?: string;
+  currentStep?: string; // Added this property to match what's being used
 }
 
 export const localStorageService = {

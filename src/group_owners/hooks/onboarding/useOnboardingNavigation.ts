@@ -118,13 +118,10 @@ export const useOnboardingNavigation = (
         nextStep = "project-creation";
         break;
       case "project-creation":
-        // Directly go to custom bot setup
         nextStep = "custom-bot-setup";
         break;
       case "custom-bot-setup":
-        nextStep = "connect-telegram";
-        break;
-      case "connect-telegram":
+        // Skip connect-telegram and go directly to completion
         nextStep = "completion";
         break;
       case "completion":
@@ -149,11 +146,9 @@ export const useOnboardingNavigation = (
       case "custom-bot-setup":
         previousStep = "project-creation";
         break;
-      case "connect-telegram":
-        previousStep = "custom-bot-setup";
-        break;
       case "completion":
-        previousStep = "connect-telegram";
+        // Go directly back to custom-bot-setup, skipping connect-telegram
+        previousStep = "custom-bot-setup";
         break;
       default:
         // Default to the welcome step if we get an invalid step

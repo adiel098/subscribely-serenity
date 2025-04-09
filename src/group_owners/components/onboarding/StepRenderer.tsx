@@ -5,7 +5,6 @@ import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
 import ProjectCreationStep from "@/group_owners/pages/onboarding/steps/ProjectCreationStep";
 import BotSetupStep from "@/group_owners/pages/onboarding/steps/BotSetupStep";
-import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
 import { Loader2 } from "lucide-react";
 
@@ -66,8 +65,8 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   };
 
   const handleCustomBotSetupComplete = () => {
-    console.log("Custom bot setup completed, going to connect telegram step");
-    navigate('/onboarding/connect-telegram');
+    console.log("Custom bot setup completed, going directly to completion step");
+    navigate('/onboarding/completion');
     goToNextStep("custom-bot-setup");
   };
   
@@ -106,32 +105,15 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         />
       );
     
-    case "connect-telegram":
-      return (
-        <ConnectTelegramStep 
-          onComplete={() => {
-            console.log("Connect telegram completed, going to completion step");
-            goToNextStep("connect-telegram");
-            navigate('/onboarding/completion');
-          }}
-          activeStep={true}
-          goToPreviousStep={() => {
-            console.log("Going back to custom bot setup step");
-            goToPreviousStep("connect-telegram");
-            navigate('/onboarding/custom-bot-setup');
-          }}
-        />
-      );
-    
     case "completion":
       return (
         <CompletionStep
           onComplete={handleCompleteOnboarding}
           activeStep={true}
           goToPreviousStep={() => {
-            console.log("Going back to connect telegram step");
+            console.log("Going back to custom bot setup step");
             goToPreviousStep("completion");
-            navigate('/onboarding/connect-telegram');
+            navigate('/onboarding/custom-bot-setup');
           }}
         />
       );

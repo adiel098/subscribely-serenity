@@ -14,7 +14,7 @@ const RootLayout = () => {
   ];
   
   const shouldRenderNavbar = !skipNavbarRoutes.some(route => 
-    location.pathname.startsWith(route)
+    location.pathname === route || location.pathname.startsWith(route + '/')
   );
   
   return (

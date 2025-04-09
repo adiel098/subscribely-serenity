@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useEffect } from "react";
@@ -31,7 +32,7 @@ export const ProtectedRoute = ({
   
   if (!user) {
     console.log("🚫 ProtectedRoute: Redirecting to auth page");
-    return <Navigate to="/auth" />;
+    return <Navigate to="/auth" state={{ from: location }} />;
   }
 
   // Check if we're trying to access the dashboard and need onboarding

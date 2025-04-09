@@ -27,9 +27,9 @@ export const AppLayout = () => {
         setIsCheckingOnboarding(true);
         console.log("Checking onboarding status from AppLayout for user:", user.id);
         
-        // Check profile to see if onboarding_step is "complete"
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+        // Updated to use 'users' table instead of 'profiles'
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
           .select('onboarding_completed, onboarding_step')
           .eq('id', user.id)
           .maybeSingle();
@@ -41,16 +41,16 @@ export const AppLayout = () => {
           return;
         }
         
-        console.log("Profile onboarding status:", profile);
+        console.log("Profile onboarding status:", userProfile);
         
         // Only redirect to onboarding if profile exists and onboarding is not complete
-        if (profile && (!profile.onboarding_step || 
-            (profile.onboarding_step !== "complete" && !profile.onboarding_completed))) {
+        if (userProfile && (!userProfile.onboarding_step || 
+            (userProfile.onboarding_step !== "complete" && !userProfile.onboarding_completed))) {
           console.log("Onboarding not completed, redirecting to onboarding flow");
           
           let targetPath = '/onboarding/welcome';
-          if (profile.onboarding_step) {
-            targetPath = `/onboarding/${profile.onboarding_step}`;
+          if (userProfile.onboarding_step) {
+            targetPath = `/onboarding/${userProfile.onboarding_step}`;
           }
           
           console.log(`Redirecting to ${targetPath}`);

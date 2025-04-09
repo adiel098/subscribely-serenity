@@ -22,7 +22,7 @@ export function useAuthRedirect() {
       if (!user && !location.pathname.startsWith('/auth')) {
         console.log("User not logged in, redirecting to login");
         isRedirectingRef.current = true;
-        navigate('/auth/login', { replace: true });
+        navigate('/auth', { replace: true, state: { from: location } });
         setTimeout(() => {
           isRedirectingRef.current = false;
         }, 500);
@@ -41,19 +41,42 @@ export function useAuthRedirect() {
           }, 500);
         }
         
-        // Always redirect to dashboard if user is on onboarding route directly
-        // We'll check onboarding status from the dashboard instead
-        if (location.pathname.startsWith('/onboarding') && !isRedirectingRef.current) {
-          console.log("Redirecting from onboarding to dashboard, will check status there");
-          isRedirectingRef.current = true;
-          navigate('/dashboard', { replace: true });
-          setTimeout(() => {
-            isRedirectingRef.current = false;
-          }, 500);
+        // Check if we need to verify onboarding status for logged in users
+        if (!onboardingCheckedRef.current && !isRedirectingRef.current && !location.pathname.startsWith('/onboarding')) {
+          const checkOnboardingStatus = async () => {
+            try {
+              // Updated to use 'users' table instead of 'profiles'
+              const { data, error } = await supabase
+                .from('users')
+                .select('onboarding_completed, onboarding_step')
+                .eq('id', user.id)
+                .maybeSingle();
+                
+              if (error) {
+                console.error("Error checking onboarding status:", error);
+                return;
+              }
+              
+              if (data && (!data.onboarding_completed && data.onboarding_step !== 'complete')) {
+                console.log("Onboarding not complete, redirecting to onboarding");
+                isRedirectingRef.current = true;
+                navigate('/onboarding', { replace: true });
+                setTimeout(() => {
+                  isRedirectingRef.current = false;
+                }, 500);
+              }
+              
+              onboardingCheckedRef.current = true;
+            } catch (err) {
+              console.error("Error in onboarding check:", err);
+            }
+          };
+          
+          checkOnboardingStatus();
         }
       }
     }
-  }, [user, isLoading, navigate, location.pathname]);
+  }, [user, isLoading, navigate, location.pathname, location]);
   
   return {
     isCheckingAuth: isLoading || isRedirectingRef.current

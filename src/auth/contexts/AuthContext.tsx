@@ -90,7 +90,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (hasCachedUser) {
       // Still verify with Supabase, but do it with a slight delay to allow UI to render first
       setTimeout(() => {
-        checkSession();
+        if (mounted) {
+          checkSession();
+        }
       }, 100);
     } else {
       // No cached user, check session immediately

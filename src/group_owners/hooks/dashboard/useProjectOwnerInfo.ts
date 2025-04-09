@@ -23,37 +23,22 @@ export const useProjectOwnerInfo = (projectId: string | null) => {
           return null;
         }
         
-        // Since we might not have a users table yet, let's try to get user info from auth.users
-        // This call will only succeed with correct permissions
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("first_name, last_name")
-            .eq("id", project.owner_id)
-            .single();
-          
-          if (!profileError && profile) {
-            return profile;
-          }
-        } catch (profileError) {
+        // Try to get from profiles table only - removed auth.users call
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("first_name, last_name")
+          .eq("id", project.owner_id)
+          .single();
+        
+        if (profileError) {
           logger.error("Error fetching profile from profiles table:", profileError);
-          // Continue to try auth.users as fallback
+          return {
+            first_name: '',
+            last_name: ''
+          };
         }
-
-        // Try to get from auth.users as fallback
-        const { data: userData, error: userDataError } = await supabase.auth.admin.getUserById(
-          project.owner_id
-        );
-
-        if (userDataError) {
-          logger.error("Error fetching user data:", userDataError);
-          return null;
-        }
-
-        return {
-          first_name: userData.user?.user_metadata?.first_name || '',
-          last_name: userData.user?.user_metadata?.last_name || ''
-        };
+        
+        return profile;
       } catch (error) {
         logger.error("Exception fetching project owner:", error);
         return null;

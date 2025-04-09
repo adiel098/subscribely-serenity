@@ -24,10 +24,18 @@ export const useOnboardingRouter = (
       try {
         if (redirectingRef.current || completionCheckDoneRef.current) return;
         
+        const user = await supabase.auth.getUser();
+        const userId = user.data.user?.id;
+        
+        if (!userId) {
+          setIsLoading(false);
+          return;
+        }
+        
         const { data: profile, error } = await supabase
           .from('users')
           .select('onboarding_completed, onboarding_step')
-          .eq('id', (await supabase.auth.getUser()).data.user?.id)
+          .eq('id', userId)
           .maybeSingle();
         
         if (error) throw error;

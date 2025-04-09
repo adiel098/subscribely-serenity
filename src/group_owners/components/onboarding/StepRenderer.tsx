@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
 import ProjectCreationStep from "@/group_owners/pages/onboarding/steps/ProjectCreationStep";
-import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
+import BotSetupStep from "@/group_owners/pages/onboarding/steps/BotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
 import { Loader2 } from "lucide-react";
@@ -95,7 +95,7 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
       
     case "custom-bot-setup":
       return (
-        <CustomBotSetupStep 
+        <BotSetupStep 
           onComplete={handleCustomBotSetupComplete} 
           activeStep={true}
           goToPreviousStep={() => {

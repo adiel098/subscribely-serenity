@@ -30,13 +30,20 @@ export const useOnboardingNavigation = (
         currentStep: step
       });
       
-      // Save to database
-      const { error } = await supabase.from('profiles')
+      // Save to database - updated to use 'users' table instead of 'profiles'
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      
+      const { error } = await supabase.from('users')
         .update({ 
           onboarding_step: step === "complete" ? "complete" : step,
           onboarding_completed: step === "complete" 
         })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', userId);
       
       if (error) throw error;
       
@@ -72,13 +79,20 @@ export const useOnboardingNavigation = (
         currentStep: "complete"
       });
       
-      // Save to database
-      const { error } = await supabase.from('profiles')
+      // Save to database - updated to use 'users' table
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      
+      const { error } = await supabase.from('users')
         .update({ 
           onboarding_step: "complete",
           onboarding_completed: true 
         })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', userId);
       
       if (error) throw error;
       
@@ -104,6 +118,7 @@ export const useOnboardingNavigation = (
         nextStep = "project-creation";
         break;
       case "project-creation":
+        // Directly go to custom bot setup, skipping the selection step
         nextStep = "custom-bot-setup";
         break;
       case "custom-bot-setup":

@@ -1,15 +1,13 @@
+
 import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Button } from "@/components/ui/button";
-import { Bot, ArrowLeft, ChevronRight, Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { Bot, ArrowLeft, ChevronRight, Loader2, Check } from "lucide-react";
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BotTokenInput } from "@/group_owners/components/onboarding/custom-bot/BotTokenInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { toast } from "sonner";
 
 interface BotSetupStepProps {
   onComplete: () => void;

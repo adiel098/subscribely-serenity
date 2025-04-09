@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "../hooks/onboarding/types";
 
 export const fetchOnboardingProfile = async (userId: string) => {
-  // Updated to use 'users' table instead of 'profiles'
+  // Fetch from users table
   const { data: user, error: userError } = await supabase
     .from('users')
     .select('onboarding_completed, onboarding_step')

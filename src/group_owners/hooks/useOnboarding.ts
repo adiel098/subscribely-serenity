@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { OnboardingStep, ONBOARDING_STEPS } from "./onboarding/types";
+import { OnboardingStep } from "./onboarding/types";
 import { useOnboardingNavigation } from "./onboarding/useOnboardingNavigation";
 import { useOnboardingStatus } from "./onboarding/useOnboardingStatus";
 import { toast } from "sonner";

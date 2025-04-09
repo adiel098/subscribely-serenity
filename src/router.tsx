@@ -30,12 +30,19 @@ import AdminSettings from "./admin/pages/Settings";
 import TelegramConnect from "./group_owners/pages/connect/TelegramConnect";
 import CustomBotNewCommunity from "@/group_owners/pages/new-community/CustomBotNewCommunity";
 import { CouponsPage } from "@/group_owners/components/coupons/CouponsPage";
+import { AppProviders } from "./providers/AppProviders";
+import { createElement } from "react";
+
+// Helper function to wrap elements with AppProviders
+const wrapWithProviders = (element: React.ReactNode) => {
+  return createElement(AppProviders, {}, element);
+};
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <AppRoutes />,
-    errorElement: <MainNotFound />,
+    element: wrapWithProviders(<AppRoutes />),
+    errorElement: wrapWithProviders(<MainNotFound />),
     children: [
       {
         index: true,

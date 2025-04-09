@@ -14,8 +14,8 @@ export const TEST_COMMUNITY: Community = {
   id: '27052464-6e68-4116-bd79-6af069fe67cd',
   name: 'Test Community',
   description: 'This is a test community for development purposes',
-  owner_id: TEST_USER.id,
-  is_group: true,
+  telegram_photo_url: null,
+  telegram_chat_id: null,
   custom_link: 'test-community',
   subscription_plans: [
     {

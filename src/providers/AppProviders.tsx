@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/auth/contexts/AuthContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ProjectProvider } from "@/contexts/ProjectContext";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,13 +23,15 @@ export const AppProviders = ({ children }: { children: React.ReactNode }) => {
     <TooltipProvider>
       <AuthProvider>
         <ThemeProvider>
-          <CommunityProvider>
-            <SidebarProvider defaultOpen={true}>
-              <div className="flex w-full min-h-screen">
-                {children}
-              </div>
-            </SidebarProvider>
-          </CommunityProvider>
+          <ProjectProvider>
+            <CommunityProvider>
+              <SidebarProvider defaultOpen={true}>
+                <div className="flex w-full min-h-screen">
+                  {children}
+                </div>
+              </SidebarProvider>
+            </CommunityProvider>
+          </ProjectProvider>
           <Toaster />
         </ThemeProvider>
       </AuthProvider>

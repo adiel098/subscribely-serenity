@@ -69,12 +69,7 @@ const CustomBotSetupStep = ({
         name: "My Project", // Default name that will be updated later
         description: "Created with custom bot", // Default description
         bot_token: customTokenInput,
-        communities: verificationResults.map(chat => ({
-          id: chat.id,
-          title: chat.title,
-          photo_url: chat.photo_url,
-          type: chat.type
-        }))
+        communities: verificationResults.map(chat => chat.id)  // Fix: Just store the chat IDs as strings
       };
       
       // Save project data temporarily

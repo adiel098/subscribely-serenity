@@ -31,8 +31,8 @@ export const useOnboardingNavigation = (
       });
       
       // Save to database - updated to use 'users' table instead of 'profiles'
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
       
       if (!userId) {
         throw new Error('User not authenticated');
@@ -80,8 +80,8 @@ export const useOnboardingNavigation = (
       });
       
       // Save to database - updated to use 'users' table
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
       
       if (!userId) {
         throw new Error('User not authenticated');

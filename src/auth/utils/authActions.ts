@@ -26,7 +26,7 @@ export const handleSignOut = async ({
     
     // Clear all browser storage
     sessionStorage.clear();
-    localStorage.clear(); // Clear all localStorage, not just the auth token
+    localStorage.clear();
     
     // Clear all cookies related to authentication
     document.cookie.split(';').forEach(cookie => {

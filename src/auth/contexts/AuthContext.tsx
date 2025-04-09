@@ -11,7 +11,7 @@ import { handleSignOut } from "../utils/authActions";
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  isLoading: true, // Add isLoading property
+  isLoading: true,
   signOut: async () => {},
 });
 
@@ -164,7 +164,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('🔄 AuthContext: signOut function called');
     
     // Immediately clear all storage and set user to null
-    // This ensures the UI updates immediately regardless of API response
     sessionStorage.clear();
     localStorage.clear();
     

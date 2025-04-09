@@ -1,4 +1,3 @@
-
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
@@ -30,6 +29,7 @@ import TelegramBot from "@/group_owners/pages/TelegramBot";
 import CommunityEdit from "@/group_owners/pages/communities/CommunityEdit";
 import GroupEdit from "@/group_owners/pages/groups/GroupEdit";
 import { CouponsPage } from "@/group_owners/components/coupons/CouponsPage";
+import NewProject from "@/group_owners/pages/projects/NewProject";
 
 // Onboarding Pages
 import Onboarding from "@/group_owners/pages/onboarding/Onboarding";
@@ -53,6 +53,13 @@ const AppRoutes = () => {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/auth/*" element={<Auth />} />
       <Route path="*" element={<NotFound />} />
+
+      {/* Project Management Routes */}
+      <Route path="/projects/new" element={
+        <ProtectedRoute>
+          <NewProject />
+        </ProtectedRoute>
+      } />
 
       {/* New Community Routes */}
       <Route path="/new-community/custom-bot" element={

@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useProjects, Project } from "@/group_owners/hooks/useProjects";
 import { useLocation, useNavigate } from "react-router-dom";
+import { localStorageService } from "@/utils/localStorageService";
 
 type ProjectContextType = {
   selectedProjectId: string | null;
@@ -62,22 +63,26 @@ export const ProjectProvider = ({
   useEffect(() => {
     if (isLoading) return;
     
-    const hasProjects = projects && projects.length > 0;
+    // Check if user is in onboarding process - if so, don't redirect to project creation
+    const isInOnboardingProcess = location.pathname.startsWith('/onboarding');
+    const onboardingStatus = localStorageService.getOnboardingStatus();
+    const isOnboardingCompleted = onboardingStatus?.isCompleted || false;
     
-    // Skip redirection if already on the /projects/new route
-    if (location.pathname === '/projects/new') {
+    // Don't redirect if user is in onboarding process or route is not dashboard
+    if (isInOnboardingProcess || !location.pathname.match(/^\/(dashboard)?$/)) {
       return;
     }
     
-    // If user has no projects and they're trying to access the dashboard,
-    // redirect them to the project creation flow
-    if (!hasProjects && location.pathname === '/dashboard') {
-      console.log("No projects found - redirecting to project creation");
-      // Don't redirect if they're already in the onboarding flow
-      if (!location.pathname.startsWith('/onboarding')) {
-        navigate('/projects/new', { replace: true });
-        return;
-      }
+    const hasProjects = projects && projects.length > 0;
+    
+    // Only redirect to project creation if:
+    // 1. User has completed onboarding
+    // 2. User has no projects
+    // 3. User is trying to access the dashboard
+    if (isOnboardingCompleted && !hasProjects && location.pathname.match(/^\/(dashboard)?$/)) {
+      console.log("Onboarding completed, no projects found - redirecting to project creation");
+      navigate('/projects/new', { replace: true });
+      return;
     }
     
     // If nothing is selected but we have projects, select one

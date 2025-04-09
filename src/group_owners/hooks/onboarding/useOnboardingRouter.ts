@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { OnboardingStep } from "./types";
@@ -25,8 +24,9 @@ export const useOnboardingRouter = (
         if (redirectingRef.current || completionCheckDoneRef.current) return;
         
         const { data: profile, error } = await supabase
-          .from('profiles')
+          .from('users')
           .select('onboarding_completed, onboarding_step')
+          .eq('id', (await supabase.auth.getUser()).data.user?.id)
           .maybeSingle();
         
         if (error) throw error;
@@ -67,8 +67,15 @@ export const useOnboardingRouter = (
       console.log("Processing URL path:", location.pathname);
       const path = location.pathname;
       
+      // If user tries to access /onboarding directly, redirect to the proper first step
       if (path === '/onboarding' || path === '/onboarding/') {
         navigate('/onboarding/welcome', { replace: true });
+      }
+      
+      // Prevent redirection to /projects/new during onboarding
+      if (location.pathname === '/projects/new') {
+        console.log("Preventing redirection to /projects/new during onboarding");
+        return;
       }
       
       setIsUrlProcessed(true);

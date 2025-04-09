@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { useEffect } from "react";
 import { localStorageService } from "@/utils/localStorageService";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -38,8 +39,16 @@ export const ProtectedRoute = ({
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Don't redirect if already in onboarding flow
+  const isOnboardingRoute = location.pathname.startsWith("/onboarding");
+  const isProjectCreationRoute = location.pathname === "/projects/new";
+  
+  if (isOnboardingRoute || isProjectCreationRoute) {
+    return children;
+  }
+
   // Check if we're trying to access the dashboard and need onboarding
-  const isDashboardRoute = location.pathname === "/dashboard";
+  const isDashboardRoute = location.pathname === "/dashboard" || location.pathname === "/";
   const onboardingStatus = localStorageService.getOnboardingStatus();
   const hasCommunity = localStorageService.getHasCommunity();
   
@@ -49,7 +58,6 @@ export const ProtectedRoute = ({
   }
 
   // If we're trying to access onboarding but it's completed and we have a community
-  const isOnboardingRoute = location.pathname.startsWith("/onboarding");
   if (isOnboardingRoute && onboardingStatus?.isCompleted && hasCommunity) {
     console.log("✅ ProtectedRoute: Onboarding complete, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;

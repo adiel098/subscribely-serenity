@@ -64,12 +64,17 @@ export const ProjectProvider = ({
     
     const hasProjects = projects && projects.length > 0;
     
+    // Skip redirection if already on the /projects/new route
+    if (location.pathname === '/projects/new') {
+      return;
+    }
+    
     // If user has no projects and they're trying to access the dashboard,
     // redirect them to the project creation flow
     if (!hasProjects && location.pathname === '/dashboard') {
       console.log("No projects found - redirecting to project creation");
       // Don't redirect if they're already in the onboarding flow
-      if (!location.pathname.startsWith('/onboarding') && !location.pathname.startsWith('/projects/new')) {
+      if (!location.pathname.startsWith('/onboarding')) {
         navigate('/projects/new', { replace: true });
         return;
       }
@@ -86,7 +91,7 @@ export const ProjectProvider = ({
       setSelectedProjectId(projects[0].id);
       return;
     }
-  }, [projects, selectedProjectId, isLoading, location, navigate]);
+  }, [projects, selectedProjectId, isLoading, location.pathname, navigate]);
 
   return (
     <ProjectContext.Provider value={{

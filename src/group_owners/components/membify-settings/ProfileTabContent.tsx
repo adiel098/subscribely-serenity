@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Pencil, Save, User, Mail, Phone, Shield, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -8,32 +7,58 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
-interface ProfileTabContentProps {
-  profileData: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-  };
-  setProfileData: React.Dispatch<React.SetStateAction<{
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone: string;
-  }>>;
-  isLoading: boolean;
-  userId: string | undefined;
-}
-
-export const ProfileTabContent = ({ 
-  profileData,
-  setProfileData,
-  isLoading,
-  userId
-}: ProfileTabContentProps) => {
+export const ProfileTabContent = () => {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [profileData, setProfileData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    setIsLoading(true);
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        setProfileData({
+          first_name: '',
+          last_name: '',
+          email: user?.email || '',
+          phone: ''
+        });
+      } else if (userData) {
+        setProfileData({
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email: userData.email || user?.email || '',
+          phone: userData.phone || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetch profile operation:', error);
+      toast.error("Failed to load profile data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,13 +72,13 @@ export const ProfileTabContent = ({
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('users')
         .update({
           first_name: profileData.first_name,
           last_name: profileData.last_name,
           phone: profileData.phone
         })
-        .eq('id', userId);
+        .eq('id', user?.id);
 
       if (error) {
         toast.error("Error saving profile", {

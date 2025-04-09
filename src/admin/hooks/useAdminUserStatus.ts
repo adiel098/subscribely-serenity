@@ -11,7 +11,7 @@ export const useAdminUserStatus = (onSuccess?: () => void) => {
     setIsUpdating(true);
     
     try {
-      // Update the profiles table
+      // Update the users table (previously profiles)
       let updates = {};
       
       if (status === 'suspended') {
@@ -22,12 +22,13 @@ export const useAdminUserStatus = (onSuccess?: () => void) => {
         updates = { is_suspended: false, status: 'inactive', last_login: null };
       }
       
-      const { error: profileError } = await supabase
-        .from('profiles')
+      // Updated to use 'users' table
+      const { error: userError } = await supabase
+        .from('users')
         .update(updates)
         .eq('id', userId);
         
-      if (profileError) throw profileError;
+      if (userError) throw userError;
       
       // If status is inactive, also update any platform subscriptions to inactive
       if (status === 'inactive') {

@@ -33,82 +33,11 @@ export type Database = {
         }
         Relationships: []
       }
-      broadcast_messages: {
-        Row: {
-          community_id: string
-          created_at: string | null
-          filter_data: Json | null
-          filter_type: string | null
-          id: string
-          image: string | null
-          include_button: boolean | null
-          message: string
-          sent_at: string | null
-          sent_failed: number | null
-          sent_success: number | null
-          status: string | null
-          subscription_plan_id: string | null
-          total_recipients: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          community_id: string
-          created_at?: string | null
-          filter_data?: Json | null
-          filter_type?: string | null
-          id?: string
-          image?: string | null
-          include_button?: boolean | null
-          message: string
-          sent_at?: string | null
-          sent_failed?: number | null
-          sent_success?: number | null
-          status?: string | null
-          subscription_plan_id?: string | null
-          total_recipients?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          community_id?: string
-          created_at?: string | null
-          filter_data?: Json | null
-          filter_type?: string | null
-          id?: string
-          image?: string | null
-          include_button?: boolean | null
-          message?: string
-          sent_at?: string | null
-          sent_failed?: number | null
-          sent_success?: number | null
-          status?: string | null
-          subscription_plan_id?: string | null
-          total_recipients?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "broadcast_messages_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "broadcast_messages_subscription_plan_id_fkey"
-            columns: ["subscription_plan_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_plans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       communities: {
         Row: {
           created_at: string
-          custom_link: string | null
           description: string | null
           id: string
-          is_group: boolean | null
           name: string
           owner_id: string
           project_id: string | null
@@ -118,10 +47,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          custom_link?: string | null
           description?: string | null
           id?: string
-          is_group?: boolean | null
           name: string
           owner_id: string
           project_id?: string | null
@@ -131,10 +58,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          custom_link?: string | null
           description?: string | null
           id?: string
-          is_group?: boolean | null
           name?: string
           owner_id?: string
           project_id?: string | null
@@ -147,7 +72,7 @@ export type Database = {
             foreignKeyName: "communities_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -159,157 +84,7 @@ export type Database = {
           },
         ]
       }
-      community_logs: {
-        Row: {
-          amount: number | null
-          community_id: string
-          created_at: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id: string
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          community_id: string
-          created_at?: string
-          event_type: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          community_id?: string
-          created_at?: string
-          event_type?: Database["public"]["Enums"]["analytics_event_type"]
-          id?: string
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      community_relationships: {
-        Row: {
-          added_at: string | null
-          community_id: string
-          display_order: number | null
-          member_id: string
-          relationship_type: string
-        }
-        Insert: {
-          added_at?: string | null
-          community_id: string
-          display_order?: number | null
-          member_id: string
-          relationship_type?: string
-        }
-        Update: {
-          added_at?: string | null
-          community_id?: string
-          display_order?: number | null
-          member_id?: string
-          relationship_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_relationships_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_relationships_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      community_subscribers: {
-        Row: {
-          community_id: string
-          id: string
-          is_active: boolean | null
-          is_trial: boolean | null
-          joined_at: string
-          last_active: string | null
-          last_checked: string | null
-          subscription_end_date: string | null
-          subscription_plan_id: string | null
-          subscription_start_date: string | null
-          subscription_status: string | null
-          telegram_user_id: string
-          telegram_username: string | null
-          trial_end_date: string | null
-        }
-        Insert: {
-          community_id: string
-          id?: string
-          is_active?: boolean | null
-          is_trial?: boolean | null
-          joined_at?: string
-          last_active?: string | null
-          last_checked?: string | null
-          subscription_end_date?: string | null
-          subscription_plan_id?: string | null
-          subscription_start_date?: string | null
-          subscription_status?: string | null
-          telegram_user_id: string
-          telegram_username?: string | null
-          trial_end_date?: string | null
-        }
-        Update: {
-          community_id?: string
-          id?: string
-          is_active?: boolean | null
-          is_trial?: boolean | null
-          joined_at?: string
-          last_active?: string | null
-          last_checked?: string | null
-          subscription_end_date?: string | null
-          subscription_plan_id?: string | null
-          subscription_start_date?: string | null
-          subscription_status?: string | null
-          telegram_user_id?: string
-          telegram_username?: string | null
-          trial_end_date?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_telegram_chat_members_bot_settings"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "telegram_bot_settings"
-            referencedColumns: ["community_id"]
-          },
-          {
-            foreignKeyName: "telegram_chat_members_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telegram_chat_members_subscription_plan_id_fkey"
-            columns: ["subscription_plan_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_plans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payment_methods: {
+      owner_payment_methods: {
         Row: {
           config: Json | null
           created_at: string
@@ -335,6 +110,30 @@ export type Database = {
           is_active?: boolean | null
           owner_id?: string | null
           provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_global_settings: {
+        Row: {
+          bot_token: string
+          bot_username: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bot_token: string
+          bot_username?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_token?: string
+          bot_username?: string | null
+          created_at?: string
+          id?: string
           updated_at?: string
         }
         Relationships: []
@@ -405,7 +204,7 @@ export type Database = {
             foreignKeyName: "platform_payments_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -505,7 +304,7 @@ export type Database = {
             foreignKeyName: "platform_subscriptions_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -517,141 +316,7 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string
-          current_telegram_code: string | null
-          custom_bot_token: string | null
-          email: string | null
-          first_name: string | null
-          full_name: string | null
-          id: string
-          initial_telegram_code: string | null
-          is_suspended: boolean | null
-          last_login: string | null
-          last_name: string | null
-          onboarding_completed: boolean | null
-          onboarding_step: string | null
-          phone: string | null
-          registration_date: string | null
-          status: string | null
-          updated_at: string
-          use_custom_bot: boolean | null
-        }
-        Insert: {
-          created_at?: string
-          current_telegram_code?: string | null
-          custom_bot_token?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          id: string
-          initial_telegram_code?: string | null
-          is_suspended?: boolean | null
-          last_login?: string | null
-          last_name?: string | null
-          onboarding_completed?: boolean | null
-          onboarding_step?: string | null
-          phone?: string | null
-          registration_date?: string | null
-          status?: string | null
-          updated_at?: string
-          use_custom_bot?: boolean | null
-        }
-        Update: {
-          created_at?: string
-          current_telegram_code?: string | null
-          custom_bot_token?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: string
-          initial_telegram_code?: string | null
-          is_suspended?: boolean | null
-          last_login?: string | null
-          last_name?: string | null
-          onboarding_completed?: boolean | null
-          onboarding_step?: string | null
-          phone?: string | null
-          registration_date?: string | null
-          status?: string | null
-          updated_at?: string
-          use_custom_bot?: boolean | null
-        }
-        Relationships: []
-      }
-      projects: {
-        Row: {
-          bot_token: string | null
-          created_at: string
-          description: string | null
-          id: string
-          is_custom_bot: boolean
-          name: string
-          owner_id: string
-          updated_at: string
-        }
-        Insert: {
-          bot_token?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_custom_bot?: boolean
-          name: string
-          owner_id: string
-          updated_at?: string
-        }
-        Update: {
-          bot_token?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_custom_bot?: boolean
-          name?: string
-          owner_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      subscription_activity_logs: {
-        Row: {
-          activity_type: string
-          community_id: string
-          created_at: string | null
-          details: string | null
-          id: string
-          status: string | null
-          telegram_user_id: string
-        }
-        Insert: {
-          activity_type: string
-          community_id: string
-          created_at?: string | null
-          details?: string | null
-          id?: string
-          status?: string | null
-          telegram_user_id: string
-        }
-        Update: {
-          activity_type?: string
-          community_id?: string
-          created_at?: string | null
-          details?: string | null
-          id?: string
-          status?: string | null
-          telegram_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_activity_logs_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_coupons: {
+      project_coupons: {
         Row: {
           code: string
           community_id: string | null
@@ -707,55 +372,105 @@ export type Database = {
           },
         ]
       }
-      subscription_notifications: {
+      project_subscribers: {
         Row: {
-          community_id: string | null
-          error: string | null
           id: string
-          member_id: string | null
-          notification_type: string
-          sent_at: string | null
-          status: string
+          is_active: boolean | null
+          is_trial: boolean | null
+          joined_at: string
+          last_active: string | null
+          last_checked: string | null
+          project_id: string
+          subscription_end_date: string | null
+          subscription_plan_id: string | null
+          subscription_start_date: string | null
+          subscription_status: string | null
+          telegram_user_id: string
+          telegram_username: string | null
+          trial_end_date: string | null
         }
         Insert: {
-          community_id?: string | null
-          error?: string | null
           id?: string
-          member_id?: string | null
-          notification_type: string
-          sent_at?: string | null
-          status: string
+          is_active?: boolean | null
+          is_trial?: boolean | null
+          joined_at?: string
+          last_active?: string | null
+          last_checked?: string | null
+          project_id: string
+          subscription_end_date?: string | null
+          subscription_plan_id?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: string | null
+          telegram_user_id: string
+          telegram_username?: string | null
+          trial_end_date?: string | null
         }
         Update: {
-          community_id?: string | null
-          error?: string | null
           id?: string
-          member_id?: string | null
-          notification_type?: string
-          sent_at?: string | null
-          status?: string
+          is_active?: boolean | null
+          is_trial?: boolean | null
+          joined_at?: string
+          last_active?: string | null
+          last_checked?: string | null
+          project_id?: string
+          subscription_end_date?: string | null
+          subscription_plan_id?: string | null
+          subscription_start_date?: string | null
+          subscription_status?: string | null
+          telegram_user_id?: string
+          telegram_username?: string | null
+          trial_end_date?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "subscription_notifications_community_id_fkey"
-            columns: ["community_id"]
+            foreignKeyName: "project_subscribers_project_id_fkey"
+            columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "subscription_notifications_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: "telegram_chat_members_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
             isOneToOne: false
-            referencedRelation: "community_subscribers"
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
       }
+      projects: {
+        Row: {
+          bot_token: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          bot_token?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          bot_token?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_payments: {
         Row: {
           amount: number
-          community_id: string | null
           coupon_id: string | null
           created_at: string
           discount_amount: number | null
@@ -766,6 +481,7 @@ export type Database = {
           original_amount: number | null
           payment_method: string | null
           plan_id: string | null
+          project_id: string | null
           status: string
           telegram_user_id: string | null
           telegram_username: string | null
@@ -773,7 +489,6 @@ export type Database = {
         }
         Insert: {
           amount: number
-          community_id?: string | null
           coupon_id?: string | null
           created_at?: string
           discount_amount?: number | null
@@ -784,6 +499,7 @@ export type Database = {
           original_amount?: number | null
           payment_method?: string | null
           plan_id?: string | null
+          project_id?: string | null
           status: string
           telegram_user_id?: string | null
           telegram_username?: string | null
@@ -791,7 +507,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          community_id?: string | null
           coupon_id?: string | null
           created_at?: string
           discount_amount?: number | null
@@ -802,6 +517,7 @@ export type Database = {
           original_amount?: number | null
           payment_method?: string | null
           plan_id?: string | null
+          project_id?: string | null
           status?: string
           telegram_user_id?: string | null
           telegram_username?: string | null
@@ -809,17 +525,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "subscription_payments_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "subscription_payments_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
-            referencedRelation: "subscription_coupons"
+            referencedRelation: "project_coupons"
             referencedColumns: ["id"]
           },
           {
@@ -827,6 +536,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -884,64 +600,15 @@ export type Database = {
           },
         ]
       }
-      system_logs: {
-        Row: {
-          created_at: string
-          details: string
-          event_type: string
-          id: number
-          metadata: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          details: string
-          event_type: string
-          id?: never
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string
-          event_type?: string
-          id?: never
-          metadata?: Json | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_system_logs_profiles"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       telegram_bot_settings: {
         Row: {
-          auto_remove_expired: boolean | null
-          auto_welcome_message: boolean | null
-          bot_signature: string | null
-          chat_id: string | null
-          community_id: string | null
           created_at: string
           expired_subscription_message: string | null
           first_reminder_days: number | null
           first_reminder_image: string | null
           first_reminder_message: string | null
           id: string
-          is_admin: boolean | null
           language: string | null
-          max_messages_per_day: number | null
           project_id: string | null
           renewal_discount_enabled: boolean | null
           renewal_discount_percentage: number | null
@@ -951,26 +618,17 @@ export type Database = {
           subscription_reminder_days: number | null
           subscription_reminder_message: string | null
           updated_at: string
-          verification_code: string | null
-          verified_at: string | null
           welcome_image: string | null
           welcome_message: string | null
         }
         Insert: {
-          auto_remove_expired?: boolean | null
-          auto_welcome_message?: boolean | null
-          bot_signature?: string | null
-          chat_id?: string | null
-          community_id?: string | null
           created_at?: string
           expired_subscription_message?: string | null
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
           id?: string
-          is_admin?: boolean | null
           language?: string | null
-          max_messages_per_day?: number | null
           project_id?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
@@ -980,26 +638,17 @@ export type Database = {
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string
-          verification_code?: string | null
-          verified_at?: string | null
           welcome_image?: string | null
           welcome_message?: string | null
         }
         Update: {
-          auto_remove_expired?: boolean | null
-          auto_welcome_message?: boolean | null
-          bot_signature?: string | null
-          chat_id?: string | null
-          community_id?: string | null
           created_at?: string
           expired_subscription_message?: string | null
           first_reminder_days?: number | null
           first_reminder_image?: string | null
           first_reminder_message?: string | null
           id?: string
-          is_admin?: boolean | null
           language?: string | null
-          max_messages_per_day?: number | null
           project_id?: string | null
           renewal_discount_enabled?: boolean | null
           renewal_discount_percentage?: number | null
@@ -1009,26 +658,10 @@ export type Database = {
           subscription_reminder_days?: number | null
           subscription_reminder_message?: string | null
           updated_at?: string
-          verification_code?: string | null
-          verified_at?: string | null
           welcome_image?: string | null
           welcome_message?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_telegram_bot_settings_community"
-            columns: ["community_id"]
-            isOneToOne: true
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "telegram_bot_settings_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: true
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "telegram_bot_settings_project_id_fkey"
             columns: ["project_id"]
@@ -1037,69 +670,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      telegram_events: {
-        Row: {
-          chat_id: string | null
-          created_at: string
-          error: string | null
-          event_type: string
-          id: number
-          message_id: string | null
-          message_text: string | null
-          raw_data: Json | null
-          user_id: string | null
-          username: string | null
-        }
-        Insert: {
-          chat_id?: string | null
-          created_at?: string
-          error?: string | null
-          event_type: string
-          id?: number
-          message_id?: string | null
-          message_text?: string | null
-          raw_data?: Json | null
-          user_id?: string | null
-          username?: string | null
-        }
-        Update: {
-          chat_id?: string | null
-          created_at?: string
-          error?: string | null
-          event_type?: string
-          id?: number
-          message_id?: string | null
-          message_text?: string | null
-          raw_data?: Json | null
-          user_id?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
-      telegram_global_settings: {
-        Row: {
-          bot_token: string
-          bot_username: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          bot_token: string
-          bot_username?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          bot_token?: string
-          bot_username?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       telegram_mini_app_users: {
         Row: {
@@ -1147,6 +717,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string
+          last_login: string | null
+          last_name: string | null
+          onboarding_completed: boolean | null
+          onboarding_step: string | null
+          registration_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id: string
+          last_login?: string | null
+          last_name?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: string | null
+          registration_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_login?: string | null
+          last_name?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: string | null
+          registration_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1265,17 +877,6 @@ export type Database = {
       get_project_bot_token: {
         Args: { project_id_param: string }
         Returns: string
-      }
-      get_system_logs: {
-        Args: { event_types?: string[]; limit_count?: number }
-        Returns: {
-          created_at: string
-          details: string
-          event_type: string
-          id: number
-          metadata: Json | null
-          user_id: string | null
-        }[]
       }
       handle_telegram_webhook: {
         Args: Record<PropertyKey, never>

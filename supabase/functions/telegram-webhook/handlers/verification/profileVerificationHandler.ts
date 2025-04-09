@@ -7,22 +7,22 @@ import { handleDuplicateChatId } from './duplicateHandler.ts';
 const logger = getLogger('profile-verification');
 
 /**
- * Handle verification based on profile method (legacy method)
+ * Handle verification based on user record (formerly profile method)
  */
 export async function handleProfileVerification(
   supabase: ReturnType<typeof createClient>,
-  profile: any,
+  user: any,
   chatId: string,
   verificationCode: string,
   message: any,
   existingChatCommunity: any
 ): Promise<boolean> {
-  logger.info(`[Verification] Found matching profile: ${profile.id}`);
+  logger.info(`[Verification] Found matching user: ${user.id}`);
   
   // Check if this chat is already connected to another user's community
   if (existingChatCommunity) {
     // If the chat belongs to the same user, that's fine
-    if (existingChatCommunity.owner_id === profile.id) {
+    if (existingChatCommunity.owner_id === user.id) {
       logger.info(`[Verification] Chat ID ${chatId} already owned by this user, updating settings`);
       
       // Update the existing community's bot settings
@@ -46,22 +46,22 @@ export async function handleProfileVerification(
         supabase, 
         chatId, 
         existingChatCommunity.owner_id, 
-        profile.id,
+        user.id,
         verificationCode
       );
     }
   }
   
   // Create a new community for the user
-  return await createCommunityForProfile(supabase, profile.id, message, chatId, verificationCode);
+  return await createCommunityForProfile(supabase, user.id, message, chatId, verificationCode);
 }
 
 /**
- * Create a new community for a verified profile
+ * Create a new community for a verified user
  */
 async function createCommunityForProfile(
   supabase: ReturnType<typeof createClient>,
-  profileId: string,
+  userId: string,
   message: any,
   chatId: string,
   verificationCode: string
@@ -71,7 +71,7 @@ async function createCommunityForProfile(
     .from('communities')
     .insert({
       name: message.chat.title || 'Telegram Community',
-      owner_id: profileId,
+      owner_id: userId,
       telegram_chat_id: chatId
     })
     .select()
@@ -80,7 +80,7 @@ async function createCommunityForProfile(
   if (communityError) {
     logger.error(`[Verification] Error creating community: ${communityError.message}`, communityError);
     await logToDatabase(supabase, 'VERIFICATION', 'ERROR', 'Error creating community', 
-      { error: communityError, profile_id: profileId });
+      { error: communityError, user_id: userId });
     return false;
   }
 
@@ -107,8 +107,8 @@ async function createCommunityForProfile(
   // Update the community with a photo
   await updateCommunityWithPhoto(supabase, community.id, chatId);
 
-  await logToDatabase(supabase, 'VERIFICATION', 'INFO', 'Verification completed successfully (profile method)', {
-    profile_id: profileId,
+  await logToDatabase(supabase, 'VERIFICATION', 'INFO', 'Verification completed successfully (user method)', {
+    user_id: userId,
     community_id: community.id,
     chat_id: chatId
   });
@@ -127,7 +127,7 @@ export async function updateCommunityWithPhoto(
 ): Promise<void> {
   try {
     const { data: settings } = await supabase
-      .from('telegram_global_settings')
+      .from('platform_global_settings')
       .select('bot_token')
       .single();
 

@@ -32,18 +32,19 @@ export const useAdminUsersFetch = () => {
       
       console.log("Admin users data:", adminUsersData);
       
-      // Get profiles data which contains most user information
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
+      // Get users data which contains most user information
+      // Updated from profiles to users table
+      const { data: allUsers, error: usersError } = await supabase
+        .from('users')
         .select('*');
         
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        throw profilesError;
+      if (usersError) {
+        console.error("Error fetching users:", usersError);
+        throw usersError;
       }
       
-      if (!profiles) {
-        throw new Error("Failed to fetch profiles data");
+      if (!allUsers) {
+        throw new Error("Failed to fetch users data");
       }
       
       // Fetch communities data with owner information
@@ -67,40 +68,41 @@ export const useAdminUsersFetch = () => {
         throw platformSubscriptionsError;
       }
       
-      // Fetch telegram_chat_members to count active subscribers for each community
-      const { data: allChatMembers, error: chatMembersError } = await supabase
-        .from('telegram_chat_members')
-        .select('community_id, subscription_status')
-        .eq('subscription_status', true)
-        .eq('is_active', true);
+      // Fetch project_subscribers to count active subscribers for each community
+      const { data: allSubscribers, error: subscribersError } = await supabase
+        .from('project_subscribers')
+        .select('project_id, subscription_status')
+        .eq('is_active', true)
+        .eq('subscription_status', 'active');
         
-      if (chatMembersError) {
-        console.error("Error fetching chat members:", chatMembersError);
-        throw chatMembersError;
+      if (subscribersError) {
+        console.error("Error fetching subscribers:", subscribersError);
+        throw subscribersError;
       }
       
-      console.log("Fetched chat members:", allChatMembers);
+      console.log("Fetched subscribers:", allSubscribers);
       
       // Process the data to create user objects
-      const processedUsers: AdminUser[] = profiles.map(profile => {
-        const adminData = adminUsersData?.find(a => a.user_id === profile.id);
+      const processedUsers: AdminUser[] = allUsers.map(user => {
+        const adminData = adminUsersData?.find(a => a.user_id === user.id);
         const adminRole = adminData?.role || null;
         
         // Get communities owned by this user
-        const userCommunities = communities?.filter(c => c.owner_id === profile.id) || [];
+        const userCommunities = communities?.filter(c => c.owner_id === user.id) || [];
         const userCommunityIds = userCommunities.map(c => c.id);
         
         // Get active subscriptions for this user
         const userPlatformSubscriptions = platformSubscriptions?.filter(s => 
-          s.owner_id === profile.id && 
+          s.owner_id === user.id && 
           s.status === 'active' && 
           (!s.subscription_end_date || new Date(s.subscription_end_date) > new Date())
         ) || [];
         
-        // Count all active subscribers in user's communities
-        const totalSubscribers = allChatMembers?.filter(member => 
-          userCommunityIds.includes(member.community_id) && 
-          member.subscription_status === true
+        // Count all active subscribers in user's projects
+        // We'll need to adapt this when we have more detailed information about the projects schema
+        const totalSubscribers = allSubscribers?.filter(member => 
+          userCommunityIds.includes(member.project_id) && 
+          member.subscription_status === 'active'
         ).length || 0;
         
         // Set role based on admin status or community ownership
@@ -115,27 +117,27 @@ export const useAdminUsersFetch = () => {
         
         // Determine user status based on is_suspended flag and active platform subscription
         let status: 'active' | 'inactive' | 'suspended' = 'inactive';
-        if (profile.is_suspended) {
+        if (user.is_suspended) {
           status = 'suspended';
         } else if (userPlatformSubscriptions.length > 0) {
           status = 'active';
-        } else if (profile.last_login) {
+        } else if (user.last_login) {
           status = 'active';
         }
         
         return {
-          id: profile.id,
-          email: profile.email || '',
-          first_name: profile.first_name || null,
-          last_name: profile.last_name || null,
-          full_name: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email?.split('@')[0] || 'Unknown',
+          id: user.id,
+          email: user.email || '',
+          first_name: user.first_name || null,
+          last_name: user.last_name || null,
+          full_name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email?.split('@')[0] || 'Unknown',
           role: role,
           status: status,
-          avatar_url: profile.avatar_url || null,
+          avatar_url: user.avatar_url || null,
           communities_count: userCommunities.length,
-          subscriptions_count: totalSubscribers, // This now shows total subscribers across all communities
-          created_at: profile.created_at || '',
-          last_login: profile.last_login || null
+          subscriptions_count: totalSubscribers,
+          created_at: user.created_at || '',
+          last_login: user.last_login || null
         };
       });
       

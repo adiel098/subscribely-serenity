@@ -1,5 +1,5 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast as toastFunction } from "@/components/ui/use-toast";
 
 /**
  * Generates a simple verification code with the MBF_ prefix
@@ -15,44 +15,46 @@ export async function fetchOrGenerateVerificationCode(userId: string, toast: any
   try {
     console.log('Fetching or generating verification code for user:', userId);
     
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+    // Updated to use 'users' table instead of 'profiles'
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('initial_telegram_code, current_telegram_code')
       .eq('id', userId)
       .maybeSingle();
 
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
+    if (userError) {
+      console.error('Error fetching user:', userError);
       toast({
         title: "Error",
-        description: "Failed to fetch profile information",
+        description: "Failed to fetch user information",
         variant: "destructive",
       });
       return null;
     }
 
-    if (!profile) {
-      console.error('Profile not found:', userId);
+    if (!user) {
+      console.error('User not found:', userId);
       toast({
         title: "Error",
-        description: "Profile not found",
+        description: "User not found",
         variant: "destructive",
       });
       return null;
     }
 
-    if (profile.current_telegram_code) {
-      console.log('Using existing code:', profile.current_telegram_code);
-      return profile.current_telegram_code;
+    if (user.current_telegram_code) {
+      console.log('Using existing code:', user.current_telegram_code);
+      return user.current_telegram_code;
     } else {
       // Generate a new code
       const newCode = generateVerificationCode();
       console.log('Generated new code:', newCode);
       
+      // Updated to use 'users' table
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from('users')
         .update({ 
-          initial_telegram_code: profile.initial_telegram_code || newCode,
+          initial_telegram_code: user.initial_telegram_code || newCode,
           current_telegram_code: newCode
         })
         .eq('id', userId);

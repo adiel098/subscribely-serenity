@@ -44,23 +44,24 @@ export async function findVerificationInBotSettings(supabase: ReturnType<typeof 
 }
 
 /**
- * Finds a verification code in the profiles table (legacy method)
+ * Finds a verification code in the users table (updated from profiles)
  */
 export async function findVerificationInProfiles(supabase: ReturnType<typeof createClient>, verificationCode: string) {
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
+  // Updated to use users table instead of profiles
+  const { data: user, error: userError } = await supabase
+    .from('users')
     .select('id, current_telegram_code')
     .eq('current_telegram_code', verificationCode)
     .maybeSingle();
 
-  if (profileError) {
-    logger.error(`Error checking profiles: ${profileError.message}`, profileError);
-    await logToDatabase(supabase, 'VERIFICATION', 'ERROR', 'Error checking profiles', 
-      { error: profileError, code: verificationCode });
+  if (userError) {
+    logger.error(`Error checking users: ${userError.message}`, userError);
+    await logToDatabase(supabase, 'VERIFICATION', 'ERROR', 'Error checking users', 
+      { error: userError, code: verificationCode });
   }
 
-  logger.info(`Profile query result: ${JSON.stringify(profile)}`);
-  return { profile, profileError };
+  logger.info(`User query result: ${JSON.stringify(user)}`);
+  return { user, userError };
 }
 
 /**

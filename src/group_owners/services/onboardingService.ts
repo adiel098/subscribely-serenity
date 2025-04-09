@@ -3,25 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingStep } from "../hooks/onboarding/types";
 
 export const fetchOnboardingProfile = async (userId: string) => {
-  // Use maybeSingle instead of single to avoid the PGRST116 error when multiple rows are returned
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
+  // Updated to use 'users' table instead of 'profiles'
+  const { data: user, error: userError } = await supabase
+    .from('users')
     .select('onboarding_completed, onboarding_step')
     .eq('id', userId)
     .maybeSingle();
 
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
-    throw profileError;
+  if (userError) {
+    console.error("Error fetching user:", userError);
+    throw userError;
   }
 
-  return profile;
+  return user;
 };
 
 export const fetchCommunities = async (userId: string) => {
+  // Now also consider the project relationship
   const { data: communities, error: communitiesError } = await supabase
     .from('communities')
-    .select('id, telegram_chat_id')
+    .select('id, telegram_chat_id, project_id')
     .eq('owner_id', userId);
 
   if (communitiesError) {
@@ -50,7 +51,7 @@ export const fetchPlatformSubscription = async (userId: string) => {
 
 export const fetchPaymentMethods = async (userId: string) => {
   const { data: paymentMethods, error: paymentMethodsError } = await supabase
-    .from('payment_methods')
+    .from('owner_payment_methods')
     .select('id')
     .eq('owner_id', userId)
     .limit(1);
@@ -64,8 +65,9 @@ export const fetchPaymentMethods = async (userId: string) => {
 };
 
 export const saveOnboardingStep = async (userId: string, step: OnboardingStep) => {
+  // Updated to use 'users' table instead of 'profiles'
   const { error } = await supabase
-    .from('profiles')
+    .from('users')
     .update({ onboarding_step: step })
     .eq('id', userId);
 
@@ -76,8 +78,9 @@ export const saveOnboardingStep = async (userId: string, step: OnboardingStep) =
 };
 
 export const completeOnboardingProcess = async (userId: string) => {
+  // Updated to use 'users' table instead of 'profiles'
   const { error } = await supabase
-    .from('profiles')
+    .from('users')
     .update({ 
       onboarding_completed: true,
       onboarding_step: "complete"

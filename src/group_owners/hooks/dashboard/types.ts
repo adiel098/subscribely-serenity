@@ -25,3 +25,41 @@ export interface DashboardSubscriber {
     features?: string[];
   } | null;
 }
+
+// Add missing types for charts
+export interface ChartDataPoint {
+  date: string;
+  members?: number;
+  subscribers?: number;
+  revenue?: number;
+}
+
+// Add missing type for payment statistics
+export interface PaymentStatistics {
+  completed: number;
+  pending: number;
+  failed: number;
+  paymentMethods: {
+    name: string;
+    count: number;
+  }[];
+  paymentDistribution: {
+    name: string;
+    value: number;
+  }[];
+}
+
+// Add missing type for trial users data
+export interface TrialUsersData {
+  count: number;
+  percentage: number;
+}
+
+// Add missing type for InsightsPanel component
+export interface InsightData {
+  averageSubscriptionDuration: number;
+  mostPopularPlan: string;
+  mostPopularPlanPrice: number;
+  renewalRate: number;
+  potentialRevenue?: number;
+}

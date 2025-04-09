@@ -1,4 +1,3 @@
-
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
 import { useRevenueStats } from "./useRevenueStats";
@@ -18,10 +17,8 @@ const logger = createLogger("useProjectDashboardStats");
 export const useProjectDashboardStats = (projectId: string | null) => {
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
   
-  // Fetch subscribers directly for the project ID
   const { data: subscribersData, isLoading: subscribersLoading } = useProjectSubscribers(projectId);
   
-  // Fetch subscription plans for the project
   const { data: plansData, isLoading: plansLoading } = useProjectPlans(projectId);
   
   const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
@@ -32,7 +29,6 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   const { trialUsers } = useTrialUsers(filteredSubscribers);
   
-  // Fetch mini app users for this project
   const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = 
     useProjectMiniAppUsers(projectId, activeSubscribers);
   
@@ -43,7 +39,7 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   const { paymentStats } = usePaymentStats(filteredSubscribers);
   
-  const { insights } = useInsights(
+  const { insights, insightsData } = useInsights(
     filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,
@@ -52,7 +48,6 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
   
-  // Fetch project owner info
   const { data: ownerInfo, isLoading: ownerLoading } = useProjectOwnerInfo(projectId);
   
   const isLoading = 
@@ -77,6 +72,7 @@ export const useProjectDashboardStats = (projectId: string | null) => {
     miniAppUsers,
     paymentStats,
     insights,
+    insightsData,
     
     memberGrowthData,
     revenueData,

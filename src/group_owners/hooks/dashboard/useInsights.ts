@@ -10,6 +10,8 @@ export interface Insight {
   trend?: number;
 }
 
+import { InsightData } from "./types";
+
 export const useInsights = (
   subscribers: any[] = [],
   activeSubscribers: any[] = [],
@@ -111,5 +113,17 @@ export const useInsights = (
     return insights;
   }, [subscribers, plans]);
 
-  return { insights };
+  // Format insights for InsightPanel component
+  const insightsData: InsightData = {
+    averageSubscriptionDuration: insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") ? 
+      parseInt(insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") || "0") : 0,
+    mostPopularPlan: insights.find(i => i.title === "Most popular plan")?.value?.toString() || "No Plan",
+    mostPopularPlanPrice: insights.find(i => i.title === "Most popular plan price")?.value?.toString().replace("$", "") ? 
+      parseFloat(insights.find(i => i.title === "Most popular plan price")?.value?.toString().replace("$", "") || "0") : 0,
+    renewalRate: insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") ? 
+      parseInt(insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") || "0") : 0,
+    potentialRevenue: (activeSubscribers.length || 0) * (insightsData?.mostPopularPlanPrice || 0)
+  };
+
+  return { insights, insightsData };
 };

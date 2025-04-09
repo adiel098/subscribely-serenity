@@ -1,4 +1,3 @@
-
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
@@ -109,7 +108,7 @@ export const useDashboardStats = (communityId: string) => {
   logger.log("💳 Payment stats calculated:", paymentStats);
   
   // Generate insights from subscriber data
-  const { insights } = useInsights(processedSubscribers);
+  const { insights, insightsData } = useInsights(processedSubscribers);
   logger.log("🧠 Insights calculated");
   
   // Prepare chart data for visualizations
@@ -148,6 +147,7 @@ export const useDashboardStats = (communityId: string) => {
     miniAppUsers,
     paymentStats,
     insights,
+    insightsData,
     
     // Chart data
     memberGrowthData,

@@ -26,11 +26,19 @@ export interface Subscriber {
 export interface SubscribersTableProps {
   subscribers: Subscriber[];
   isProjectSelected?: boolean;
+  onEdit?: (subscriber: Subscriber) => void;
+  onRemove?: (subscriber: Subscriber) => void;
+  onUnblock?: (subscriber: Subscriber) => void;
+  onAssignPlan?: (subscriber: Subscriber) => void;
 }
 
 export const SubscribersTable: React.FC<SubscribersTableProps> = ({
   subscribers,
   isProjectSelected = false,
+  onEdit,
+  onRemove,
+  onUnblock,
+  onAssignPlan
 }) => {
   return (
     <div className="rounded-md border">

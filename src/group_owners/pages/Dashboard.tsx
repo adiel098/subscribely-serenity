@@ -43,6 +43,7 @@ const Dashboard = () => {
     miniAppUsers,
     paymentStats,
     insights,
+    insightsData, // Add this line to destructure the new insightsData property
     
     memberGrowthData,
     revenueData,
@@ -86,7 +87,7 @@ const Dashboard = () => {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <InsightsPanel insights={insights} />
+                <InsightsPanel insights={insightsData} />
               </div>
               <div className="lg:col-span-1">
                 <PaymentMethodsPanel

@@ -35,7 +35,7 @@ export const useCommunityDashboardStats = (communityId: string | null) => {
   const { trialUsers } = useTrialUsers(subscribers);
   const miniAppStats = useMiniAppUsers(subscribers);
   const { paymentStats } = usePaymentStats(subscribers);
-  const { insights } = useInsights(subscribers);
+  const { insights, insightsData } = useInsights(subscribers);
   const { memberGrowthData, revenueData } = useChartData(subscribers);
   const { data: ownerInfo, isLoading: ownerLoading } = useOwnerInfo(communityId);
   
@@ -61,6 +61,7 @@ export const useCommunityDashboardStats = (communityId: string | null) => {
     },
     paymentStats,
     insights,
+    insightsData, // Add the new insightsData
     memberGrowthData,
     revenueData,
     ownerInfo,

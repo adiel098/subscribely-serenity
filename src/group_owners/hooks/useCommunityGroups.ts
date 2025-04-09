@@ -39,13 +39,24 @@ export const useCommunityGroups = () => {
           throw error;
         }
 
-        // Transform the data to match the expected format
+        // Transform the data to match the expected format with all required properties
         const formattedGroups = groups
           .filter(group => group.communities)
-          .map(group => ({
-            ...group.communities,
-            is_group: true // Add this property even though it's not in DB
-          }));
+          .map(group => {
+            const community = group.communities;
+            return {
+              id: community.id,
+              name: community.name,
+              description: community.description,
+              owner_id: community.owner_id,
+              telegram_chat_id: community.telegram_chat_id,
+              telegram_photo_url: community.telegram_photo_url,
+              custom_link: community.custom_link,
+              created_at: community.created_at,
+              updated_at: community.updated_at,
+              is_group: true // Add this virtual property
+            };
+          });
 
         console.log("Successfully fetched community groups:", formattedGroups);
         return formattedGroups as CommunityGroup[];

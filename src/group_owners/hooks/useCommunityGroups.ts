@@ -19,12 +19,19 @@ export const useCommunityGroups = () => {
       console.log("Fetching community groups for user:", user.id);
       
       try {
+        // Instead of filtering on is_group column which doesn't exist anymore, 
+        // we'll query community_relationships table to find groups
         const { data: groups, error } = await supabase
-          .from("communities")
-          .select("*")
-          .eq("owner_id", user.id)
-          .eq("is_group", true)
-          .order("created_at", { ascending: false });
+          .from("community_relationships")
+          .select(`
+            community_id,
+            communities:community_id (
+              id, name, description, owner_id, telegram_photo_url, 
+              telegram_chat_id, custom_link, created_at, updated_at
+            )
+          `)
+          .eq("relationship_type", "group")
+          .eq("owner_id", user.id);
 
         if (error) {
           console.error("Error fetching community groups:", error);
@@ -32,8 +39,16 @@ export const useCommunityGroups = () => {
           throw error;
         }
 
-        console.log("Successfully fetched community groups:", groups);
-        return groups as CommunityGroup[];
+        // Transform the data to match the expected format
+        const formattedGroups = groups
+          .filter(group => group.communities)
+          .map(group => ({
+            ...group.communities,
+            is_group: true // Add this property even though it's not in DB
+          }));
+
+        console.log("Successfully fetched community groups:", formattedGroups);
+        return formattedGroups as CommunityGroup[];
       } catch (error) {
         console.error("Error in community groups query:", error);
         toast.error("An error occurred while fetching community groups");

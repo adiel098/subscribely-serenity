@@ -9,7 +9,7 @@ export interface CommunityGroup extends Community {
   custom_link: string | null;
   created_at: string;
   updated_at: string;
-  is_group: boolean;
+  is_group: boolean; // Virtual property, not in DB
 }
 
 // This should only include fields that are specific to community_groups table
@@ -52,4 +52,5 @@ export interface CommunityRelationship {
   display_order: number;
   relationship_type: string;
   added_at: string;
+  owner_id?: string; // Added to track ownership
 }

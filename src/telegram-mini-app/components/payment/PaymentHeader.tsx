@@ -3,12 +3,14 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { CreditCard, Sparkles } from "lucide-react";
+import { Plan } from "@/telegram-mini-app/types/community.types";
 
-interface PaymentHeaderProps {
+export interface PaymentHeaderProps {
   children?: React.ReactNode;
+  selectedPlan?: Plan;
 }
 
-export const PaymentHeader: React.FC<PaymentHeaderProps> = ({ children }) => {
+export const PaymentHeader: React.FC<PaymentHeaderProps> = ({ children, selectedPlan }) => {
   return (
     <motion.div
       className="text-center space-y-3"

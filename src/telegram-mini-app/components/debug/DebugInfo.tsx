@@ -1,8 +1,19 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export const DebugInfo = () => {
+interface DebugInfoProps {
+  telegramUser?: any;
+  community?: any;
+  activeSubscription?: any;
+}
+
+export const DebugInfo: React.FC<DebugInfoProps> = ({ 
+  telegramUser, 
+  community, 
+  activeSubscription 
+}) => {
   const isDevelopment = import.meta.env.DEV;
   const showDebug = new URLSearchParams(window.location.search).get('debug') === 'true';
 
@@ -25,6 +36,42 @@ export const DebugInfo = () => {
         </div>
         
         <Separator />
+        
+        {telegramUser && (
+          <>
+            <div>
+              <h3 className="font-medium mb-2">Telegram User</h3>
+              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(telegramUser, null, 2)}
+              </pre>
+            </div>
+            <Separator />
+          </>
+        )}
+        
+        {community && (
+          <>
+            <div>
+              <h3 className="font-medium mb-2">Community</h3>
+              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(community, null, 2)}
+              </pre>
+            </div>
+            <Separator />
+          </>
+        )}
+        
+        {activeSubscription && (
+          <>
+            <div>
+              <h3 className="font-medium mb-2">Active Subscription</h3>
+              <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
+                {JSON.stringify(activeSubscription, null, 2)}
+              </pre>
+            </div>
+            <Separator />
+          </>
+        )}
         
         <div>
           <h3 className="font-medium mb-2">App Info</h3>

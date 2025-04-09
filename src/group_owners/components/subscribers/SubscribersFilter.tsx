@@ -1,8 +1,7 @@
 
-import React from "react";
+import React from 'react';
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, XCircle } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface SubscribersFilterProps {
   statusFilter: string;
@@ -19,39 +18,59 @@ export const SubscribersFilter: React.FC<SubscribersFilterProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3 w-full">
-      <div className="relative flex-grow">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-        <Input 
-          placeholder="Search by username or ID..." 
-          className="pl-9" 
-          value={searchQuery} 
-          onChange={e => onSearchChange(e.target.value)} 
-        />
-        {searchQuery && (
-          <button 
-            onClick={() => onSearchChange("")} 
-            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <XCircle className="h-4 w-4" />
-          </button>
-        )}
+      <div className="flex-1">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            type="text"
+            placeholder="Search subscribers..."
+            className="w-full pl-9"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
       </div>
-      
-      <div className="w-full sm:w-48">
-        <Select 
-          value={statusFilter} 
-          onValueChange={(value) => onStatusFilterChange(value)}
+      <div className="flex gap-2">
+        <button
+          onClick={() => onStatusFilterChange('all')}
+          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+            statusFilter === 'all'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="trial">Trial</SelectItem>
-          </SelectContent>
-        </Select>
+          All
+        </button>
+        <button
+          onClick={() => onStatusFilterChange('active')}
+          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+            statusFilter === 'active'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Active
+        </button>
+        <button
+          onClick={() => onStatusFilterChange('inactive')}
+          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+            statusFilter === 'inactive'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Inactive
+        </button>
+        <button
+          onClick={() => onStatusFilterChange('trial')}
+          className={`px-3 py-2 text-sm rounded-md transition-colors ${
+            statusFilter === 'trial'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          Trial
+        </button>
       </div>
     </div>
   );

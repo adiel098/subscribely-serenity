@@ -1,31 +1,38 @@
 
-import React from "react";
-import { Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface EmptySubscribersProps {
-  isProjectSelected: boolean;
+  isProjectSelected?: boolean;
 }
 
-export const EmptySubscribers: React.FC<EmptySubscribersProps> = ({
-  isProjectSelected
-}) => {
+export const EmptySubscribers: React.FC<EmptySubscribersProps> = ({ isProjectSelected = false }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
-      <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-        <Users className="h-6 w-6 text-purple-600" />
+    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+      <div className="bg-gray-100 p-3 rounded-full">
+        <Users className="h-8 w-8 text-gray-500" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-1">
+      
+      <h2 className="mt-4 text-lg font-medium text-gray-900">
         No subscribers yet
-      </h3>
-      <p className="text-gray-500 text-center max-w-md mb-6">
+      </h2>
+      
+      <p className="mt-1 text-sm text-gray-500 max-w-md">
         {isProjectSelected 
-          ? "This project doesn't have any subscribers yet. Share your subscription link to get started."
-          : "This community doesn't have any subscribers yet. Share your community link to get started."}
+          ? "You haven't added any subscribers to this project yet. Share your project link to start getting subscribers."
+          : "You haven't added any subscribers to this community yet. Share your community link to start getting subscribers."
+        }
       </p>
-      <div className="space-x-3">
-        <Button>
-          Invite Subscribers
+      
+      <div className="mt-6">
+        <Button
+          onClick={() => navigate(isProjectSelected ? '/projects/invite' : '/invite')}
+        >
+          Invite Members
         </Button>
       </div>
     </div>

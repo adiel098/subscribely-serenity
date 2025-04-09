@@ -10,7 +10,6 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Users, Loader2 } from "lucide-react";
 import { EmptySubscribers } from "@/group_owners/components/subscribers/EmptySubscribers";
-import { Button } from "@/components/ui/button";
 
 enum SubscriptionStatus {
   ALL = "all",
@@ -26,11 +25,11 @@ const Subscribers = () => {
   const projectId = isProjectSelected ? selectedProjectId : null;
   
   // Choose which hook to use based on what's selected
-  const communitySubscribersQuery = useSubscribers(communityId);
-  const projectSubscribersQuery = useProjectSubscribers(projectId);
+  const communitySubscribersQuery = useSubscribers(communityId || '');
+  const projectSubscribersQuery = useProjectSubscribers(projectId || null);
   
   // Use the appropriate data based on what's selected
-  const { data: subscribers, isLoading } = isProjectSelected
+  const { subscribers, isLoading } = isProjectSelected
     ? projectSubscribersQuery
     : communitySubscribersQuery;
   

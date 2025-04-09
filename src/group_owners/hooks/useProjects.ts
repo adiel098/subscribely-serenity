@@ -1,7 +1,7 @@
-
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth"; // Updated import path
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useProjects");
@@ -49,5 +49,69 @@ export const useProjects = () => {
       }
     },
     enabled: !!user?.id
+  });
+};
+
+// Add the missing useProject hook
+export const useProject = (projectId?: string) => {
+  return useQuery({
+    queryKey: ['project', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (error) throw error;
+      return data as Project;
+    },
+    enabled: !!projectId
+  });
+};
+
+// Add the missing useCreateProject hook
+export const useCreateProject = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (newProject: Omit<Project, 'id' | 'created_at' | 'owner_id'>) => {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([newProject])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    }
+  });
+};
+
+// Add the missing useUpdateProject hook
+export const useUpdateProject = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Project> }) => {
+      const { data, error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', data.id] });
+    }
   });
 };

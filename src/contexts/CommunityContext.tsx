@@ -12,6 +12,8 @@ type CommunityContextType = {
   selectedProjectId: string | null;
   setSelectedProjectId: (id: string | null) => void;
   isProjectSelected: boolean;
+  selectedGroupId?: string | null;
+  isGroupSelected?: boolean;
 };
 
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
@@ -188,7 +190,9 @@ export const CommunityProvider = ({
       setSelectedCommunityId,
       selectedProjectId,
       setSelectedProjectId,
-      isProjectSelected: !!selectedProjectId
+      isProjectSelected: !!selectedProjectId,
+      selectedGroupId: null,
+      isGroupSelected: false
     }}>
       {children}
     </CommunityContext.Provider>

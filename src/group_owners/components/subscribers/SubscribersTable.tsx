@@ -1,70 +1,94 @@
 
-import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import React from 'react';
+import { Subscriber } from "@/group_owners/hooks/useSubscribers";
 
 export interface SubscribersTableProps {
-  subscribers: any[];
+  subscribers: Subscriber[];
+  isProjectSelected?: boolean;
+  onEdit?: (subscriber: Subscriber) => void;
+  onRemove?: (subscriber: Subscriber) => void;
+  onUnblock?: (subscriber: Subscriber) => void;
+  onAssignPlan?: (subscriber: Subscriber) => void;
 }
 
 export const SubscribersTable: React.FC<SubscribersTableProps> = ({
-  subscribers
+  subscribers,
+  isProjectSelected,
+  onEdit,
+  onRemove,
+  onUnblock,
+  onAssignPlan
 }) => {
   return (
-    <div className="border rounded-md overflow-hidden">
-      <Table>
-        <TableHeader className="bg-gray-50">
-          <TableRow>
-            <TableHead className="w-[250px]">User</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Joined</TableHead>
-            <TableHead>Subscription Ends</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <div className="border rounded-lg overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">User</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Plan</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Joined</th>
+            <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
           {subscribers.map((subscriber) => (
-            <TableRow key={subscriber.id || subscriber.telegram_user_id}>
-              <TableCell className="font-medium">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {subscriber.telegram_username || "No username"}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {subscriber.telegram_user_id}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {subscriber.subscription_status ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Inactive</Badge>
-                )}
-              </TableCell>
-              <TableCell>
+            <tr key={subscriber.id} className="bg-white">
+              <td className="px-4 py-3 text-sm text-gray-900 flex items-center gap-3">
+                {subscriber.first_name} {subscriber.last_name}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  subscriber.is_blocked ? "bg-red-100 text-red-800" :
+                  subscriber.subscription_status === true || subscriber.subscription_status === "active" 
+                    ? "bg-green-100 text-green-800" 
+                    : "bg-gray-100 text-gray-800"
+                }`}>
+                  {subscriber.is_blocked ? "Blocked" :
+                   subscriber.is_trial ? "Trial" :
+                   subscriber.subscription_status === true || subscriber.subscription_status === "active" 
+                    ? "Active" 
+                    : "Inactive"}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
                 {subscriber.plan?.name || "No plan"}
-              </TableCell>
-              <TableCell>
-                {subscriber.joined_at ? format(new Date(subscriber.joined_at), 'MMM d, yyyy') : 'N/A'}
-              </TableCell>
-              <TableCell>
-                {subscriber.subscription_end_date 
-                  ? format(new Date(subscriber.subscription_end_date), 'MMM d, yyyy') 
-                  : 'N/A'}
-              </TableCell>
-            </TableRow>
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600">
+                {subscriber.joined_at ? new Date(subscriber.joined_at).toLocaleDateString() : "Unknown"}
+              </td>
+              <td className="px-4 py-3 text-sm text-right">
+                <div className="flex gap-2 justify-end">
+                  {onEdit && (
+                    <button 
+                      className="text-blue-600 hover:text-blue-800"
+                      onClick={() => onEdit(subscriber)}
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {subscriber.is_blocked && onUnblock && (
+                    <button 
+                      className="text-green-600 hover:text-green-800"
+                      onClick={() => onUnblock(subscriber)}
+                    >
+                      Unblock
+                    </button>
+                  )}
+                  {!subscriber.is_blocked && onRemove && (
+                    <button 
+                      className="text-red-600 hover:text-red-800"
+                      onClick={() => onRemove(subscriber)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };

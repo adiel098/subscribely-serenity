@@ -1,128 +1,66 @@
 
-import { useTimeRange } from "./useTimeRange";
-import { useFilteredSubscribers } from "./useFilteredSubscribers";
-import { useRevenueStats } from "./useRevenueStats";
-import { useTrialUsers } from "./useTrialUsers";
-import { usePaymentStats } from "./usePaymentStats";
-import { useInsights } from "./useInsights";
-import { useChartData } from "./useChartData";
-import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
-import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
-import { useMiniAppUsers } from "./useMiniAppUsers";
-import { useOwnerInfo } from "./useOwnerInfo";
-import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
-
-const logger = createLogger("useCommunityDashboardStats");
+import { useTimeRange } from '@/group_owners/hooks/dashboard/useTimeRange';
+import { useFilteredSubscribers } from '@/group_owners/hooks/dashboard/useFilteredSubscribers';
+import { useRevenueStats } from '@/group_owners/hooks/dashboard/useRevenueStats';
+import { useTrialUsers } from '@/group_owners/hooks/dashboard/useTrialUsers';
+import { usePaymentStats } from '@/group_owners/hooks/dashboard/usePaymentStats';
+import { useInsights } from '@/group_owners/hooks/dashboard/useInsights';
+import { useChartData } from '@/group_owners/hooks/dashboard/useChartData';
+import { useMiniAppUsers } from '@/group_owners/hooks/dashboard/useMiniAppUsers';
+import { useOwnerInfo } from '@/group_owners/hooks/dashboard/useOwnerInfo';
+import { useSubscribers } from '@/group_owners/hooks/useSubscribers';
+import { useState, useEffect } from 'react';
 
 export const useCommunityDashboardStats = (communityId: string | null) => {
-  if (!communityId) {
-    return {
-      timeRange: "all",
-      setTimeRange: () => {},
-      timeRangeLabel: "All Time",
-      filteredSubscribers: [],
-      activeSubscribers: [],
-      inactiveSubscribers: [],
-      totalRevenue: 0,
-      avgRevenuePerSubscriber: 0,
-      conversionRate: 0,
-      trialUsers: { count: 0, percentage: 0 },
-      miniAppUsers: { count: 0, nonSubscribers: 0 },
-      paymentStats: { paymentMethods: [], paymentDistribution: [] },
-      insights: {
-        averageSubscriptionDuration: 0,
-        mostPopularPlan: "None",
-        mostPopularPlanPrice: 0,
-        renewalRate: 0,
-        potentialRevenue: 0,
-      },
-      memberGrowthData: [],
-      revenueData: [],
-      ownerInfo: null,
-      isLoading: false
-    };
-  }
+  const [isLoading, setIsLoading] = useState(true);
+  const { timeRange, setTimeRange, timeRangeLabel } = useTimeRange();
 
-  logger.log("📊 Using community dashboard stats for community ID:", communityId);
-  
-  // Set up time range filter
-  const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
-  logger.log("⏱️ Time range set to:", timeRange);
-  
-  // Fetch subscribers data
-  const { data: subscribers, isLoading: subscribersLoading } = useSubscribers(communityId);
-  logger.log("👥 Subscribers loading:", subscribersLoading, "Count:", subscribers?.length || 0);
-  
-  // Fetch subscription plans
-  const { data: plans, isLoading: plansLoading } = useFetchSubscriptionPlans(communityId);
-  logger.log("💲 Subscription plans loaded:", plans?.length || 0);
+  // Fetch subscribers for the community
+  const subscribersResult = useSubscribers(communityId || '');
+  const { subscribers } = subscribersResult;
 
   // Filter subscribers based on time range
-  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(subscribers || [], timeRangeStartDate);
+  const filteredSubscribers = useFilteredSubscribers(subscribers, timeRange);
   
-  // Calculate revenue statistics
-  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
-    useRevenueStats(filteredSubscribers || []);
-  
-  // Get trial users information
-  const { trialUsers } = useTrialUsers(filteredSubscribers || []);
-  
-  // Get active user IDs for mini app data filtering
-  const activeUserIds = activeSubscribers?.map(sub => sub.telegram_user_id) || [];
-  
-  // Fetch mini app users data
-  const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = 
-    useMiniAppUsers(communityId, activeUserIds);
-  
-  // Use the fetched mini app users data
-  const miniAppUsers = {
-    count: miniAppUsersData?.count || 0,
-    nonSubscribers: miniAppUsersData?.nonSubscribers || 0
-  };
-  
-  // Calculate payment statistics
-  const { paymentStats } = usePaymentStats(filteredSubscribers || []);
-  
-  // Generate insights from subscriber data
-  const { insights } = useInsights(
-    filteredSubscribers || [],
-    activeSubscribers || [],
-    inactiveSubscribers || [],
-    plans || []
+  // Calculate active and inactive subscribers
+  const activeSubscribers = filteredSubscribers.filter((s) => 
+    s.subscription_status === true || s.subscription_status === 'active'
   );
-  
-  // Prepare chart data for visualizations
-  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers || []);
+  const inactiveSubscribers = filteredSubscribers.filter((s) => 
+    s.subscription_status === false || s.subscription_status === 'inactive'
+  );
 
-  // Fetch community owner info
-  const { data: ownerInfo, isLoading: ownerLoading } = useOwnerInfo(communityId);
-
-  // Combine loading states
-  const isLoading = subscribersLoading || plansLoading || ownerLoading || miniAppUsersLoading;
+  // Get calculated stats
+  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = useRevenueStats(filteredSubscribers);
+  const { trialUsers } = useTrialUsers(filteredSubscribers);
+  const miniAppStats = useMiniAppUsers(filteredSubscribers);
+  const { paymentStats } = usePaymentStats(filteredSubscribers);
+  const { insights } = useInsights(filteredSubscribers, totalRevenue);
+  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers, timeRange);
+  const ownerInfo = useOwnerInfo(communityId);
   
+  // Update loading state
+  useEffect(() => {
+    setIsLoading(subscribersResult.isLoading);
+  }, [subscribersResult.isLoading]);
+
   return {
     timeRange,
     setTimeRange,
     timeRangeLabel,
-    
     filteredSubscribers,
     activeSubscribers,
     inactiveSubscribers,
-    
     totalRevenue,
     avgRevenuePerSubscriber,
     conversionRate,
     trialUsers,
-    miniAppUsers,
+    miniAppUsers: miniAppStats?.miniAppUsers || { count: 0, percentage: 0 },
     paymentStats,
     insights,
-    
     memberGrowthData,
     revenueData,
-    
     ownerInfo,
-    
     isLoading
   };
 };

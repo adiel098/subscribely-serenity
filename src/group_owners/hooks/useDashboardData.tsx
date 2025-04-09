@@ -1,64 +1,38 @@
 
-import { DashboardSubscriber } from "./dashboard/types";
-import { useTimeRange } from "./dashboard/useTimeRange";
-import { useFilteredSubscribers } from "./dashboard/useFilteredSubscribers";
-import { useRevenueStats } from "./dashboard/useRevenueStats";
-import { useTrialUsers } from "./dashboard/useTrialUsers";
-import { usePaymentStats } from "./dashboard/usePaymentStats";
-import { useChartData } from "./dashboard/useChartData";
-import { useInsights } from "./dashboard/useInsights";
-import { Subscriber } from "./useSubscribers";
+import { useTrialUsers } from './dashboard/useTrialUsers';
+import { useMiniAppUsers } from './dashboard/useMiniAppUsers';
+import { useSubscribers } from './useSubscribers';
+import { useRevenueStats } from './dashboard/useRevenueStats';
+import { usePaymentStats } from './dashboard/usePaymentStats';
+import { useEffect, useState } from 'react';
 
-export const useDashboardData = (subscribers: Subscriber[] | undefined, plans: any[] | undefined) => {
-  // Cast subscribers to the extended type needed for dashboard
-  const dashboardSubscribers = subscribers as DashboardSubscriber[] | undefined;
+export const useDashboardData = (communityId: string) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const { subscribers, isLoading: isLoadingSubscribers } = useSubscribers(communityId);
   
-  // Compose all hooks
-  const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
+  // Calculate trial users stats
+  const trialUsersData = useTrialUsers(subscribers);
   
-  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(dashboardSubscribers, timeRangeStartDate);
+  // Calculate mini app users stats
+  const miniAppUsersData = useMiniAppUsers(subscribers);
   
-  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
-    useRevenueStats(filteredSubscribers);
+  // Calculate revenue stats
+  const revenueStats = useRevenueStats(subscribers);
   
-  const { trialUsers, miniAppUsers } = useTrialUsers(filteredSubscribers);
+  // Calculate payment stats
+  const paymentStats = usePaymentStats(subscribers);
   
-  const { paymentStats } = usePaymentStats(filteredSubscribers);
+  // Update loading state
+  useEffect(() => {
+    setIsLoading(isLoadingSubscribers);
+  }, [isLoadingSubscribers]);
   
-  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
-  
-  const { insights } = useInsights(
-    filteredSubscribers, 
-    activeSubscribers, 
-    inactiveSubscribers, 
-    plans
-  );
-
   return {
-    // Time range
-    timeRange,
-    setTimeRange,
-    timeRangeLabel,
-    
-    // Subscriber data
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers,
-    
-    // Revenue data
-    totalRevenue,
-    avgRevenuePerSubscriber,
-    conversionRate,
-    
-    // Chart data
-    memberGrowthData,
-    revenueData,
-    
-    // Analytics 
-    insights,
-    trialUsers,
-    miniAppUsers,
-    paymentStats
+    subscribers,
+    trialUsers: trialUsersData.trialUsers,
+    miniAppUsers: miniAppUsersData.miniAppUsers,
+    ...revenueStats,
+    paymentStats: paymentStats.paymentStats,
+    isLoading
   };
 };

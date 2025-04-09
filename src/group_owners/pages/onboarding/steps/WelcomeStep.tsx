@@ -1,10 +1,9 @@
 
 import React from "react";
-import { PartyPopper, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Rocket, ChevronRight, Sparkles, Check, Bot, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface WelcomeStepProps {
   onComplete: () => void;
@@ -12,80 +11,79 @@ interface WelcomeStepProps {
 }
 
 export const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete, activeStep }) => {
-  const navigate = useNavigate();
-  
-  const handleBeginClick = () => {
-    console.log("Let's Begin button clicked");
-    onComplete();
-    // Add a direct navigation fallback
-    setTimeout(() => {
-      navigate('/onboarding/bot-selection');
-    }, 300);
-  };
-  
   return (
     <OnboardingLayout
       currentStep="welcome"
-      title="Welcome to Membify!"
-      description="Let's set up your account to manage Telegram groups with paid memberships"
-      icon={<PartyPopper className="w-6 h-6" />}
+      title="Welcome to Membify! 👋"
+      description="Let's set up your paid Telegram communities in a few simple steps"
+      icon={<Rocket className="w-6 h-6" />}
+      showBackButton={false}
     >
       <div className="space-y-6">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="text-center"
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-6 overflow-hidden relative"
         >
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Ready to grow your community?</h2>
-          <p className="text-gray-600">
-            You're just a few steps away from managing your premium Telegram community.
-            We'll guide you through the setup process.
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="bg-indigo-50 rounded-xl p-6 border border-indigo-100"
-        >
-          <h3 className="font-medium text-indigo-800 mb-3">What you'll need to set up:</h3>
-          <ul className="space-y-2 text-left">
-            <li className="flex items-start gap-2">
-              <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
-                1
-              </div>
-              <span className="text-gray-700">Choose which bot to use for your communities</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
-                2
-              </div>
-              <span className="text-gray-700">Connect your Telegram channel or group</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <div className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
-                3
-              </div>
-              <span className="text-gray-700">Set up subscription plans for your members</span>
-            </li>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-200/20 to-purple-300/20 blur-3xl rounded-full -mr-16 -mt-16"></div>
+          
+          <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+            What You'll Need to Get Started
+          </h2>
+          
+          <ul className="space-y-4">
+            {[
+              { 
+                icon: <Bot className="h-5 w-5 text-indigo-600" />, 
+                title: "Telegram Bot Token", 
+                description: "Create a bot with @BotFather or use an existing one" 
+              },
+              { 
+                icon: <MessageSquare className="h-5 w-5 text-purple-600" />, 
+                title: "Telegram Group or Channel", 
+                description: "Where your subscribers will join" 
+              },
+              { 
+                icon: <Sparkles className="h-5 w-5 text-amber-600" />, 
+                title: "Admin Privileges", 
+                description: "Make sure your bot is an admin in your group/channel" 
+              }
+            ].map((item, index) => (
+              <li key={index} className="flex gap-3 items-start">
+                <div className="rounded-full bg-white p-2 shadow-sm border border-indigo-100 flex-shrink-0">
+                  {item.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{item.title}</h3>
+                  <p className="text-sm text-gray-600">{item.description}</p>
+                </div>
+              </li>
+            ))}
           </ul>
         </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.4 }}
-          className="flex justify-center"
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-4 mb-6">
+            <h3 className="flex items-center text-blue-800 font-medium gap-2">
+              <Check className="h-5 w-5 text-blue-600" />
+              Fast & Easy Setup
+            </h3>
+            <p className="text-sm text-blue-700 mt-1">
+              The entire process takes just a few minutes. We'll guide you through each step!
+            </p>
+          </div>
+          
           <Button 
-            onClick={handleBeginClick}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-            size="lg"
+            onClick={onComplete}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium py-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
           >
-            Let's Begin
-            <ArrowRight className="w-4 h-4" />
+            Let's Get Started
+            <ChevronRight className="ml-2 h-5 w-5" />
           </Button>
         </motion.div>
       </div>

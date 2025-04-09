@@ -1,26 +1,18 @@
 
-// If the file doesn't exist, we'll create it with this content
+// Onboarding step types
 export type OnboardingStep = 
   | "welcome" 
-  | "bot-selection" 
-  | "custom-bot-setup" 
+  | "bot-setup"
+  | "project-creation"
   | "connect-telegram"
-  | "completion" 
+  | "completion"
   | "complete";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
-  "bot-selection",
-  "custom-bot-setup",
+  "project-creation",
+  "bot-setup",
   "connect-telegram",
   "completion",
   "complete"
 ];
-
-export interface OnboardingState {
-  currentStep: OnboardingStep;
-  isCompleted: boolean;
-  isTelegramConnected: boolean;
-  hasPlatformPlan: boolean;
-  hasPaymentMethod: boolean;
-}

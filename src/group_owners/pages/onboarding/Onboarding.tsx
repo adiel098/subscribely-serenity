@@ -6,7 +6,8 @@ import { useOnboarding } from "@/group_owners/hooks/useOnboarding";
 import { useOnboardingRouter } from "@/group_owners/hooks/onboarding/useOnboardingRouter";
 import { StepRenderer } from "@/group_owners/components/onboarding/StepRenderer";
 import { OnboardingLoading } from "@/group_owners/components/onboarding/OnboardingLoading";
-import OfficialBotSetupStep from "./steps/OfficialBotSetupStep";
+import { toast } from "sonner";
+import { localStorageService } from "@/utils/localStorageService";
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -25,8 +26,7 @@ const Onboarding = () => {
 
   const {
     isLoading,
-    isUrlProcessed,
-    handleOfficialBotSetup
+    isUrlProcessed
   } = useOnboardingRouter(onboardingState, onboardingHookLoading, saveCurrentStep);
 
   const handleCompleteOnboarding = async () => {
@@ -35,7 +35,19 @@ const Onboarding = () => {
     try {
       console.log("Handling complete onboarding...");
       redirectingRef.current = true;
+      
+      // Save the completed state
       await completeOnboarding();
+      
+      // Store completion in local storage
+      localStorageService.setOnboardingStatus({ isCompleted: true, lastStep: "complete" });
+      localStorageService.setHasCommunity(true);
+      
+      // Toast notification
+      toast.success("Setup completed! Welcome to Membify.", {
+        description: "You're ready to start managing your paid communities.",
+        duration: 5000
+      });
       
       // Use setTimeout to prevent React errors during navigation
       setTimeout(() => {
@@ -45,6 +57,9 @@ const Onboarding = () => {
     } catch (error) {
       console.error("Error completing onboarding:", error);
       redirectingRef.current = false;
+      toast.error("Failed to complete setup", {
+        description: "Please try again or contact support."
+      });
     }
   };
 
@@ -63,11 +78,6 @@ const Onboarding = () => {
 
   // Extract the current path step
   const pathStep = location.pathname.split('/').pop();
-
-  // Special case for official-bot-setup - redirect to connect-telegram
-  if (pathStep === 'official-bot-setup') {
-    return handleOfficialBotSetup();
-  }
 
   // Special case for complete step - redirect to dashboard
   if (pathStep === 'complete' || onboardingState.currentStep === 'complete') {

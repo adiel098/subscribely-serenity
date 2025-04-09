@@ -3,8 +3,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { OnboardingStep } from "@/group_owners/hooks/onboarding/types";
 import { WelcomeStep } from "@/group_owners/pages/onboarding/steps/WelcomeStep";
-import BotSelectionStep from "@/group_owners/pages/onboarding/steps/BotSelectionStep";
-import CustomBotSetupStep from "@/group_owners/pages/onboarding/steps/CustomBotSetupStep";
+import ProjectCreationStep from "@/group_owners/pages/onboarding/steps/ProjectCreationStep";
+import BotSetupStep from "@/group_owners/pages/onboarding/steps/BotSetupStep";
 import ConnectTelegramStep from "@/group_owners/pages/onboarding/steps/ConnectTelegramStep";
 import CompletionStep from "@/group_owners/pages/onboarding/steps/CompletionStep";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,29 +58,22 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     );
   }
 
-  // Special case for custom-bot-setup
-  if (pathStep === 'custom-bot-setup') {
-    return (
-      <CustomBotSetupStep 
-        onComplete={() => {
-          console.log("Custom bot setup completed, marking as complete...");
-          handleCompleteOnboarding();
-        }} 
-        activeStep={true}
-        goToPreviousStep={() => navigate('/onboarding/bot-selection')}
-      />
-    );
-  }
-  
   const handleWelcomeComplete = () => {
-    console.log("Welcome step completed, going to next step");
-    // Use direct navigation to ensure we move to the next step
+    console.log("Welcome step completed, going to project creation step");
+    navigate('/onboarding/project-creation');
     goToNextStep("welcome");
-    
-    // Add a direct navigation fallback
-    setTimeout(() => {
-      navigate('/onboarding/bot-selection');
-    }, 300);
+  };
+  
+  const handleProjectCreationComplete = () => {
+    console.log("Project creation completed, going to bot setup step");
+    navigate('/onboarding/bot-setup');
+    goToNextStep("project-creation");
+  };
+
+  const handleBotSetupComplete = () => {
+    console.log("Bot setup completed, going to connect telegram step");
+    navigate('/onboarding/connect-telegram');
+    goToNextStep("bot-setup");
   };
   
   switch(currentStep) {
@@ -92,13 +85,10 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
         />
       );
     
-    case "bot-selection":
+    case "project-creation":
       return (
-        <BotSelectionStep 
-          onComplete={() => {
-            console.log("Bot selection completed, going to next step");
-            goToNextStep("bot-selection");
-          }} 
+        <ProjectCreationStep 
+          onComplete={handleProjectCreationComplete} 
           activeStep={true}
           goToPreviousStep={() => {
             console.log("Going back to welcome step");
@@ -107,16 +97,16 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           }}
         />
       );
-      
-    case "custom-bot-setup":
+    
+    case "bot-setup":
       return (
-        <CustomBotSetupStep 
-          onComplete={() => handleCompleteOnboarding()} 
+        <BotSetupStep 
+          onComplete={handleBotSetupComplete} 
           activeStep={true}
           goToPreviousStep={() => {
-            console.log("Going back to bot selection step");
-            goToPreviousStep("bot-selection");
-            navigate('/onboarding/bot-selection');
+            console.log("Going back to project creation step");
+            goToPreviousStep("project-creation");
+            navigate('/onboarding/project-creation');
           }}
         />
       );
@@ -131,29 +121,9 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
           }}
           activeStep={true}
           goToPreviousStep={() => {
-            // Check if we need to go back to custom-bot-setup or bot-selection
-            const hasBotToken = async () => {
-              try {
-                const { data } = await supabase
-                  .from('bot_settings')
-                  .select('custom_bot_token')
-                  .single();
-                
-                if (data?.custom_bot_token) {
-                  console.log("Has bot token, going back to custom-bot-setup");
-                  navigate('/onboarding/custom-bot-setup');
-                } else {
-                  console.log("No bot token, going back to bot-selection");
-                  navigate('/onboarding/bot-selection');
-                }
-              } catch (error) {
-                console.error("Error checking bot token:", error);
-                toast.error("Failed to check previous step");
-                navigate('/onboarding/bot-selection');
-              }
-            };
-            
-            hasBotToken();
+            console.log("Going back to bot setup step");
+            goToPreviousStep("connect-telegram");
+            navigate('/onboarding/bot-setup');
           }}
         />
       );

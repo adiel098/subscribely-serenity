@@ -1,38 +1,44 @@
-const ONBOARDING_STATUS_KEY = 'onboarding_status';
-const HAS_COMMUNITY_KEY = 'has_community';
+
+// Helper service for managing local storage values consistently
+
+interface OnboardingStatus {
+  isCompleted: boolean;
+  lastStep?: string;
+}
 
 export const localStorageService = {
-  // Onboarding Status
-  setOnboardingStatus: (status: { currentStep: string; isCompleted: boolean }) => {
-    localStorage.setItem(ONBOARDING_STATUS_KEY, JSON.stringify(status));
-  },
-  
-  getOnboardingStatus: () => {
-    const status = localStorage.getItem(ONBOARDING_STATUS_KEY);
+  // Onboarding status
+  getOnboardingStatus: (): OnboardingStatus | null => {
+    const status = localStorage.getItem('onboarding_status');
     return status ? JSON.parse(status) : null;
   },
   
-  clearOnboardingStatus: () => {
-    localStorage.removeItem(ONBOARDING_STATUS_KEY);
-  },
-
-  // Community Status
-  setHasCommunity: (hasCommunity: boolean) => {
-    localStorage.setItem(HAS_COMMUNITY_KEY, JSON.stringify(hasCommunity));
+  setOnboardingStatus: (status: OnboardingStatus): void => {
+    localStorage.setItem('onboarding_status', JSON.stringify(status));
   },
   
-  getHasCommunity: () => {
-    const status = localStorage.getItem(HAS_COMMUNITY_KEY);
-    return status ? JSON.parse(status) : null;
+  // Community status
+  getHasCommunity: (): boolean => {
+    return localStorage.getItem('has_community') === 'true';
   },
   
-  clearHasCommunity: () => {
-    localStorage.removeItem(HAS_COMMUNITY_KEY);
+  setHasCommunity: (value: boolean): void => {
+    localStorage.setItem('has_community', value.toString());
   },
-
-  // Clear all
-  clearAll: () => {
-    localStorage.removeItem(ONBOARDING_STATUS_KEY);
-    localStorage.removeItem(HAS_COMMUNITY_KEY);
+  
+  // Current project
+  getCurrentProjectId: (): string | null => {
+    return localStorage.getItem('current_project_id');
+  },
+  
+  setCurrentProjectId: (projectId: string): void => {
+    localStorage.setItem('current_project_id', projectId);
+  },
+  
+  // Clear all app data
+  clearAllData: (): void => {
+    localStorage.removeItem('onboarding_status');
+    localStorage.removeItem('has_community');
+    localStorage.removeItem('current_project_id');
   }
 };

@@ -15,46 +15,43 @@ import TelegramConnect from "@/group_owners/pages/connect/TelegramConnect";
 import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";
 import NewProject from "@/group_owners/pages/projects/NewProject";
 import ProjectSettings from "@/group_owners/pages/projects/ProjectSettings";
-import { AuthProvider } from "@/auth/contexts/AuthContext";
-import { CommunityProvider } from "@/contexts/CommunityContext";
-import { ProjectProvider } from "@/contexts/ProjectContext";
+import { BrowserRouter } from "react-router-dom";
+import { AppProviders } from "@/providers/AppProviders";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ProjectProvider>
-          <CommunityProvider>
-            <Routes>
-              {/* Telegram Mini App */}
-              <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
-              
-              {/* Main Application */}
-              <Route element={<RootLayout />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                
-                {/* Project Management */}
-                <Route path="/projects/new" element={<NewProject />} />
-                <Route path="/projects/settings" element={<ProjectSettings />} />
-                
-                {/* Dashboard Routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/subscribers" element={<Subscribers />} />
-                <Route path="/subscriptions" element={<Subscriptions />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/bot-settings" element={<BotSettings />} />
-                <Route path="/telegram-bot" element={<TelegramBot />} />
-                
-                {/* Connection routes */}
-                <Route path="/connect/telegram" element={<TelegramConnect />} />
-              </Route>
-            </Routes>
+      <BrowserRouter>
+        <AppProviders>
+          <Routes>
+            {/* Telegram Mini App */}
+            <Route path="/telegram-mini-app" element={<TelegramMiniApp />} />
             
-            <Toaster />
-            <SonnerToaster position="top-right" />
-          </CommunityProvider>
-        </ProjectProvider>
-      </AuthProvider>
+            {/* Main Application */}
+            <Route element={<RootLayout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              
+              {/* Project Management */}
+              <Route path="/projects/new" element={<NewProject />} />
+              <Route path="/projects/settings" element={<ProjectSettings />} />
+              
+              {/* Dashboard Routes */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/subscribers" element={<Subscribers />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/bot-settings" element={<BotSettings />} />
+              <Route path="/telegram-bot" element={<TelegramBot />} />
+              
+              {/* Connection routes */}
+              <Route path="/connect/telegram" element={<TelegramConnect />} />
+            </Route>
+          </Routes>
+          
+          <Toaster />
+          <SonnerToaster position="top-right" />
+        </AppProviders>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

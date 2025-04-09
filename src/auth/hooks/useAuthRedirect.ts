@@ -27,6 +27,17 @@ export function useAuthRedirect() {
       }, 500);
     }
     
+    // If user is NOT logged in and NOT on the auth page, redirect to auth
+    if (!user && location.pathname !== '/auth' && !isRedirectingRef.current) {
+      console.log("No user logged in, redirecting to auth page");
+      isRedirectingRef.current = true;
+      navigate('/auth', { replace: true });
+      setTimeout(() => {
+        isRedirectingRef.current = false;
+      }, 500);
+      return;
+    }
+    
     // Reset checking status when changing locations outside onboarding
     if (!location.pathname.startsWith('/onboarding')) {
       onboardingCheckedRef.current = false;

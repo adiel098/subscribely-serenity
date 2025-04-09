@@ -77,10 +77,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           // Clear cached session
           sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          
+          // If we're not on the auth page, redirect to it
+          if (location.pathname !== '/auth') {
+            console.log('🔄 AuthContext: No session, redirecting to auth page');
+            navigate('/auth', { replace: true });
+          }
         }
       } catch (err) {
         console.error('❌ AuthContext: Error checking session:', err);
-        if (mounted) setUser(null);
+        if (mounted) {
+          setUser(null);
+          // If we're not on the auth page, redirect to it
+          if (location.pathname !== '/auth') {
+            navigate('/auth', { replace: true });
+          }
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -114,11 +126,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         sessionStorage.clear();
         localStorage.clear();
         
-        // Only redirect to auth page if not already there
-        if (location.pathname !== '/auth') {
-          console.log('🚀 AuthContext: Redirecting to auth page after sign out');
-          navigate("/auth", { replace: true });
-        }
+        // Always redirect to auth page on sign out
+        console.log('🚀 AuthContext: Redirecting to auth page after sign out');
+        navigate("/auth", { replace: true });
         return;
       }
       
@@ -135,10 +145,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (e) {
           console.error('Error caching session:', e);
         }
+        
+        // If we're on the auth page and have a user, redirect to dashboard
+        if (location.pathname === '/auth') {
+          console.log('✅ AuthContext: User authenticated, redirecting from auth to dashboard');
+          navigate("/dashboard", { replace: true });
+        }
       } else {
         setUser(null);
         // Clear cached session
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        
+        // If we're not on the auth page, redirect to it
+        if (location.pathname !== '/auth') {
+          console.log('🔄 AuthContext: No session after state change, redirecting to auth page');
+          navigate('/auth', { replace: true });
+        }
       }
       
       setLoading(false);
@@ -149,6 +171,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (mounted && loading) {
         console.log('⚠️ AuthContext: Loading state timeout reached, forcing loading to false');
         setLoading(false);
+        
+        // If no user and not on auth page, redirect to auth
+        if (!user && location.pathname !== '/auth') {
+          navigate('/auth', { replace: true });
+        }
       }
     }, 3000);
 

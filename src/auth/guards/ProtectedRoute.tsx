@@ -25,14 +25,17 @@ export const ProtectedRoute = ({
     }
   }, [user, loading]);
 
+  // If still loading, show loading screen
   if (loading) {
     console.log("⏳ ProtectedRoute: Still loading, showing loading state");
     return <LoadingScreen />;
   }
   
+  // If no authenticated user, redirect to auth page
   if (!user) {
-    console.log("🚫 ProtectedRoute: Redirecting to auth page");
-    return <Navigate to="/auth" state={{ from: location }} />;
+    console.log("🚫 ProtectedRoute: No user, redirecting to auth page");
+    // Save the current location so we can redirect back after login
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Check if we're trying to access the dashboard and need onboarding
@@ -42,14 +45,14 @@ export const ProtectedRoute = ({
   
   if (isDashboardRoute && (!onboardingStatus?.isCompleted || !hasCommunity)) {
     console.log("🔄 ProtectedRoute: Redirecting to onboarding from dashboard");
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   // If we're trying to access onboarding but it's completed and we have a community
   const isOnboardingRoute = location.pathname.startsWith("/onboarding");
   if (isOnboardingRoute && onboardingStatus?.isCompleted && hasCommunity) {
     console.log("✅ ProtectedRoute: Onboarding complete, redirecting to dashboard");
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

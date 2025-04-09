@@ -30,15 +30,15 @@ export const ProfileTabContent = () => {
   const fetchProfileData = async () => {
     setIsLoading(true);
     try {
-      // First try to get data from the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+      // Get data from the users table instead of profiles table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
         .select('*')
         .eq('id', user?.id)
         .single();
 
-      if (profileError) {
-        console.error('Error fetching profile data:', profileError);
+      if (userError) {
+        console.error('Error fetching user data:', userError);
         
         // If there's an error, fallback to user auth data
         setProfileData({
@@ -47,12 +47,12 @@ export const ProfileTabContent = () => {
           email: user?.email || '',
           phone: ''
         });
-      } else if (profileData) {
+      } else if (userData) {
         setProfileData({
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || '',
-          email: profileData.email || user?.email || '',
-          phone: profileData.phone || ''
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email: userData.email || user?.email || '',
+          phone: userData.phone || ''
         });
       }
     } catch (error) {
@@ -75,7 +75,7 @@ export const ProfileTabContent = () => {
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('users')
         .update({
           first_name: profileData.first_name,
           last_name: profileData.last_name,

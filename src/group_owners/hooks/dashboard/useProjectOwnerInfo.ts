@@ -23,15 +23,15 @@ export const useProjectOwnerInfo = (projectId: string | null) => {
           return null;
         }
         
-        // Try to get from profiles table only - removed auth.users call
+        // Use the users table instead of profiles
         const { data: profile, error: profileError } = await supabase
-          .from("profiles")
+          .from("users")
           .select("first_name, last_name")
           .eq("id", project.owner_id)
           .single();
         
         if (profileError) {
-          logger.error("Error fetching profile from profiles table:", profileError);
+          logger.error("Error fetching profile from users table:", profileError);
           return {
             first_name: '',
             last_name: ''

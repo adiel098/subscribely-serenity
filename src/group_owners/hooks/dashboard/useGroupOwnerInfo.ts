@@ -24,8 +24,9 @@ export const useGroupOwnerInfo = (groupId: string | null) => {
           return null;
         }
         
+        // Use the users table instead of profiles
         const { data: owner, error: ownerError } = await supabase
-          .from("profiles")
+          .from("users")
           .select("first_name, last_name")
           .eq("id", group.owner_id)
           .single();

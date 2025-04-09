@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,8 +26,10 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
 
     try {
       if (isSignUp) {
-        console.log(`🔐 Auth page: Attempting to sign up user: ${email}`);
-        const { error } = await supabase.auth.signUp({
+        console.log(`🔐 Auth page: Starting registration process for email: ${email}`);
+        
+        // שלב 1: יצירת משתמש בטבלת האימות של Supabase
+        const { data: authData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -39,13 +40,61 @@ export const AuthForm = ({ isSignUp, setIsSignUp }: AuthFormProps) => {
             }
           }
         });
-        if (error) throw error;
+
+        if (error) {
+          console.error("❌ Auth page: Supabase auth signup failed:", error);
+          throw error;
+        }
+
+        console.log("✅ Auth page: Supabase auth signup successful");
+
+        // שלב 2: עדכון פרטי המשתמש בטבלת users
+        if (authData.user) {
+          const now = new Date().toISOString();
+          console.log(`📝 Auth page: Updating user record in users table for ID: ${authData.user.id}`);
+          
+          const { error: userError } = await supabase
+            .from('users')
+            .update({
+              email: authData.user.email,
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`.trim(),
+              status: 'active',
+              registration_date: now,
+              updated_at: now,
+              last_login: now,
+              onboarding_completed: false,
+              onboarding_step: 'welcome'
+            })
+            .eq('id', authData.user.id);
+
+          if (userError) {
+            console.error("❌ Auth page: Failed to update user record:", userError);
+            // נרשום את השגיאה המלאה לצורכי דיבוג
+            console.error("Error details:", {
+              code: userError.code,
+              message: userError.message,
+              details: userError.details,
+              hint: userError.hint
+            });
+            
+            toast({
+              variant: "destructive",
+              title: "Registration Error",
+              description: "Failed to complete user registration. Our team has been notified.",
+            });
+            return;
+          }
+
+          console.log("✅ Auth page: User record updated successfully");
+        }
         
         toast({
-          title: "Registration Successful",
-          description: "Please check your email for verification.",
+          title: "Welcome to Subscribely!",
+          description: "Please check your email to verify your account.",
         });
-        console.log("✅ Auth page: User registered successfully");
+        console.log("🎉 Auth page: Registration process completed successfully");
       } else {
         console.log(`🔑 Auth page: Attempting to sign in user: ${email}`);
         const { error } = await supabase.auth.signInWithPassword({

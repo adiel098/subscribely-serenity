@@ -1,16 +1,15 @@
-
 import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bot, Code, Shield, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { Bot } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card } from "@/components/ui/card";
-import { getTempOnboardingData, setTempProjectData } from "@/group_owners/hooks/useCreateCommunityGroup";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { TelegramChat } from "@/group_owners/components/onboarding/custom-bot/TelegramChatItem";
+import { getTempOnboardingData, setTempProjectData, commitOnboardingData } from "@/group_owners/hooks/useCreateCommunityGroup";
+import { CustomBotSetupCard } from "@/group_owners/components/onboarding/custom-bot/CustomBotSetupCard";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 const botSetupSchema = z.object({
   bot_token: z.string().min(40, "Bot token must be valid").max(100, "Bot token is too long")
@@ -30,9 +29,13 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
   activeStep 
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tokenVerified, setTokenVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationResults, setVerificationResults] = useState<TelegramChat[] | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [customTokenInput, setCustomTokenInput] = useState("");
   const tempData = getTempOnboardingData();
-  
+  const { user } = useAuth();
+
   const form = useForm<BotSetupFormData>({
     resolver: zodResolver(botSetupSchema),
     defaultValues: {
@@ -40,41 +43,120 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     }
   });
 
-  const onSubmit = async (data: BotSetupFormData) => {
+  const handleVerifyConnection = async () => {
+    if (!customTokenInput) {
+      toast.error("Please enter your bot token");
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError(null);
+    
+    try {
+      const response = await supabase.functions.invoke("validate-bot-token", {
+        body: { 
+          botToken: customTokenInput,
+          projectId: null
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data.valid) {
+        setVerificationResults(response.data.chatList || []);
+        
+        const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
+        const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
+        
+        if (response.data.chatList && response.data.chatList.length > 0) {
+          let successMessage = `Bot verified successfully!`;
+          if (channelCount > 0 && groupCount > 0) {
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+          } else if (channelCount > 0) {
+            successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'}.`;
+          } else if (groupCount > 0) {
+            successMessage += ` Found ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
+          }
+          toast.success(successMessage);
+        } else {
+          toast.warning("Bot token is valid, but no channels or groups were found. Make sure your bot is an admin in at least one group or channel.");
+        }
+      } else {
+        setVerificationError(response.data.message || "Invalid bot token");
+        toast.error(`Invalid bot token: ${response.data.message}`);
+      }
+    } catch (error: any) {
+      console.error("Error validating bot token:", error);
+      setVerificationError(error.message || "Failed to validate bot token");
+      toast.error("Failed to validate bot token. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleContinue = async () => {
+    if (!user?.id) {
+      console.error("❌ Bot Setup: User not authenticated");
+      toast.error("User not authenticated");
+      return;
+    }
+
+    console.log("🤖 Bot Setup: Starting continue process for user:", {
+      userId: user.id,
+      email: user.email
+    });
+
     setIsSubmitting(true);
     try {
-      // Verify token format (this is just a basic check)
-      if (!data.bot_token.includes(":")) {
-        toast.error("Invalid bot token format. Please check and try again.");
+      // Check if a project with this bot token already exists
+      const { data: existingProject } = await supabase
+        .from("projects")
+        .select("id, name")
+        .eq("bot_token", customTokenInput)
+        .single();
+
+      if (existingProject) {
+        toast.error(`A project with this bot token already exists: ${existingProject.name}`);
         setIsSubmitting(false);
         return;
       }
+
+      // Use the project name that was already set in the previous step
+      setTempProjectData({
+        ...tempData.project,
+        bot_token: customTokenInput,
+        communities: verificationResults || []
+      });
+
+      console.log("✅ Bot Setup: Saved temporary project data:", {
+        name: tempData.project?.name,
+        botTokenSet: !!customTokenInput,
+        communitiesCount: verificationResults?.length || 0
+      });
+
+      // Call commitOnboardingData
+      const success = await commitOnboardingData();
       
-      // Update temp data with bot token
-      if (tempData.project) {
-        const success = setTempProjectData({
-          ...tempData.project,
-          bot_token: data.bot_token
-        });
-        
-        if (success) {
-          console.log("Bot token stored temporarily:", data.bot_token);
-          setTokenVerified(true);
-          setTimeout(() => {
-            onComplete();
-          }, 1000);
-        } else {
-          toast.error("Failed to store bot token");
-        }
-      } else {
-        toast.error("Project data not found. Please go back to the project creation step.");
+      if (!success) {
+        throw new Error("Failed to commit onboarding data");
       }
-    } catch (error) {
-      console.error("Error in bot setup step:", error);
-      toast.error("Something went wrong. Please try again.");
+
+      console.log("✅ Bot Setup: Successfully committed onboarding data");
+      
+      // Proceed to the next step
+      onComplete();
+    } catch (error: any) {
+      console.error("❌ Bot Setup: Error in continue process:", error);
+      toast.error(error.message || "Failed to save bot settings");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleChatsRefresh = (newChats: TelegramChat[]) => {
+    setVerificationResults(newChats);
   };
 
   return (
@@ -82,70 +164,22 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
       currentStep="custom-bot-setup"
       title="Set Up Your Telegram Bot"
       description="Connect your bot to enable payment processing and member management"
-      icon={<Bot className="w-6 h-6 text-indigo-500" />}
+      icon={<Bot className="w-6 h-6" />}
       showBackButton={true}
       onBack={goToPreviousStep}
     >
-      <div className="space-y-6">
-        <Card className="p-5 border border-blue-100 bg-blue-50">
-          <div className="flex items-start space-x-4">
-            <div className="bg-blue-100 p-2 rounded-full">
-              <Shield className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-medium text-blue-800 mb-1">Create a Telegram Bot First</h3>
-              <p className="text-sm text-blue-700 mb-2">Before proceeding, you need to create a Telegram bot using BotFather.</p>
-              <a 
-                href="https://t.me/botfather" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full inline-flex items-center hover:bg-blue-700 transition-colors"
-              >
-                Open BotFather
-              </a>
-            </div>
-          </div>
-        </Card>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="bot_token"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bot Token</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center">
-                      <Input 
-                        placeholder="12345678:ABCdefGHIjklMNOpqrsTUVwxyz" 
-                        {...field} 
-                        className="py-6 font-mono"
-                        type="password"
-                      />
-                      {tokenVerified && (
-                        <CheckCircle className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="pt-4 flex justify-end">
-              <Button 
-                type="submit" 
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-6"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Verifying..." : "Continue"}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
+      <CustomBotSetupCard
+        customTokenInput={customTokenInput}
+        setCustomTokenInput={setCustomTokenInput}
+        goToPreviousStep={goToPreviousStep}
+        onContinue={handleContinue}
+        onVerifyConnection={handleVerifyConnection}
+        isVerifying={isVerifying}
+        verificationResults={verificationResults}
+        verificationError={verificationError}
+        onChatsRefresh={handleChatsRefresh}
+        isSaving={isSubmitting}
+      />
     </OnboardingLayout>
   );
 };

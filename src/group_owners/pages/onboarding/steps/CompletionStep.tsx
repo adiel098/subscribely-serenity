@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { Card } from "@/components/ui/card";
-import { commitOnboardingData, getTempOnboardingData } from "@/group_owners/hooks/useCreateCommunityGroup";
+import { getTempOnboardingData } from "@/group_owners/hooks/useCreateCommunityGroup";
 
 interface CompletionStepProps {
   onComplete: () => Promise<void>;
@@ -38,17 +38,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
   const handleCompleteOnboarding = async () => {
     setIsSubmitting(true);
     try {
-      // First commit all temporary data to the database
-      const commitSuccess = await commitOnboardingData();
-      
-      if (!commitSuccess) {
-        console.error("Failed to commit onboarding data");
-        // Continue with onboarding completion even if commit fails
-      } else {
-        console.log("Successfully committed all onboarding data");
-      }
-      
-      // Complete the onboarding process
+      // Complete the onboarding process and navigate to dashboard
       await onComplete();
       navigate('/dashboard', { replace: true });
     } catch (error) {

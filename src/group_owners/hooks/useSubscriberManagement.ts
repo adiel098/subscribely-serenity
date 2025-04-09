@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,49 +50,35 @@ export const useSubscriberManagement = (communityId: string) => {
       // The community_id is the UUID in our database, but Telegram needs the actual chat_id
       const { data: community, error: communityError } = await supabase
         .from('communities')
-        .select('telegram_chat_id')
+        .select('telegram_chat_id, project_id')  
         .eq('id', subscriber.community_id)
         .single();
         
       if (communityError || !community?.telegram_chat_id) {
-        console.error('Error getting telegram_chat_id:', communityError);
+        console.error('❌ Error getting telegram_chat_id:', communityError);
         throw new Error('Could not retrieve Telegram chat ID');
       }
       
       console.log(`Using telegram_chat_id: ${community.telegram_chat_id} instead of community_id: ${subscriber.community_id}`);
       
-      // 1. Get bot token for this community
-      const { data: botSettings, error: botError } = await supabase
-        .from('telegram_bot_settings')
-        .select('use_custom_bot, custom_bot_token')
-        .eq('community_id', subscriber.community_id)
+      // 1. Get bot token from projects table
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('bot_token')
+        .eq('id', community.project_id)
         .single();
       
-      if (botError) {
-        console.error('Error fetching bot settings:', botError);
-        // Fallback to global bot token
-        console.log('Falling back to global bot token');
+      if (projectError) {
+        console.error('❌ Error fetching project:', projectError);
+        throw new Error('Could not retrieve project settings');
       }
-      
-      // Get the bot token (custom or global)
-      let botToken;
-      if (botSettings?.use_custom_bot && botSettings?.custom_bot_token) {
-        console.log('Using custom bot token');
-        botToken = botSettings.custom_bot_token;
-      } else {
-        console.log('Using global bot token');
-        const { data: globalSettings, error: globalError } = await supabase
-          .from('telegram_global_settings')
-          .select('bot_token')
-          .single();
-          
-        if (globalError || !globalSettings?.bot_token) {
-          console.error('Error retrieving global bot token:', globalError);
-          throw new Error('Could not retrieve bot token');
-        }
-        
-        botToken = globalSettings.bot_token;
+
+      if (!project.bot_token) {
+        console.error('❌ No bot token found for project');
+        throw new Error('Bot token not configured for this project');
       }
+
+      console.log('✅ Successfully retrieved bot token from project');
       
       // 2. Remove member from Telegram chat through the kick-member edge function
       const { data: kickResult, error: kickError } = await supabase.functions.invoke('kick-member', {
@@ -101,14 +86,16 @@ export const useSubscriberManagement = (communityId: string) => {
           member_id: subscriber.id,
           telegram_user_id: subscriber.telegram_user_id,
           chat_id: community.telegram_chat_id,
-          bot_token: botToken
+          bot_token: project.bot_token
         }
       });
-
+      
       if (kickError) {
-        console.error('Error removing member from Telegram:', kickError);
-        throw new Error('Failed to remove member from Telegram channel');
+        console.error('❌ Error kicking member:', kickError);
+        throw kickError;
       }
+
+      console.log('✅ Successfully kicked member from Telegram chat');
       
       if (!kickResult?.success) {
         console.error('Kick-member function returned error:', kickResult?.error);

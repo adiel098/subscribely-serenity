@@ -63,7 +63,7 @@ export const useSubscriberPageState = (entityId: string) => {
       const { data: botSettings, error: botError } = await supabase
         .from('telegram_bot_settings')
         .select('*')
-        .eq('community_id', subscriber.community_id)
+        .eq('project_id', subscriber.project_id)
         .single();
       
       if (botError) {
@@ -77,35 +77,23 @@ export const useSubscriberPageState = (entityId: string) => {
       }
       
       let botToken = null;
-      if (botSettings?.use_custom_bot && botSettings?.custom_bot_token) {
-        botToken = botSettings.custom_bot_token;
-      } else {
-        const { data: globalSettings, error: globalError } = await supabase
-          .from('telegram_global_settings')
-          .select('bot_token')
-          .single();
+      // We don't use custom bots anymore, always use global bot token
+      const { data: globalSettings, error: globalError } = await supabase
+        .from('telegram_global_settings')
+        .select('bot_token')
+        .single();
           
-        if (globalError || !globalSettings?.bot_token) {
-          console.error('Error retrieving global bot token:', globalError);
-          toast({
-            title: "Error",
-            description: "Could not retrieve bot token",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        botToken = globalSettings.bot_token;
-      }
-      
-      if (!botToken) {
+      if (globalError || !globalSettings?.bot_token) {
+        console.error('Error retrieving global bot token:', globalError);
         toast({
           title: "Error",
-          description: "No bot token available",
+          description: "Could not retrieve bot token",
           variant: "destructive"
         });
         return;
       }
+        
+      botToken = globalSettings.bot_token;
       
       const { data: community, error: communityError } = await supabase
         .from('communities')

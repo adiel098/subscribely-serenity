@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -33,24 +32,27 @@ export const useUserBotPreference = (): UserBotPreference => {
         return profileData;
       }
       
-      // If not in profiles, check if user has any communities with bot settings
-      const { data: communityData, error: communityError } = await supabase
-        .from("communities")
+      // If not in profiles, check if user has any projects with bot settings
+      const { data: projectData, error: projectError } = await supabase
+        .from("projects")
         .select("id")
         .eq("owner_id", user.id)
         .limit(1)
         .single();
       
-      if (!communityError && communityData) {
+      if (!projectError && projectData) {
         const { data: botSettingsData, error: botSettingsError } = await supabase
           .from("telegram_bot_settings")
-          .select("use_custom_bot, custom_bot_token")
-          .eq("community_id", communityData.id)
+          .select("*")
+          .eq("project_id", projectData.id)
           .single();
           
         if (!botSettingsError && botSettingsData) {
-          console.log("Found bot preference in telegram_bot_settings:", botSettingsData);
-          return botSettingsData;
+          console.log("Found bot settings:", botSettingsData);
+          return {
+            use_custom_bot: false,  // We don't use custom bots anymore
+            custom_bot_token: null
+          };
         }
       }
       

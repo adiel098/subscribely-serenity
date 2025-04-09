@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,20 +11,14 @@ export interface ReminderMessage {
 
 export interface BotSettings {
   id: string;
-  community_id: string;
+  project_id: string;
   welcome_message: string;
   welcome_image: string | null;
   subscription_reminder_days: number;
   subscription_reminder_message: string;
-  auto_remove_expired: boolean;
   expired_subscription_message: string;
   renewal_discount_enabled: boolean;
   renewal_discount_percentage: number;
-  max_messages_per_day: number | null;
-  quiet_hours_start: string | null;
-  quiet_hours_end: string | null;
-  auto_welcome_message: boolean;
-  bot_signature: string;
   language: string;
   first_reminder_days: number;
   first_reminder_message: string;
@@ -33,15 +26,14 @@ export interface BotSettings {
   second_reminder_days: number;
   second_reminder_message: string;
   second_reminder_image: string | null;
-  use_custom_bot: boolean;
-  custom_bot_token: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useBotSettings = (entityId: string | null = null) => {
   const queryClient = useQueryClient();
   const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Log the entityId to help with debugging
   console.log(`useBotSettings hook called with entityId: ${entityId}`);
 
   const { data: settings, isLoading } = useQuery({
@@ -57,13 +49,12 @@ export const useBotSettings = (entityId: string | null = null) => {
       const query = supabase
         .from('telegram_bot_settings')
         .select('*')
-        .eq('community_id', entityId);
+        .eq('project_id', entityId);
 
       const { data, error } = await query.single();
 
       if (error) {
         console.error('Error fetching bot settings:', error);
-        // If no settings found, create default settings
         if (error.code === 'PGRST116') {
           console.log(`No settings found for entity ${entityId}, creating defaults`);
           return createDefaultBotSettings(entityId);
@@ -73,7 +64,6 @@ export const useBotSettings = (entityId: string | null = null) => {
 
       console.log(`Successfully fetched bot settings for entity ${entityId}`);
       
-      // Ensure all required properties have default values
       return {
         ...data,
         welcome_image: data.welcome_image || null,
@@ -83,8 +73,10 @@ export const useBotSettings = (entityId: string | null = null) => {
         second_reminder_days: data.second_reminder_days || 1,
         second_reminder_message: data.second_reminder_message || 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
         second_reminder_image: data.second_reminder_image || null,
-        use_custom_bot: data.use_custom_bot || false,
-        custom_bot_token: data.custom_bot_token || null
+        subscription_reminder_days: data.subscription_reminder_days || 3,
+        language: data.language || 'en',
+        renewal_discount_enabled: data.renewal_discount_enabled || false,
+        renewal_discount_percentage: data.renewal_discount_percentage || 10
       } as BotSettings;
     },
     enabled: Boolean(entityId),
@@ -94,26 +86,21 @@ export const useBotSettings = (entityId: string | null = null) => {
     console.log("Creating default bot settings for entity", entityId);
     
     const defaultSettings = {
-      community_id: entityId,
-      welcome_message: 'Welcome to our community! 👋\nWe\'re excited to have you here.\nFeel free to introduce yourself and join the conversations.',
+      project_id: entityId,
+      welcome_message: 'Welcome to our community! 👋\nWe\'re excited to have you here.',
       welcome_image: null,
       subscription_reminder_days: 3,
-      subscription_reminder_message: 'Hey there! 🔔\nYour subscription will end soon. Don\'t forget to renew to keep enjoying our community!',
-      auto_remove_expired: false,
-      expired_subscription_message: 'Your subscription has ended. We hope to see you again soon! 🌟\nTo renew your subscription, please visit our subscription page.',
+      subscription_reminder_message: 'Hey there! 🔔\nYour subscription will end soon. Don\'t forget to renew!',
+      expired_subscription_message: 'Your subscription has ended. We hope to see you again soon! 🌟',
       renewal_discount_enabled: false,
       renewal_discount_percentage: 10,
-      auto_welcome_message: true,
-      bot_signature: '🤖 Community Bot',
       language: 'en',
       first_reminder_days: 3,
       first_reminder_message: 'Your subscription will expire soon. Renew now to maintain access!',
       first_reminder_image: null,
       second_reminder_days: 1,
-      second_reminder_message: 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
-      second_reminder_image: null,
-      use_custom_bot: false,
-      custom_bot_token: null,
+      second_reminder_message: 'Final reminder: Your subscription expires tomorrow. Renew now!',
+      second_reminder_image: null
     };
 
     try {
@@ -142,7 +129,7 @@ export const useBotSettings = (entityId: string | null = null) => {
       const query = supabase
         .from('telegram_bot_settings')
         .update(newSettings)
-        .eq('community_id', entityId);
+        .eq('project_id', entityId);
 
       const { data, error } = await query.select().single();
 
@@ -174,8 +161,7 @@ export const useBotSettings = (entityId: string | null = null) => {
       key !== 'language' && 
       key !== 'welcome_image' &&
       key !== 'first_reminder_image' &&
-      key !== 'second_reminder_image' &&
-      key !== 'custom_bot_token'
+      key !== 'second_reminder_image'
     )) {
       updateSettingsMutation.mutate(newSettings);
       return;

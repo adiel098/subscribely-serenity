@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { TelegramBot } from "https://deno.land/x/telegram_bot_api/mod.ts";
@@ -245,7 +244,7 @@ serve(async (req: Request) => {
         await supabase
           .from('telegram_bot_settings')
           .insert({
-            community_id: community.id,
+            project_id: community.id,
             chat_id: chatId,
             verification_code: verificationCode,
             verified_at: new Date().toISOString(),

@@ -2,7 +2,6 @@
 export interface BotSettings {
   id?: string;
   project_id?: string;
-  community_id?: string;
   welcome_message?: string;
   welcome_image?: string | null;
   expired_subscription_message?: string;

@@ -1,3 +1,4 @@
+
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { LoggerService } from '../loggingService.ts';
 
@@ -20,11 +21,11 @@ export async function createBotSettings(
   const { data: existingSettings } = await supabase
     .from('telegram_bot_settings')
     .select('id')
-    .eq('community_id', communityId)
+    .eq('project_id', communityId) // Changed from community_id to project_id
     .single();
 
   if (existingSettings) {
-    await logger.info(`Bot settings already exist for community ${communityId}`);
+    await logger.info(`Bot settings already exist for project ${communityId}`);
     return { success: true, data: existingSettings };
   }
 
@@ -32,7 +33,7 @@ export async function createBotSettings(
   const { data: settings, error: settingsError } = await supabase
     .from('telegram_bot_settings')
     .insert({
-      community_id: communityId,
+      project_id: communityId, // Changed from community_id to project_id
       chat_id: chatId,
       is_admin: false, // Will be updated after checking bot permissions
       welcome_message: `Welcome to ${communityName}! 🎉\n\n${description ? description + '\n\n' : ''}To join and access exclusive content, please subscribe using the button below:`,
@@ -64,6 +65,6 @@ export async function createBotSettings(
     return { success: false, error: settingsError };
   }
 
-  await logger.success(`✅ Successfully created bot settings for community ${communityId}`);
+  await logger.success(`✅ Successfully created bot settings for project ${communityId}`);
   return { success: true, data: settings };
 }

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +12,7 @@ export interface ReminderMessage {
 
 export interface BotSettings {
   id: string;
-  project_id: string;
+  project_id: string; // Changed from community_id to project_id
   welcome_message: string;
   welcome_image: string | null;
   subscription_reminder_days: number;
@@ -49,7 +50,7 @@ export const useBotSettings = (entityId: string | null) => {
       const query = supabase
         .from('telegram_bot_settings')
         .select('*')
-        .eq('project_id', entityId);
+        .eq('project_id', entityId); // Changed from community_id to project_id
 
       const { data, error } = await query.single();
 
@@ -91,7 +92,7 @@ export const useBotSettings = (entityId: string | null) => {
     console.log("Creating default bot settings for entity", entityId);
     
     const defaultSettings = {
-      project_id: entityId,
+      project_id: entityId, // Changed from community_id to project_id
       welcome_message: 'Welcome to our community! 👋\nWe\'re excited to have you here.',
       welcome_image: null,
       subscription_reminder_days: 3,
@@ -137,7 +138,7 @@ export const useBotSettings = (entityId: string | null) => {
       const query = supabase
         .from('telegram_bot_settings')
         .update(newSettings)
-        .eq('project_id', entityId);
+        .eq('project_id', entityId); // Changed from community_id to project_id
 
       const { data, error } = await query.select().single();
 

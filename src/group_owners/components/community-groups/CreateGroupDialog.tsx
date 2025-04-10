@@ -15,20 +15,34 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-interface CreateGroupDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+interface TelegramChat {
+  id: string;
+  title: string;
+  type: string;
 }
 
-export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ 
-  isOpen, 
-  onOpenChange 
-}) => {
+interface CreateGroupDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: CreateGroupData) => Promise<void>;
+  isSubmitting?: boolean;
+}
+
+interface CreateGroupData {
+  name: string;
+  description: string;
+  telegram_chat_id: string;
+  telegram_invite_link: string;
+}
+
+export const CreateGroupDialog = ({ open, onOpenChange, onSubmit, isSubmitting = false }: CreateGroupDialogProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [customLink, setCustomLink] = useState("");
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [availableChats, setAvailableChats] = useState<TelegramChat[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   const { user } = useAuth();
   const { data: communities, isLoading: isCommunitiesLoading } = useCommunities();
@@ -85,8 +99,26 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
     return /^[a-zA-Z0-9_-]*$/.test(link);
   };
 
+  const fetchTelegramChats = async () => {
+    setIsLoading(true);
+    try {
+      // Mock implementation - in a real app, this would fetch from the Telegram API
+      const mockChats: TelegramChat[] = [
+        { id: "-1001234567890", title: "My Channel", type: "channel" },
+        { id: "-987654321", title: "My Group", type: "supergroup" },
+        { id: "-123987456", title: "Another Group", type: "group" }
+      ];
+      setAvailableChats(mockChats);
+    } catch (error) {
+      console.error("Failed to fetch Telegram chats:", error);
+      // Show error toast
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
+    <Dialog open={open} onOpenChange={(open) => {
       if (!open) resetForm();
       onOpenChange(open);
     }}>

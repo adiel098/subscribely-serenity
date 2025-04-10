@@ -1,67 +1,67 @@
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { useEffect } from "react";
-import { localStorageService } from "@/utils/localStorageService";
-import { LoadingScreen } from "@/components/ui/loading-screen";
-import { supabase } from "@/integrations/supabase/client";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "@/auth/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useOnboardingStatus } from "@/group_owners/hooks/useOnboardingStatus";
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute = ({
-  children
-}: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+/**
+ * ProtectedRoute - Ensures that only authenticated users can access certain routes
+ * If a user tries to access a protected route without being logged in, they are redirected to the login page
+ */
+export const ProtectedRoute = () => {
+  const { user, isLoading } = useAuth();
   const location = useLocation();
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
+  const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] = useState(false);
+  const { checkOnboardingStatus } = useOnboardingStatus();
   
   useEffect(() => {
-    if (loading) {
-      console.log("🔄 ProtectedRoute: Loading authentication state...");
-    } else if (user) {
-      console.log(`✅ ProtectedRoute: User authenticated: ${user.email}`);
-    } else {
-      console.log("⚠️ ProtectedRoute: No authenticated user, redirecting to auth page");
-    }
-  }, [user, loading]);
-
-  // If still loading, show loading screen
-  if (loading) {
+    const checkIfShouldRedirect = async () => {
+      if (user && !location.pathname.startsWith('/onboarding')) {
+        setIsCheckingOnboarding(true);
+        try {
+          const needsOnboarding = await checkOnboardingStatus();
+          if (needsOnboarding) {
+            console.log("🔄 ProtectedRoute: Redirecting to onboarding from", location.pathname);
+            setShouldRedirectToOnboarding(true);
+          } else {
+            setShouldRedirectToOnboarding(false);
+          }
+        } catch (error) {
+          console.error("❌ Error checking onboarding status:", error);
+        } finally {
+          setIsCheckingOnboarding(false);
+        }
+      }
+    };
+    
+    checkIfShouldRedirect();
+  }, [user, location.pathname, checkOnboardingStatus]);
+  
+  if (isLoading || isCheckingOnboarding) {
     console.log("⏳ ProtectedRoute: Still loading, showing loading state");
-    return <LoadingScreen />;
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <span className="ml-2 text-lg">Loading...</span>
+      </div>
+    );
   }
   
-  // If no authenticated user, redirect to auth page
+  // Redirect to login if not authenticated
   if (!user) {
-    console.log("🚫 ProtectedRoute: No user, redirecting to auth page");
-    // Save the current location so we can redirect back after login
+    console.log("🚫 ProtectedRoute: No authenticated user, redirecting to auth page");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
-
-  // Don't redirect if already in onboarding flow
-  const isOnboardingRoute = location.pathname.startsWith("/onboarding");
-  const isProjectCreationRoute = location.pathname === "/projects/new";
   
-  if (isOnboardingRoute || isProjectCreationRoute) {
-    return children;
-  }
-
-  // Check if we're trying to access the dashboard and need onboarding
-  const isDashboardRoute = location.pathname === "/dashboard" || location.pathname === "/";
-  const onboardingStatus = localStorageService.getOnboardingStatus();
-  const hasCommunity = localStorageService.getHasCommunity();
+  console.log("✅ ProtectedRoute: User authenticated:", user.email);
   
-  if (isDashboardRoute && (!onboardingStatus?.isCompleted || !hasCommunity)) {
-    console.log("🔄 ProtectedRoute: Redirecting to onboarding from dashboard");
+  // Redirect to onboarding if needed
+  if (shouldRedirectToOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
-
-  // If we're trying to access onboarding but it's completed and we have a community
-  if (isOnboardingRoute && onboardingStatus?.isCompleted && hasCommunity) {
-    console.log("✅ ProtectedRoute: Onboarding complete, redirecting to dashboard");
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
+  
+  // User is authenticated and has completed onboarding
+  return <Outlet />;
 };

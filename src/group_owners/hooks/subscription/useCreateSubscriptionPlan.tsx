@@ -1,48 +1,30 @@
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { CreateSubscriptionPlanData } from "@/group_owners/hooks/types/subscription.types";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { SubscriptionPlan, CreateSubscriptionPlanParams } from '@/group_owners/hooks/types/subscription.types';
 
-export const useCreateSubscriptionPlan = (communityId: string) => {
+export const useCreateSubscriptionPlan = (onSuccess?: (data: SubscriptionPlan) => void) => {
   const queryClient = useQueryClient();
-  const { isGroupSelected } = useCommunityContext();
-  
+
   return useMutation({
-    mutationFn: async (planData: Omit<CreateSubscriptionPlanData, 'community_id'>) => {
-      // With our consolidated model, all plans belong to communities
-      const payload = {
-        community_id: communityId,
-        name: planData.name,
-        description: planData.description || null,
-        price: planData.price,
-        interval: planData.interval,
-        features: planData.features || [],
-        is_active: true, // Ensure plans are active by default
-        has_trial_period: planData.has_trial_period || false,
-        trial_days: planData.has_trial_period ? (planData.trial_days || 0) : 0
-      };
-      
-      console.log("Creating subscription plan with payload:", payload);
-      
+    mutationFn: async (newPlan: CreateSubscriptionPlanParams): Promise<SubscriptionPlan> => {
       const { data, error } = await supabase
-        .from('subscription_plans')
-        .insert(payload)
+        .from('project_plans')
+        .insert(newPlan)
         .select()
         .single();
-        
+
       if (error) {
-        console.error("Error in subscription plan creation:", error);
         throw error;
       }
-      
-      return data;
+
+      return data as SubscriptionPlan;
     },
-    onSuccess: () => {
-      // Invalidate the query to refetch the updated list
-      queryClient.invalidateQueries({ 
-        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
-      });
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['subscription-plans'] });
+      if (onSuccess) {
+        onSuccess(data);
+      }
     }
   });
 };

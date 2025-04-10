@@ -1,211 +1,133 @@
-
+import React, { useState } from "react";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
-import { CheckIcon, ClockIcon, EditIcon, GiftIcon, StarIcon, Trash2Icon } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 
-export interface SubscriptionPlanCardProps {
+interface Props {
   plan: SubscriptionPlan;
-  onEdit: (plan: SubscriptionPlan) => void;
+  onUpdate: (plan: SubscriptionPlan) => void;
   onDelete: (planId: string) => void;
-  intervalColors?: {
-    monthly: string;
-    quarterly: string;
-    "half-yearly": string;
-    yearly: string;
-    "one-time": string;
-    lifetime: string;
-  };
-  intervalLabels?: {
-    monthly: string;
-    quarterly: string;
-    "half-yearly": string;
-    yearly: string;
-    "one-time": string;
-    lifetime: string;
-  };
+  onToggleStatus: (planId: string, isActive: boolean) => void;
 }
 
-export const SubscriptionPlanCard = ({
-  plan,
-  onEdit,
-  onDelete,
-  intervalColors,
-  intervalLabels
-}: SubscriptionPlanCardProps) => {
-  const defaultIntervalLabel = {
-    monthly: "Monthly",
-    quarterly: "Quarterly",
-    "half-yearly": "Half-Yearly",
-    yearly: "Yearly",
-    "one-time": "One-Time",
-    lifetime: "Lifetime",
+export const SubscriptionPlanCard = ({ plan, onUpdate, onDelete, onToggleStatus }: Props) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const formatInterval = (interval: string): string => {
+    const mapping: Record<string, string> = {
+      'monthly': 'month',
+      'quarterly': '3 months',
+      'half_yearly': '6 months',
+      'half-yearly': '6 months',
+      'yearly': 'year',
+      'lifetime': 'lifetime',
+      'one_time': 'one-time payment',
+      'one-time': 'one-time payment',
+    };
+    
+    return mapping[interval] || interval;
   };
 
-  const defaultIntervalColor = {
-    monthly: "bg-blue-100 text-blue-800",
-    quarterly: "bg-green-100 text-green-800",
-    "half-yearly": "bg-purple-100 text-purple-800", 
-    yearly: "bg-amber-100 text-amber-800",
-    "one-time": "bg-gray-100 text-gray-800",
-    lifetime: "bg-indigo-100 text-indigo-800",
+  const renderBadge = () => {
+    if (plan.is_active) {
+      return <Badge className="bg-green-500 text-white">Active</Badge>;
+    } else {
+      return <Badge variant="outline">Inactive</Badge>;
+    }
   };
 
-  const finalIntervalLabels = intervalLabels || defaultIntervalLabel;
-  const finalIntervalColors = intervalColors || defaultIntervalColor;
+  const renderFeatures = () => {
+    return (
+      <ScrollArea className="h-[120px] w-full rounded-md border p-2">
+        <ul className="list-disc pl-4 text-sm text-muted-foreground">
+          {plan.features.map((feature, index) => (
+            <li key={index}>{feature}</li>
+          ))}
+        </ul>
+      </ScrollArea>
+    );
+  };
+
+  const renderActions = () => {
+    return (
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onUpdate(plan)}
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToggleStatus(plan.id, !plan.is_active)}
+          >
+            {plan.is_active ? (
+              <ToggleLeft className="h-4 w-4" />
+            ) : (
+              <ToggleRight className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPriceSection = () => {
+    return (
+      <div className="text-center mb-6">
+        <div className="text-3xl font-bold text-indigo-700">
+          ${plan.price}
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {plan.interval === "lifetime" || plan.interval === "one_time" ? 
+            "One-time payment" : 
+            `per ${formatInterval(plan.interval)}`
+          }
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <Card className="border shadow-sm hover:shadow-md transition-shadow h-full flex flex-col relative group">
-      <CardHeader className="pb-2 sm:pb-4 pt-2 sm:pt-6 px-2 sm:px-6">
-        <div className="flex justify-between items-start gap-1">
-          <div>
-            <h3 className="font-bold text-s sm:text-lg leading-tight">{plan.name}</h3>
-            {plan.description && (
-              <p className="text-muted-foreground text-[10px] sm:text-sm mt-0.5 sm:mt-1 line-clamp-2">
-                {plan.description}
-              </p>
-            )}
-          </div>
-          <Badge
-            variant="outline"
-            className={`font-medium text-[10px] sm:text-sm whitespace-nowrap ${
-              finalIntervalColors[plan.interval as keyof typeof finalIntervalColors] || ""
-            }`}
-          >
-            {finalIntervalLabels[plan.interval as keyof typeof finalIntervalLabels]}
-          </Badge>
-        </div>
-        
-        <div className="mt-1 sm:mt-2">
-          <div className="flex items-baseline flex-wrap">
-            <span className="text-base sm:text-2xl font-bold">
-              {formatCurrency(plan.price)}
-            </span>
-            {plan.interval !== "one-time" && plan.interval !== "lifetime" && (
-              <span className="text-muted-foreground text-[10px] sm:text-sm ml-0.5 sm:ml-1">
-                /{plan.interval.replace("-", " ")}
-              </span>
-            )}
-          </div>
-          
-          {plan.has_trial_period && plan.trial_days && plan.trial_days > 0 && (
-            <div className="flex items-center mt-0.5 sm:mt-2 text-[10px] sm:text-sm text-indigo-600">
-              <GiftIcon className="h-2.5 w-2.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-              <span>{plan.trial_days}-day free trial</span>
-            </div>
-          )}
-        </div>
+    <Card className="bg-white shadow-md rounded-lg overflow-hidden">
+      <CardHeader className="text-center">
+        {renderBadge()}
       </CardHeader>
-      <CardContent className="pb-4 sm:pb-6 pt-0 px-2 sm:px-6 flex-1 flex flex-col">
-        {plan.features && plan.features.length > 0 ? (
-          <div className="flex flex-col flex-1">
-            <ul className="space-y-0.5 sm:space-y-2">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-start">
-                  <CheckIcon className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-green-500 mr-0.5 sm:mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-[10px] sm:text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-            
-            {/* Action buttons positioned at the bottom-right */}
-            <div className="mt-auto pt-3 flex justify-end gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(plan)}
-                      className="h-7 w-7 p-0 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 border-indigo-200"
-                    >
-                      <EditIcon className="h-3.5 w-3.5" />
-                      <span className="sr-only">Edit plan</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit plan</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDelete(plan.id)}
-                      className="h-7 w-7 p-0 rounded-full bg-white text-red-500 hover:bg-red-50 border-red-200"
-                    >
-                      <Trash2Icon className="h-3.5 w-3.5" />
-                      <span className="sr-only">Delete plan</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete plan</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col flex-1">
-            <p className="text-muted-foreground text-[10px] sm:text-sm italic">
-              No features specified
-            </p>
-            
-            {/* Action buttons positioned at the bottom-right */}
-            <div className="mt-auto pt-3 flex justify-end gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(plan)}
-                      className="h-7 w-7 p-0 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 border-indigo-200"
-                    >
-                      <EditIcon className="h-3.5 w-3.5" />
-                      <span className="sr-only">Edit plan</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit plan</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDelete(plan.id)}
-                      className="h-7 w-7 p-0 rounded-full bg-white text-red-500 hover:bg-red-50 border-red-200"
-                    >
-                      <Trash2Icon className="h-3.5 w-3.5" />
-                      <span className="sr-only">Delete plan</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete plan</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-        )}
+      <CardContent>
+        {renderPriceSection()}
+        <h3 className="text-xl font-semibold text-center mb-2">{plan.name}</h3>
+        <p className="text-sm text-muted-foreground text-center mb-4">
+          {plan.description}
+        </p>
+        <div className="mb-4">
+          <h4 className="uppercase text-xs text-gray-500 font-medium mb-2">
+            Features
+          </h4>
+          {renderFeatures()}
+        </div>
       </CardContent>
+      <CardFooter>{renderActions()}</CardFooter>
+      <ConfirmDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={() => onDelete(plan.id)}
+        itemName={plan.name}
+      />
     </Card>
   );
 };

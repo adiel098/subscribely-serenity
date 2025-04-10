@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { SubscriptionPlan, convertSubscriptionInterval } from "@/group_owners/hooks/types/subscription.types";
 import { planFormSchema, PlanFormValues, featuresToArray, featuresToString } from "./plan-form/PlanFormSchema";
 import { PlanBasicInfoSection } from "./form-sections/PlanBasicInfoSection";
 import { PlanPricingSection } from "./form-sections/PlanPricingSection";
@@ -52,11 +52,14 @@ export const EditPlanDialog = ({
   useEffect(() => {
     if (plan && isOpen) {
       console.log("Setting form values for plan:", plan);
+      // Convert half_yearly to half-yearly for form compatibility
+      const formInterval = convertSubscriptionInterval(plan.interval) === "half_yearly" ? "half-yearly" : plan.interval;
+      
       form.reset({
         name: plan.name,
         description: plan.description || "",
         price: plan.price,
-        interval: plan.interval,
+        interval: formInterval,
         features: featuresToString(plan.features),
         has_trial_period: plan.has_trial_period || false,
         trial_days: plan.trial_days || undefined,
@@ -71,6 +74,9 @@ export const EditPlanDialog = ({
     try {
       // Convert features string to array
       const featuresArray = featuresToArray(data.features);
+      
+      // Convert half-yearly back to half_yearly for API compatibility
+      const apiInterval = data.interval === "half-yearly" ? "half_yearly" : data.interval;
 
       // Prepare data for submission, ensuring all fields are included
       const updatedPlan: Partial<SubscriptionPlan> = {
@@ -78,7 +84,7 @@ export const EditPlanDialog = ({
         name: data.name,
         description: data.description || null,
         price: data.price,
-        interval: data.interval,
+        interval: apiInterval,
         features: featuresArray,
         has_trial_period: data.has_trial_period,
         trial_days: data.has_trial_period ? (data.trial_days || 0) : 0,

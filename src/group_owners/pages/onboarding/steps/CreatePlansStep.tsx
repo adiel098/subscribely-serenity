@@ -1,278 +1,260 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, SparklesIcon, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
-import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Loader2, AlertCircle, Check, Sparkles } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProjectContext } from "@/contexts/ProjectContext";
+import { useCreateSubscriptionPlan } from "@/group_owners/hooks/subscription/useCreateSubscriptionPlan";
 import { CreatePlanDialog } from "@/group_owners/components/subscriptions/CreatePlanDialog";
-import { DeletePlanDialog } from "@/group_owners/components/subscriptions/DeletePlanDialog";
-import { EditPlanDialog } from "@/group_owners/components/subscriptions/EditPlanDialog";
 import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
-import { EmptySubscriptionsState } from "@/group_owners/components/subscriptions/EmptySubscriptionsState";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { useUpdateSubscriptionPlan } from "@/group_owners/hooks/subscription/useUpdateSubscriptionPlan";
+import { useDeleteSubscriptionPlan } from "@/group_owners/hooks/subscription/useDeleteSubscriptionPlan";
+import { useToggleSubscriptionPlanStatus } from "@/group_owners/hooks/subscription/useToggleSubscriptionPlanStatus";
+import { useSubscriptionPlans } from "@/group_owners/hooks/subscription/useSubscriptionPlans";
 
-const intervalColors = {
-  monthly: "bg-blue-100 text-blue-700",
-  quarterly: "bg-green-100 text-green-700",
-  "half-yearly": "bg-purple-100 text-purple-700",
-  yearly: "bg-orange-100 text-amber-800",
-  "one-time": "bg-gray-100 text-gray-800",
-  "lifetime": "bg-indigo-100 text-indigo-800",
-};
-
-const intervalLabels = {
-  monthly: "Monthly",
-  quarterly: "Quarterly",
-  "half-yearly": "Half Yearly",
-  yearly: "Yearly",
-  "one-time": "One Time",
-  "lifetime": "Lifetime"
-};
-
-interface CreatePlansStepProps {
-  goToNextStep: () => void;
-  goToPreviousStep: () => void;
-  saveCurrentStep: (step: string) => void;
-}
-
-const CreatePlansStep: React.FC<CreatePlansStepProps> = ({ 
-  goToNextStep, 
-  goToPreviousStep,
-  saveCurrentStep
-}) => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [communityId, setCommunityId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+const CreatePlansStep = () => {
+  const navigate = useNavigate();
+  const { selectedProjectId: selectedCommunityId } = useProjectContext();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchCommunity = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('communities')
-          .select('id')
-          .eq('owner_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          setCommunityId(data.id);
-        }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching community:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load community information"
-        });
-        setIsLoading(false);
-      }
-    };
-    
-    fetchCommunity();
-  }, [user]);
-
-  const { plans, isLoading: plansLoading, createPlan, updatePlan } = useSubscriptionPlans(communityId || "");
+  const queryClient = useQueryClient();
   
-  const handleCreatePlan = () => {
-    setCreateDialogOpen(true);
-  };
-
-  const handleEditPlan = (plan: any) => {
-    setSelectedPlanId(plan.id);
-    setEditDialogOpen(true);
-  };
-
-  const handleDeletePlan = (planId: string) => {
-    setSelectedPlanId(planId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleSubmitPlan = async (data: any) => {
-    if (!communityId) return;
-    
-    await createPlan.mutateAsync({
-      ...data,
-      community_id: communityId
-    });
-    setCreateDialogOpen(false);
-    toast({
-      title: "Plan created",
-      description: "Your subscription plan was created successfully."
-    });
-  };
-
-  const handleUpdatePlan = async (planId: string, data: any) => {
-    await updatePlan.mutateAsync({
-      id: planId, 
-      ...data
-    });
-    setEditDialogOpen(false);
-    toast({
-      title: "Plan updated",
-      description: "Your subscription plan was updated successfully."
-    });
-  };
-
-  const handleContinue = async () => {
-    saveCurrentStep("completion");
-    goToNextStep();
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
+  const { data: plans, isLoading, refetch } = useSubscriptionPlans(selectedCommunityId || undefined);
+  const createPlanMutation = useCreateSubscriptionPlan();
+  const updatePlanMutation = useUpdateSubscriptionPlan();
+  const deletePlanMutation = useDeleteSubscriptionPlan();
+  const togglePlanStatusMutation = useToggleSubscriptionPlanStatus();
+  
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const handleCreatePlan = async (data: any) => {
+    setIsSaving(true);
+    try {
+      if (!selectedCommunityId) {
+        throw new Error("No community selected");
       }
+      
+      await createPlanMutation.mutateAsync({
+        ...data,
+        project_id: selectedCommunityId,
+      });
+      
+      toast({
+        title: "Plan created",
+        description: "Your subscription plan has been created successfully",
+      });
+    } catch (error: any) {
+      console.error("Error creating plan:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create subscription plan",
+      });
+    } finally {
+      setIsSaving(false);
+      setShowCreateDialog(false);
     }
   };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+  
+  const handleUpdatePlan = async (planId: string, updatedPlan: Partial<SubscriptionPlan>) => {
+    setIsSaving(true);
+    try {
+      await updatePlanMutation.mutateAsync({
+        planId: planId,
+        updates: updatedPlan,
+      });
+      
+      toast({
+        title: "Plan updated",
+        description: "Your subscription plan has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error("Error updating plan:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update subscription plan",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
-
+  
+  const handleDeletePlan = async (planId: string) => {
+    setIsSaving(true);
+    try {
+      await deletePlanMutation.mutateAsync(planId);
+      
+      toast({
+        title: "Plan deleted",
+        description: "Your subscription plan has been deleted successfully",
+      });
+    } catch (error: any) {
+      console.error("Error deleting plan:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete subscription plan",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleTogglePlanStatus = async (planId: string, is_active: boolean) => {
+    setIsSaving(true);
+    try {
+      await togglePlanStatusMutation.mutateAsync({ planId, is_active });
+      
+      toast({
+        title: "Plan status updated",
+        description: `Subscription plan status has been updated successfully`,
+      });
+    } catch (error: any) {
+      console.error("Error toggling plan status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to toggle subscription plan status",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleContinue = () => {
+    navigate("/onboarding/payment-methods");
+  };
+  
+  const hasPlans = plans && plans.length > 0;
+  
   return (
-    <OnboardingLayout 
-      currentStep="custom-bot-setup"
-      title="Create Subscription Plans"
-      description="Define subscription plans for members of your new community"
-      icon={<SparklesIcon size={24} />}
-      onBack={goToPreviousStep}
-      showBackButton={true}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container max-w-4xl mx-auto py-12 px-4"
     >
-      <div className="space-y-6">
-        <motion.div 
-          className="flex justify-between items-center" 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Create plans to offer to your community members. You can add more plans later.
-            </p>
-          </div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              onClick={handleCreatePlan}
-              className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 px-5 py-2.5 h-auto" 
-              type="button"
-              disabled={!communityId || isLoading}
-            >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Create Plan
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {(isLoading || plansLoading) ? (
-          <div className="flex items-center justify-center min-h-[300px]">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-          </div>
-        ) : !plans || plans.length === 0 ? (
-          <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
-        ) : (
-          <motion.div 
-            variants={containerVariants} 
-            initial="hidden" 
-            animate="visible" 
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl"
-          >
-            {plans?.map(plan => (
-              <motion.div key={plan.id} variants={itemVariants}>
-                <SubscriptionPlanCard 
-                  plan={plan} 
-                  onEdit={handleEditPlan} 
-                  onDelete={handleDeletePlan} 
-                  intervalColors={intervalColors} 
-                  intervalLabels={intervalLabels} 
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-        
-        <div className="pt-6 flex justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-          >
-            <Button 
-              variant="outline" 
-              onClick={goToPreviousStep}
-              className="gap-2"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </Button>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-          >
-            <Button 
-              onClick={handleContinue}
-              size="lg" 
-              className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-              disabled={isLoading || plansLoading}
-            >
-              Continue to Next Step
-              <ArrowRight size={16} />
-            </Button>
-          </motion.div>
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center gap-2 mb-3 px-4 py-1.5 bg-indigo-50 rounded-full">
+          <Sparkles className="h-4 w-4 text-indigo-500" />
+          <span className="text-sm font-medium text-indigo-600">Step 3</span>
         </div>
+        <h2 className="text-3xl font-bold text-gray-900">
+          Create Subscription Plans
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Define subscription plans for your community members. You can create
+          multiple plans with different features and pricing.
+        </p>
       </div>
-
-      {communityId && (
+      
+      {isLoading ? (
+        <div className="flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : (
         <>
-          <CreatePlanDialog 
-            isOpen={createDialogOpen} 
-            onOpenChange={setCreateDialogOpen} 
-            communityId={communityId}
-            onSubmit={handleSubmitPlan}
-          />
-
-          {selectedPlanId && (
-            <>
-              <EditPlanDialog 
-                isOpen={editDialogOpen} 
-                onOpenChange={setEditDialogOpen} 
-                plan={plans?.find(p => p.id === selectedPlanId) || null}
-                onSubmit={(data) => handleUpdatePlan(selectedPlanId, data)}
-              />
-              
-              <DeletePlanDialog 
-                isOpen={deleteDialogOpen} 
-                onOpenChange={setDeleteDialogOpen} 
-                planId={selectedPlanId} 
-              />
-            </>
+          {plans && plans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {plans.map((plan) => (
+                <SubscriptionPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  onUpdate={handleUpdatePlan}
+                  onDelete={handleDeletePlan}
+                  onToggleStatus={handleTogglePlanStatus}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
+              <CardContent className="flex flex-col items-center justify-center space-y-4">
+                <AlertCircle className="h-10 w-10 text-indigo-500" />
+                <CardTitle className="text-xl font-semibold">
+                  No Subscription Plans Yet
+                </CardTitle>
+                <CardDescription className="text-gray-500">
+                  Get started by creating your first subscription plan.
+                </CardDescription>
+              </CardContent>
+            </Card>
           )}
         </>
       )}
-    </OnboardingLayout>
+      
+      <div className="flex justify-between items-center mt-8">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/onboarding/community-details")}
+          disabled={isSaving}
+        >
+          Previous
+        </Button>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="secondary"
+            onClick={() => setShowCreateDialog(true)}
+            disabled={isSaving}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Plan
+          </Button>
+          <Button
+            onClick={handleContinue}
+            disabled={!hasPlans || isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                Next
+                <Check className="h-4 w-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {showCreateDialog && (
+        <CreatePlanDialog 
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          communityId={selectedCommunityId || ''}
+          onSubmit={handleCreatePlan}
+        />
+      )}
+    </motion.div>
   );
 };
 

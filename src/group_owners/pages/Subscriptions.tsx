@@ -1,206 +1,204 @@
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { useProjectContext } from "@/contexts/ProjectContext";
+import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
 import { CreatePlanDialog } from "@/group_owners/components/subscriptions/CreatePlanDialog";
 import { EditPlanDialog } from "@/group_owners/components/subscriptions/EditPlanDialog";
-import { DeletePlanDialog } from "@/group_owners/components/subscriptions/DeletePlanDialog";
-import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
-import { EmptySubscriptionsState } from "@/group_owners/components/subscriptions/EmptySubscriptionsState";
-import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunityContext } from "@/contexts/CommunityContext";
-import { motion } from "framer-motion";
-import { Loader2, Plus, SparklesIcon, Sparkles } from "lucide-react";
-
-const intervalColors = {
-  monthly: "bg-blue-100 text-blue-700",
-  quarterly: "bg-green-100 text-green-700",
-  "half-yearly": "bg-purple-100 text-purple-700",
-  yearly: "bg-orange-100 text-orange-700",
-  "one-time": "bg-gray-100 text-gray-700",
-  "lifetime": "bg-amber-100 text-amber-700"
-};
-
-const intervalLabels = {
-  monthly: "Monthly",
-  quarterly: "Quarterly",
-  "half-yearly": "Half Yearly",
-  yearly: "Yearly",
-  "one-time": "One Time",
-  "lifetime": "Lifetime"
-};
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { useSubscriptionPlans } from "@/group_owners/hooks/subscription/useSubscriptionPlans";
+import { useCreateSubscriptionPlan } from "@/group_owners/hooks/subscription/useCreateSubscriptionPlan";
+import { useUpdateSubscriptionPlan } from "@/group_owners/hooks/subscription/useUpdateSubscriptionPlan";
+import { useDeleteSubscriptionPlan } from "@/group_owners/hooks/subscription/useDeleteSubscriptionPlan";
+import { useToggleSubscriptionPlanStatus } from "@/group_owners/hooks/subscription/useToggleSubscriptionPlanStatus";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Subscriptions = () => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { selectedProjectId } = useProjectContext();
   const { toast } = useToast();
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
-  
-  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
-  const { plans, isLoading, createPlan, updatePlan } = useSubscriptionPlans(entityId || "");
+  const queryClient = useQueryClient();
 
-  const handleCreatePlan = () => {
-    setCreateDialogOpen(true);
-  };
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editPlan, setEditPlan] = useState<SubscriptionPlan | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
-  const handleEditPlan = (plan: any) => {
-    setSelectedPlanId(plan.id);
-    setEditDialogOpen(true);
-  };
+  const {
+    data: plans,
+    isLoading,
+    isError,
+    error,
+  } = useSubscriptionPlans(selectedProjectId || undefined);
 
-  const handleDeletePlan = (planId: string) => {
-    setSelectedPlanId(planId);
-    setDeleteDialogOpen(true);
-  };
+  const createPlanMutation = useCreateSubscriptionPlan({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Subscription plan created successfully.",
+      });
+      setShowCreateDialog(false);
+    },
+  });
 
-  const handleSubmitPlan = async (data: any) => {
-    await createPlan.mutateAsync({
+  const updatePlanMutation = useUpdateSubscriptionPlan({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Subscription plan updated successfully.",
+      });
+      setShowEditDialog(false);
+      setEditPlan(null);
+    },
+  });
+
+  const deletePlanMutation = useDeleteSubscriptionPlan({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Subscription plan deleted successfully.",
+      });
+    },
+  });
+
+  const toggleStatusMutation = useToggleSubscriptionPlanStatus({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Subscription plan status updated successfully.",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!selectedProjectId) {
+      navigate("/dashboard");
+    }
+  }, [selectedProjectId, navigate]);
+
+  const handleCreatePlan = async (data: any) => {
+    if (!selectedProjectId) return;
+    await createPlanMutation.mutateAsync({
       ...data,
-      community_id: entityId || ""
-    });
-    setCreateDialogOpen(false);
-    toast({
-      title: "Plan created",
-      description: "Your subscription plan was created successfully."
+      project_id: selectedProjectId,
     });
   };
 
-  const handleUpdatePlan = async (planId: string, data: any) => {
-    console.log("[Subscriptions] Updating plan with ID:", planId);
-    console.log("[Subscriptions] Update data:", data);
-    console.log("[Subscriptions] Current entity ID:", entityId);
-    
-    try {
-      const updateData = {
-        ...data,
-        id: planId,
-        community_id: entityId
-      };
-      
-      await updatePlan.mutateAsync(updateData);
-      setEditDialogOpen(false);
-      toast({
-        title: "Plan updated",
-        description: "Your subscription plan was updated successfully."
-      });
-    } catch (error) {
-      console.error("[Subscriptions] Error updating plan:", error);
-      toast({
-        variant: "destructive",
-        title: "Update failed",
-        description: `Could not update plan: ${error instanceof Error ? error.message : "Unknown error"}`
-      });
-    }
+  const handleUpdatePlan = async (planId: string, data: Partial<SubscriptionPlan>) => {
+    await updatePlanMutation.mutateAsync({
+      id: planId,
+      updates: data,
+    });
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+  const handleDeletePlan = async (planId: string) => {
+    await deletePlanMutation.mutateAsync(planId);
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+  const handleToggleStatus = async (planId: string, is_active: boolean) => {
+    await toggleStatusMutation.mutateAsync({
+      id: planId,
+      is_active: !is_active,
+    });
+  };
+
+  const handleEditPlan = (plan: SubscriptionPlan) => {
+    setEditPlan(plan);
+    setShowEditDialog(true);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-4">Subscription Plans</h1>
+        <p className="text-muted-foreground">Loading subscription plans...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <CardTitle>
+                  <Skeleton className="h-5 w-32" />
+                </CardTitle>
+                <CardDescription>
+                  <Skeleton className="h-4 w-48" />
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load subscription plans. {error?.message}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <div className="container px-0 py-4 max-w-full">
-      <div className="space-y-6 px-2 sm:px-6 py-0 my-[6px]">
-        <motion.div className="flex items-center justify-between" initial={{
-          opacity: 0,
-          y: -20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.5
-        }}>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-2 sm:p-3 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-lg sm:rounded-xl">
-              <SparklesIcon className="h-5 w-5 sm:h-8 sm:w-8 text-amber-600" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
-                Subscription Plans <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 inline text-amber-400" />
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Manage your {isGroupSelected ? "group" : "community"} subscription plans
-              </p>
-            </div>
-          </div>
-          
-          {plans && plans.length > 0 && (
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                onClick={handleCreatePlan} 
-                className="w-8 h-8 sm:w-auto sm:h-auto bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white shadow-md hover:shadow-lg transition-all duration-300 p-1.5 sm:px-5 sm:py-2 text-sm sm:text-base rounded-md" 
-                type="button"
-              >
-                <Plus className="h-5 w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Create Plan</span>
-              </Button>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {!plans || plans.length === 0 ? (
-          <EmptySubscriptionsState onCreatePlan={handleCreatePlan} />
-        ) : (
-          <motion.div 
-            variants={containerVariants} 
-            initial="hidden" 
-            animate="visible" 
-            className="grid gap-2 sm:gap-6 lg:gap-8 grid-cols-2 lg:grid-cols-3 mx-auto max-w-5xl auto-rows-fr mt-6 sm:mt-16 lg:mt-82 px-1 sm:px-6"
-          >
-            {plans?.map(plan => (
-              <motion.div key={plan.id} variants={itemVariants}>
-                <SubscriptionPlanCard 
-                  plan={plan} 
-                  onEdit={handleEditPlan} 
-                  onDelete={handleDeletePlan}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+    <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Subscription Plans</h1>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Plan
+        </Button>
       </div>
 
-      <CreatePlanDialog 
-        isOpen={createDialogOpen} 
-        onOpenChange={setCreateDialogOpen}
-        communityId={entityId || ""}
-        onSubmit={handleSubmitPlan}
-      />
+      {plans && plans.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {plans.map((plan) => (
+            <SubscriptionPlanCard
+              key={plan.id}
+              plan={plan}
+              onUpdate={handleEditPlan}
+              onDelete={handleDeletePlan}
+              onToggleStatus={handleToggleStatus}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No subscription plans yet"
+          description="Create subscription plans to monetize your community"
+        />
+      )}
 
-      {selectedPlanId && (
-        <>
-          <EditPlanDialog 
-            isOpen={editDialogOpen} 
-            onOpenChange={setEditDialogOpen} 
-            plan={plans?.find(p => p.id === selectedPlanId) || null}
-            onSubmit={(planId, data) => handleUpdatePlan(planId, data)}
-          />
-          
-          <DeletePlanDialog 
-            isOpen={deleteDialogOpen} 
-            onOpenChange={setDeleteDialogOpen} 
-            planId={selectedPlanId} 
-          />
-        </>
+      {showCreateDialog && (
+        <CreatePlanDialog 
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          communityId={selectedProjectId || ''}
+          onSubmit={handleCreatePlan}
+        />
+      )}
+
+      {editPlan && (
+        <EditPlanDialog
+          plan={editPlan}
+          isOpen={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          onSubmit={handleUpdatePlan}
+        />
       )}
     </div>
   );

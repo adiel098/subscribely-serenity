@@ -1,4 +1,3 @@
-
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 
@@ -40,3 +39,36 @@ export const TEST_COMMUNITY: Community = {
     }
   ]
 };
+
+export const mockSubscriptionPlans = [
+  {
+    id: "plan-1",
+    name: "Basic Plan",
+    price: 9.99,
+    interval: "monthly",
+    description: "Starter plan with basic features",
+    features: ["Access to main content", "Basic support", "1 device"],
+    is_active: true,
+    community_id: "community-1",
+    project_id: "project-1",
+    has_trial_period: false,
+    trial_days: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "plan-2",
+    name: "Premium Plan",
+    price: 99.99,
+    interval: "yearly",
+    description: "Premium plan with all features",
+    features: ["Access to all content", "Priority support", "Multiple devices", "Exclusive content"],
+    is_active: true,
+    community_id: "community-1",
+    project_id: "project-1",
+    has_trial_period: true,
+    trial_days: 7,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];

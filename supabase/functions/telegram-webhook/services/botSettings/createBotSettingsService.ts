@@ -21,7 +21,7 @@ export async function createBotSettings(
   const { data: existingSettings } = await supabase
     .from('telegram_bot_settings')
     .select('id')
-    .eq('project_id', communityId) // Changed from community_id to project_id
+    .eq('project_id', communityId) // Using project_id consistently
     .single();
 
   if (existingSettings) {
@@ -33,7 +33,7 @@ export async function createBotSettings(
   const { data: settings, error: settingsError } = await supabase
     .from('telegram_bot_settings')
     .insert({
-      project_id: communityId, // Changed from community_id to project_id
+      project_id: communityId, // Using project_id consistently
       chat_id: chatId,
       is_admin: false, // Will be updated after checking bot permissions
       welcome_message: `Welcome to ${communityName}! 🎉\n\n${description ? description + '\n\n' : ''}To join and access exclusive content, please subscribe using the button below:`,

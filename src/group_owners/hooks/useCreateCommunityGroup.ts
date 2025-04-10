@@ -82,7 +82,7 @@ export const useCreateCommunityGroup = () => {
         const { error: botSettingsError } = await supabase
           .from("telegram_bot_settings")
           .insert({
-            project_id: newProject.id,
+            project_id: newProject.id, // Using project_id consistently
             welcome_message: "Welcome to our group! 🎉",
             subscription_reminder_days: 3,
             subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
@@ -168,7 +168,7 @@ export const commitOnboardingData = async () => {
   });
   
   try {
-    // בדיקה אם המשתמש קיים לפני העדכון
+    // Check if user exists before updating
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("*")
@@ -191,7 +191,7 @@ export const commitOnboardingData = async () => {
       email: existingUser.email
     });
 
-    // עדכון פרטי המשתמש
+    // Update user details
     const { error: userUpdateError } = await supabase
       .from("users")
       .update({
@@ -243,6 +243,33 @@ export const commitOnboardingData = async () => {
       name: newProject.name,
       botTokenSet: !!tempData.project.bot_token
     });
+    
+    // Create default bot settings
+    const { error: botSettingsError } = await supabase
+      .from("telegram_bot_settings")
+      .insert({
+        project_id: newProject.id, // Using project_id consistently
+        welcome_message: "Welcome to our group! 🎉",
+        subscription_reminder_days: 3,
+        subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
+        expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
+        renewal_discount_enabled: false,
+        renewal_discount_percentage: 10,
+        language: 'en',
+        first_reminder_days: 3,
+        first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
+        second_reminder_days: 1,
+        second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
+      })
+      .select("*")
+      .single();
+    
+    if (botSettingsError) {
+      console.error("❌ Error creating bot settings:", botSettingsError);
+      throw botSettingsError;
+    }
+    
+    console.log("✅ Created default bot settings for project:", newProject.id);
     
     // Create communities if any
     if (tempData.project.communities && tempData.project.communities.length > 0) {

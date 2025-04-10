@@ -1,16 +1,10 @@
 
 export interface TelegramChat {
   id: string;
-  title: string;
+  title?: string;
   username?: string;
-  type: 'private' | 'group' | 'supergroup' | 'channel';
-  members_count?: number;
+  type?: string;
   photo_url?: string;
+  description?: string;
+  invite_link?: string;
 }
-
-// Helper function to convert string to TelegramChat
-export const stringToTelegramChat = (id: string): TelegramChat => ({
-  id,
-  title: id,
-  type: 'group'
-});

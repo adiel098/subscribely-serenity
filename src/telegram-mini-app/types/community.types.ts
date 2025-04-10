@@ -14,22 +14,8 @@ export interface Community {
   subscription_plans: SubscriptionPlan[];
 }
 
-export interface Plan {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  interval: string;
-  features: string[];
-  is_active: boolean;
-  community_id: string;
-  project_id: string;
-  has_trial_period: boolean;
-  trial_days: number;
-  created_at?: string;
-  updated_at?: string;
-  duration?: number;
-  duration_type?: string;
+export interface Plan extends SubscriptionPlan {
+  description: string;
 }
 
 export interface Subscription {

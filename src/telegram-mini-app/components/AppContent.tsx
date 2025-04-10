@@ -1,26 +1,25 @@
+
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
-import { useTelegram } from "@/hooks/useTelegram";
-import { Main } from "./Main";
+import { useTelegram } from "../hooks/useTelegram";
+import { Main } from "./MainContent";
 import { SubscriptionCheckout } from "./SubscriptionCheckout";
-import { TelegramLoginButton } from "./TelegramLoginButton";
-import { useCommunityData } from "../hooks/useCommunityData";
-import { useSubscription } from "../hooks/useSubscription";
-import { Subscription as SubscriptionType } from "@/telegram-mini-app/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { SubscriptionPlan } from "@/types";
+import { Plan, Community, Subscription as SubscriptionType } from "@/telegram-mini-app/types/community.types";
+import { useCommunityData } from "../hooks/useCommunityData";
+import { useUserSubscriptions } from "../hooks/useUserSubscriptions";
 
 const logger = createLogger("AppContent");
 
-// Just add this one function at the appropriate location in the file
-// This function should handle mapping between types appropriately
-
+// Add this function to map subscription plan types for compatibility
 const mapSubscriptionPlanForDisplay = (plans: any[]): any[] => {
   return plans.map(plan => ({
     ...plan,
     duration: plan.duration || 30,
-    duration_type: plan.duration_type || 'days'
+    duration_type: plan.duration_type || 'days',
+    description: plan.description || ''
   }));
 }
 
@@ -35,28 +34,28 @@ export const AppContent: React.FC = () => {
   
   const {
     community,
-    isLoading: communityLoading,
+    loading: communityLoading,
     error: communityError,
-    refreshCommunity,
+    refresh: refreshCommunity,
   } = useCommunityData(startParam);
   
   const {
-    subscription,
-    isLoading: subscriptionLoading,
+    subscriptions: userSubscriptions,
+    loading: subscriptionsLoading,
     error: subscriptionError,
-    refreshSubscription,
-  } = useSubscription(user?.id, community?.id);
+    refresh: refreshSubscription,
+  } = useUserSubscriptions(user?.id, community?.id);
   
-  const isLoading = authLoading || communityLoading || subscriptionLoading;
+  const isLoading = authLoading || communityLoading || subscriptionsLoading;
   const error = communityError || subscriptionError;
   
   useEffect(() => {
     logger.log("AppContent - User:", user);
     logger.log("AppContent - Community:", community);
-    logger.log("AppContent - Subscription:", subscription);
+    logger.log("AppContent - Subscriptions:", userSubscriptions);
     logger.log("AppContent - Telegram:", tg);
     logger.log("AppContent - Is Telegram Available:", isTelegramAvailable);
-  }, [user, community, subscription, tg, isTelegramAvailable]);
+  }, [user, community, userSubscriptions, tg, isTelegramAvailable]);
   
   useEffect(() => {
     if (tg) {
@@ -64,9 +63,9 @@ export const AppContent: React.FC = () => {
     }
   }, [tg]);
   
-  const handlePlanSelect = (plan: SubscriptionPlan) => {
+  const handlePlanSelect = (plan: Plan) => {
     logger.log("Plan selected:", plan);
-    setSelectedPlan(plan);
+    setSelectedPlan(plan as unknown as SubscriptionPlan);
     setShowCheckout(true);
   };
   
@@ -95,7 +94,7 @@ export const AppContent: React.FC = () => {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center space-y-4">
         <p>Please log in to continue:</p>
-        <TelegramLoginButton />
+        <button className="bg-blue-500 text-white px-4 py-2 rounded">Login with Telegram</button>
       </div>
     );
   }
@@ -107,7 +106,7 @@ export const AppContent: React.FC = () => {
   if (showCheckout && selectedPlan) {
     return (
       <SubscriptionCheckout
-        selectedPlan={selectedPlan}
+        selectedPlan={selectedPlan as unknown as Plan}
         onCompletePurchase={handleCompletePurchase}
         onCancel={handleCancelCheckout}
         communityInviteLink={communityInviteLink}
@@ -118,12 +117,14 @@ export const AppContent: React.FC = () => {
   return (
     <Main
       community={community}
-      userSubscriptions={subscription ? [subscription] : []}
+      userSubscriptions={userSubscriptions || []}
       onPlanSelect={handlePlanSelect}
       showPaymentMethods={showCheckout}
       communityInviteLink={communityInviteLink}
       setCommunityInviteLink={setCommunityInviteLink}
-      activeSubscription={subscription}
+      activeSubscription={userSubscriptions?.[0]}
     />
   );
 };
+
+export default AppContent;

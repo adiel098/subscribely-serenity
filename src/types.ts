@@ -23,8 +23,23 @@ export interface SubscriptionPlan {
 }
 
 // This type mapping function helps convert between the two interfaces
-export const mapSubscriptionPlanTypes = (plan: TelegramSubscriptionPlan | SubscriptionPlan): SubscriptionPlan => ({
-  ...plan,
-  duration: plan.duration || 30, // Default for backward compatibility
-  duration_type: (plan.duration_type as 'days' | 'months' | 'years') || 'days'
-});
+export const mapSubscriptionPlanTypes = (plan: TelegramSubscriptionPlan | SubscriptionPlan): SubscriptionPlan => {
+  // Create a new object with required fields and safe defaults
+  return {
+    id: plan.id,
+    name: plan.name,
+    description: plan.description || '',
+    price: plan.price,
+    duration: plan.duration || 30, // Default for backward compatibility
+    duration_type: (plan.duration_type as 'days' | 'months' | 'years') || 'days',
+    community_id: plan.community_id || '',
+    features: plan.features || [],
+    interval: plan.interval as any,
+    is_active: plan.is_active,
+    has_trial_period: plan.has_trial_period,
+    trial_days: plan.trial_days,
+    created_at: plan.created_at,
+    updated_at: plan.updated_at,
+    project_id: plan.project_id
+  };
+};

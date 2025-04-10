@@ -28,6 +28,8 @@ export interface Plan {
   trial_days: number;
   created_at?: string;
   updated_at?: string;
+  duration?: number;
+  duration_type?: string;
 }
 
 export interface Subscription {

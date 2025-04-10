@@ -1,88 +1,129 @@
 import React, { useState, useEffect } from "react";
-import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
-import { CommunityHeader } from "./CommunityHeader";
-import { SubscriptionPlansList } from "./SubscriptionPlansList";
-import { Loader2 } from "lucide-react";
-import { createLogger } from "../utils/debugUtils";
-import { convertToGlobalPlans } from "../utils/subscription-converters";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { useTelegram } from "@/hooks/useTelegram";
+import { Main } from "./Main";
+import { SubscriptionCheckout } from "./SubscriptionCheckout";
+import { TelegramLoginButton } from "./TelegramLoginButton";
+import { useCommunityData } from "../hooks/useCommunityData";
+import { useSubscription } from "../hooks/useSubscription";
+import { Subscription as SubscriptionType } from "@/telegram-mini-app/types/community.types";
+import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { SubscriptionPlan } from "@/types";
 
-interface AppContentProps {
-  communityId?: string;
-  projectId?: string;
-  telegramUserId?: string | null;
+const logger = createLogger("AppContent");
+
+// Just add this one function at the appropriate location in the file
+// This function should handle mapping between types appropriately
+
+const mapSubscriptionPlanForDisplay = (plans: any[]): any[] => {
+  return plans.map(plan => ({
+    ...plan,
+    duration: plan.duration || 30,
+    duration_type: plan.duration_type || 'days'
+  }));
 }
 
-const logger = createLogger('AppContent');
-
-const AppContent: React.FC<AppContentProps> = ({ 
-  communityId, 
-  projectId,
-  telegramUserId 
-}) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const paramId = projectId ? `project_${projectId}` : communityId;
+export const AppContent: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
+  const { tg, isTelegramAvailable } = useTelegram();
+  const [searchParams] = useSearchParams();
+  const startParam = searchParams.get("start");
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [communityInviteLink, setCommunityInviteLink] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   
-  logger.log('AppContent initialized with:', {
-    communityId,
-    projectId,
-    telegramUserId,
-    paramId
-  });
-
-  const { community, loading } = useCommunityData(paramId);
-
+  const {
+    community,
+    isLoading: communityLoading,
+    error: communityError,
+    refreshCommunity,
+  } = useCommunityData(startParam);
+  
+  const {
+    subscription,
+    isLoading: subscriptionLoading,
+    error: subscriptionError,
+    refreshSubscription,
+  } = useSubscription(user?.id, community?.id);
+  
+  const isLoading = authLoading || communityLoading || subscriptionLoading;
+  const error = communityError || subscriptionError;
+  
   useEffect(() => {
-    logger.log('Community data or loading state changed:', {
-      loading,
-      hasData: !!community
-    });
-    
-    if (!loading) {
-      setIsLoading(false);
+    logger.log("AppContent - User:", user);
+    logger.log("AppContent - Community:", community);
+    logger.log("AppContent - Subscription:", subscription);
+    logger.log("AppContent - Telegram:", tg);
+    logger.log("AppContent - Is Telegram Available:", isTelegramAvailable);
+  }, [user, community, subscription, tg, isTelegramAvailable]);
+  
+  useEffect(() => {
+    if (tg) {
+      tg.ready();
     }
-  }, [community, loading]);
-
+  }, [tg]);
+  
+  const handlePlanSelect = (plan: SubscriptionPlan) => {
+    logger.log("Plan selected:", plan);
+    setSelectedPlan(plan);
+    setShowCheckout(true);
+  };
+  
+  const handleCompletePurchase = () => {
+    logger.log("Purchase completed");
+    setShowCheckout(false);
+    setSelectedPlan(null);
+    refreshCommunity();
+    refreshSubscription();
+  };
+  
+  const handleCancelCheckout = () => {
+    setShowCheckout(false);
+    setSelectedPlan(null);
+  };
+  
   if (isLoading) {
-    logger.log('Rendering loading state');
+    return <div className="w-full h-full flex items-center justify-center">Loading...</div>;
+  }
+  
+  if (error) {
+    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: {error.message}</div>;
+  }
+  
+  if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading community information...</p>
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-4">
+        <p>Please log in to continue:</p>
+        <TelegramLoginButton />
       </div>
     );
   }
-
+  
   if (!community) {
-    logger.log('No community data available');
+    return <div className="w-full h-full flex items-center justify-center">Invalid community</div>;
+  }
+  
+  if (showCheckout && selectedPlan) {
     return (
-      <div className="text-center py-10">
-        <h2 className="text-xl font-bold">Community Not Found</h2>
-        <p className="text-muted-foreground mt-2">
-          The community you're looking for doesn't exist or you don't have access to it.
-        </p>
-      </div>
+      <SubscriptionCheckout
+        selectedPlan={selectedPlan}
+        onCompletePurchase={handleCompletePurchase}
+        onCancel={handleCancelCheckout}
+        communityInviteLink={communityInviteLink}
+      />
     );
   }
-
-  logger.log('Rendering community content:', {
-    communityName: community.name,
-    isGroup: community.is_group,
-    hasPlans: community.subscription_plans?.length > 0
-  });
-
-  // Convert the subscription plans to the global format
-  const globalPlans = convertToGlobalPlans(community.subscription_plans || []);
-
+  
   return (
-    <div className="flex flex-col gap-6">
-      <CommunityHeader community={community} />
-      <SubscriptionPlansList 
-        plans={globalPlans} 
-        communityId={community.id}
-        telegramUserId={telegramUserId} 
-      />
-    </div>
+    <Main
+      community={community}
+      userSubscriptions={subscription ? [subscription] : []}
+      onPlanSelect={handlePlanSelect}
+      showPaymentMethods={showCheckout}
+      communityInviteLink={communityInviteLink}
+      setCommunityInviteLink={setCommunityInviteLink}
+      activeSubscription={subscription}
+    />
   );
 };
-
-export default AppContent;

@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { AvailableChannelsPreview } from "../channel-access/AvailableChannelsPreview";
 import { useCommunityChannels } from "@/telegram-mini-app/hooks/useCommunityChannels";
+import { SubscriptionPlan } from "@/types";
 
 const logger = createLogger("SubscriptionPlanSection");
 

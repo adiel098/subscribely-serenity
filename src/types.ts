@@ -1,13 +1,14 @@
 
-import { SubscriptionPlan } from "./telegram-mini-app/types/subscriptionTypes";
+// Import the SubscriptionPlan type with an alias to avoid naming conflict
+import { SubscriptionPlan as TelegramSubscriptionPlan } from "./telegram-mini-app/types/subscriptionTypes";
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
   description?: string;
   price: number;
-  duration?: number;
-  duration_type?: 'days' | 'months' | 'years';
+  duration: number;
+  duration_type: 'days' | 'months' | 'years';
   community_id: string;
   features?: string[];
   trial_days?: number;
@@ -22,8 +23,8 @@ export interface SubscriptionPlan {
 }
 
 // This type mapping function helps convert between the two interfaces
-export const mapSubscriptionPlanTypes = (plan: SubscriptionPlan): SubscriptionPlan => ({
+export const mapSubscriptionPlanTypes = (plan: TelegramSubscriptionPlan | SubscriptionPlan): SubscriptionPlan => ({
   ...plan,
   duration: plan.duration || 30, // Default for backward compatibility
-  duration_type: plan.duration_type || 'days'
+  duration_type: (plan.duration_type as 'days' | 'months' | 'years') || 'days'
 });

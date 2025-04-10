@@ -16,6 +16,15 @@ interface CreateGroupDialogProps {
   onSuccess?: (groupId: string) => void;
 }
 
+// Define the data shape expected by useCreateCommunityGroup
+interface CreateCommunityGroupData {
+  name: string;
+  description?: string;
+  communities: TelegramChat[];
+  telegram_invite_link?: string;
+  // If additional properties are required, add them here
+}
+
 const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, onSuccess }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -52,10 +61,9 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, 
       const newGroupId = await mutation.mutateAsync({
         name,
         description,
-        telegram_chat_id,
-        telegram_invite_link,
-        communities
-      });
+        communities,
+        telegram_invite_link
+      } as CreateCommunityGroupData);
       
       toast({
         title: 'Group created!',

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -43,7 +44,7 @@ export const AppContent: React.FC = () => {
     isLoading: subscriptionsLoading,
     error: subscriptionError,
     refetch: refreshSubscription,
-  } = useUserSubscriptions(user?.id, community?.id);
+  } = useUserSubscriptions(user?.id);
   
   const isLoading = authLoading || communityLoading || subscriptionsLoading;
   const error = communityError || subscriptionError;

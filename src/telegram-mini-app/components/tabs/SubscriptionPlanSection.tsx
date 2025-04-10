@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
-// Define a basic ChannelInfo type to avoid import conflicts
+// Define a simplified ChannelInfo type to avoid import conflicts
 interface ChannelInfo {
   id: string;
   name: string;
@@ -102,9 +102,9 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
           </motion.div>
           
           <SubscriptionPlans
-            plans={sortedPlans as any[]}
-            selectedPlan={selectedPlan as any}
-            onPlanSelect={onPlanSelect as any}
+            plans={sortedPlans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={onPlanSelect}
             userSubscriptions={userSubscriptions}
           />
         </div>

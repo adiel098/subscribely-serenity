@@ -1,6 +1,5 @@
 
-// Import necessary types and utility functions
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateCommunityGroup } from '@/group_owners/hooks/useCreateCommunityGroup';
-import { TelegramChat, stringsToTelegramChats } from '@/group_owners/types/telegram.types';
+import { TelegramChat } from '@/group_owners/types/telegram.types';
+import { stringsToTelegramChats } from '@/group_owners/types/telegram.types';
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, 
     }
     
     try {
-      // Convert string array to TelegramChat array
+      // Convert string array to TelegramChat array using our helper
       const communities = stringsToTelegramChats(selectedCommunities);
       
       const newGroupId = await mutation.mutateAsync({

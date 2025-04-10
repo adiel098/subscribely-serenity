@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Bot } from "lucide-react";
@@ -137,13 +138,13 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
       });
 
       // Call commitOnboardingData
-      const success = await commitOnboardingData();
+      const { success, error, projectId } = await commitOnboardingData();
       
       if (!success) {
-        throw new Error("Failed to commit onboarding data");
+        throw new Error(error || "Failed to commit onboarding data");
       }
 
-      console.log("✅ Bot Setup: Successfully committed onboarding data");
+      console.log("✅ Bot Setup: Successfully committed onboarding data with project ID:", projectId);
       
       // Proceed to the next step
       onComplete();

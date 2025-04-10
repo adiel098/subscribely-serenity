@@ -1,19 +1,15 @@
 
 import React from "react";
 import { BotSettings } from "@/group_owners/hooks/useBotSettings";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { SettingsContent } from "./SettingsContent";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
-export interface BotSettingsFormProps {
+interface BotSettingsFormProps {
   settings: BotSettings;
   isLoading: boolean;
-  updateSettings: {
-    mutate: (settings: Partial<BotSettings>) => void;
-    isPending?: boolean;
-  };
-  error?: Error | null;
+  updateSettings: any;
+  error: any;
 }
 
 export const BotSettingsForm: React.FC<BotSettingsFormProps> = ({
@@ -23,34 +19,38 @@ export const BotSettingsForm: React.FC<BotSettingsFormProps> = ({
   error
 }) => {
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Card className="p-6 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+        <span>Loading settings...</span>
+      </Card>
+    );
   }
-
+  
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Error loading bot settings: {error instanceof Error ? error.message : String(error)}
-        </AlertDescription>
-      </Alert>
+      <Card className="p-6 text-center text-red-600">
+        <p>Error loading bot settings: {error instanceof Error ? error.message : String(error)}</p>
+      </Card>
     );
   }
 
-  const handleUpdate = (updatedSettings: Partial<BotSettings>) => {
-    updateSettings.mutate(updatedSettings);
-  };
+  if (!settings) {
+    return (
+      <Card className="p-6 text-center text-amber-600">
+        <p>No bot settings found. Settings will be created when you make your first change.</p>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="shadow-sm">
-      <CardContent className="p-6">
-        <SettingsContent 
-          settings={settings} 
-          updateSettings={handleUpdate}
-          entityId={settings.project_id || ''}
-          entityType={'project'}
-        />
-      </CardContent>
+    <Card className="p-6">
+      <SettingsContent
+        settings={settings}
+        updateSettings={updateSettings.mutate}
+        entityId={settings.project_id}
+        entityType="project"
+      />
     </Card>
   );
 };

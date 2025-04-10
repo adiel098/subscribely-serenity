@@ -159,7 +159,7 @@ export const commitOnboardingData = async () => {
   
   if (userError || !userData.user) {
     console.error("User not authenticated when committing onboarding data");
-    return false;
+    return { success: false, error: "User not authenticated" };
   }
 
   console.log("🔍 Committing onboarding data for user:", {
@@ -177,12 +177,12 @@ export const commitOnboardingData = async () => {
 
     if (checkError) {
       console.error("❌ Error checking user existence:", checkError);
-      throw checkError;
+      return { success: false, error: checkError.message };
     }
 
     if (!existingUser) {
       console.error("❌ User not found in users table:", userData.user.id);
-      throw new Error("User not found in users table");
+      return { success: false, error: "User not found in users table" };
     }
 
     console.log("✅ Found user in users table:", {
@@ -202,7 +202,7 @@ export const commitOnboardingData = async () => {
 
     if (userUpdateError) {
       console.error("❌ Error updating user onboarding step:", userUpdateError);
-      throw userUpdateError;
+      return { success: false, error: userUpdateError.message };
     }
 
     console.log("✅ Successfully updated user onboarding step to 'bot_setup'");
@@ -210,7 +210,7 @@ export const commitOnboardingData = async () => {
     const tempData = getTempOnboardingData();
     if (!tempData.project) {
       console.error("No temporary project data found");
-      return false;
+      return { success: false, error: "No temporary project data found" };
     }
     
     // Create project with bot token
@@ -222,7 +222,8 @@ export const commitOnboardingData = async () => {
 
     const projectName = tempData.project?.name || `Project ${new Date().toISOString()}`;
 
-    const { data: newProject, error } = await supabase
+    // First create the project
+    const { data: newProject, error: projectError } = await supabase
       .from("projects")
       .insert({
         name: projectName,  
@@ -233,13 +234,20 @@ export const commitOnboardingData = async () => {
       .select("*")
       .single();
     
-    if (error) {
-      console.error("❌ Error creating project at the end of onboarding:", error);
-      throw error;
+    if (projectError) {
+      console.error("❌ Error creating project at the end of onboarding:", projectError);
+      return { success: false, error: projectError.message };
     }
 
+    if (!newProject || !newProject.id) {
+      console.error("❌ Project created but no ID returned");
+      return { success: false, error: "Project created but no ID returned" };
+    }
+
+    const projectId = newProject.id;
+    
     console.log("✅ Project created successfully:", {
-      projectId: newProject.id,
+      projectId: projectId,
       name: newProject.name,
       botTokenSet: !!tempData.project.bot_token
     });
@@ -248,7 +256,7 @@ export const commitOnboardingData = async () => {
     const { error: botSettingsError } = await supabase
       .from("telegram_bot_settings")
       .insert({
-        project_id: newProject.id, // Using project_id consistently
+        project_id: projectId, // Using project_id consistently
         welcome_message: "Welcome to our group! 🎉",
         subscription_reminder_days: 3,
         subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
@@ -260,21 +268,19 @@ export const commitOnboardingData = async () => {
         first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
         second_reminder_days: 1,
         second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
-      })
-      .select("*")
-      .single();
+      });
     
     if (botSettingsError) {
       console.error("❌ Error creating bot settings:", botSettingsError);
-      throw botSettingsError;
+      return { success: false, error: botSettingsError.message };
     }
     
-    console.log("✅ Created default bot settings for project:", newProject.id);
+    console.log("✅ Created default bot settings for project:", projectId);
     
     // Create communities if any
     if (tempData.project.communities && tempData.project.communities.length > 0) {
       const communitiesData = tempData.project.communities.map(chat => ({
-        project_id: newProject.id,  
+        project_id: projectId,
         telegram_chat_id: chat.id,
         owner_id: userData.user.id,
         name: chat.title,
@@ -290,10 +296,11 @@ export const commitOnboardingData = async () => {
       
       if (communitiesError) {
         console.error("❌ Error creating communities at the end of onboarding:", communitiesError);
-        throw communitiesError;
+        // Don't return error here, continue with onboarding even if communities creation fails
+        // Just log the error
+      } else {
+        console.log("✅ Created communities:", communitiesData.length);
       }
-
-      console.log("✅ Created communities:", communitiesData.length);
     }
     
     console.log("🎉 Successfully committed all onboarding data");
@@ -301,9 +308,9 @@ export const commitOnboardingData = async () => {
     // Clear temporary storage
     onboardingTempData.project = undefined;
     
-    return true;
-  } catch (error) {
+    return { success: true, projectId: projectId };
+  } catch (error: any) {
     console.error("❌ Error committing onboarding data:", error);
-    return false;
+    return { success: false, error: error.message || String(error) };
   }
 };

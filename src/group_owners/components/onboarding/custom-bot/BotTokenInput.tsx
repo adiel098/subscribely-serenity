@@ -2,59 +2,58 @@
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface BotTokenInputProps {
   customTokenInput: string;
   setCustomTokenInput: (value: string) => void;
-  disabled?: boolean;
 }
 
 export const BotTokenInput: React.FC<BotTokenInputProps> = ({
   customTokenInput,
   setCustomTokenInput,
-  disabled = false
 }) => {
-  const [showToken, setShowToken] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const toggleShowToken = () => {
-    setShowToken(!showToken);
+  const toggleVisibility = () => {
+    setIsVisible(!isVisible);
   };
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="bot-token">Bot Token from @BotFather</Label>
+      <Label htmlFor="bot-token" className="text-gray-700 font-medium">
+        Bot Token
+        <span className="text-red-500"> *</span>
+      </Label>
+      
       <div className="relative">
         <Input
           id="bot-token"
-          type={showToken ? "text" : "password"}
+          type={isVisible ? "text" : "password"}
           value={customTokenInput}
           onChange={(e) => setCustomTokenInput(e.target.value)}
-          placeholder="Enter your bot token"
-          className="w-full pr-10"
-          disabled={disabled}
+          placeholder="Paste your bot token from @BotFather"
+          className="pr-12"
         />
+        
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="absolute right-0 top-0 h-full px-3 text-gray-500 hover:text-gray-700"
-          onClick={toggleShowToken}
-          disabled={disabled}
+          onClick={toggleVisibility}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2"
         >
-          {showToken ? (
-            <EyeOff className="h-4 w-4" />
+          {isVisible ? (
+            <EyeOff className="h-4 w-4 text-gray-400" />
           ) : (
-            <Eye className="h-4 w-4" />
+            <Eye className="h-4 w-4 text-gray-400" />
           )}
-          <span className="sr-only">
-            {showToken ? "Hide token" : "Show token"}
-          </span>
         </Button>
       </div>
-      <p className="text-xs text-gray-500 mt-1">
-        Your bot token is private and sensitive - keep it secure
+      
+      <p className="text-xs text-gray-500">
+        This token can be obtained from @BotFather on Telegram
       </p>
     </div>
   );

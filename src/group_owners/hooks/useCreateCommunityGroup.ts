@@ -268,40 +268,50 @@ export const commitOnboardingData = async () => {
     console.log("✅ Project verified to exist:", projectId);
     
     // Create default bot settings with explicit delay to ensure project is committed
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Add longer delay to make sure project is fully committed
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    const botSettingsData = {
-      project_id: projectId,
-      welcome_message: "Welcome to our group! 🎉",
-      subscription_reminder_days: 3,
-      subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
-      expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
-      renewal_discount_enabled: false,
-      renewal_discount_percentage: 10,
-      language: 'en',
-      first_reminder_days: 3,
-      first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
-      second_reminder_days: 1,
-      second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
-    };
-    
-    console.log("📝 Creating bot settings with data:", {
-      project_id: botSettingsData.project_id
-    });
-    
-    const { error: botSettingsError } = await supabase
-      .from("telegram_bot_settings")
-      .insert(botSettingsData);
-    
-    if (botSettingsError) {
-      console.error("❌ Error creating bot settings:", botSettingsError);
-      return { success: false, error: botSettingsError.message };
+    try {
+      const botSettingsData = {
+        project_id: projectId,
+        welcome_message: "Welcome to our group! 🎉",
+        subscription_reminder_days: 3,
+        subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
+        expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
+        renewal_discount_enabled: false,
+        renewal_discount_percentage: 10,
+        language: 'en',
+        first_reminder_days: 3,
+        first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
+        second_reminder_days: 1,
+        second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
+      };
+      
+      console.log("📝 Creating bot settings with data:", {
+        project_id: botSettingsData.project_id
+      });
+      
+      const { error: botSettingsError } = await supabase
+        .from("telegram_bot_settings")
+        .insert(botSettingsData);
+      
+      if (botSettingsError) {
+        console.error("❌ Error creating bot settings:", botSettingsError);
+        // Continue despite bot settings error - don't return early
+        // We want to try to create communities even if bot settings fail
+      } else {
+        console.log("✅ Created default bot settings for project:", projectId);
+      }
+    } catch (botError) {
+      console.error("❌ Exception creating bot settings:", botError);
+      // Continue despite bot settings error
     }
     
-    console.log("✅ Created default bot settings for project:", projectId);
-    
     // Create communities if any (with delay to ensure project is fully committed)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Add an even longer delay to ensure project is fully committed to database
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    let successfulCommunities = 0;
     
     if (tempData.project.communities && tempData.project.communities.length > 0) {
       console.log("📝 Creating communities for project:", {
@@ -309,9 +319,17 @@ export const commitOnboardingData = async () => {
         communitiesCount: tempData.project.communities.length
       });
       
-      // Try creating communities one by one to avoid batch issues
-      let successfulCommunities = 0;
+      // Log the community data for debugging
+      console.log("Communities data:", tempData.project.communities.map(chat => ({
+        project_id: projectId,
+        telegram_chat_id: chat.id,
+        owner_id: userData.user.id,
+        name: chat.title,
+        description: chat.description || null,
+        telegram_photo_url: chat.photo_url || null
+      })));
       
+      // Try creating communities one by one to avoid batch issues
       for (const chat of tempData.project.communities) {
         const communityData = {
           project_id: projectId,
@@ -339,7 +357,7 @@ export const commitOnboardingData = async () => {
         }
         
         // Small delay between community creations
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       if (successfulCommunities > 0) {

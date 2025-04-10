@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateCommunityGroup } from '@/group_owners/hooks/useCreateCommunityGroup';
 import { TelegramChat } from '@/group_owners/types/telegram.types';
-import { stringsToTelegramChats } from '@/group_owners/types/telegram.types';
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -43,8 +42,12 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, 
     }
     
     try {
-      // Convert string array to TelegramChat array using our helper
-      const communities = stringsToTelegramChats(selectedCommunities);
+      // Create communities array with proper type
+      const communities: TelegramChat[] = selectedCommunities.map(id => ({
+        id,
+        title: id,
+        type: "channel"
+      }));
       
       const newGroupId = await mutation.mutateAsync({
         name,

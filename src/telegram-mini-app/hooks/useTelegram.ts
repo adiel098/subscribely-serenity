@@ -30,7 +30,7 @@ export const useTelegram = (): TelegramHook => {
     const initTelegram = () => {
       try {
         if (window.Telegram && window.Telegram.WebApp) {
-          const webApp = window.Telegram.WebApp;
+          const webApp = window.Telegram.WebApp as TelegramWebApp;
           setTg(webApp);
           setIsTelegramAvailable(true);
           setIsDarkMode(!!webApp.isDarkMode);

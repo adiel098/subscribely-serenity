@@ -1,5 +1,5 @@
-
-import React, { useState, useEffect } from "react";
+import React from 'react';
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useTelegram } from "../hooks/useTelegram";
@@ -10,10 +10,10 @@ import { SubscriptionPlan } from "@/types";
 import { Plan, Community, Subscription as SubscriptionType } from "@/telegram-mini-app/types/community.types";
 import { useCommunityData } from "../hooks/useCommunityData";
 import { useUserSubscriptions } from "../hooks/useUserSubscriptions";
+import { useCommunityChannels } from "../hooks/useCommunityChannels";
 
 const logger = createLogger("AppContent");
 
-// Add this function to map subscription plan types for compatibility
 const mapSubscriptionPlanForDisplay = (plans: any[]): any[] => {
   return plans.map(plan => ({
     ...plan,
@@ -72,7 +72,6 @@ export const AppContent: React.FC = () => {
     logger.log("Purchase completed");
     setShowCheckout(false);
     setSelectedPlan(null);
-    // Refresh community data and subscriptions
     refreshSubscription();
   };
   
@@ -101,6 +100,8 @@ export const AppContent: React.FC = () => {
   if (!community) {
     return <div className="w-full h-full flex items-center justify-center">Invalid community</div>;
   }
+  
+  const { channels, isLoading: channelsLoading } = useCommunityChannels(community.id);
   
   if (showCheckout && selectedPlan) {
     return (

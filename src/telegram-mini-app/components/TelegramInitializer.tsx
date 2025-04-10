@@ -85,7 +85,6 @@ export const TelegramInitializer: React.FC<TelegramInitializerProps> = ({
         
         // Platform-specific fixes
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
         
         if (isIOS) {
           // iOS specific viewport fixes

@@ -4,7 +4,7 @@ import { createLogger } from "../utils/debugUtils";
 
 const logger = createLogger("useTelegram");
 
-// Make sure our interface matches what's actually available in the Telegram WebApp
+// Define interface for Telegram WebApp based on the available window.Telegram.WebApp properties
 interface TelegramWebAppInterface {
   MainButton?: any;
   BackButton?: any;
@@ -13,19 +13,16 @@ interface TelegramWebAppInterface {
   ready?: () => void;
   HapticFeedback?: any;
   initDataUnsafe?: any;
-  isDarkMode?: boolean;
 }
 
 interface TelegramHook {
   tg: TelegramWebAppInterface | null;
   isTelegramAvailable: boolean;
-  isDarkMode: boolean;
 }
 
 export const useTelegram = (): TelegramHook => {
   const [tg, setTg] = useState<TelegramWebAppInterface | null>(null);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState<boolean>(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   useEffect(() => {
     const initTelegram = () => {
@@ -35,8 +32,6 @@ export const useTelegram = (): TelegramHook => {
           // Cast to TelegramWebAppInterface to match our expected interface
           setTg(webApp as unknown as TelegramWebAppInterface);
           setIsTelegramAvailable(true);
-          // Safely check for isDarkMode property
-          setIsDarkMode(!!webApp.isDarkMode);
           logger.log('Telegram WebApp initialized successfully');
         } else {
           logger.warn('Telegram WebApp not available in this context');
@@ -51,10 +46,10 @@ export const useTelegram = (): TelegramHook => {
     initTelegram();
   }, []);
 
-  return { tg, isTelegramAvailable, isDarkMode };
+  return { tg, isTelegramAvailable };
 };
 
-// Update the global declaration to match what we expect
+// Make sure the global declaration matches our expected interface
 declare global {
   interface Window {
     Telegram?: {

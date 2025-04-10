@@ -1,4 +1,3 @@
-
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -16,3 +15,6 @@ export interface SubscriptionPlan {
   duration?: number;
   duration_type?: string;
 }
+
+// Alias Plan to SubscriptionPlan to keep compatibility
+export type Plan = SubscriptionPlan;

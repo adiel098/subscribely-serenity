@@ -14,7 +14,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { TelegramChat } from "@/group_owners/types/telegram.types";
+import { TelegramChat, stringToTelegramChat } from "@/group_owners/types/telegram.types";
 
 interface CreateGroupDialogProps {
   open: boolean;
@@ -102,11 +102,7 @@ export function CreateGroupDialog({
       if (Array.isArray(data) && data.length > 0) {
         const formattedChats: TelegramChat[] = data.map((chat: any) => {
           if (typeof chat === 'string') {
-            return {
-              id: chat,
-              title: chat,
-              type: 'group'
-            };
+            return stringToTelegramChat(chat);
           }
           return chat as TelegramChat;
         });

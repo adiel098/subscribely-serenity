@@ -69,7 +69,7 @@ const BotSettings = () => {
       <BotSettingsForm 
         settings={settings as ExtendedBotSettings} 
         isLoading={isLoading} 
-        onSubmit={(updatedSettings) => updateSettings.mutate(updatedSettings)} 
+        updateSettings={updateSettings} 
       />
     </div>
   );

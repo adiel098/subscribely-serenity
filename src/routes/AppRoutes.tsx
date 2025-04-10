@@ -1,9 +1,10 @@
+
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
 import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
 import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
-import { ProtectedRouteContent } from "@/components/ProtectedRouteContent";
+import ProtectedRouteContent from "@/components/ProtectedRouteContent";
 import NotFound from "@/main/pages/NotFound";
 import Index from "@/main/pages/Index";
 import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";

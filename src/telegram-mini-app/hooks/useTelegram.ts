@@ -4,7 +4,7 @@ import { createLogger } from "../utils/debugUtils";
 
 const logger = createLogger("useTelegram");
 
-interface TelegramWebApp {
+interface TelegramWebAppInterface {
   MainButton: any;
   BackButton: any;
   close: () => void;
@@ -16,13 +16,13 @@ interface TelegramWebApp {
 }
 
 interface TelegramHook {
-  tg: TelegramWebApp | null;
+  tg: TelegramWebAppInterface | null;
   isTelegramAvailable: boolean;
   isDarkMode: boolean;
 }
 
 export const useTelegram = (): TelegramHook => {
-  const [tg, setTg] = useState<TelegramWebApp | null>(null);
+  const [tg, setTg] = useState<TelegramWebAppInterface | null>(null);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
@@ -30,7 +30,7 @@ export const useTelegram = (): TelegramHook => {
     const initTelegram = () => {
       try {
         if (window.Telegram && window.Telegram.WebApp) {
-          const webApp = window.Telegram.WebApp as TelegramWebApp;
+          const webApp = window.Telegram.WebApp;
           setTg(webApp);
           setIsTelegramAvailable(true);
           setIsDarkMode(!!webApp.isDarkMode);
@@ -51,11 +51,11 @@ export const useTelegram = (): TelegramHook => {
   return { tg, isTelegramAvailable, isDarkMode };
 };
 
-// Add the Telegram WebApp types to the global Window interface
+// Update the Telegram WebApp types to match our interface
 declare global {
   interface Window {
     Telegram?: {
-      WebApp: TelegramWebApp;
+      WebApp: TelegramWebAppInterface;
     };
   }
 }

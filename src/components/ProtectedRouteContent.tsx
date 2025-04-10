@@ -5,6 +5,8 @@ interface ProtectedRouteContentProps {
   children: ReactNode;
 }
 
-export const ProtectedRouteContent: React.FC<ProtectedRouteContentProps> = ({ children }) => {
+export const ProtectedRouteContent = ({ children }: ProtectedRouteContentProps) => {
   return <>{children}</>;
 };
+
+export default ProtectedRouteContent;

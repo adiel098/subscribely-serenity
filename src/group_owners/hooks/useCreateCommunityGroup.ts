@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -216,7 +217,8 @@ export const commitOnboardingData = async () => {
     console.log("Creating project with data:", {
       name: tempData.project?.name || "Default Project",  
       description: tempData.project?.description,
-      botToken: !!tempData.project?.bot_token
+      botToken: !!tempData.project?.bot_token,
+      communitiesCount: tempData.project?.communities?.length || 0
     });
 
     const projectName = tempData.project?.name || `Project ${new Date().toISOString()}`;
@@ -266,7 +268,7 @@ export const commitOnboardingData = async () => {
     console.log("✅ Project verified to exist:", projectId);
     
     // Create default bot settings with explicit delay to ensure project is committed
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const botSettingsData = {
       project_id: projectId,
@@ -284,8 +286,7 @@ export const commitOnboardingData = async () => {
     };
     
     console.log("📝 Creating bot settings with data:", {
-      project_id: botSettingsData.project_id,
-      // Other fields omitted for brevity
+      project_id: botSettingsData.project_id
     });
     
     const { error: botSettingsError } = await supabase
@@ -299,7 +300,9 @@ export const commitOnboardingData = async () => {
     
     console.log("✅ Created default bot settings for project:", projectId);
     
-    // Create communities if any
+    // Create communities if any (with delay to ensure project is fully committed)
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     if (tempData.project.communities && tempData.project.communities.length > 0) {
       const communitiesData = tempData.project.communities.map(chat => ({
         project_id: projectId,
@@ -310,7 +313,7 @@ export const commitOnboardingData = async () => {
         telegram_photo_url: chat.photo_url || null
       }));
 
-      console.log("📝 Creating communities:", communitiesData);
+      console.log("📝 Creating communities:", communitiesData.length);
 
       const { error: communitiesError } = await supabase
         .from("communities")
@@ -318,16 +321,30 @@ export const commitOnboardingData = async () => {
       
       if (communitiesError) {
         console.error("❌ Error creating communities at the end of onboarding:", communitiesError);
+        console.error("Communities data:", communitiesData);
         // Don't return error here, continue with onboarding even if communities creation fails
-        // Just log the error
+        toast.error("Some communities could not be created. You can add them later.");
       } else {
         console.log("✅ Created communities:", communitiesData.length);
+        toast.success(`Added ${communitiesData.length} communities to your project`);
       }
+    } else {
+      console.log("⚠️ No communities found to create");
     }
     
     console.log("🎉 Successfully committed all onboarding data");
     
+    // Update onboarding step to completed
+    await supabase
+      .from("users")
+      .update({
+        onboarding_step: 'completion',
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", userData.user.id);
+    
     // Clear temporary storage
+    // Only clear after successful completion
     onboardingTempData.project = undefined;
     
     return { success: true, projectId: projectId };

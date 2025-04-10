@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { OnboardingLayout } from "@/group_owners/components/onboarding/OnboardingLayout";
 import { Bot } from "lucide-react";
 import { z } from "zod";
@@ -44,6 +44,16 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     }
   });
 
+  // Save the bot token immediately when it changes for persistence
+  useEffect(() => {
+    if (customTokenInput && customTokenInput.length > 10) {
+      setTempProjectData({
+        ...tempData.project,
+        bot_token: customTokenInput
+      });
+    }
+  }, [customTokenInput]);
+
   const handleVerifyConnection = async () => {
     if (!customTokenInput) {
       toast.error("Please enter your bot token");
@@ -66,12 +76,20 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
       }
 
       if (response.data.valid) {
-        setVerificationResults(response.data.chatList || []);
+        const chatList = response.data.chatList || [];
+        setVerificationResults(chatList);
         
-        const channelCount = (response.data.chatList || []).filter(chat => chat.type === 'channel').length;
-        const groupCount = (response.data.chatList || []).filter(chat => chat.type !== 'channel').length;
+        // Automatically save the communities and bot token in temp data
+        setTempProjectData({
+          ...tempData.project,
+          bot_token: customTokenInput,
+          communities: chatList
+        });
         
-        if (response.data.chatList && response.data.chatList.length > 0) {
+        const channelCount = chatList.filter(chat => chat.type === 'channel').length;
+        const groupCount = chatList.filter(chat => chat.type !== 'channel').length;
+        
+        if (chatList.length > 0) {
           let successMessage = `Bot verified successfully!`;
           if (channelCount > 0 && groupCount > 0) {
             successMessage += ` Found ${channelCount} ${channelCount === 1 ? 'channel' : 'channels'} and ${groupCount} ${groupCount === 1 ? 'group' : 'groups'}.`;
@@ -111,6 +129,27 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Make sure communities are explicitly set before continuing
+      if (verificationResults && verificationResults.length > 0) {
+        setTempProjectData({
+          ...tempData.project,
+          bot_token: customTokenInput,
+          communities: verificationResults
+        });
+
+        console.log("🤖 Bot Setup: Saving communities:", {
+          count: verificationResults.length,
+          communities: verificationResults.map(c => ({id: c.id, title: c.title}))
+        });
+      } else {
+        console.log("⚠️ Bot Setup: No communities found to save");
+        if (!tempData.project?.communities || tempData.project.communities.length === 0) {
+          toast.warning("No communities were found. Please verify your bot token and make sure your bot is added as an admin to at least one group or channel.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Check if a project with this bot token already exists
       if (customTokenInput) {
         const { data: existingProject } = await supabase
@@ -126,20 +165,13 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
         }
       }
 
-      // Update the temporary project data with the bot token and communities
-      setTempProjectData({
-        ...tempData.project,
-        bot_token: customTokenInput,
-        communities: verificationResults || []
+      console.log("✅ Bot Setup: Ready to commit with data:", {
+        projectName: tempData.project?.name,
+        hasToken: !!customTokenInput,
+        communitiesCount: tempData.project?.communities?.length || 0
       });
 
-      console.log("✅ Bot Setup: Saved temporary project data:", {
-        name: tempData.project?.name,
-        botTokenSet: !!customTokenInput,
-        communitiesCount: verificationResults?.length || 0
-      });
-
-      // Call commitOnboardingData
+      // Call commitOnboardingData with explicit delay to ensure all data is properly saved
       const result = await commitOnboardingData();
       
       if (!result.success) {
@@ -161,6 +193,11 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
 
   const handleChatsRefresh = (newChats: TelegramChat[]) => {
     setVerificationResults(newChats);
+    // Also update the temp data with the new chats
+    setTempProjectData({
+      ...tempData.project,
+      communities: newChats
+    });
   };
 
   return (

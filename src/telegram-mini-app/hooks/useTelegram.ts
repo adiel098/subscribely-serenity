@@ -4,24 +4,13 @@ import { createLogger } from "../utils/debugUtils";
 
 const logger = createLogger("useTelegram");
 
-// Define interface for Telegram WebApp based on the available window.Telegram.WebApp properties
-interface TelegramWebAppInterface {
-  MainButton?: any;
-  BackButton?: any;
-  close?: () => void;
-  expand?: () => void;
-  ready?: () => void;
-  HapticFeedback?: any;
-  initDataUnsafe?: any;
-}
-
 interface TelegramHook {
-  tg: TelegramWebAppInterface | null;
+  tg: TelegramWebApp | null;
   isTelegramAvailable: boolean;
 }
 
 export const useTelegram = (): TelegramHook => {
-  const [tg, setTg] = useState<TelegramWebAppInterface | null>(null);
+  const [tg, setTg] = useState<TelegramWebApp | null>(null);
   const [isTelegramAvailable, setIsTelegramAvailable] = useState<boolean>(false);
 
   useEffect(() => {
@@ -29,8 +18,7 @@ export const useTelegram = (): TelegramHook => {
       try {
         if (window.Telegram && window.Telegram.WebApp) {
           const webApp = window.Telegram.WebApp;
-          // Cast to TelegramWebAppInterface to match our expected interface
-          setTg(webApp as unknown as TelegramWebAppInterface);
+          setTg(webApp);
           setIsTelegramAvailable(true);
           logger.log('Telegram WebApp initialized successfully');
         } else {
@@ -49,11 +37,4 @@ export const useTelegram = (): TelegramHook => {
   return { tg, isTelegramAvailable };
 };
 
-// Make sure the global declaration matches our expected interface
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: TelegramWebAppInterface;
-    };
-  }
-}
+// No need to redeclare the global Window interface here since it's already defined in vite-env.d.ts

@@ -15,7 +15,7 @@ export async function getBotSettings(supabase: ReturnType<typeof createClient>, 
     const query = supabase
       .from('telegram_bot_settings')
       .select('*, use_custom_bot, custom_bot_token')
-      .eq('project_id', projectId); // Using project_id consistently
+      .eq('project_id', projectId);
     
     // Execute query
     const { data: settings, error } = await query.single();
@@ -58,7 +58,7 @@ export async function updateBotSettings(
     const query = supabase
       .from('telegram_bot_settings')
       .update(settings)
-      .eq('project_id', projectId); // Using project_id consistently
+      .eq('project_id', projectId);
     
     // Execute query with returning set to minimal to reduce payload size
     const { data, error } = await query.select('id').single();
@@ -86,7 +86,7 @@ export async function getBotToken(
     const { data, error } = await supabase
       .from('telegram_bot_settings')
       .select('use_custom_bot, custom_bot_token')
-      .eq('project_id', projectId) // Using project_id consistently
+      .eq('project_id', projectId)
       .single();
     
     if (error) {

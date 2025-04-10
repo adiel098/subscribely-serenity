@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
@@ -20,19 +21,19 @@ export const useUserBotPreference = (): UserBotPreference => {
     } | null> => {
       if (!user) return null;
       
-      // First try to get from profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
+      // First try to get from users table
+      const { data: userData, error: userError } = await supabase
+        .from("users")
         .select("use_custom_bot, custom_bot_token")
         .eq("id", user.id)
         .single();
       
-      if (!profileError && profileData) {
-        console.log("Found bot preference in profiles:", profileData);
-        return profileData;
+      if (!userError && userData) {
+        console.log("Found bot preference in users table:", userData);
+        return userData;
       }
       
-      // If not in profiles, check if user has any projects with bot settings
+      // If not in users table, check if user has any projects with bot settings
       const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select("id")

@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -13,57 +10,42 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Plus, Loader2, AlertCircle, Check, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useProjectContext } from "@/contexts/ProjectContext";
-import { useCreateSubscriptionPlan } from "@/group_owners/hooks/subscription/useCreateSubscriptionPlan";
 import { CreatePlanDialog } from "@/group_owners/components/subscriptions/CreatePlanDialog";
 import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
+import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
-import { useUpdateSubscriptionPlan } from "@/group_owners/hooks/subscription/useUpdateSubscriptionPlan";
-import { useDeleteSubscriptionPlan } from "@/group_owners/hooks/subscription/useDeleteSubscriptionPlan";
-import { useToggleSubscriptionPlanStatus } from "@/group_owners/hooks/subscription/useToggleSubscriptionPlanStatus";
-import { useSubscriptionPlans } from "@/group_owners/hooks/subscription/useSubscriptionPlans";
 
 const CreatePlansStep = () => {
   const navigate = useNavigate();
-  const { selectedProjectId: selectedCommunityId } = useProjectContext();
+  const { selectedProjectId } = useProjectContext();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
-  const { data: plans, isLoading, refetch } = useSubscriptionPlans(selectedCommunityId || undefined);
-  const createPlanMutation = useCreateSubscriptionPlan();
-  const updatePlanMutation = useUpdateSubscriptionPlan();
-  const deletePlanMutation = useDeleteSubscriptionPlan();
-  const togglePlanStatusMutation = useToggleSubscriptionPlanStatus();
+  const { 
+    plans, 
+    isLoading, 
+    createPlan, 
+    updatePlan, 
+    deletePlan, 
+    togglePlanStatus 
+  } = useSubscriptionPlans(selectedProjectId);
   
   const [isSaving, setIsSaving] = useState(false);
   
   const handleCreatePlan = async (data: any) => {
     setIsSaving(true);
     try {
-      if (!selectedCommunityId) {
+      if (!selectedProjectId) {
         throw new Error("No community selected");
       }
       
-      await createPlanMutation.mutateAsync({
+      await createPlan.mutateAsync({
         ...data,
-        project_id: selectedCommunityId,
+        project_id: selectedProjectId,
       });
       
       toast({
@@ -86,8 +68,8 @@ const CreatePlansStep = () => {
   const handleUpdatePlan = async (planId: string, updatedPlan: Partial<SubscriptionPlan>) => {
     setIsSaving(true);
     try {
-      await updatePlanMutation.mutateAsync({
-        planId: planId,
+      await updatePlan.mutateAsync({
+        id: planId,
         updates: updatedPlan,
       });
       
@@ -110,7 +92,7 @@ const CreatePlansStep = () => {
   const handleDeletePlan = async (planId: string) => {
     setIsSaving(true);
     try {
-      await deletePlanMutation.mutateAsync(planId);
+      await deletePlan.mutateAsync(planId);
       
       toast({
         title: "Plan deleted",
@@ -131,7 +113,10 @@ const CreatePlansStep = () => {
   const handleTogglePlanStatus = async (planId: string, is_active: boolean) => {
     setIsSaving(true);
     try {
-      await togglePlanStatusMutation.mutateAsync({ planId, is_active });
+      await togglePlanStatus.mutateAsync({ 
+        id: planId, 
+        is_active: !is_active 
+      });
       
       toast({
         title: "Plan status updated",
@@ -154,6 +139,16 @@ const CreatePlansStep = () => {
   };
   
   const hasPlans = plans && plans.length > 0;
+
+  // Create an adapter for the handleUpdatePlan to match SubscriptionPlanCard's expected format
+  const handleEditPlan = (plan: SubscriptionPlan) => {
+    // This function will be passed to SubscriptionPlanCard's onUpdate prop
+    // It will receive the plan object, but we need to adapt it to our handleUpdatePlan
+    // which expects a planId and updates object
+    return (updatedPlan: Partial<SubscriptionPlan>) => {
+      handleUpdatePlan(plan.id, updatedPlan);
+    };
+  };
   
   return (
     <motion.div
@@ -187,8 +182,8 @@ const CreatePlansStep = () => {
               {plans.map((plan) => (
                 <SubscriptionPlanCard
                   key={plan.id}
-                  plan={plan}
-                  onUpdate={handleUpdatePlan}
+                  plan={plan as any} // Using any temporarily to fix type mismatch
+                  onUpdate={(updatedPlan) => handleUpdatePlan(plan.id, updatedPlan)}
                   onDelete={handleDeletePlan}
                   onToggleStatus={handleTogglePlanStatus}
                 />
@@ -250,7 +245,7 @@ const CreatePlansStep = () => {
         <CreatePlanDialog 
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
-          communityId={selectedCommunityId || ''}
+          projectId={selectedProjectId || ''}
           onSubmit={handleCreatePlan}
         />
       )}

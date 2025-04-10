@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -10,15 +9,22 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BotSettings as BotSettingsType } from "@/group_owners/hooks/types/subscription.types";
+
+interface ExtendedBotSettings extends BotSettingsType {
+  use_custom_bot?: boolean;
+  custom_bot_token?: string | null;
+}
 
 const TelegramBot = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
   const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
   const isMobile = useIsMobile();
   
-  const { settings, isLoading, updateSettings } = useBotSettings(communityIdToUse);
+  const { settings: originalSettings, isLoading, updateSettings } = useBotSettings(communityIdToUse || undefined);
+  const settings = originalSettings as ExtendedBotSettings | undefined;
   
   const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
   const [customBotToken, setCustomBotToken] = useState<string>('');
@@ -137,36 +143,21 @@ const TelegramBot = () => {
         </Card>
 
         <Card className={useCustomBot ? "border-indigo-200 bg-indigo-50/50 shadow-md" : ""}>
-          <CardHeader className={isMobile ? "p-3 pb-2" : ""}>
-            <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
-              <div className={`bg-indigo-100 p-${isMobile ? '1.5' : '2'} rounded-full`}>
-                <Lock className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="bg-indigo-100 p-2 rounded-full">
+                <Lock className="h-5 w-5 text-indigo-600" />
               </div>
               Custom Bot
             </CardTitle>
-            <CardDescription className={isMobile ? "text-xs" : ""}>
+            <CardDescription>
               Use your own custom Telegram bot (requires setup)
             </CardDescription>
           </CardHeader>
-          <CardContent className={`space-y-3 md:space-y-4 ${isMobile ? 'p-3 pt-0' : ''}`}>
-            <div className="space-y-2 md:space-y-3">
-              <div className="flex items-center gap-2">
-                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Full brand customization</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Private message handling</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className={`h-${isMobile ? '3.5' : '4'} w-${isMobile ? '3.5' : '4'} text-green-500`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'}`}>Your own bot username and avatar</span>
-              </div>
-            </div>
-            
-            <div className="border-t pt-3 md:pt-4">
+          <CardContent className="space-y-4">
+            <div className="border-t pt-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="custom-bot-toggle" className={`font-medium text-indigo-700 ${isMobile ? 'text-sm' : ''}`}>
+                <Label htmlFor="custom-bot-toggle" className="font-medium text-indigo-700">
                   Use Custom Bot
                 </Label>
                 <Switch 
@@ -177,25 +168,23 @@ const TelegramBot = () => {
               </div>
               
               {useCustomBot && (
-                <div className="mt-3 md:mt-4 space-y-3 md:space-y-4">
-                  <div className="space-y-1 md:space-y-2">
-                    <Label htmlFor="bot-token" className={`${isMobile ? 'text-xs' : 'text-sm'}`}>
+                <div className="mt-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bot-token">
                       Bot Token <span className="text-red-500">*</span>
                     </Label>
-                    <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
+                    <div className="flex gap-2">
                       <Input
                         id="bot-token"
                         type="password"
                         value={customBotToken}
                         onChange={(e) => setCustomBotToken(e.target.value)}
                         placeholder="Enter your bot token from @BotFather"
-                        className={`flex-1 ${isMobile ? 'text-xs h-8' : ''}`}
+                        className="flex-1"
                       />
                       <Button 
                         onClick={validateBotToken} 
-                        disabled={isValidating || !customBotToken || customBotToken.includes('•')}
-                        className={`whitespace-nowrap ${isMobile ? 'text-xs h-8 mt-1' : ''}`}
-                      >
+                        disabled={isValidating || !customBotToken || customBotToken.includes('•')}>
                         {isValidating ? "Validating..." : "Validate & Save"}
                       </Button>
                     </div>

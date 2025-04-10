@@ -1,5 +1,5 @@
 
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouteObject } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import Login from "./auth/pages/Login";
 import SignUp from "./auth/pages/SignUp";
@@ -33,16 +33,12 @@ import { CouponsPage } from "@/group_owners/components/coupons/CouponsPage";
 import { AppProviders } from "./providers/AppProviders";
 import { createElement } from "react";
 
-// Helper function to wrap elements with AppProviders
-const wrapWithProviders = (element: React.ReactNode) => {
-  return createElement(AppProviders, { children: element });
-};
-
-export const router = createBrowserRouter([
+// Define routes without wrapping everything with providers
+const routes: RouteObject[] = [
   {
     path: "/",
-    element: wrapWithProviders(<AppRoutes />),
-    errorElement: wrapWithProviders(<MainNotFound />),
+    element: <AppRoutes />,
+    errorElement: <MainNotFound />,
     children: [
       {
         index: true,
@@ -50,79 +46,98 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <Dashboard /> }]
       },
       {
         path: "subscriptions",
-        element: <ProtectedRoute><Subscriptions /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <Subscriptions /> }]
       },
       {
         path: "subscribers",
-        element: <ProtectedRoute><Subscribers /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <Subscribers /> }]
       },
       {
         path: "coupons",
-        element: <ProtectedRoute><CouponsPage /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <CouponsPage /> }]
       },
       {
         path: "payment-methods",
-        element: <ProtectedRoute><PaymentMethods /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <PaymentMethods /> }]
       },
       {
         path: "bot-settings",
-        element: <ProtectedRoute><BotSettings /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <BotSettings /> }]
       },
       {
         path: "telegram-bot",
-        element: <ProtectedRoute><TelegramBot /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <TelegramBot /> }]
       },
       {
         path: "membify-settings",
-        element: <ProtectedRoute><MembifySettings /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <MembifySettings /> }]
       },
       {
         path: "platform-plans",
-        element: <ProtectedRoute><PlatformPlans /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <PlatformPlans /> }]
       },
       {
         path: "platform-payment",
-        element: <ProtectedRoute><PlatformPayment /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <PlatformPayment /> }]
       },
       {
         path: "onboarding",
-        element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <Onboarding /> }]
       },
       {
         path: "onboarding/:step",
-        element: <ProtectedRoute><Onboarding /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <Onboarding /> }]
       },
       {
         path: "connect/telegram",
-        element: <ProtectedRoute><TelegramConnect /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <TelegramConnect /> }]
       },
       {
         path: "admin/dashboard",
-        element: <AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminDashboard /> }]
       },
       {
         path: "admin/communities",
-        element: <AdminProtectedRoute><AdminCommunities /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminCommunities /> }]
       },
       {
         path: "admin/users",
-        element: <AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminUsers /> }]
       },
       {
         path: "admin/payments",
-        element: <AdminProtectedRoute><AdminPayments /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminPayments /> }]
       },
       {
         path: "admin/reports",
-        element: <AdminProtectedRoute><AdminReports /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminReports /> }]
       },
       {
         path: "admin/settings",
-        element: <AdminProtectedRoute><AdminSettings /></AdminProtectedRoute>
+        element: <AdminProtectedRoute />,
+        children: [{ index: true, element: <AdminSettings /> }]
       },
       {
         path: "auth",
@@ -150,8 +165,22 @@ export const router = createBrowserRouter([
       },
       {
         path: "new-community/custom-bot",
-        element: <ProtectedRoute><CustomBotNewCommunity /></ProtectedRoute>
+        element: <ProtectedRoute />,
+        children: [{ index: true, element: <CustomBotNewCommunity /> }]
       },
     ]
   }
-]);
+];
+
+// Helper function to wrap routes with providers
+const wrapWithProviders = (routes: RouteObject[]): RouteObject[] => {
+  return routes.map(route => ({
+    ...route,
+    element: route.element ? createElement(AppProviders, { children: route.element }) : route.element,
+    errorElement: route.errorElement ? createElement(AppProviders, { children: route.errorElement }) : route.errorElement,
+    children: route.children ? wrapWithProviders(route.children) : undefined,
+  }));
+};
+
+// Create the router with providers
+export const router = createBrowserRouter(wrapWithProviders(routes));

@@ -1,74 +1,49 @@
-import { Community } from "@/telegram-mini-app/types/community.types";
-import { TelegramUser } from "@/telegram-mini-app/types/telegramTypes";
 
-export const TEST_USER: TelegramUser = {
-  id: '123456789',
-  username: 'test_user',
-  first_name: 'Test',
-  last_name: 'User',
-  photo_url: 'https://via.placeholder.com/100'
-};
+import { Community } from "../types/community.types";
 
-export const TEST_COMMUNITY: Community = {
-  id: '27052464-6e68-4116-bd79-6af069fe67cd',
-  name: 'Test Community',
-  description: 'This is a test community for development purposes',
+// Sample community data for development
+export const sampleCommunity: Community = {
+  id: "sample-community-1",
+  name: "Sample Community",
+  description: "A test community for development purposes",
   telegram_photo_url: null,
-  telegram_chat_id: null,
-  custom_link: 'test-community',
+  telegram_chat_id: "12345",
+  custom_link: null,
+  photo_url: "https://via.placeholder.com/150",
+  member_count: 120,
+  subscription_count: 45,
   subscription_plans: [
     {
-      id: 'test-plan-1',
-      name: 'Monthly Plan',
+      id: "plan-1",
+      name: "Monthly Premium",
       price: 9.99,
-      interval: 'monthly',
-      description: 'Basic monthly subscription',
-      features: ['Access to all content', '24/7 support'],
+      interval: "monthly",
+      description: "Access to all premium content",
+      features: ["Premium content", "Early access", "Monthly newsletter"],
       is_active: true,
-      community_id: '27052464-6e68-4116-bd79-6af069fe67cd'
+      community_id: "sample-community-1",
+      project_id: "project-1",
+      has_trial_period: true,
+      trial_days: 7,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 'test-plan-2',
-      name: 'Yearly Plan',
+      id: "plan-2",
+      name: "Yearly Premium",
       price: 99.99,
-      interval: 'yearly',
-      description: 'Premium yearly subscription',
-      features: ['Access to all content', '24/7 support', 'Special perks'],
+      interval: "yearly",
+      description: "Access to all premium content, yearly discount",
+      features: ["Premium content", "Early access", "Monthly newsletter", "Save 20%"],
       is_active: true,
-      community_id: '27052464-6e68-4116-bd79-6af069fe67cd'
+      community_id: "sample-community-1",
+      project_id: "project-1",
+      has_trial_period: true,
+      trial_days: 14,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
-  ]
+  ],
+  platform_url: "https://example.com/community/sample-community-1",
+  miniapp_url: "https://t.me/sample_bot/app"
 };
-
-export const mockSubscriptionPlans = [
-  {
-    id: "plan-1",
-    name: "Basic Plan",
-    price: 9.99,
-    interval: "monthly",
-    description: "Starter plan with basic features",
-    features: ["Access to main content", "Basic support", "1 device"],
-    is_active: true,
-    community_id: "community-1",
-    project_id: "project-1",
-    has_trial_period: false,
-    trial_days: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: "plan-2",
-    name: "Premium Plan",
-    price: 99.99,
-    interval: "yearly",
-    description: "Premium plan with all features",
-    features: ["Access to all content", "Priority support", "Multiple devices", "Exclusive content"],
-    is_active: true,
-    community_id: "community-1",
-    project_id: "project-1",
-    has_trial_period: true,
-    trial_days: 7,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];

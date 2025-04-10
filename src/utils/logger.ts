@@ -1,24 +1,28 @@
 
 /**
- * A simple logger utility for consistent logging
+ * Logger utility for consistent logging across the application
  */
 
 const logger = {
+  log: (message: string, ...args: any[]) => {
+    console.log(`[LOG] ${message}`, ...args);
+  },
+  
   info: (message: string, ...args: any[]) => {
-    console.log(`${new Date().toISOString()} info: ${message}`, ...args);
+    console.info(`[INFO] ${message}`, ...args);
   },
   
   warn: (message: string, ...args: any[]) => {
-    console.warn(`${new Date().toISOString()} warn: ${message}`, ...args);
+    console.warn(`[WARN] ${message}`, ...args);
   },
   
   error: (message: string, ...args: any[]) => {
-    console.error(`${new Date().toISOString()} error: ${message}`, ...args);
+    console.error(`[ERROR] ${message}`, ...args);
   },
   
   debug: (message: string, ...args: any[]) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.debug(`${new Date().toISOString()} debug: ${message}`, ...args);
+      console.debug(`[DEBUG] ${message}`, ...args);
     }
   }
 };

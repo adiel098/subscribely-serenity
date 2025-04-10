@@ -29,13 +29,15 @@ type CreatePlanFormValues = z.infer<typeof createPlanSchema>;
 export interface CreatePlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreatePlanFormValues) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
+  projectId?: string; // Add projectId prop instead of communityId
 }
 
 export const CreatePlanDialog = ({ 
   open, 
   onOpenChange, 
-  onSubmit
+  onSubmit,
+  projectId = ''
 }: CreatePlanDialogProps) => {
   const [newFeature, setNewFeature] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,7 +82,8 @@ export const CreatePlanDialog = ({
     try {
       await onSubmit({
         ...data,
-        price: Number(data.price)
+        price: Number(data.price),
+        project_id: projectId  // Use projectId instead of communityId
       });
     } catch (error) {
       console.error("Error creating plan:", error);

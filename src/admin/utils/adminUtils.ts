@@ -1,10 +1,10 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { AdminRole } from "../hooks/types/adminUsers.types";
+import { supabase } from "@/lib/supabaseClient";
+import { AdminRole, AdminUserRole } from "../hooks/types/adminUsers.types";
 import { useToast } from "@/components/ui/use-toast";
 
 // Types
-export type { AdminRole };
+export type { AdminRole, AdminUserRole };
 
 // Admin statistics
 export const getAdminStatistics = async () => {
@@ -116,92 +116,6 @@ export const getAdminUsers = async () => {
     }));
   } catch (error) {
     console.error("Error fetching admin users:", error);
-    throw error;
-  }
-};
-
-// Grant admin access to a user
-export const grantAdminAccess = async (userId: string, role: AdminRole) => {
-  const { toast } = useToast();
-  try {
-    // First check if user already has admin role
-    const { data: existingRole, error: checkError } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-    
-    if (checkError) throw checkError;
-    
-    let result;
-    
-    if (existingRole) {
-      // Update existing role
-      const { data, error } = await supabase
-        .from('admin_users')
-        .update({ role })
-        .eq('user_id', userId)
-        .select();
-      
-      if (error) throw error;
-      result = data;
-      
-      toast({
-        title: "Admin role updated",
-        description: `User role updated to ${role}`,
-      });
-    } else {
-      // Insert new role
-      const { data, error } = await supabase
-        .from('admin_users')
-        .insert({ user_id: userId, role })
-        .select();
-      
-      if (error) throw error;
-      result = data;
-      
-      toast({
-        title: "Admin access granted",
-        description: `User granted ${role} access`,
-      });
-    }
-    
-    return result;
-  } catch (error) {
-    console.error("Error granting admin access:", error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to grant admin access. Please try again.",
-    });
-    throw error;
-  }
-};
-
-// Update user status (active/inactive/suspended)
-export const updateUserStatus = async (userId: string, status: 'active' | 'inactive' | 'suspended') => {
-  try {
-    // Update the users table
-    let updates = {};
-    
-    if (status === 'suspended') {
-      updates = { is_suspended: true, status: 'suspended' };
-    } else if (status === 'active') {
-      updates = { is_suspended: false, status: 'active', last_login: new Date().toISOString() };
-    } else if (status === 'inactive') {
-      updates = { is_suspended: false, status: 'inactive', last_login: null };
-    }
-    
-    const { error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId);
-      
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error("Error updating user status:", error);
     throw error;
   }
 };

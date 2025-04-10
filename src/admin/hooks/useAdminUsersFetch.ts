@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminUser, AdminUserRole } from "./types/adminUsers.types";
 
@@ -99,7 +99,6 @@ export const useAdminUsersFetch = () => {
         ) || [];
         
         // Count all active subscribers in user's projects
-        // We'll need to adapt this when we have more detailed information about the projects schema
         const totalSubscribers = allSubscribers?.filter(member => 
           userCommunityIds.includes(member.project_id) && 
           member.subscription_status === 'active'
@@ -127,6 +126,7 @@ export const useAdminUsersFetch = () => {
         
         return {
           id: user.id,
+          user_id: user.id, // Match user_id with id to satisfy the AdminUser type
           email: user.email || '',
           first_name: user.first_name || null,
           last_name: user.last_name || null,
@@ -137,6 +137,7 @@ export const useAdminUsersFetch = () => {
           communities_count: userCommunities.length,
           subscriptions_count: totalSubscribers,
           created_at: user.created_at || '',
+          updated_at: user.updated_at || '',
           last_login: user.last_login || null
         };
       });

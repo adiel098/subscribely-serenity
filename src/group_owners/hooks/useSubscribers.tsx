@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 
 export interface Plan {
   id: string;
@@ -28,6 +28,7 @@ export interface Subscriber {
   last_active?: string;
   last_checked?: string;
   community_id?: string;
+  project_id?: string;  // Add project_id to fix the error
   plan?: Plan | null;
   is_blocked?: boolean;
   payment_status?: string;

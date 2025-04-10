@@ -1,106 +1,148 @@
-
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useAuth } from "@/auth/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 import { createLogger } from "@/utils/debugUtils";
 
 const logger = createLogger("useOnboardingStatus");
 
-/**
- * Hook to check and manage user onboarding status
- */
 export const useOnboardingStatus = () => {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState<string | null>(null);
-  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const { toast } = useToast();
 
-  /**
-   * Check if the user needs to complete onboarding
-   * @returns {Promise<boolean>} True if user needs to complete onboarding
-   */
-  const checkOnboardingStatus = useCallback(async (): Promise<boolean> => {
-    if (!user) {
-      logger.warn("No authenticated user to check onboarding status");
-      return false;
-    }
-
-    setIsLoading(true);
-    logger.log(`Fetching onboarding status for user: ${user.id}`);
-
+  const checkOnboardingStatus = async (): Promise<boolean> => {
+    setIsChecking(true);
     try {
-      const { data, error } = await supabase
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw userError;
+      }
+      
+      if (!user) {
+        return false; // No user, can't check onboarding
+      }
+      
+      // Get user profile data
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('onboarding_completed, onboarding_step')
         .eq('id', user.id)
         .single();
-
-      if (error) {
-        logger.error("Error fetching onboarding status:", error);
+        
+      if (profileError) {
+        throw profileError;
+      }
+      
+      logger.log("Onboarding status check:", profile);
+      
+      if (!profile) {
+        return true; // No profile means onboarding needed
+      }
+      
+      // If onboarding is explicitly completed, return false (no need for onboarding)
+      if (profile.onboarding_completed === true) {
         return false;
       }
-
-      setOnboardingStep(data.onboarding_step || 'welcome');
-      setOnboardingCompleted(data.onboarding_completed || false);
-
-      logger.log(`User onboarding status: completed=${data.onboarding_completed}, step=${data.onboarding_step}`);
-      return !data.onboarding_completed;
-    } catch (error) {
-      logger.error("Exception in checkOnboardingStatus:", error);
-      return false;
+      
+      // Otherwise, onboarding is needed
+      return true;
+    } catch (err) {
+      logger.error("Error checking onboarding status:", err);
+      if (err instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+      }
+      return false; // Default to not requiring onboarding on error
     } finally {
-      setIsLoading(false);
+      setIsChecking(false);
     }
-  }, [user]);
+  };
 
-  /**
-   * Update the user's current onboarding step
-   * @param {string} step The current step of onboarding
-   * @returns {Promise<void>}
-   */
-  const updateOnboardingStep = useCallback(async (step: string): Promise<void> => {
-    if (!user) return;
-
-    logger.log(`Updating onboarding step to: ${step}`);
-    const { error } = await supabase
-      .from('users')
-      .update({ onboarding_step: step })
-      .eq('id', user.id);
-
-    if (error) {
-      logger.error("Error updating onboarding step:", error);
+  const updateOnboardingStep = async (step: string): Promise<void> => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw userError;
+      }
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ onboarding_step: step })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        throw updateError;
+      }
+      
+      logger.log("Updated onboarding step to:", step);
+    } catch (err) {
+      logger.error("Error updating onboarding step:", err);
+      if (err instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+      }
+      throw err;
     }
-  }, [user]);
+  };
 
-  /**
-   * Mark the onboarding process as complete
-   * @returns {Promise<void>}
-   */
-  const completeOnboarding = useCallback(async (): Promise<void> => {
-    if (!user) return;
-
-    logger.log("Completing onboarding for user");
-    const { error } = await supabase
-      .from('users')
-      .update({ 
-        onboarding_completed: true,
-        onboarding_step: 'completed' 
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      logger.error("Error completing onboarding:", error);
-    } else {
-      setOnboardingCompleted(true);
+  const completeOnboarding = async (): Promise<void> => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw userError;
+      }
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          onboarding_completed: true,
+          onboarding_step: 'completed'
+        })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        throw updateError;
+      }
+      
+      logger.log("Onboarding completed");
+      toast({
+        title: "Success",
+        description: "Onboarding completed successfully!",
+      });
+    } catch (err) {
+      logger.error("Error completing onboarding:", err);
+      if (err instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+      }
+      throw err;
     }
-  }, [user]);
+  };
 
   return {
-    isLoading,
-    onboardingStep,
-    onboardingCompleted,
     checkOnboardingStatus,
     updateOnboardingStep,
-    completeOnboarding
+    completeOnboarding,
+    isChecking
   };
 };

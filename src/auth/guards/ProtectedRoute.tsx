@@ -10,7 +10,7 @@ import { useOnboardingStatus } from "@/group_owners/hooks/useOnboardingStatus";
  * If a user tries to access a protected route without being logged in, they are redirected to the login page
  */
 export const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] = useState(false);
@@ -35,11 +35,11 @@ export const ProtectedRoute = () => {
         }
       }
     };
-
+    
     checkIfShouldRedirect();
   }, [user, location.pathname, checkOnboardingStatus]);
 
-  if (loading || isCheckingOnboarding) {
+  if (isLoading || isCheckingOnboarding) {
     console.log("⏳ ProtectedRoute: Still loading, showing loading state");
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -56,12 +56,12 @@ export const ProtectedRoute = () => {
   }
 
   console.log("✅ ProtectedRoute: User authenticated:", user.email);
-
+  
   // Redirect to onboarding if needed
   if (shouldRedirectToOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
-
+  
   // User is authenticated and has completed onboarding
   return <Outlet />;
 };

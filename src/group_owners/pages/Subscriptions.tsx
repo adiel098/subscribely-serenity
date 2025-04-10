@@ -1,79 +1,40 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Loader2, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTitle } from "@/components/ui/alert-title";
 import { useToast } from "@/components/ui/use-toast";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { SubscriptionPlanCard } from "@/group_owners/components/subscriptions/SubscriptionPlanCard";
 import { CreatePlanDialog } from "@/group_owners/components/subscriptions/CreatePlanDialog";
 import { EditPlanDialog } from "@/group_owners/components/subscriptions/EditPlanDialog";
-import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
-import { useSubscriptionPlans } from "@/group_owners/hooks/subscription/useSubscriptionPlans";
-import { useCreateSubscriptionPlan } from "@/group_owners/hooks/subscription/useCreateSubscriptionPlan";
-import { useUpdateSubscriptionPlan } from "@/group_owners/hooks/subscription/useUpdateSubscriptionPlan";
-import { useDeleteSubscriptionPlan } from "@/group_owners/hooks/subscription/useDeleteSubscriptionPlan";
-import { useToggleSubscriptionPlanStatus } from "@/group_owners/hooks/subscription/useToggleSubscriptionPlanStatus";
+import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
 
 const Subscriptions = () => {
   const navigate = useNavigate();
   const { selectedProjectId } = useProjectContext();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editPlan, setEditPlan] = useState<SubscriptionPlan | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const {
-    data: plans,
+    plans,
     isLoading,
     isError,
     error,
+    createPlan,
+    updatePlan,
+    deletePlan,
+    togglePlanStatus
   } = useSubscriptionPlans(selectedProjectId || undefined);
-
-  const createPlanMutation = useCreateSubscriptionPlan({
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription plan created successfully.",
-      });
-      setShowCreateDialog(false);
-    },
-  });
-
-  const updatePlanMutation = useUpdateSubscriptionPlan({
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription plan updated successfully.",
-      });
-      setShowEditDialog(false);
-      setEditPlan(null);
-    },
-  });
-
-  const deletePlanMutation = useDeleteSubscriptionPlan({
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription plan deleted successfully.",
-      });
-    },
-  });
-
-  const toggleStatusMutation = useToggleSubscriptionPlanStatus({
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Subscription plan status updated successfully.",
-      });
-    },
-  });
 
   useEffect(() => {
     if (!selectedProjectId) {
@@ -83,27 +44,46 @@ const Subscriptions = () => {
 
   const handleCreatePlan = async (data: any) => {
     if (!selectedProjectId) return;
-    await createPlanMutation.mutateAsync({
+    await createPlan.mutateAsync({
       ...data,
       project_id: selectedProjectId,
     });
+    toast({
+      title: "Success",
+      description: "Subscription plan created successfully.",
+    });
+    setShowCreateDialog(false);
   };
 
   const handleUpdatePlan = async (planId: string, data: Partial<SubscriptionPlan>) => {
-    await updatePlanMutation.mutateAsync({
-      id: planId,
-      updates: data,
+    await updatePlan.mutateAsync({ 
+      id: planId, 
+      updates: data 
     });
+    toast({
+      title: "Success",
+      description: "Subscription plan updated successfully.",
+    });
+    setShowEditDialog(false);
+    setEditPlan(null);
   };
 
   const handleDeletePlan = async (planId: string) => {
-    await deletePlanMutation.mutateAsync(planId);
+    await deletePlan.mutateAsync(planId);
+    toast({
+      title: "Success",
+      description: "Subscription plan deleted successfully.",
+    });
   };
 
   const handleToggleStatus = async (planId: string, is_active: boolean) => {
-    await toggleStatusMutation.mutateAsync({
-      id: planId,
-      is_active: !is_active,
+    await togglePlanStatus.mutateAsync({ 
+      id: planId, 
+      is_active: !is_active 
+    });
+    toast({
+      title: "Success",
+      description: "Subscription plan status updated successfully.",
     });
   };
 
@@ -147,7 +127,7 @@ const Subscriptions = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            Failed to load subscription plans. {error?.message}
+            Failed to load subscription plans. {error instanceof Error ? error.message : String(error)}
           </AlertDescription>
         </Alert>
       </div>
@@ -169,7 +149,7 @@ const Subscriptions = () => {
           {plans.map((plan) => (
             <SubscriptionPlanCard
               key={plan.id}
-              plan={plan}
+              plan={plan as any} // Using any temporarily to fix type mismatch
               onUpdate={handleEditPlan}
               onDelete={handleDeletePlan}
               onToggleStatus={handleToggleStatus}
@@ -187,7 +167,7 @@ const Subscriptions = () => {
         <CreatePlanDialog 
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
-          communityId={selectedProjectId || ''}
+          projectId={selectedProjectId || ''}
           onSubmit={handleCreatePlan}
         />
       )}

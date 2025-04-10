@@ -8,14 +8,14 @@ import { Loader2 } from "lucide-react";
  * AdminProtectedRoute - Only allows access to users with admin privileges
  */
 export const AdminProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   
   const isAdmin = useMemo(() => {
     if (!user) return false;
     return user.role === 'admin' || user.role === 'super_admin';
   }, [user]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />

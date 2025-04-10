@@ -112,19 +112,21 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     setIsSubmitting(true);
     try {
       // Check if a project with this bot token already exists
-      const { data: existingProject } = await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("bot_token", customTokenInput)
-        .single();
+      if (customTokenInput) {
+        const { data: existingProject } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("bot_token", customTokenInput)
+          .maybeSingle();
 
-      if (existingProject) {
-        toast.error(`A project with this bot token already exists: ${existingProject.name}`);
-        setIsSubmitting(false);
-        return;
+        if (existingProject) {
+          toast.error(`A project with this bot token already exists: ${existingProject.name}`);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      // Use the project name that was already set in the previous step
+      // Update the temporary project data with the bot token and communities
       setTempProjectData({
         ...tempData.project,
         bot_token: customTokenInput,
@@ -138,13 +140,14 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
       });
 
       // Call commitOnboardingData
-      const { success, error, projectId } = await commitOnboardingData();
+      const result = await commitOnboardingData();
       
-      if (!success) {
-        throw new Error(error || "Failed to commit onboarding data");
+      if (!result.success) {
+        console.error("❌ Bot Setup: Failed to commit onboarding data:", result.error);
+        throw new Error(result.error || "Failed to commit onboarding data");
       }
 
-      console.log("✅ Bot Setup: Successfully committed onboarding data with project ID:", projectId);
+      console.log("✅ Bot Setup: Successfully committed onboarding data with project ID:", result.projectId);
       
       // Proceed to the next step
       onComplete();

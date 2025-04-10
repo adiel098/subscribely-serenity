@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BotSettings } from "@/group_owners/hooks/useBotSettings";
+import { BotSettings } from "@/group_owners/hooks/types/botSettings.types";
 import { Card } from "@/components/ui/card";
 import { SettingsContent } from "./SettingsContent";
 import { Loader2 } from "lucide-react";

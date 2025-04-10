@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -173,7 +172,7 @@ export const commitOnboardingData = async () => {
       .from("users")
       .select("*")
       .eq("id", userData.user.id)
-      .single();
+      .maybeSingle();
 
     if (checkError) {
       console.error("❌ Error checking user existence:", checkError);
@@ -252,23 +251,46 @@ export const commitOnboardingData = async () => {
       botTokenSet: !!tempData.project.bot_token
     });
     
-    // Create default bot settings
+    // Verify the project exists before creating bot settings
+    const { data: verifiedProject, error: verifyError } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .single();
+      
+    if (verifyError || !verifiedProject) {
+      console.error("❌ Project verification failed. Cannot create bot settings:", verifyError || "Project not found");
+      return { success: false, error: "Project verification failed" };
+    }
+    
+    console.log("✅ Project verified to exist:", projectId);
+    
+    // Create default bot settings with explicit delay to ensure project is committed
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const botSettingsData = {
+      project_id: projectId,
+      welcome_message: "Welcome to our group! 🎉",
+      subscription_reminder_days: 3,
+      subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
+      expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
+      renewal_discount_enabled: false,
+      renewal_discount_percentage: 10,
+      language: 'en',
+      first_reminder_days: 3,
+      first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
+      second_reminder_days: 1,
+      second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
+    };
+    
+    console.log("📝 Creating bot settings with data:", {
+      project_id: botSettingsData.project_id,
+      // Other fields omitted for brevity
+    });
+    
     const { error: botSettingsError } = await supabase
       .from("telegram_bot_settings")
-      .insert({
-        project_id: projectId, // Using project_id consistently
-        welcome_message: "Welcome to our group! 🎉",
-        subscription_reminder_days: 3,
-        subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
-        expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
-        renewal_discount_enabled: false,
-        renewal_discount_percentage: 10,
-        language: 'en',
-        first_reminder_days: 3,
-        first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
-        second_reminder_days: 1,
-        second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
-      });
+      .insert(botSettingsData);
     
     if (botSettingsError) {
       console.error("❌ Error creating bot settings:", botSettingsError);

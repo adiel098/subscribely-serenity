@@ -1,93 +1,71 @@
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
-import { Project } from "@/types/project.types"; 
-import { createLogger } from "@/utils/debugUtils";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Project } from '@/types/project.types';
+import { supabase } from '@/lib/supabaseClient';
+import logger from '@/utils/logger';
 
-const logger = createLogger("ProjectContext");
-
-interface ProjectContextType {
-  selectedProjectId: string | null;
-  setSelectedProjectId: (id: string | null) => void;
-  projects: Project[];
+export interface ProjectContextType {
+  projects: Project[] | undefined;
   isLoading: boolean;
   error: string | null;
-  createProject: (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => Promise<Project>;
+  selectedProject: Project | null;
+  selectedProjectId: string | null;
+  setSelectedProject: (project: Project) => void;
+  createProject: (project: Omit<Project, 'id' | 'created_at'>) => Promise<Project>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
-  refreshProjects: () => Promise<void>;
+  refreshProjects: () => void;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
-interface ProjectContextProviderProps {
-  children: ReactNode;
-}
-
-export const ProjectContextProvider = ({ children }: ProjectContextProviderProps) => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Use TanStack Query for data fetching
-  const query = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      try {
-        logger.log("Fetching projects");
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          throw error;
-        }
-        
-        setProjects(data || []);
-        return data as Project[];
-      } catch (err) {
-        if (err instanceof Error) {
-          logger.error("Error fetching projects:", err.message);
-          setError(err.message);
-        } else {
-          logger.error("Unknown error fetching projects");
-          setError("Unknown error fetching projects");
-        }
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchProjects = async (): Promise<Project[]> => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      logger.error('Error fetching projects:', error);
+      throw error;
     }
+
+    return data || [];
+  };
+
+  const {
+    data: projects,
+    isLoading,
+    refetch
+  } = useQuery<Project[], Error>({
+    queryKey: ['projects'],
+    queryFn: fetchProjects
   });
 
-  // Manually setup project operations (create, update, delete)
-  const createProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> => {
+  const createProject = async (projectData: Omit<Project, 'id' | 'created_at'>): Promise<Project> => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .insert(project)
+        .insert([projectData])
         .select()
         .single();
-        
+
       if (error) throw error;
       
-      // Update local state
-      setProjects(prev => [data, ...prev]);
-      
+      refetch();
       return data;
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to create project");
-      }
-      throw err;
+    } catch (error: any) {
+      logger.error('Error creating project:', error);
+      setError(error.message);
+      throw error;
     }
   };
-  
+
   const updateProject = async (id: string, updates: Partial<Project>): Promise<Project> => {
     try {
       const { data, error } = await supabase
@@ -96,74 +74,66 @@ export const ProjectContextProvider = ({ children }: ProjectContextProviderProps
         .eq('id', id)
         .select()
         .single();
-        
+
       if (error) throw error;
       
-      // Update local state
-      setProjects(prev => prev.map(p => p.id === id ? data : p));
-      
+      refetch();
       return data;
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to update project");
-      }
-      throw err;
+    } catch (error: any) {
+      logger.error('Error updating project:', error);
+      setError(error.message);
+      throw error;
     }
   };
-  
+
   const deleteProject = async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
         .from('projects')
         .delete()
         .eq('id', id);
-        
+
       if (error) throw error;
       
-      // Update local state
-      setProjects(prev => prev.filter(p => p.id !== id));
-      
-      // Reset selected project if it was deleted
-      if (selectedProjectId === id) {
-        setSelectedProjectId(null);
+      refetch();
+      if (selectedProject?.id === id) {
+        setSelectedProject(null);
       }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to delete project");
-      }
-      throw err;
+    } catch (error: any) {
+      logger.error('Error deleting project:', error);
+      setError(error.message);
+      throw error;
     }
   };
-  
-  const refreshProjects = async (): Promise<void> => {
-    await query.refetch();
+
+  const refreshProjects = () => {
+    refetch();
+  };
+
+  const value: ProjectContextType = {
+    projects,
+    isLoading,
+    error,
+    selectedProject,
+    selectedProjectId: selectedProject?.id || null,
+    setSelectedProject,
+    createProject,
+    updateProject,
+    deleteProject,
+    refreshProjects
   };
 
   return (
-    <ProjectContext.Provider value={{
-      selectedProjectId,
-      setSelectedProjectId,
-      projects,
-      isLoading: query.isLoading || isLoading,
-      error,
-      createProject,
-      updateProject,
-      deleteProject,
-      refreshProjects
-    }}>
+    <ProjectContext.Provider value={value}>
       {children}
     </ProjectContext.Provider>
   );
 };
 
-export const useProjectContext = () => {
+export const useProjectContext = (): ProjectContextType => {
   const context = useContext(ProjectContext);
   if (context === undefined) {
-    throw new Error('useProjectContext must be used within a ProjectContextProvider');
+    throw new Error('useProjectContext must be used within a ProjectProvider');
   }
   return context;
 };

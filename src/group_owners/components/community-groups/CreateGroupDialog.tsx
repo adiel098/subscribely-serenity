@@ -24,18 +24,16 @@ interface TelegramChat {
 interface CreateGroupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: CreateGroupData) => Promise<void>;
-  isSubmitting?: boolean;
+  onSuccess: () => void;
+  communityId: string;
 }
 
-interface CreateGroupData {
-  name: string;
-  description: string;
-  telegram_chat_id: string;
-  telegram_invite_link: string;
-}
-
-export const CreateGroupDialog = ({ open, onOpenChange, onSubmit, isSubmitting = false }: CreateGroupDialogProps) => {
+export function CreateGroupDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  communityId
+}: CreateGroupDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [customLink, setCustomLink] = useState("");
@@ -73,6 +71,7 @@ export const CreateGroupDialog = ({ open, onOpenChange, onSubmit, isSubmitting =
       
       resetForm();
       onOpenChange(false);
+      onSuccess();
     } catch (err: any) {
       console.error("Error in form submission:", err);
       setError(err.message || "Failed to create group");
@@ -99,19 +98,35 @@ export const CreateGroupDialog = ({ open, onOpenChange, onSubmit, isSubmitting =
     return /^[a-zA-Z0-9_-]*$/.test(link);
   };
 
-  const fetchTelegramChats = async () => {
+  const fetchAvailableTelegramChats = async () => {
     setIsLoading(true);
     try {
-      // Mock implementation - in a real app, this would fetch from the Telegram API
-      const mockChats: TelegramChat[] = [
-        { id: "-1001234567890", title: "My Channel", type: "channel" },
-        { id: "-987654321", title: "My Group", type: "supergroup" },
-        { id: "-123987456", title: "Another Group", type: "group" }
-      ];
-      setAvailableChats(mockChats);
+      const response = await fetch('/api/telegram/available-chats');
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const formattedChats: TelegramChat[] = data.map((chat: any) => {
+          if (typeof chat === 'string') {
+            return {
+              id: chat,
+              title: chat,
+              type: 'group'
+            };
+          }
+          return chat as TelegramChat;
+        });
+        
+        setAvailableChats(formattedChats);
+      } else {
+        setAvailableChats([]);
+      }
     } catch (error) {
-      console.error("Failed to fetch Telegram chats:", error);
-      // Show error toast
+      console.error('Error fetching telegram chats:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch Telegram chats. Please try again later.',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }

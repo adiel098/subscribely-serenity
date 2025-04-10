@@ -11,12 +11,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BotSettings as BotSettingsType } from "@/group_owners/hooks/types/subscription.types";
-
-interface ExtendedBotSettings extends BotSettingsType {
-  use_custom_bot?: boolean;
-  custom_bot_token?: string | null;
-}
 
 const TelegramBot = () => {
   const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
@@ -24,7 +18,6 @@ const TelegramBot = () => {
   const isMobile = useIsMobile();
   
   const { settings: originalSettings, isLoading, updateSettings } = useBotSettings(communityIdToUse || undefined);
-  const settings = originalSettings as ExtendedBotSettings | undefined;
   
   const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
   const [customBotToken, setCustomBotToken] = useState<string>('');
@@ -32,12 +25,12 @@ const TelegramBot = () => {
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (settings) {
-      setUseCustomBot(settings.use_custom_bot || false);
+    if (originalSettings) {
+      setUseCustomBot(originalSettings.use_custom_bot || false);
       // We don't show the token for security reasons, but we'll indicate if one is set
-      setCustomBotToken(settings.custom_bot_token ? '••••••••••••••••••••••••••••••' : '');
+      setCustomBotToken(originalSettings.custom_bot_token ? '••••••••••••••••••••••••••••••' : '');
     }
-  }, [settings]);
+  }, [originalSettings]);
 
   const handleToggleCustomBot = (checked: boolean) => {
     setUseCustomBot(checked);

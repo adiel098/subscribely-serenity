@@ -1,38 +1,29 @@
 
-import { convertSubscriptionInterval } from "@/shared/types/subscription.types";
-
-export type SubscriptionInterval = 
-  | 'monthly'
-  | 'quarterly' 
-  | 'half_yearly'
-  | 'yearly'
-  | 'lifetime'
-  | 'one_time';
+// Subscription plan types
+export type SubscriptionInterval = 'monthly' | 'quarterly' | 'half_yearly' | 'yearly' | 'lifetime' | 'one-time';
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  description?: string | null;
+  description: string;
   price: number;
   interval: SubscriptionInterval;
-  features?: string[];
+  features: string[];
   is_active: boolean;
-  project_id?: string;
+  project_id: string;
   community_id?: string;
   has_trial_period: boolean;
   trial_days: number;
   created_at: string;
   updated_at: string;
-  duration?: number;
-  duration_type?: string;
 }
 
 export interface CreateSubscriptionPlanParams {
   name: string;
-  description?: string;
+  description: string;
   price: number;
-  interval: string;
-  features?: string[];
+  interval: SubscriptionInterval;
+  features: string[];
   project_id: string;
   community_id?: string;
   has_trial_period?: boolean;
@@ -41,7 +32,13 @@ export interface CreateSubscriptionPlanParams {
 
 export interface UpdatePlanParams {
   id: string;
-  updates: Partial<SubscriptionPlan>;
+  name?: string;
+  description?: string;
+  price?: number;
+  interval?: SubscriptionInterval;
+  features?: string[];
+  has_trial_period?: boolean;
+  trial_days?: number;
 }
 
 export interface TogglePlanStatusParams {
@@ -49,43 +46,30 @@ export interface TogglePlanStatusParams {
   is_active: boolean;
 }
 
-export type PaymentMethod = {
-  id: string;
-  provider: string;
-  is_active: boolean;
-  config: PaymentMethodConfig;
-  created_at: string;
-  updated_at: string;
-};
-
-export type PaymentMethodConfig = {
-  api_key?: string;
-  webhook_secret?: string;
-  merchant_id?: string;
-  wallet_address?: string;
-  [key: string]: any;
-};
-
 export interface BotSettings {
-  id: string;
-  welcome_message?: string;
-  subscription_reminder_message?: string;
-  expired_subscription_message?: string;
-  language?: string;
-  welcome_image?: string;
-  first_reminder_message?: string;
-  first_reminder_image?: string;
-  second_reminder_message?: string;
-  second_reminder_image?: string;
-  subscription_reminder_days?: number;
-  renewal_discount_enabled?: boolean;
-  renewal_discount_percentage?: number;
-  first_reminder_days?: number;
-  second_reminder_days?: number;
-  project_id?: string;
+  welcome_message: string;
+  expired_message: string;
+  removed_message: string;
+  reminder_message: string;
+  auto_remove_expired: boolean;
+  auto_remove_days: number;
+  send_reminders: boolean;
+  reminder_days: number;
+  project_id: string;
   community_id?: string;
   use_custom_bot?: boolean;
   custom_bot_token?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Payment method types
+export interface PaymentMethod {
+  id: string;
+  provider: string;
+  config: Record<string, any>;
+  is_active: boolean;
+  owner_id?: string;
   created_at: string;
   updated_at: string;
 }

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Auth from "@/auth/pages/Auth";
 import { ProtectedRoute } from "@/auth/guards/ProtectedRoute";
 import { AdminProtectedRoute } from "@/auth/guards/AdminProtectedRoute";
+import { ProtectedRouteContent } from "@/components/ProtectedRouteContent";
 import NotFound from "@/main/pages/NotFound";
 import Index from "@/main/pages/Index";
 import TelegramMiniApp from "@/telegram-mini-app/pages/TelegramMiniApp";
@@ -57,159 +58,209 @@ const AppRoutes = () => {
       {/* Project Management Routes */}
       <Route path="/projects/new" element={
         <ProtectedRoute>
-          <NewProject />
+          <ProtectedRouteContent>
+            <NewProject />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
 
       {/* New Community Routes */}
       <Route path="/new-community/custom-bot" element={
         <ProtectedRoute>
-          <CustomBotNewCommunity />
+          <ProtectedRouteContent>
+            <CustomBotNewCommunity />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
 
       {/* Onboarding Routes - handle all onboarding steps internally */}
       <Route path="/onboarding" element={
         <ProtectedRoute>
-          <Onboarding />
+          <ProtectedRouteContent>
+            <Onboarding />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/onboarding/:step" element={
         <ProtectedRoute>
-          <Onboarding />
+          <ProtectedRouteContent>
+            <Onboarding />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
 
       {/* Group Owner Routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <OwnerDashboard />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <OwnerDashboard />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/subscribers" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <Subscribers />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <Subscribers />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/subscriptions" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <Subscriptions />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <Subscriptions />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/coupons" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <CouponsPage />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <CouponsPage />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/payment-methods" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <PaymentMethods />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <PaymentMethods />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/messages" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <PaymentMethods />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <PaymentMethods />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/bot-settings" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <BotSettings />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <BotSettings />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/telegram-bot" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <TelegramBot />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <TelegramBot />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/platform-plans" element={
         <ProtectedRoute>
-          <PlatformPlans />
+          <ProtectedRouteContent>
+            <PlatformPlans />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/platform-payment" element={
         <ProtectedRoute>
-          <PlatformPayment />
+          <ProtectedRouteContent>
+            <PlatformPayment />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/connect/telegram" element={
         <ProtectedRoute>
-          <TelegramConnect />
+          <ProtectedRouteContent>
+            <TelegramConnect />
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/membify-settings" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <MembifySettings />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <MembifySettings />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       
       {/* Community and Group Edit Routes */}
       <Route path="/communities/:communityId/edit" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <CommunityEdit />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <CommunityEdit />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
       <Route path="/groups/:groupId/edit" element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <GroupEdit />
-          </DashboardLayout>
+          <ProtectedRouteContent>
+            <DashboardLayout>
+              <GroupEdit />
+            </DashboardLayout>
+          </ProtectedRouteContent>
         </ProtectedRoute>
       } />
 
       {/* Admin Routes */}
       <Route path="/admin" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Dashboard />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Dashboard />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/dashboard" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Dashboard />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Dashboard />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/users" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Users />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Users />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/communities" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Communities />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Communities />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/payments" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Payments />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Payments />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/reports" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Reports />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Reports />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
       <Route path="/admin/settings" element={
         <AdminProtectedRoute>
-          <AdminLayout dashboard={<Settings />} />
+          <ProtectedRouteContent>
+            <AdminLayout dashboard={<Settings />} />
+          </ProtectedRouteContent>
         </AdminProtectedRoute>
       } />
 

@@ -301,32 +301,53 @@ export const commitOnboardingData = async () => {
     console.log("✅ Created default bot settings for project:", projectId);
     
     // Create communities if any (with delay to ensure project is fully committed)
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     if (tempData.project.communities && tempData.project.communities.length > 0) {
-      const communitiesData = tempData.project.communities.map(chat => ({
-        project_id: projectId,
-        telegram_chat_id: chat.id,
-        owner_id: userData.user.id,
-        name: chat.title,
-        description: chat.description || null,
-        telegram_photo_url: chat.photo_url || null
-      }));
-
-      console.log("📝 Creating communities:", communitiesData.length);
-
-      const { error: communitiesError } = await supabase
-        .from("communities")
-        .insert(communitiesData);
+      console.log("📝 Creating communities for project:", {
+        projectId: projectId,
+        communitiesCount: tempData.project.communities.length
+      });
       
-      if (communitiesError) {
-        console.error("❌ Error creating communities at the end of onboarding:", communitiesError);
-        console.error("Communities data:", communitiesData);
-        // Don't return error here, continue with onboarding even if communities creation fails
-        toast.error("Some communities could not be created. You can add them later.");
+      // Try creating communities one by one to avoid batch issues
+      let successfulCommunities = 0;
+      
+      for (const chat of tempData.project.communities) {
+        const communityData = {
+          project_id: projectId,
+          telegram_chat_id: chat.id,
+          owner_id: userData.user.id,
+          name: chat.title,
+          description: chat.description || null,
+          telegram_photo_url: chat.photo_url || null
+        };
+        
+        console.log(`Creating community: ${chat.title} (${chat.id})`);
+        
+        try {
+          const { error: communityError } = await supabase
+            .from("communities")
+            .insert([communityData]);
+            
+          if (communityError) {
+            console.error(`Error creating community ${chat.title}:`, communityError);
+          } else {
+            successfulCommunities++;
+          }
+        } catch (err) {
+          console.error(`Exception creating community ${chat.title}:`, err);
+        }
+        
+        // Small delay between community creations
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      if (successfulCommunities > 0) {
+        console.log(`✅ Successfully created ${successfulCommunities} out of ${tempData.project.communities.length} communities`);
+        toast.success(`Added ${successfulCommunities} communities to your project`);
       } else {
-        console.log("✅ Created communities:", communitiesData.length);
-        toast.success(`Added ${communitiesData.length} communities to your project`);
+        console.error("❌ Failed to create any communities");
+        toast.error("Could not create communities. You can add them later in the dashboard.");
       }
     } else {
       console.log("⚠️ No communities found to create");

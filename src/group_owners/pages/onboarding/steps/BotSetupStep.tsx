@@ -44,11 +44,19 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     }
   });
 
+  // Load saved token on component mount
+  useEffect(() => {
+    if (tempData.project?.bot_token) {
+      setCustomTokenInput(tempData.project.bot_token);
+    }
+  }, []);
+
   // Save the bot token immediately when it changes for persistence
   useEffect(() => {
     if (customTokenInput && customTokenInput.length > 10) {
+      const currentData = getTempOnboardingData();
       setTempProjectData({
-        ...tempData.project,
+        ...currentData.project,
         bot_token: customTokenInput
       });
     }
@@ -80,10 +88,16 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
         setVerificationResults(chatList);
         
         // Automatically save the communities and bot token in temp data
+        const currentData = getTempOnboardingData();
         setTempProjectData({
-          ...tempData.project,
+          ...currentData.project,
           bot_token: customTokenInput,
           communities: chatList
+        });
+        
+        console.log("✅ Bot verification successful. Saved communities:", {
+          count: chatList.length,
+          communities: chatList.map(c => ({id: c.id, title: c.title}))
         });
         
         const channelCount = chatList.filter(chat => chat.type === 'channel').length;
@@ -115,6 +129,22 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     }
   };
 
+  const handleChatsRefresh = (newChats: TelegramChat[]) => {
+    setVerificationResults(newChats);
+    
+    // Save the updated communities in temp data
+    const currentData = getTempOnboardingData();
+    setTempProjectData({
+      ...currentData.project,
+      communities: newChats
+    });
+    
+    console.log("Updated communities in temporary data:", {
+      count: newChats.length,
+      communities: newChats.map(c => ({id: c.id, title: c.title}))
+    });
+  };
+
   const handleContinue = async () => {
     if (!user?.id) {
       console.error("❌ Bot Setup: User not authenticated");
@@ -131,8 +161,9 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     try {
       // Make sure communities are explicitly set before continuing
       if (verificationResults && verificationResults.length > 0) {
+        const currentData = getTempOnboardingData();
         setTempProjectData({
-          ...tempData.project,
+          ...currentData.project,
           bot_token: customTokenInput,
           communities: verificationResults
         });
@@ -149,6 +180,13 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
           return;
         }
       }
+
+      // Double check that communities are properly saved in tempData
+      const finalCheck = getTempOnboardingData();
+      console.log("Final data check before commit:", {
+        botToken: !!finalCheck.project?.bot_token,
+        communitiesCount: finalCheck.project?.communities?.length || 0
+      });
 
       // Check if a project with this bot token already exists
       if (customTokenInput) {
@@ -189,15 +227,6 @@ const BotSetupStep: React.FC<BotSetupStepProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleChatsRefresh = (newChats: TelegramChat[]) => {
-    setVerificationResults(newChats);
-    // Also update the temp data with the new chats
-    setTempProjectData({
-      ...tempData.project,
-      communities: newChats
-    });
   };
 
   return (

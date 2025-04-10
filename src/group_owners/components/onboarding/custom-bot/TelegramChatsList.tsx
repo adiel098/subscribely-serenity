@@ -24,6 +24,11 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
   
   // Refresh photo for a specific chat
   const handleRefreshPhoto = async (chatId: string) => {
+    if (!botToken) {
+      toast.error("Bot token is required");
+      return;
+    }
+    
     setRefreshingPhotoId(chatId);
     
     try {
@@ -65,6 +70,11 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
   
   // Refresh all chats
   const handleRefreshAll = async () => {
+    if (!botToken) {
+      toast.error("Bot token is required");
+      return;
+    }
+    
     setIsRefreshingAll(true);
     
     try {
@@ -80,11 +90,16 @@ export const TelegramChatsList: React.FC<TelegramChatsListProps> = ({
       if (response.data && response.data.valid) {
         const newChats = response.data.chatList || [];
         
-        if (onChatsRefresh) {
+        if (onChatsRefresh && newChats.length > 0) {
+          console.log("Refreshed chats:", {
+            count: newChats.length,
+            chats: newChats.map(c => ({id: c.id, title: c.title}))
+          });
           onChatsRefresh(newChats);
+          toast.success(`Refreshed ${newChats.length} ${newChats.length === 1 ? 'chat' : 'chats'} successfully`);
+        } else {
+          toast.warning("No chats found during refresh. Make sure your bot is an admin in at least one group or channel.");
         }
-        
-        toast.success("Refreshed chat list successfully");
       } else {
         toast.error("Could not refresh chat list. Please check your bot token.");
       }

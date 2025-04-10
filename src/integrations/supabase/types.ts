@@ -372,6 +372,59 @@ export type Database = {
           },
         ]
       }
+      project_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json | null
+          has_trial_period: boolean | null
+          id: string
+          interval: string
+          is_active: boolean | null
+          name: string
+          price: number
+          project_id: string | null
+          trial_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          has_trial_period?: boolean | null
+          id?: string
+          interval: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          project_id?: string | null
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          has_trial_period?: boolean | null
+          id?: string
+          interval?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          project_id?: string | null
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_subscribers: {
         Row: {
           id: string
@@ -433,7 +486,7 @@ export type Database = {
             foreignKeyName: "telegram_chat_members_subscription_plan_id_fkey"
             columns: ["subscription_plan_id"]
             isOneToOne: false
-            referencedRelation: "subscription_plans"
+            referencedRelation: "project_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -535,65 +588,12 @@ export type Database = {
             foreignKeyName: "subscription_payments_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
-            referencedRelation: "subscription_plans"
+            referencedRelation: "project_plans"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subscription_payments_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_plans: {
-        Row: {
-          community_id: string | null
-          created_at: string
-          description: string | null
-          features: Json | null
-          has_trial_period: boolean | null
-          id: string
-          interval: string
-          is_active: boolean | null
-          name: string
-          price: number
-          trial_days: number | null
-          updated_at: string
-        }
-        Insert: {
-          community_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: Json | null
-          has_trial_period?: boolean | null
-          id?: string
-          interval: string
-          is_active?: boolean | null
-          name: string
-          price: number
-          trial_days?: number | null
-          updated_at?: string
-        }
-        Update: {
-          community_id?: string | null
-          created_at?: string
-          description?: string | null
-          features?: Json | null
-          has_trial_period?: boolean | null
-          id?: string
-          interval?: string
-          is_active?: boolean | null
-          name?: string
-          price?: number
-          trial_days?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_plans_community_id_fkey"
-            columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "communities"
             referencedColumns: ["id"]

@@ -1,160 +1,228 @@
-import { supabase } from "@/integrations/supabase/client";
 
-export type AdminRole = 'super_admin' | 'moderator';
+import { supabase } from '@/lib/supabaseClient';
+import { AdminRole, AdminStatistics, AdminUser, ApiResponse } from '../hooks/types/admin.types';
 
-export const grantAdminAccess = async (userId: string, role: AdminRole = 'moderator') => {
+// Export the AdminRole type
+export type { AdminRole };
+
+/**
+ * Gets admin statistics for the dashboard
+ */
+export const getAdminStatistics = async (): Promise<ApiResponse<AdminStatistics>> => {
   try {
-    // Check if current user is a super admin using the security definer function
-    const { data: adminStatus, error: checkError } = await supabase
-      .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
-      
-    if (checkError) {
-      console.error("Error checking admin permissions:", checkError);
-      throw new Error("You don't have permission to grant admin access");
-    }
-    
-    console.log("Admin status check for granting access:", adminStatus);
-    
-    if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
-      throw new Error("Only super admins can grant admin access");
-    }
-    
-    // Update or insert based on whether user is already an admin
-    let result;
-    
-    // Check if user already has an admin role
-    const { data: existingRole } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (existingRole) {
-      // Update existing role
-      result = await supabase
-        .from('admin_users')
-        .update({ role })
-        .eq('user_id', userId);
-    } else {
-      // Insert new admin
-      result = await supabase
-        .from('admin_users')
-        .insert({
-          user_id: userId,
-          role: role
-        });
-    }
-    
-    if (result.error) throw result.error;
-    
-    // Log the admin role change
-    await supabase.from('system_logs').insert({
-      event_type: 'admin_role_granted',
-      details: `User granted ${role} role`,
-      user_id: userId,
-      metadata: { 
-        granted_by: (await supabase.auth.getUser()).data.user?.id,
-        role: role
-      }
+    const { data, error } = await supabase.functions.invoke('admin-stats', {
+      body: { type: 'dashboard' },
     });
-    
-    return { success: true, data: result.data };
-  } catch (error: any) {
-    console.error("Error granting admin access:", error);
-    return { success: false, error };
-  }
-};
 
-export const revokeAdminAccess = async (userId: string) => {
-  try {
-    // Check if current user is a super admin using the security definer function
-    const { data: adminStatus, error: checkError } = await supabase
-      .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
-      
-    if (checkError) {
-      console.error("Error checking admin permissions:", checkError);
-      throw new Error("You don't have permission to revoke admin access");
+    if (error) {
+      throw error;
     }
-    
-    console.log("Admin status check for revoking access:", adminStatus);
-    
-    if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
-      throw new Error("Only super admins can revoke admin access");
-    }
-    
-    const { data, error } = await supabase
-      .from('admin_users')
-      .delete()
-      .eq('user_id', userId);
 
-    if (error) throw error;
-    
-    // Log the admin role revocation
-    await supabase.from('system_logs').insert({
-      event_type: 'admin_role_revoked',
-      details: "User's admin privileges revoked",
-      user_id: userId,
-      metadata: { revoked_by: (await supabase.auth.getUser()).data.user?.id }
-    });
-    
     return { success: true, data };
-  } catch (error: any) {
-    console.error("Error revoking admin access:", error);
-    return { success: false, error };
+  } catch (error) {
+    console.error('Error getting admin statistics:', error);
+    return { success: false, error: 'Failed to fetch statistics' };
   }
 };
 
-export const updateAdminRole = async (userId: string, newRole: AdminRole) => {
+/**
+ * Gets all users in the system
+ */
+export const getAdminStatisticsData = async (): Promise<AdminStatistics> => {
   try {
-    // Check if current user is a super admin using the security definer function
-    const { data: adminStatus, error: checkError } = await supabase
-      .rpc('get_admin_status', { user_id_param: (await supabase.auth.getUser()).data.user?.id });
-      
-    if (checkError) {
-      console.error("Error checking admin permissions:", checkError);
-      throw new Error("You don't have permission to update admin roles");
+    const response = await getAdminStatistics();
+    
+    if (!response.success) {
+      throw new Error(response.error);
     }
     
-    console.log("Admin status check for updating role:", adminStatus);
-    
-    if (!adminStatus?.is_admin || adminStatus?.admin_role !== 'super_admin') {
-      throw new Error("Only super admins can update admin roles");
-    }
-    
-    const { data, error } = await supabase
-      .from('admin_users')
-      .update({ role: newRole })
-      .eq('user_id', userId);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting admin statistics data:', error);
+    throw error;
+  }
+};
 
-    if (error) throw error;
-    
-    // Log the admin role update
-    await supabase.from('system_logs').insert({
-      event_type: 'admin_role_updated',
-      details: `Admin role updated to ${newRole}`,
-      user_id: userId,
-      metadata: { updated_by: (await supabase.auth.getUser()).data.user?.id, new_role: newRole }
+/**
+ * Gets all users in the system
+ */
+export const getAllUsers = async (): Promise<ApiResponse<any[]>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { action: 'getAll' },
     });
-    
+
+    if (error) {
+      throw error;
+    }
+
     return { success: true, data };
-  } catch (error: any) {
-    console.error("Error updating admin role:", error);
-    return { success: false, error };
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    return { success: false, error: 'Failed to fetch users' };
   }
 };
 
-// Use the security definer function to check super admin status
-export const checkSuperAdminStatus = async (userId: string) => {
+/**
+ * Updates user status (active/inactive)
+ */
+export const updateUserStatus = async (userId: string, isActive: boolean): Promise<ApiResponse<any>> => {
   try {
-    const { data, error } = await supabase
-      .rpc('get_admin_status', { user_id_param: userId });
-    
-    if (error) throw error;
-    
-    console.log("Super admin status check result:", data);
-    return data?.admin_role === 'super_admin';
-  } catch (error: any) {
-    console.error("Error checking super admin status:", error);
-    return false;
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        action: 'updateStatus',
+        userId,
+        status: isActive ? 'active' : 'inactive'
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    return { success: false, error: 'Failed to update user status' };
   }
+};
+
+/**
+ * Gets all admin users
+ */
+export const getAdminUsers = async (): Promise<ApiResponse<AdminUser[]>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { action: 'getAdmins' },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error getting admin users:', error);
+    return { success: false, error: 'Failed to fetch admin users' };
+  }
+};
+
+/**
+ * Update admin role
+ */
+export const updateUserRole = async (userId: string, role: AdminRole): Promise<ApiResponse<any>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        action: 'updateRole',
+        userId,
+        role
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error updating admin role:', error);
+    return { success: false, error: 'Failed to update admin role' };
+  }
+};
+
+/**
+ * Revoke admin access
+ */
+export const revokeAdminAccess = async (userId: string): Promise<ApiResponse<any>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        action: 'revokeAccess',
+        userId
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error revoking admin access:', error);
+    return { success: false, error: 'Failed to revoke admin access' };
+  }
+};
+
+/**
+ * Grant admin access
+ */
+export const grantAdminAccess = async (userId: string, role: AdminRole): Promise<ApiResponse<any>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-users', {
+      body: { 
+        action: 'grantAccess',
+        userId,
+        role
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error granting admin access:', error);
+    return { success: false, error: 'Failed to grant admin access' };
+  }
+};
+
+/**
+ * Gets all payments in the system
+ */
+export const getAllPayments = async (): Promise<ApiResponse<any>> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-payments', {
+      body: { action: 'getAll' },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error getting all payments:', error);
+    return { success: false, error: 'Failed to fetch payments' };
+  }
+};
+
+/**
+ * Gets platform plans
+ */
+export const getPlatformPlans = async (): Promise<ApiResponse> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('admin-platform-plans', {
+      body: { action: 'getAll' },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error getting platform plans:', error);
+    return { success: false, error: 'Failed to fetch platform plans' };
+  }
+};
+
+// Export all necessary functions and types
+export {
+  getAdminStatistics,
+  getAllUsers,
+  getAdminUsers,
+  getAllPayments,
+  getPlatformPlans
 };

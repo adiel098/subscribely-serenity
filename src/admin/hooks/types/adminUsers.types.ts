@@ -1,17 +1,28 @@
 
-export type AdminUserRole = 'super_admin' | 'moderator' | 'community_owner' | 'user';
+import { AdminRole } from "./admin.types";
 
 export interface AdminUser {
   id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  full_name: string | null;
-  role: AdminUserRole;
-  status: 'active' | 'inactive' | 'suspended';
-  avatar_url: string | null;
-  communities_count: number;
-  subscriptions_count: number;
+  user_id: string;
+  role: AdminRole;
   created_at: string;
-  last_login: string | null;
+  updated_at: string;
+  email: string; 
+  name?: string;
+  status?: string;
+}
+
+export interface UpdateUserStatusParams {
+  userId: string;
+  isActive: boolean;
+}
+
+export interface UpdateUserRoleParams {
+  userId: string;
+  role: AdminRole;
+}
+
+export interface GrantAdminAccessParams {
+  userId: string;
+  role: AdminRole;
 }

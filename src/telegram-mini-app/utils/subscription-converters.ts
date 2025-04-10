@@ -1,51 +1,32 @@
 
-import { SubscriptionPlan as GlobalSubscriptionPlan } from '@/types';
-import { SubscriptionPlan as GroupOwnerSubscriptionPlan } from '@/group_owners/hooks/types/subscription.types';
+import { SubscriptionPlan } from "../types/subscriptionTypes";
 
-/**
- * Converts a subscription plan from the group_owners format to the global format
- */
-export const convertToGlobalPlan = (plan: GroupOwnerSubscriptionPlan): GlobalSubscriptionPlan => {
-  // Map interval to duration and duration_type
-  let duration = 1;
-  let duration_type: 'days' | 'months' | 'years' = 'months';
-  
-  switch (plan.interval) {
-    case 'monthly':
-      duration = 1;
-      duration_type = 'months';
-      break;
-    case 'quarterly':
-      duration = 3;
-      duration_type = 'months';
-      break;
-    case 'half-yearly':
-      duration = 6;
-      duration_type = 'months';
-      break;
-    case 'yearly':
-      duration = 1;
-      duration_type = 'years';
-      break;
-    case 'one-time':
-    case 'lifetime':
-      duration = 100;
-      duration_type = 'years'; // Effectively lifetime
-      break;
-  }
-  
-  return {
-    ...plan,
-    duration,
-    duration_type,
-  };
-};
+export interface GlobalPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: string;
+  features: string[];
+  is_active: boolean;
+}
 
-/**
- * Converts an array of subscription plans from the group_owners format to the global format
- */
-export const convertToGlobalPlans = (
-  plans: GroupOwnerSubscriptionPlan[]
-): GlobalSubscriptionPlan[] => {
-  return plans.map(convertToGlobalPlan);
+export const convertToGlobalPlans = (plans: any[]): SubscriptionPlan[] => {
+  return plans.map(plan => ({
+    id: plan.id,
+    name: plan.name,
+    description: plan.description || '',
+    price: plan.price || 0,
+    interval: plan.interval || 'monthly',
+    features: plan.features || [],
+    is_active: plan.is_active !== false,
+    project_id: plan.project_id || '',
+    community_id: plan.community_id || '',
+    has_trial_period: plan.has_trial_period || false,
+    trial_days: plan.trial_days || 0,
+    created_at: plan.created_at || new Date().toISOString(),
+    updated_at: plan.updated_at || new Date().toISOString(),
+    duration: 30,
+    duration_type: 'days'
+  }));
 };

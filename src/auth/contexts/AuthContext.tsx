@@ -1,219 +1,182 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { AuthContextType } from "../types/authTypes";
-import { useCheckAdminStatus } from "../hooks/useCheckAdminStatus";
-import { handleSignOut } from "../utils/authActions";
+import { Session, User } from "@supabase/supabase-js";
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  isLoading: true,
-  signOut: async () => {},
-});
+interface AuthContextProps {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+}
 
-// Create a session cache to persist user state between refreshes
-const SESSION_STORAGE_KEY = 'cached_user_session';
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  const { checkAdminStatus } = useCheckAdminStatus();
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Add extra console logs for debugging
+  const logMessage = (message: string, data?: any) => {
+    console.log(message, data ? data : '');
+  };
 
   useEffect(() => {
-    let mounted = true;
-    
-    // Try to get cached user from session storage to avoid flicker
-    const tryGetCachedUser = () => {
+    // Get initial session
+    const getSession = async () => {
+      setIsLoading(true);
+      logMessage("AuthContext: Checking user session...");
       try {
-        const cachedSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
-        if (cachedSession) {
-          const parsedSession = JSON.parse(cachedSession);
-          if (parsedSession?.user) {
-            console.log(`🔄 AuthContext: Using cached session for ${parsedSession.user.email}`);
-            setUser(parsedSession.user);
-            // Note: We still need to verify with Supabase, but this prevents UI flickering
-            return true;
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing cached session:', e);
-      }
-      return false;
-    };
-    
-    // Check if we have a cached session
-    const hasCachedUser = tryGetCachedUser();
-    
-    // Check active sessions and set the user
-    const checkSession = async () => {
-      try {
-        console.log('🔄 AuthContext: Checking user session...');
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (!mounted) return;
+        if (error) {
+          logMessage("❌ AuthContext: Error fetching session:", error);
+        }
         
         if (session?.user) {
-          console.log(`🔐 AuthContext: User session found for ${session.user.email}`);
-          setUser(session.user);
-          
-          // Cache the session in sessionStorage
-          try {
-            sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ 
-              user: session.user,
-              timestamp: Date.now()
-            }));
-          } catch (e) {
-            console.error('Error caching session:', e);
-          }
+          logMessage(`🔐 AuthContext: User session found for ${session.user.email}`);
+          updateUserState(session);
         } else {
-          console.log('⚠️ AuthContext: No user session found');
+          logMessage("⚠️ AuthContext: No user session found");
           setUser(null);
-          // Clear cached session
-          sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          
-          // If we're not on the auth page, redirect to it
-          if (location.pathname !== '/auth') {
-            console.log('🔄 AuthContext: No session, redirecting to auth page');
-            navigate('/auth', { replace: true });
-          }
+          setSession(null);
         }
       } catch (err) {
-        console.error('❌ AuthContext: Error checking session:', err);
-        if (mounted) {
-          setUser(null);
-          // If we're not on the auth page, redirect to it
-          if (location.pathname !== '/auth') {
-            navigate('/auth', { replace: true });
-          }
-        }
+        logMessage("❌ AuthContext: Exception in getSession:", err);
+        setUser(null);
+        setSession(null);
       } finally {
-        if (mounted) setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    // If we have a cached user, reduce the loading time
-    if (hasCachedUser) {
-      // Still verify with Supabase, but do it with a slight delay to allow UI to render first
-      setTimeout(() => {
-        if (mounted) {
-          checkSession();
-        }
-      }, 100);
-    } else {
-      // No cached user, check session immediately
-      checkSession();
-    }
+    getSession();
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`🔄 AuthContext: Auth state changed: ${event}`);
-      
-      if (!mounted) return;
-      
-      if (event === 'SIGNED_OUT') {
-        console.log('👋 AuthContext: User signed out');
-        setUser(null);
-        setLoading(false);
-        
-        // Clear all storage on sign out event
-        sessionStorage.clear();
-        localStorage.clear();
-        
-        // Always redirect to auth page on sign out
-        console.log('🚀 AuthContext: Redirecting to auth page after sign out');
-        navigate("/auth", { replace: true });
-        return;
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        logMessage(`🔄 AuthContext: Auth state changed: ${event}`);
+        updateUserState(session);
       }
-      
-      if (session?.user) {
-        console.log(`👤 AuthContext: User session updated: ${session.user.email}`);
-        setUser(session.user);
-        
-        // Update cached session
-        try {
-          sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ 
-            user: session.user,
-            timestamp: Date.now()
-          }));
-        } catch (e) {
-          console.error('Error caching session:', e);
-        }
-        
-        // If we're on the auth page and have a user, redirect to dashboard
-        if (location.pathname === '/auth') {
-          console.log('✅ AuthContext: User authenticated, redirecting from auth to dashboard');
-          navigate("/dashboard", { replace: true });
-        }
-      } else {
-        setUser(null);
-        // Clear cached session
-        sessionStorage.removeItem(SESSION_STORAGE_KEY);
-        
-        // If we're not on the auth page, redirect to it
-        if (location.pathname !== '/auth') {
-          console.log('🔄 AuthContext: No session after state change, redirecting to auth page');
-          navigate('/auth', { replace: true });
-        }
-      }
-      
-      setLoading(false);
-    });
+    );
 
-    // Set a backup timeout to ensure loading state is cleared if something goes wrong
-    const timeoutId = setTimeout(() => {
-      if (mounted && loading) {
-        console.log('⚠️ AuthContext: Loading state timeout reached, forcing loading to false');
-        setLoading(false);
-        
-        // If no user and not on auth page, redirect to auth
-        if (!user && location.pathname !== '/auth') {
-          navigate('/auth', { replace: true });
-        }
+    // Safety timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        logMessage("⚠️ AuthContext: Loading state timeout reached, forcing loading to false");
+        setIsLoading(false);
       }
-    }, 3000);
+    }, 5000);
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
+      clearTimeout(timeout);
     };
-  }, [navigate, location.pathname]);
+  }, []);
 
-  // Improved signOut function with immediate storage clearing
+  // Separate function to update user state to avoid duplication
+  const updateUserState = (session: Session | null) => {
+    if (session?.user) {
+      logMessage(`👤 AuthContext: User session updated: ${session.user.email}`);
+      setUser(session.user);
+      setSession(session);
+    } else {
+      logMessage("🔄 AuthContext: Clearing user session");
+      setUser(null);
+      setSession(null);
+    }
+    setIsLoading(false);
+  };
+
+  // Sign in with email and password
+  const signIn = async (email: string, password: string) => {
+    setIsLoading(true);
+    logMessage(`🔐 AuthContext: Signing in with email: ${email}`);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        logMessage(`❌ AuthContext: Sign in error:`, error);
+        throw error;
+      }
+      
+      logMessage(`✅ AuthContext: Sign in successful`);
+    } catch (error) {
+      setIsLoading(false);
+      logMessage(`❌ AuthContext: Sign in exception:`, error);
+      throw error;
+    }
+  };
+
+  // Sign up with email and password
+  const signUp = async (email: string, password: string) => {
+    setIsLoading(true);
+    logMessage(`📝 AuthContext: Creating account for: ${email}`);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        logMessage(`❌ AuthContext: Sign up error:`, error);
+        setIsLoading(false);
+        throw error;
+      }
+      
+      logMessage(`✅ AuthContext: Account created successfully`);
+    } catch (error) {
+      setIsLoading(false);
+      logMessage(`❌ AuthContext: Sign up exception:`, error);
+      throw error;
+    }
+  };
+
+  // Sign out
   const signOut = async () => {
-    console.log('🔄 AuthContext: signOut function called');
-    
-    // Immediately clear all storage and set user to null
-    sessionStorage.clear();
-    localStorage.clear();
-    
-    // Immediately set the user to null to update UI
-    setUser(null);
-    
-    // Then proceed with the full logout process
-    await handleSignOut({
-      setLoading,
-      setUser,
-      navigate,
-      currentPath: location.pathname,
-      toast
-    });
+    setIsLoading(true);
+    logMessage(`🚪 AuthContext: Signing out user`);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        logMessage(`❌ AuthContext: Sign out error:`, error);
+        setIsLoading(false);
+        throw error;
+      }
+      logMessage(`✅ AuthContext: Sign out successful`);
+    } catch (error) {
+      setIsLoading(false);
+      logMessage(`❌ AuthContext: Sign out exception:`, error);
+      throw error;
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isLoading: loading, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

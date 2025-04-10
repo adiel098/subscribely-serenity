@@ -11,6 +11,7 @@ import {
 } from "../../services/onboardingService";
 import { toast } from "sonner";
 import { localStorageService } from "@/utils/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define a local interface for the state
 interface OnboardingStateData {
@@ -59,6 +60,35 @@ export const useOnboardingStatus = () => {
     setIsLoading(true);
     try {
       console.log("Fetching onboarding status for user:", user.id);
+
+      // Direct database query to check user onboarding status
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("onboarding_completed, onboarding_step")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) {
+        console.error("Error fetching user onboarding status:", userError);
+      } else {
+        console.log("User onboarding data:", userData);
+        if (userData?.onboarding_completed) {
+          setState(prev => ({
+            ...prev,
+            isCompleted: true,
+            currentStep: "complete"
+          }));
+          
+          // Save to localStorage
+          localStorageService.setOnboardingStatus({
+            lastStep: "complete",
+            isCompleted: true
+          });
+          
+          setIsLoading(false);
+          return;
+        }
+      }
       
       // Fetch profile data to get onboarding status
       let profile = null;
@@ -102,8 +132,8 @@ export const useOnboardingStatus = () => {
 
       const hasCommunity = communities && communities.length > 0 && communities.some(c => c.telegram_chat_id);
       const newState = {
-        currentStep: (profile?.onboarding_step as any) || "welcome",
-        isCompleted: profile?.onboarding_completed || false,
+        currentStep: (userData?.onboarding_step || profile?.onboarding_step || "welcome") as OnboardingStep,
+        isCompleted: userData?.onboarding_completed || profile?.onboarding_completed || false,
         isTelegramConnected: hasCommunity,
         hasPlatformPlan: !!subscription,
         hasPaymentMethod: paymentMethods && paymentMethods.length > 0
@@ -127,7 +157,7 @@ export const useOnboardingStatus = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, isLoading]);
 
   // Clear localStorage when user logs out
   useEffect(() => {

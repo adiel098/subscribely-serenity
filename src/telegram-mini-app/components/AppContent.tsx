@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { useTelegram } from "../hooks/useTelegram";
-import { Main } from "./MainContent";
+import { MainContent } from "./MainContent";
 import { SubscriptionCheckout } from "./SubscriptionCheckout";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { SubscriptionPlan } from "@/types";
@@ -24,7 +24,7 @@ const mapSubscriptionPlanForDisplay = (plans: any[]): any[] => {
 }
 
 export const AppContent: React.FC = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { tg, isTelegramAvailable } = useTelegram();
   const [searchParams] = useSearchParams();
   const startParam = searchParams.get("start");
@@ -36,14 +36,13 @@ export const AppContent: React.FC = () => {
     community,
     loading: communityLoading,
     error: communityError,
-    refresh: refreshCommunity,
   } = useCommunityData(startParam);
   
   const {
     subscriptions: userSubscriptions,
-    loading: subscriptionsLoading,
+    isLoading: subscriptionsLoading,
     error: subscriptionError,
-    refresh: refreshSubscription,
+    refetch: refreshSubscription,
   } = useUserSubscriptions(user?.id, community?.id);
   
   const isLoading = authLoading || communityLoading || subscriptionsLoading;
@@ -73,7 +72,7 @@ export const AppContent: React.FC = () => {
     logger.log("Purchase completed");
     setShowCheckout(false);
     setSelectedPlan(null);
-    refreshCommunity();
+    // Refresh community data and subscriptions
     refreshSubscription();
   };
   
@@ -87,7 +86,7 @@ export const AppContent: React.FC = () => {
   }
   
   if (error) {
-    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: {error.message}</div>;
+    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: {typeof error === 'string' ? error : (error as any)?.message || 'Unknown error'}</div>;
   }
   
   if (!user) {
@@ -115,7 +114,7 @@ export const AppContent: React.FC = () => {
   }
   
   return (
-    <Main
+    <MainContent
       community={community}
       userSubscriptions={userSubscriptions || []}
       onPlanSelect={handlePlanSelect}

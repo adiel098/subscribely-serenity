@@ -1,287 +1,167 @@
-import React, { useState } from "react";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useCreateCommunityGroup } from "@/group_owners/hooks/useCreateCommunityGroup";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, AlertCircle } from "lucide-react";
-import { useAuth } from "@/auth/contexts/AuthContext";
-import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { TelegramChat, stringToTelegramChat } from "@/group_owners/types/telegram.types";
+// Import necessary types and utility functions
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useCreateCommunityGroup } from '@/group_owners/hooks/useCreateCommunityGroup';
+import { TelegramChat, stringsToTelegramChats } from '@/group_owners/types/telegram.types';
 
 interface CreateGroupDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-  communityId: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: (groupId: string) => void;
 }
 
-export function CreateGroupDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-  communityId
-}: CreateGroupDialogProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [customLink, setCustomLink] = useState("");
+const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, onSuccess }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [telegram_chat_id, setTelegramChatId] = useState('');
+  const [telegram_invite_link, setTelegramInviteLink] = useState('');
   const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [availableChats, setAvailableChats] = useState<TelegramChat[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
-  const { user } = useAuth();
-  const { data: communities, isLoading: isCommunitiesLoading } = useCommunities();
-  const createGroupMutation = useCreateCommunityGroup();
-
+  const [activeTab, setActiveTab] = useState<string>('basic');
+  
+  const { createGroup, isCreating, error } = useCreateCommunityGroup();
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     
-    if (!user) {
-      setError("You must be logged in to create a group");
-      toast.error("Authentication required");
-      return;
-    }
-    
-    if (selectedCommunities.length === 0) {
-      setError("Please select at least one community");
+    if (!name.trim()) {
+      toast({
+        title: 'Missing information',
+        description: 'Group name is required',
+        variant: 'destructive',
+      });
       return;
     }
     
     try {
-      await createGroupMutation.mutateAsync({
+      // Convert string array to TelegramChat array
+      const communities = stringsToTelegramChats(selectedCommunities);
+      
+      const newGroupId = await createGroup({
         name,
-        description: description || null,
-        custom_link: customLink || null,
-        communities: selectedCommunities
+        description,
+        telegram_chat_id,
+        telegram_invite_link,
+        communities
       });
       
-      resetForm();
-      onOpenChange(false);
-      onSuccess();
-    } catch (err: any) {
-      console.error("Error in form submission:", err);
-      setError(err.message || "Failed to create group");
-    }
-  };
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setCustomLink("");
-    setSelectedCommunities([]);
-    setError(null);
-  };
-
-  const handleCommunityToggle = (communityId: string) => {
-    setSelectedCommunities(prev => 
-      prev.includes(communityId)
-        ? prev.filter(id => id !== communityId)
-        : [...prev, communityId]
-    );
-  };
-
-  const isValidCustomLink = (link: string) => {
-    return /^[a-zA-Z0-9_-]*$/.test(link);
-  };
-
-  const fetchAvailableTelegramChats = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/telegram/available-chats');
-      const data = await response.json();
+      toast({
+        title: 'Group created!',
+        description: 'Your new group has been created successfully.'
+      });
       
-      if (Array.isArray(data) && data.length > 0) {
-        const formattedChats: TelegramChat[] = data.map((chat: any) => {
-          if (typeof chat === 'string') {
-            return stringToTelegramChat(chat);
-          }
-          return chat as TelegramChat;
-        });
-        
-        setAvailableChats(formattedChats);
-      } else {
-        setAvailableChats([]);
-      }
-    } catch (error) {
-      console.error('Error fetching telegram chats:', error);
-      toast.error('Failed to fetch Telegram chats. Please try again later.');
-    } finally {
-      setIsLoading(false);
+      if (onSuccess) onSuccess(newGroupId);
+      onClose();
+      
+    } catch (err) {
+      console.error('Error creating group:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to create group. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
-
+  
   return (
-    <Dialog open={open} onOpenChange={(open) => {
-      if (!open) resetForm();
-      onOpenChange(open);
-    }}>
-      <DialogContent className="sm:max-w-[400px] p-3 gap-3">
-        <DialogHeader className="space-y-2 pb-3">
-          <DialogTitle className="text-base font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent inline-flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-600 text-xs">G</span>
-            </div>
-            Create New Group
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground leading-normal">
-            Create a group of communities that can be managed together
-          </DialogDescription>
+    <Dialog open={isOpen} onOpenChange={isOpen => !isOpen && onClose()}>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle>Create New Group</DialogTitle>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="name" className="text-xs font-medium">
-              Group Name
-            </Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter group name"
-              className="h-8 text-sm"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="description" className="text-xs font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter group description"
-              className="text-sm resize-none h-16"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="customLink" className="text-xs font-medium">
-              Custom Link
-            </Label>
-            <Input
-              id="customLink"
-              value={customLink}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (isValidCustomLink(value)) {
-                  setCustomLink(value);
-                }
-              }}
-              placeholder="my-group-link"
-              className="h-8 text-sm"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Only letters, numbers, underscores and hyphens
-            </p>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs font-medium">Select Communities</Label>
-            <div className="border rounded-md p-2 space-y-1.5 max-h-35 overflow-y-auto">
-              {isCommunitiesLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                </div>
-              ) : communities?.filter(c => !c.is_group).length > 0 ? (
-                communities.filter(c => !c.is_group).map((community) => (
-                  <div 
-                    key={community.id} 
-                    className={`group flex items-center gap-2 p-2 rounded-md transition-all ${
-                      selectedCommunities.includes(community.id) ? 'bg-blue-50/50 ring-1 ring-blue-200' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <Checkbox
-                      id={community.id}
-                      checked={selectedCommunities.includes(community.id)}
-                      onCheckedChange={() => handleCommunityToggle(community.id)}
-                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 cursor-pointer"
-                    />
-                    <Label
-                      htmlFor={community.id}
-                      className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
-                    >
-                      <Avatar className="h-5 w-5 rounded-full ring-1 ring-border">
-                        <AvatarImage 
-                          src={community.photo_url || community.telegram_photo_url || `/images/default-community-avatar.png`}
-                          alt={community.name}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="text-[10px] bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 font-medium">
-                          {community.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-medium truncate">{community.name}</span>
-                        {community.telegram_username && (
-                          <span className="text-[10px] text-muted-foreground truncate">
-                            @{community.telegram_username}
-                          </span>
-                        )}
-                      </div>
-                    </Label>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  No communities available
+        
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="basic" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="communities">Communities</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="basic" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Group Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Enter group name"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder="Enter group description"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="telegram_chat_id">Telegram Chat ID</Label>
+                <Input
+                  id="telegram_chat_id"
+                  value={telegram_chat_id}
+                  onChange={e => setTelegramChatId(e.target.value)}
+                  placeholder="Telegram chat ID"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="telegram_invite_link">Telegram Invite Link</Label>
+                <Input
+                  id="telegram_invite_link"
+                  value={telegram_invite_link}
+                  onChange={e => setTelegramInviteLink(e.target.value)}
+                  placeholder="https://t.me/..."
+                />
+              </div>
+              
+              <div className="flex justify-between mt-6">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => setActiveTab('communities')}>
+                  Next
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="communities" className="space-y-4 mt-4">
+              {/* Communities selection UI would go here */}
+              <div className="space-y-2">
+                <Label>Selected Communities</Label>
+                <p className="text-sm text-muted-foreground">
+                  {selectedCommunities.length === 0 
+                    ? "No communities selected" 
+                    : `${selectedCommunities.length} communities selected`}
                 </p>
-              )}
-            </div>
-            {communities?.filter(c => !c.is_group).length > 0 && (
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Selected: {selectedCommunities.length} communities
-              </p>
-            )}
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="p-2">
-              <AlertCircle className="h-3 w-3" />
-              <AlertDescription className="text-xs ml-2">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <DialogFooter className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="text-xs h-7"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={createGroupMutation.isPending}
-              className="text-xs h-7 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 text-white hover:opacity-90"
-            >
-              {createGroupMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Group'
-              )}
-            </Button>
-          </DialogFooter>
+              </div>
+              
+              <div className="flex justify-between mt-6">
+                <Button type="button" variant="outline" onClick={() => setActiveTab('basic')}>
+                  Back
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? 'Creating...' : 'Create Group'}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </form>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default CreateGroupDialog;

@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "@/telegram-mini-app/hooks/useTelegramUser";
 import { useCommunityData } from "@/telegram-mini-app/hooks/useCommunityData";
 import { TelegramInitializer } from "@/telegram-mini-app/components/TelegramInitializer";
-import AppContent from "@/telegram-mini-app/components/AppContent"; 
+import AppContent from "@/telegram-mini-app/components/app-content/AppContent"; 
 import { initTelegramWebApp, ensureFullScreen } from "@/telegram-mini-app/utils/telegramUtils";
 import { DebugMenu } from "../components/debug/DebugMenu";
 import { getWebAppData, getProjectIdFromStartParam } from "../utils/webAppDataExtractor";
@@ -141,9 +141,9 @@ const TelegramMiniApp = () => {
     <div className="pb-32 pt-8 px-4 max-w-lg mx-auto">
       <TelegramInitializer onInitialized={handleTelegramInitialized} />
       
+      {/* Using the app-content/AppContent component which has different props than the original AppContent */}
       <AppContent
         communityId={projectId ? undefined : finalStartParam}
-        projectId={projectId}
         telegramUserId={telegramUser?.id || directTelegramUserId}
       />
       

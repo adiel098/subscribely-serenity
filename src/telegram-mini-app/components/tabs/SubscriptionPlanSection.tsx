@@ -73,7 +73,7 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
       {isGroup && channels.length > 0 && (
         <AvailableChannelsPreview 
           communityName={communityName}
-          channels={channels as any}
+          channels={channels}
           isGroup={isGroup}
         />
       )}

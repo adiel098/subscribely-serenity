@@ -8,3 +8,5 @@ interface ProtectedRouteContentProps {
 export const ProtectedRouteContent: React.FC<ProtectedRouteContentProps> = ({ children }) => {
   return <>{children}</>;
 };
+
+export default ProtectedRouteContent;

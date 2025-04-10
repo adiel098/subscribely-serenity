@@ -1,7 +1,7 @@
 
 export interface BotSettings {
   id?: string;
-  project_id?: string;
+  project_id: string;
   welcome_message?: string;
   welcome_image?: string | null;
   expired_subscription_message?: string;
@@ -12,7 +12,7 @@ export interface BotSettings {
   second_reminder_message?: string;
   second_reminder_image?: string | null;
   use_custom_bot?: boolean;
-  custom_bot_token?: string;
+  custom_bot_token?: string | null;
   subscription_reminder_days?: number;
   subscription_reminder_message?: string;
   renewal_discount_enabled?: boolean;

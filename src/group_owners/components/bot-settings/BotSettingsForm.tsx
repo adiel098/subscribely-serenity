@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BotSettings } from "@/group_owners/hooks/types/subscription.types";
+import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { Card, CardContent } from "@/components/ui/card";
 import { SettingsContent } from "./SettingsContent";
 import { AlertCircle } from "lucide-react";

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BotSettings } from "@/group_owners/hooks/types/subscription.types";
+import { BotSettings } from "@/group_owners/hooks/useBotSettings";
 import { WelcomeMessageSection } from "./WelcomeMessageSection";
 import { SubscriptionSection } from "./SubscriptionSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

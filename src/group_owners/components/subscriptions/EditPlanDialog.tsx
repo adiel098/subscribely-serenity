@@ -1,99 +1,89 @@
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PencilIcon } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
-import { SubscriptionPlan, convertSubscriptionInterval } from "@/group_owners/hooks/types/subscription.types";
-import { planFormSchema, PlanFormValues, featuresToArray, featuresToString } from "./plan-form/PlanFormSchema";
-import { PlanBasicInfoSection } from "./form-sections/PlanBasicInfoSection";
-import { PlanPricingSection } from "./form-sections/PlanPricingSection";
-import { PlanFeaturesSection } from "./form-sections/PlanFeaturesSection";
-import { PlanTrialSection } from "./form-sections/PlanTrialSection";
-import { PlanFormActions } from "./form-sections/PlanFormActions";
+import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Plus, X } from "lucide-react";
+
+const editPlanSchema = z.object({
+  name: z.string().min(1, "Plan name is required"),
+  description: z.string(),
+  price: z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, {
+    message: "Price must be a valid number"
+  }),
+  interval: z.enum(["monthly", "quarterly", "half_yearly", "yearly", "lifetime", "one_time"]),
+  features: z.array(z.string()).default([])
+});
+
+type EditPlanFormValues = z.infer<typeof editPlanSchema>;
 
 interface EditPlanDialogProps {
-  plan: SubscriptionPlan | null;
+  plan: SubscriptionPlan;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (planId: string, data: Partial<SubscriptionPlan>) => Promise<void>;
 }
 
-export const EditPlanDialog = ({
-  plan,
-  isOpen,
-  onOpenChange,
-  onSubmit,
+export const EditPlanDialog = ({ 
+  plan, 
+  isOpen, 
+  onOpenChange, 
+  onSubmit 
 }: EditPlanDialogProps) => {
+  const [newFeature, setNewFeature] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<PlanFormValues>({
-    resolver: zodResolver(planFormSchema),
+  const { 
+    control, 
+    register, 
+    handleSubmit, 
+    formState: { errors },
+    setValue,
+    watch
+  } = useForm<EditPlanFormValues>({
+    resolver: zodResolver(editPlanSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      interval: "monthly",
-      features: "",
-      has_trial_period: false,
-      trial_days: undefined,
-    },
-    mode: "onBlur",
+      name: plan.name,
+      description: plan.description,
+      price: String(plan.price),
+      interval: plan.interval,
+      features: plan.features || []
+    }
   });
 
-  // Reset form when plan changes or dialog opens
-  useEffect(() => {
-    if (plan && isOpen) {
-      console.log("Setting form values for plan:", plan);
-      // Convert half_yearly to half-yearly for form compatibility
-      const formInterval = convertSubscriptionInterval(plan.interval) === "half_yearly" ? "half-yearly" : plan.interval;
-      
-      form.reset({
-        name: plan.name,
-        description: plan.description || "",
-        price: plan.price,
-        interval: formInterval,
-        features: featuresToString(plan.features),
-        has_trial_period: plan.has_trial_period || false,
-        trial_days: plan.trial_days || undefined,
-      });
+  const features = watch("features");
+
+  const addFeature = () => {
+    if (newFeature.trim() !== "") {
+      setValue("features", [...features, newFeature.trim()]);
+      setNewFeature("");
     }
-  }, [plan, isOpen, form]);
+  };
 
-  const handleSubmit = async (data: PlanFormValues) => {
-    if (!plan) return;
+  const removeFeature = (index: number) => {
+    const updatedFeatures = [...features];
+    updatedFeatures.splice(index, 1);
+    setValue("features", updatedFeatures);
+  };
 
+  const handleFormSubmit = async (data: EditPlanFormValues) => {
     setIsSubmitting(true);
     try {
-      // Convert features string to array
-      const featuresArray = featuresToArray(data.features);
-      
-      // Convert half-yearly back to half_yearly for API compatibility
-      const apiInterval = data.interval === "half-yearly" ? "half_yearly" : data.interval;
-
-      // Prepare data for submission, ensuring all fields are included
-      const updatedPlan: Partial<SubscriptionPlan> = {
-        id: plan.id,
+      await onSubmit(plan.id, {
         name: data.name,
-        description: data.description || null,
-        price: data.price,
-        interval: apiInterval,
-        features: featuresArray,
-        has_trial_period: data.has_trial_period,
-        trial_days: data.has_trial_period ? (data.trial_days || 0) : 0,
-        community_id: plan.community_id, // Ensure community_id is passed
-      };
-
-      console.log("Submitting updated plan:", updatedPlan);
-      await onSubmit(plan.id, updatedPlan);
-      onOpenChange(false);
+        description: data.description,
+        price: Number(data.price),
+        interval: data.interval,
+        features: data.features
+      });
     } catch (error) {
       console.error("Error updating plan:", error);
     } finally {
@@ -101,33 +91,121 @@ export const EditPlanDialog = ({
     }
   };
 
-  if (!plan) return null;
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <PencilIcon className="h-5 w-5 text-indigo-500" />
-            Edit Subscription Plan
-          </DialogTitle>
-          <DialogDescription>
-            Update your subscription plan details
-          </DialogDescription>
+          <DialogTitle>Edit Subscription Plan</DialogTitle>
         </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <PlanBasicInfoSection form={form} />
-            <PlanPricingSection form={form} />
-            <PlanFeaturesSection form={form} />
-            <PlanTrialSection form={form} />
-            <PlanFormActions 
-              isSubmitting={isSubmitting} 
-              onCancel={() => onOpenChange(false)}
+        
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Plan Name</Label>
+            <Input 
+              id="name" 
+              {...register("name")} 
             />
-          </form>
-        </Form>
+            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description"
+              {...register("description")}
+            />
+            {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
+                {...register("price")}
+              />
+              {errors.price && <p className="text-sm text-red-500">{errors.price.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="interval">Billing Interval</Label>
+              <Controller
+                control={control}
+                name="interval"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select interval" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="lifetime">Lifetime</SelectItem>
+                      <SelectItem value="one_time">One Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.interval && <p className="text-sm text-red-500">{errors.interval.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="features">Features</Label>
+            <div className="flex gap-2">
+              <Input
+                id="feature"
+                placeholder="Add a feature"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+              />
+              <Button type="button" onClick={addFeature} variant="outline">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {features.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {features.map((feature, index) => (
+                  <Badge key={index} variant="secondary" className="pl-2">
+                    {feature}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFeature(index)}
+                      className="h-5 w-5 p-0 ml-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>Save Changes</>
+              )}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

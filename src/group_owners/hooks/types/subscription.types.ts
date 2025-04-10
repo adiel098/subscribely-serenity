@@ -61,6 +61,20 @@ export interface CreateSubscriptionPlanParams {
   trial_days?: number;
 }
 
+export interface UpdateSubscriptionPlanParams {
+  id: string;
+  name?: string;
+  description?: string;
+  price?: number;
+  interval?: SubscriptionInterval;
+  features?: string[];
+  is_active?: boolean;
+  has_trial_period?: boolean;
+  trial_days?: number;
+  community_id?: string;
+  project_id?: string;
+}
+
 export interface PaymentMethod {
   id: string;
   provider: string;

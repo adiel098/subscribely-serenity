@@ -1,69 +1,92 @@
 
 import { useState } from "react";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { convertSubscriptionInterval } from "@/shared/types/subscription.types";
-import { SubscriptionInterval } from "@/shared/types/subscription.types";
-import { CreateSubscriptionPlanParams } from "@/group_owners/hooks/types/subscription.types";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Loader2, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-interface CreatePlanDialogProps {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (values: CreateSubscriptionPlanParams) => Promise<void>;
-  isProcessing?: boolean;
-}
-
-const formSchema = z.object({
-  name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
-  description: z.string().optional(),
-  price: z.coerce.number().min(0, { message: "Price must be a positive number" }),
-  interval: z.string(),
+const createPlanSchema = z.object({
+  name: z.string().min(1, "Plan name is required"),
+  description: z.string(),
+  price: z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, {
+    message: "Price must be a valid number"
+  }),
+  interval: z.enum(["monthly", "quarterly", "half_yearly", "yearly", "lifetime", "one_time"]),
+  features: z.array(z.string()).default([]),
   has_trial_period: z.boolean().default(false),
-  trial_days: z.coerce.number().min(0).default(0),
-  is_active: z.boolean().default(true),
+  trial_days: z.number().min(0).default(0)
 });
 
-export const CreatePlanDialog = ({ projectId, open, onOpenChange, onSubmit, isProcessing = false }: CreatePlanDialogProps) => {
-  const [showTrialFields, setShowTrialFields] = useState(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+type CreatePlanFormValues = z.infer<typeof createPlanSchema>;
+
+export interface CreatePlanDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: CreatePlanFormValues) => Promise<void>;
+}
+
+export const CreatePlanDialog = ({ 
+  open, 
+  onOpenChange, 
+  onSubmit
+}: CreatePlanDialogProps) => {
+  const [newFeature, setNewFeature] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { 
+    control, 
+    register, 
+    handleSubmit, 
+    formState: { errors },
+    setValue,
+    watch
+  } = useForm<CreatePlanFormValues>({
+    resolver: zodResolver(createPlanSchema),
     defaultValues: {
       name: "",
       description: "",
-      price: 0,
+      price: "",
       interval: "monthly",
+      features: [],
       has_trial_period: false,
-      trial_days: 7,
-      is_active: true,
-    },
+      trial_days: 0
+    }
   });
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Convert interval from UI format to backend format
-    const standardizedInterval = convertSubscriptionInterval(values.interval);
-    
-    await onSubmit({
-      project_id: projectId,
-      name: values.name,
-      description: values.description || "",
-      price: values.price,
-      interval: standardizedInterval,
-      has_trial_period: values.has_trial_period,
-      trial_days: values.has_trial_period ? values.trial_days : 0,
-      is_active: values.is_active
-    });
-    
-    form.reset();
+  const features = watch("features");
+
+  const addFeature = () => {
+    if (newFeature.trim() !== "") {
+      setValue("features", [...features, newFeature.trim()]);
+      setNewFeature("");
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    const updatedFeatures = [...features];
+    updatedFeatures.splice(index, 1);
+    setValue("features", updatedFeatures);
+  };
+
+  const handleFormSubmit = async (data: CreatePlanFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        ...data,
+        price: Number(data.price)
+      });
+    } catch (error) {
+      console.error("Error creating plan:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -73,145 +96,117 @@ export const CreatePlanDialog = ({ projectId, open, onOpenChange, onSubmit, isPr
           <DialogTitle>Create Subscription Plan</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Plan Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Premium Plan" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Plan Name</Label>
+            <Input 
+              id="name" 
+              placeholder="Premium Plan"
+              {...register("name")} 
             />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Describe the benefits of this plan" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description"
+              placeholder="Access to premium features and content"
+              {...register("description")}
             />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price (USD)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="9.99" type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
+                placeholder="9.99"
+                {...register("price")}
               />
-              
-              <FormField
-                control={form.control}
+              {errors.price && <p className="text-sm text-red-500">{errors.price.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="interval">Billing Interval</Label>
+              <Controller
+                control={control}
                 name="interval"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Billing Interval</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select interval" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="quarterly">Quarterly</SelectItem>
-                        <SelectItem value="half-yearly">Half Yearly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                        <SelectItem value="lifetime">Lifetime</SelectItem>
-                        <SelectItem value="one-time">One Time</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select interval" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="half_yearly">Half Yearly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                      <SelectItem value="lifetime">Lifetime</SelectItem>
+                      <SelectItem value="one_time">One Time</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
               />
+              {errors.interval && <p className="text-sm text-red-500">{errors.interval.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="features">Features</Label>
+            <div className="flex gap-2">
+              <Input
+                id="feature"
+                placeholder="Add a feature"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+              />
+              <Button type="button" onClick={addFeature} variant="outline">
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
             
-            <FormField
-              control={form.control}
-              name="has_trial_period"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between py-2">
-                  <div className="space-y-0.5">
-                    <FormLabel>Free Trial Period</FormLabel>
-                    <FormDescription>Allow users to try before they pay</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        setShowTrialFields(checked);
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            
-            {showTrialFields && (
-              <FormField
-                control={form.control}
-                name="trial_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trial Period (Days)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="7" type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {features.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {features.map((feature, index) => (
+                  <Badge key={index} variant="secondary" className="pl-2">
+                    {feature}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFeature(index)}
+                      className="h-5 w-5 p-0 ml-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
             )}
-            
-            <FormField
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between py-2">
-                  <div className="space-y-0.5">
-                    <FormLabel>Active</FormLabel>
-                    <FormDescription>Make this plan available immediately</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>Create Plan</>
               )}
-            />
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isProcessing}>
-                {isProcessing ? "Creating..." : "Create Plan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

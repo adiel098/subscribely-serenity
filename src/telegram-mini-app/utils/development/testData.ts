@@ -23,6 +23,9 @@ export const TEST_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: ["Access to exclusive content", "Community chat"],
     is_active: true,
     community_id: "comm-1",
+    project_id: "proj-1",
+    has_trial_period: true,
+    trial_days: 7,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
@@ -35,6 +38,9 @@ export const TEST_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     features: ["Access to exclusive content", "Community chat", "Private Q&A", "Priority support"],
     is_active: true,
     community_id: "comm-1",
+    project_id: "proj-1",
+    has_trial_period: false,
+    trial_days: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }

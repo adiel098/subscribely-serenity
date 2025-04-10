@@ -1,103 +1,93 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
-import { BotSettings } from './types/subscription.types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { BotSettings } from './types/botSettings.types';
 
-export const useBotSettings = (projectId?: string) => {
-  const [error, setError] = useState<Error | null>(null);
-  const queryClient = useQueryClient();
+export type { BotSettings };
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['bot-settings', projectId],
+export const useBotSettings = (communityId: string | undefined) => {
+  const [settings, setSettings] = useState<BotSettings>({});
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['bot-settings', communityId],
     queryFn: async () => {
-      try {
-        if (!projectId) return defaultBotSettings;
-        
-        const { data, error } = await supabase
-          .from('bot_settings')
-          .select('*')
-          .eq('project_id', projectId)
-          .single();
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-            // If no record exists, create default settings
-            const defaultSettings = {
-              ...defaultBotSettings,
-              project_id: projectId
-            };
-            
-            const { data: newData, error: createError } = await supabase
-              .from('bot_settings')
-              .insert(defaultSettings)
-              .select()
-              .single();
-              
-            if (createError) throw createError;
-            return newData;
-          }
-          throw error;
-        }
-
-        return data;
-      } catch (err: any) {
-        setError(err);
-        return defaultBotSettings;
-      }
-    },
-    enabled: !!projectId
-  });
-
-  const updateSettings = useMutation({
-    mutationFn: async (newSettings: Partial<BotSettings>) => {
-      if (!projectId) throw new Error('Project ID is required');
+      if (!communityId) return null;
       
-      try {
-        const { data, error } = await supabase
-          .from('bot_settings')
-          .update({
-            ...newSettings,
-            updated_at: new Date().toISOString()
-          })
-          .eq('project_id', projectId)
-          .select();
-
-        if (error) throw error;
-        return data;
-      } catch (err: any) {
-        setError(err);
-        throw err;
+      const { data, error } = await supabase
+        .from('bot_settings')
+        .select('*')
+        .eq('community_id', communityId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching bot settings:', error);
+        throw error;
       }
+      
+      return data as BotSettings;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['bot-settings', projectId]
+    enabled: !!communityId
+  });
+  
+  useEffect(() => {
+    if (data) {
+      setSettings(data);
+    } else if (!isLoading && !error && communityId) {
+      // If no settings exist yet, create default settings
+      setSettings({
+        community_id: communityId,
+        welcome_message: 'Welcome to our community! Thank you for subscribing.',
+        expired_subscription_message: 'Your subscription has expired. Please renew to keep access.',
+        first_reminder_days: 3,
+        first_reminder_message: 'Your subscription will expire soon. Renew now to maintain access!',
+        second_reminder_days: 1,
+        second_reminder_message: 'Final reminder: Your subscription expires tomorrow. Renew now to avoid losing access!',
+        use_custom_bot: false,
       });
     }
+  }, [data, isLoading, error, communityId]);
+  
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (newSettings: Partial<BotSettings>) => {
+      if (!communityId) throw new Error('Community ID is required');
+      
+      const updatedSettings = { ...settings, ...newSettings };
+      
+      if (data) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('bot_settings')
+          .update(updatedSettings)
+          .eq('id', data.id);
+          
+        if (error) throw error;
+      } else {
+        // Create new settings
+        const { error } = await supabase
+          .from('bot_settings')
+          .insert([{ ...updatedSettings, community_id: communityId }]);
+          
+        if (error) throw error;
+      }
+      
+      return { ...settings, ...newSettings };
+    },
+    onSuccess: (newSettings) => {
+      setSettings(newSettings);
+      toast.success('Bot settings updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update bot settings');
+      console.error('Error updating bot settings:', error);
+    }
   });
-
+  
   return {
-    settings: settings || defaultBotSettings,
+    settings,
     isLoading,
     error,
-    updateSettings: {
-      mutate: updateSettings.mutate,
-      isLoading: updateSettings.isPending
-    }
+    updateSettings: updateSettingsMutation
   };
-};
-
-const defaultBotSettings: BotSettings = {
-  welcome_message: "👋 Welcome to our community! Your subscription is now active.",
-  expired_message: "Your subscription has expired. Please renew to continue accessing our content.",
-  removed_message: "You have been removed from the group due to an expired subscription.",
-  reminder_message: "Your subscription will expire soon. Please renew to maintain access.",
-  auto_remove_expired: false,
-  auto_remove_days: 3,
-  send_reminders: true,
-  reminder_days: 3,
-  project_id: '',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
 };

@@ -1,10 +1,10 @@
 
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 
 interface ProtectedRouteContentProps {
-  children: ReactElement;
+  children: ReactNode;
 }
 
 export const ProtectedRouteContent: React.FC<ProtectedRouteContentProps> = ({ children }) => {
-  return children;
+  return <>{children}</>;
 };

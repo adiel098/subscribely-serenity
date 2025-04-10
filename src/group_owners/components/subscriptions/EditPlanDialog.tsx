@@ -6,12 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { SubscriptionPlan, SubscriptionInterval } from "@/group_owners/hooks/types/subscription.types";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, X } from "lucide-react";
+
+const subscriptionIntervals = {
+  "monthly": "Monthly",
+  "quarterly": "Quarterly", 
+  "half_yearly": "Half Yearly",
+  "yearly": "Yearly",
+  "one-time": "One Time",
+  "lifetime": "Lifetime"
+} as const;
 
 const editPlanSchema = z.object({
   name: z.string().min(1, "Plan name is required"),
@@ -19,7 +28,7 @@ const editPlanSchema = z.object({
   price: z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, {
     message: "Price must be a valid number"
   }),
-  interval: z.enum(["monthly", "quarterly", "half_yearly", "yearly", "lifetime", "one_time"]),
+  interval: z.enum(["monthly", "quarterly", "half_yearly", "yearly", "one-time", "lifetime"] as const),
   features: z.array(z.string()).default([])
 });
 
@@ -52,7 +61,7 @@ export const EditPlanDialog = ({
     resolver: zodResolver(editPlanSchema),
     defaultValues: {
       name: plan.name,
-      description: plan.description,
+      description: plan.description || '',
       price: String(plan.price),
       interval: plan.interval,
       features: plan.features || []

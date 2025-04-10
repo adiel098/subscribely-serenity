@@ -1,133 +1,159 @@
-import React, { useState } from "react";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 
-interface Props {
+import React from "react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  MoreHorizontal, 
+  Check, 
+  Edit2, 
+  Trash2, 
+  ToggleLeft, 
+  ToggleRight 
+} from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { SubscriptionPlan } from "@/group_owners/hooks/types/subscription.types";
+import { formatCurrency } from "@/utils/format";
+
+interface SubscriptionPlanCardProps {
   plan: SubscriptionPlan;
   onUpdate: (plan: SubscriptionPlan) => void;
-  onDelete: (planId: string) => void;
-  onToggleStatus: (planId: string, isActive: boolean) => void;
+  onDelete: (planId: string) => Promise<void>;
+  onToggleStatus: (planId: string, is_active: boolean) => Promise<void>;
 }
 
-export const SubscriptionPlanCard = ({ plan, onUpdate, onDelete, onToggleStatus }: Props) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const formatInterval = (interval: string): string => {
+export const SubscriptionPlanCard: React.FC<SubscriptionPlanCardProps> = ({
+  plan,
+  onUpdate,
+  onDelete,
+  onToggleStatus
+}) => {
+  const getIntervalLabel = (interval: string): string => {
     const mapping: Record<string, string> = {
-      'monthly': 'month',
-      'quarterly': '3 months',
-      'half_yearly': '6 months',
-      'half-yearly': '6 months',
-      'yearly': 'year',
-      'lifetime': 'lifetime',
-      'one_time': 'one-time payment',
-      'one-time': 'one-time payment',
+      'monthly': 'Monthly',
+      'quarterly': 'Quarterly',
+      'half_yearly': 'Half-Yearly',
+      'yearly': 'Yearly',
+      'one-time': 'One-Time',
+      'lifetime': 'Lifetime'
     };
     
     return mapping[interval] || interval;
   };
 
-  const renderBadge = () => {
-    if (plan.is_active) {
-      return <Badge className="bg-green-500 text-white">Active</Badge>;
-    } else {
-      return <Badge variant="outline">Inactive</Badge>;
+  const handleDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete the ${plan.name} plan?`)) {
+      await onDelete(plan.id);
     }
   };
 
-  const renderFeatures = () => {
-    return (
-      <ScrollArea className="h-[120px] w-full rounded-md border p-2">
-        <ul className="list-disc pl-4 text-sm text-muted-foreground">
-          {plan.features.map((feature, index) => (
-            <li key={index}>{feature}</li>
-          ))}
-        </ul>
-      </ScrollArea>
-    );
-  };
-
-  const renderActions = () => {
-    return (
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onUpdate(plan)}
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Edit
-        </Button>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onToggleStatus(plan.id, !plan.is_active)}
-          >
-            {plan.is_active ? (
-              <ToggleLeft className="h-4 w-4" />
-            ) : (
-              <ToggleRight className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-  const renderPriceSection = () => {
-    return (
-      <div className="text-center mb-6">
-        <div className="text-3xl font-bold text-indigo-700">
-          ${plan.price}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {plan.interval === "lifetime" || plan.interval === "one_time" ? 
-            "One-time payment" : 
-            `per ${formatInterval(plan.interval)}`
-          }
-        </div>
-      </div>
-    );
+  const handleToggleStatus = async () => {
+    await onToggleStatus(plan.id, plan.is_active);
   };
 
   return (
-    <Card className="bg-white shadow-md rounded-lg overflow-hidden">
-      <CardHeader className="text-center">
-        {renderBadge()}
+    <Card className={`relative overflow-hidden ${!plan.is_active ? 'opacity-70' : ''}`}>
+      {/* Status indicator */}
+      <Badge 
+        variant={plan.is_active ? "default" : "outline"}
+        className="absolute top-3 right-3 z-10"
+      >
+        {plan.is_active ? 'Active' : 'Inactive'}
+      </Badge>
+      
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-bold">
+          {plan.name}
+        </CardTitle>
+        <CardDescription>
+          {getIntervalLabel(plan.interval)}
+          {plan.interval !== "one-time" && plan.interval !== "lifetime" && " Plan"}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        {renderPriceSection()}
-        <h3 className="text-xl font-semibold text-center mb-2">{plan.name}</h3>
-        <p className="text-sm text-muted-foreground text-center mb-4">
-          {plan.description}
-        </p>
+      
+      <CardContent className="pt-0">
         <div className="mb-4">
-          <h4 className="uppercase text-xs text-gray-500 font-medium mb-2">
-            Features
-          </h4>
-          {renderFeatures()}
+          <p className="text-3xl font-bold">{formatCurrency(plan.price)}</p>
+          
+          {/* Trial period badge */}
+          {plan.has_trial_period && plan.trial_days > 0 && (
+            <Badge variant="secondary" className="mt-1">
+              {plan.trial_days} Days Free Trial
+            </Badge>
+          )}
+        </div>
+        
+        {plan.description && (
+          <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+        )}
+        
+        <div className="space-y-2">
+          <p className="font-semibold text-sm">Features:</p>
+          {plan.features && plan.features.length > 0 ? (
+            <ul className="space-y-1">
+              {plan.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No features listed</p>
+          )}
         </div>
       </CardContent>
-      <CardFooter>{renderActions()}</CardFooter>
-      <ConfirmDeleteDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={() => onDelete(plan.id)}
-        itemName={plan.name}
-      />
+      
+      <CardFooter className="flex justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onUpdate(plan)}>
+              <Edit2 className="mr-2 h-4 w-4" />
+              Edit Plan
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleToggleStatus}>
+              {plan.is_active ? (
+                <>
+                  <ToggleLeft className="mr-2 h-4 w-4" />
+                  Disable Plan
+                </>
+              ) : (
+                <>
+                  <ToggleRight className="mr-2 h-4 w-4" />
+                  Enable Plan
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleDelete}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Plan
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardFooter>
     </Card>
   );
 };

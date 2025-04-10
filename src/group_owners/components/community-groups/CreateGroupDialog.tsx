@@ -14,12 +14,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
-interface TelegramChat {
-  id: string;
-  title: string;
-  type: string;
-}
+import { TelegramChat } from "@/group_owners/types/telegram.types";
 
 interface CreateGroupDialogProps {
   open: boolean;
@@ -122,11 +117,7 @@ export function CreateGroupDialog({
       }
     } catch (error) {
       console.error('Error fetching telegram chats:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch Telegram chats. Please try again later.',
-        variant: 'destructive'
-      });
+      toast.error('Failed to fetch Telegram chats. Please try again later.');
     } finally {
       setIsLoading(false);
     }

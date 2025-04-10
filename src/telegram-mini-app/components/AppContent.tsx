@@ -86,7 +86,7 @@ export const AppContent: React.FC = () => {
   }
   
   if (error) {
-    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: {typeof error === 'string' ? error : (error as any)?.message || 'Unknown error'}</div>;
+    return <div className="w-full h-full flex items-center justify-center text-red-500">Error: {typeof error === 'string' ? error : 'Unknown error'}</div>;
   }
   
   if (!user) {
@@ -116,12 +116,18 @@ export const AppContent: React.FC = () => {
   return (
     <MainContent
       community={community}
-      userSubscriptions={userSubscriptions || []}
-      onPlanSelect={handlePlanSelect}
+      telegramUser={user}
+      selectedPlan={selectedPlan}
       showPaymentMethods={showCheckout}
-      communityInviteLink={communityInviteLink}
-      setCommunityInviteLink={setCommunityInviteLink}
-      activeSubscription={userSubscriptions?.[0]}
+      showSuccess={false}
+      subscriptions={userSubscriptions || []}
+      activeTab="subscribe"
+      handleTabChange={() => {}}
+      handlePlanSelect={handlePlanSelect}
+      handleCompletePurchase={handleCompletePurchase}
+      handleRenewSubscription={() => {}}
+      handleSelectCommunity={() => {}}
+      subscriptionsLoading={subscriptionsLoading}
     />
   );
 };

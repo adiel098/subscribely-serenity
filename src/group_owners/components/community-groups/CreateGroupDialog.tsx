@@ -1,3 +1,4 @@
+
 // Import necessary types and utility functions
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,7 +27,8 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, 
   
   const [activeTab, setActiveTab] = useState<string>('basic');
   
-  const { createGroup, isCreating, error } = useCreateCommunityGroup();
+  const mutation = useCreateCommunityGroup();
+  const isCreating = mutation.isPending;
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ isOpen, onClose, 
       // Convert string array to TelegramChat array
       const communities = stringsToTelegramChats(selectedCommunities);
       
-      const newGroupId = await createGroup({
+      const newGroupId = await mutation.mutateAsync({
         name,
         description,
         telegram_chat_id,

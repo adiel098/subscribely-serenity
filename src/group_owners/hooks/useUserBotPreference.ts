@@ -16,60 +16,45 @@ export const useUserBotPreference = (): UserBotPreference => {
   const { data, isLoading } = useQuery({
     queryKey: ["user-bot-preference", user?.id],
     queryFn: async (): Promise<{
-      use_custom_bot: boolean;
+      use_custom: boolean;
       custom_bot_token?: string | null;
     } | null> => {
       if (!user) return null;
       
-      // First try to get from users table
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("use_custom_bot, custom_bot_token")
-        .eq("id", user.id)
-        .single();
-      
-      if (!userError && userData) {
-        console.log("Found bot preference in users table:", userData);
-        return userData;
-      }
-      
-      // If not in users table, check if user has any projects with bot settings
-      const { data: projectData, error: projectError } = await supabase
-        .from("projects")
-        .select("id")
-        .eq("owner_id", user.id)
-        .limit(1)
-        .single();
-      
-      if (!projectError && projectData) {
-        const { data: botSettingsData, error: botSettingsError } = await supabase
-          .from("telegram_bot_settings")
-          .select("*")
-          .eq("project_id", projectData.id)
-          .single();
-          
-        if (!botSettingsError && botSettingsData) {
-          console.log("Found bot settings:", botSettingsData);
-          return {
-            use_custom_bot: false,  // We don't use custom bots anymore
-            custom_bot_token: null
-          };
+      try {
+        // Use the get_bot_preference database function
+        const { data, error } = await supabase.rpc('get_bot_preference');
+        
+        if (error) {
+          console.error("Error fetching bot preference:", error);
+          throw error;
         }
+        
+        if (data) {
+          console.log("Retrieved bot preference:", data);
+          return data;
+        }
+        
+        // Default to official bot if no preference is found
+        return {
+          use_custom: false,
+          custom_bot_token: null
+        };
+      } catch (error) {
+        console.error("Error in bot preference query:", error);
+        // Default to official bot on error
+        return {
+          use_custom: false,
+          custom_bot_token: null
+        };
       }
-      
-      console.log("No bot preference found, using defaults");
-      // Default to official bot if no preference is found
-      return {
-        use_custom_bot: false,
-        custom_bot_token: null
-      };
     },
     enabled: !!user,
   });
   
   // Default to official bot if no preference is set
   return {
-    isCustomBot: data?.use_custom_bot || false,
+    isCustomBot: data?.use_custom || false,
     hasCustomBotToken: !!data?.custom_bot_token,
     custom_bot_token: data?.custom_bot_token,
     isLoadingBotPreference: isLoading

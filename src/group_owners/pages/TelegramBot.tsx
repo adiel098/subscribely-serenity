@@ -52,6 +52,17 @@ const TelegramBot = () => {
 
     setIsValidating(true);
     try {
+      // First try to set the bot preference in the database
+      const { data: prefData, error: prefError } = await supabase.rpc("set_bot_preference", {
+        use_custom: true,
+        custom_token: customBotToken
+      });
+      
+      if (prefError) {
+        throw new Error(prefError.message);
+      }
+
+      // Then validate the token
       const response = await supabase.functions.invoke("validate-bot-token", {
         body: { 
           botToken: customBotToken,

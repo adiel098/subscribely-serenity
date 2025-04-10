@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Bot, Loader2 } from "lucide-react";
 import { BotSettingsForm } from "@/group_owners/components/bot-settings/BotSettingsForm";
 
+// Update the interface to make sure project_id is required
 interface ExtendedBotSettings extends Omit<BotSettingsType, 'project_id'> {
-  project_id?: string;
+  project_id: string; // Make this required to match BotSettingsType
   use_custom_bot?: boolean;
   custom_bot_token?: string | null;
 }

@@ -1,34 +1,15 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useCallback, useRef } from "react";
+import { BotSettings } from "./types/botSettings.types";
+
+export type { BotSettings } from "./types/botSettings.types";
 
 export interface ReminderMessage {
   days_before: number;
   message: string;
   image: string | null;
-}
-
-export interface BotSettings {
-  id: string;
-  project_id: string; // Changed from community_id to project_id
-  welcome_message: string;
-  welcome_image: string | null;
-  subscription_reminder_days: number;
-  subscription_reminder_message: string;
-  expired_subscription_message: string;
-  renewal_discount_enabled: boolean;
-  renewal_discount_percentage: number;
-  language: string;
-  first_reminder_days: number;
-  first_reminder_message: string;
-  first_reminder_image: string | null;
-  second_reminder_days: number;
-  second_reminder_message: string;
-  second_reminder_image: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export const useBotSettings = (entityId: string | null) => {
@@ -189,5 +170,6 @@ export const useBotSettings = (entityId: string | null) => {
     updateSettings: {
       mutate: debouncedUpdateSettings
     },
+    error
   };
 };

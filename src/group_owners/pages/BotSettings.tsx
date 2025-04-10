@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Bot, Loader2 } from "lucide-react";
 
 interface ExtendedBotSettings extends BotSettingsType {
-  community_id?: string;
+  project_id?: string;
   use_custom_bot?: boolean;
   custom_bot_token?: string | null;
 }
@@ -20,7 +20,7 @@ const BotSettings = () => {
     settings,
     isLoading,
     updateSettings,
-    error 
+    error
   } = useBotSettings(selectedProjectId || undefined);
 
   useEffect(() => {
@@ -69,7 +69,8 @@ const BotSettings = () => {
       <BotSettingsForm 
         settings={settings as ExtendedBotSettings} 
         isLoading={isLoading} 
-        updateSettings={updateSettings} 
+        updateSettings={updateSettings}
+        error={error} 
       />
     </div>
   );

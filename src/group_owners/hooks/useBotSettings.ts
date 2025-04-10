@@ -163,6 +163,7 @@ export const useBotSettings = (entityId: string | null) => {
     updateSettings: {
       mutate: debouncedUpdateSettings
     },
+    error // Include error in the return object
   };
 };
 

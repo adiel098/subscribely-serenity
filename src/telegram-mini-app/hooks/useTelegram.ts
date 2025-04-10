@@ -51,7 +51,7 @@ export const useTelegram = (): TelegramHook => {
   return { tg, isTelegramAvailable, isDarkMode };
 };
 
-// Update the Telegram WebApp types to match our interface
+// Define Telegram WebApp types
 declare global {
   interface Window {
     Telegram?: {

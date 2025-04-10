@@ -1,13 +1,17 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/hooks/useAuth";
-import { useMemo } from "react";
+import { useMemo, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
+
+interface AdminProtectedRouteProps {
+  children: ReactNode;
+}
 
 /**
  * AdminProtectedRoute - Only allows access to users with admin privileges
  */
-export const AdminProtectedRoute = () => {
+export const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const { user, loading } = useAuth();
   
   const isAdmin = useMemo(() => {
@@ -28,5 +32,5 @@ export const AdminProtectedRoute = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };

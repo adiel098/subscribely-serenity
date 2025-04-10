@@ -1,15 +1,19 @@
 
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { useOnboardingStatus } from "@/group_owners/hooks/useOnboardingStatus";
+
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
 
 /**
  * ProtectedRoute - Ensures that only authenticated users can access certain routes
  * If a user tries to access a protected route without being logged in, they are redirected to the login page
  */
-export const ProtectedRoute = () => {
+export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
@@ -63,5 +67,5 @@ export const ProtectedRoute = () => {
   }
   
   // User is authenticated and has completed onboarding
-  return <Outlet />;
+  return <>{children}</>;
 };

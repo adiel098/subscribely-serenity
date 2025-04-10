@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MessagePreview } from "./MessagePreview";
 import { Card, CardContent } from "@/components/ui/card";
-import { BotSettings } from "@/group_owners/hooks/useBotSettings";
+import { BotSettings } from "@/group_owners/hooks/useBotSettings"; // Fixed import
 import { motion } from "framer-motion";
 import { MessageCircle, Bell, AlertTriangle, CheckCheck } from "lucide-react";
 

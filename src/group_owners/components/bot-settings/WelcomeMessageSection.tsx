@@ -2,7 +2,7 @@
 import { MessageSquare, Image, Save, UserPlus, Sparkles } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BotSettings } from "@/group_owners/hooks/useBotSettings";
+import { BotSettings } from "@/group_owners/hooks/useBotSettings"; // Fixed import
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUploadSection } from "./welcome-message/ImageUploadSection";

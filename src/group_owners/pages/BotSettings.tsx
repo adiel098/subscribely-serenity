@@ -1,12 +1,10 @@
-
 import { useEffect } from "react";
-import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
+import { useBotSettings, BotSettings as BotSettingsType } from "@/group_owners/hooks/useBotSettings";
 import { useProjectContext } from "@/contexts/ProjectContext";
-import { BotSettings as BotSettingsType } from "@/group_owners/hooks/types/subscription.types";
-import { BotSettingsForm } from "@/group_owners/components/bot-settings/BotSettingsForm";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Bot, Loader2 } from "lucide-react";
+import { BotSettingsForm } from "@/group_owners/components/bot-settings/BotSettingsForm";
 
 interface ExtendedBotSettings extends BotSettingsType {
   project_id?: string;

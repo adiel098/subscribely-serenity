@@ -11,14 +11,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '@/group_owners/hooks/useProjects';
-import { useProjectContext } from '@/contexts/ProjectContext';
+import { useProjectContext } from '@/group_owners/hooks/dashboard/useProjectContext';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 export const ProjectSelector: React.FC = () => {
   const navigate = useNavigate();
-  const { selectedProjectId, setSelectedProjectId, selectedProject } = useProjectContext();
-  const { data: projects, isLoading } = useProjectContext();
+  const { selectedProjectId, setSelectedProjectId, selectedProject, projects, isLoading } = useProjectContext();
 
   useEffect(() => {
     // If no project is selected but projects are available, select the first one

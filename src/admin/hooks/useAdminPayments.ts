@@ -79,7 +79,7 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
   try {
     // First fetch all subscription payments
     const { data, error } = await supabase
-      .from('subscription_payments')
+      .from('project_payments')
       .select(`
         id,
         amount,
@@ -90,7 +90,7 @@ const fetchCommunityPayments = async (): Promise<RawCommunityPayment[]> => {
         last_name,
         telegram_username,
         telegram_user_id,
-        community_id
+        project_id
       `)
       .order('created_at', { ascending: false });
       

@@ -63,9 +63,9 @@ export const MembershipCard: React.FC<MembershipCardProps> = ({
         
         // Try to get the invite link from subscription_payments
         const { data: payments, error } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select('invite_link')
-          .eq('community_id', subscription.community_id)
+          .eq('project_id', subscription.community_id)
           .eq('telegram_user_id', subscription.telegram_user_id)
           .order('created_at', { ascending: false })
           .limit(1);

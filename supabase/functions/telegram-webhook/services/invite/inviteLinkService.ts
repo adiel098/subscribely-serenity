@@ -58,7 +58,7 @@ export class InviteLinkService {
             // Update payment record if payment ID is provided
             if (paymentId) {
               await this.supabase
-                .from('subscription_payments')
+                .from('project_payments')
                 .update({ invite_link: inviteLink })
                 .eq('id', paymentId);
             }

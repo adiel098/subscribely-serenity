@@ -12,8 +12,8 @@ export function processCommunityData(communities: any[]): AdminCommunity[] {
   return communities.map(community => {
     // Calculate total revenue from subscription payments
     let totalRevenue = 0;
-    if (community.subscription_payments && Array.isArray(community.subscription_payments)) {
-      totalRevenue = community.subscription_payments.reduce((sum, payment) => {
+    if (community.project_payments && Array.isArray(community.project_payments)) {
+      totalRevenue = community.project_payments.reduce((sum, payment) => {
         return sum + (parseFloat(payment.amount) || 0);
       }, 0);
     }

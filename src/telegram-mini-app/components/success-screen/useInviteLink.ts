@@ -131,8 +131,8 @@ export const useInviteLink = (initialInviteLink: string | null) => {
       
       // Get community ID from recent payment
       const { data: recentPayment, error: paymentError } = await supabase
-        .from('subscription_payments')
-        .select('id, community_id')
+        .from('project_payments')
+        .select('id, project_id')
         .order('created_at', { ascending: false })
         .limit(1);
       
@@ -196,7 +196,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
           
           // Update the most recent payment with the complete JSON structure of links
           const { error: updateError } = await supabase
-            .from('subscription_payments')
+            .from('project_payments')
             .update({ invite_link: storeLink })
             .eq('id', paymentId);
             
@@ -216,7 +216,7 @@ export const useInviteLink = (initialInviteLink: string | null) => {
         
         // Update the most recent payment with the new link
         const { error: updateError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .update({ invite_link: response.data.inviteLink })
           .eq('id', paymentId);
           

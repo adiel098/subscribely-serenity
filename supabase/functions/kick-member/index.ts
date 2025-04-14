@@ -102,10 +102,10 @@ class MemberRemovalService {
       console.log(`[MEMBER-REMOVAL-SERVICE] info: Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
       
       const { error: inviteError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId);
+        .eq('project_id', communityId);
         
       if (inviteError) {
         console.warn(`Error invalidating invite links: ${inviteError.message}`);
@@ -113,10 +113,10 @@ class MemberRemovalService {
       
       // 4. Find the subscriber record by telegram_user_id
       const { data: subscriber, error: subscriberError } = await this.supabase
-        .from('community_subscribers')
+        .from('project_subscribers')
         .select('id')
         .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId)
+        .eq('project_id', communityId)
         .single();
         
       if (subscriberError) {

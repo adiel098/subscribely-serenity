@@ -68,7 +68,7 @@ export class PaymentRecordService {
       
       // Record the payment in the database
       const { data: paymentRecord, error: paymentError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .insert({
           telegram_user_id: userId,
           telegram_payment_id: payment.telegram_payment_charge_id,

@@ -12,7 +12,7 @@ export async function fetchCommunities() {
         profiles:owner_id (
           full_name
         ),
-        subscription_payments(amount)
+        project_payments(amount)
       `)
       .order('created_at', { ascending: false });
 

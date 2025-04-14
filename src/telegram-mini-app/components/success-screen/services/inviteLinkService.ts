@@ -35,8 +35,8 @@ export const fetchGroupData = async (communityId: string) => {
 export const fetchRecentPayment = async () => {
   try {
     const { data: recentPayment, error: paymentError } = await supabase
-      .from('subscription_payments')
-      .select('id, community_id')
+      .from('project_payments')
+      .select('id, project_id')
       .order('created_at', { ascending: false })
       .limit(1);
     
@@ -68,7 +68,7 @@ export const fetchRecentPayment = async () => {
 export const updatePaymentWithInviteLink = async (paymentId: string, inviteLink: string) => {
   try {
     const { error: updateError } = await supabase
-      .from('subscription_payments')
+      .from('project_payments')
       .update({ invite_link: inviteLink })
       .eq('id', paymentId);
       

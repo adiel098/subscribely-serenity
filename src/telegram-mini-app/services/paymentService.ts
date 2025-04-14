@@ -4,7 +4,7 @@ import { PaymentData } from "../types/payment.types";
 
 export const createPayment = async (paymentData: PaymentData) => {
   const { data: payment, error: paymentError } = await supabase
-    .from('subscription_payments')
+    .from('project_payments')
     .insert([paymentData])
     .select()
     .single();

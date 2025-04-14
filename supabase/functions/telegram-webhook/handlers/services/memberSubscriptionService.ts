@@ -16,9 +16,9 @@ export async function processNewMember(
     
     // Find the most recent payment for this user
     const { data: payments, error: paymentsError } = await supabase
-      .from('subscription_payments')
+      .from('project_payments')
       .select('*')
-      .eq('community_id', communityId)
+      .eq('project_id', communityId)
       .eq('status', 'successful')
       .or(`telegram_user_id.eq.${telegramUserId},telegram_username.eq.${username || ''}`)
       .order('created_at', { ascending: false })
@@ -65,7 +65,7 @@ export async function processPaymentBasedMembership(
     if (!payment.telegram_user_id) {
       console.log(`[MEMBER-SERVICE] 🔄 Updating payment ${payment.id} with telegram_user_id ${telegramUserId}`);
       await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ telegram_user_id: telegramUserId })
         .eq('id', payment.id);
     }

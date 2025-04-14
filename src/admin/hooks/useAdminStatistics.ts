@@ -71,7 +71,7 @@ export const useAdminStatistics = () => {
 
       // Get community revenue from subscription_payments table - now including both 'successful' and 'completed' statuses
       const { data: paymentsData, error: paymentsError } = await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .select('amount')
         .in('status', ['successful', 'completed']);
       

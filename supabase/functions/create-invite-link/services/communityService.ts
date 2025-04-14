@@ -36,9 +36,9 @@ export const getLatestInviteLink = async (
   console.log(`Fetching latest invite link for community ${communityId}`);
   
   const { data: payment, error } = await supabase
-    .from('subscription_payments')
+    .from('project_payments')
     .select('invite_link')
-    .eq('community_id', communityId)
+    .eq('project_id', communityId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -63,9 +63,9 @@ export const storeInviteLink = async (
   
   // First check if there are any existing payments for this community
   const { data: existingPayment, error: fetchError } = await supabase
-    .from('subscription_payments')
+    .from('project_payments')
     .select('id, invite_link')
-    .eq('community_id', communityId)
+    .eq('project_id', communityId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -78,7 +78,7 @@ export const storeInviteLink = async (
   if (existingPayment) {
     // Update the existing payment with the new invite link
     const { error: updateError } = await supabase
-      .from('subscription_payments')
+      .from('project_payments')
       .update({ invite_link: inviteLink })
       .eq('id', existingPayment.id);
       
@@ -93,7 +93,7 @@ export const storeInviteLink = async (
   
   // No existing payment found, create a placeholder payment record
   const { error: insertError } = await supabase
-    .from('subscription_payments')
+    .from('project_payments')
     .insert([{
       community_id: communityId,
       plan_id: '00000000-0000-0000-0000-000000000000', // Placeholder plan ID

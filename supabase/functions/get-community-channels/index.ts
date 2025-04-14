@@ -102,9 +102,9 @@ serve(async (req) => {
     const enrichedChannels = await Promise.all(channels.map(async (channel) => {
       // Get the most recent invite link for this community
       const { data: payment, error: linkError } = await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .select('invite_link')
-        .eq('community_id', channel.id)
+        .eq('project_id', channel.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();

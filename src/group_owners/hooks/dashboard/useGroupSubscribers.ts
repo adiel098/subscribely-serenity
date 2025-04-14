@@ -70,12 +70,12 @@ export const useGroupSubscribers = (groupId: string | null) => {
           
           // Get the latest payment status for each user
           const { data: payments, error: paymentsError } = await supabase
-            .from("subscription_payments")
+            .from("project_payments")
             .select(`
               telegram_user_id,
               status
             `)
-            .eq("community_id", groupId)
+            .eq("project_id", groupId)
             .in("telegram_user_id", telegramUserIds)
             .order("created_at", { ascending: false });
             

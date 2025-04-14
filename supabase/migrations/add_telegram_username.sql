@@ -4,10 +4,10 @@ DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'subscription_payments' 
+        WHERE table_name = 'project_payments' 
         AND column_name = 'telegram_username'
     ) THEN
-        ALTER TABLE subscription_payments ADD COLUMN telegram_username text;
+        ALTER TABLE project_payments ADD COLUMN telegram_username text;
     END IF;
 END
 $$;

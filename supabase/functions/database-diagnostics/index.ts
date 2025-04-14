@@ -58,7 +58,7 @@ serve(async (req) => {
         
         // Then check user payments
         const { data: paymentData, error: paymentError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select(`
             id, 
             plan_id, 
@@ -72,11 +72,11 @@ serve(async (req) => {
           
         // Also check direct join with subscription_plans
         const { data: joinData, error: joinError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select(`
             id,
             plan_id,
-            plan:subscription_plans!plan_id(id, name)
+            plan:project_plans!plan_id(id, name)
           `)
           .eq('telegram_user_id', telegram_user_id)
           .limit(3);
@@ -130,7 +130,7 @@ serve(async (req) => {
           
         // Check if any payments are associated with this plan
         const { data: planPayments, error: planPaymentsError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select('id, created_at, status')
           .eq('plan_id', plan_id)
           .limit(5);

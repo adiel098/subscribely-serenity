@@ -37,7 +37,7 @@ export const useApplyCoupon = () => {
       // If we have a payment ID, update the payment record with the coupon ID
       if (paymentId) {
         const { error: paymentError } = await supabase
-          .from('subscription_payments')
+          .from('platform_payments')
           .update({ coupon_id: couponId })
           .eq('id', paymentId);
         

@@ -162,7 +162,7 @@ serve(async (req) => {
           // Create payment record for successful payments
           const paymentId = payload.payment_id || payload.id || `nowpayments-${Date.now()}`;
           const { error: paymentUpdateError } = await supabase
-            .from('subscription_payments')
+            .from('project_payments')
             .insert({
               community_id: communityId,
               telegram_user_id: telegramUserId,
@@ -194,7 +194,7 @@ serve(async (req) => {
               
               // עדכון התשלום עם לינק ההזמנה
               await supabase
-                .from('subscription_payments')
+                .from('project_payments')
                 .update({
                   invite_link: inviteData.invite_link
                 })

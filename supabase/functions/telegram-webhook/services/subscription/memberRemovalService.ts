@@ -52,10 +52,10 @@ export class MemberRemovalService {
       await this.logger.info(`Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
       
       const { error: inviteError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId);
+        .eq('project_id', communityId);
         
       if (inviteError) {
         await this.logger.warn(`Error invalidating invite links: ${inviteError.message}`);
@@ -200,10 +200,10 @@ export class MemberRemovalService {
       await this.logger.info(`Invalidating invite links for user ${telegramUserId} in community ${communityId}`);
       
       const { error: inviteError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', telegramUserId)
-        .eq('community_id', communityId);
+        .eq('project_id', communityId);
         
       if (inviteError) {
         await this.logger.warn(`Error invalidating invite links: ${inviteError.message}`);

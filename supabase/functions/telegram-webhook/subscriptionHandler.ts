@@ -5,7 +5,7 @@ export async function handleSubscription(supabase: ReturnType<typeof createClien
   if (!inviteLink) return null;
 
   const { data: payment, error: paymentError } = await supabase
-    .from('subscription_payments')
+    .from('project_payments')
     .select(`
       id,
       plan_id,

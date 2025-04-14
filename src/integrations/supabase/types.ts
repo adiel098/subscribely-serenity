@@ -521,7 +521,7 @@ export type Database = {
         }
         Relationships: []
       }
-      subscription_payments: {
+      project_payments: {
         Row: {
           amount: number
           coupon_id: string | null
@@ -578,21 +578,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "subscription_payments_coupon_id_fkey"
+            foreignKeyName: "project_payments_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "project_coupons"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "subscription_payments_plan_id_fkey"
+            foreignKeyName: "project_payments_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "project_plans"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "subscription_payments_project_id_fkey"
+            foreignKeyName: "project_payments_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "communities"

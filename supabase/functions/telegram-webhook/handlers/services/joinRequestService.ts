@@ -68,10 +68,10 @@ export class JoinRequestService {
     try {
       // Try to find by telegram_user_id
       const { data: paymentByTelegramId, error: telegramIdError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .select('*')
         .eq('telegram_user_id', userId)
-        .eq('community_id', communityId)
+        .eq('project_id', communityId)
         .eq('status', 'successful')
         .order('created_at', { ascending: false })
         .maybeSingle();
@@ -88,10 +88,10 @@ export class JoinRequestService {
         console.log(`[JOIN-REQUEST-SERVICE] 🔍 Looking for payment by username: ${username}`);
         
         const { data: paymentByUsername, error: usernameError } = await this.supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select('*')
           .eq('telegram_username', username)
-          .eq('community_id', communityId)
+          .eq('project_id', communityId)
           .eq('status', 'successful')
           .is('telegram_user_id', null) // Only get payments without telegram_user_id
           .order('created_at', { ascending: false })
@@ -108,10 +108,10 @@ export class JoinRequestService {
       // Try to find for any payment regardless of status
       console.log('[JOIN-REQUEST-SERVICE] 🔍 Looking for any payment record regardless of status');
       const { data: anyPayment, error: anyPaymentError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .select('*')
         .eq('telegram_user_id', userId)
-        .eq('community_id', communityId)
+        .eq('project_id', communityId)
         .order('created_at', { ascending: false })
         .maybeSingle();
         
@@ -142,7 +142,7 @@ export class JoinRequestService {
       console.log(`[JOIN-REQUEST-SERVICE] 🔄 Updating payment ${paymentId} with telegram_user_id ${userId}`);
       
       const { error } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ telegram_user_id: userId })
         .eq('id', paymentId);
         

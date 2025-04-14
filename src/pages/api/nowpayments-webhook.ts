@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       // עדכון התשלום עם לינק ההזמנה
       const { error: paymentUpdateError } = await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .insert({
           community_id: communityId,
           telegram_user_id: telegramUserId,

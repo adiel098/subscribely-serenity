@@ -105,7 +105,7 @@ export const handleInviteLink = async (req: Request) => {
       );
       
       // Store the invite link in the subscription_payments table
-      console.log(`Created link: ${inviteLink}, storing in subscription_payments`);
+      console.log(`Created link: ${inviteLink}, storing in project_payments`);
       await storeInviteLink(supabase, communityId, inviteLink);
       
       // If this is a group, also fetch its channels

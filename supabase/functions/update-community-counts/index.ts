@@ -63,9 +63,9 @@ Deno.serve(async (req) => {
 
         // Calculate total revenue
         const { data: payments, error: paymentError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .select('amount')
-          .eq('community_id', community.id)
+          .eq('project_id', community.id)
           .eq('status', 'completed');
 
         let totalRevenue = 0;

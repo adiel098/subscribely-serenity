@@ -41,7 +41,7 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
   const handleCheckTable = async () => {
     await runDiagnostics({ 
       action: 'table_info', 
-      table_name: 'subscription_payments' 
+      table_name: 'project_payments' 
     });
     setDiagnosticsRun(true);
   };

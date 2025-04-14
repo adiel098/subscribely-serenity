@@ -88,7 +88,7 @@ export async function handleCreateOrUpdateMember(supabase, requestData) {
     if (payment_id) {
       console.log(`[telegram-user-manager] Updating payment record: ${payment_id}`);
       const { error: paymentError } = await supabase
-        .from("subscription_payments")
+        .from("project_payments")
         .update({ status: "completed" })
         .eq("id", payment_id);
       

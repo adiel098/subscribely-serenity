@@ -117,10 +117,10 @@ export async function handleChatJoinRequest(
     } else {
       // No existing member record - check if we have a payment for this user
       const { data: payments, error: paymentError } = await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .select('id, status, plan_id')
         .eq('telegram_user_id', userId)
-        .eq('community_id', community.id)
+        .eq('project_id', community.id)
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(1);

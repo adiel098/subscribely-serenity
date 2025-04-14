@@ -129,7 +129,7 @@ owner_id (uuid): מזהה הבעלים
 bot_token (text): טוקן של בוט טלגרם (אופציונלי)
 created_at (timestamp): זמן יצירה
 updated_at (timestamp): זמן עדכון אחרון
-12. טבלת subscription_payments - תשלומי מנויים
+12. טבלת project_payments - תשלומי מנויים
 תיעוד תשלומים עבור מנויים לקהילות.
 
 id (uuid): מזהה ייחודי
@@ -221,9 +221,9 @@ communities.project_id → projects.id: קהילות שייכות לפרויקט
 project_subscribers.project_id → projects.id: מנויים משויכים לפרויקט ספציפי
 project_subscribers.subscription_plan_id → subscription_plans.id: מנויים משויכים לתוכנית מנוי
 קשרי תשלומים:
-subscription_payments.project_id → projects.id: תשלומים משויכים לפרויקט
-subscription_payments.plan_id → subscription_plans.id: תשלומים משויכים לתוכנית מנוי
-subscription_payments.coupon_id → project_coupons.id: תשלומים יכולים להשתמש בקופון
+project_payments.project_id → projects.id: תשלומים משויכים לפרויקט
+project_payments.plan_id → subscription_plans.id: תשלומים משויכים לתוכנית מנוי
+project_payments.coupon_id → project_coupons.id: תשלומים יכולים להשתמש בקופון
 קשרי פלטפורמה:
 platform_subscriptions.owner_id → users.id: מנויי פלטפורמה משויכים לבעלים
 platform_subscriptions.plan_id → platform_plans.id: מנויי פלטפורמה משויכים לתוכנית

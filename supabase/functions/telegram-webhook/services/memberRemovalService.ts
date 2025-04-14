@@ -43,10 +43,10 @@ export async function handleMemberRemoval(
         
         // Then invalidate invite links
         const { error: invalidateError } = await supabase
-          .from('subscription_payments')
+          .from('project_payments')
           .update({ invite_link: null })
           .eq('telegram_user_id', userId)
-          .eq('community_id', resolvedCommunityId);
+          .eq('project_id', resolvedCommunityId);
         
         if (invalidateError) {
           console.error('[MEMBER-REMOVAL] Error invalidating invite links:', invalidateError);

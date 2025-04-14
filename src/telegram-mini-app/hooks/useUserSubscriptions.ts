@@ -42,13 +42,13 @@ export const useUserSubscriptions = (telegramUserId: string | undefined) => {
         
         // If no invite link is available on the community, try to fetch it from subscription_payments
         if ((!sub.community?.telegram_invite_link && !sub.invite_link) && sub.community_id) {
-          logger.log(`No invite link found for subscription ${sub.id}, checking subscription_payments`);
+          logger.log(`No invite link found for subscription ${sub.id}, checking project_payments`);
           
           // Query subscription_payments for the latest invite link
           const { data: payments, error: paymentsError } = await supabase
-            .from('subscription_payments')
+            .from('project_payments')
             .select('invite_link, created_at')
-            .eq('community_id', sub.community_id)
+            .eq('project_id', sub.community_id)
             .eq('telegram_user_id', telegramUserId)
             .order('created_at', { ascending: false })
             .limit(1);

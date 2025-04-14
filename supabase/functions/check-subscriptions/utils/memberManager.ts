@@ -71,10 +71,10 @@ export class TelegramMemberManager {
       
       // Invalidate any invite links for this user
       const { error: inviteError } = await this.supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', userId)
-        .eq('community_id', community.id);
+        .eq('project_id', community.id);
         
       if (inviteError) {
         console.error('[Member Manager] Error invalidating invite links:', inviteError);

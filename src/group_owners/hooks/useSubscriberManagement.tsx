@@ -83,10 +83,10 @@ export const useSubscriberManagement = (communityId: string) => {
       console.log('Invalidating invite links...');
       
       const { error: inviteError } = await supabase
-        .from('subscription_payments')
+        .from('project_payments')
         .update({ invite_link: null })
         .eq('telegram_user_id', subscriber.telegram_user_id)
-        .eq('community_id', subscriber.community_id);
+        .eq('project_id', subscriber.community_id);
         
       if (inviteError) {
         console.error('Error invalidating invite links:', inviteError);

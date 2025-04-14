@@ -1,13 +1,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
-import { SubscriptionPlan } from "@/telegram-mini-app/types/subscriptionTypes";
 import { createLogger } from "@/utils/debugUtils";
 
 const logger = createLogger("useSubscriptionPlans");
 
 /**
- * Hook to fetch subscription plans for a specific project or community
+ * Hook to fetch subscription plans for a specific project
  */
 export const useSubscriptionPlans = (projectId?: string) => {
   return useQuery({
@@ -32,7 +31,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
       }
       
       logger.log(`Fetched ${data?.length || 0} subscription plans`);
-      return data as SubscriptionPlan[];
+      return data || [];
     },
     enabled: !!projectId
   });

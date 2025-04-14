@@ -14,27 +14,11 @@ export const useProjectPlans = (projectId: string | null) => {
       logger.log("Fetching plans for project ID:", projectId);
       
       try {
-        // Changed to join via communities to get plans
-        const { data: communities, error: communitiesError } = await supabase
-          .from("communities")
-          .select("id")
-          .eq("project_id", projectId);
-        
-        if (communitiesError) {
-          logger.error("Error fetching project communities:", communitiesError);
-          return [];
-        }
-        
-        if (!communities || communities.length === 0) {
-          return [];
-        }
-        
-        // Get all plans for the communities in this project
-        const communityIds = communities.map(c => c.id);
+        // Directly fetch plans using project_id
         const { data: plans, error } = await supabase
-          .from("project_plans")  // Changed from "subscription_plans" to "project_plans"
+          .from("project_plans")
           .select("*")
-          .in("community_id", communityIds);
+          .eq("project_id", projectId);
         
         if (error) {
           logger.error("Error fetching project plans:", error);

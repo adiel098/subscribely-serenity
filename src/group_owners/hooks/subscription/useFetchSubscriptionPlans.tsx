@@ -11,11 +11,23 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
     queryFn: async () => {
       if (!communityId) return [];
       
-      // With our consolidated model, all plans belong to communities
+      // First get the project_id for this community
+      const { data: communityData, error: communityError } = await supabase
+        .from("communities")
+        .select("project_id")
+        .eq("id", communityId)
+        .single();
+      
+      if (communityError || !communityData?.project_id) {
+        console.error('Error fetching community project_id:', communityError);
+        throw communityError;
+      }
+      
+      // Then fetch plans using project_id
       const { data, error } = await supabase
-        .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
+        .from('project_plans')
         .select('*')
-        .eq('community_id', communityId)
+        .eq('project_id', communityData.project_id)
         .order('created_at', { ascending: false });
         
       if (error) {

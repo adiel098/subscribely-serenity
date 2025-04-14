@@ -14,7 +14,7 @@ export const useFetchPlanDetails = () => {
     
     try {
       const { data: planDetails, error: planError } = await supabase
-        .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
+        .from('project_plans')
         .select('interval, price')
         .eq('id', planId)
         .single();

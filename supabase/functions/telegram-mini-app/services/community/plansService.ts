@@ -8,13 +8,29 @@ export async function fetchPlansDirectly(
   supabase: ReturnType<typeof createClient>,
   communityId: string
 ) {
-  console.log(`⚠️ Fetching plans directly for community ID: ${communityId}`);
+  console.log(`⚠️ Fetching plans for community ID: ${communityId}`);
   
   try {
+    // First get the project_id for this community
+    const { data: communityData, error: communityError } = await supabase
+      .from("communities")
+      .select("project_id")
+      .eq("id", communityId)
+      .single();
+    
+    if (communityError || !communityData?.project_id) {
+      console.error(`❌ Error fetching community project_id: ${communityError?.message}`);
+      return [];
+    }
+    
+    const projectId = communityData.project_id;
+    console.log(`📋 Found project_id: ${projectId} for community: ${communityId}`);
+    
+    // Then fetch plans using project_id
     const { data: plansData, error: plansError } = await supabase
-      .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
-      .select('id, name, description, price, interval, features, is_active, community_id')
-      .eq('community_id', communityId);
+      .from('project_plans')
+      .select('id, name, description, price, interval, features, is_active')
+      .eq('project_id', projectId);
       
     if (plansError) {
       console.error(`❌ Error fetching subscription plans: ${plansError.message}`);
@@ -38,7 +54,7 @@ export async function checkPlansPermissions(
 ) {
   try {
     const { count, error: countError } = await supabase
-      .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
+      .from('project_plans')
       .select('id', { count: 'exact', head: true });
       
     if (countError) {
@@ -63,11 +79,13 @@ export function processSubscriptionPlans(plans, communityId) {
     return [];
   }
   
-  // Filter out inactive subscription plans and ensure community_id is set
+  // Filter out inactive subscription plans
   return plans
     .filter(plan => plan.is_active)
     .map(plan => ({
       ...plan,
-      community_id: plan.community_id || communityId // Ensure community_id is set
+      // The community_id is added here for backward compatibility with frontend components
+      // This doesn't have to come from the database since frontend components expect it
+      community_id: communityId
     }));
 }

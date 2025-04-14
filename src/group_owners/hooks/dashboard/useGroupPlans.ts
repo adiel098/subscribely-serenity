@@ -14,10 +14,23 @@ export const useGroupPlans = (groupId: string | null) => {
       logger.log("Fetching plans for group ID:", groupId);
       
       try {
+        // First get the project_id for this community/group
+        const { data: communityData, error: communityError } = await supabase
+          .from("communities")
+          .select("project_id")
+          .eq("id", groupId)
+          .single();
+        
+        if (communityError || !communityData?.project_id) {
+          logger.error("Error fetching community project_id:", communityError);
+          return [];
+        }
+        
+        // Then fetch plans using project_id
         const { data: plans, error } = await supabase
-          .from("project_plans")  // Changed from "subscription_plans" to "project_plans"
+          .from("project_plans")
           .select("*")
-          .eq("community_id", groupId);
+          .eq("project_id", communityData.project_id);
         
         if (error) {
           logger.error("Error fetching group plans:", error);

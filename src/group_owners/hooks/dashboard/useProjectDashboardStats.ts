@@ -1,4 +1,3 @@
-
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
 import { useRevenueStats } from "./useRevenueStats";
@@ -35,28 +34,41 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   // Use memoized filtered data to prevent unnecessary recalculations
   const subscribersInfo = useMemo(() => {
-    return useFilteredSubscribers(subscribersData || [], timeRangeStartDate);
+    // נשלח מערך בטוח גם אם subscribersData הוא null או undefined
+    const safeSubscribersData = Array.isArray(subscribersData) ? subscribersData : [];
+    return useFilteredSubscribers(safeSubscribersData, timeRangeStartDate);
   }, [subscribersData, timeRangeStartDate]);
   
-  const { filteredSubscribers = [], activeSubscribers = [], inactiveSubscribers = [] } = subscribersInfo || {};
+  // וידוא שהערכים המוחזרים גם הם מערכים
+  const filteredSubscribers = Array.isArray(subscribersInfo?.filteredSubscribers) 
+    ? subscribersInfo.filteredSubscribers 
+    : [];
+  const activeSubscribers = Array.isArray(subscribersInfo?.activeSubscribers) 
+    ? subscribersInfo.activeSubscribers 
+    : [];
+  const inactiveSubscribers = Array.isArray(subscribersInfo?.inactiveSubscribers) 
+    ? subscribersInfo.inactiveSubscribers 
+    : [];
   
   // Memoize revenue stats
   const revenueInfo = useMemo(() => {
-    return useRevenueStats(filteredSubscribers || []);
+    // וידוא שאנחנו תמיד שולחים מערך תקין
+    return useRevenueStats(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
   }, [filteredSubscribers]);
   
   const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = revenueInfo || {};
   
   // Memoize trial users
   const trialInfo = useMemo(() => {
-    return useTrialUsers(filteredSubscribers || []);
+    // וידוא שאנחנו תמיד שולחים מערך תקין
+    return useTrialUsers(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
   }, [filteredSubscribers]);
   
   const { trialUsers } = trialInfo || { trialUsers: { count: 0, percentage: 0 } };
   
   // Fetch mini app users data
   const { data: miniAppUsersData = null, isLoading: miniAppUsersLoading } = 
-    useProjectMiniAppUsers(projectId, activeSubscribers || []);
+    useProjectMiniAppUsers(projectId, Array.isArray(activeSubscribers) ? activeSubscribers : []);
   
   // Create a stable mini app users object
   const miniAppUsers: MiniAppData = useMemo(() => {
@@ -68,7 +80,8 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   // Memoize payment stats
   const paymentInfo = useMemo(() => {
-    return usePaymentStats(filteredSubscribers || []);
+    // וידוא שאנחנו תמיד שולחים מערך תקין
+    return usePaymentStats(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
   }, [filteredSubscribers]);
   
   const { paymentStats } = paymentInfo || { paymentStats: { paymentMethods: [], paymentDistribution: [] } };
@@ -76,10 +89,10 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   // Memoize insights
   const insightsInfo = useMemo(() => {
     return useInsights(
-      filteredSubscribers || [],
-      activeSubscribers || [],
-      inactiveSubscribers || [],
-      plansData || []
+      Array.isArray(filteredSubscribers) ? filteredSubscribers : [],
+      Array.isArray(activeSubscribers) ? activeSubscribers : [],
+      Array.isArray(inactiveSubscribers) ? inactiveSubscribers : [],
+      Array.isArray(plansData) ? plansData : []
     );
   }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plansData]);
   
@@ -94,7 +107,8 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   // Memoize chart data
   const chartData = useMemo(() => {
-    return useChartData(filteredSubscribers || []);
+    // וידוא שאנחנו תמיד שולחים מערך תקין
+    return useChartData(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
   }, [filteredSubscribers]);
   
   const { memberGrowthData = [], revenueData = [] } = chartData || {};

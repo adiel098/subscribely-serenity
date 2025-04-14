@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
@@ -32,8 +31,10 @@ export const useProjectSubscribers = (projectId: string | null) => {
           return [];
         }
         
-        logger.log(`Fetched ${subscribers?.length || 0} project subscribers`);
-        return subscribers || [];
+        // Verify that the subscribers array is valid and log its length
+        const safeSubscribers = Array.isArray(subscribers) ? subscribers : [];
+        logger.log(`Fetched ${safeSubscribers.length} project subscribers`);
+        return safeSubscribers;
       } catch (error) {
         logger.error("Exception in project subscribers fetch:", error);
         return [];

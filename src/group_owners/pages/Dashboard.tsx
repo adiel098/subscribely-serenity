@@ -38,14 +38,15 @@ const Dashboard = memo(() => {
     );
   }
   
+  // התגנות מפני מבנה לא תקין של stats
   const {
-    timeRange,
-    setTimeRange,
-    timeRangeLabel,
+    timeRange = 'last7days',
+    setTimeRange = () => {},
+    timeRangeLabel = '',
     
-    filteredSubscribers = [],
-    activeSubscribers = [],
-    inactiveSubscribers = [],
+    filteredSubscribers: rawFilteredSubscribers,
+    activeSubscribers: rawActiveSubscribers,
+    inactiveSubscribers: rawInactiveSubscribers,
     
     totalRevenue = 0,
     avgRevenuePerSubscriber = 0,
@@ -54,44 +55,42 @@ const Dashboard = memo(() => {
     miniAppUsers = { count: 0, nonSubscribers: 0 },
     paymentStats = { paymentMethods: [], paymentDistribution: [] },
     insights = {},
-    insightsData = {
-      averageSubscriptionDuration: 0,
-      mostPopularPlan: 'No Plan',
-      mostPopularPlanPrice: 0,
-      renewalRate: 0,
-      potentialRevenue: 0
-    },
+    insightsData: rawInsightsData,
     
-    memberGrowthData = [],
-    revenueData = [],
+    memberGrowthData: rawMemberGrowthData,
+    revenueData: rawRevenueData,
     
     ownerInfo = {},
     
     isLoading
   } = stats;
+  
+  // וידוא שכל המערכים הם באמת מערכים
+  const filteredSubscribers = Array.isArray(rawFilteredSubscribers) ? rawFilteredSubscribers : [];
+  const activeSubscribers = Array.isArray(rawActiveSubscribers) ? rawActiveSubscribers : [];
+  const inactiveSubscribers = Array.isArray(rawInactiveSubscribers) ? rawInactiveSubscribers : [];
+  const memberGrowthData = Array.isArray(rawMemberGrowthData) ? rawMemberGrowthData : [];
+  const revenueData = Array.isArray(rawRevenueData) ? rawRevenueData : [];
+  
+  // וידוא שיש לנו paymentStats תקין
+  const safePaymentStats = {
+    paymentMethods: Array.isArray(paymentStats?.paymentMethods) ? paymentStats.paymentMethods : [],
+    paymentDistribution: Array.isArray(paymentStats?.paymentDistribution) ? paymentStats.paymentDistribution : []
+  };
 
   // Ensure insightsData has the correct type structure
   const safeInsightsData: InsightData = {
-    averageSubscriptionDuration: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
-      insightsData.averageSubscriptionDuration || 0 : 0,
-    mostPopularPlan: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
-      insightsData.mostPopularPlan || 'No Plan' : 'No Plan',
-    mostPopularPlanPrice: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
-      insightsData.mostPopularPlanPrice || 0 : 0,
-    renewalRate: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
-      insightsData.renewalRate || 0 : 0,
-    potentialRevenue: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
-      insightsData.potentialRevenue || 0 : 0
+    averageSubscriptionDuration: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+      rawInsightsData.averageSubscriptionDuration || 0 : 0,
+    mostPopularPlan: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+      rawInsightsData.mostPopularPlan || 'No Plan' : 'No Plan',
+    mostPopularPlanPrice: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+      rawInsightsData.mostPopularPlanPrice || 0 : 0,
+    renewalRate: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+      rawInsightsData.renewalRate || 0 : 0,
+    potentialRevenue: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+      rawInsightsData.potentialRevenue || 0 : 0
   };
-
-  // Ensure all arrays are initialized properly
-  const safeMemberGrowthData = Array.isArray(memberGrowthData) ? memberGrowthData : [];
-  const safeRevenueData = Array.isArray(revenueData) ? revenueData : [];
-  const safePaymentMethods = Array.isArray(paymentStats?.paymentMethods) ? paymentStats.paymentMethods : [];
-  const safePaymentDistribution = Array.isArray(paymentStats?.paymentDistribution) ? paymentStats.paymentDistribution : [];
-  const safeFilteredSubscribers = Array.isArray(filteredSubscribers) ? filteredSubscribers : [];
-  const safeActiveSubscribers = Array.isArray(activeSubscribers) ? activeSubscribers : [];
-  const safeInactiveSubscribers = Array.isArray(inactiveSubscribers) ? inactiveSubscribers : [];
 
   return (
     <DashboardLayout>
@@ -110,19 +109,19 @@ const Dashboard = memo(() => {
             />
             
             <MetricsGrid 
-              activeSubscribers={safeActiveSubscribers}
-              inactiveSubscribers={safeInactiveSubscribers}
+              activeSubscribers={activeSubscribers}
+              inactiveSubscribers={inactiveSubscribers}
               totalRevenue={totalRevenue}
               avgRevenuePerSubscriber={avgRevenuePerSubscriber}
               conversionRate={conversionRate}
               trialUsers={trialUsers}
               miniAppUsers={miniAppUsers}
-              paymentStats={paymentStats}
+              paymentStats={safePaymentStats}
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <MembersGrowthCard data={safeMemberGrowthData} />
-              <RevenueChartCard data={safeRevenueData} />
+              <MembersGrowthCard data={memberGrowthData} />
+              <RevenueChartCard data={revenueData} />
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -131,14 +130,14 @@ const Dashboard = memo(() => {
               </div>
               <div className="lg:col-span-1">
                 <PaymentMethodsPanel
-                  paymentMethods={safePaymentMethods}
-                  paymentDistribution={safePaymentDistribution}
+                  paymentMethods={safePaymentStats.paymentMethods}
+                  paymentDistribution={safePaymentStats.paymentDistribution}
                 />
               </div>
             </div>
             
             {/* בדיקה מבטיחה שהמשתנה הוא מערך ובעל ערך משמעותי */}
-            {safeFilteredSubscribers.length === 0 && (
+            {filteredSubscribers.length === 0 && (
               <FirstTimeSetupHelp isProject={isProjectSelected} />
             )}
           </div>

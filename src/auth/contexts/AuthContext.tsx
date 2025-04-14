@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authInitializedRef = useRef(false);
 
   // Add extra console logs for debugging
   const logMessage = (message: string, data?: any) => {
@@ -25,43 +26,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    if (authInitializedRef.current) return;
+    authInitializedRef.current = true;
+    
     // Get initial session
     const getSession = async () => {
       setIsLoading(true);
       logMessage("AuthContext: Checking user session...");
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // First set up auth state listener to avoid race conditions
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, newSession) => {
+            logMessage(`🔄 AuthContext: Auth state changed: ${event}`);
+            
+            // Use a simple equality check to prevent unnecessary state updates
+            const shouldUpdateSession = JSON.stringify(newSession) !== JSON.stringify(session);
+            const shouldUpdateUser = newSession?.user?.id !== user?.id;
+            
+            if (shouldUpdateSession) {
+              setSession(newSession);
+            }
+            
+            if (shouldUpdateUser) {
+              setUser(newSession?.user || null);
+            }
+            
+            if (shouldUpdateSession || shouldUpdateUser) {
+              setIsLoading(false);
+            }
+          }
+        );
+
+        // Then check for existing session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           logMessage("❌ AuthContext: Error fetching session:", error);
         }
         
-        if (session?.user) {
-          logMessage(`🔐 AuthContext: User session found for ${session.user.email}`);
-          updateUserState(session);
+        if (initialSession?.user) {
+          logMessage(`🔐 AuthContext: User session found for ${initialSession.user.email}`);
+          setSession(initialSession);
+          setUser(initialSession.user);
         } else {
           logMessage("⚠️ AuthContext: No user session found");
           setUser(null);
           setSession(null);
         }
+        
+        setIsLoading(false);
+
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (err) {
         logMessage("❌ AuthContext: Exception in getSession:", err);
         setUser(null);
         setSession(null);
-      } finally {
         setIsLoading(false);
       }
     };
 
     getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        logMessage(`🔄 AuthContext: Auth state changed: ${event}`);
-        updateUserState(session);
-      }
-    );
 
     // Safety timeout to prevent infinite loading
     const timeout = setTimeout(() => {
@@ -72,24 +98,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, 5000);
 
     return () => {
-      subscription.unsubscribe();
       clearTimeout(timeout);
     };
   }, []);
-
-  // Separate function to update user state to avoid duplication
-  const updateUserState = (session: Session | null) => {
-    if (session?.user) {
-      logMessage(`👤 AuthContext: User session updated: ${session.user.email}`);
-      setUser(session.user);
-      setSession(session);
-    } else {
-      logMessage("🔄 AuthContext: Clearing user session");
-      setUser(null);
-      setSession(null);
-    }
-    setIsLoading(false);
-  };
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {

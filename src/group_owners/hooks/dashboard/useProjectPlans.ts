@@ -14,7 +14,7 @@ export const useProjectPlans = (projectId: string | null) => {
       logger.log("Fetching plans for project ID:", projectId);
       
       try {
-        // Directly fetch plans using project_id
+        // Fetch plans using project_id
         const { data: plans, error } = await supabase
           .from("project_plans")
           .select("*")
@@ -31,6 +31,7 @@ export const useProjectPlans = (projectId: string | null) => {
         return [];
       }
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    staleTime: 60000 // Cache for 1 minute
   });
 };

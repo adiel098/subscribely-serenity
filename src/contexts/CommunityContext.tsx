@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useProjects } from "@/group_owners/hooks/useProjects";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -37,6 +37,11 @@ export const CommunityProvider = ({
   const { data: allCommunities, isLoading: isCommunitiesLoading } = useCommunities();
   const { data: projects, isLoading: isProjectsLoading } = useProjects();
   const navigate = useNavigate();
+  
+  // Track if selection process has been completed to prevent infinite loops
+  const selectionProcessedRef = useRef(false);
+  const photoRefreshAttemptedRef = useRef(false);
+  const selectionDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Filter out communities that are not part of a group
   const communities = allCommunities?.filter(community => !community.is_group);
@@ -81,69 +86,97 @@ export const CommunityProvider = ({
 
   // Handle community selection and onboarding redirection
   useEffect(() => {
-    const isDataLoaded = !isCommunitiesLoading && !isProjectsLoading;
-    const hasCommunities = communities && communities.length > 0;
-    const hasProjects = projects?.length > 0;
+    // Debounce selection processing to prevent multiple runs
+    if (selectionDebounceTimerRef.current) {
+      clearTimeout(selectionDebounceTimerRef.current);
+    }
     
-    if (!isDataLoaded) return;
-
-    // If user has no communities and no projects, and they're trying to access the dashboard,
-    // redirect them to the onboarding flow
-    if (!hasCommunities && !hasProjects && location.pathname === '/dashboard') {
-      console.log("No communities or projects found - redirecting to onboarding");
-      // Don't redirect if they're already in the onboarding flow
-      if (!location.pathname.startsWith('/onboarding')) {
-        navigate('/onboarding', { replace: true });
+    selectionDebounceTimerRef.current = setTimeout(() => {
+      // If already processed or data still loading, skip
+      if (selectionProcessedRef.current || isCommunitiesLoading || isProjectsLoading) {
         return;
       }
-    }
+      
+      const isDataLoaded = !isCommunitiesLoading && !isProjectsLoading;
+      const hasCommunities = communities && communities.length > 0;
+      const hasProjects = projects?.length > 0;
+      
+      // Only process selection after data has loaded
+      if (!isDataLoaded) return;
 
-    // If coming from Telegram connect page, select the latest community
-    if (location.pathname === '/dashboard' && location.state?.from === '/connect/telegram') {
-      if (hasCommunities) {
-        if (communities.length > 0) {
-          const latestCommunity = communities[0]; // Communities are ordered by created_at in descending order
-          setSelectedCommunityId(latestCommunity.id);
-          setSelectedProjectId(null);
+      // If user has no communities and no projects, and they're trying to access the dashboard,
+      // redirect them to the onboarding flow
+      if (!hasCommunities && !hasProjects && location.pathname === '/dashboard') {
+        console.log("No communities or projects found - redirecting to onboarding");
+        // Don't redirect if they're already in the onboarding flow
+        if (!location.pathname.startsWith('/onboarding')) {
+          navigate('/onboarding', { replace: true });
+          return;
         }
       }
-      return;
-    }
-    
-    // If nothing is selected but we have communities or projects, select one
-    if (!selectedCommunityId && !selectedProjectId) {
-      if (hasCommunities) {
+
+      // If coming from Telegram connect page, select the latest community
+      if (location.pathname === '/dashboard' && location.state?.from === '/connect/telegram') {
+        if (hasCommunities) {
+          if (communities.length > 0) {
+            const latestCommunity = communities[0]; // Communities are ordered by created_at in descending order
+            setSelectedCommunityId(latestCommunity.id);
+            setSelectedProjectId(null);
+          }
+        }
+        return;
+      }
+      
+      // If nothing is selected but we have communities or projects, select one
+      if (!selectedCommunityId && !selectedProjectId) {
+        if (hasCommunities) {
+          if (communities.length > 0) {
+            setSelectedCommunityId(communities[0].id);
+          }
+        } else if (hasProjects) {
+          setSelectedProjectId(projects[0].id);
+        }
+        return;
+      }
+      
+      // If a community is selected but doesn't exist anymore, select another one
+      if (selectedCommunityId && hasCommunities && !communities.find(c => c.id === selectedCommunityId)) {
         if (communities.length > 0) {
           setSelectedCommunityId(communities[0].id);
+        } else {
+          setSelectedCommunityId(null);
         }
-      } else if (hasProjects) {
+        return;
+      }
+      
+      // If a project is selected but doesn't exist anymore, select another one
+      if (selectedProjectId && hasProjects && !projects.find(g => g.id === selectedProjectId)) {
         setSelectedProjectId(projects[0].id);
+        return;
       }
-      return;
-    }
+      
+      // Mark selection as processed to prevent infinite loops
+      selectionProcessedRef.current = true;
+    }, 300); // Debounce for 300ms
     
-    // If a community is selected but doesn't exist anymore, select another one
-    if (selectedCommunityId && hasCommunities && !communities.find(c => c.id === selectedCommunityId)) {
-      if (communities.length > 0) {
-        setSelectedCommunityId(communities[0].id);
-      } else {
-        setSelectedCommunityId(null);
+    return () => {
+      if (selectionDebounceTimerRef.current) {
+        clearTimeout(selectionDebounceTimerRef.current);
       }
-      return;
-    }
-    
-    // If a project is selected but doesn't exist anymore, select another one
-    if (selectedProjectId && hasProjects && !projects.find(g => g.id === selectedProjectId)) {
-      setSelectedProjectId(projects[0].id);
-      return;
-    }
-  }, [communities, projects, selectedCommunityId, selectedProjectId, isCommunitiesLoading, isProjectsLoading, location, navigate]);
+    };
+  }, [communities, projects, selectedCommunityId, selectedProjectId, isCommunitiesLoading, isProjectsLoading, location.pathname, navigate, location.state]);
 
+  // Handle photo refresh - run only once per session
   useEffect(() => {
+    if (photoRefreshAttemptedRef.current || isCommunitiesLoading || !communities || communities.length === 0) {
+      return;
+    }
+    
+    // Mark that we've attempted the refresh to prevent repeated calls
+    photoRefreshAttemptedRef.current = true;
+    
     // Synchronize community photos from Telegram on page load
     const refreshCommunityPhotos = async () => {
-      if (!communities || communities.length === 0) return;
-      
       try {
         console.log("Refreshing community photos on page load...");
         
@@ -179,9 +212,7 @@ export const CommunityProvider = ({
       }
     };
     
-    if (!isCommunitiesLoading && communities && communities.length > 0) {
-      refreshCommunityPhotos();
-    }
+    refreshCommunityPhotos();
   }, [communities, isCommunitiesLoading]);
 
   return (

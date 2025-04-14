@@ -33,6 +33,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
       logger.log(`Fetched ${data?.length || 0} subscription plans`);
       return data || [];
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    staleTime: 60000 // Cache for 1 minute
   });
 };

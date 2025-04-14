@@ -20,8 +20,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] = useState(false);
   const { checkOnboardingStatus } = useOnboardingStatus();
   const checkPerformedRef = useRef(false);
+  const processingRef = useRef(false);
 
   useEffect(() => {
+    // Prevent concurrent processing
+    if (processingRef.current) return;
+    processingRef.current = true;
+    
     // Only check onboarding status once per route change
     const checkIfShouldRedirect = async () => {
       if (user && !location.pathname.startsWith('/onboarding') && !checkPerformedRef.current) {
@@ -40,7 +45,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           console.error("❌ Error checking onboarding status:", error);
         } finally {
           setIsCheckingOnboarding(false);
+          processingRef.current = false;
         }
+      } else {
+        processingRef.current = false;
       }
     };
     
@@ -68,6 +76,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Only log once when authenticated (reduced spam)
   console.log("✅ ProtectedRoute: User authenticated:", user.email);
   
   // Redirect to onboarding if needed

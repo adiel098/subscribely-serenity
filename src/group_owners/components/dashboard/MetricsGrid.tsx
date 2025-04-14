@@ -4,24 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Users, CreditCard, TrendingUp, Box, Smartphone } from "lucide-react";
 
 interface MetricsGridProps {
-  activeSubscribers: any[];
-  inactiveSubscribers: any[];
-  totalRevenue: number;
-  avgRevenuePerSubscriber: number;
-  conversionRate: number;
-  trialUsers: { count: number; percentage: number };
-  miniAppUsers: { count: number; nonSubscribers: number };
-  paymentStats: any;
+  activeSubscribers?: any[];
+  inactiveSubscribers?: any[];
+  totalRevenue?: number;
+  avgRevenuePerSubscriber?: number;
+  conversionRate?: number;
+  trialUsers?: { count: number; percentage: number };
+  miniAppUsers?: { count: number; nonSubscribers: number };
+  paymentStats?: any;
 }
 
 export const MetricsGrid: React.FC<MetricsGridProps> = ({
-  activeSubscribers,
-  inactiveSubscribers,
-  totalRevenue,
-  avgRevenuePerSubscriber,
-  conversionRate,
-  trialUsers,
-  miniAppUsers
+  activeSubscribers = [],
+  inactiveSubscribers = [],
+  totalRevenue = 0,
+  avgRevenuePerSubscriber = 0,
+  conversionRate = 0,
+  trialUsers = { count: 0, percentage: 0 },
+  miniAppUsers = { count: 0, nonSubscribers: 0 }
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -35,28 +35,28 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   // Use memoized filtered data to prevent unnecessary recalculations
   const subscribersInfo = useMemo(() => {
-    return useFilteredSubscribers(subscribersData, timeRangeStartDate);
+    return useFilteredSubscribers(subscribersData || [], timeRangeStartDate);
   }, [subscribersData, timeRangeStartDate]);
   
-  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = subscribersInfo;
+  const { filteredSubscribers = [], activeSubscribers = [], inactiveSubscribers = [] } = subscribersInfo || {};
   
   // Memoize revenue stats
   const revenueInfo = useMemo(() => {
-    return useRevenueStats(filteredSubscribers);
+    return useRevenueStats(filteredSubscribers || []);
   }, [filteredSubscribers]);
   
-  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = revenueInfo;
+  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = revenueInfo || {};
   
   // Memoize trial users
   const trialInfo = useMemo(() => {
-    return useTrialUsers(filteredSubscribers);
+    return useTrialUsers(filteredSubscribers || []);
   }, [filteredSubscribers]);
   
-  const { trialUsers } = trialInfo;
+  const { trialUsers } = trialInfo || { trialUsers: { count: 0, percentage: 0 } };
   
   // Fetch mini app users data
   const { data: miniAppUsersData = null, isLoading: miniAppUsersLoading } = 
-    useProjectMiniAppUsers(projectId, activeSubscribers);
+    useProjectMiniAppUsers(projectId, activeSubscribers || []);
   
   // Create a stable mini app users object
   const miniAppUsers: MiniAppData = useMemo(() => {
@@ -68,59 +68,59 @@ export const useProjectDashboardStats = (projectId: string | null) => {
   
   // Memoize payment stats
   const paymentInfo = useMemo(() => {
-    return usePaymentStats(filteredSubscribers);
+    return usePaymentStats(filteredSubscribers || []);
   }, [filteredSubscribers]);
   
-  const { paymentStats } = paymentInfo;
+  const { paymentStats } = paymentInfo || { paymentStats: { paymentMethods: [], paymentDistribution: [] } };
   
   // Memoize insights
   const insightsInfo = useMemo(() => {
     return useInsights(
-      filteredSubscribers,
-      activeSubscribers,
-      inactiveSubscribers,
-      plansData
+      filteredSubscribers || [],
+      activeSubscribers || [],
+      inactiveSubscribers || [],
+      plansData || []
     );
   }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plansData]);
   
-  const { insights, insightsData } = insightsInfo;
+  const { insights = {}, insightsData = [] } = insightsInfo || {};
   
   // Memoize chart data
   const chartData = useMemo(() => {
-    return useChartData(filteredSubscribers);
+    return useChartData(filteredSubscribers || []);
   }, [filteredSubscribers]);
   
-  const { memberGrowthData, revenueData } = chartData;
+  const { memberGrowthData = [], revenueData = [] } = chartData || {};
   
   // Fetch owner info
-  const { data: ownerInfo, isLoading: ownerLoading } = useProjectOwnerInfo(projectId);
+  const { data: ownerInfo = {}, isLoading: ownerLoading } = useProjectOwnerInfo(projectId);
   
   // Combine loading states
   const isLoading = subscribersLoading || plansLoading || miniAppUsersLoading || ownerLoading;
   
-  // Return a stable object
+  // Return a stable object with default values for all properties
   return {
     timeRange,
     setTimeRange,
     timeRangeLabel,
     
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers,
+    filteredSubscribers: filteredSubscribers || [],
+    activeSubscribers: activeSubscribers || [],
+    inactiveSubscribers: inactiveSubscribers || [],
     
-    totalRevenue,
-    avgRevenuePerSubscriber,
-    conversionRate,
-    trialUsers,
+    totalRevenue: totalRevenue || 0,
+    avgRevenuePerSubscriber: avgRevenuePerSubscriber || 0,
+    conversionRate: conversionRate || 0,
+    trialUsers: trialUsers || { count: 0, percentage: 0 },
     miniAppUsers,
-    paymentStats,
-    insights,
-    insightsData,
+    paymentStats: paymentStats || { paymentMethods: [], paymentDistribution: [] },
+    insights: insights || {},
+    insightsData: insightsData || [],
     
-    memberGrowthData,
-    revenueData,
+    memberGrowthData: memberGrowthData || [],
+    revenueData: revenueData || [],
     
-    ownerInfo,
+    ownerInfo: ownerInfo || {},
     
     isLoading
   };

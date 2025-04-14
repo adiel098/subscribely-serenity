@@ -29,28 +29,37 @@ const Dashboard = memo(() => {
   // Use either community stats or project stats based on what's selected
   const stats = isProjectSelected ? projectStats : communityStats;
   
+  // Handle a case when stats is undefined or null
+  if (!stats) {
+    return (
+      <DashboardLayout>
+        <StatsBaseSkeleton />
+      </DashboardLayout>
+    );
+  }
+  
   const {
     timeRange,
     setTimeRange,
     timeRangeLabel,
     
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers,
+    filteredSubscribers = [],
+    activeSubscribers = [],
+    inactiveSubscribers = [],
     
-    totalRevenue,
-    avgRevenuePerSubscriber,
-    conversionRate,
-    trialUsers,
-    miniAppUsers,
-    paymentStats,
-    insights,
-    insightsData,
+    totalRevenue = 0,
+    avgRevenuePerSubscriber = 0,
+    conversionRate = 0,
+    trialUsers = { count: 0, percentage: 0 },
+    miniAppUsers = { count: 0, nonSubscribers: 0 },
+    paymentStats = { paymentMethods: [], paymentDistribution: [] },
+    insights = {},
+    insightsData = [],
     
-    memberGrowthData,
-    revenueData,
+    memberGrowthData = [],
+    revenueData = [],
     
-    ownerInfo,
+    ownerInfo = {},
     
     isLoading
   } = stats;
@@ -93,8 +102,8 @@ const Dashboard = memo(() => {
               </div>
               <div className="lg:col-span-1">
                 <PaymentMethodsPanel
-                  paymentMethods={paymentStats.paymentMethods}
-                  paymentDistribution={paymentStats.paymentDistribution}
+                  paymentMethods={paymentStats?.paymentMethods || []}
+                  paymentDistribution={paymentStats?.paymentDistribution || []}
                 />
               </div>
             </div>

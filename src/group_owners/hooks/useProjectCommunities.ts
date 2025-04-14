@@ -40,11 +40,11 @@ export const useProjectCommunities = (projectId: string | null) => {
         
         // Only log success once per projectId
         if (!dataLoadedRef.current) {
-          logger.log("Successfully fetched project communities:", data);
+          logger.log("Successfully fetched project communities:", data || []);
           dataLoadedRef.current = true;
         }
         
-        return data as Community[];
+        return (data || []) as Community[];
       } catch (error) {
         logger.error("Exception in project communities query:", error);
         return [];
@@ -57,5 +57,8 @@ export const useProjectCommunities = (projectId: string | null) => {
     refetchOnMount: true // Only refetch on mount, not during re-renders
   });
 
-  return query;
+  return {
+    ...query,
+    data: query.data || []
+  };
 };

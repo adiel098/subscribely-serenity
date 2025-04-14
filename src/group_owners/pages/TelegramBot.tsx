@@ -7,11 +7,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TelegramIcon, Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
+import { MessageSquare, Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Loader } from "@/components/Loader";
+import Loader from "@/components/Loader";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { useTelegramBot } from "@/group_owners/hooks/useTelegramBot";
 import { useUpdateTelegramBot } from "@/group_owners/hooks/useUpdateTelegramBot";
@@ -105,7 +105,7 @@ const TelegramBot = () => {
       <PageHeader
         title="Telegram Bot Configuration"
         description="Configure your Telegram bot settings"
-        icon={<TelegramIcon className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
+        icon={<MessageSquare className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       <Card className="animate-pulse">
         <CardContent className="h-64 flex items-center justify-center">
@@ -120,7 +120,7 @@ const TelegramBot = () => {
       <PageHeader
         title="Telegram Bot Configuration"
         description="Choose between Membify's bot or your own custom Telegram bot"
-        icon={<TelegramIcon className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
+        icon={<MessageSquare className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       
       <div className="grid gap-4 md:gap-6">
@@ -128,7 +128,7 @@ const TelegramBot = () => {
           <CardHeader className={isMobile ? "p-3 pb-2" : ""}>
             <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
               <div className={`bg-indigo-100 p-${isMobile ? '1.5' : '2'} rounded-full`}>
-                <TelegramIcon className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
+                <MessageSquare className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
               </div>
               Membify Default Bot
             </CardTitle>

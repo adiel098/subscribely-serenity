@@ -15,7 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { CreateSubscriber } from "@/group_owners/components/subscribers/CreateSubscriber";
+import CreateSubscriber from "@/group_owners/components/subscribers/CreateSubscriber";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SubscriberFilters } from "@/group_owners/components/subscribers/SubscriberFilters";
 import { Input } from "@/components/ui/input";
@@ -47,9 +47,12 @@ const Subscribers = () => {
   const subscribers = isProjectSelected ? projectSubscribersQuery.data : communitySubscribersQuery.subscribers;
   const isLoading = isProjectSelected ? projectSubscribersQuery.isLoading : communitySubscribersQuery.isLoading;
   
-  const [statusFilter, setStatusFilter] = useState<SubscriptionStatus>(SubscriptionStatus.ALL);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const { selectedProjectId: selectedProjectIdFromContext } = useProjectContext();
+  const { subscribers: subscribersData, isLoading: isLoadingData, error, refetch } = useSubscribers(selectedProjectIdFromContext || "");
+
   const filteredSubscribers = subscribers?.filter((subscriber) => {
     // Apply status filter
     if (statusFilter === SubscriptionStatus.ACTIVE && subscriber.subscription_status !== "active") {
@@ -76,8 +79,8 @@ const Subscribers = () => {
     return true;
   });
 
-  const handleStatusFilterChange = (status: string) => {
-    setStatusFilter(status as SubscriptionStatus);
+  const handleStatusFilterChange = (status: "all" | "active" | "inactive") => {
+    setStatusFilter(status as any);
   };
 
   const handleSearchChange = (query: string) => {

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,15 +16,16 @@ import { toast } from 'sonner';
 
 export const ProjectSelector: React.FC = () => {
   const navigate = useNavigate();
-  const { selectedProjectId, setSelectedProjectId, selectedProject, projects, isLoading } = useProjectContext();
+  const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
+  const selectedProject = projects?.find(p => p.id === selectedProjectId) || null;
 
   useEffect(() => {
     // If no project is selected but projects are available, select the first one
-    if (!selectedProject && projects?.length > 0 && !isLoading) {
+    if (!selectedProject && projects?.length > 0) {
       console.log("ProjectSelector: Auto-selecting first project", projects[0].id);
       setSelectedProjectId(projects[0].id);
     }
-  }, [projects, selectedProject, setSelectedProjectId, isLoading]);
+  }, [projects, selectedProject, setSelectedProjectId]);
 
   const handleCreateProject = () => {
     navigate('/projects/new');
@@ -46,7 +46,7 @@ export const ProjectSelector: React.FC = () => {
           variant="ghost"
           className="px-2 gap-1 h-9 w-full justify-start font-normal text-sm"
         >
-          {isLoading ? (
+          {projects === null ? (
             <span className="text-muted-foreground">טוען פרויקטים...</span>
           ) : selectedProject ? (
             <div className="flex items-center gap-2 max-w-full overflow-hidden">
@@ -81,15 +81,9 @@ export const ProjectSelector: React.FC = () => {
             </DropdownMenuItem>
           ))}
           
-          {projects?.length === 0 && !isLoading && (
+          {projects?.length === 0 && (
             <div className="py-2 px-2 text-sm text-muted-foreground text-center">
               לא נמצאו פרויקטים
-            </div>
-          )}
-          
-          {isLoading && (
-            <div className="py-2 px-2 text-sm text-muted-foreground text-center">
-              טוען...
             </div>
           )}
         </DropdownMenuGroup>

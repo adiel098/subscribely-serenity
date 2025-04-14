@@ -70,7 +70,7 @@ export const usePaymentProcessing = ({
         .single();
         
       if (planError) {
-        setErrorState({ message: `Error fetching plan details: ${planError.message}` });
+        setPaymentErrorState(setIsLoading, setError, onError, `Error fetching plan details: ${planError.message}`);
         return;
       }
       

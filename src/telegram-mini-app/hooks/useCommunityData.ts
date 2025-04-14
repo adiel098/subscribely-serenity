@@ -49,23 +49,22 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         // Basic checks on community data
         if (!communityData || !communityData.id) {
           logger.error('❌ Community data invalid:', communityData);
-          setError({ message: "Failed to load community data" });
+          setError("Failed to load community data");
           return;
         }
         
-        // Check if plans are available
-        if (!communityData.project_plans || communityData.project_plans.length === 0) {
-          logger.warn('⚠️ Community has no subscription plans');
-          setError({ message: "This community has no subscription plans available" });
+        // Check if community has no subscription plans
+        if (!communityData.subscription_plans || communityData.subscription_plans.length === 0) {
+          setError("Community has no subscription plans");
           return;
         }
         
         // Log success and plan info
         if (process.env.NODE_ENV !== 'production') {
-          logger.success(`📋 Found ${communityData.project_plans.length} subscription plans`);
+          logger.success(`📋 Found ${communityData.subscription_plans.length} subscription plans`);
           
           // Log basic details of each plan for debugging
-          communityData.project_plans.forEach((plan, index) => {
+          communityData.subscription_plans.forEach((plan, index) => {
             logger.debug(`📝 Plan ${index + 1}: ${plan.name} (${plan.id}) - ${plan.price} ${plan.interval}`);
           });
         }

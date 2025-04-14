@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "./useTelegramUser";
 import { useCommunityData } from "./useCommunityData";
@@ -46,7 +46,7 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   useEffect(() => {
     if (community && !selectedCommunity) {
       console.log('🔍 Community found:', community.name);
-      console.log('🌟 Community has plans:', community.project_plans?.length || 0);
+      console.log('🌟 Community has plans:', community.subscription_plans?.length || 0);
       setSelectedCommunity(community);
     }
   }, [community, selectedCommunity]);
@@ -132,6 +132,12 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
 
   // Calculate which community to display
   const displayCommunity = selectedCommunity || community;
+
+  const lowestPricePlan = useMemo(() => {
+    return community?.subscription_plans?.reduce((lowest, plan) => {
+      return plan.price < lowest.price ? plan : lowest;
+    }, community.subscription_plans[0]);
+  }, [community?.subscription_plans]);
 
   return {
     // States

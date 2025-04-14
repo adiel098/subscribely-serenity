@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Community } from "@/telegram-mini-app/types/community.types";
@@ -80,6 +79,10 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
         <CommunityCardHeader 
           community={community} 
           isHovered={isHovered} 
+          onSelectPlan={(planId) => {
+            console.log(`Selected plan: ${planId} for community: ${community.id}`);
+            // Additional plan selection logic can be added here
+          }}
         />
         
         <CommunityCardContent 

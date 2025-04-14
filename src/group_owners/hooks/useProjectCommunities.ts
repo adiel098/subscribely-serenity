@@ -10,12 +10,12 @@ const logger = createLogger("useProjectCommunities");
 
 export const useProjectCommunities = (projectId: string | null) => {
   const prevProjectIdRef = useRef<string | null>(null);
+  const dataLoadedRef = useRef<boolean>(false);
   
   const query = useQuery({
     queryKey: ["project-communities", projectId],
     queryFn: async () => {
       if (!projectId) {
-        logger.log("No project ID provided, returning empty array");
         return [];
       }
       
@@ -23,6 +23,7 @@ export const useProjectCommunities = (projectId: string | null) => {
       if (prevProjectIdRef.current !== projectId) {
         logger.log("Fetching communities for project:", projectId);
         prevProjectIdRef.current = projectId;
+        dataLoadedRef.current = false;
       }
       
       try {
@@ -37,17 +38,22 @@ export const useProjectCommunities = (projectId: string | null) => {
           throw error;
         }
         
-        logger.log("Successfully fetched project communities:", data);
+        // Only log success once per projectId
+        if (!dataLoadedRef.current) {
+          logger.log("Successfully fetched project communities:", data);
+          dataLoadedRef.current = true;
+        }
+        
         return data as Community[];
       } catch (error) {
         logger.error("Exception in project communities query:", error);
-        toast.error("An error occurred while fetching project communities");
         return [];
       }
     },
     enabled: !!projectId,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 300000, // Cache for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch when the window is focused
+    refetchInterval: false, // Don't refetch automatically
     refetchOnMount: true // Only refetch on mount, not during re-renders
   });
 

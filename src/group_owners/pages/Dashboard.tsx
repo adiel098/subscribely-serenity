@@ -12,8 +12,10 @@ import { FirstTimeSetupHelp } from "@/group_owners/components/dashboard/FirstTim
 import { OnboardingCompleteBanner } from "@/group_owners/components/dashboard/OnboardingCompleteBanner";
 import { InsightsPanel } from "@/group_owners/components/dashboard/InsightsPanel";
 import { StatsBaseSkeleton } from "@/group_owners/components/dashboard/loading/StatsBaseSkeleton";
+import { memo } from "react";
 
-const Dashboard = () => {
+// Use React.memo to prevent unnecessary re-renders
+const Dashboard = memo(() => {
   const {
     selectedCommunityId,
     selectedProjectId,
@@ -43,7 +45,7 @@ const Dashboard = () => {
     miniAppUsers,
     paymentStats,
     insights,
-    insightsData, // Add this line to destructure the new insightsData property
+    insightsData,
     
     memberGrowthData,
     revenueData,
@@ -105,6 +107,8 @@ const Dashboard = () => {
       )}
     </DashboardLayout>
   );
-};
+});
+
+Dashboard.displayName = "Dashboard";
 
 export default Dashboard;

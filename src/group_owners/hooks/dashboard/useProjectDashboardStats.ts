@@ -12,59 +12,93 @@ import { useProjectMiniAppUsers } from "./useProjectMiniAppUsers";
 import { useProjectOwnerInfo } from "./useProjectOwnerInfo";
 import { MiniAppData } from "./types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 
 const logger = createLogger("useProjectDashboardStats");
 
 export const useProjectDashboardStats = (projectId: string | null) => {
+  // Use ref to prevent duplicate logs
   const loggedRef = useRef(false);
   
-  if (!loggedRef.current && projectId) {
+  if (projectId && !loggedRef.current) {
     logger.log("📊 useProjectDashboardStats hook initialized with projectId:", projectId);
     loggedRef.current = true;
   }
   
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
   
-  const { data: subscribersData, isLoading: subscribersLoading } = useProjectSubscribers(projectId);
+  // Fetch subscribers data with stabilized query
+  const { data: subscribersData = [], isLoading: subscribersLoading } = useProjectSubscribers(projectId);
   
-  const { data: plansData, isLoading: plansLoading } = useProjectPlans(projectId);
+  // Fetch plans data with stabilized query
+  const { data: plansData = [], isLoading: plansLoading } = useProjectPlans(projectId);
   
-  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = 
-    useFilteredSubscribers(subscribersData, timeRangeStartDate);
+  // Use memoized filtered data to prevent unnecessary recalculations
+  const subscribersInfo = useMemo(() => {
+    return useFilteredSubscribers(subscribersData, timeRangeStartDate);
+  }, [subscribersData, timeRangeStartDate]);
   
-  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = 
-    useRevenueStats(filteredSubscribers);
+  const { filteredSubscribers, activeSubscribers, inactiveSubscribers } = subscribersInfo;
   
-  const { trialUsers } = useTrialUsers(filteredSubscribers);
+  // Memoize revenue stats
+  const revenueInfo = useMemo(() => {
+    return useRevenueStats(filteredSubscribers);
+  }, [filteredSubscribers]);
   
-  const { data: miniAppUsersData, isLoading: miniAppUsersLoading } = 
+  const { totalRevenue, avgRevenuePerSubscriber, conversionRate } = revenueInfo;
+  
+  // Memoize trial users
+  const trialInfo = useMemo(() => {
+    return useTrialUsers(filteredSubscribers);
+  }, [filteredSubscribers]);
+  
+  const { trialUsers } = trialInfo;
+  
+  // Fetch mini app users data
+  const { data: miniAppUsersData = null, isLoading: miniAppUsersLoading } = 
     useProjectMiniAppUsers(projectId, activeSubscribers);
   
-  const miniAppUsers: MiniAppData = {
-    count: miniAppUsersData?.count || 0,
-    nonSubscribers: miniAppUsersData?.nonSubscribers || 0
-  };
+  // Create a stable mini app users object
+  const miniAppUsers: MiniAppData = useMemo(() => {
+    return {
+      count: miniAppUsersData?.count || 0,
+      nonSubscribers: miniAppUsersData?.nonSubscribers || 0
+    };
+  }, [miniAppUsersData]);
   
-  const { paymentStats } = usePaymentStats(filteredSubscribers);
+  // Memoize payment stats
+  const paymentInfo = useMemo(() => {
+    return usePaymentStats(filteredSubscribers);
+  }, [filteredSubscribers]);
   
-  const { insights, insightsData } = useInsights(
-    filteredSubscribers,
-    activeSubscribers,
-    inactiveSubscribers,
-    plansData
-  );
+  const { paymentStats } = paymentInfo;
   
-  const { memberGrowthData, revenueData } = useChartData(filteredSubscribers);
+  // Memoize insights
+  const insightsInfo = useMemo(() => {
+    return useInsights(
+      filteredSubscribers,
+      activeSubscribers,
+      inactiveSubscribers,
+      plansData
+    );
+  }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plansData]);
   
+  const { insights, insightsData } = insightsInfo;
+  
+  // Memoize chart data
+  const chartData = useMemo(() => {
+    return useChartData(filteredSubscribers);
+  }, [filteredSubscribers]);
+  
+  const { memberGrowthData, revenueData } = chartData;
+  
+  // Fetch owner info
   const { data: ownerInfo, isLoading: ownerLoading } = useProjectOwnerInfo(projectId);
   
-  const isLoading = 
-    subscribersLoading || 
-    plansLoading || 
-    miniAppUsersLoading || 
-    ownerLoading;
+  // Combine loading states
+  const isLoading = subscribersLoading || plansLoading || miniAppUsersLoading || ownerLoading;
   
+  // Return a stable object
   return {
     timeRange,
     setTimeRange,

@@ -12,11 +12,17 @@ import { useRef } from "react";
 export const useActivePaymentMethods = () => {
   const { user } = useAuth();
   const loggedRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
   
   return useQuery({
     queryKey: ['active-payment-methods', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      
+      // Update userId ref if changed
+      if (userIdRef.current !== user.id) {
+        userIdRef.current = user.id;
+      }
       
       try {
         // Get all active payment methods for the current user
@@ -44,8 +50,9 @@ export const useActivePaymentMethods = () => {
       }
     },
     enabled: !!user?.id,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 300000, // Cache for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: true // Only refetch on mount
+    refetchOnMount: true, // Only refetch on mount
+    refetchInterval: false // Don't automatically refetch at intervals
   });
 };

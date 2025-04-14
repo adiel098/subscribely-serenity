@@ -40,8 +40,9 @@ export const useProjectSubscribers = (projectId: string | null) => {
       }
     },
     enabled: !!projectId,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 300000, // Cache for 5 minutes to prevent excessive refetching
     refetchOnWindowFocus: false, // Don't refetch when the window is focused
-    refetchOnMount: true // Only refetch on mount
+    refetchOnMount: true, // Only refetch on mount, not during re-renders
+    refetchInterval: false // Don't automatically refetch at intervals
   });
 };

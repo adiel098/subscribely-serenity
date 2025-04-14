@@ -11,102 +11,195 @@ import { FirstTimeSetupHelp } from "@/group_owners/components/dashboard/FirstTim
 import { OnboardingCompleteBanner } from "@/group_owners/components/dashboard/OnboardingCompleteBanner";
 import { InsightsPanel } from "@/group_owners/components/dashboard/InsightsPanel";
 import { StatsBaseSkeleton } from "@/group_owners/components/dashboard/loading/StatsBaseSkeleton";
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { InsightData } from "@/group_owners/hooks/dashboard/types";
+
+// Default empty stats to avoid undefined errors
+const DEFAULT_STATS = {
+  timeRange: 'last7days',
+  setTimeRange: () => {},
+  timeRangeLabel: '',
+  filteredSubscribers: [],
+  activeSubscribers: [],
+  inactiveSubscribers: [],
+  totalRevenue: 0,
+  avgRevenuePerSubscriber: 0,
+  conversionRate: 0,
+  trialUsers: { count: 0, percentage: 0 },
+  miniAppUsers: { count: 0, nonSubscribers: 0 },
+  paymentStats: { paymentMethods: [], paymentDistribution: [] },
+  insights: {},
+  insightsData: {
+    averageSubscriptionDuration: 0,
+    mostPopularPlan: 'No Plan',
+    mostPopularPlanPrice: 0,
+    renewalRate: 0,
+    potentialRevenue: 0
+  },
+  memberGrowthData: [],
+  revenueData: [],
+  ownerInfo: {},
+  isLoading: false
+};
 
 // Use React.memo to prevent unnecessary re-renders
 const Dashboard = memo(() => {
   // State to track if there was an error
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  // State to store processed stats safely
+  const [safeStats, setSafeStats] = useState(DEFAULT_STATS);
+  // State to track if data is loading
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
-  try {
-    // Reset error state on each render attempt
+  // Reset error state when component mounts or re-renders
+  useEffect(() => {
     if (hasError) {
       setHasError(false);
       setErrorMessage("");
     }
+  }, [hasError]);
 
+  try {
+    // Get context data
     const {
       selectedCommunityId,
       selectedProjectId,
       isProjectSelected
     } = useCommunityContext();
     
-    // Load appropriate stats based on whether a community or project is selected
+    // Fetch appropriate stats based on selection
     const communityStats = useCommunityDashboardStats(isProjectSelected ? null : selectedCommunityId);
     const projectStats = useProjectDashboardStats(isProjectSelected ? selectedProjectId : null);
     
-    // Use either community stats or project stats based on what's selected
-    const stats = isProjectSelected ? projectStats : communityStats;
+    // Safely process stats in a separate useEffect to avoid React lifecycle issues
+    useEffect(() => {
+      try {
+        // Use either community stats or project stats based on what's selected
+        const rawStats = isProjectSelected ? projectStats : communityStats;
+        
+        // Handle a case when stats is undefined or null
+        if (!rawStats || typeof rawStats !== 'object') {
+          console.log("Stats object is not valid:", rawStats);
+          setSafeStats(DEFAULT_STATS);
+          setIsDataLoading(false);
+          return;
+        }
+        
+        // Process and sanitize stats data
+        const {
+          timeRange = 'last7days',
+          setTimeRange = () => {},
+          timeRangeLabel = '',
+          
+          filteredSubscribers: rawFilteredSubscribers,
+          activeSubscribers: rawActiveSubscribers,
+          inactiveSubscribers: rawInactiveSubscribers,
+          
+          totalRevenue = 0,
+          avgRevenuePerSubscriber = 0,
+          conversionRate = 0,
+          trialUsers = { count: 0, percentage: 0 },
+          miniAppUsers = { count: 0, nonSubscribers: 0 },
+          paymentStats = { paymentMethods: [], paymentDistribution: [] },
+          insights = {},
+          insightsData: rawInsightsData,
+          
+          memberGrowthData: rawMemberGrowthData,
+          revenueData: rawRevenueData,
+          
+          ownerInfo = {},
+          
+          isLoading
+        } = rawStats;
+        
+        // Ensure arrays are actually arrays
+        const filteredSubscribers = Array.isArray(rawFilteredSubscribers) ? rawFilteredSubscribers : [];
+        const activeSubscribers = Array.isArray(rawActiveSubscribers) ? rawActiveSubscribers : [];
+        const inactiveSubscribers = Array.isArray(rawInactiveSubscribers) ? rawInactiveSubscribers : [];
+        const memberGrowthData = Array.isArray(rawMemberGrowthData) ? rawMemberGrowthData : [];
+        const revenueData = Array.isArray(rawRevenueData) ? rawRevenueData : [];
+        
+        // Ensure payment stats are valid
+        const safePaymentStats = {
+          paymentMethods: Array.isArray(paymentStats?.paymentMethods) ? paymentStats.paymentMethods : [],
+          paymentDistribution: Array.isArray(paymentStats?.paymentDistribution) ? paymentStats.paymentDistribution : []
+        };
+      
+        // Ensure insightsData has the correct type structure
+        const safeInsightsData = {
+          averageSubscriptionDuration: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+            rawInsightsData.averageSubscriptionDuration || 0 : 0,
+          mostPopularPlan: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+            rawInsightsData.mostPopularPlan || 'No Plan' : 'No Plan',
+          mostPopularPlanPrice: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+            rawInsightsData.mostPopularPlanPrice || 0 : 0,
+          renewalRate: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+            rawInsightsData.renewalRate || 0 : 0,
+          potentialRevenue: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
+            rawInsightsData.potentialRevenue || 0 : 0
+        };
+
+        // Create safe processed stats
+        const processedStats = {
+          timeRange,
+          setTimeRange,
+          timeRangeLabel,
+          
+          filteredSubscribers,
+          activeSubscribers,
+          inactiveSubscribers,
+          
+          totalRevenue,
+          avgRevenuePerSubscriber,
+          conversionRate,
+          trialUsers,
+          miniAppUsers,
+          paymentStats: safePaymentStats,
+          insights,
+          insightsData: safeInsightsData,
+          
+          memberGrowthData,
+          revenueData,
+          
+          ownerInfo,
+          
+          isLoading
+        };
+        
+        // Update state with safe stats
+        setSafeStats(processedStats);
+        setIsDataLoading(isLoading);
+      } catch (error) {
+        console.error("Error processing stats:", error);
+        setSafeStats(DEFAULT_STATS);
+        setIsDataLoading(false);
+      }
+    }, [communityStats, projectStats, isProjectSelected]);
     
-    // Handle a case when stats is undefined or null
-    if (!stats || typeof stats !== 'object') {
-      console.log("Stats object is not valid:", stats);
-      return (
-        <DashboardLayout>
-          <StatsBaseSkeleton />
-        </DashboardLayout>
-      );
-    }
-    
-    // התגנות מפני מבנה לא תקין של stats
+    // Destructure from safe stats state for rendering
     const {
-      timeRange = 'last7days',
-      setTimeRange = () => {},
-      timeRangeLabel = '',
-      
-      filteredSubscribers: rawFilteredSubscribers,
-      activeSubscribers: rawActiveSubscribers,
-      inactiveSubscribers: rawInactiveSubscribers,
-      
-      totalRevenue = 0,
-      avgRevenuePerSubscriber = 0,
-      conversionRate = 0,
-      trialUsers = { count: 0, percentage: 0 },
-      miniAppUsers = { count: 0, nonSubscribers: 0 },
-      paymentStats = { paymentMethods: [], paymentDistribution: [] },
-      insights = {},
-      insightsData: rawInsightsData,
-      
-      memberGrowthData: rawMemberGrowthData,
-      revenueData: rawRevenueData,
-      
-      ownerInfo = {},
-      
+      timeRange,
+      setTimeRange,
+      timeRangeLabel,
+      filteredSubscribers,
+      activeSubscribers,
+      inactiveSubscribers,
+      totalRevenue,
+      avgRevenuePerSubscriber,
+      conversionRate,
+      trialUsers,
+      miniAppUsers,
+      paymentStats,
+      insightsData,
+      memberGrowthData,
+      revenueData,
       isLoading
-    } = stats;
-    
-    // וידוא שכל המערכים הם באמת מערכים
-    const filteredSubscribers = Array.isArray(rawFilteredSubscribers) ? rawFilteredSubscribers : [];
-    const activeSubscribers = Array.isArray(rawActiveSubscribers) ? rawActiveSubscribers : [];
-    const inactiveSubscribers = Array.isArray(rawInactiveSubscribers) ? rawInactiveSubscribers : [];
-    const memberGrowthData = Array.isArray(rawMemberGrowthData) ? rawMemberGrowthData : [];
-    const revenueData = Array.isArray(rawRevenueData) ? rawRevenueData : [];
-    
-    // וידוא שיש לנו paymentStats תקין
-    const safePaymentStats = {
-      paymentMethods: Array.isArray(paymentStats?.paymentMethods) ? paymentStats.paymentMethods : [],
-      paymentDistribution: Array.isArray(paymentStats?.paymentDistribution) ? paymentStats.paymentDistribution : []
-    };
-  
-    // Ensure insightsData has the correct type structure
-    const safeInsightsData: InsightData = {
-      averageSubscriptionDuration: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
-        rawInsightsData.averageSubscriptionDuration || 0 : 0,
-      mostPopularPlan: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
-        rawInsightsData.mostPopularPlan || 'No Plan' : 'No Plan',
-      mostPopularPlanPrice: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
-        rawInsightsData.mostPopularPlanPrice || 0 : 0,
-      renewalRate: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
-        rawInsightsData.renewalRate || 0 : 0,
-      potentialRevenue: typeof rawInsightsData === 'object' && rawInsightsData !== null ? 
-        rawInsightsData.potentialRevenue || 0 : 0
-    };
+    } = safeStats;
   
     return (
       <DashboardLayout>
-        {isLoading ? (
+        {isDataLoading ? (
           <StatsBaseSkeleton />
         ) : (
           <>
@@ -128,7 +221,7 @@ const Dashboard = memo(() => {
                 conversionRate={conversionRate}
                 trialUsers={trialUsers}
                 miniAppUsers={miniAppUsers}
-                paymentStats={safePaymentStats}
+                paymentStats={paymentStats}
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -138,18 +231,17 @@ const Dashboard = memo(() => {
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <InsightsPanel insights={safeInsightsData} />
+                  <InsightsPanel insights={insightsData} />
                 </div>
                 <div className="lg:col-span-1">
                   <PaymentMethodsPanel
-                    paymentMethods={safePaymentStats.paymentMethods}
-                    paymentDistribution={safePaymentStats.paymentDistribution}
+                    paymentMethods={paymentStats.paymentMethods}
+                    paymentDistribution={paymentStats.paymentDistribution}
                   />
                 </div>
               </div>
               
-              {/* בדיקה מבטיחה שהמשתנה הוא מערך ובעל ערך משמעותי */}
-              {filteredSubscribers.length === 0 && (
+              {Array.isArray(filteredSubscribers) && filteredSubscribers.length === 0 && (
                 <FirstTimeSetupHelp isProject={isProjectSelected} />
               )}
             </div>

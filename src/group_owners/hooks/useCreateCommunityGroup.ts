@@ -78,51 +78,89 @@ export const useCreateCommunityGroup = () => {
           botTokenSet: !!data.bot_token
         });
         
-        // Create default bot settings for the project
-        const { error: botSettingsError } = await supabase
-          .from("telegram_bot_settings")
-          .insert({
-            project_id: newProject.id, // Using project_id consistently
-            welcome_message: "Welcome to our group! 🎉",
-            subscription_reminder_days: 3,
-            subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
-            expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
-            renewal_discount_enabled: false,
-            renewal_discount_percentage: 10,
-            language: 'en',
-            first_reminder_days: 3,
-            first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
-            second_reminder_days: 1,
-            second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
-          })
-          .select("*")
-          .single();
+        // Give time for the database to process the project creation before creating bot settings
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (botSettingsError) {
-          console.error("❌ Error creating bot settings:", botSettingsError);
-          throw botSettingsError;
+        // Create default bot settings for the project
+        try {
+          const { error: botSettingsError } = await supabase
+            .from("telegram_bot_settings")
+            .insert({
+              project_id: newProject.id, // Using project_id consistently
+              welcome_message: "Welcome to our group! 🎉",
+              subscription_reminder_days: 3,
+              subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
+              expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
+              renewal_discount_enabled: false,
+              renewal_discount_percentage: 10,
+              language: 'en',
+              first_reminder_days: 3,
+              first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
+              second_reminder_days: 1,
+              second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
+            });
+          
+          if (botSettingsError) {
+            console.error("❌ Error creating bot settings:", botSettingsError);
+            // Continue despite errors - don't block the flow
+          } else {
+            console.log("✅ Created default bot settings for project:", newProject.id);
+          }
+        } catch (settingsError) {
+          console.error("Exception creating bot settings:", settingsError);
+          // Continue despite errors
         }
-
-        console.log("✅ Created default bot settings for project:", newProject.id);
         
         // Create communities if any
         if (data.communities && data.communities.length > 0) {
-          const communitiesData = data.communities.map(chat => ({
-            project_id: newProject.id,
-            telegram_chat_id: chat.id,
-            owner_id: user.id,
-            name: chat.title,
-            description: chat.description || null,
-            telegram_photo_url: chat.photo_url || null
-          }));
-
-          const { error: communitiesError } = await supabase
-            .from("communities")
-            .insert(communitiesData);
+          // Add a delay before creating communities to ensure project is fully saved
+          await new Promise(resolve => setTimeout(resolve, 1500));
           
-          if (communitiesError) {
-            console.error("Error creating communities:", communitiesError);
-            toast.error("Warning: Some communities could not be created");
+          // Create communities in batches of 5 to avoid overloading the database
+          const batchSize = 5;
+          let successCount = 0;
+          
+          for (let i = 0; i < data.communities.length; i += batchSize) {
+            const batch = data.communities.slice(i, i + batchSize);
+            const communitiesData = batch.map(chat => ({
+              project_id: newProject.id,
+              telegram_chat_id: chat.id,
+              owner_id: user.id,
+              name: chat.title,
+              description: chat.description || null,
+              telegram_photo_url: chat.photo_url || null
+            }));
+
+            try {
+              const { data: createdCommunities, error: communitiesError } = await supabase
+                .from("communities")
+                .insert(communitiesData)
+                .select("id, name");
+              
+              if (communitiesError) {
+                console.error(`Error creating communities batch ${i/batchSize + 1}:`, communitiesError);
+              } else {
+                console.log(`✅ Created ${createdCommunities?.length || 0} communities in batch ${i/batchSize + 1}`);
+                successCount += createdCommunities?.length || 0;
+              }
+            } catch (batchError) {
+              console.error(`Error in batch ${i/batchSize + 1}:`, batchError);
+            }
+            
+            // Small delay between batches
+            if (i + batchSize < data.communities.length) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+          
+          console.log(`📊 Created ${successCount} out of ${data.communities.length} communities`);
+          
+          if (successCount === 0) {
+            toast.warning("Could not create communities. You'll be able to add them later in the dashboard.");
+          } else if (successCount < data.communities.length) {
+            toast.warning(`Created ${successCount} out of ${data.communities.length} communities. You can add the rest later.`);
+          } else {
+            toast.success(`All ${successCount} communities created successfully!`);
           }
         }
         
@@ -253,64 +291,10 @@ export const commitOnboardingData = async () => {
       botTokenSet: !!tempData.project.bot_token
     });
     
-    // Verify the project exists before creating bot settings
-    const { data: verifiedProject, error: verifyError } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("id", projectId)
-      .single();
-      
-    if (verifyError || !verifiedProject) {
-      console.error("❌ Project verification failed. Cannot create bot settings:", verifyError || "Project not found");
-      return { success: false, error: "Project verification failed" };
-    }
-    
-    console.log("✅ Project verified to exist:", projectId);
-    
-    // Create default bot settings with explicit delay to ensure project is committed
-    // Add longer delay to make sure project is fully committed
+    // Make sure project is fully committed before proceeding
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    try {
-      const botSettingsData = {
-        project_id: projectId,
-        welcome_message: "Welcome to our group! 🎉",
-        subscription_reminder_days: 3,
-        subscription_reminder_message: "Your subscription is about to expire. Please renew to maintain access.",
-        expired_subscription_message: "Your subscription has expired. Please renew to regain access.",
-        renewal_discount_enabled: false,
-        renewal_discount_percentage: 10,
-        language: 'en',
-        first_reminder_days: 3,
-        first_reminder_message: "Your subscription will expire soon. Renew now to maintain access!",
-        second_reminder_days: 1,
-        second_reminder_message: "Final reminder: Your subscription expires tomorrow. Renew now!"
-      };
-      
-      console.log("📝 Creating bot settings with data:", {
-        project_id: botSettingsData.project_id
-      });
-      
-      const { error: botSettingsError } = await supabase
-        .from("telegram_bot_settings")
-        .insert(botSettingsData);
-      
-      if (botSettingsError) {
-        console.error("❌ Error creating bot settings:", botSettingsError);
-        // Continue despite bot settings error - don't return early
-        // We want to try to create communities even if bot settings fail
-      } else {
-        console.log("✅ Created default bot settings for project:", projectId);
-      }
-    } catch (botError) {
-      console.error("❌ Exception creating bot settings:", botError);
-      // Continue despite bot settings error
-    }
-    
     // Create communities if any (with delay to ensure project is fully committed)
-    // Add an even longer delay to ensure project is fully committed to database
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
     let successfulCommunities = 0;
     
     if (tempData.project.communities && tempData.project.communities.length > 0) {
@@ -319,45 +303,40 @@ export const commitOnboardingData = async () => {
         communitiesCount: tempData.project.communities.length
       });
       
-      // Log the community data for debugging
-      console.log("Communities data:", tempData.project.communities.map(chat => ({
-        project_id: projectId,
-        telegram_chat_id: chat.id,
-        owner_id: userData.user.id,
-        name: chat.title,
-        description: chat.description || null,
-        telegram_photo_url: chat.photo_url || null
-      })));
+      // Process communities in smaller batches to avoid overwhelming the database
+      const batchSize = 3;
       
-      // Try creating communities one by one to avoid batch issues
-      for (const chat of tempData.project.communities) {
-        const communityData = {
+      for (let i = 0; i < tempData.project.communities.length; i += batchSize) {
+        const batch = tempData.project.communities.slice(i, i + batchSize);
+        console.log(`Processing community batch ${Math.floor(i/batchSize) + 1} (size: ${batch.length})`);
+        
+        const communitiesData = batch.map(chat => ({
           project_id: projectId,
           telegram_chat_id: chat.id,
           owner_id: userData.user.id,
           name: chat.title,
           description: chat.description || null,
           telegram_photo_url: chat.photo_url || null
-        };
-        
-        console.log(`Creating community: ${chat.title} (${chat.id})`);
+        }));
         
         try {
-          const { error: communityError } = await supabase
+          const { data: createdCommunities, error: communitiesError } = await supabase
             .from("communities")
-            .insert([communityData]);
-            
-          if (communityError) {
-            console.error(`Error creating community ${chat.title}:`, communityError);
+            .insert(communitiesData)
+            .select("id, name");
+          
+          if (communitiesError) {
+            console.error(`Error creating communities batch ${Math.floor(i/batchSize) + 1}:`, communitiesError);
           } else {
-            successfulCommunities++;
+            console.log(`✅ Batch ${Math.floor(i/batchSize) + 1}: Created ${createdCommunities?.length || 0} communities`);
+            successfulCommunities += createdCommunities?.length || 0;
           }
-        } catch (err) {
-          console.error(`Exception creating community ${chat.title}:`, err);
+        } catch (batchError) {
+          console.error(`Exception in batch ${Math.floor(i/batchSize) + 1}:`, batchError);
         }
         
-        // Small delay between community creations
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Add a delay between batches
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       if (successfulCommunities > 0) {
@@ -365,6 +344,7 @@ export const commitOnboardingData = async () => {
         toast.success(`Added ${successfulCommunities} communities to your project`);
       } else {
         console.error("❌ Failed to create any communities");
+        // Don't fail the whole process if communities can't be created
         toast.error("Could not create communities. You can add them later in the dashboard.");
       }
     } else {

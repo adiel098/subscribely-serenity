@@ -1,5 +1,4 @@
-
-import { Community } from "@/group_owners/hooks/useCommunities";
+import { Community } from "@/group_owners/hooks/types/community.types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("channelTransformers");

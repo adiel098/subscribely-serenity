@@ -16,9 +16,9 @@ export const useCoupons = (entityId: string) => {
       
       try {
         const { data, error } = await supabase
-          .from('subscription_coupons')
+          .from('project_coupons')
           .select('*')
-          .eq('community_id', entityId)
+          .eq('project_id', entityId)
           .order('created_at', { ascending: false });
         
         if (error) {
@@ -47,11 +47,12 @@ export const useCoupons = (entityId: string) => {
 
         const fullCouponData = {
           ...couponData,
+          project_id: entityId,
           owner_id: userData.user.id
         };
         
         const { data, error } = await supabase
-          .from('subscription_coupons')
+          .from('project_coupons')
           .insert(fullCouponData)
           .select()
           .single();
@@ -75,7 +76,7 @@ export const useCoupons = (entityId: string) => {
     mutationFn: async (data: UpdateCouponData) => {
       try {
         const { error } = await supabase
-          .from('subscription_coupons')
+          .from('project_coupons')
           .update(data)
           .eq('id', data.id);
         
@@ -98,7 +99,7 @@ export const useCoupons = (entityId: string) => {
     mutationFn: async (couponId: string) => {
       try {
         const { error } = await supabase
-          .from('subscription_coupons')
+          .from('project_coupons')
           .delete()
           .eq('id', couponId);
         

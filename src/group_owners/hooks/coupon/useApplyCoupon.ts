@@ -1,4 +1,3 @@
-
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Coupon } from "../types/coupon.types";
@@ -14,7 +13,7 @@ export const useApplyCoupon = () => {
     mutationFn: async ({ couponId, telegramUserId, paymentId }: ApplyCouponParams) => {
       // Get the coupon
       const { data: coupon, error: couponError } = await supabase
-        .from('subscription_coupons')
+        .from('project_coupons')
         .select('*')
         .eq('id', couponId)
         .single();
@@ -26,7 +25,7 @@ export const useApplyCoupon = () => {
       
       // Increment the used_count
       const { error: updateError } = await supabase
-        .from('subscription_coupons')
+        .from('project_coupons')
         .update({ used_count: (coupon.used_count || 0) + 1 })
         .eq('id', couponId);
       

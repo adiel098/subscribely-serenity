@@ -1,13 +1,12 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 export const useFetchSubscriptionPlans = (communityId: string) => {
-  const { isGroupSelected } = useCommunityContext();
+  const { selectedProjectId } = useProjectContext();
   
   return useQuery({
-    queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId],
+    queryKey: [selectedProjectId ? 'group-subscription-plans' : 'subscription-plans', communityId],
     queryFn: async () => {
       if (!communityId) return [];
       

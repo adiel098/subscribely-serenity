@@ -1,4 +1,3 @@
-
 export type DiscountType = 'percentage' | 'fixed';
 
 export interface Coupon {
@@ -14,7 +13,7 @@ export interface Coupon {
   created_at?: string;
   updated_at?: string;
   owner_id?: string;
-  community_id?: string | null;
+  project_id?: string | null;
 }
 
 export interface CreateCouponData {
@@ -25,7 +24,7 @@ export interface CreateCouponData {
   max_uses?: number | null;
   is_active?: boolean;
   expires_at?: string | null;
-  community_id: string;
+  project_id?: string;
 }
 
 export interface UpdateCouponData {

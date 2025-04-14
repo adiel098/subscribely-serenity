@@ -7,8 +7,13 @@ import { Button } from '@/components/ui/button'
 import { useProjectContext } from '@/contexts/ProjectContext'
 import { PaymentMethodCard } from '@/group_owners/components/payment-methods/PaymentMethodCard'
 import { PaymentMethodForm } from '@/group_owners/components/payment-methods/PaymentMethodForm'
-import { CreditCard, ExternalLink, Check, DollarSign, CreditCardIcon } from 'lucide-react'
+import { CreditCard, ExternalLink, Check, DollarSign, CreditCardIcon, Loader2, LayoutGrid, Wallet, Bitcoin, Sparkles } from 'lucide-react'
 import { usePaymentMethods } from '@/group_owners/hooks/usePaymentMethods'
+import { useToast } from '@/components/ui/use-toast'
+import { motion } from 'framer-motion'
+import { useAuth } from '@/hooks/useAuth'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { usePaymentMethodsPage } from '@/group_owners/hooks/usePaymentMethodsPage'
 
 const PaymentMethods = () => {
   const {
@@ -21,7 +26,15 @@ const PaymentMethods = () => {
     setFilter,
     handleTogglePaymentMethod
   } = usePaymentMethodsPage();
-  const { user } = useAuth();
+  
+  let authData = { user: null };
+  try {
+    authData = useAuth();
+  } catch (error) {
+    console.warn("Auth provider not available, continuing with null user");
+  }
+  const { user } = authData;
+  
   const isMobile = useIsMobile();
 
   // Animation variants

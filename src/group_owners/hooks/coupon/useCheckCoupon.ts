@@ -1,27 +1,26 @@
-
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCouponResult } from "../types/coupon.types";
 
 interface CheckCouponParams {
   couponCode: string;
-  communityId: string;
+  projectId: string;
   planPrice: number;
 }
 
 export const useCheckCoupon = () => {
   return useMutation({
-    mutationFn: async ({ couponCode, communityId, planPrice }: CheckCouponParams): Promise<CheckCouponResult> => {
+    mutationFn: async ({ couponCode, projectId, planPrice }: CheckCouponParams): Promise<CheckCouponResult> => {
       if (!couponCode) {
         return { isValid: false, message: "No coupon code provided" };
       }
 
       // Get the coupon by code
       const { data: coupon, error } = await supabase
-        .from('subscription_coupons')
+        .from('project_coupons')
         .select('*')
         .eq('code', couponCode)
-        .eq('community_id', communityId)
+        .eq('project_id', projectId)
         .eq('is_active', true)
         .single();
       

@@ -12,13 +12,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CommunitySelector } from '@/group_owners/components/community-selector/CommunitySelector';
-import { useCommunityContext } from '@/contexts/CommunityContext';
+import { ProjectSelector } from '@/group_owners/components/project-selector/ProjectSelector';
+import { useProjectContext } from '@/group_owners/hooks/dashboard/useProjectContext';
 
 export function MainHeader() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { selectedCommunityId, setSelectedCommunityId } = useCommunityContext();
+  const { selectedProjectId, setSelectedProjectId } = useProjectContext();
   
   return (
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-50 bg-white/90 shadow-sm backdrop-blur-sm flex items-center justify-between px-2 sm:px-6">
@@ -36,7 +36,7 @@ export function MainHeader() {
         </Link>
         {user && (
           <div className="ml-2 sm:ml-8 w-[140px] sm:w-[200px]">
-            <CommunitySelector onCommunityChange={(community) => community && setSelectedCommunityId(community.id)} />
+            <ProjectSelector />
           </div>
         )}
         <nav className="ml-2 sm:ml-8 hidden md:flex space-x-1">

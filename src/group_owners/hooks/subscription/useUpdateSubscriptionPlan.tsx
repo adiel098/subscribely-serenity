@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useProjectContext } from "@/contexts/ProjectContext";
 import { toast } from "sonner";
 
 interface UpdatePlanParams {
@@ -17,7 +17,7 @@ interface UpdatePlanParams {
 
 export const useUpdateSubscriptionPlan = (communityId: string) => {
   const queryClient = useQueryClient();
-  const { isGroupSelected } = useCommunityContext();
+  const { selectedProjectId } = useProjectContext();
   
   return useMutation({
     mutationFn: async (planData: UpdatePlanParams) => {
@@ -90,7 +90,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
     onSuccess: () => {
       // Invalidate the query to refetch the updated list
       queryClient.invalidateQueries({ 
-        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
+        queryKey: ['subscription-plans', selectedProjectId] 
       });
       toast.success("Subscription plan updated successfully");
     },

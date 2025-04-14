@@ -1,18 +1,26 @@
-
 import { useState, useEffect } from "react";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useProjectContext } from "@/contexts/ProjectContext";
 import { usePaymentMethods } from "@/group_owners/hooks/usePaymentMethods";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { PaymentMethod } from "@/group_owners/hooks/types/subscription.types";
-import { useAuth } from "@/auth/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 export const usePaymentMethodsPage = () => {
-  const { selectedCommunityId } = useCommunityContext();
-  const { user } = useAuth();
+  const { selectedProjectId } = useProjectContext();
+  let authData = { user: null };
+  
+  try {
+    authData = useAuth();
+  } catch (error) {
+    console.warn("Auth provider not available, continuing with null user");
+  }
+  
+  const { user } = authData;
   const { data: paymentMethods, isLoading, refetch } = usePaymentMethods();
   const [filter, setFilter] = useState<string>("all");
   const [isInitializing, setIsInitializing] = useState(true);
+  const { toast } = useToast();
 
   // Create default payment methods if none exist
   useEffect(() => {
@@ -120,7 +128,7 @@ export const usePaymentMethodsPage = () => {
   console.log("Filtered payment methods:", filteredPaymentMethods);
 
   return {
-    selectedCommunityId,
+    selectedProjectId,
     paymentMethods: filteredPaymentMethods,
     isLoading: isLoading || isInitializing,
     filter,

@@ -7,10 +7,8 @@ import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { MobileSidebar } from "./MobileSidebar";
 import { useProjectContext } from "@/contexts/ProjectContext";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useProjects } from "@/group_owners/hooks/useProjects";
-import { CommunityDropdown } from "./community-selector/CommunityDropdown";
-import { PlatformSubscriptionBanner } from "./community-selector/PlatformSubscriptionBanner";
+import { ProjectDropdown } from "./project-selector/ProjectDropdown";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { getBotUsername } from "@/telegram-mini-app/utils/telegram/botUsernameUtil";
@@ -27,7 +25,6 @@ export function GroupOwnerHeader() {
   const navigate = useNavigate();
   
   // נוסיף את הדאטה והפונקציות הדרושות מהפרויקט
-  const { data: communities } = useCommunities();
   const { data: projects } = useProjects();
   const { 
     selectedCommunityId, 
@@ -38,7 +35,6 @@ export function GroupOwnerHeader() {
   } = useProjectContext();
   
   const selectedProject = projects?.find(project => project.id === selectedProjectId);
-  const selectedCommunity = communities?.find(comm => comm.id === selectedCommunityId);
   const botUsername = getBotUsername();
   
   // יצירת פונקציות הנדרשות
@@ -47,20 +43,17 @@ export function GroupOwnerHeader() {
   };
 
   const handleCopyLink = () => {
-    if (!selectedCommunityId && !selectedProjectId) {
-      toast.error("יש לבחור קהילה או פרויקט תחילה");
+    if (!selectedProjectId) {
+      toast.error("יש לבחור פרויקט תחילה");
       return;
     }
 
     let linkParam = "";
     let entityName = "";
 
-    if (isProjectSelected && selectedProject) {
+    if (selectedProject) {
       linkParam = selectedProject.id;
       entityName = "פרויקט";
-    } else if (selectedCommunity) {
-      linkParam = selectedCommunity.custom_link || selectedCommunity.id;
-      entityName = "קהילה";
     }
 
     const fullLink = `https://t.me/${botUsername}?start=${linkParam}`;
@@ -76,15 +69,13 @@ export function GroupOwnerHeader() {
   };
 
   const handleEditLink = () => {
-    if (!selectedCommunityId && !selectedProjectId) {
-      toast.error("יש לבחור קהילה או פרויקט תחילה");
+    if (!selectedProjectId) {
+      toast.error("יש לבחור פרויקט תחילה");
       return;
     }
 
-    if (isProjectSelected && selectedProject) {
+    if (selectedProject) {
       navigate(`/projects/${selectedProject.id}/settings`);
-    } else if (selectedCommunity) {
-      navigate(`/communities/${selectedCommunity.id}/edit`);
     }
   };
 
@@ -122,11 +113,8 @@ export function GroupOwnerHeader() {
 
       {/* סרגל בחירת הפרויקט/קהילה */}
       <div className="flex-1 flex items-center justify-center gap-4">
-        <CommunityDropdown 
-          communities={communities} 
+        <ProjectDropdown 
           projects={projects}
-          selectedCommunityId={selectedCommunityId}
-          setSelectedCommunityId={setSelectedCommunityId}
           selectedProjectId={selectedProjectId}
           setSelectedProjectId={setSelectedProjectId}
           isMobile={isMobile}
@@ -164,10 +152,6 @@ export function GroupOwnerHeader() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-white border border-gray-100 shadow-md">
-              <DropdownMenuItem onClick={() => navigate("/connect/telegram")}>
-                <PlusCircle className="h-4 w-4 mr-2 text-blue-600" />
-                הוסף קהילה
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleCreateProject}>
                 <FolderPlus className="h-4 w-4 mr-2 text-purple-600" />
                 הוסף פרויקט
@@ -176,7 +160,6 @@ export function GroupOwnerHeader() {
           </DropdownMenu>
         </div>
         
-        <PlatformSubscriptionBanner />
       </div>
 
       <div className="ml-auto flex items-center">

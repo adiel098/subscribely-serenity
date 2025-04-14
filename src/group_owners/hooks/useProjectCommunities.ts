@@ -1,7 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Community } from "./useCommunities";
+import { Community } from "./types/community.types";
 import { toast } from "sonner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { useRef } from "react";

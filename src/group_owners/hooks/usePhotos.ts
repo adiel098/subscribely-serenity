@@ -1,9 +1,11 @@
-
 import { useCommunityPhotos } from "@/group_owners/components/community-selector/photo-handling/useCommunityPhotos";
-import { useCommunities } from "./useCommunities";
+import { useProjectCommunities } from "./useProjectCommunities";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 export const usePhotos = () => {
-  const { data: communities } = useCommunities();
+  const { selectedProjectId } = useProjectContext();
+  const { data: communities } = useProjectCommunities(selectedProjectId);
+  
   const { 
     communityPhotos, 
     refreshingCommunityId, 

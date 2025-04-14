@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon, SearchIcon, TagIcon } from "lucide-react";
-import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useCoupons } from "@/group_owners/hooks/coupon/useCoupons";
 import { Coupon, CreateCouponData, UpdateCouponData } from "@/group_owners/hooks/types/coupon.types";
 import { CouponCard } from "./CouponCard";
@@ -12,11 +11,12 @@ import { EmptyCouponsState } from "./EmptyCouponsState";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 export const CouponsPage = () => {
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
+  const { selectedProjectId } = useProjectContext();
   const { toast } = useToast();
-  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const entityId = selectedProjectId;
   
   const { coupons, isLoading, createCoupon, updateCoupon, deleteCoupon } = useCoupons(entityId || "");
   
@@ -36,11 +36,11 @@ export const CouponsPage = () => {
   const handleCreateCoupon = async (data: CreateCouponData) => {
     try {
       setIsProcessing(true);
-      console.log("Submitting coupon:", { ...data, community_id: entityId });
+      console.log("Submitting coupon:", { ...data, project_id: entityId });
       
       await createCoupon.mutateAsync({
         ...data,
-        community_id: entityId || ""
+        project_id: entityId || ""
       });
       
       setCreateDialogOpen(false);
@@ -113,8 +113,8 @@ export const CouponsPage = () => {
           icon={<TagIcon />}
         />
         <EmptyCouponsState 
-          title={`Select a ${isGroupSelected ? 'group' : 'community'} to manage coupons`}
-          description={`Choose a ${isGroupSelected ? 'group' : 'community'} from the dropdown above to start managing coupons.`}
+          title={`Select a project to manage coupons`}
+          description={`Choose a project from the dropdown above to start managing coupons.`}
         />
       </>
     );

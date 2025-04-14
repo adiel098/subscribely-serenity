@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../loggingService.ts';
 
@@ -35,7 +34,7 @@ export class PaymentRecordService {
         
         try {
           const { data: coupon, error: couponError } = await this.supabase
-            .from('subscription_coupons')
+            .from('project_coupons')
             .select('*')
             .eq('id', couponId)
             .single();
@@ -54,7 +53,7 @@ export class PaymentRecordService {
             
             // Increment coupon usage count
             const { error: updateError } = await this.supabase
-              .from('subscription_coupons')
+              .from('project_coupons')
               .update({ used_count: (coupon.used_count || 0) + 1 })
               .eq('id', couponId);
             

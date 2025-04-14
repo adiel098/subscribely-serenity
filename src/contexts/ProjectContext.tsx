@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useProjects } from "@/group_owners/hooks/useProjects";
 import { useLocation, useNavigate } from "react-router-dom";
 import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
@@ -60,7 +59,6 @@ export const ProjectProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { data: allCommunities, isLoading: isCommunitiesLoading } = useCommunities();
   const { data: projects, isLoading: isProjectsLoading } = useProjects();
   const navigate = useNavigate();
   
@@ -68,9 +66,6 @@ export const ProjectProvider = ({
   const selectionProcessedRef = useRef(false);
   const photoRefreshAttemptedRef = useRef(false);
   const selectionDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Filter out communities that are not part of a group
-  const communities = allCommunities?.filter(community => !community.is_group);
   
   const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(() => {
     // Check for saved community ID in localStorage
@@ -119,21 +114,20 @@ export const ProjectProvider = ({
     
     selectionDebounceTimerRef.current = setTimeout(() => {
       // If already processed or data still loading, skip
-      if (selectionProcessedRef.current || isCommunitiesLoading || isProjectsLoading) {
+      if (selectionProcessedRef.current || isProjectsLoading) {
         return;
       }
       
-      const isDataLoaded = !isCommunitiesLoading && !isProjectsLoading;
-      const hasCommunities = communities && communities.length > 0;
+      const isDataLoaded = !isProjectsLoading;
       const hasProjects = projects?.length > 0;
       
       // Only process selection after data has loaded
       if (!isDataLoaded) return;
 
-      // If user has no communities and no projects, and they're trying to access the dashboard,
+      // If user has no projects, and they're trying to access the dashboard,
       // redirect them to the onboarding flow
-      if (!hasCommunities && !hasProjects && location.pathname === '/dashboard') {
-        console.log("No communities or projects found - redirecting to onboarding");
+      if (!hasProjects && location.pathname === '/dashboard') {
+        console.log("No projects found - redirecting to onboarding");
         // Don't redirect if they're already in the onboarding flow
         if (!location.pathname.startsWith('/onboarding')) {
           navigate('/onboarding', { replace: true });
@@ -141,41 +135,20 @@ export const ProjectProvider = ({
         }
       }
 
-      // If coming from Telegram connect page, select the latest community
+      // If coming from Telegram connect page, select the latest project
       if (location.pathname === '/dashboard' && location.state?.from === '/connect/telegram') {
-        if (hasCommunities) {
-          if (communities.length > 0) {
-            const latestCommunity = communities[0]; // Communities are ordered by created_at in descending order
-            setSelectedCommunityId(latestCommunity.id);
-            setSelectedProjectId(null);
-          }
+        if (hasProjects) {
+          setSelectedProjectId(projects[0].id);
         }
         return;
       }
       
-      // If nothing is selected but we have communities or projects, select one
+      // If nothing is selected but we have projects, select one
       if (!selectedCommunityId && !selectedProjectId) {
         if (hasProjects) {
           setSelectedProjectId(projects[0].id);
-        } else if (hasCommunities) {
-          if (communities.length > 0) {
-            setSelectedCommunityId(communities[0].id);
-          }
         }
         return;
-      }
-      
-      // If a community ID is selected but doesn't exist anymore, reset to first available 
-      if (selectedCommunityId && hasCommunities) {
-        const communityExists = communities.some(c => c.id === selectedCommunityId);
-        if (!communityExists) {
-          console.log(`Selected community ${selectedCommunityId} no longer exists, selecting first available`);
-          if (communities.length > 0) {
-            setSelectedCommunityId(communities[0].id);
-          } else {
-            setSelectedCommunityId(null);
-          }
-        }
       }
       
       // If a project ID is selected but doesn't exist anymore, reset to first available
@@ -202,20 +175,17 @@ export const ProjectProvider = ({
       }
     };
   }, [
-    communities, 
     projects, 
     selectedCommunityId, 
     selectedProjectId, 
-    isCommunitiesLoading, 
     isProjectsLoading, 
     location, 
     navigate
   ]);
 
   // Determine if a group is selected (communities can be groups too)
-  const selectedCommunity = communities?.find(c => c.id === selectedCommunityId);
-  const isGroupSelected = selectedCommunity?.is_group || false;
-  const selectedGroupId = isGroupSelected ? selectedCommunityId : null;
+  const isGroupSelected = false;
+  const selectedGroupId = null;
   
   // Derived state to determine if a project is selected
   const isProjectSelected = !!selectedProjectId;

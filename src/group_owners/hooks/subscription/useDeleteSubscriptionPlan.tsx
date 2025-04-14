@@ -1,33 +1,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
-export const useDeleteSubscriptionPlan = (communityId: string) => {
+export const useDeleteSubscriptionPlan = () => {
+  const { selectedProjectId } = useProjectContext();
   const queryClient = useQueryClient();
-  const { isGroupSelected } = useCommunityContext();
-  
+
   return useMutation({
     mutationFn: async (planId: string) => {
-      try {
-        const { error } = await supabase
-          .from('project_plans')
-          .delete()
-          .eq('id', planId);
+      const { error } = await supabase
+        .from("subscription_plans")
+        .delete()
+        .eq("id", planId);
 
-        if (error) {
-          throw error;
-        }
-
-        return true;
-      } catch (error) {
+      if (error) {
+        console.error("Error deleting subscription plan:", error);
         throw error;
       }
+
+      return { success: true };
     },
     onSuccess: () => {
-      // Invalidate the query to refetch the updated list
-      queryClient.invalidateQueries({ 
-        queryKey: [isGroupSelected ? 'group-subscription-plans' : 'subscription-plans', communityId] 
-      });
+      const queryKey = ["subscription-plans", selectedProjectId];
+      queryClient.invalidateQueries({ queryKey });
     }
   });
 };

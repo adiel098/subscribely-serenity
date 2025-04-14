@@ -19,11 +19,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 
 const TelegramBot = () => {
-  const { selectedCommunityId, selectedGroupId, isGroupSelected, selectedProjectId } = useProjectContext();
-  const communityIdToUse = selectedProjectId || selectedGroupId || selectedCommunityId;
+  const { selectedProjectId } = useProjectContext();
+  const entityId = selectedProjectId;
   const isMobile = useIsMobile();
   
-  const { settings: originalSettings, isLoading, updateSettings } = useBotSettings(communityIdToUse || undefined);
+  const { settings: originalSettings, isLoading, updateSettings } = useBotSettings(entityId || undefined);
   
   const [useCustomBot, setUseCustomBot] = useState<boolean>(false);
   const [customBotToken, setCustomBotToken] = useState<string>('');
@@ -72,7 +72,7 @@ const TelegramBot = () => {
       const response = await supabase.functions.invoke("validate-bot-token", {
         body: { 
           botToken: customBotToken,
-          communityId: communityIdToUse
+          communityId: entityId
         }
       });
 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,33 +6,59 @@ import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2 } from 'lucide-react';
 
 export interface PaymentMethodCardProps {
-  method: any;
+  method?: any;
   onEdit?: (method: any) => void;
   onToggleActive?: (id: string, isActive: boolean) => void;
   onDelete?: (id: string) => void;
+  title?: string;
+  description?: string;
+  icon?: React.ComponentType<any>;
+  isActive?: boolean;
+  onToggle?: (active: boolean) => void;
+  isConfigured?: boolean;
+  onConfigure?: () => void;
+  imageSrc?: string;
+  provider?: string;
+  ownerId?: string;
 }
 
 export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({ 
   method,
   onEdit,
   onToggleActive,
-  onDelete
+  onDelete,
+  title = '',
+  description = '',
+  icon: Icon,
+  isActive = false,
+  onToggle,
+  isConfigured = false,
+  onConfigure,
+  imageSrc,
+  provider,
+  ownerId
 }) => {
-  if (!method) return null;
+  if (!method && !title) return null;
   
   const handleToggleActive = () => {
-    onToggleActive?.(method.id, !method.is_active);
+    if (onToggleActive && method) {
+      onToggleActive(method.id, !method.is_active);
+    }
   };
   
   const handleEdit = () => {
-    onEdit?.(method);
+    if (onEdit && method) {
+      onEdit(method);
+    }
   };
   
   const handleDelete = () => {
-    onDelete?.(method.id);
+    if (onDelete && method) {
+      onDelete(method.id);
+    }
   };
   
-  const getProviderIcon = (provider: string) => {
+  const getProviderIcon = (provider?: string) => {
     switch(provider?.toLowerCase()) {
       case 'stripe':
         return '💳';
@@ -53,11 +78,11 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
       <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 pb-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{getProviderIcon(method.provider)}</span>
-            <CardTitle className="text-lg">{method.provider}</CardTitle>
+            {Icon ? <Icon size={24} className="mr-2" /> : <span className="text-2xl">{getProviderIcon(provider || method?.provider)}</span>}
+            <CardTitle className="text-lg">{title || method?.provider}</CardTitle>
           </div>
-          <Badge variant={method.is_active ? "success" : "secondary"}>
-            {method.is_active ? 'Active' : 'Inactive'}
+          <Badge variant={isActive || method?.is_active ? "success" : "secondary"}>
+            {isActive || method?.is_active ? 'Active' : 'Inactive'}
           </Badge>
         </div>
       </CardHeader>
@@ -66,8 +91,8 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           <div>
             <h4 className="text-sm font-medium text-gray-500">Configuration</h4>
             <p className="text-sm mt-1 truncate">
-              {Object.keys(method.config || {}).length > 0 
-                ? `${Object.keys(method.config || {}).length} field(s) configured` 
+              {isConfigured || (Object.keys(method?.config || {}).length > 0) 
+                ? `${isConfigured ? 'Configured' : Object.keys(method?.config || {}).length} field(s) configured` 
                 : 'No configuration set'}
             </p>
           </div>
@@ -75,15 +100,15 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           <div className="flex justify-between items-center pt-2">
             <div className="flex items-center gap-2">
               <Switch 
-                checked={method.is_active} 
-                onCheckedChange={handleToggleActive}
-                id={`toggle-${method.id}`}
+                checked={isActive || method?.is_active} 
+                onCheckedChange={onToggle || handleToggleActive}
+                id={`toggle-${method?.id}`}
               />
               <label 
-                htmlFor={`toggle-${method.id}`}
+                htmlFor={`toggle-${method?.id}`}
                 className="text-sm text-gray-500 cursor-pointer"
               >
-                {method.is_active ? 'Enabled' : 'Disabled'}
+                {isActive || method?.is_active ? 'Enabled' : 'Disabled'}
               </label>
             </div>
             
@@ -106,6 +131,15 @@ export const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
                 >
                   <Trash2 size={14} className="mr-1" />
                   Remove
+                </Button>
+              )}
+              {onConfigure && (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={onConfigure}
+                >
+                  Configure
                 </Button>
               )}
             </div>

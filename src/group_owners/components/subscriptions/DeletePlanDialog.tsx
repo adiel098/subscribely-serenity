@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useSubscriptionPlans } from "@/group_owners/hooks/useSubscriptionPlans";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useProjectContext } from "@/contexts/ProjectContext";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,8 +14,8 @@ interface Props {
 }
 
 export const DeletePlanDialog = ({ isOpen, onOpenChange, planId }: Props) => {
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
-  const entityId = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const { selectedProjectId } = useProjectContext();
+  const entityId = selectedProjectId;
   const { deletePlan, plans } = useSubscriptionPlans(entityId || "");
   const [isDeleting, setIsDeleting] = useState(false);
   const isMobile = useIsMobile();

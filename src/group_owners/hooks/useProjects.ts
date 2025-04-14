@@ -1,8 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth"; // Updated import path
+import { useAuth } from "@/hooks/useAuth"; 
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useProjects");
@@ -46,10 +45,12 @@ export const useProjects = () => {
         return data as Project[];
       } catch (error) {
         logger.error("Exception in projects fetch:", error);
-        return [];
+        throw error;
       }
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    retry: 2, // Add retry logic
+    staleTime: 60000 // Cache valid for 1 minute
   });
 };
 
@@ -59,6 +60,8 @@ export const useProject = (projectId?: string) => {
     queryKey: ['project', projectId],
     queryFn: async () => {
       if (!projectId) return null;
+      
+      logger.log("Fetching single project:", projectId);
 
       const { data, error } = await supabase
         .from('projects')
@@ -66,10 +69,15 @@ export const useProject = (projectId?: string) => {
         .eq('id', projectId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error("Error fetching project:", error);
+        throw error;
+      }
+      
       return data as Project;
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    retry: 1
   });
 };
 
@@ -82,6 +90,8 @@ export const useCreateProject = () => {
     mutationFn: async (newProject: Omit<Project, 'id' | 'created_at' | 'owner_id' | 'updated_at'>) => {
       if (!user?.id) throw new Error('User ID not available');
       
+      logger.log("Creating new project for user:", user.id);
+      
       const projectData = {
         ...newProject,
         owner_id: user.id
@@ -93,10 +103,16 @@ export const useCreateProject = () => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        logger.error("Error creating project:", error);
+        throw error;
+      }
+      
+      logger.log("Project created successfully:", data.id);
       return data;
     },
     onSuccess: () => {
+      logger.log("Invalidating projects query cache");
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     }
   });
@@ -108,6 +124,8 @@ export const useUpdateProject = () => {
   
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<Project> }) => {
+      logger.log("Updating project:", id);
+      
       const { data, error } = await supabase
         .from('projects')
         .update(updates)
@@ -115,10 +133,16 @@ export const useUpdateProject = () => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        logger.error("Error updating project:", error);
+        throw error;
+      }
+      
+      logger.log("Project updated successfully:", id);
       return data;
     },
     onSuccess: (data) => {
+      logger.log("Invalidating project cache after update");
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['project', data.id] });
     }

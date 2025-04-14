@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { useProjects, Project } from "@/group_owners/hooks/useProjects";
 import { useLocation, useNavigate } from "react-router-dom";
 import { localStorageService } from "@/utils/localStorageService";
+import { toast } from "sonner";
 
 type ProjectContextType = {
   selectedProjectId: string | null;
@@ -27,7 +28,7 @@ export const ProjectProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const { data: projects, isLoading } = useProjects();
+  const { data: projects, isLoading, error, isError } = useProjects();
   const navigate = useNavigate();
   
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() => {
@@ -50,17 +51,34 @@ export const ProjectProvider = ({
     }
   }, [selectedProjectId]);
 
+  // Show error toast if project loading fails
+  useEffect(() => {
+    if (isError && error) {
+      toast.error("שגיאה בטעינת הפרוייקטים", {
+        description: "אנא נסה שוב מאוחר יותר או צור קשר עם התמיכה"
+      });
+      console.error("Project loading error:", error);
+    }
+  }, [isError, error]);
+
   // Update selected project when projects load or selection changes
   useEffect(() => {
     if (projects && selectedProjectId) {
       const project = projects.find(p => p.id === selectedProjectId);
       setSelectedProject(project || null);
+      
+      // If selected project not found but we have projects
+      if (!project && projects.length > 0) {
+        console.log("Selected project not found, switching to first available project");
+        setSelectedProjectId(projects[0].id);
+      }
     } else {
       setSelectedProject(null);
     }
 
     // Mark that we've checked projects after they've loaded
     if (!isLoading && !hasCheckedProjects) {
+      console.log("Projects loaded, marking as checked. Found", projects?.length || 0, "projects");
       setHasCheckedProjects(true);
     }
   }, [projects, selectedProjectId, isLoading, hasCheckedProjects]);
@@ -68,10 +86,16 @@ export const ProjectProvider = ({
   // Handle project selection and onboarding redirection
   useEffect(() => {
     // Don't do anything if projects are still loading
-    if (isLoading) return;
+    if (isLoading) {
+      console.log("Projects are still loading, skipping redirection logic");
+      return;
+    }
     
     // Wait until we've done the initial check of projects
-    if (!hasCheckedProjects) return;
+    if (!hasCheckedProjects) {
+      console.log("Haven't checked projects yet, skipping redirection logic");
+      return;
+    }
     
     // Check if user is in onboarding process - if so, don't redirect to project creation
     const isInOnboardingProcess = location.pathname.startsWith('/onboarding');
@@ -84,6 +108,7 @@ export const ProjectProvider = ({
     }
     
     const hasProjects = projects && projects.length > 0;
+    console.log("Project redirection check - hasProjects:", hasProjects, "projectsCount:", projects?.length);
     
     // Only redirect to project creation if:
     // 1. User has completed onboarding
@@ -98,12 +123,14 @@ export const ProjectProvider = ({
     
     // If nothing is selected but we have projects, select one
     if (!selectedProjectId && hasProjects) {
+      console.log("No project selected but projects exist, selecting first one:", projects[0].id);
       setSelectedProjectId(projects[0].id);
       return;
     }
     
     // If a project is selected but doesn't exist anymore, select another one
     if (selectedProjectId && hasProjects && !projects.find(p => p.id === selectedProjectId)) {
+      console.log("Selected project no longer exists, switching to first available project");
       setSelectedProjectId(projects[0].id);
       return;
     }

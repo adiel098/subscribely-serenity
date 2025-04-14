@@ -37,10 +37,10 @@ export const useBotSelectionActions = ({ userId, onComplete }: UseBotSelectionAc
         // For custom bot, navigate to custom bot setup
         navigate("/onboarding/custom-bot-setup");
       } else {
-        // For official bot, skip directly to connect-telegram step
-        // This fixes the issue where it was incorrectly going to official-bot-setup
-        saveCurrentStep("connect-telegram");
-        navigate("/onboarding/connect-telegram");
+        // For official bot, skip directly to completion step instead of connect-telegram
+        // This fixes the issue where it was trying to use a non-existent step
+        saveCurrentStep("completion");
+        navigate("/onboarding/completion");
       }
     } catch (error) {
       console.error("Error saving bot selection:", error);

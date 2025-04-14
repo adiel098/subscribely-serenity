@@ -1,14 +1,29 @@
-import { useState } from "react";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import React, { useState, useCallback, useEffect } from "react";
+import { useProjectContext } from "@/contexts/ProjectContext";
 import { SubscribersTable } from "@/group_owners/components/subscribers/SubscribersTable";
-import { SubscribersFilter } from "@/group_owners/components/subscribers/SubscribersFilter";
-import { SubscribersActions } from "@/group_owners/components/subscribers/SubscribersActions";
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
-import { useProjectSubscribers } from "@/group_owners/hooks/dashboard/useProjectSubscribers";
-import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Users, Loader2 } from "lucide-react";
-import { EmptySubscribers } from "@/group_owners/components/subscribers/EmptySubscribers";
+import { UserRoundPlus, Users2, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { CreateSubscriber } from "@/group_owners/components/subscribers/CreateSubscriber";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { FilterSubscribers } from "@/group_owners/components/subscribers/FilterSubscribers";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
+import { NoResults } from "@/components/ui/no-results";
 
 enum SubscriptionStatus {
   ALL = "all",
@@ -18,14 +33,14 @@ enum SubscriptionStatus {
 }
 
 const Subscribers = () => {
-  const { selectedCommunityId, selectedProjectId, isProjectSelected } = useCommunityContext();
+  const { selectedCommunityId, selectedProjectId, isProjectSelected } = useProjectContext();
   
   const communityId = isProjectSelected ? null : selectedCommunityId;
   const projectId = isProjectSelected ? selectedProjectId : null;
   
   // Choose which hook to use based on what's selected
   const communitySubscribersQuery = useSubscribers(communityId || '');
-  const projectSubscribersQuery = useProjectSubscribers(projectId || null);
+  const projectSubscribersQuery = useSubscribers(projectId || null);
   
   // Use the appropriate data based on what's selected
   const subscribersQuery = isProjectSelected ? projectSubscribersQuery : communitySubscribersQuery;
@@ -83,23 +98,23 @@ const Subscribers = () => {
         <PageHeader
           title={isProjectSelected ? "Project Subscribers" : "Community Subscribers"}
           description="Manage your subscribers and their subscriptions"
-          icon={<Users className="h-6 w-6" />}
+          icon={<Users2 className="h-6 w-6" />}
         />
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+            <Skeleton className="h-8 w-8 animate-spin text-purple-600" />
           </div>
         ) : subscribers && subscribers.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
-              <SubscribersFilter
+              <FilterSubscribers
                 statusFilter={statusFilter}
                 onStatusFilterChange={handleStatusFilterChange}
                 searchQuery={searchQuery}
                 onSearchChange={handleSearchChange}
               />
-              <SubscribersActions onRefresh={handleRefresh} />
+              <Button onClick={handleRefresh}>Refresh</Button>
             </div>
 
             <SubscribersTable
@@ -107,7 +122,7 @@ const Subscribers = () => {
             />
           </div>
         ) : (
-          <EmptySubscribers isProjectSelected={isProjectSelected} />
+          <NoResults />
         )}
       </div>
     </DashboardLayout>

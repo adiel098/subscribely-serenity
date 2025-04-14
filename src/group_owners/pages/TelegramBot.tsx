@@ -1,20 +1,26 @@
-import { useState, useEffect } from "react";
-import { Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
-import { useCommunityContext } from "@/contexts/CommunityContext";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useBotSettings } from "@/group_owners/hooks/useBotSettings";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { TelegramIcon, Bot, Check, AlertCircle, Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Loader } from "@/components/Loader";
+import { useProjectContext } from "@/contexts/ProjectContext";
+import { useTelegramBot } from "@/group_owners/hooks/useTelegramBot";
+import { useUpdateTelegramBot } from "@/group_owners/hooks/useUpdateTelegramBot";
+import { PageHeader } from "@/components/ui/page-header";
+import { Switch } from "@/components/ui/switch";
 
 const TelegramBot = () => {
-  const { selectedCommunityId, selectedGroupId, isGroupSelected } = useCommunityContext();
-  const communityIdToUse = isGroupSelected ? selectedGroupId : selectedCommunityId;
+  const { selectedCommunityId, selectedGroupId, isGroupSelected, selectedProjectId } = useProjectContext();
+  const communityIdToUse = selectedProjectId || selectedGroupId || selectedCommunityId;
   const isMobile = useIsMobile();
   
   const { settings: originalSettings, isLoading, updateSettings } = useBotSettings(communityIdToUse || undefined);
@@ -99,7 +105,7 @@ const TelegramBot = () => {
       <PageHeader
         title="Telegram Bot Configuration"
         description="Configure your Telegram bot settings"
-        icon={<Bot className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
+        icon={<TelegramIcon className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       <Card className="animate-pulse">
         <CardContent className="h-64 flex items-center justify-center">
@@ -114,7 +120,7 @@ const TelegramBot = () => {
       <PageHeader
         title="Telegram Bot Configuration"
         description="Choose between Membify's bot or your own custom Telegram bot"
-        icon={<Bot className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
+        icon={<TelegramIcon className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'}`} />}
       />
       
       <div className="grid gap-4 md:gap-6">
@@ -122,7 +128,7 @@ const TelegramBot = () => {
           <CardHeader className={isMobile ? "p-3 pb-2" : ""}>
             <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
               <div className={`bg-indigo-100 p-${isMobile ? '1.5' : '2'} rounded-full`}>
-                <Bot className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
+                <TelegramIcon className={`h-${isMobile ? '4' : '5'} w-${isMobile ? '4' : '5'} text-indigo-600`} />
               </div>
               Membify Default Bot
             </CardTitle>

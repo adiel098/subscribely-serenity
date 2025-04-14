@@ -13,21 +13,24 @@ const logger = createLogger("useProjectSubscribers");
 export const useProjectSubscribers = (projectId: string | null) => {
   const prevProjectIdRef = useRef<string | null>(null);
   
+  logger.log("🔍 useProjectSubscribers called with projectId:", projectId);
+  
   return useQuery({
     queryKey: ["project-subscribers", projectId],
     queryFn: async () => {
-      if (!projectId) {
-        logger.log("No project ID provided, returning empty array");
-        return [];
-      }
-      
-      // Prevent unnecessary logs for the same projectId
-      if (prevProjectIdRef.current !== projectId) {
-        logger.log("Fetching subscribers for project ID:", projectId);
-        prevProjectIdRef.current = projectId;
-      }
-      
       try {
+        if (!projectId) {
+          logger.log("❌ useProjectSubscribers: No projectId provided, returning empty array");
+          return [];
+        }
+        
+        // Prevent unnecessary logs for the same projectId
+        if (prevProjectIdRef.current !== projectId) {
+          logger.log("👥 Fetching subscribers for project ID:", projectId);
+          prevProjectIdRef.current = projectId;
+        }
+        
+        logger.log("🔄 Starting supabase query for project subscribers");
         const { data: subscribers, error } = await supabase
           .from("project_subscribers")
           .select("*")
@@ -35,32 +38,32 @@ export const useProjectSubscribers = (projectId: string | null) => {
           .order("joined_at", { ascending: false });
         
         if (error) {
-          logger.error("Error fetching project subscribers:", error);
+          logger.error("❌ Error fetching project subscribers:", error);
           return [];
         }
         
-        // Verify that the subscribers array is valid
         if (!subscribers) {
-          logger.log("No subscribers data returned, using empty array");
+          logger.log("⚠️ No subscribers data returned from supabase");
           return [];
         }
         
-        // Make sure we're dealing with an array
-        const safeSubscribers = Array.isArray(subscribers) ? subscribers : [];
-        logger.log(`Fetched ${safeSubscribers.length} project subscribers`);
-        return safeSubscribers;
+        if (!Array.isArray(subscribers)) {
+          logger.error("❓ Subscribers data is not an array:", typeof subscribers);
+          return [];
+        }
+        
+        logger.log("✅ Successfully fetched", subscribers.length, "project subscribers");
+        return subscribers;
       } catch (error) {
-        logger.error("Exception in project subscribers fetch:", error);
-        // Always return a valid array in case of error
+        logger.error("🛑 Exception in project subscribers fetch:", error);
         return [];
       }
     },
     enabled: !!projectId,
-    staleTime: 300000, // Cache for 5 minutes to prevent excessive refetching
-    refetchOnWindowFocus: false, // Don't refetch when the window is focused
-    refetchOnMount: true, // Only refetch on mount, not during re-renders
-    refetchInterval: false, // Don't automatically refetch at intervals
-    // Default data ensures we always have a valid array
-    initialData: []
+    staleTime: 300000, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchInterval: false,
+    initialData: [] // Always have an empty array as initial data to prevent undefined
   });
 };

@@ -1,17 +1,14 @@
-
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Wallet, Bitcoin, Sparkles, Shield, Lock, Zap, LayoutGrid, Loader2 } from "lucide-react";
-import { useCommunityContext } from '@/contexts/CommunityContext';
-import { PaymentMethodCard } from "@/group_owners/components/payments/PaymentMethodCard";
-import { usePaymentMethodsPage } from "@/group_owners/hooks/usePaymentMethodsPage";
-import { motion } from "framer-motion";
-import { PageHeader } from "@/components/ui/page-header";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { DEFAULT_PAYMENT_METHODS } from "@/group_owners/data/paymentMethodsData";
-import { useAuth } from "@/auth/contexts/AuthContext";
+import { useState } from 'react'
+import { DashboardLayout } from '@/group_owners/components/DashboardLayout'
+import { PageHeader } from '@/components/ui/page-header'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { useProjectContext } from '@/contexts/ProjectContext'
+import { PaymentMethodCard } from '@/group_owners/components/payment-methods/PaymentMethodCard'
+import { PaymentMethodForm } from '@/group_owners/components/payment-methods/PaymentMethodForm'
+import { CreditCard, ExternalLink, Check, DollarSign, CreditCardIcon } from 'lucide-react'
+import { usePaymentMethods } from '@/group_owners/hooks/usePaymentMethods'
 
 const PaymentMethods = () => {
   const {

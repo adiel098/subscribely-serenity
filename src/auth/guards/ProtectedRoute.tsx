@@ -1,7 +1,6 @@
-
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/auth/hooks/useAuth";
-import { useEffect, useState, useRef, ReactNode } from "react";
+import { useAuth } from "@/auth/contexts/AuthContext";
+import { useEffect, useState, useRef, ReactNode, memo } from "react";
 import { Loader2 } from "lucide-react";
 import { useOnboardingStatus } from "@/group_owners/hooks/useOnboardingStatus";
 
@@ -9,11 +8,21 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
+// Loading component extracted to avoid re-renders
+const LoadingIndicator = memo(() => (
+  <div className="flex h-screen w-full items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+    <span className="ml-2 text-lg">Loading...</span>
+  </div>
+));
+LoadingIndicator.displayName = 'LoadingIndicator';
+
 /**
  * ProtectedRoute - Ensures that only authenticated users can access certain routes
  * If a user tries to access a protected route without being logged in, they are redirected to the login page
+ * This optimized version reduces unnecessary state changes and improves performance
  */
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute = memo(({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
@@ -21,73 +30,62 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { checkOnboardingStatus } = useOnboardingStatus();
   const checkPerformedRef = useRef(false);
   const processingRef = useRef(false);
-  const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const maxLoadingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Debounce loading state changes to prevent rapid UI flickering
-  const [stableLoading, setStableLoading] = useState(true);
+  // Use a single loading state with optimized timeout handling
+  const [isLoading, setIsLoading] = useState(true);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  // Use a stable loading state with debounce
+  // Efficiently handle loading state changes
   useEffect(() => {
     if (!loading && !isCheckingOnboarding) {
-      // Clear any pending timer
-      if (loadingTimerRef.current) {
-        clearTimeout(loadingTimerRef.current);
-      }
-      
-      // Short delay before removing loading state to prevent flicker
+      // Use a short timer to prevent flickering during quick state changes
       loadingTimerRef.current = setTimeout(() => {
-        setStableLoading(false);
+        setIsLoading(false);
       }, 300);
     } else {
-      setStableLoading(true);
+      setIsLoading(true);
     }
     
-    // Set a maximum time for loading state to prevent infinite loading
-    if (!maxLoadingTimerRef.current) {
-      maxLoadingTimerRef.current = setTimeout(() => {
-        setStableLoading(false);
-      }, 3000);
-    }
+    // Maximum loading time of 3 seconds
+    const maxLoadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
     
     return () => {
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
       }
-      if (maxLoadingTimerRef.current) {
-        clearTimeout(maxLoadingTimerRef.current);
-      }
+      clearTimeout(maxLoadingTimer);
     };
   }, [loading, isCheckingOnboarding]);
 
+  // Efficiently check onboarding status
   useEffect(() => {
-    // Prevent concurrent processing
-    if (processingRef.current) return;
+    // Don't run if already checking or if the check was already performed
+    if (processingRef.current || !user || checkPerformedRef.current) return;
     
-    // Only check onboarding status once per route change
     const checkIfShouldRedirect = async () => {
-      if (user && !location.pathname.startsWith('/onboarding') && !checkPerformedRef.current) {
-        processingRef.current = true;
-        setIsCheckingOnboarding(true);
-        
-        try {
-          const needsOnboarding = await checkOnboardingStatus();
-          setShouldRedirectToOnboarding(needsOnboarding);
-        } catch (error) {
-          console.error("❌ Error checking onboarding status:", error);
-        } finally {
-          setIsCheckingOnboarding(false);
-          processingRef.current = false;
-          checkPerformedRef.current = true;
-        }
-      } else {
+      // Skip onboarding check if already on onboarding page
+      if (location.pathname.startsWith('/onboarding')) {
+        return;
+      }
+      
+      processingRef.current = true;
+      setIsCheckingOnboarding(true);
+      
+      try {
+        const needsOnboarding = await checkOnboardingStatus();
+        setShouldRedirectToOnboarding(needsOnboarding);
+      } catch (error) {
+        console.error("❌ Error checking onboarding status:", error);
+      } finally {
+        setIsCheckingOnboarding(false);
         processingRef.current = false;
+        checkPerformedRef.current = true;
       }
     };
     
-    if (user) {
-      checkIfShouldRedirect();
-    }
+    checkIfShouldRedirect();
     
     // Reset check flag when location changes
     return () => {
@@ -95,13 +93,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     };
   }, [user, location.pathname, checkOnboardingStatus]);
 
-  if (stableLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-        <span className="ml-2 text-lg">Loading...</span>
-      </div>
-    );
+  // Show loading indicator
+  if (isLoading) {
+    return <LoadingIndicator />;
   }
 
   // Redirect to login if not authenticated
@@ -116,4 +110,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   
   // User is authenticated and has completed onboarding
   return <>{children}</>;
-};
+});
+
+ProtectedRoute.displayName = 'ProtectedRoute';

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { SubscribersTable } from "@/group_owners/components/subscribers/SubscribersTable";
@@ -6,7 +5,7 @@ import { SubscribersFilter } from "@/group_owners/components/subscribers/Subscri
 import { SubscribersActions } from "@/group_owners/components/subscribers/SubscribersActions";
 import { useSubscribers } from "@/group_owners/hooks/useSubscribers";
 import { useProjectSubscribers } from "@/group_owners/hooks/dashboard/useProjectSubscribers";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Users, Loader2 } from "lucide-react";
 import { EmptySubscribers } from "@/group_owners/components/subscribers/EmptySubscribers";

@@ -1,10 +1,9 @@
-
 import { useCommunityContext } from "@/contexts/CommunityContext";
 import { useCommunityDashboardStats } from "@/group_owners/hooks/dashboard/useCommunityDashboardStats";
 import { useProjectDashboardStats } from "@/group_owners/hooks/dashboard/useProjectDashboardStats";
 import { DashboardHeader } from "@/group_owners/components/dashboard/DashboardHeader";
 import { MetricsGrid } from "@/group_owners/components/dashboard/MetricsGrid";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { DashboardLayout } from "@/group_owners/components/DashboardLayout";
 import { PaymentMethodsPanel } from "@/group_owners/components/dashboard/PaymentMethodsPanel";
 import { MembersGrowthCard } from "@/group_owners/components/dashboard/MembersGrowthCard";
 import { RevenueChartCard } from "@/group_owners/components/dashboard/RevenueChartCard";

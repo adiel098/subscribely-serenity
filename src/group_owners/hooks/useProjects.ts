@@ -1,7 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth"; 
+import { useAuth } from "@/auth/contexts/AuthContext"; 
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("useProjects");

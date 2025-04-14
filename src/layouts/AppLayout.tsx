@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
@@ -9,29 +9,38 @@ export const AppLayout = () => {
   const { isLoading } = useAuth();
   const { isCheckingAuth } = useAuthRedirect();
   const [showLoading, setShowLoading] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
   
   // Add a small delay before showing content to prevent flickering
   useEffect(() => {
-    let mounted = true;
+    // Set up the ref to track component mounted state
+    mountedRef.current = true;
+    
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     
     if (!isLoading && !isCheckingAuth) {
       // Add a small delay before showing content to ensure smooth transition
-      const timer = setTimeout(() => {
-        if (mounted) {
+      timerRef.current = setTimeout(() => {
+        if (mountedRef.current) {
           setShowLoading(false);
         }
-      }, 100);
-      
-      return () => {
-        mounted = false;
-        clearTimeout(timer);
-      };
+      }, 300);
     } else {
       setShowLoading(true);
     }
     
+    // Cleanup function
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [isLoading, isCheckingAuth]);
 

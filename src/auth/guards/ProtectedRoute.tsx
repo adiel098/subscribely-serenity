@@ -21,6 +21,33 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { checkOnboardingStatus } = useOnboardingStatus();
   const checkPerformedRef = useRef(false);
   const processingRef = useRef(false);
+  const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Debounce loading state changes to prevent rapid UI flickering
+  const [stableLoading, setStableLoading] = useState(true);
+  
+  // Use a stable loading state with debounce
+  useEffect(() => {
+    if (!loading && !isCheckingOnboarding) {
+      // Clear any pending timer
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+      
+      // Short delay before removing loading state to prevent flicker
+      loadingTimerRef.current = setTimeout(() => {
+        setStableLoading(false);
+      }, 300);
+    } else {
+      setStableLoading(true);
+    }
+    
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
+  }, [loading, isCheckingOnboarding]);
 
   useEffect(() => {
     // Prevent concurrent processing
@@ -35,12 +62,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         try {
           const needsOnboarding = await checkOnboardingStatus();
-          if (needsOnboarding) {
-            console.log("🔄 ProtectedRoute: Redirecting to onboarding from", location.pathname);
-            setShouldRedirectToOnboarding(true);
-          } else {
-            setShouldRedirectToOnboarding(false);
-          }
+          setShouldRedirectToOnboarding(needsOnboarding);
         } catch (error) {
           console.error("❌ Error checking onboarding status:", error);
         } finally {
@@ -60,8 +82,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     };
   }, [user, location.pathname, checkOnboardingStatus]);
 
-  if (loading || isCheckingOnboarding) {
-    console.log("⏳ ProtectedRoute: Still loading, showing loading state");
+  if (stableLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
@@ -72,12 +93,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Redirect to login if not authenticated
   if (!user) {
-    console.log("🚫 ProtectedRoute: No authenticated user, redirecting to auth page");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
-
-  // Only log once when authenticated (reduced spam)
-  console.log("✅ ProtectedRoute: User authenticated:", user.email);
   
   // Redirect to onboarding if needed
   if (shouldRedirectToOnboarding) {

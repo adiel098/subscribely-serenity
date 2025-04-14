@@ -21,6 +21,7 @@ interface CustomBotSetupCardProps {
   verificationError: string | null;
   onChatsRefresh?: (newChats: TelegramChat[]) => void;
   isSaving?: boolean;
+  commitError?: string | null;
 }
 
 export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
@@ -33,7 +34,8 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
   verificationResults,
   verificationError,
   onChatsRefresh,
-  isSaving = false
+  isSaving = false,
+  commitError
 }) => {
   const hasVerifiedChats = verificationResults && verificationResults.length > 0;
 
@@ -51,6 +53,7 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
           <BotTokenInput 
             customTokenInput={customTokenInput} 
             setCustomTokenInput={setCustomTokenInput}
+            error={verificationError}
           />
           
           <div className="space-y-3">
@@ -82,6 +85,14 @@ export const CustomBotSetupCard: React.FC<CustomBotSetupCardProps> = ({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{verificationError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {commitError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Saving Bot Settings</AlertTitle>
+            <AlertDescription>{commitError}</AlertDescription>
           </Alert>
         )}
         

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useProjects } from "@/group_owners/hooks/useProjects";
@@ -19,11 +18,38 @@ type CommunityContextType = {
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
 
 export const useCommunityContext = () => {
-  const context = useContext(CommunityContext);
-  if (!context) {
-    throw new Error('useCommunityContext must be used within a CommunityProvider');
+  try {
+    const context = useContext(CommunityContext);
+    
+    // Validate context exists
+    if (!context) {
+      console.error('useCommunityContext must be used within a CommunityProvider');
+      // Return a safe default context instead of throwing
+      return {
+        selectedCommunityId: null,
+        setSelectedCommunityId: () => {},
+        selectedProjectId: null,
+        setSelectedProjectId: () => {},
+        isProjectSelected: false,
+        selectedGroupId: null,
+        isGroupSelected: false
+      };
+    }
+    
+    return context;
+  } catch (error) {
+    console.error('Error in useCommunityContext:', error);
+    // Return a safe default context in case of any error
+    return {
+      selectedCommunityId: null,
+      setSelectedCommunityId: () => {},
+      selectedProjectId: null,
+      setSelectedProjectId: () => {},
+      isProjectSelected: false,
+      selectedGroupId: null,
+      isGroupSelected: false
+    };
   }
-  return context;
 };
 
 const SELECTED_COMMUNITY_KEY = 'selectedCommunityId';

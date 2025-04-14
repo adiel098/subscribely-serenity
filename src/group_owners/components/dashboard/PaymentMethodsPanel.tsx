@@ -1,82 +1,107 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { CreditCard } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-interface PaymentMethodsPanelProps {
-  paymentMethods: Array<{
-    name: string;
-    count: number;
-  }>;
-  paymentDistribution: Array<{
-    name: string;
-    value: number;
-  }>;
+interface PaymentMethod {
+  name: string;
+  value: number;
+  color: string;
 }
 
-export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
-  paymentMethods = [],
-  paymentDistribution = []
-}) => {
-  // Ensure data is array
+interface PaymentMethodsPanelProps {
+  paymentMethods: PaymentMethod[] | null | undefined;
+  paymentDistribution: any[] | null | undefined;
+}
+
+export const PaymentMethodsPanel = ({ 
+  paymentMethods, 
+  paymentDistribution 
+}: PaymentMethodsPanelProps) => {
+  // Safety checks for data
   const safePaymentMethods = Array.isArray(paymentMethods) ? paymentMethods : [];
   const safePaymentDistribution = Array.isArray(paymentDistribution) ? paymentDistribution : [];
   
-  const hasData = safePaymentDistribution.length > 0;
-
-  const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
+  // Check if there is any payment data
+  const hasPaymentData = safePaymentMethods.length > 0 || safePaymentDistribution.length > 0;
+  
+  // If no data, display empty state
+  if (!hasPaymentData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Methods</CardTitle>
+          <CardDescription>Distribution of payment methods used</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[250px] text-center">
+          <p className="text-muted-foreground mb-2">No payment data available</p>
+          <p className="text-sm text-muted-foreground">
+            Payment distribution will be shown once users make payments
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Custom renderer for pie chart labels
+  const renderCustomizedLabel = ({ 
+    cx, 
+    cy, 
+    midAngle, 
+    innerRadius, 
+    outerRadius, 
+    percent
+  }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+    
+    return percent > 0.05 ? (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    ) : null;
+  };
+  
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-purple-600" />
-          <span>Payment Methods</span>
-        </CardTitle>
+      <CardHeader>
+        <CardTitle>Payment Methods</CardTitle>
+        <CardDescription>Distribution of payment methods used</CardDescription>
       </CardHeader>
       <CardContent>
-        {!hasData ? (
-          <div className="flex justify-center items-center h-[250px] text-slate-500">
-            No payment method data available yet
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={safePaymentDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {safePaymentDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4">
-              <ul className="space-y-2">
-                {safePaymentMethods.map((method, index) => (
-                  <li key={method.name} className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                      <span>{method.name}</span>
-                    </div>
-                    <span className="font-medium">{method.count}</span>
-                  </li>
+        <div className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={safePaymentMethods}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {safePaymentMethods.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
-              </ul>
-            </div>
-          </div>
-        )}
+              </Pie>
+              <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              <Tooltip 
+                formatter={(value, name) => [`${value} subscribers`, name]}
+                itemStyle={{ color: '#000' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

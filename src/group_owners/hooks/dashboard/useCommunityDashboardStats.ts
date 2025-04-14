@@ -9,6 +9,7 @@ import { useChartData } from '@/group_owners/hooks/dashboard/useChartData';
 import { useMiniAppUsers } from '@/group_owners/hooks/dashboard/useMiniAppUsers';
 import { useOwnerInfo } from '@/group_owners/hooks/dashboard/useOwnerInfo';
 import { useSubscribers } from '@/group_owners/hooks/useSubscribers';
+import { InsightData } from './types';
 import { useState, useEffect, useMemo } from 'react';
 
 export const useCommunityDashboardStats = (communityId: string | null) => {
@@ -58,6 +59,20 @@ export const useCommunityDashboardStats = (communityId: string | null) => {
     return useInsights(subscribers || []);
   }, [subscribers]);
   
+  // Ensure insightsData has the correct type
+  const insightsData = useMemo<InsightData>(() => {
+    if (insightsInfo?.insightsData && typeof insightsInfo.insightsData === 'object' && !Array.isArray(insightsInfo.insightsData)) {
+      return insightsInfo.insightsData as InsightData;
+    }
+    return {
+      averageSubscriptionDuration: 0,
+      mostPopularPlan: 'No Plan',
+      mostPopularPlanPrice: 0,
+      renewalRate: 0,
+      potentialRevenue: 0
+    };
+  }, [insightsInfo]);
+  
   const chartDataInfo = useMemo(() => {
     return useChartData(subscribers || []);
   }, [subscribers]);
@@ -86,7 +101,7 @@ export const useCommunityDashboardStats = (communityId: string | null) => {
     },
     paymentStats: paymentStatsInfo?.paymentStats || { paymentMethods: [], paymentDistribution: [] },
     insights: insightsInfo?.insights || {},
-    insightsData: insightsInfo?.insightsData || [], // Default to empty array if undefined
+    insightsData: insightsData,
     memberGrowthData: chartDataInfo?.memberGrowthData || [],
     revenueData: chartDataInfo?.revenueData || [],
     ownerInfo: ownerInfo || {},

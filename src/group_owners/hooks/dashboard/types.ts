@@ -55,7 +55,7 @@ export interface TrialUsersData {
   percentage: number;
 }
 
-// Add missing type for InsightsPanel component
+// InsightData type for InsightsPanel component
 export interface InsightData {
   averageSubscriptionDuration: number;
   mostPopularPlan: string;

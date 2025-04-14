@@ -13,6 +13,7 @@ import { OnboardingCompleteBanner } from "@/group_owners/components/dashboard/On
 import { InsightsPanel } from "@/group_owners/components/dashboard/InsightsPanel";
 import { StatsBaseSkeleton } from "@/group_owners/components/dashboard/loading/StatsBaseSkeleton";
 import { memo } from "react";
+import { InsightData } from "@/group_owners/hooks/dashboard/types";
 
 // Use React.memo to prevent unnecessary re-renders
 const Dashboard = memo(() => {
@@ -54,7 +55,13 @@ const Dashboard = memo(() => {
     miniAppUsers = { count: 0, nonSubscribers: 0 },
     paymentStats = { paymentMethods: [], paymentDistribution: [] },
     insights = {},
-    insightsData = [],
+    insightsData = {
+      averageSubscriptionDuration: 0,
+      mostPopularPlan: 'No Plan',
+      mostPopularPlanPrice: 0,
+      renewalRate: 0,
+      potentialRevenue: 0
+    },
     
     memberGrowthData = [],
     revenueData = [],
@@ -63,6 +70,20 @@ const Dashboard = memo(() => {
     
     isLoading
   } = stats;
+
+  // Ensure insightsData has the correct type structure
+  const safeInsightsData: InsightData = {
+    averageSubscriptionDuration: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
+      insightsData.averageSubscriptionDuration || 0 : 0,
+    mostPopularPlan: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
+      insightsData.mostPopularPlan || 'No Plan' : 'No Plan',
+    mostPopularPlanPrice: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
+      insightsData.mostPopularPlanPrice || 0 : 0,
+    renewalRate: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
+      insightsData.renewalRate || 0 : 0,
+    potentialRevenue: typeof insightsData === 'object' && !Array.isArray(insightsData) ? 
+      insightsData.potentialRevenue || 0 : 0
+  };
 
   return (
     <DashboardLayout>
@@ -98,7 +119,7 @@ const Dashboard = memo(() => {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <InsightsPanel insights={insightsData} />
+                <InsightsPanel insights={safeInsightsData} />
               </div>
               <div className="lg:col-span-1">
                 <PaymentMethodsPanel

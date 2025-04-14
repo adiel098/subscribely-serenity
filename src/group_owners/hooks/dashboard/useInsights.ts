@@ -113,7 +113,7 @@ export const useInsights = (
     return insights;
   }, [subscribers, plans]);
 
-  // Initialize insightsData first, before using it
+  // Initialize insightsData with default values to ensure proper type
   const insightsData: InsightData = useMemo(() => {
     // Extract the most popular plan price from insights
     const mostPopularPlanPriceInsight = insights.find(i => i.title === "Most popular plan price");
@@ -124,10 +124,10 @@ export const useInsights = (
       averageSubscriptionDuration: insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") ? 
         parseInt(insights.find(i => i.title === "Average subscription duration")?.value?.toString().replace(" days", "") || "0") : 0,
       mostPopularPlan: insights.find(i => i.title === "Most popular plan")?.value?.toString() || "No Plan",
-      mostPopularPlanPrice: mostPopularPlanPrice,
+      mostPopularPlanPrice: mostPopularPlanPrice || 0,
       renewalRate: insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") ? 
         parseInt(insights.find(i => i.title === "Renewal rate")?.value?.toString().replace("%", "") || "0") : 0,
-      potentialRevenue: (activeSubscribers.length || 0) * mostPopularPlanPrice
+      potentialRevenue: (activeSubscribers?.length || 0) * mostPopularPlanPrice || 0
     };
   }, [insights, activeSubscribers]);
 

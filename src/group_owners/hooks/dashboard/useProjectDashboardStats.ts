@@ -10,7 +10,7 @@ import { useProjectSubscribers } from "./useProjectSubscribers";
 import { useProjectPlans } from "./useProjectPlans";
 import { useProjectMiniAppUsers } from "./useProjectMiniAppUsers";
 import { useProjectOwnerInfo } from "./useProjectOwnerInfo";
-import { MiniAppData } from "./types";
+import { InsightData, MiniAppData } from "./types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 import { useRef, useMemo } from "react";
 
@@ -83,7 +83,14 @@ export const useProjectDashboardStats = (projectId: string | null) => {
     );
   }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plansData]);
   
-  const { insights = {}, insightsData = [] } = insightsInfo || {};
+  // Ensure we have properly typed insightsData
+  const { insights = {}, insightsData = {
+    averageSubscriptionDuration: 0,
+    mostPopularPlan: 'No Plan',
+    mostPopularPlanPrice: 0,
+    renewalRate: 0,
+    potentialRevenue: 0
+  } } = insightsInfo || {};
   
   // Memoize chart data
   const chartData = useMemo(() => {
@@ -115,7 +122,7 @@ export const useProjectDashboardStats = (projectId: string | null) => {
     miniAppUsers,
     paymentStats: paymentStats || { paymentMethods: [], paymentDistribution: [] },
     insights: insights || {},
-    insightsData: insightsData || [],
+    insightsData: insightsData as InsightData,
     
     memberGrowthData: memberGrowthData || [],
     revenueData: revenueData || [],

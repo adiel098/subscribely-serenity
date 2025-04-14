@@ -2,15 +2,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Award, BarChart3, Repeat } from "lucide-react";
+import { InsightData } from "@/group_owners/hooks/dashboard/types";
 
 interface InsightsPanelProps {
-  insights: {
-    averageSubscriptionDuration: number;
-    mostPopularPlan: string;
-    mostPopularPlanPrice: number;
-    renewalRate: number;
-    potentialRevenue?: number;
-  };
+  insights: InsightData;
 }
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {

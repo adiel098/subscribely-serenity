@@ -15,7 +15,7 @@ export const useGroupPlans = (groupId: string | null) => {
       
       try {
         const { data: plans, error } = await supabase
-          .from("subscription_plans")
+          .from("project_plans")  // Changed from "subscription_plans" to "project_plans"
           .select("*")
           .eq("community_id", groupId);
         

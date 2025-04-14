@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/auth/contexts/AuthContext";
 
 interface UseCustomBotValidationProps {
   onComplete: () => void;
@@ -12,6 +13,7 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
   const [isValidating, setIsValidating] = useState<boolean>(false);
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
   const [botChatList, setBotChatList] = useState<any[]>([]);
+  const { user } = useAuth();
 
   const validateBotToken = async () => {
     if (!customTokenInput) {
@@ -36,11 +38,13 @@ export const useCustomBotValidation = ({ onComplete }: UseCustomBotValidationPro
         setValidationSuccess(true);
         setBotChatList(response.data.chatList || []);
         
-        // Save the token in profiles table
-        await supabase.rpc('set_bot_preference', { 
-          use_custom: true,
-          custom_token: customTokenInput
-        });
+        // Save the token in the users table directly
+        if (user?.id) {
+          await supabase
+            .from('users')
+            .update({ custom_bot_token: customTokenInput })
+            .eq('id', user.id);
+        }
         
         toast.success("Bot token validated successfully!");
         

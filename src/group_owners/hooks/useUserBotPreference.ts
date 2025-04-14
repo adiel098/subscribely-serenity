@@ -22,23 +22,24 @@ export const useUserBotPreference = (): UserBotPreference => {
       if (!user) return null;
       
       try {
-        // Use the get_bot_preference database function
-        const { data, error } = await supabase.rpc('get_bot_preference');
+        // Check if the user has any custom bot token set
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('custom_bot_token')
+          .eq('id', user.id)
+          .single();
         
-        if (error) {
-          console.error("Error fetching bot preference:", error);
-          throw error;
+        if (userError) {
+          console.error("Error fetching user bot preference:", userError);
+          throw userError;
         }
         
-        if (data) {
-          console.log("Retrieved bot preference:", data);
-          return data;
-        }
+        // Determine if using a custom bot based on whether they have a token
+        const hasCustomBot = !!userData?.custom_bot_token;
         
-        // Default to official bot if no preference is found
         return {
-          use_custom: false,
-          custom_bot_token: null
+          use_custom: hasCustomBot,
+          custom_bot_token: userData?.custom_bot_token
         };
       } catch (error) {
         console.error("Error in bot preference query:", error);

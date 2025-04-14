@@ -13,7 +13,7 @@ export const useFetchSubscriptionPlans = (communityId: string) => {
       
       // With our consolidated model, all plans belong to communities
       const { data, error } = await supabase
-        .from('subscription_plans')
+        .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
         .select('*')
         .eq('community_id', communityId)
         .order('created_at', { ascending: false });

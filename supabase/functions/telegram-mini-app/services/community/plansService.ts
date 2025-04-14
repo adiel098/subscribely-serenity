@@ -12,7 +12,7 @@ export async function fetchPlansDirectly(
   
   try {
     const { data: plansData, error: plansError } = await supabase
-      .from('subscription_plans')
+      .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
       .select('id, name, description, price, interval, features, is_active, community_id')
       .eq('community_id', communityId);
       
@@ -38,12 +38,12 @@ export async function checkPlansPermissions(
 ) {
   try {
     const { count, error: countError } = await supabase
-      .from('subscription_plans')
+      .from('project_plans')  // Changed from "subscription_plans" to "project_plans"
       .select('id', { count: 'exact', head: true });
       
     if (countError) {
       console.error(`❌ Permission error checking plans: ${countError.message}`);
-      console.error(`❌ This suggests a permissions issue with the subscription_plans table`);
+      console.error(`❌ This suggests a permissions issue with the project_plans table`);
       return false;
     } else {
       console.log(`🔐 Successfully counted ${count} total plans in database - permissions seem OK`);

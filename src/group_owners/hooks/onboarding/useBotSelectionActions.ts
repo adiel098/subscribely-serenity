@@ -26,19 +26,28 @@ export const useBotSelectionActions = ({ userId, onComplete }: UseBotSelectionAc
     try {
       console.log(`Saving bot selection: ${selected}`);
       
-      // Set the custom bot preference in the global settings for this user
-      await supabase.rpc('set_bot_preference', { 
-        use_custom: selected === "custom"
-      });
-      
-      toast.success(`${selected === "official" ? "Official" : "Custom"} bot selected successfully`);
-      
+      // Store the bot token preference directly in user profile
       if (selected === "custom") {
-        // For custom bot, navigate to custom bot setup
+        // For custom bot, we just set the flag but the actual token will be set later
+        await supabase
+          .from('users')
+          .update({ custom_bot_token: 'pending' }) // We'll update this with actual token later
+          .eq('id', userId);
+          
+        toast.success("Custom bot selected. Please provide your bot token in the next step.");
+        
+        // Navigate to custom bot setup
         navigate("/onboarding/custom-bot-setup");
       } else {
-        // For official bot, skip directly to completion step instead of connect-telegram
-        // This fixes the issue where it was trying to use a non-existent step
+        // For official bot, clear any existing custom bot token
+        await supabase
+          .from('users')
+          .update({ custom_bot_token: null })
+          .eq('id', userId);
+          
+        toast.success("Official bot selected successfully");
+        
+        // Skip directly to completion step
         saveCurrentStep("completion");
         navigate("/onboarding/completion");
       }

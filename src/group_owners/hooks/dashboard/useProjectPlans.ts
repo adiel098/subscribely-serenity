@@ -32,7 +32,7 @@ export const useProjectPlans = (projectId: string | null) => {
         // Get all plans for the communities in this project
         const communityIds = communities.map(c => c.id);
         const { data: plans, error } = await supabase
-          .from("subscription_plans")
+          .from("project_plans")  // Changed from "subscription_plans" to "project_plans"
           .select("*")
           .in("community_id", communityIds);
         

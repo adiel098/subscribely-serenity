@@ -25,6 +25,7 @@ export function useAuthRedirect() {
       setTimeout(() => {
         isRedirectingRef.current = false;
       }, 500);
+      return;
     }
     
     // If user is NOT logged in and NOT on the auth page, redirect to auth
@@ -42,41 +43,7 @@ export function useAuthRedirect() {
     if (!location.pathname.startsWith('/onboarding')) {
       onboardingCheckedRef.current = false;
     }
-    
-    // Check onboarding status for logged-in users
-    if (user && !onboardingCheckedRef.current && !isRedirectingRef.current && !location.pathname.startsWith('/onboarding')) {
-      const checkOnboardingStatus = async () => {
-        try {
-          // Use 'users' table instead of 'profiles'
-          const { data, error } = await supabase
-            .from('users')
-            .select('onboarding_completed, onboarding_step')
-            .eq('id', user.id)
-            .maybeSingle();
-            
-          if (error) {
-            console.error("Error checking onboarding status:", error);
-            return;
-          }
-          
-          if (data && (!data.onboarding_completed && data.onboarding_step !== 'complete')) {
-            console.log("Onboarding not complete, redirecting to onboarding");
-            isRedirectingRef.current = true;
-            navigate('/onboarding', { replace: true });
-            setTimeout(() => {
-              isRedirectingRef.current = false;
-            }, 500);
-          }
-          
-          onboardingCheckedRef.current = true;
-        } catch (err) {
-          console.error("Error in onboarding check:", err);
-        }
-      };
-      
-      checkOnboardingStatus();
-    }
-  }, [user, isLoading, navigate, location.pathname, location]);
+  }, [user, isLoading, navigate, location.pathname]);
   
   return {
     isCheckingAuth: isLoading || isRedirectingRef.current

@@ -1,81 +1,20 @@
 
 import React, { useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useAuthRedirect } from "@/auth/hooks/useAuthRedirect";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 export const AppLayout = () => {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const { isCheckingAuth } = useAuthRedirect();
-  const location = useLocation();
-  const navigate = useNavigate();
   const [showLoading, setShowLoading] = useState(true);
-  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
-  
-  // Check onboarding status when user is logged in
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!user || location.pathname.startsWith('/onboarding')) {
-        setIsCheckingOnboarding(false);
-        return;
-      }
-      
-      try {
-        setIsCheckingOnboarding(true);
-        console.log("Checking onboarding status from AppLayout for user:", user.id);
-        
-        // Updated to use 'users' table instead of 'profiles'
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('onboarding_completed, onboarding_step')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (profileError) {
-          console.error("Error checking profile:", profileError);
-          // Don't redirect if there's an error, just continue with the current page
-          setIsCheckingOnboarding(false);
-          return;
-        }
-        
-        console.log("Profile onboarding status:", userProfile);
-        
-        // Only redirect to onboarding if profile exists and onboarding is not complete
-        if (userProfile && (!userProfile.onboarding_step || 
-            (userProfile.onboarding_step !== "complete" && !userProfile.onboarding_completed))) {
-          console.log("Onboarding not completed, redirecting to onboarding flow");
-          
-          let targetPath = '/onboarding/welcome';
-          if (userProfile.onboarding_step) {
-            targetPath = `/onboarding/${userProfile.onboarding_step}`;
-          }
-          
-          console.log(`Redirecting to ${targetPath}`);
-          navigate(targetPath, { replace: true });
-        }
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-        toast.error("Error checking onboarding status. Please refresh the page.");
-      } finally {
-        setIsCheckingOnboarding(false);
-      }
-    };
-    
-    if (!isLoading && user) {
-      checkOnboardingStatus();
-    } else {
-      setIsCheckingOnboarding(false);
-    }
-  }, [user, isLoading, navigate, location.pathname]);
   
   // Add a small delay before showing content to prevent flickering
   useEffect(() => {
     let mounted = true;
     
-    if (!isLoading && !isCheckingAuth && !isCheckingOnboarding) {
+    if (!isLoading && !isCheckingAuth) {
       // Add a small delay before showing content to ensure smooth transition
       const timer = setTimeout(() => {
         if (mounted) {
@@ -94,7 +33,7 @@ export const AppLayout = () => {
     return () => {
       mounted = false;
     };
-  }, [isLoading, isCheckingAuth, isCheckingOnboarding, location.pathname]);
+  }, [isLoading, isCheckingAuth]);
 
   if (showLoading) {
     return (

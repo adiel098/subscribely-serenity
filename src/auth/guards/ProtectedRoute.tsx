@@ -1,7 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/hooks/useAuth";
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, useRef, ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { useOnboardingStatus } from "@/group_owners/hooks/useOnboardingStatus";
 
@@ -19,11 +19,15 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(false);
   const [shouldRedirectToOnboarding, setShouldRedirectToOnboarding] = useState(false);
   const { checkOnboardingStatus } = useOnboardingStatus();
+  const checkPerformedRef = useRef(false);
 
   useEffect(() => {
+    // Only check onboarding status once per route change
     const checkIfShouldRedirect = async () => {
-      if (user && !location.pathname.startsWith('/onboarding')) {
+      if (user && !location.pathname.startsWith('/onboarding') && !checkPerformedRef.current) {
+        checkPerformedRef.current = true;
         setIsCheckingOnboarding(true);
+        
         try {
           const needsOnboarding = await checkOnboardingStatus();
           if (needsOnboarding) {
@@ -41,6 +45,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     };
     
     checkIfShouldRedirect();
+    
+    // Reset check flag when location changes
+    return () => {
+      checkPerformedRef.current = false;
+    };
   }, [user, location.pathname, checkOnboardingStatus]);
 
   if (loading || isCheckingOnboarding) {

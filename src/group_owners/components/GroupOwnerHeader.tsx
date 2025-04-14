@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { UserButton } from "@/auth/components/UserButton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CommunitySelector } from "./CommunitySelector";
-import { ProjectSelector } from "./ProjectSelector";
+import { ProjectSelector } from "@/components/ui/project-selector";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";

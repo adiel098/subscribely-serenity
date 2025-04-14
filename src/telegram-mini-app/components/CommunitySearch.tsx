@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Users2 } from "lucide-react";
 import { searchCommunities } from "../services/communityService";
 import { Community } from "@/telegram-mini-app/types/community.types";
 import { SearchBar } from "./search/SearchBar";
@@ -9,6 +9,19 @@ import { EmptyState } from "./search/EmptyState";
 import { SearchPageHeader } from "./search/SearchPageHeader";
 import { useCommunitiesWithDescriptions } from "../hooks/useCommunitiesWithDescriptions";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatCurrency } from "@/lib/utils";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle
+} from "@/components/ui/card";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback
+} from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface CommunitySearchProps {
   onSelectCommunity: (community: Community) => void;
@@ -172,10 +185,10 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
                     >
                       Join
                     </Button>
-                    {community.project_plans?.length > 0 && (
+                    {community.subscription_plans?.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         From {formatCurrency(
-                          community.project_plans.reduce((min, plan) => {
+                          community.subscription_plans.reduce((min, plan) => {
                             return Math.min(min, plan.price);
                           }, Infinity)
                         )}

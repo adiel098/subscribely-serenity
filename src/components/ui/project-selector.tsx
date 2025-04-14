@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 export const ProjectSelector: React.FC = () => {
   const navigate = useNavigate();
   const { 
-    selectedProject, 
+    projects,
     selectedProjectId,
     setSelectedProjectId 
   } = useProjectContext();
-  const projects = selectedProject ? [selectedProject] : [];
+  const selectedProject = projects?.find(p => p.id === selectedProjectId) || null;
   const isLoading = false;
 
   const handleCreateProject = () => {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,18 +11,24 @@ import { useCardAnimations } from "./useCardAnimations";
 interface CommunityCardHeaderProps {
   community: Community;
   isHovered: boolean;
+  onSelectPlan: (planId: string) => void;
 }
 
 export const CommunityCardHeader: React.FC<CommunityCardHeaderProps> = ({
   community,
-  isHovered
+  isHovered,
+  onSelectPlan
 }) => {
-  const { name, telegram_photo_url, project_plans } = community;
+  const { name, telegram_photo_url, subscription_plans } = community;
   const { sparkleVariants } = useCardAnimations();
   
-  const lowestPricePlan = project_plans && project_plans.length > 0
-    ? [...project_plans].sort((a, b) => a.price - b.price)[0]
-    : null;
+  const lowestPricePlan = useMemo(() => {
+    if (!subscription_plans || subscription_plans.length === 0) {
+      return null;
+    }
+    
+    return [...subscription_plans].sort((a, b) => a.price - b.price)[0];
+  }, [subscription_plans]);
   
   const avatarFallback = name ? name.charAt(0).toUpperCase() : "C";
 

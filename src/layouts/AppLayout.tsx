@@ -6,11 +6,12 @@ import { Loader2 } from "lucide-react";
 import { useAuthRedirect } from "@/auth/hooks/useAuthRedirect";
 
 export const AppLayout = () => {
-  const { isLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
   const { isCheckingAuth } = useAuthRedirect();
   const [showLoading, setShowLoading] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
+  const location = useLocation();
   
   // Add a small delay before showing content to prevent flickering
   useEffect(() => {
@@ -23,13 +24,20 @@ export const AppLayout = () => {
       timerRef.current = null;
     }
     
-    if (!isLoading && !isCheckingAuth) {
+    // Only show loading for a maximum of 2 seconds to prevent infinite loading states
+    const maxLoadingTime = setTimeout(() => {
+      if (mountedRef.current) {
+        setShowLoading(false);
+      }
+    }, 2000);
+    
+    if (!authLoading && !isCheckingAuth) {
       // Add a small delay before showing content to ensure smooth transition
       timerRef.current = setTimeout(() => {
         if (mountedRef.current) {
           setShowLoading(false);
         }
-      }, 300);
+      }, 100);
     } else {
       setShowLoading(true);
     }
@@ -39,10 +47,10 @@ export const AppLayout = () => {
       mountedRef.current = false;
       if (timerRef.current) {
         clearTimeout(timerRef.current);
-        timerRef.current = null;
       }
+      clearTimeout(maxLoadingTime);
     };
-  }, [isLoading, isCheckingAuth]);
+  }, [authLoading, isCheckingAuth, location.pathname]);
 
   if (showLoading) {
     return (

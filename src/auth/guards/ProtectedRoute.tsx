@@ -22,6 +22,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const checkPerformedRef = useRef(false);
   const processingRef = useRef(false);
   const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const maxLoadingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Debounce loading state changes to prevent rapid UI flickering
   const [stableLoading, setStableLoading] = useState(true);
@@ -42,9 +43,19 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       setStableLoading(true);
     }
     
+    // Set a maximum time for loading state to prevent infinite loading
+    if (!maxLoadingTimerRef.current) {
+      maxLoadingTimerRef.current = setTimeout(() => {
+        setStableLoading(false);
+      }, 3000);
+    }
+    
     return () => {
       if (loadingTimerRef.current) {
         clearTimeout(loadingTimerRef.current);
+      }
+      if (maxLoadingTimerRef.current) {
+        clearTimeout(maxLoadingTimerRef.current);
       }
     };
   }, [loading, isCheckingOnboarding]);
@@ -52,12 +63,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   useEffect(() => {
     // Prevent concurrent processing
     if (processingRef.current) return;
-    processingRef.current = true;
     
     // Only check onboarding status once per route change
     const checkIfShouldRedirect = async () => {
       if (user && !location.pathname.startsWith('/onboarding') && !checkPerformedRef.current) {
-        checkPerformedRef.current = true;
+        processingRef.current = true;
         setIsCheckingOnboarding(true);
         
         try {
@@ -68,13 +78,16 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         } finally {
           setIsCheckingOnboarding(false);
           processingRef.current = false;
+          checkPerformedRef.current = true;
         }
       } else {
         processingRef.current = false;
       }
     };
     
-    checkIfShouldRedirect();
+    if (user) {
+      checkIfShouldRedirect();
+    }
     
     // Reset check flag when location changes
     return () => {

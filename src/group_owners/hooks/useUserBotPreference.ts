@@ -22,28 +22,29 @@ export const useUserBotPreference = (): UserBotPreference => {
       if (!user) return null;
       
       try {
-        // Check if the user has any custom bot token set
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('custom_bot_token')
-          .eq('id', user.id)
-          .single();
+        // בדיקה אם למשתמש יש פרויקט עם custom bot token
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('bot_token')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false })
+          .maybeSingle();
         
-        if (userError) {
-          console.error("Error fetching user bot preference:", userError);
-          throw userError;
+        if (projectError) {
+          console.error("Error fetching user bot preference:", projectError);
+          throw projectError;
         }
         
-        // Determine if using a custom bot based on whether they have a token
-        const hasCustomBot = !!userData?.custom_bot_token;
+        // קביעה אם משתמשים בבוט מותאם אישית לפי האם יש להם token
+        const hasCustomBot = !!projectData?.bot_token;
         
         return {
           use_custom: hasCustomBot,
-          custom_bot_token: userData?.custom_bot_token
+          custom_bot_token: projectData?.bot_token
         };
       } catch (error) {
         console.error("Error in bot preference query:", error);
-        // Default to official bot on error
+        // ברירת מחדל לבוט הרשמי במקרה של שגיאה
         return {
           use_custom: false,
           custom_bot_token: null
@@ -53,7 +54,7 @@ export const useUserBotPreference = (): UserBotPreference => {
     enabled: !!user,
   });
   
-  // Default to official bot if no preference is set
+  // ברירת מחדל לבוט הרשמי אם לא מוגדרות העדפות
   return {
     isCustomBot: data?.use_custom || false,
     hasCustomBotToken: !!data?.custom_bot_token,

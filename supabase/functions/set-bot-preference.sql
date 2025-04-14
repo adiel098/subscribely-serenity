@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION public.set_bot_preference(use_custom boolean, custom_
 RETURNS void AS $$
 DECLARE
   v_user_id UUID;
-  v_communities_count INTEGER;
+  v_projects_count INTEGER;
 BEGIN
   -- Get the authenticated user ID
   v_user_id := auth.uid();
@@ -13,33 +13,39 @@ BEGIN
     RAISE EXCEPTION 'Authentication required';
   END IF;
   
-  -- Check how many communities the user owns
-  SELECT COUNT(*) INTO v_communities_count
-  FROM public.communities
+  -- Check how many projects the user owns
+  SELECT COUNT(*) INTO v_projects_count
+  FROM public.projects
   WHERE owner_id = v_user_id;
   
-  -- If the user has communities, update their bot settings
-  IF v_communities_count > 0 THEN
-    -- Update all bot settings for communities owned by this user
+  -- If the user has projects, update their bot settings
+  IF v_projects_count > 0 THEN
+    -- Update all bot settings for projects owned by this user
     UPDATE public.telegram_bot_settings tbs
     SET 
       use_custom_bot = use_custom,
       custom_bot_token = CASE WHEN use_custom THEN custom_token ELSE NULL END
-    FROM public.communities c
-    WHERE tbs.community_id = c.id AND c.owner_id = v_user_id;
+    FROM public.projects p
+    WHERE tbs.project_id = p.id AND p.owner_id = v_user_id;
     
-    -- If no bot settings exist yet, insert them for each community
-    INSERT INTO public.telegram_bot_settings (community_id, use_custom_bot, custom_bot_token)
+    -- If no bot settings exist yet, insert them for each project
+    INSERT INTO public.telegram_bot_settings (project_id, use_custom_bot, custom_bot_token)
     SELECT 
-      c.id, 
+      p.id, 
       use_custom, 
       CASE WHEN use_custom THEN custom_token ELSE NULL END
-    FROM public.communities c
-    LEFT JOIN public.telegram_bot_settings tbs ON c.id = tbs.community_id
-    WHERE c.owner_id = v_user_id AND tbs.community_id IS NULL;
+    FROM public.projects p
+    LEFT JOIN public.telegram_bot_settings tbs ON p.id = tbs.project_id
+    WHERE p.owner_id = v_user_id AND tbs.project_id IS NULL;
+    
+    -- Update all projects with the bot token
+    UPDATE public.projects
+    SET 
+      bot_token = CASE WHEN use_custom THEN custom_token ELSE NULL END
+    WHERE owner_id = v_user_id;
   END IF;
   
-  -- Also store the preference in a global setting for future communities
+  -- Store the preference in a global setting for future projects
   INSERT INTO public.user_preferences (user_id, preference_name, preference_value)
   VALUES (
     v_user_id, 
@@ -67,8 +73,3 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Grant permissions to use the function
-GRANT EXECUTE ON FUNCTION public.set_bot_preference(boolean, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.set_bot_preference(boolean, text) TO service_role;
-

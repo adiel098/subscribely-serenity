@@ -78,13 +78,29 @@ export const useCreateCommunityGroup = () => {
           botTokenSet: !!data.bot_token
         });
         
-        // Note: We don't need to manually create bot settings anymore
-        // as they're created automatically by database trigger
+        // Note: Bot settings are created automatically by database trigger
+        // But we need to make sure they exist before creating communities
+        
+        // Wait for database triggers to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Verify bot settings were created
+        const { data: botSettings, error: botSettingsError } = await supabase
+          .from("telegram_bot_settings")
+          .select("id")
+          .eq("project_id", newProject.id)
+          .maybeSingle();
+          
+        if (botSettingsError || !botSettings) {
+          console.log("⚠️ Bot settings not found, waiting additional time...");
+          // Wait longer if settings aren't found
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
         
         // Create communities if any
         if (data.communities && data.communities.length > 0) {
           // Add a delay before creating communities to ensure project is fully saved
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Create communities in batches of 5 to avoid overloading the database
           const batchSize = 5;
@@ -109,6 +125,25 @@ export const useCreateCommunityGroup = () => {
               
               if (communitiesError) {
                 console.error(`Error creating communities batch ${i/batchSize + 1}:`, communitiesError);
+                
+                // If error is related to foreign key constraint, wait and try once more
+                if (communitiesError.code === '23503') {
+                  console.log("Foreign key constraint error. Waiting and trying again...");
+                  await new Promise(resolve => setTimeout(resolve, 3000));
+                  
+                  // Try one more time
+                  const { data: retryCreatedCommunities, error: retryError } = await supabase
+                    .from("communities")
+                    .insert(communitiesData)
+                    .select("id, name");
+                    
+                  if (!retryError) {
+                    console.log(`✅ Retry successful! Created ${retryCreatedCommunities?.length || 0} communities`);
+                    successCount += retryCreatedCommunities?.length || 0;
+                  } else {
+                    console.error("Retry also failed:", retryError);
+                  }
+                }
               } else {
                 console.log(`✅ Created ${createdCommunities?.length || 0} communities in batch ${i/batchSize + 1}`);
                 successCount += createdCommunities?.length || 0;
@@ -119,7 +154,7 @@ export const useCreateCommunityGroup = () => {
             
             // Small delay between batches
             if (i + batchSize < data.communities.length) {
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise(resolve => setTimeout(resolve, 2000));
             }
           }
           
@@ -231,7 +266,7 @@ export const commitOnboardingData = async () => {
 
     const projectName = tempData.project?.name || `Project ${new Date().toISOString()}`;
 
-    // First create the project
+    // Create the project - this will trigger the creation of bot settings via database trigger
     const { data: newProject, error: projectError } = await supabase
       .from("projects")
       .insert({
@@ -261,11 +296,28 @@ export const commitOnboardingData = async () => {
       botTokenSet: !!tempData.project.bot_token
     });
     
-    // Make sure project is fully committed before proceeding
+    // Wait for database triggers to complete
     // Increased wait time to ensure bot settings are created by trigger
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 4000));
     
-    // Create communities if any (with delay to ensure project is fully committed)
+    // Verify bot settings were created
+    const { data: botSettings, error: botVerifyError } = await supabase
+      .from("telegram_bot_settings")
+      .select("id")
+      .eq("project_id", projectId)
+      .maybeSingle();
+      
+    if (botVerifyError) {
+      console.error("❌ Error verifying bot settings:", botVerifyError);
+    } else if (!botSettings) {
+      console.warn("⚠️ Bot settings not found after project creation, waiting additional time...");
+      // Wait longer if settings aren't found
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    } else {
+      console.log("✅ Bot settings verified for project:", projectId);
+    }
+    
+    // Create communities if any
     let successfulCommunities = 0;
     
     if (tempData.project.communities && tempData.project.communities.length > 0) {
@@ -275,7 +327,7 @@ export const commitOnboardingData = async () => {
       });
       
       // Process communities in smaller batches to avoid overwhelming the database
-      const batchSize = 3;
+      const batchSize = 2;
       
       for (let i = 0; i < tempData.project.communities.length; i += batchSize) {
         const batch = tempData.project.communities.slice(i, i + batchSize);
@@ -301,7 +353,29 @@ export const commitOnboardingData = async () => {
           if (botSettingsError || !botSettings) {
             console.warn("Bot settings not found for project, waiting...");
             // Additional wait if bot settings aren't found
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            // Check again after waiting
+            const { data: botSettingsRetry } = await supabase
+              .from("telegram_bot_settings")
+              .select("id")
+              .eq("project_id", projectId)
+              .maybeSingle();
+              
+            if (!botSettingsRetry) {
+              console.error("❌ Bot settings still not found after waiting, attempting to create manually");
+              
+              // Try to manually create bot settings as a fallback
+              try {
+                await supabase.rpc('create_default_bot_settings_manual', { project_id_param: projectId });
+                console.log("✅ Manually created bot settings via RPC");
+              } catch (rpcError) {
+                console.error("Failed to create bot settings via RPC:", rpcError);
+              }
+              
+              // Additional wait after manual creation attempt
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
           }
           
           const { data: createdCommunities, error: communitiesError } = await supabase
@@ -315,7 +389,7 @@ export const commitOnboardingData = async () => {
             // If error is related to foreign key constraint, wait and try once more
             if (communitiesError.code === '23503') {
               console.log("Foreign key constraint error. Waiting and trying again...");
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              await new Promise(resolve => setTimeout(resolve, 4000));
               
               // Try one more time
               const { data: retryCreatedCommunities, error: retryError } = await supabase
@@ -338,8 +412,8 @@ export const commitOnboardingData = async () => {
           console.error(`Exception in batch ${Math.floor(i/batchSize) + 1}:`, batchError);
         }
         
-        // Add a delay between batches
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Add a longer delay between batches
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       
       if (successfulCommunities > 0) {

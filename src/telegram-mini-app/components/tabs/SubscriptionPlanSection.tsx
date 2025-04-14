@@ -1,3 +1,4 @@
+
 import React from "react";
 import { ChevronDown, Sparkles, AlertTriangle } from "lucide-react";
 import { Plan } from "@/telegram-mini-app/types/community.types";
@@ -80,37 +81,40 @@ export const SubscriptionPlanSection: React.FC<SubscriptionPlanSectionProps> = (
     );
   }
 
-  // Use an empty div for channel preview since we're just making a type fix */}
-  <div id="available-channels-preview"></div>
-  
-  <div id="subscription-plans" className="scroll-mt-4 pt-2">
-    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-0 max-w-sm mx-auto">
-      <motion.div 
-        className="text-center space-y-3 mb-1"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Badge variant="secondary" className="px-5 py-2 text-base font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
-          <Sparkles className="h-5 w-5 mr-2 text-indigo-600" />
-          Choose Your Plan <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
-        </Badge>
-        <p className="text-sm text-gray-600">Select the perfect plan for your needs 🚀</p>
-      </motion.div>
+  return (
+    <>
+      {/* Use an empty div for channel preview since we're just making a type fix */}
+      <div id="available-channels-preview"></div>
       
-      <SubscriptionPlans
-        plans={sortedPlans}
-        selectedPlan={selectedPlan}
-        onPlanSelect={onPlanSelect}
-        userSubscriptions={userSubscriptions}
-      />
-    </div>
-  </div>
+      <div id="subscription-plans" className="scroll-mt-4 pt-2">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-3 rounded-lg mb-0 max-w-sm mx-auto">
+          <motion.div 
+            className="text-center space-y-3 mb-1"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge variant="secondary" className="px-5 py-2 text-base font-medium bg-gradient-to-r from-purple-500/20 to-indigo-500/20">
+              <Sparkles className="h-5 w-5 mr-2 text-indigo-600" />
+              Choose Your Plan <Sparkles className="h-4 w-4 ml-1 text-amber-500" />
+            </Badge>
+            <p className="text-sm text-gray-600">Select the perfect plan for your needs 🚀</p>
+          </motion.div>
+          
+          <SubscriptionPlans
+            plans={sortedPlans}
+            selectedPlan={selectedPlan}
+            onPlanSelect={onPlanSelect}
+            userSubscriptions={userSubscriptions}
+          />
+        </div>
+      </div>
 
-  {!selectedPlan && !showPaymentMethods && (
-    <div className="flex justify-center py-2 animate-bounce">
-      <ChevronDown className="h-4 w-4 text-primary/50" />
-    </div>
-  )}
-</>;
+      {!selectedPlan && !showPaymentMethods && (
+        <div className="flex justify-center py-2 animate-bounce">
+          <ChevronDown className="h-4 w-4 text-primary/50" />
+        </div>
+      )}
+    </>
+  );
 };

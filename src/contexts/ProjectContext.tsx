@@ -83,7 +83,7 @@ export const ProjectProvider = ({
     }
   }, [projects, selectedProjectId, isLoading, hasCheckedProjects]);
 
-  // Handle project selection and onboarding redirection
+  // Handle project selection - REMOVED AUTO-REDIRECT TO PROJECT CREATION
   useEffect(() => {
     // Don't do anything if projects are still loading
     if (isLoading) {
@@ -97,29 +97,16 @@ export const ProjectProvider = ({
       return;
     }
     
-    // Check if user is in onboarding process - if so, don't redirect to project creation
+    // Check if user is in onboarding process - if so, don't redirect
     const isInOnboardingProcess = location.pathname.startsWith('/onboarding');
-    const onboardingStatus = localStorageService.getOnboardingStatus();
-    const isOnboardingCompleted = onboardingStatus?.isCompleted || false;
     
-    // Don't redirect if user is in onboarding process or route is not dashboard
-    if (isInOnboardingProcess || !location.pathname.match(/^\/(dashboard)?$/)) {
+    // Don't redirect if user is in onboarding process
+    if (isInOnboardingProcess) {
       return;
     }
     
     const hasProjects = projects && projects.length > 0;
     console.log("Project redirection check - hasProjects:", hasProjects, "projectsCount:", projects?.length);
-    
-    // Only redirect to project creation if:
-    // 1. User has completed onboarding
-    // 2. User has no projects
-    // 3. User is trying to access the dashboard
-    // 4. We've already loaded projects (hasCheckedProjects)
-    if (isOnboardingCompleted && !hasProjects && location.pathname.match(/^\/(dashboard)?$/) && hasCheckedProjects) {
-      console.log("Onboarding completed, no projects found - redirecting to project creation");
-      navigate('/projects/new', { replace: true });
-      return;
-    }
     
     // If nothing is selected but we have projects, select one
     if (!selectedProjectId && hasProjects) {
@@ -134,7 +121,7 @@ export const ProjectProvider = ({
       setSelectedProjectId(projects[0].id);
       return;
     }
-  }, [projects, selectedProjectId, isLoading, location.pathname, navigate, hasCheckedProjects]);
+  }, [projects, selectedProjectId, isLoading, location.pathname, hasCheckedProjects]);
 
   return (
     <ProjectContext.Provider value={{

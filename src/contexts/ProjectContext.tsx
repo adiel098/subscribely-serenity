@@ -37,6 +37,7 @@ export const ProjectProvider = ({
   });
   
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [hasCheckedProjects, setHasCheckedProjects] = useState(false);
 
   const location = useLocation();
 
@@ -57,11 +58,20 @@ export const ProjectProvider = ({
     } else {
       setSelectedProject(null);
     }
-  }, [projects, selectedProjectId]);
+
+    // Mark that we've checked projects after they've loaded
+    if (!isLoading && !hasCheckedProjects) {
+      setHasCheckedProjects(true);
+    }
+  }, [projects, selectedProjectId, isLoading, hasCheckedProjects]);
 
   // Handle project selection and onboarding redirection
   useEffect(() => {
+    // Don't do anything if projects are still loading
     if (isLoading) return;
+    
+    // Wait until we've done the initial check of projects
+    if (!hasCheckedProjects) return;
     
     // Check if user is in onboarding process - if so, don't redirect to project creation
     const isInOnboardingProcess = location.pathname.startsWith('/onboarding');
@@ -79,7 +89,8 @@ export const ProjectProvider = ({
     // 1. User has completed onboarding
     // 2. User has no projects
     // 3. User is trying to access the dashboard
-    if (isOnboardingCompleted && !hasProjects && location.pathname.match(/^\/(dashboard)?$/)) {
+    // 4. We've already loaded projects (hasCheckedProjects)
+    if (isOnboardingCompleted && !hasProjects && location.pathname.match(/^\/(dashboard)?$/) && hasCheckedProjects) {
       console.log("Onboarding completed, no projects found - redirecting to project creation");
       navigate('/projects/new', { replace: true });
       return;
@@ -96,7 +107,7 @@ export const ProjectProvider = ({
       setSelectedProjectId(projects[0].id);
       return;
     }
-  }, [projects, selectedProjectId, isLoading, location.pathname, navigate]);
+  }, [projects, selectedProjectId, isLoading, location.pathname, navigate, hasCheckedProjects]);
 
   return (
     <ProjectContext.Provider value={{

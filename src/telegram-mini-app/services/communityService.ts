@@ -7,39 +7,37 @@ export const fetchCommunities = async (): Promise<Community[]> => {
   try {
     const { data, error } = await supabase
       .from('communities')
-      .select('*, subscription_plans(*)');
+      .select('*, project_plans(*)');
 
     if (error) throw error;
 
-    // Process the data to match the Community type
-    const communities: Community[] = data.map(item => {
-      return {
-        id: item.id,
-        name: item.name,
-        description: item.description || "",
-        telegram_photo_url: item.telegram_photo_url,
-        telegram_chat_id: item.telegram_chat_id,
-        custom_link: item.custom_link,
-        is_group: item.is_group,
-        platform_url: `${process.env.NEXT_PUBLIC_APP_URL}/communities/${item.id}`,
-        miniapp_url: `https://t.me/YourBot?start=${item.id}`,
-        subscription_plans: item.subscription_plans.map((plan: any): SubscriptionPlan => ({
-          id: plan.id,
-          name: plan.name,
-          description: plan.description || "",
-          price: plan.price,
-          interval: plan.interval,
-          features: plan.features || [],
-          is_active: plan.is_active,
-          community_id: plan.community_id,
-          project_id: plan.project_id,
-          has_trial_period: plan.has_trial_period || false,
-          trial_days: plan.trial_days || 0,
-          created_at: plan.created_at,
-          updated_at: plan.updated_at
-        }))
-      };
-    });
+    // Process the data into our Community type
+    const communities = data.map((item: any): Community => ({
+      id: item.id,
+      name: item.name,
+      telegram_group_id: item.telegram_group_id,
+      telegram_photo_url: item.telegram_photo_url,
+      description: item.description || '',
+      is_public: item.is_public,
+      is_group: item.is_group,
+      platform_url: `${process.env.NEXT_PUBLIC_APP_URL}/communities/${item.id}`,
+      miniapp_url: `https://t.me/YourBot?start=${item.id}`,
+      project_plans: item.project_plans.map((plan: any): SubscriptionPlan => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description || "",
+        price: plan.price,
+        interval: plan.interval,
+        features: plan.features || [],
+        is_active: plan.is_active,
+        community_id: plan.community_id,
+        project_id: plan.project_id,
+        has_trial_period: plan.has_trial_period || false,
+        trial_days: plan.trial_days || 0,
+        created_at: plan.created_at,
+        updated_at: plan.updated_at
+      }))
+    }));
 
     return communities;
   } catch (error) {
@@ -53,7 +51,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     // First try to find by ID
     let { data, error } = await supabase
       .from('communities')
-      .select('*, subscription_plans(*)')
+      .select('*, project_plans(*)')
       .eq('id', idOrLink)
       .single();
     
@@ -61,7 +59,7 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     if (error || !data) {
       const { data: linkData, error: linkError } = await supabase
         .from('communities')
-        .select('*, subscription_plans(*)')
+        .select('*, project_plans(*)')
         .eq('custom_link', idOrLink)
         .single();
       
@@ -74,14 +72,14 @@ export const fetchCommunityByIdOrLink = async (idOrLink: string): Promise<Commun
     return {
       id: data.id,
       name: data.name,
-      description: data.description || "",
+      telegram_group_id: data.telegram_group_id,
       telegram_photo_url: data.telegram_photo_url,
-      telegram_chat_id: data.telegram_chat_id,
-      custom_link: data.custom_link,
+      description: data.description || '',
+      is_public: data.is_public,
       is_group: data.is_group,
       platform_url: `${process.env.NEXT_PUBLIC_APP_URL}/communities/${data.id}`,
       miniapp_url: `https://t.me/YourBot?start=${data.id}`,
-      subscription_plans: data.subscription_plans.map((plan: any): SubscriptionPlan => ({
+      project_plans: data.project_plans.map((plan: any): SubscriptionPlan => ({
         id: plan.id,
         name: plan.name,
         description: plan.description || "",
@@ -111,22 +109,22 @@ export const searchCommunities = async (query: string): Promise<Community[]> => 
     
     const { data, error } = await supabase
       .from('communities')
-      .select('*, subscription_plans(*)')
+      .select('*, project_plans(*)')
       .ilike('name', `%${query}%`);
       
     if (error) throw error;
     
-    const communities: Community[] = data.map(item => ({
+    const communities = data.map((item: any): Community => ({
       id: item.id,
       name: item.name,
-      description: item.description || "",
+      telegram_group_id: item.telegram_group_id,
       telegram_photo_url: item.telegram_photo_url,
-      telegram_chat_id: item.telegram_chat_id,
-      custom_link: item.custom_link,
+      description: item.description || '',
+      is_public: item.is_public,
       is_group: item.is_group,
       platform_url: `${process.env.NEXT_PUBLIC_APP_URL}/communities/${item.id}`,
       miniapp_url: `https://t.me/YourBot?start=${item.id}`,
-      subscription_plans: item.subscription_plans.map((plan: any): SubscriptionPlan => ({
+      project_plans: item.project_plans.map((plan: any): SubscriptionPlan => ({
         id: plan.id,
         name: plan.name,
         description: plan.description || "",

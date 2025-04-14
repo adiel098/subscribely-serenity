@@ -46,36 +46,33 @@ export const useCommunityData = (communityIdOrLink: string | null) => {
         logger.debug(`📞 Calling fetchCommunityByIdOrLink with: ${idOrLink}`);
         const communityData = await fetchCommunityByIdOrLink(idOrLink);
         
-        if (!communityData) {
-          logger.error(`❌ Community not found with identifier: ${idOrLink}`);
-          setError(`Community not found with identifier: ${idOrLink}`);
-          throw new Error(`Community not found`);
+        // Basic checks on community data
+        if (!communityData || !communityData.id) {
+          logger.error('❌ Community data invalid:', communityData);
+          setError({ message: "Failed to load community data" });
+          return;
+        }
+        
+        // Check if plans are available
+        if (!communityData.project_plans || communityData.project_plans.length === 0) {
+          logger.warn('⚠️ Community has no subscription plans');
+          setError({ message: "This community has no subscription plans available" });
+          return;
+        }
+        
+        // Log success and plan info
+        if (process.env.NODE_ENV !== 'production') {
+          logger.success(`📋 Found ${communityData.project_plans.length} subscription plans`);
+          
+          // Log basic details of each plan for debugging
+          communityData.project_plans.forEach((plan, index) => {
+            logger.debug(`📝 Plan ${index + 1}: ${plan.name} (${plan.id}) - ${plan.price} ${plan.interval}`);
+          });
         }
         
         logger.success(`✅ Successfully fetched community: ${communityData.name} (ID: ${communityData.id})`);
         logger.log(`🔗 Has custom_link: ${communityData.custom_link || 'None'}`);
         logger.log(`👥 Is group: ${communityData.is_group ? 'Yes' : 'No'}`);
-        
-        // Log details about subscription plans
-        if (!communityData.subscription_plans || communityData.subscription_plans.length === 0) {
-          logger.warn(`⚠️ No subscription plans found for community: ${communityData.name}`);
-          
-          // Show toast notification for developers
-          if (process.env.NODE_ENV !== 'production') {
-            toast({
-              variant: "destructive",
-              title: "Developer Notice",
-              description: `No subscription plans found for community: ${communityData.name}`
-            });
-          }
-        } else {
-          logger.success(`📋 Found ${communityData.subscription_plans.length} subscription plans`);
-          
-          // Log plan details for debugging
-          communityData.subscription_plans.forEach((plan, index) => {
-            logger.debug(`📝 Plan ${index + 1}: ${plan.name} (${plan.id}) - ${plan.price} ${plan.interval}`);
-          });
-        }
         
         setCommunity(communityData);
       } catch (error) {

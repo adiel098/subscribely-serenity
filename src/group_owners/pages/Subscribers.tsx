@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { CreateSubscriber } from "@/group_owners/components/subscribers/CreateSubscriber";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FilterSubscribers } from "@/group_owners/components/subscribers/FilterSubscribers";
+import { SubscriberFilters } from "@/group_owners/components/subscribers/SubscriberFilters";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -93,39 +93,41 @@ const Subscribers = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <PageHeader
-          title={isProjectSelected ? "Project Subscribers" : "Community Subscribers"}
-          description="Manage your subscribers and their subscriptions"
-          icon={<Users2 className="h-6 w-6" />}
-        />
+    <div className="space-y-6">
+      <PageHeader
+        title={isProjectSelected ? "Project Subscribers" : "Community Subscribers"}
+        description="Manage your subscribers and their subscriptions"
+        icon={<Users2 className="h-6 w-6" />}
+      />
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Skeleton className="h-8 w-8 animate-spin text-purple-600" />
-          </div>
-        ) : subscribers && subscribers.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <FilterSubscribers
-                statusFilter={statusFilter}
-                onStatusFilterChange={handleStatusFilterChange}
-                searchQuery={searchQuery}
-                onSearchChange={handleSearchChange}
-              />
-              <Button onClick={handleRefresh}>Refresh</Button>
-            </div>
-
-            <SubscribersTable
-              subscribers={filteredSubscribers || []}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Skeleton className="h-8 w-8 animate-spin text-purple-600" />
+        </div>
+      ) : subscribers && subscribers.length > 0 ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <SubscriberFilters
+              statusFilter={statusFilter}
+              onStatusFilterChange={handleStatusFilterChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              planFilter={null}
+              onPlanFilterChange={() => {}}
+              uniquePlans={[]}
+              onExport={() => {}}
             />
+            <Button onClick={handleRefresh}>Refresh</Button>
           </div>
-        ) : (
-          <NoResults />
-        )}
-      </div>
-    </DashboardLayout>
+
+          <SubscribersTable
+            subscribers={filteredSubscribers || []}
+          />
+        </div>
+      ) : (
+        <NoResults />
+      )}
+    </div>
   );
 };
 

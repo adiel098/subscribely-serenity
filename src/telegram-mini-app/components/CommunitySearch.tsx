@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { searchCommunities } from "../services/communityService";
@@ -145,12 +144,46 @@ export const CommunitySearch: React.FC<CommunitySearchProps> = ({ onSelectCommun
             className="space-y-3 mb-16 px-2"
           >
             {communities.map((community, index) => (
-              <CommunityCard 
-                key={community.id} 
-                community={community} 
-                onSelect={onSelectCommunity}
-                animationDelay={index * 0.1}
-              />
+              <Card key={community.id} className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    {community.telegram_photo_url ? (
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={community.telegram_photo_url} alt={community.name} />
+                        <AvatarFallback>{community.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Users2 className="h-4 w-4" />
+                      </div>
+                    )}
+                    <CardTitle className="text-base">{community.name}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                    {community.description || "No description available"}
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onSelectCommunity(community)}
+                    >
+                      Join
+                    </Button>
+                    {community.project_plans?.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        From {formatCurrency(
+                          community.project_plans.reduce((min, plan) => {
+                            return Math.min(min, plan.price);
+                          }, Infinity)
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </motion.div>
         )}

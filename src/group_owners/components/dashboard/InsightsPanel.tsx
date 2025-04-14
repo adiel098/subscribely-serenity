@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Award, BarChart3, Repeat } from "lucide-react";
@@ -8,7 +7,15 @@ interface InsightsPanelProps {
   insights: InsightData;
 }
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights = {} }) => {
+  const {
+    averageSubscriptionDuration = 0,
+    mostPopularPlan = 'No Plan',
+    mostPopularPlanPrice = 0,
+    renewalRate = 0,
+    potentialRevenue = 0
+  } = insights || {};
+
   return (
     <Card>
       <CardHeader>
@@ -21,26 +28,26 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InsightCard
             title="Avg. Subscription Length"
-            value={`${insights.averageSubscriptionDuration} days`}
+            value={`${averageSubscriptionDuration} days`}
             icon={<Clock className="h-4 w-4 text-blue-600" />}
           />
           
           <InsightCard
             title="Most Popular Plan"
-            value={insights.mostPopularPlan}
-            subValue={`$${insights.mostPopularPlanPrice.toFixed(2)}`}
+            value={mostPopularPlan}
+            subValue={`$${mostPopularPlanPrice.toFixed(2)}`}
             icon={<Award className="h-4 w-4 text-amber-600" />}
           />
           
           <InsightCard
             title="Renewal Rate"
-            value={`${insights.renewalRate}%`}
+            value={`${renewalRate}%`}
             icon={<Repeat className="h-4 w-4 text-green-600" />}
           />
           
           <InsightCard
             title="Potential Revenue"
-            value={`$${insights.potentialRevenue?.toFixed(2) || '0.00'}`}
+            value={`$${potentialRevenue.toFixed(2)}`}
             icon={<BarChart3 className="h-4 w-4 text-purple-600" />}
           />
         </div>

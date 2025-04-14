@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -18,11 +17,11 @@ export const CommunityCardHeader: React.FC<CommunityCardHeaderProps> = ({
   community,
   isHovered
 }) => {
-  const { name, telegram_photo_url, subscription_plans } = community;
+  const { name, telegram_photo_url, project_plans } = community;
   const { sparkleVariants } = useCardAnimations();
   
-  const lowestPricePlan = subscription_plans && subscription_plans.length > 0
-    ? [...subscription_plans].sort((a, b) => a.price - b.price)[0]
+  const lowestPricePlan = project_plans && project_plans.length > 0
+    ? [...project_plans].sort((a, b) => a.price - b.price)[0]
     : null;
   
   const avatarFallback = name ? name.charAt(0).toUpperCase() : "C";

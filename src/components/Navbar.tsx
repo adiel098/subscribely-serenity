@@ -1,6 +1,4 @@
-
 import { useLocation } from 'react-router-dom';
-import { GroupOwnerHeader } from '@/group_owners/components/GroupOwnerHeader';
 import { MainHeader } from '@/components/MainHeader';
 
 const Navbar = () => {
@@ -13,8 +11,9 @@ const Navbar = () => {
                             location.pathname.includes('/messages') ||
                             location.pathname.includes('/bot-settings');
   
-  // Determine which header to render based on the route
-  return isGroupOwnerRoute ? <GroupOwnerHeader /> : <MainHeader />;
+  // בדפי המנהל אנחנו לא מציגים את ה-header כאן,
+  // כי הוא כבר מוצג בתוך ה-DashboardLayout
+  return !isGroupOwnerRoute ? <MainHeader /> : null;
 };
 
 export default Navbar;

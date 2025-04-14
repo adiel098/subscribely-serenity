@@ -25,11 +25,11 @@ const Messages = lazy(() => import("@/group_owners/pages/Messages"));
 // Helper HOC for protected dashboard routes
 const withDashboardLayout = (Component: React.ComponentType) => {
   return (
-    <ProtectedRoute>
-      <DashboardLayout>
+    <DashboardLayout>
+      <ProtectedRoute>
         <Component />
-      </DashboardLayout>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </DashboardLayout>
   );
 };
 

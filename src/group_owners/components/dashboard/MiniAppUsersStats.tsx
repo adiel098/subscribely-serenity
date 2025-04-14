@@ -7,11 +7,11 @@ import { MiniAppData } from "@/group_owners/hooks/dashboard/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MiniAppUsersStatsProps {
-  miniAppUsers: MiniAppData;
+  miniAppUsers?: MiniAppData;
 }
 
 export const MiniAppUsersStats: React.FC<MiniAppUsersStatsProps> = ({
-  miniAppUsers
+  miniAppUsers = { count: 0, nonSubscribers: 0 }
 }) => {
   const isMobile = useIsMobile();
   

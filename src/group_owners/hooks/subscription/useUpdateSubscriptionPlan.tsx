@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCommunityContext } from "@/contexts/CommunityContext";
@@ -29,7 +28,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
       try {
         // First verify if the plan exists
         const { data: existingPlan, error: checkError } = await supabase
-          .from('subscription_plans')
+          .from('project_plans')
           .select('*')
           .eq('id', planData.id)
           .single();
@@ -56,7 +55,7 @@ export const useUpdateSubscriptionPlan = (communityId: string) => {
         
         // If we get here, the plan exists, so update it
         const { data, error } = await supabase
-          .from('subscription_plans')
+          .from('project_plans')
           .update({
             name: planData.name,
             description: planData.description,

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFetchSubscriptionPlans } from "@/group_owners/hooks/subscription/useFetchSubscriptionPlans";
@@ -49,7 +48,7 @@ export const FilterTypeSelector = ({
         // For each community in the group, fetch their plans
         const plansPromises = groupCommunities.map(community => 
           supabase
-            .from('subscription_plans')
+            .from('project_plans')
             .select('*')
             .eq('community_id', community.id)
             .eq('is_active', true)

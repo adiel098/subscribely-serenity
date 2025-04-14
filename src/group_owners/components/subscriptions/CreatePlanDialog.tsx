@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -83,7 +82,7 @@ export const CreatePlanDialog = ({
       await onSubmit({
         ...data,
         price: Number(data.price),
-        project_id: projectId  // Use projectId instead of communityId
+        project_id: projectId  // Use project_id instead of community_id
       });
     } catch (error) {
       console.error("Error creating plan:", error);

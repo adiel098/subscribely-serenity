@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +47,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
       
       // Log the SQL query we're about to make (in a readable format)
       console.log(`[usePaymentHistory] Query: 
-        FROM: subscription_payments
+        FROM: subscriptions
         SELECT: all columns, community, plan using plan_id as foreign key
         WHERE: telegram_user_id = ${telegramUserId}
         ORDER BY: created_at DESC
@@ -56,7 +55,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
       
       // Fixed: Using correct Supabase join syntax for the subscription_plans table
       const { data, error: queryError } = await supabase
-        .from('subscription_payments')
+        .from('subscriptions')
         .select(`
           *,
           community:communities(
@@ -108,7 +107,7 @@ export const usePaymentHistory = (telegramUserId: string | undefined) => {
         
         const uniquePlanIds = [...new Set(missingPlanIds)];
         const { data: planDetails, error: planError } = await supabase
-          .from('subscription_plans')
+          .from('project_plans')
           .select('id, name, interval, price')
           .in('id', uniquePlanIds);
           

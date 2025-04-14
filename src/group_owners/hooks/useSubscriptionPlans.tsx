@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { SubscriptionPlan, CreatePlanParams, UpdatePlanParams, TogglePlanStatusParams } from './types/subscription.types';
@@ -13,14 +12,22 @@ export const useSubscriptionPlans = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
       
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+      try {
+        // בדיקת לוגיקת החיפוש בטבלה לפי project_id
+        console.log("Fetching plans for project ID:", projectId);
         
-      if (error) throw error;
-      return data as SubscriptionPlan[];
+        const { data, error } = await supabase
+          .from('project_plans')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw new Error(error.message);
+        return data as SubscriptionPlan[];
+      } catch (error) {
+        console.error("Error fetching subscription plans:", error);
+        throw error;
+      }
     },
     enabled: !!projectId
   });
@@ -29,7 +36,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
   const createPlan = useMutation({
     mutationFn: async (planData: CreatePlanParams) => {
       const { data, error } = await supabase
-        .from('subscription_plans')
+        .from('project_plans')
         .insert([planData])
         .select()
         .single();
@@ -54,7 +61,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
       const dataToUpdate = updates || updateData;
       
       const { data, error } = await supabase
-        .from('subscription_plans')
+        .from('project_plans')
         .update(dataToUpdate)
         .eq('id', id)
         .select()
@@ -77,7 +84,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
   const deletePlan = useMutation({
     mutationFn: async (planId: string) => {
       const { error } = await supabase
-        .from('subscription_plans')
+        .from('project_plans')
         .delete()
         .eq('id', planId);
         
@@ -100,7 +107,7 @@ export const useSubscriptionPlans = (projectId?: string) => {
       const { id, is_active } = params;
       
       const { data, error } = await supabase
-        .from('subscription_plans')
+        .from('project_plans')
         .update({ is_active: !is_active })
         .eq('id', id)
         .select()

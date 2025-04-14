@@ -9,8 +9,8 @@ interface PaymentMethod {
 }
 
 interface PaymentMethodsPanelProps {
-  paymentMethods: PaymentMethod[] | null | undefined;
-  paymentDistribution: any[] | null | undefined;
+  paymentMethods: PaymentMethod[] | null;
+  paymentDistribution: any[] | null;
 }
 
 export const PaymentMethodsPanel = ({ 

@@ -8,13 +8,13 @@ import { TrialUsersData } from "@/group_owners/hooks/dashboard/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TrialUsersStatsProps {
-  trialUsers: TrialUsersData;
-  averageSubscriptionDuration: number;
+  trialUsers?: TrialUsersData;
+  averageSubscriptionDuration?: number;
 }
 
 export const TrialUsersStats: React.FC<TrialUsersStatsProps> = ({
-  trialUsers,
-  averageSubscriptionDuration
+  trialUsers = { count: 0, percentage: 0 },
+  averageSubscriptionDuration = 0
 }) => {
   const isMobile = useIsMobile();
   
@@ -29,7 +29,7 @@ export const TrialUsersStats: React.FC<TrialUsersStatsProps> = ({
         <div className="mt-auto pt-0.5 md:pt-1">
           <span className={`${isMobile ? 'text-[9px]' : 'text-xs'} text-gray-500 font-medium flex items-center`}>
             <Clock className={`${isMobile ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5'} inline mr-0.5 text-purple-400`} /> 
-            {averageSubscriptionDuration}d avg
+            {trialUsers.percentage.toFixed(1)}% of all subscribers
           </span>
         </div>
       </div>

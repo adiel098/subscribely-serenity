@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { CommunityHeader } from "./CommunityHeader";
 import { ContentTabs } from "./tabs/ContentTabs";
@@ -50,8 +49,13 @@ export const MainContent = ({
       if (subscription.plan) {
         console.log("[MainContent] Setting plan for renewal:", subscription.plan);
         
-        const fullPlan = community?.subscription_plans?.find(p => p.id === subscription.plan.id) || 
-                        (subscription.community.subscription_plans?.find(p => p.id === subscription.plan.id));
+        // Find the full plan data
+        const fullPlan = community?.project_plans?.find(p => p.id === subscription.plan.id) || 
+                        (subscription.community.project_plans?.find(p => p.id === subscription.plan.id));
+        
+        if (!fullPlan) {
+          console.warn('⚠️ Could not find full plan data for subscription', subscription.id);
+        }
         
         if (fullPlan) {
           handlePlanSelect(fullPlan);
@@ -86,7 +90,7 @@ export const MainContent = ({
         <ContentTabs
           activeTab={activeTab}
           handleTabChange={handleTabChange}
-          communitySubscriptionPlans={community?.subscription_plans || []}
+          communitySubscriptionPlans={community?.project_plans || []}
           selectedPlan={selectedPlan}
           onPlanSelect={handlePlanSelect}
           showPaymentMethods={showPaymentMethods}

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useDatabaseDiagnostics } from "@/telegram-mini-app/hooks/useDatabaseDiagnostics";
 import { Button } from "@/components/ui/button";
@@ -58,10 +57,10 @@ export const PaymentDiagnostics: React.FC<PaymentDiagnosticsProps> = ({
       });
       setDiagnosticsRun(true);
     } else {
-      // If no plan_id is available, check subscription_plans table structure
-      await runDiagnostics({
+      // If no plan_id is available, check project_plans table structure
+      const tableStructure = await runDiagnostics({
         action: 'table_info',
-        table_name: 'subscription_plans'
+        table_name: 'project_plans'
       });
       setDiagnosticsRun(true);
     }

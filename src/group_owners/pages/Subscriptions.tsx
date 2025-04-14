@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, AlertCircle } from "lucide-react";
@@ -47,6 +46,7 @@ const Subscriptions = () => {
     await createPlan.mutateAsync({
       ...data,
       project_id: selectedProjectId,
+      community_id: selectedProjectId, 
     });
     toast({
       title: "Success",
@@ -96,7 +96,7 @@ const Subscriptions = () => {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-4">Subscription Plans</h1>
-        <p className="text-muted-foreground">Loading subscription plans...</p>
+        <div className="text-muted-foreground mb-4">Loading subscription plans...</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
             <Card key={i}>
@@ -109,9 +109,11 @@ const Subscriptions = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-3/4" />
+                <div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6 mt-2" />
+                  <Skeleton className="h-4 w-3/4 mt-2" />
+                </div>
               </CardContent>
             </Card>
           ))}

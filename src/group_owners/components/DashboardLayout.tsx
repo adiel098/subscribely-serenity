@@ -29,21 +29,18 @@ export const DashboardLayout = ({
             animate={{
               opacity: 1,
               y: 0
-            }} 
+            }}
             transition={{
-              duration: 0.4,
-              delay: 0.2
-            }} 
-            className={`w-full ${!isMobile && 'pl-[240px] pr-6'}`}
+              duration: 0.3
+            }}
+            className={`p-6 ${!isMobile ? 'pl-[240px]' : ''}`}
           >
-            <div className="bg-white w-full p-3 md:p-4">
-              {children}
-            </div>
+            {children}
           </motion.div>
         </main>
       </div>
     </div>
   );
-}
+};
 
 DashboardLayout.displayName = "DashboardLayout";

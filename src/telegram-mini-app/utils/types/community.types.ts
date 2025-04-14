@@ -1,15 +1,15 @@
-
 import { SubscriptionPlan } from "../../types/subscriptionTypes";
 
+// Community type definition
 export interface Community {
   id: string;
   name: string;
-  description?: string;
+  description: string;
+  telegram_group_id: string;
   telegram_photo_url?: string;
-  telegram_chat_id?: string;
-  custom_link?: string;
+  is_public?: boolean;
   is_group?: boolean;
   platform_url?: string;
   miniapp_url?: string;
-  subscription_plans: SubscriptionPlan[];
+  project_plans: SubscriptionPlan[];
 }

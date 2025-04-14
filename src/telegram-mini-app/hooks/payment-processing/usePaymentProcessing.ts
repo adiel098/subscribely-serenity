@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { usePaymentRecord } from "./usePaymentRecord";
 import { useInviteLink } from "./useInviteLink";
@@ -63,19 +62,20 @@ export const usePaymentProcessing = ({
       // Set loading state and notify start
       setPaymentLoadingState(setIsLoading, setError, onStart);
       
-      // Get plan details to check for trial period
-      const { data: plan, error: planError } = await supabase
-        .from('subscription_plans')
+      // Fetch the plan's details
+      const { data: planData, error: planError } = await supabase
+        .from('project_plans')
         .select('*')
         .eq('id', planId)
         .single();
         
       if (planError) {
-        console.error('[usePaymentProcessing] Error fetching plan details:', planError);
+        setErrorState({ message: `Error fetching plan details: ${planError.message}` });
+        return;
       }
       
-      const hasTrial = plan?.has_trial_period || false;
-      const trialDays = plan?.trial_days || 0;
+      const hasTrial = planData?.has_trial_period || false;
+      const trialDays = planData?.trial_days || 0;
       
       console.log('[usePaymentProcessing] Plan has trial:', hasTrial);
       console.log('[usePaymentProcessing] Trial days:', trialDays);

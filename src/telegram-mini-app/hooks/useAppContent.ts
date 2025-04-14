@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTelegramUser } from "./useTelegramUser";
@@ -46,8 +45,8 @@ export const useAppContent = (initialCommunityId: string, telegramUserId?: strin
   // Set initial community when data loads
   useEffect(() => {
     if (community && !selectedCommunity) {
-      console.log('🌟 Setting initial community:', community);
-      console.log('🌟 Community has plans:', community.subscription_plans?.length || 0);
+      console.log('🔍 Community found:', community.name);
+      console.log('🌟 Community has plans:', community.project_plans?.length || 0);
       setSelectedCommunity(community);
     }
   }, [community, selectedCommunity]);

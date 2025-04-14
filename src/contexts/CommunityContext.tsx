@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useCommunities } from "@/group_owners/hooks/useCommunities";
 import { useProjects } from "@/group_owners/hooks/useProjects";
+import { useProjectContext } from "./ProjectContext"; // שימוש ב-ProjectContext החדש
 import { useLocation, useNavigate } from "react-router-dom";
 import { invokeSupabaseFunction } from "@/telegram-mini-app/services/utils/serviceUtils";
 import { toast } from "sonner";
@@ -19,24 +20,9 @@ const CommunityContext = createContext<CommunityContextType | undefined>(undefin
 
 export const useCommunityContext = () => {
   try {
-    const context = useContext(CommunityContext);
-    
-    // Validate context exists
-    if (!context) {
-      console.error('useCommunityContext must be used within a CommunityProvider');
-      // Return a safe default context instead of throwing
-      return {
-        selectedCommunityId: null,
-        setSelectedCommunityId: () => {},
-        selectedProjectId: null,
-        setSelectedProjectId: () => {},
-        isProjectSelected: false,
-        selectedGroupId: null,
-        isGroupSelected: false
-      };
-    }
-    
-    return context;
+    // !!! הפיתרון: כשיש קריאה ל-useCommunityContext נשתמש בפועל ב-ProjectContext
+    // זה מאפשר לקוד שעדיין משתמש ב-CommunityContext לעבוד תוך שימוש בערכים מה-ProjectContext
+    return useProjectContext();
   } catch (error) {
     console.error('Error in useCommunityContext:', error);
     // Return a safe default context in case of any error

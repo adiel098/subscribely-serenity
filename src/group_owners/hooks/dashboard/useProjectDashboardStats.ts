@@ -49,10 +49,10 @@ const DEFAULT_STATS = {
 };
 
 export const useProjectDashboardStats = (projectId: string | null) => {
+  // Use ref to prevent duplicate logs
+  const loggedRef = useRef(false);
+
   try {
-    // Use ref to prevent duplicate logs
-    const loggedRef = useRef(false);
-    
     logger.log("🚀 useProjectDashboardStats called with projectId:", projectId);
     
     // Return default state immediately if projectId is null
@@ -66,7 +66,7 @@ export const useProjectDashboardStats = (projectId: string | null) => {
       loggedRef.current = true;
     }
     
-    // Start with a safe object we know will have the right properties
+    // Get time range info - CALL HOOKS FIRST at the top level
     const defaultTimeRange = useTimeRange();
     logger.log("⏰ Time range loaded:", defaultTimeRange ? "success" : "failed");
     
@@ -99,28 +99,33 @@ export const useProjectDashboardStats = (projectId: string | null) => {
       count: Array.isArray(plansData) ? plansData.length : 'not an array'
     });
     
-    // Use memoized filtered data to prevent unnecessary recalculations
-    const subscribersInfo = useMemo(() => {
-      try {
-        // נשלח מערך בטוח גם אם subscribersData הוא null או undefined
-        const safeSubscribersData = Array.isArray(subscribersData) ? subscribersData : [];
-        logger.log("🔄 useFilteredSubscribers starting with subscribers count:", safeSubscribersData.length);
-        return useFilteredSubscribers(safeSubscribersData, timeRangeStartDate);
-      } catch (error) {
-        logger.error("❌ Error in filtered subscribers calculation:", error);
-        return { filteredSubscribers: [], activeSubscribers: [], inactiveSubscribers: [] };
-      }
-    }, [subscribersData, timeRangeStartDate]);
+    // Early return for loading state
+    if (subscribersLoading || plansLoading) {
+      logger.log("⏳ Dashboard data is still loading");
+      return {
+        ...DEFAULT_STATS,
+        isLoading: true,
+        timeRange: timeRange,
+        setTimeRange: setTimeRange,
+        timeRangeLabel: timeRangeLabel
+      };
+    }
     
-    // וידוא שהערכים המוחזרים גם הם מערכים
-    const filteredSubscribers = Array.isArray(subscribersInfo?.filteredSubscribers) 
-      ? subscribersInfo.filteredSubscribers 
+    // Call all other hooks at the top level, not inside useMemo
+    const filteredSubscribersData = useFilteredSubscribers(
+      Array.isArray(subscribersData) ? subscribersData : [], 
+      timeRangeStartDate
+    );
+    
+    // Get these values safely from the hook result
+    const filteredSubscribers = Array.isArray(filteredSubscribersData?.filteredSubscribers) 
+      ? filteredSubscribersData.filteredSubscribers 
       : [];
-    const activeSubscribers = Array.isArray(subscribersInfo?.activeSubscribers) 
-      ? subscribersInfo.activeSubscribers 
+    const activeSubscribers = Array.isArray(filteredSubscribersData?.activeSubscribers) 
+      ? filteredSubscribersData.activeSubscribers 
       : [];
-    const inactiveSubscribers = Array.isArray(subscribersInfo?.inactiveSubscribers) 
-      ? subscribersInfo.inactiveSubscribers 
+    const inactiveSubscribers = Array.isArray(filteredSubscribersData?.inactiveSubscribers) 
+      ? filteredSubscribersData.inactiveSubscribers 
       : [];
     
     logger.log("👥 Processed subscribers data:", {
@@ -129,30 +134,24 @@ export const useProjectDashboardStats = (projectId: string | null) => {
       inactiveSubscribers: inactiveSubscribers.length
     });
     
-    // Memoize revenue stats
-    const revenueInfo = useMemo(() => {
-      try {
-        // וידוא שאנחנו תמיד שולחים מערך תקין
-        return useRevenueStats(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
-      } catch (error) {
-        logger.error("Error in revenue stats calculation:", error);
-        return { totalRevenue: 0, avgRevenuePerSubscriber: 0, conversionRate: 0 };
-      }
-    }, [filteredSubscribers]);
+    // Call revenue hook at the top level
+    const revenueInfo = useRevenueStats(
+      Array.isArray(filteredSubscribers) ? filteredSubscribers : []
+    );
     
-    const { totalRevenue = 0, avgRevenuePerSubscriber = 0, conversionRate = 0 } = revenueInfo || {};
+    // Use destructuring with default values for safety
+    const { 
+      totalRevenue = 0, 
+      avgRevenuePerSubscriber = 0, 
+      conversionRate = 0 
+    } = revenueInfo || {};
     
-    // Memoize trial users
-    const trialInfo = useMemo(() => {
-      try {
-        // וידוא שאנחנו תמיד שולחים מערך תקין
-        return useTrialUsers(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
-      } catch (error) {
-        logger.error("Error in trial users calculation:", error);
-        return { trialUsers: { count: 0, percentage: 0 } };
-      }
-    }, [filteredSubscribers]);
+    // Call trial users hook at the top level
+    const trialInfo = useTrialUsers(
+      Array.isArray(filteredSubscribers) ? filteredSubscribers : []
+    );
     
+    // Use destructuring with default value for safety
     const { trialUsers = { count: 0, percentage: 0 } } = trialInfo || {};
     
     // Fetch mini app users data
@@ -172,67 +171,53 @@ export const useProjectDashboardStats = (projectId: string | null) => {
       }
     }, [miniAppUsersData]);
     
-    // Memoize payment stats
-    const paymentInfo = useMemo(() => {
-      try {
-        // וידוא שאנחנו תמיד שולחים מערך תקין
-        return usePaymentStats(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
-      } catch (error) {
-        logger.error("Error in payment stats calculation:", error);
-        return { paymentStats: { paymentMethods: [], paymentDistribution: [] } };
-      }
-    }, [filteredSubscribers]);
+    // Call payment stats hook at the top level
+    const paymentInfo = usePaymentStats(
+      Array.isArray(filteredSubscribers) ? filteredSubscribers : []
+    );
     
+    // Use destructuring with default values for safety
     const { paymentStats } = paymentInfo || { paymentStats: { paymentMethods: [], paymentDistribution: [] } };
+    
+    // Call insights hook at the top level 
+    const insightsData = useInsights(
+      Array.isArray(filteredSubscribers) ? filteredSubscribers : [],
+      Array.isArray(plansData) ? plansData : []
+    );
+    
+    // Get chart data at the top level
+    const chartData = useChartData(
+      Array.isArray(subscribersData) ? subscribersData : [],
+      timeRangeStartDate
+    );
+    
+    // Destructure with safe defaults
+    const memberGrowthData = Array.isArray(chartData?.memberGrowthData) 
+      ? chartData.memberGrowthData 
+      : [];
+      
+    const revenueData = Array.isArray(chartData?.revenueData) 
+      ? chartData.revenueData 
+      : [];
     
     // Memoize insights
     const insightsInfo = useMemo(() => {
       try {
-        return useInsights(
-          Array.isArray(filteredSubscribers) ? filteredSubscribers : [],
-          Array.isArray(activeSubscribers) ? activeSubscribers : [],
-          Array.isArray(inactiveSubscribers) ? inactiveSubscribers : [],
-          Array.isArray(plansData) ? plansData : []
-        );
+        return { insights: insightsData };
       } catch (error) {
         logger.error("Error in insights calculation:", error);
-        return { insights: {}, insightsData: {
-          averageSubscriptionDuration: 0,
-          mostPopularPlan: 'No Plan',
-          mostPopularPlanPrice: 0,
-          renewalRate: 0,
-          potentialRevenue: 0
-        } };
+        return { insights: {} };
       }
-    }, [filteredSubscribers, activeSubscribers, inactiveSubscribers, plansData]);
+    }, [insightsData]);
     
     // Ensure we have properly typed insightsData
-    const { insights = {}, insightsData = {
-      averageSubscriptionDuration: 0,
-      mostPopularPlan: 'No Plan',
-      mostPopularPlanPrice: 0,
-      renewalRate: 0,
-      potentialRevenue: 0
-    } } = insightsInfo || {};
-    
-    // Memoize chart data
-    const chartData = useMemo(() => {
-      try {
-        // וידוא שאנחנו תמיד שולחים מערך תקין
-        return useChartData(Array.isArray(filteredSubscribers) ? filteredSubscribers : []);
-      } catch (error) {
-        logger.error("Error in chart data calculation:", error);
-        return { memberGrowthData: [], revenueData: [] };
-      }
-    }, [filteredSubscribers]);
-    
-    const { memberGrowthData = [], revenueData = [] } = chartData || {};
+    const { insights = {} } = insightsInfo || {};
     
     // Fetch owner info
     const { data: ownerInfo = {}, isLoading: ownerLoading } = useProjectOwnerInfo(projectId);
     
     // Combine loading states
-    const isLoading = subscribersLoading || plansLoading || miniAppUsersLoading || ownerLoading;
+    const isLoading = miniAppUsersLoading || ownerLoading;
     
     // Final logging before returning
     logger.log("🔚 useProjectDashboardStats returning object with these arrays:", {

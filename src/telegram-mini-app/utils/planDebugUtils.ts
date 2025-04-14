@@ -1,4 +1,3 @@
-
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
 
 const logger = createLogger("planDebugUtils");
@@ -12,7 +11,7 @@ export const verifyPlansInDatabase = async (communityId: string, supabase: any) 
     
     // First, check count with a simple query
     const { count, error: countError } = await supabase
-      .from('subscription_plans')
+      .from('project_plans')
       .select('id', { count: 'exact', head: true })
       .eq('community_id', communityId);
       
@@ -24,7 +23,7 @@ export const verifyPlansInDatabase = async (communityId: string, supabase: any) 
     
     // Then get all plans to inspect them
     const { data: plans, error } = await supabase
-      .from('subscription_plans')
+      .from('project_plans')
       .select('id, name, price, interval, is_active, community_id')
       .eq('community_id', communityId);
       
@@ -73,7 +72,7 @@ export const deepVerifyPlans = async (communityId: string, supabase: any) => {
     // Try different querying strategies
     logger.log(`Method 1: Direct plans query`);
     const { data: plansMethod1, error: error1 } = await supabase
-      .from('subscription_plans')
+      .from('project_plans')
       .select('*')
       .eq('community_id', communityId);
       
@@ -89,7 +88,7 @@ export const deepVerifyPlans = async (communityId: string, supabase: any) => {
       .select(`
         id, 
         name,
-        subscription_plans (*)
+        project_plans (*)
       `)
       .eq('id', communityId)
       .single();
@@ -97,7 +96,7 @@ export const deepVerifyPlans = async (communityId: string, supabase: any) => {
     if (error2) {
       logger.error(`Method 2 error: ${error2.message}`);
     } else {
-      const plansCount = communityData?.subscription_plans?.length || 0;
+      const plansCount = communityData?.project_plans?.length || 0;
       logger.log(`Method 2 found ${plansCount} plans for community ${communityData?.name || 'unknown'}`);
     }
     
@@ -167,4 +166,20 @@ export const ensurePlanFields = (plans: any[] | null | undefined) => {
     created_at: plan.created_at || new Date().toISOString(),
     updated_at: plan.updated_at || new Date().toISOString()
   }));
+};
+
+/**
+ * Check which field holds the duration in the plan
+ */
+export const getFirstPlanDuration = async (communityId: string, supabase: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('project_plans')
+      .select('*')
+      .eq('community_id', communityId)
+      .limit(1)
+      .maybeSingle();
+  } catch (error) {
+    logger.error(`Error getting first plan duration: ${error}`);
+  }
 };

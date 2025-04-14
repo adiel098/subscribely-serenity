@@ -1,4 +1,3 @@
-
 import { SubscriptionPlan } from "../../types/subscriptionTypes";
 import { Community } from "../types/community.types";
 
@@ -47,12 +46,14 @@ export const TEST_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export const TEST_COMMUNITY: Community = {
-  id: "comm-1",
+  id: "test-community-id",
   name: "Test Community",
-  description: "A community for testing purposes",
-  telegram_photo_url: "https://placekitten.com/300/300",
-  telegram_chat_id: "-1001234567890",
-  platform_url: "https://example.com/community/test",
-  miniapp_url: "https://t.me/YourBot?start=comm-1",
-  subscription_plans: TEST_SUBSCRIPTION_PLANS
+  description: "This is a test community for development purposes",
+  telegram_group_id: "test-telegram-group-id",
+  telegram_photo_url: "https://placehold.co/100",
+  is_public: true,
+  is_group: true,
+  platform_url: "https://example.com/communities/test-community-id",
+  miniapp_url: "https://t.me/YourBot?start=test-community-id",
+  project_plans: TEST_SUBSCRIPTION_PLANS
 };

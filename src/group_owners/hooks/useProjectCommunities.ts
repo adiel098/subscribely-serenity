@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Community } from "./useCommunities";
 import { toast } from "sonner";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { useRef } from "react";
 
 const logger = createLogger("useProjectCommunities");
 
 export const useProjectCommunities = (projectId: string | null) => {
+  const prevProjectIdRef = useRef<string | null>(null);
+  
   const query = useQuery({
     queryKey: ["project-communities", projectId],
     queryFn: async () => {
@@ -16,7 +19,11 @@ export const useProjectCommunities = (projectId: string | null) => {
         return [];
       }
       
-      logger.log("Fetching communities for project:", projectId);
+      // Prevent unnecessary logs for the same projectId
+      if (prevProjectIdRef.current !== projectId) {
+        logger.log("Fetching communities for project:", projectId);
+        prevProjectIdRef.current = projectId;
+      }
       
       try {
         const { data, error } = await supabase
@@ -38,7 +45,10 @@ export const useProjectCommunities = (projectId: string | null) => {
         return [];
       }
     },
-    enabled: !!projectId
+    enabled: !!projectId,
+    staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false, // Don't refetch when the window is focused
+    refetchOnMount: true // Only refetch on mount, not during re-renders
   });
 
   return query;

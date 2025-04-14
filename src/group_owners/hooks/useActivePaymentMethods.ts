@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentMethod } from "./types/subscription.types";
 import { useAuth } from "@/auth/contexts/AuthContext";
+import { useRef } from "react";
 
 /**
  * Hook to fetch only active payment methods that can be used for payments
@@ -10,6 +11,7 @@ import { useAuth } from "@/auth/contexts/AuthContext";
  */
 export const useActivePaymentMethods = () => {
   const { user } = useAuth();
+  const loggedRef = useRef(false);
   
   return useQuery({
     queryKey: ['active-payment-methods', user?.id],
@@ -29,13 +31,21 @@ export const useActivePaymentMethods = () => {
           throw error;
         }
         
-        console.log("Active payment methods:", data);
+        // Log only once
+        if (!loggedRef.current) {
+          console.log("Active payment methods:", data);
+          loggedRef.current = true;
+        }
+        
         return data as PaymentMethod[];
       } catch (err) {
         console.error("Error in useActivePaymentMethods:", err);
         return [];
       }
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: true // Only refetch on mount
   });
 };

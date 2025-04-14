@@ -2,9 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/contexts/AuthContext";
+import { useRef } from "react";
 
 export const usePlatformSubscription = () => {
   const { user } = useAuth();
+  const loggedRef = useRef(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['platform-subscription', user?.id],
@@ -13,7 +15,11 @@ export const usePlatformSubscription = () => {
         return { hasPlatformPlan: false };
       }
       
-      console.log('Checking platform subscription for user:', user.id);
+      // Prevent duplicate logs
+      if (!loggedRef.current) {
+        console.log('Checking platform subscription for user:', user.id);
+        loggedRef.current = true;
+      }
       
       // Query platform_subscriptions to check if user has an active subscription
       const { data, error } = await supabase
@@ -29,6 +35,8 @@ export const usePlatformSubscription = () => {
       }
       
       const hasPlatformPlan = !!data;
+      
+      // Only log on initial load or status changes
       console.log('Platform subscription check result:', { hasPlatformPlan, subscription: data });
       
       return { 
@@ -38,6 +46,8 @@ export const usePlatformSubscription = () => {
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: true
   });
 
   return {

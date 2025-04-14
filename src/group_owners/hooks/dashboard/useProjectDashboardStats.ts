@@ -1,3 +1,4 @@
+
 import { useTimeRange } from "./useTimeRange";
 import { useFilteredSubscribers } from "./useFilteredSubscribers";
 import { useRevenueStats } from "./useRevenueStats";
@@ -11,10 +12,18 @@ import { useProjectMiniAppUsers } from "./useProjectMiniAppUsers";
 import { useProjectOwnerInfo } from "./useProjectOwnerInfo";
 import { MiniAppData } from "./types";
 import { createLogger } from "@/telegram-mini-app/utils/debugUtils";
+import { useRef } from "react";
 
 const logger = createLogger("useProjectDashboardStats");
 
 export const useProjectDashboardStats = (projectId: string | null) => {
+  const loggedRef = useRef(false);
+  
+  if (!loggedRef.current && projectId) {
+    logger.log("📊 useProjectDashboardStats hook initialized with projectId:", projectId);
+    loggedRef.current = true;
+  }
+  
   const { timeRange, setTimeRange, timeRangeLabel, timeRangeStartDate } = useTimeRange();
   
   const { data: subscribersData, isLoading: subscribersLoading } = useProjectSubscribers(projectId);

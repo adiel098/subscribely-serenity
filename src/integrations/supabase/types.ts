@@ -791,6 +791,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: boolean
       }
+      create_default_bot_settings_manual: {
+        Args: { project_id_param: string }
+        Returns: undefined
+      }
       delete_all_platform_subscriptions: {
         Args: { owner_id_param: string }
         Returns: undefined

@@ -13,14 +13,13 @@ export const useOnboardingNavigation = (
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Save the current step to the database and localStorage
-  const saveCurrentStep = useCallback(async (step: string) => {
+  const saveCurrentStep = useCallback(async (step: OnboardingStep): Promise<void> => {
     setIsSubmitting(true);
     try {
-      const validStep = step as OnboardingStep;
       console.log(`Saving current step: ${step}`);
       
       // Update the local state
-      setCurrentStep(validStep);
+      setCurrentStep(step);
       
       // Save to localStorage
       const status = localStorageService.getOnboardingStatus() || { isCompleted: false };
@@ -51,12 +50,9 @@ export const useOnboardingNavigation = (
       if (step === "complete") {
         setIsCompleted(true);
       }
-      
-      return true;
     } catch (error) {
       console.error("Error saving step:", error);
       toast.error("Failed to save your progress. Please try again.");
-      return false;
     } finally {
       setIsSubmitting(false);
     }

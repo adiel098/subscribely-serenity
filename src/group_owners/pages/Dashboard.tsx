@@ -30,7 +30,7 @@ const Dashboard = memo(() => {
   const stats = isProjectSelected ? projectStats : communityStats;
   
   // Handle a case when stats is undefined or null
-  if (!stats) {
+  if (!stats || typeof stats !== 'object') {
     return (
       <DashboardLayout>
         <StatsBaseSkeleton />
@@ -84,6 +84,15 @@ const Dashboard = memo(() => {
       insightsData.potentialRevenue || 0 : 0
   };
 
+  // Ensure all arrays are initialized properly
+  const safeMemberGrowthData = Array.isArray(memberGrowthData) ? memberGrowthData : [];
+  const safeRevenueData = Array.isArray(revenueData) ? revenueData : [];
+  const safePaymentMethods = Array.isArray(paymentStats?.paymentMethods) ? paymentStats.paymentMethods : [];
+  const safePaymentDistribution = Array.isArray(paymentStats?.paymentDistribution) ? paymentStats.paymentDistribution : [];
+  const safeFilteredSubscribers = Array.isArray(filteredSubscribers) ? filteredSubscribers : [];
+  const safeActiveSubscribers = Array.isArray(activeSubscribers) ? activeSubscribers : [];
+  const safeInactiveSubscribers = Array.isArray(inactiveSubscribers) ? inactiveSubscribers : [];
+
   return (
     <DashboardLayout>
       {isLoading ? (
@@ -101,8 +110,8 @@ const Dashboard = memo(() => {
             />
             
             <MetricsGrid 
-              activeSubscribers={activeSubscribers}
-              inactiveSubscribers={inactiveSubscribers}
+              activeSubscribers={safeActiveSubscribers}
+              inactiveSubscribers={safeInactiveSubscribers}
               totalRevenue={totalRevenue}
               avgRevenuePerSubscriber={avgRevenuePerSubscriber}
               conversionRate={conversionRate}
@@ -112,8 +121,8 @@ const Dashboard = memo(() => {
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <MembersGrowthCard data={memberGrowthData} />
-              <RevenueChartCard data={revenueData} />
+              <MembersGrowthCard data={safeMemberGrowthData} />
+              <RevenueChartCard data={safeRevenueData} />
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -122,13 +131,14 @@ const Dashboard = memo(() => {
               </div>
               <div className="lg:col-span-1">
                 <PaymentMethodsPanel
-                  paymentMethods={paymentStats?.paymentMethods || []}
-                  paymentDistribution={paymentStats?.paymentDistribution || []}
+                  paymentMethods={safePaymentMethods}
+                  paymentDistribution={safePaymentDistribution}
                 />
               </div>
             </div>
             
-            {filteredSubscribers && filteredSubscribers.length === 0 && (
+            {/* בדיקה מבטיחה שהמשתנה הוא מערך ובעל ערך משמעותי */}
+            {safeFilteredSubscribers.length === 0 && (
               <FirstTimeSetupHelp isProject={isProjectSelected} />
             )}
           </div>

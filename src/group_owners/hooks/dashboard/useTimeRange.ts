@@ -1,46 +1,59 @@
-
 import { useState, useMemo } from "react";
-import { subDays } from "date-fns";
+import { addDays, startOfDay, subDays, subMonths, format } from "date-fns";
 
+/**
+ * Hook to manage time range selection and calculations
+ * @returns Object containing time range state and related data
+ */
 export const useTimeRange = () => {
-  const [timeRange, setTimeRange] = useState<string>("all");
-  
-  // Use useMemo to prevent unnecessary recalculations
-  const timeRangeData = useMemo(() => {
+  const [timeRange, setTimeRange] = useState<string>("last7days");
+
+  // Calculate start date based on selected time range
+  const timeRangeStartDate = useMemo(() => {
     const now = new Date();
     
-    // Get time range label
-    const getTimeRangeLabel = () => {
-      switch (timeRange) {
-        case "7d": return "Last 7 days";
-        case "30d": return "Last 30 days";
-        case "90d": return "Last 90 days";
-        case "1y": return "Last year";
-        default: return "All time";
-      }
-    };
-    
-    // Get time range start date
-    const getTimeRangeStartDate = () => {
-      switch (timeRange) {
-        case "7d": return subDays(now, 7);
-        case "30d": return subDays(now, 30);
-        case "90d": return subDays(now, 90);
-        case "1y": return subDays(now, 365);
-        default: return null; // All time
-      }
-    };
-    
-    return {
-      timeRangeLabel: getTimeRangeLabel(),
-      timeRangeStartDate: getTimeRangeStartDate()
-    };
-  }, [timeRange]); // Only recalculate when timeRange changes
-  
+    switch (timeRange) {
+      case "today":
+        return startOfDay(now);
+      case "yesterday":
+        return startOfDay(subDays(now, 1));
+      case "last7days":
+        return startOfDay(subDays(now, 7));
+      case "last30days":
+        return startOfDay(subDays(now, 30));
+      case "thisMonth":
+        return startOfDay(new Date(now.getFullYear(), now.getMonth(), 1));
+      case "lastMonth":
+        return startOfDay(subMonths(now, 1));
+      default:
+        return startOfDay(subDays(now, 7)); // Default to last 7 days
+    }
+  }, [timeRange]);
+
+  // Generate human-readable label for selected time range
+  const timeRangeLabel = useMemo(() => {
+    switch (timeRange) {
+      case "today":
+        return "Today";
+      case "yesterday":
+        return "Yesterday";
+      case "last7days":
+        return "Last 7 days";
+      case "last30days":
+        return "Last 30 days";
+      case "thisMonth":
+        return "This month";
+      case "lastMonth":
+        return "Last month";
+      default:
+        return "Last 7 days";
+    }
+  }, [timeRange]);
+
   return {
     timeRange,
     setTimeRange,
-    timeRangeLabel: timeRangeData.timeRangeLabel,
-    timeRangeStartDate: timeRangeData.timeRangeStartDate
+    timeRangeLabel,
+    timeRangeStartDate
   };
 };

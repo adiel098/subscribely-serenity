@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -7,6 +6,7 @@ interface AuthContextProps {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  loading: boolean; // הוספה לתאימות עם קומפוננטים קיימים
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // הוספה לתאימות עם קומפוננטים קיימים
   const authInitializedRef = useRef(false);
   const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
   const userIdRef = useRef<string | null>(null);
@@ -34,11 +35,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isLoading) {
         setIsLoading(false);
       }
+      if (loading) {
+        setLoading(false);
+      }
     } else if (isLoading && authInitializedRef.current) {
       // If loading but auth is initialized, we should exit loading state
       setIsLoading(false);
+    } else if (loading && authInitializedRef.current) {
+      setLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, loading]);
 
   useEffect(() => {
     if (authInitializedRef.current) return;
@@ -47,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Get initial session
     const initAuth = async () => {
       setIsLoading(true);
+      setLoading(true);
       console.log("AuthContext: Checking user session...");
       
       try {
@@ -84,6 +91,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("⚠️ AuthContext: Loading state timeout reached, forcing loading to false");
         setIsLoading(false);
       }
+      if (loading) {
+        console.log("⚠️ AuthContext: Loading state timeout reached, forcing loading to false");
+        setLoading(false);
+      }
     }, 3000);
 
     // Clean up subscription and timeout
@@ -91,11 +102,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(timeout);
       subscriptionRef.current?.unsubscribe();
     };
-  }, [updateUserState, isLoading]);
+  }, [updateUserState, isLoading, loading]);
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
+    setLoading(true);
     console.log(`🔐 AuthContext: Signing in with email: ${email}`);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -106,6 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.log(`❌ AuthContext: Sign in error:`, error);
         setIsLoading(false);
+        setLoading(false);
         throw error;
       }
       
@@ -113,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Loading state will be updated by the auth state change listener
     } catch (error) {
       setIsLoading(false);
+      setLoading(false);
       console.log(`❌ AuthContext: Sign in exception:`, error);
       throw error;
     }
@@ -121,6 +135,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Sign up with email and password
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
+    setLoading(true);
     console.log(`📝 AuthContext: Creating account for: ${email}`);
     try {
       const { error } = await supabase.auth.signUp({
@@ -131,6 +146,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         console.log(`❌ AuthContext: Sign up error:`, error);
         setIsLoading(false);
+        setLoading(false);
         throw error;
       }
       
@@ -138,6 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Loading state will be updated by the auth state change listener
     } catch (error) {
       setIsLoading(false);
+      setLoading(false);
       console.log(`❌ AuthContext: Sign up exception:`, error);
       throw error;
     }
@@ -146,18 +163,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Sign out
   const signOut = async () => {
     setIsLoading(true);
+    setLoading(true);
     console.log(`🚪 AuthContext: Signing out user`);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.log(`❌ AuthContext: Sign out error:`, error);
         setIsLoading(false);
+        setLoading(false);
         throw error;
       }
       console.log(`✅ AuthContext: Sign out successful`);
       // Loading state will be updated by the auth state change listener
     } catch (error) {
       setIsLoading(false);
+      setLoading(false);
       console.log(`❌ AuthContext: Sign out exception:`, error);
       throw error;
     }
@@ -169,6 +189,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
+        loading,
         signIn,
         signUp,
         signOut,
